@@ -12,11 +12,11 @@ Welcome to the central documentation wiki for **LUMI-JOY**, a self-evolving agen
 
 ### Latest generated verification
 
-Generated at **2026-08-15T04:28:34.865Z** on Node.js `v23.5.0`, macOS ARM64:
+Generated at **2026-08-15T20:42:06.673Z** on Node.js `v23.5.0`, macOS ARM64:
 
 | Lane | Result |
 |---|---:|
-| Pass 192 exact composition | 142/142 |
+| Pass 192 exact composition | 252/252 |
 | Runtime smoke | 9/9 |
 | Heterogeneous benchmark | 5/5 |
 | Flappy Bird React + TypeScript + Vite deep assertions | 8/8 |

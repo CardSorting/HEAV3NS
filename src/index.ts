@@ -107,6 +107,133 @@ import { StderrGuardFilter, type SuppressionStats } from "./tooling/extensions/t
 import { TTSRCoordinator, type TTSRMeasurement } from "./tooling/extensions/telemetry/ttsr-coordinator.js";
 import { CentennialPassMarker, type CentennialMilestone } from "./tooling/extensions/policy/centennial-pass-marker.js";
 
+import { DeterministicSkillTreeParser } from "./tooling/extensions/skills/deterministic-skill-tree-parser.js";
+import { AnchoredSkillMutator } from "./tooling/extensions/skills/anchored-skill-mutator.js";
+import { SkillTreeToolSuite } from "./tooling/extensions/skills/skill-tree-tool-suite.js";
+import { BroccoliSkillTreeSubstrate } from "./sessions/extensions/skills/broccoli-skill-tree-substrate.js";
+import { SkillTreeSnapshotManager } from "./sessions/extensions/skills/skill-tree-snapshot-manager.js";
+import { DeterministicSkillCurator } from "./sessions/extensions/skills/deterministic-skill-curator.js";
+import { EvolutionarySkillTreeEngine } from "./agents/extensions/skills/evolutionary-skill-tree-engine.js";
+import { SkillTreePromptComposer } from "./agents/extensions/skills/skill-tree-prompt-composer.js";
+import { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degeneration-guard.js";
+
+import { DeterministicSoulParser } from "./tooling/extensions/soul/deterministic-soul-parser.js";
+import { AnchoredSoulMutator } from "./tooling/extensions/soul/anchored-soul-mutator.js";
+import { SoulToolSuite } from "./tooling/extensions/soul/soul-tool-suite.js";
+import { BroccoliSoulSubstrate } from "./sessions/extensions/soul/broccoli-soul-substrate.js";
+import { SoulSnapshotManager } from "./sessions/extensions/soul/soul-snapshot-manager.js";
+import { SoulThreatGuard } from "./agents/extensions/soul/soul-threat-guard.js";
+import { SoulPromptComposer } from "./agents/extensions/soul/soul-prompt-composer.js";
+
+import { AnchoredWorktreeManager } from "./tooling/extensions/delegation/anchored-worktree-manager.js";
+import { SwarmToolSuite } from "./tooling/extensions/delegation/swarm-tool-suite.js";
+import { SubagentVfsBrancher } from "./sessions/extensions/delegation/subagent-vfs-brancher.js";
+import { SubagentBudgetGovernor } from "./sessions/extensions/delegation/subagent-budget-governor.js";
+import { SubagentLifecycleGuard } from "./agents/extensions/delegation/subagent-lifecycle-guard.js";
+import { MonolithSwarmDelegator } from "./agents/extensions/delegation/monolith-swarm-delegator.js";
+
+import { DeterministicBlueprintCatalog } from "./tooling/extensions/cron/deterministic-blueprint-catalog.js";
+import { AnchoredCronJobManager } from "./tooling/extensions/cron/anchored-cron-job-manager.js";
+import { CronToolSuite } from "./tooling/extensions/cron/cron-tool-suite.js";
+import { BroccoliCronSubstrate } from "./sessions/extensions/cron/broccoli-cron-substrate.js";
+import { CronSnapshotManager } from "./sessions/extensions/cron/cron-snapshot-manager.js";
+import { CronLifecycleGuard } from "./agents/extensions/cron/cron-lifecycle-guard.js";
+import { MonolithCronScheduler } from "./agents/extensions/cron/monolith-cron-scheduler.js";
+
+import { CdpNavigationGuard } from "./agents/extensions/cdp/cdp-navigation-guard.js";
+import { CdpDialogPolicyEngine } from "./agents/extensions/cdp/cdp-dialog-policy-engine.js";
+import { CdpDomSnapshotter } from "./tooling/extensions/cdp/cdp-dom-snapshotter.js";
+import { CdpProtocolClient } from "./tooling/extensions/cdp/cdp-protocol-client.js";
+import { BroccoliBrowserSubstrate } from "./sessions/extensions/cdp/broccoli-browser-substrate.js";
+import { BrowserSnapshotManager } from "./sessions/extensions/cdp/browser-snapshot-manager.js";
+import { CdpSupervisorEngine } from "./agents/extensions/cdp/cdp-supervisor-engine.js";
+import { CdpToolSuite } from "./tooling/extensions/cdp/cdp-tool-suite.js";
+
+import { DeterministicCredentialPool } from "./tooling/extensions/credential/deterministic-credential-pool.js";
+import { CredentialToolSuite } from "./tooling/extensions/credential/credential-tool-suite.js";
+import { BroccoliCredentialSubstrate } from "./sessions/extensions/credential/broccoli-credential-substrate.js";
+import { CredentialSnapshotManager } from "./sessions/extensions/credential/credential-snapshot-manager.js";
+import { CredentialCircuitBreaker } from "./agents/extensions/credential/credential-circuit-breaker.js";
+import { MonolithCredentialManager } from "./agents/extensions/credential/monolith-credential-manager.js";
+
+import { TelegramProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/telegram-protocol-adapter.js";
+import { DiscordProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/discord-protocol-adapter.js";
+import { SlackProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/slack-protocol-adapter.js";
+import { WebhookProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/webhook-protocol-adapter.js";
+import { GatewayToolSuite } from "./tooling/extensions/gateway/gateway-tool-suite.js";
+import { GatewayDeliveryLedger } from "./sessions/extensions/gateway/gateway-delivery-ledger.js";
+import { BroccoliGatewaySubstrate } from "./sessions/extensions/gateway/broccoli-gateway-substrate.js";
+import { GatewaySnapshotManager } from "./sessions/extensions/gateway/gateway-snapshot-manager.js";
+import { GatewayDispatcherEngine } from "./agents/extensions/gateway/gateway-dispatcher-engine.js";
+
+import { HeadTailBudgetGovernor } from "./tooling/extensions/compaction/head-tail-budget-governor.js";
+import { DeterministicToolPruner } from "./tooling/extensions/compaction/deterministic-tool-pruner.js";
+import { BroccoliCompressionSubstrate } from "./sessions/extensions/compaction/broccoli-compression-substrate.js";
+import { CompressionSnapshotManager } from "./sessions/extensions/compaction/compression-snapshot-manager.js";
+import { TrajectoryCompactorEngine } from "./agents/extensions/compaction/trajectory-compactor-engine.js";
+import { CompressionToolSuite } from "./tooling/extensions/compaction/compression-tool-suite.js";
+
+import { FtsQuerySanitizer } from "./tooling/extensions/search/fts-query-sanitizer.js";
+import { BroccoliSearchSubstrate } from "./sessions/extensions/search/broccoli-search-substrate.js";
+import { SearchSnapshotManager } from "./sessions/extensions/search/search-snapshot-manager.js";
+import { DeterministicSessionSearchEngine } from "./tooling/extensions/search/deterministic-session-search-engine.js";
+import { SearchToolSuite } from "./tooling/extensions/search/search-tool-suite.js";
+
+import { SecretScrubber } from "./tooling/extensions/environments/secret-scrubber.js";
+import { LocalEnvironmentAdapter } from "./tooling/extensions/environments/local-environment-adapter.js";
+import { DockerEnvironmentAdapter } from "./tooling/extensions/environments/docker-environment-adapter.js";
+import { BroccoliEnvironmentSubstrate } from "./sessions/extensions/environments/broccoli-environment-substrate.js";
+import { EnvironmentSnapshotManager } from "./sessions/extensions/environments/environment-snapshot-manager.js";
+import { EnvironmentSupervisorEngine } from "./agents/extensions/environments/environment-supervisor-engine.js";
+import { EnvironmentToolSuite } from "./tooling/extensions/environments/environment-tool-suite.js";
+
+import { JitteredBackoffGovernor } from "./tooling/extensions/faults/jittered-backoff-governor.js";
+import { DeterministicErrorClassifier } from "./tooling/extensions/faults/deterministic-error-classifier.js";
+import { BroccoliFaultSubstrate } from "./sessions/extensions/faults/broccoli-fault-substrate.js";
+import { FaultSnapshotManager } from "./sessions/extensions/faults/fault-snapshot-manager.js";
+import { FaultRecoverySupervisor } from "./agents/extensions/faults/fault-recovery-supervisor.js";
+import { FaultDiagnosticToolSuite } from "./tooling/extensions/faults/fault-diagnostic-tool-suite.js";
+
+import { AcpProtocolCodec } from "./tooling/extensions/acp/acp-protocol-codec.js";
+import { AcpPermissionGate } from "./tooling/extensions/acp/acp-permission-gate.js";
+import { BroccoliAcpSubstrate } from "./sessions/extensions/acp/broccoli-acp-substrate.js";
+import { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js";
+import { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js";
+import { AcpToolSuite } from "./tooling/extensions/acp/acp-tool-suite.js";
+
+import { McpTransportCodec } from "./tooling/extensions/mcp/mcp-transport-codec.js";
+import { McpSecurityScrubber } from "./tooling/extensions/mcp/mcp-security-scrubber.js";
+import { BroccoliMcpSubstrate } from "./sessions/extensions/mcp/broccoli-mcp-substrate.js";
+import { McpSnapshotManager } from "./sessions/extensions/mcp/mcp-snapshot-manager.js";
+import { McpSupervisorEngine } from "./agents/extensions/mcp/mcp-supervisor-engine.js";
+import { McpClientToolSuite } from "./tooling/extensions/mcp/mcp-client-tool-suite.js";
+
+import { ProcessOutputRingBuffer } from "./tooling/extensions/process/process-output-ring-buffer.js";
+import { ProcessSecuritySandbox } from "./tooling/extensions/process/process-security-sandbox.js";
+import { BroccoliProcessSubstrate } from "./sessions/extensions/process/broccoli-process-substrate.js";
+import { ProcessSnapshotManager } from "./sessions/extensions/process/process-snapshot-manager.js";
+import { ProcessSupervisorEngine } from "./agents/extensions/process/process-supervisor-engine.js";
+import { ProcessToolSuite } from "./tooling/extensions/process/process-tool-suite.js";
+
+import { SecurityRiskClassifier } from "./tooling/extensions/arbiter/security-risk-classifier.js";
+import { ApprovalHashLedger } from "./tooling/extensions/arbiter/approval-hash-ledger.js";
+import { BroccoliArbiterSubstrate } from "./sessions/extensions/arbiter/broccoli-arbiter-substrate.js";
+import { ArbiterSnapshotManager } from "./sessions/extensions/arbiter/arbiter-snapshot-manager.js";
+import { InteractiveSecurityArbiter } from "./agents/extensions/arbiter/interactive-security-arbiter.js";
+import { ArbiterToolSuite } from "./tooling/extensions/arbiter/arbiter-tool-suite.js";
+
+import { SemanticKnowledgeGraph } from "./sessions/extensions/memory/semantic-knowledge-graph.js";
+import { BroccoliLearningSubstrate } from "./sessions/extensions/memory/broccoli-learning-substrate.js";
+import { LearningSnapshotManager } from "./sessions/extensions/memory/learning-snapshot-manager.js";
+import { ContinuousLearningCurator } from "./agents/extensions/memory/continuous-learning-curator.js";
+import { LearningCuratorToolSuite } from "./tooling/extensions/memory/learning-curator-tool-suite.js";
+
+import { DeterministicPatchEngine } from "./tooling/extensions/patch/deterministic-patch-engine.js";
+import { BroccoliPatchSubstrate } from "./sessions/extensions/patch/broccoli-patch-substrate.js";
+import { PatchSnapshotManager } from "./sessions/extensions/patch/patch-snapshot-manager.js";
+import { AtomicMutationSupervisor } from "./agents/extensions/patch/atomic-mutation-supervisor.js";
+import { FileMutationToolSuite } from "./tooling/extensions/patch/file-mutation-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -122,6 +249,166 @@ export type {
 } from "./core/contracts/agent.contracts.js";
 export type { GameStateSnapshot, SessionMessage, ISessionStore, SlabBufferSnapshot } from "./core/contracts/session.contracts.js";
 export type { CommandResult, AnchoredEditResult, ToolingEvent, JsonRpcNotification, TerminalProgressFrame, IHands, IEars, IToolRegistry } from "./core/contracts/tooling.contracts.js";
+export type {
+  SkillTier,
+  SkillLifecycleState,
+  SkillProvenance,
+  SkillSupportFile,
+  SkillNodeManifest,
+  SkillTreeDag,
+  SkillMutationChunk,
+  SkillMutationPayload,
+  SkillMutationResult,
+  SkillEvolutionSignal,
+  ISkillTreeParser,
+  IAnchoredSkillMutator,
+  IBroccoliSkillTreeSubstrate,
+  ISkillTreeSnapshotManager,
+  IDeterministicSkillCurator,
+  IEvolutionarySkillEngine,
+  IAntiDegenerationGuard,
+} from "./core/contracts/skills.contracts.js";
+export type {
+  SoulArchetype,
+  SoulTrait,
+  SoulAxiom,
+  SoulStyleRules,
+  SoulManifest,
+  SoulMutationIntent,
+  SoulMutationResult,
+  SoulSnapshot,
+} from "./core/contracts/soul.contracts.js";
+export type {
+  SwarmTaskStatus,
+  SubagentBudget,
+  WorktreeIsolationSpec,
+  SwarmTaskManifest,
+  DelegationOutcome,
+  BatchDelegationResult,
+  ISwarmDelegator,
+  IWorktreeManager,
+  ISubagentVfsBrancher,
+  ISubagentBudgetGovernor,
+} from "./core/contracts/delegation.contracts.js";
+export type {
+  CronScheduleType,
+  CronJobStatus,
+  BlueprintSlotType,
+  BlueprintSlot,
+  AutomationBlueprint,
+  CronJobManifest,
+  CronExecutionRecord,
+  CronStateSnapshot,
+  ICronScheduler,
+  IBroccoliCronSubstrate,
+  ICronSnapshotManager,
+} from "./core/contracts/cron.contracts.js";
+export type {
+  CdpTargetType,
+  CdpTarget,
+  CdpDialogType,
+  CdpDialogStatus,
+  CdpDialogEvent,
+  CdpDialogPolicy,
+  CdpDomNode,
+  CdpDomSnapshot,
+  CdpConsoleMessage,
+  CdpNetworkRequest,
+  CdpNavigationPolicy,
+  CdpBrowserStateSnapshot,
+  ICdpProtocolClient,
+  IBroccoliBrowserSubstrate,
+  IBrowserSnapshotManager,
+  ICdpSupervisor,
+} from "./core/contracts/cdp.contracts.js";
+export type {
+  CredentialStatus,
+  CredentialRotationStrategy,
+  TokenBucketState,
+  CredentialAccount,
+  CredentialStateSnapshot,
+  ICredentialPool,
+  IBroccoliCredentialSubstrate,
+  ICredentialSnapshotManager,
+} from "./core/contracts/credential.contracts.js";
+export type {
+  GatewayPlatformType,
+  GatewayDeliveryStatus,
+  GatewayMessageEnvelope,
+  GatewayOutboundPayload,
+  GatewayChannelSession,
+  GatewayStateSnapshot,
+  IGatewayPlatformAdapter,
+  IBroccoliGatewaySubstrate,
+  IGatewayDeliveryLedger,
+  IGatewaySnapshotManager,
+  IGatewayDispatcher,
+} from "./core/contracts/gateway.contracts.js";
+export type {
+  CompressionPolicy,
+  TokenWindowBudget,
+  CompressedTurnSummary,
+  ToolPruningPolicy,
+  CompressionStateSnapshot,
+  IHeadTailBudgetGovernor,
+  IDeterministicToolPruner,
+  IBroccoliCompressionSubstrate,
+  ICompressionSnapshotManager,
+  ITrajectoryCompactorEngine,
+} from "./core/contracts/compression.contracts.js";
+export type {
+  IndexedMessageRecord,
+  SearchQueryOptions,
+  SearchMatchSnippet,
+  SearchIndexSnapshot,
+  IFtsQuerySanitizer,
+  IBroccoliSearchSubstrate,
+  ISearchSnapshotManager,
+  IDeterministicSessionSearchEngine,
+} from "./core/contracts/search.contracts.js";
+export type {
+  ExecutionBackendType,
+  SecurityIsolationProfile,
+  ExecutionCommandSpec,
+  ExecutionCommandResult,
+  EnvironmentSessionState,
+  EnvironmentStateSnapshot,
+  ISecretScrubber,
+  IExecutionEnvironmentAdapter,
+  IBroccoliEnvironmentSubstrate,
+  IEnvironmentSnapshotManager,
+  IEnvironmentSupervisorEngine,
+} from "./core/contracts/environment.contracts.js";
+export type {
+  FaultCategory,
+  RecoveryDirectiveType,
+  ClassifiedFault,
+  JitterMode,
+  BackoffPolicySpec,
+  ProviderHealthRecord,
+  FaultTaxonomyStateSnapshot,
+  IDeterministicErrorClassifier,
+  IJitteredBackoffGovernor,
+  IBroccoliFaultSubstrate,
+  IFaultSnapshotManager,
+  IFaultRecoverySupervisor,
+} from "./core/contracts/fault.contracts.js";
+export type {
+  AcpSessionMode,
+  AcpPermissionLevel,
+  AcpRpcRequest,
+  AcpRpcResponse,
+  AcpRpcNotification,
+  AcpSessionInfo,
+  AcpEditApprovalRequest,
+  AcpEditApprovalDecision,
+  AcpStateSnapshot,
+  IAcpProtocolCodec,
+  IAcpPermissionGate,
+  IBroccoliAcpSubstrate,
+  IAcpSnapshotManager,
+  IAcpBridgeServer,
+} from "./core/contracts/acp.contracts.js";
 export {
   estimateMessageTokens,
   estimateMessagesTokens,
@@ -383,7 +670,7 @@ export type {
 export { ArchitectureGuardrailGate } from "./tooling/extensions/policy/architecture-guardrail-gate.js";
 export type { GuardrailAuditReport, GuardrailCheckResult } from "./tooling/extensions/policy/architecture-guardrail-gate.js";
 export { McpHub } from "./tooling/extensions/mcp/mcp-hub.js";
-export type { McpServerConfig, McpDiscoveredTool } from "./tooling/extensions/mcp/mcp-hub.js";
+export type { McpDiscoveredTool } from "./tooling/extensions/mcp/mcp-hub.js";
 export { RipgrepSearchService } from "./tooling/extensions/perception/ripgrep-search-service.js";
 export type { RipgrepMatch } from "./tooling/extensions/perception/ripgrep-search-service.js";
 export { UrlContentFetcher } from "./tooling/extensions/perception/url-content-fetcher.js";
@@ -467,6 +754,192 @@ export { TTSRCoordinator } from "./tooling/extensions/telemetry/ttsr-coordinator
 export type { TTSRMeasurement } from "./tooling/extensions/telemetry/ttsr-coordinator.js";
 export { CentennialPassMarker } from "./tooling/extensions/policy/centennial-pass-marker.js";
 export type { CentennialMilestone } from "./tooling/extensions/policy/centennial-pass-marker.js";
+
+export { DeterministicSkillTreeParser } from "./tooling/extensions/skills/deterministic-skill-tree-parser.js";
+export { AnchoredSkillMutator } from "./tooling/extensions/skills/anchored-skill-mutator.js";
+export { SkillTreeToolSuite } from "./tooling/extensions/skills/skill-tree-tool-suite.js";
+export { BroccoliSkillTreeSubstrate } from "./sessions/extensions/skills/broccoli-skill-tree-substrate.js";
+export { SkillTreeSnapshotManager } from "./sessions/extensions/skills/skill-tree-snapshot-manager.js";
+export { DeterministicSkillCurator } from "./sessions/extensions/skills/deterministic-skill-curator.js";
+export { EvolutionarySkillTreeEngine } from "./agents/extensions/skills/evolutionary-skill-tree-engine.js";
+export { SkillTreePromptComposer } from "./agents/extensions/skills/skill-tree-prompt-composer.js";
+export { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degeneration-guard.js";
+
+export { DeterministicSoulParser } from "./tooling/extensions/soul/deterministic-soul-parser.js";
+export { AnchoredSoulMutator } from "./tooling/extensions/soul/anchored-soul-mutator.js";
+export { SoulToolSuite } from "./tooling/extensions/soul/soul-tool-suite.js";
+export { BroccoliSoulSubstrate } from "./sessions/extensions/soul/broccoli-soul-substrate.js";
+export { SoulSnapshotManager } from "./sessions/extensions/soul/soul-snapshot-manager.js";
+export { SoulThreatGuard } from "./agents/extensions/soul/soul-threat-guard.js";
+export { SoulPromptComposer } from "./agents/extensions/soul/soul-prompt-composer.js";
+
+export { AnchoredWorktreeManager } from "./tooling/extensions/delegation/anchored-worktree-manager.js";
+export { SwarmToolSuite } from "./tooling/extensions/delegation/swarm-tool-suite.js";
+export { SubagentVfsBrancher } from "./sessions/extensions/delegation/subagent-vfs-brancher.js";
+export { SubagentBudgetGovernor } from "./sessions/extensions/delegation/subagent-budget-governor.js";
+export { SubagentLifecycleGuard } from "./agents/extensions/delegation/subagent-lifecycle-guard.js";
+export { MonolithSwarmDelegator } from "./agents/extensions/delegation/monolith-swarm-delegator.js";
+
+export { DeterministicBlueprintCatalog } from "./tooling/extensions/cron/deterministic-blueprint-catalog.js";
+export { AnchoredCronJobManager } from "./tooling/extensions/cron/anchored-cron-job-manager.js";
+export { CronToolSuite } from "./tooling/extensions/cron/cron-tool-suite.js";
+export { BroccoliCronSubstrate } from "./sessions/extensions/cron/broccoli-cron-substrate.js";
+export { CronSnapshotManager } from "./sessions/extensions/cron/cron-snapshot-manager.js";
+export { CronLifecycleGuard } from "./agents/extensions/cron/cron-lifecycle-guard.js";
+export { MonolithCronScheduler } from "./agents/extensions/cron/monolith-cron-scheduler.js";
+
+export { CdpNavigationGuard } from "./agents/extensions/cdp/cdp-navigation-guard.js";
+export { CdpDialogPolicyEngine } from "./agents/extensions/cdp/cdp-dialog-policy-engine.js";
+export { CdpDomSnapshotter } from "./tooling/extensions/cdp/cdp-dom-snapshotter.js";
+export { CdpProtocolClient } from "./tooling/extensions/cdp/cdp-protocol-client.js";
+export { BroccoliBrowserSubstrate } from "./sessions/extensions/cdp/broccoli-browser-substrate.js";
+export { BrowserSnapshotManager } from "./sessions/extensions/cdp/browser-snapshot-manager.js";
+export { CdpSupervisorEngine } from "./agents/extensions/cdp/cdp-supervisor-engine.js";
+export { CdpToolSuite } from "./tooling/extensions/cdp/cdp-tool-suite.js";
+
+export { TokenBucketRateGovernor as ContinuousTokenBucketRateGovernor } from "./tooling/extensions/credential/token-bucket-rate-governor.js";
+export { DeterministicCredentialPool } from "./tooling/extensions/credential/deterministic-credential-pool.js";
+export { CredentialToolSuite } from "./tooling/extensions/credential/credential-tool-suite.js";
+export { BroccoliCredentialSubstrate } from "./sessions/extensions/credential/broccoli-credential-substrate.js";
+export { CredentialSnapshotManager } from "./sessions/extensions/credential/credential-snapshot-manager.js";
+export { CredentialCircuitBreaker } from "./agents/extensions/credential/credential-circuit-breaker.js";
+export { MonolithCredentialManager } from "./agents/extensions/credential/monolith-credential-manager.js";
+
+export { AbstractPlatformAdapter } from "./tooling/extensions/gateway/abstract-platform-adapter.js";
+export { TelegramProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/telegram-protocol-adapter.js";
+export { DiscordProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/discord-protocol-adapter.js";
+export { SlackProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/slack-protocol-adapter.js";
+export { WebhookProtocolAdapter } from "./tooling/extensions/gateway/platform-adapters/webhook-protocol-adapter.js";
+export { GatewayToolSuite } from "./tooling/extensions/gateway/gateway-tool-suite.js";
+export { GatewayDeliveryLedger } from "./sessions/extensions/gateway/gateway-delivery-ledger.js";
+export { BroccoliGatewaySubstrate } from "./sessions/extensions/gateway/broccoli-gateway-substrate.js";
+export { GatewaySnapshotManager } from "./sessions/extensions/gateway/gateway-snapshot-manager.js";
+export { GatewayDispatcherEngine } from "./agents/extensions/gateway/gateway-dispatcher-engine.js";
+
+export { HeadTailBudgetGovernor } from "./tooling/extensions/compaction/head-tail-budget-governor.js";
+export { DeterministicToolPruner } from "./tooling/extensions/compaction/deterministic-tool-pruner.js";
+export { BroccoliCompressionSubstrate } from "./sessions/extensions/compaction/broccoli-compression-substrate.js";
+export { CompressionSnapshotManager } from "./sessions/extensions/compaction/compression-snapshot-manager.js";
+export { TrajectoryCompactorEngine } from "./agents/extensions/compaction/trajectory-compactor-engine.js";
+export { CompressionToolSuite } from "./tooling/extensions/compaction/compression-tool-suite.js";
+
+export { FtsQuerySanitizer } from "./tooling/extensions/search/fts-query-sanitizer.js";
+export { BroccoliSearchSubstrate } from "./sessions/extensions/search/broccoli-search-substrate.js";
+export { SearchSnapshotManager } from "./sessions/extensions/search/search-snapshot-manager.js";
+export { DeterministicSessionSearchEngine } from "./tooling/extensions/search/deterministic-session-search-engine.js";
+export { SearchToolSuite } from "./tooling/extensions/search/search-tool-suite.js";
+
+export { SecretScrubber } from "./tooling/extensions/environments/secret-scrubber.js";
+export { LocalEnvironmentAdapter } from "./tooling/extensions/environments/local-environment-adapter.js";
+export { DockerEnvironmentAdapter } from "./tooling/extensions/environments/docker-environment-adapter.js";
+export { BroccoliEnvironmentSubstrate } from "./sessions/extensions/environments/broccoli-environment-substrate.js";
+export { EnvironmentSnapshotManager } from "./sessions/extensions/environments/environment-snapshot-manager.js";
+export { EnvironmentSupervisorEngine } from "./agents/extensions/environments/environment-supervisor-engine.js";
+export { EnvironmentToolSuite } from "./tooling/extensions/environments/environment-tool-suite.js";
+
+export { JitteredBackoffGovernor } from "./tooling/extensions/faults/jittered-backoff-governor.js";
+export { DeterministicErrorClassifier } from "./tooling/extensions/faults/deterministic-error-classifier.js";
+export { BroccoliFaultSubstrate } from "./sessions/extensions/faults/broccoli-fault-substrate.js";
+export { FaultSnapshotManager } from "./sessions/extensions/faults/fault-snapshot-manager.js";
+export { FaultRecoverySupervisor } from "./agents/extensions/faults/fault-recovery-supervisor.js";
+export { FaultDiagnosticToolSuite } from "./tooling/extensions/faults/fault-diagnostic-tool-suite.js";
+
+export { AcpProtocolCodec } from "./tooling/extensions/acp/acp-protocol-codec.js";
+export { AcpPermissionGate } from "./tooling/extensions/acp/acp-permission-gate.js";
+export { BroccoliAcpSubstrate } from "./sessions/extensions/acp/broccoli-acp-substrate.js";
+export { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js";
+export { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js";
+export { AcpToolSuite } from "./tooling/extensions/acp/acp-tool-suite.js";
+
+export { McpTransportCodec } from "./tooling/extensions/mcp/mcp-transport-codec.js";
+export { McpSecurityScrubber } from "./tooling/extensions/mcp/mcp-security-scrubber.js";
+export { BroccoliMcpSubstrate } from "./sessions/extensions/mcp/broccoli-mcp-substrate.js";
+export { McpSnapshotManager } from "./sessions/extensions/mcp/mcp-snapshot-manager.js";
+export { McpSupervisorEngine } from "./agents/extensions/mcp/mcp-supervisor-engine.js";
+export { McpClientToolSuite } from "./tooling/extensions/mcp/mcp-client-tool-suite.js";
+export type {
+  McpTransportType,
+  McpServerState,
+  McpServerConfig,
+  McpToolParameterSchema,
+  McpToolDefinition,
+  McpResourceDefinition,
+  McpPromptArgument,
+  McpPromptDefinition,
+  McpSamplingRequest,
+  McpSamplingResponse,
+  McpToolCallRequest,
+  McpToolCallResponse,
+  McpServerStatus,
+  McpSessionSnapshot,
+} from "./core/contracts/mcp-client.contracts.js";
+
+export { ProcessOutputRingBuffer } from "./tooling/extensions/process/process-output-ring-buffer.js";
+export { ProcessSecuritySandbox } from "./tooling/extensions/process/process-security-sandbox.js";
+export { BroccoliProcessSubstrate } from "./sessions/extensions/process/broccoli-process-substrate.js";
+export { ProcessSnapshotManager } from "./sessions/extensions/process/process-snapshot-manager.js";
+export { ProcessSupervisorEngine } from "./agents/extensions/process/process-supervisor-engine.js";
+export { ProcessToolSuite } from "./tooling/extensions/process/process-tool-suite.js";
+export type {
+  ProcessExecutionStatus,
+  ProcessWatchPattern,
+  ProcessWatchMatch,
+  ProcessSpawnOptions,
+  ProcessHandleDescriptor,
+  ProcessPollResult,
+  ProcessSessionSnapshot,
+} from "./core/contracts/process.contracts.js";
+
+export { SecurityRiskClassifier } from "./tooling/extensions/arbiter/security-risk-classifier.js";
+export { ApprovalHashLedger } from "./tooling/extensions/arbiter/approval-hash-ledger.js";
+export { BroccoliArbiterSubstrate } from "./sessions/extensions/arbiter/broccoli-arbiter-substrate.js";
+export { ArbiterSnapshotManager } from "./sessions/extensions/arbiter/arbiter-snapshot-manager.js";
+export { InteractiveSecurityArbiter } from "./agents/extensions/arbiter/interactive-security-arbiter.js";
+export { ArbiterToolSuite } from "./tooling/extensions/arbiter/arbiter-tool-suite.js";
+export type {
+  ApprovalRiskLevel,
+  ApprovalActionType,
+  ApprovalVerdict,
+  RiskAssessmentResult,
+  PendingApprovalRequest,
+  StagedWriteArtifact,
+  ApprovalAuditEntry,
+  ArbiterSessionSnapshot,
+  ArbiterOptions,
+} from "./core/contracts/arbiter.contracts.js";
+
+export { SemanticKnowledgeGraph } from "./sessions/extensions/memory/semantic-knowledge-graph.js";
+export { BroccoliLearningSubstrate } from "./sessions/extensions/memory/broccoli-learning-substrate.js";
+export { LearningSnapshotManager } from "./sessions/extensions/memory/learning-snapshot-manager.js";
+export { ContinuousLearningCurator } from "./agents/extensions/memory/continuous-learning-curator.js";
+export { LearningCuratorToolSuite } from "./tooling/extensions/memory/learning-curator-tool-suite.js";
+export type {
+  KnowledgeNodeType,
+  CuratorKnowledgeNode,
+  CuratorKnowledgeEdge,
+  KnowledgeGraphSnapshot,
+  MemoryQueryOptions,
+  MemoryRecallResult,
+  CuratorReviewDirective,
+  CuratorOptions,
+} from "./core/contracts/memory-curator.contracts.js";
+
+export { DeterministicPatchEngine } from "./tooling/extensions/patch/deterministic-patch-engine.js";
+export { BroccoliPatchSubstrate } from "./sessions/extensions/patch/broccoli-patch-substrate.js";
+export { PatchSnapshotManager } from "./sessions/extensions/patch/patch-snapshot-manager.js";
+export { AtomicMutationSupervisor } from "./agents/extensions/patch/atomic-mutation-supervisor.js";
+export { FileMutationToolSuite } from "./tooling/extensions/patch/file-mutation-tool-suite.js";
+export type {
+  PatchOperationType,
+  PatchHunkLine,
+  PatchHunk,
+  PatchOperation,
+  PatchApplyResult,
+  FileMutationEntry,
+  FileMutationSnapshot,
+  FilePaginationOptions,
+  FilePaginatedReadResult,
+} from "./core/contracts/patch-mutation.contracts.js";
 
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
@@ -563,6 +1036,116 @@ export class LumiMonolith implements IAgentEngine {
   readonly hands: AnchoredHands;
   readonly ears: ProgressStreamingEars;
   readonly skillsIngestor: SkillsIngestor;
+  readonly skillTreeParser: DeterministicSkillTreeParser;
+  readonly anchoredSkillMutator: AnchoredSkillMutator;
+  readonly skillTreeToolSuite: SkillTreeToolSuite;
+  readonly skillTreeSubstrate: BroccoliSkillTreeSubstrate;
+  readonly skillTreeSnapshotManager: SkillTreeSnapshotManager;
+  readonly deterministicSkillCurator: DeterministicSkillCurator;
+  readonly evolutionarySkillEngine: EvolutionarySkillTreeEngine;
+  readonly skillTreePromptComposer: SkillTreePromptComposer;
+  readonly antiDegenerationGuard: AntiDegenerationGuard;
+  readonly deterministicSoulParser: DeterministicSoulParser;
+  readonly anchoredSoulMutator: AnchoredSoulMutator;
+  readonly soulToolSuite: SoulToolSuite;
+  readonly broccoliSoulSubstrate: BroccoliSoulSubstrate;
+  readonly soulSnapshotManager: SoulSnapshotManager;
+  readonly soulThreatGuard: SoulThreatGuard;
+  readonly soulPromptComposer: SoulPromptComposer;
+  readonly anchoredWorktreeManager: AnchoredWorktreeManager;
+  readonly subagentBudgetGovernor: SubagentBudgetGovernor;
+  readonly subagentLifecycleGuard: SubagentLifecycleGuard;
+  readonly subagentVfsBrancher: SubagentVfsBrancher;
+  readonly monolithSwarmDelegator: MonolithSwarmDelegator;
+  readonly swarmToolSuite: SwarmToolSuite;
+  readonly deterministicBlueprintCatalog: DeterministicBlueprintCatalog;
+  readonly anchoredCronJobManager: AnchoredCronJobManager;
+  readonly cronToolSuite: CronToolSuite;
+  readonly broccoliCronSubstrate: BroccoliCronSubstrate;
+  readonly cronSnapshotManager: CronSnapshotManager;
+  readonly cronLifecycleGuard: CronLifecycleGuard;
+  readonly monolithCronScheduler: MonolithCronScheduler;
+  readonly cdpNavigationGuard: CdpNavigationGuard;
+  readonly cdpDialogPolicyEngine: CdpDialogPolicyEngine;
+  readonly cdpDomSnapshotter: CdpDomSnapshotter;
+  readonly cdpProtocolClient: CdpProtocolClient;
+  readonly broccoliBrowserSubstrate: BroccoliBrowserSubstrate;
+  readonly browserSnapshotManager: BrowserSnapshotManager;
+  readonly cdpSupervisorEngine: CdpSupervisorEngine;
+  readonly cdpToolSuite: CdpToolSuite;
+  readonly broccoliCredentialSubstrate: BroccoliCredentialSubstrate;
+  readonly deterministicCredentialPool: DeterministicCredentialPool;
+  readonly credentialCircuitBreaker: CredentialCircuitBreaker;
+  readonly monolithCredentialManager: MonolithCredentialManager;
+  readonly credentialSnapshotManager: CredentialSnapshotManager;
+  readonly credentialToolSuite: CredentialToolSuite;
+  readonly telegramProtocolAdapter: TelegramProtocolAdapter;
+  readonly discordProtocolAdapter: DiscordProtocolAdapter;
+  readonly slackProtocolAdapter: SlackProtocolAdapter;
+  readonly webhookProtocolAdapter: WebhookProtocolAdapter;
+  readonly broccoliGatewaySubstrate: BroccoliGatewaySubstrate;
+  readonly gatewayDeliveryLedger: GatewayDeliveryLedger;
+  readonly gatewaySnapshotManager: GatewaySnapshotManager;
+  readonly gatewayDispatcherEngine: GatewayDispatcherEngine;
+  readonly gatewayToolSuite: GatewayToolSuite;
+  readonly headTailBudgetGovernor: HeadTailBudgetGovernor;
+  readonly deterministicToolPruner: DeterministicToolPruner;
+  readonly broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
+  readonly compressionSnapshotManager: CompressionSnapshotManager;
+  readonly trajectoryCompactorEngine: TrajectoryCompactorEngine;
+  readonly compressionToolSuite: CompressionToolSuite;
+  readonly ftsQuerySanitizer: FtsQuerySanitizer;
+  readonly broccoliSearchSubstrate: BroccoliSearchSubstrate;
+  readonly searchSnapshotManager: SearchSnapshotManager;
+  readonly deterministicSessionSearchEngine: DeterministicSessionSearchEngine;
+  readonly searchToolSuite: SearchToolSuite;
+  readonly secretScrubber: SecretScrubber;
+  readonly localEnvironmentAdapter: LocalEnvironmentAdapter;
+  readonly dockerEnvironmentAdapter: DockerEnvironmentAdapter;
+  readonly broccoliEnvironmentSubstrate: BroccoliEnvironmentSubstrate;
+  readonly environmentSnapshotManager: EnvironmentSnapshotManager;
+  readonly environmentSupervisorEngine: EnvironmentSupervisorEngine;
+  readonly environmentToolSuite: EnvironmentToolSuite;
+  readonly jitteredBackoffGovernor: JitteredBackoffGovernor;
+  readonly deterministicErrorClassifier: DeterministicErrorClassifier;
+  readonly broccoliFaultSubstrate: BroccoliFaultSubstrate;
+  readonly faultSnapshotManager: FaultSnapshotManager;
+  readonly faultRecoverySupervisor: FaultRecoverySupervisor;
+  readonly faultDiagnosticToolSuite: FaultDiagnosticToolSuite;
+  readonly acpProtocolCodec: AcpProtocolCodec;
+  readonly acpPermissionGate: AcpPermissionGate;
+  readonly broccoliAcpSubstrate: BroccoliAcpSubstrate;
+  readonly acpSnapshotManager: AcpSnapshotManager;
+  readonly acpBridgeServer: AcpBridgeServer;
+  readonly acpToolSuite: AcpToolSuite;
+  readonly mcpTransportCodec: McpTransportCodec;
+  readonly mcpSecurityScrubber: McpSecurityScrubber;
+  readonly broccoliMcpSubstrate: BroccoliMcpSubstrate;
+  readonly mcpSnapshotManager: McpSnapshotManager;
+  readonly mcpSupervisorEngine: McpSupervisorEngine;
+  readonly mcpClientToolSuite: McpClientToolSuite;
+  readonly processOutputRingBuffer: ProcessOutputRingBuffer;
+  readonly processSecuritySandbox: ProcessSecuritySandbox;
+  readonly broccoliProcessSubstrate: BroccoliProcessSubstrate;
+  readonly processSnapshotManager: ProcessSnapshotManager;
+  readonly processSupervisorEngine: ProcessSupervisorEngine;
+  readonly processToolSuite: ProcessToolSuite;
+  readonly securityRiskClassifier: SecurityRiskClassifier;
+  readonly approvalHashLedger: ApprovalHashLedger;
+  readonly broccoliArbiterSubstrate: BroccoliArbiterSubstrate;
+  readonly arbiterSnapshotManager: ArbiterSnapshotManager;
+  readonly interactiveSecurityArbiter: InteractiveSecurityArbiter;
+  readonly arbiterToolSuite: ArbiterToolSuite;
+  readonly semanticKnowledgeGraph: SemanticKnowledgeGraph;
+  readonly broccoliLearningSubstrate: BroccoliLearningSubstrate;
+  readonly learningSnapshotManager: LearningSnapshotManager;
+  readonly continuousLearningCurator: ContinuousLearningCurator;
+  readonly learningCuratorToolSuite: LearningCuratorToolSuite;
+  readonly deterministicPatchEngine: DeterministicPatchEngine;
+  readonly broccoliPatchSubstrate: BroccoliPatchSubstrate;
+  readonly patchSnapshotManager: PatchSnapshotManager;
+  readonly atomicMutationSupervisor: AtomicMutationSupervisor;
+  readonly fileMutationToolSuite: FileMutationToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -649,6 +1232,116 @@ export class LumiMonolith implements IAgentEngine {
     this.hands = components.hands;
     this.ears = components.ears;
     this.skillsIngestor = components.skillsIngestor;
+    this.skillTreeParser = components.skillTreeParser;
+    this.anchoredSkillMutator = components.anchoredSkillMutator;
+    this.skillTreeToolSuite = components.skillTreeToolSuite;
+    this.skillTreeSubstrate = components.skillTreeSubstrate;
+    this.skillTreeSnapshotManager = components.skillTreeSnapshotManager;
+    this.deterministicSkillCurator = components.deterministicSkillCurator;
+    this.evolutionarySkillEngine = components.evolutionarySkillEngine;
+    this.skillTreePromptComposer = components.skillTreePromptComposer;
+    this.antiDegenerationGuard = components.antiDegenerationGuard;
+    this.deterministicSoulParser = components.deterministicSoulParser;
+    this.anchoredSoulMutator = components.anchoredSoulMutator;
+    this.soulToolSuite = components.soulToolSuite;
+    this.broccoliSoulSubstrate = components.broccoliSoulSubstrate;
+    this.soulSnapshotManager = components.soulSnapshotManager;
+    this.soulThreatGuard = components.soulThreatGuard;
+    this.soulPromptComposer = components.soulPromptComposer;
+    this.anchoredWorktreeManager = components.anchoredWorktreeManager;
+    this.subagentBudgetGovernor = components.subagentBudgetGovernor;
+    this.subagentLifecycleGuard = components.subagentLifecycleGuard;
+    this.subagentVfsBrancher = components.subagentVfsBrancher;
+    this.monolithSwarmDelegator = components.monolithSwarmDelegator;
+    this.swarmToolSuite = components.swarmToolSuite;
+    this.deterministicBlueprintCatalog = components.deterministicBlueprintCatalog;
+    this.anchoredCronJobManager = components.anchoredCronJobManager;
+    this.cronToolSuite = components.cronToolSuite;
+    this.broccoliCronSubstrate = components.broccoliCronSubstrate;
+    this.cronSnapshotManager = components.cronSnapshotManager;
+    this.cronLifecycleGuard = components.cronLifecycleGuard;
+    this.monolithCronScheduler = components.monolithCronScheduler;
+    this.cdpNavigationGuard = components.cdpNavigationGuard;
+    this.cdpDialogPolicyEngine = components.cdpDialogPolicyEngine;
+    this.cdpDomSnapshotter = components.cdpDomSnapshotter;
+    this.cdpProtocolClient = components.cdpProtocolClient;
+    this.broccoliBrowserSubstrate = components.broccoliBrowserSubstrate;
+    this.browserSnapshotManager = components.browserSnapshotManager;
+    this.cdpSupervisorEngine = components.cdpSupervisorEngine;
+    this.cdpToolSuite = components.cdpToolSuite;
+    this.broccoliCredentialSubstrate = components.broccoliCredentialSubstrate;
+    this.deterministicCredentialPool = components.deterministicCredentialPool;
+    this.credentialCircuitBreaker = components.credentialCircuitBreaker;
+    this.monolithCredentialManager = components.monolithCredentialManager;
+    this.credentialSnapshotManager = components.credentialSnapshotManager;
+    this.credentialToolSuite = components.credentialToolSuite;
+    this.telegramProtocolAdapter = components.telegramProtocolAdapter;
+    this.discordProtocolAdapter = components.discordProtocolAdapter;
+    this.slackProtocolAdapter = components.slackProtocolAdapter;
+    this.webhookProtocolAdapter = components.webhookProtocolAdapter;
+    this.broccoliGatewaySubstrate = components.broccoliGatewaySubstrate;
+    this.gatewayDeliveryLedger = components.gatewayDeliveryLedger;
+    this.gatewaySnapshotManager = components.gatewaySnapshotManager;
+    this.gatewayDispatcherEngine = components.gatewayDispatcherEngine;
+    this.gatewayToolSuite = components.gatewayToolSuite;
+    this.headTailBudgetGovernor = components.headTailBudgetGovernor;
+    this.deterministicToolPruner = components.deterministicToolPruner;
+    this.broccoliCompressionSubstrate = components.broccoliCompressionSubstrate;
+    this.compressionSnapshotManager = components.compressionSnapshotManager;
+    this.trajectoryCompactorEngine = components.trajectoryCompactorEngine;
+    this.compressionToolSuite = components.compressionToolSuite;
+    this.ftsQuerySanitizer = components.ftsQuerySanitizer;
+    this.broccoliSearchSubstrate = components.broccoliSearchSubstrate;
+    this.searchSnapshotManager = components.searchSnapshotManager;
+    this.deterministicSessionSearchEngine = components.deterministicSessionSearchEngine;
+    this.searchToolSuite = components.searchToolSuite;
+    this.secretScrubber = components.secretScrubber;
+    this.localEnvironmentAdapter = components.localEnvironmentAdapter;
+    this.dockerEnvironmentAdapter = components.dockerEnvironmentAdapter;
+    this.broccoliEnvironmentSubstrate = components.broccoliEnvironmentSubstrate;
+    this.environmentSnapshotManager = components.environmentSnapshotManager;
+    this.environmentSupervisorEngine = components.environmentSupervisorEngine;
+    this.environmentToolSuite = components.environmentToolSuite;
+    this.jitteredBackoffGovernor = components.jitteredBackoffGovernor;
+    this.deterministicErrorClassifier = components.deterministicErrorClassifier;
+    this.broccoliFaultSubstrate = components.broccoliFaultSubstrate;
+    this.faultSnapshotManager = components.faultSnapshotManager;
+    this.faultRecoverySupervisor = components.faultRecoverySupervisor;
+    this.faultDiagnosticToolSuite = components.faultDiagnosticToolSuite;
+    this.acpProtocolCodec = components.acpProtocolCodec;
+    this.acpPermissionGate = components.acpPermissionGate;
+    this.broccoliAcpSubstrate = components.broccoliAcpSubstrate;
+    this.acpSnapshotManager = components.acpSnapshotManager;
+    this.acpBridgeServer = components.acpBridgeServer;
+    this.acpToolSuite = components.acpToolSuite;
+    this.mcpTransportCodec = components.mcpTransportCodec;
+    this.mcpSecurityScrubber = components.mcpSecurityScrubber;
+    this.broccoliMcpSubstrate = components.broccoliMcpSubstrate;
+    this.mcpSnapshotManager = components.mcpSnapshotManager;
+    this.mcpSupervisorEngine = components.mcpSupervisorEngine;
+    this.mcpClientToolSuite = components.mcpClientToolSuite;
+    this.processOutputRingBuffer = components.processOutputRingBuffer;
+    this.processSecuritySandbox = components.processSecuritySandbox;
+    this.broccoliProcessSubstrate = components.broccoliProcessSubstrate;
+    this.processSnapshotManager = components.processSnapshotManager;
+    this.processSupervisorEngine = components.processSupervisorEngine;
+    this.processToolSuite = components.processToolSuite;
+    this.securityRiskClassifier = components.securityRiskClassifier;
+    this.approvalHashLedger = components.approvalHashLedger;
+    this.broccoliArbiterSubstrate = components.broccoliArbiterSubstrate;
+    this.arbiterSnapshotManager = components.arbiterSnapshotManager;
+    this.interactiveSecurityArbiter = components.interactiveSecurityArbiter;
+    this.arbiterToolSuite = components.arbiterToolSuite;
+    this.semanticKnowledgeGraph = components.semanticKnowledgeGraph;
+    this.broccoliLearningSubstrate = components.broccoliLearningSubstrate;
+    this.learningSnapshotManager = components.learningSnapshotManager;
+    this.continuousLearningCurator = components.continuousLearningCurator;
+    this.learningCuratorToolSuite = components.learningCuratorToolSuite;
+    this.deterministicPatchEngine = components.deterministicPatchEngine;
+    this.broccoliPatchSubstrate = components.broccoliPatchSubstrate;
+    this.patchSnapshotManager = components.patchSnapshotManager;
+    this.atomicMutationSupervisor = components.atomicMutationSupervisor;
+    this.fileMutationToolSuite = components.fileMutationToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

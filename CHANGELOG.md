@@ -8,6 +8,90 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added (Deterministic Execution Environments & Container Sandboxes — Phase 70 / ADR-022)
+
+- **Deterministic Secret Scrubber (`SecretScrubber`)**: Added automated sanitization of sensitive environment variables (`*_API_KEY`, `*_TOKEN`, `*_SECRET`, `LUMI_*`) and inline token redaction in command payloads ([ADR-022](.wiki/adr/ADR-022-deterministic-execution-environments-and-container-sandboxes.md)).
+- **Deterministic Local Execution Adapter (`LocalEnvironmentAdapter`)**: Added process execution with timeout bounds, bounded stream capture, and exit code capture.
+- **Hardened Docker Container Adapter (`DockerEnvironmentAdapter`)**: Added container sandbox command synthesis with `--cap-drop ALL`, `--security-opt no-new-privileges`, memory/PID limits, and volume mounts.
+- **Zero-GC In-Memory Environment Substrate (`BroccoliEnvironmentSubstrate`)**: Added in-memory tracking of active sessions, working directories, and execution histories in Broccolidb.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`EnvironmentSnapshotManager`)**: Added sub-millisecond environment state restoration ($<0.1\text{ ms}$).
+- **Multi-Backend Supervisor Engine (`EnvironmentSupervisorEngine`)**: Added high-level command routing across local and Docker execution adapters with automatic fallback.
+- **Model-Facing Environment Tools (`EnvironmentToolSuite`)**: Registered `env_execute_command`, `env_switch_backend`, `env_inspect_status` in `ValidatingToolRegistry`.
+
+### Added (Deterministic Inverted-Index & Session Knowledge Search Engine — Phase 69 / ADR-021)
+
+- **Deterministic FTS Query Sanitizer (`FtsQuerySanitizer`)**: Added Unicode normalization, unsafe FTS5 control character stripping/escaping (`+{}():"^@/#&|~[]<>,;!?$=\'`), and CJK n-gram tokenization ([ADR-021](.wiki/adr/ADR-021-deterministic-session-search-engine.md)).
+- **Zero-GC In-Memory Search Substrate (`BroccoliSearchSubstrate`)**: Added in-memory inverted index and posting lists in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ term lookup latency.
+- **BM25 Relevance Scoring Engine (`DeterministicSessionSearchEngine`)**: Added posting-accumulator BM25 ranking, IDF calculation, role/tool/session filters, and contextual match snippet generation.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`SearchSnapshotManager`)**: Added sub-millisecond state restoration for search index substrates.
+- **Model-Facing Search Tools (`SearchToolSuite`)**: Registered `session_search_history`, `session_extract_context`, `session_index_status` in `ValidatingToolRegistry`.
+
+### Added (Deterministic Semantic Context Compression & Trajectory Compactor — Phase 68 / ADR-020)
+
+- **Mathematical Head/Tail Budget Governor (`HeadTailBudgetGovernor`)**: Added token-aware context window partitioning protecting system axioms (15%) and recent conversation turns (25%) while targeting middle turns for compaction ([ADR-020](.wiki/adr/ADR-020-deterministic-semantic-context-compression.md)).
+- **AST-Aware Deterministic Tool Pruner (`DeterministicToolPruner`)**: Added automated stripping of inline base64 blobs, collapsing of repeated log lines, and bounded output truncation while preserving exit codes and JSON syntax.
+- **Trajectory Compactor Engine (`TrajectoryCompactorEngine`)**: Added structured multi-turn middle compaction into byte-stable `LUMI-CONTEXT/1` summary blocks preserving prompt prefix caching.
+- **Zero-GC In-Memory Compression Substrate (`BroccoliCompressionSubstrate`)**: Added Broccolidb memory slab caching of compressed summaries and turn hashes.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`CompressionSnapshotManager`)**: Added instant state restoration for context compression substrates.
+- **Model-Facing Compression Tools (`CompressionToolSuite`)**: Registered `context_compress_window`, `context_prune_tools`, `context_inspect_budget` in `ValidatingToolRegistry`.
+
+### Added (Unified Multi-Platform Messaging Gateway & Streaming Adapters — Phase 67 / ADR-019)
+
+- **Protocol Platform Adapters (`TelegramProtocolAdapter`, `DiscordProtocolAdapter`, `SlackProtocolAdapter`, `WebhookProtocolAdapter`)**: Added typed platform protocol adapters with character bounds (Telegram 4096, Discord 2000, Slack 3000, Webhook 65536) and HMAC SHA-256 webhook signature verification ([ADR-019](.wiki/adr/ADR-019-unified-multi-platform-messaging-gateway.md)).
+- **Bounded Delivery Queue & Backpressure (`GatewayDeliveryLedger`)**: Added a 500-capacity bounded ring buffer ledger with automatic backpressure pruning and delivery receipt tracking.
+- **Zero-GC In-Memory Gateway Substrate (`BroccoliGatewaySubstrate`)**: Added in-memory storage of channel sessions, pairing keys, and interaction statistics in Broccolidb.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`GatewaySnapshotManager`)**: Added instant restoration for channel sessions, message histories, and pending deliveries.
+- **Event-Driven Dispatcher & Model Tools (`GatewayDispatcherEngine`, `GatewayToolSuite`)**: Registered `gateway_broadcast_message`, `gateway_list_channels`, `gateway_inspect_session`, `gateway_delivery_status` in `ValidatingToolRegistry`.
+
+### Added (Deterministic Token-Bucket Credential Pool Rotation & Circuit Breaker — Phase 66 / ADR-018)
+
+- **Mathematical Continuous Rate Governor (`ContinuousTokenBucketRateGovernor`)**: Added continuous RPM and TPM token bucket calculation with zero-timer proportional refill ([ADR-018](.wiki/adr/ADR-018-deterministic-credential-pool-and-circuit-breaker.md)).
+- **Multi-Account Rotation Strategies (`DeterministicCredentialPool`)**: Added `round_robin`, `least_utilized`, and `priority_failover` selection strategies with dynamic load balancing.
+- **Axiomatic Circuit Breaker & Terminal Fault Detector (`CredentialCircuitBreaker`)**: Added status transitions (`healthy` $\to$ `cooldown` $\to$ `exhausted` $\to$ `dead`) and terminal OAuth error detection (`token_revoked`, `invalid_grant`, `account_deactivated`).
+- **Zero-GC In-Memory Credential Substrate (`BroccoliCredentialSubstrate`)**: Added Broccolidb memory slab caching of accounts and token allocations.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`CredentialSnapshotManager`)**: Added instant binary state rollback for credential pools.
+- **Model-Facing Credential Tools (`CredentialToolSuite`)**: Registered `auth_list_credentials`, `auth_add_credential`, `auth_rotate_credential`, `auth_circuit_status` in `ValidatingToolRegistry`.
+
+### Added (Deterministic CDP Browser Supervisor & Dialog Automation — Phase 65 / ADR-017)
+
+- **Native Protocol Dialog Handling (`CdpDialogPolicyEngine`)**: Added protocol-level dialog resolution via `Page.handleJavaScriptDialog` with `auto_dismiss`, `auto_accept`, and `interactive` policies ([ADR-017](.wiki/adr/ADR-017-deterministic-cdp-browser-supervisor.md)).
+- **Bounded Semantic DOM Snapshotter (`CdpDomSnapshotter`)**: Added accessible and interactive DOM tree extraction with bounded depth ($\le 4$) and noise filtering, preserving prompt cache stability.
+- **Zero-GC In-Memory Browser Substrate (`BroccoliBrowserSubstrate`)**: Added in-memory caching of active tabs, console ring buffers, network request logs, and DOM snapshots in Broccolidb.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`BrowserSnapshotManager`)**: Added instant state restoration for browser tabs, console histories, and dialog events.
+- **Axiomatic URL & SSRF Guard (`CdpNavigationGuard`)**: Added destination URL validation blocking cloud metadata (`169.254.169.254`), private IP loopbacks, and masking credentials in CDP URLs.
+- **Browser & CDP Model Tool Suite (`CdpToolSuite`)**: Registered `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_dialog`, `browser_eval`, `browser_cdp_send` in `ValidatingToolRegistry`.
+
+### Added (Deterministic Self-Healing Cron Kernel & Job Blueprints — Phase 64 / ADR-016)
+
+- **Frame-Tick & Millisecond-Precision Synchronization (`MonolithCronScheduler`)**: Implemented frame-tick synchronized background job execution eliminating polling drift with zero-GC timestamp evaluations ([ADR-016](.wiki/adr/ADR-016-deterministic-cron-kernel-and-job-blueprints.md)).
+- **Zero-GC In-Memory Cron Substrate (`BroccoliCronSubstrate`)**: Added in-memory memory slab substrate caching of scheduled cron jobs, blueprints, and execution history in Broccolidb with $<0.5\ \mu\text{s}$ query latency.
+- **AST-Validated Blueprint Catalog (`DeterministicBlueprintCatalog`)**: Added strongly-typed parameter slots (`time`, `enum`, `text`, `weekdays`, `number`, `boolean`) with pre-packaged automation templates (`daily_summary`, `health_check_monitor`, `workspace_cleaner`, `dependency_audit`, `benchmark_guard`).
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`CronSnapshotManager`)**: Added binary state snapshotting and $<0.1\text{ ms}$ rollback for complete cron schedules and ledgers.
+- **Axiomatic Command & Lifecycle Guard (`CronLifecycleGuard`)**: Added schedule expression validators, destructive command injection blockers (`shutdown_monolith`, `pkill`, `launchctl`, `systemctl`), and recursion loop guards.
+- **Cron Model Tools (`CronToolSuite`)**: Registered `cron_list_jobs`, `cron_create_job`, `cron_trigger_job`, `cron_pause_job`, `cron_resume_job`, `cron_delete_job`, `cron_list_blueprints` in `ValidatingToolRegistry`.
+
+### Added (Evolutionary AI Agent SOUL.md & Ethos Kernel System — Phase 62 / ADR-014)
+
+- **Topological Persona & Ethos Manifest ($\mathcal{M}_{\text{soul}}$)**: Implemented `DeterministicSoulParser` structuring AI personas into typed manifests with archetypes, immutable operational axioms, dynamic bounded traits, style constraints, Trojan Unicode sanitization, and SHA-256 integrity verification ([ADR-014](.wiki/adr/ADR-014-deterministic-evolutionary-soul-kernel.md)).
+- **Zero-GC In-Memory Persona Substrate (`BroccoliSoulSubstrate`)**: Integrated in-memory caching of active and profile-scoped soul manifests within Broccolidb, achieving $0.48\ \mu\text{s}$ per lookup latency.
+- **Forensic Line-Anchored Persona Mutator (`AnchoredSoulMutator`)**: Added non-destructive trait tuning and body patching using `AnchoredHands` with strict read-before-write provenance enforcement.
+- **Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`SoulSnapshotManager`)**: Added frame-level binary state snapshotting enabling $<0.1\text{ ms}$ rollback if a persona mutation breaks operational axioms.
+- **Axiomatic Threat Guard & Injection Firewall (`SoulThreatGuard`)**: Added real-time scanner blocking Trojan Unicode, role-play jailbreak attacks, C2 command sequences, and unauthorized axiom contradictions.
+- **Byte-Stable Progressive Prompt Composer (`SoulPromptComposer`)**: Added pre-compiled Slot #1 identity generator ensuring 100% prefix prompt cache retention across multi-turn sessions.
+- **Soul Model Tools (`SoulToolSuite`)**: Registered `soul_view`, `soul_tune_trait`, and `soul_audit_integrity` tools into `ValidatingToolRegistry`.
+
+### Added (Evolutionary AI Agent Skill Tree System — Phase 61 / ADR-013)
+
+- **Topological Skill Tree DAG ($\mathcal{G}_{\text{skill}}$)**: Implemented `DeterministicSkillTreeParser` building typed Directed Acyclic Graphs of agent capabilities with prerequisite unlock hierarchies, mastery ratings ($0-100\%$), tier rankings (`novice`, `adept`, `master`, `sovereign`), Trojan Unicode sanitization (stripping zero-width/bidi control codes), and Kahn's algorithm cycle detection ([ADR-013](.wiki/adr/ADR-013-deterministic-evolutionary-skill-tree-dag.md)).
+- **Zero-GC Substrate Memory Slab (`BroccoliSkillTreeSubstrate`)**: Integrated in-memory caching of the Skill Tree DAG and relation vectors into the Broccolidb substrate, achieving $0.55\ \mu\text{s}$ per lookup latency.
+- **Line-Anchored Forensic Mutation Engine (`AnchoredSkillMutator`)**: Implemented non-destructive skill mutation using `AnchoredHands` (`applyAnchoredEdit`) and SHA-256 integrity verification with strict read-before-write provenance enforcement.
+- **Frame-Perfect Snapshot Coordination & Instant $O(1)$ Rollback (`SkillTreeSnapshotManager`)**: Added binary state snapshot checkpoints prior to skill evolution passes with atomic rollback capabilities on downstream verification failure.
+- **Deterministic Frame-Tick Curator (`DeterministicSkillCurator`)**: Added frame-tick-based decay evaluation (active $\to$ stale $\to$ archivable) and Jaccard similarity cluster detection for automated class-level umbrella consolidation.
+- **Evolutionary Trajectory Reflection Engine (`EvolutionarySkillTreeEngine`)**: Added post-turn trajectory analysis ($\mathbf{Step}_t$) detecting user corrections, workflow refinements, and tool workarounds with fitness ($\mathcal{F}$) and mastery ($\mathcal{M}$) scoring.
+- **Axiomatic Anti-Degeneration Guard (`AntiDegenerationGuard`)**: Enforced formal guardrails disallowing negative tool refusals, transient environment errors, and unverified failure loops from contaminating procedural skills.
+- **Progressive Disclosure Prompt Context Engine (`SkillTreePromptComposer`)**: Added token-efficient 3-tier progressive context injector streaming Tier 1 unlocked summaries into the system prompt while maintaining byte-stable prefix caching.
+- **Skill Tree Model Tools (`SkillTreeToolSuite`)**: Registered `skill_list_tree`, `skill_view`, and `skill_tree_visualize` tools in `ValidatingToolRegistry`.
+
 ### Added (Attempt Completion Gate Strategy & Autonomous Turn Progression)
 
 - **Apex / Sovereign Tier Completion Gates**: Upgraded `RoadmapCompletionGate` with multi-phase lifecycle checkpoints (`admission`, `in_flight`, `completion`, `postmortem`), severity and category taxonomy, dynamic criteria evaluators, and quantitative scoring metrics ([ADR-084](.wiki/adr/ADR-084-attempt-completion-gate-strategy.md)).

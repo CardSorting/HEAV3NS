@@ -12,8 +12,43 @@ import { ModuleDecomposer } from "../policy/module-decomposer.js";
 import { StabilityDoctor } from "../../../sessions/extensions/integrity/stability-doctor.js";
 import { BroccoliStreamingToolExecutor } from "./broccolidb-streaming-tool-executor.js";
 
+import type { SkillTreeToolSuite } from "../skills/skill-tree-tool-suite.js";
+import type { SoulToolSuite } from "../soul/soul-tool-suite.js";
+import type { SwarmToolSuite } from "../delegation/swarm-tool-suite.js";
+import type { CronToolSuite } from "../cron/cron-tool-suite.js";
+import type { CdpToolSuite } from "../cdp/cdp-tool-suite.js";
+import type { CredentialToolSuite } from "../credential/credential-tool-suite.js";
+import type { GatewayToolSuite } from "../gateway/gateway-tool-suite.js";
+import type { CompressionToolSuite } from "../compaction/compression-tool-suite.js";
+import type { SearchToolSuite } from "../search/search-tool-suite.js";
+import type { EnvironmentToolSuite } from "../environments/environment-tool-suite.js";
+import type { FaultDiagnosticToolSuite } from "../faults/fault-diagnostic-tool-suite.js";
+import type { AcpToolSuite } from "../acp/acp-tool-suite.js";
+import type { McpClientToolSuite } from "../mcp/mcp-client-tool-suite.js";
+import type { ProcessToolSuite } from "../process/process-tool-suite.js";
+import type { ArbiterToolSuite } from "../arbiter/arbiter-tool-suite.js";
+import type { LearningCuratorToolSuite } from "../memory/learning-curator-tool-suite.js";
+import type { FileMutationToolSuite } from "../patch/file-mutation-tool-suite.js";
+
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
+  readonly skillTreeToolSuite?: SkillTreeToolSuite;
+  readonly soulToolSuite?: SoulToolSuite;
+  readonly swarmToolSuite?: SwarmToolSuite;
+  readonly cronToolSuite?: CronToolSuite;
+  readonly cdpToolSuite?: CdpToolSuite;
+  readonly credentialToolSuite?: CredentialToolSuite;
+  readonly gatewayToolSuite?: GatewayToolSuite;
+  readonly compressionToolSuite?: CompressionToolSuite;
+  readonly searchToolSuite?: SearchToolSuite;
+  readonly environmentToolSuite?: EnvironmentToolSuite;
+  readonly faultDiagnosticToolSuite?: FaultDiagnosticToolSuite;
+  readonly acpToolSuite?: AcpToolSuite;
+  readonly mcpClientToolSuite?: McpClientToolSuite;
+  readonly processToolSuite?: ProcessToolSuite;
+  readonly arbiterToolSuite?: ArbiterToolSuite;
+  readonly learningCuratorToolSuite?: LearningCuratorToolSuite;
+  readonly fileMutationToolSuite?: FileMutationToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -25,10 +60,44 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     hands: AnchoredHands,
     ears: ProtocolEars,
     skillsIngestor?: SkillsIngestor,
-    memoryStore?: SessionMemoryStore
+    memoryStore?: SessionMemoryStore,
+    skillTreeToolSuite?: SkillTreeToolSuite,
+    soulToolSuite?: SoulToolSuite,
+    swarmToolSuite?: SwarmToolSuite,
+    cronToolSuite?: CronToolSuite,
+    cdpToolSuite?: CdpToolSuite,
+    credentialToolSuite?: CredentialToolSuite,
+    gatewayToolSuite?: GatewayToolSuite,
+    compressionToolSuite?: CompressionToolSuite,
+    searchToolSuite?: SearchToolSuite,
+    environmentToolSuite?: EnvironmentToolSuite,
+    faultDiagnosticToolSuite?: FaultDiagnosticToolSuite,
+    acpToolSuite?: AcpToolSuite,
+    mcpClientToolSuite?: McpClientToolSuite,
+    processToolSuite?: ProcessToolSuite,
+    arbiterToolSuite?: ArbiterToolSuite,
+    learningCuratorToolSuite?: LearningCuratorToolSuite,
+    fileMutationToolSuite?: FileMutationToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
+    this.skillTreeToolSuite = skillTreeToolSuite;
+    this.soulToolSuite = soulToolSuite;
+    this.swarmToolSuite = swarmToolSuite;
+    this.cronToolSuite = cronToolSuite;
+    this.cdpToolSuite = cdpToolSuite;
+    this.credentialToolSuite = credentialToolSuite;
+    this.gatewayToolSuite = gatewayToolSuite;
+    this.compressionToolSuite = compressionToolSuite;
+    this.searchToolSuite = searchToolSuite;
+    this.environmentToolSuite = environmentToolSuite;
+    this.faultDiagnosticToolSuite = faultDiagnosticToolSuite;
+    this.acpToolSuite = acpToolSuite;
+    this.mcpClientToolSuite = mcpClientToolSuite;
+    this.processToolSuite = processToolSuite;
+    this.arbiterToolSuite = arbiterToolSuite;
+    this.learningCuratorToolSuite = learningCuratorToolSuite;
+    this.fileMutationToolSuite = fileMutationToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -223,6 +292,92 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         return this.stabilityDoctor.auditEnvironment(cwd, this.eyes);
       },
     });
+
+    if (this.skillTreeToolSuite) {
+      for (const tool of this.skillTreeToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.soulToolSuite) {
+      for (const tool of this.soulToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.swarmToolSuite) {
+      for (const tool of this.swarmToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.cronToolSuite) {
+      for (const tool of this.cronToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.cdpToolSuite) {
+      for (const tool of this.cdpToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.credentialToolSuite) {
+      for (const tool of this.credentialToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.gatewayToolSuite) {
+      for (const tool of this.gatewayToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.compressionToolSuite) {
+      for (const tool of this.compressionToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.searchToolSuite) {
+      for (const tool of this.searchToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.environmentToolSuite) {
+      for (const tool of this.environmentToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.faultDiagnosticToolSuite) {
+      for (const tool of this.faultDiagnosticToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.acpToolSuite) {
+      for (const tool of this.acpToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.mcpClientToolSuite) {
+      for (const tool of this.mcpClientToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.processToolSuite) {
+      for (const tool of this.processToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.arbiterToolSuite) {
+      for (const tool of this.arbiterToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.learningCuratorToolSuite) {
+      for (const tool of this.learningCuratorToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.fileMutationToolSuite) {
+      for (const tool of this.fileMutationToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
   }
 }
 

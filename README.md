@@ -8,6 +8,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Ancestral Teacher](https://img.shields.io/badge/Ancestral%20Teacher-Hermes--Agent%20(Nous%20Research)-FFD700?style=for-the-badge&logo=github)](https://github.com/NousResearch/hermes-agent)
 [![Academic Paper](https://img.shields.io/badge/Academic%20Paper-AKD--DSO-9C27B0?style=for-the-badge)](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
 [![Whitepaper](https://img.shields.io/badge/Whitepaper-Osmosis%20Paradigm-00C853?style=for-the-badge)](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md)
 [![Auto-Rolling Roadmap](https://img.shields.io/badge/Roadmap-Auto--Rolling-E91E63?style=for-the-badge)](.wiki/roadmap/AUTOROLLING-ROADMAP.md)
@@ -20,11 +21,12 @@
 |---|---|---|
 | 📌 [Executive Brief](#-why-lumi-joy-the-architectural-imperative) | 📖 [Author's Preface](PREFACE.md) | ⚡ [Composition Root](src/index.ts) |
 | ⚡ [Comparison Matrix](#-comparison-matrix--empirical-benchmarks) | 🎮 [Game Engine Paradigm](#-inspired-by-game-engines-deterministic-agent-architecture) | 🏭 [Engine Factory](src/factories/monolith-factory.ts) |
-| 🏗️ [Architecture Tree](#%EF%B8%8F-subsystem-architecture--file-tree) | ⚡ [Runtime Universal Pass](.wiki/agent/runtime-universal-pass.md) | ⚙️ [Core Abstracts](src/core/abstracts/) |
-| 🧪 [Osmosis Methodology](#-the-osmosis-learning-methodology) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) | 🧠 [Agents Tier](src/agents/) |
-| 🚀 [Quick Start Guide](#-quick-start--installation) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) | 💾 [Sessions Tier](src/sessions/) |
-| 📡 [Live Activity Streaming](#-live-agent-activity-streaming) | 📦 [1-to-1 Package Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md) | 🖥️ [TUI Components](src/tui/components/) |
-| 🤝 [Contributing Guide](CONTRIBUTING.md) | 📋 [API Reference Guide](.wiki/agent/api-reference.md) | 📜 [Core Contracts](src/core/contracts/) |
+| 🏛️ [Ancestral Heritage](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis) | ⚡ [Runtime Universal Pass](.wiki/agent/runtime-universal-pass.md) | ⚙️ [Core Abstracts](src/core/abstracts/) |
+| 🏗️ [Architecture Tree](#%EF%B8%8F-subsystem-architecture--file-tree) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) | 🧠 [Agents Tier](src/agents/) |
+| 🧪 [Osmosis Methodology](#-the-osmosis-learning-methodology) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) | 💾 [Sessions Tier](src/sessions/) |
+| 🚀 [Quick Start Guide](#-quick-start--installation) | 📦 [1-to-1 Package Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md) | 🖥️ [TUI Components](src/tui/components/) |
+| 📡 [Live Activity Streaming](#-live-agent-activity-streaming) | 📋 [API Reference Guide](.wiki/agent/api-reference.md) | 📜 [Core Contracts](src/core/contracts/) |
+| 🤝 [Contributing Guide](CONTRIBUTING.md) | 🛡️ [Security Guardrails](.wiki/policy/CONTRIBUTOR-SECURITY-GUARDRAILS.md) | 🔧 [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) |
 
 ---
 
@@ -34,25 +36,23 @@
 
 ## 📖 Author's Preface & Dedication
 
-> *To my family, whose quiet encouragement and unconditional warmth gave me the space to dream, tinker, and build in the silence of late nights;*  
-> 
-> *To the open-source community and the legendary pioneers of computer graphics who taught us that code can be written with craftsmanship, elegance, and soul;*  
-> 
-> *And to every engineer who has ever looked at a bloated, sluggish system and believed, in their heart, that we could build something far more beautiful.*  
-> 
+> *To my family, whose quiet encouragement and unconditional warmth gave me the space to dream, tinker, and build in the silence of late nights;*
+>
+> *To the visionary team at **Nous Research** and the vibrant **Hermes community**—where I have had the deep honor to serve as an ambassador, community mentor, and meetup contributor. You inspired me with the pure beauty of true open science, permissionless research, and the boundless power of open collaborators building together for the future of human agency;*
+>
+> *To the open-source community and the legendary pioneers of computer graphics who taught us that code can be written with craftsmanship, elegance, and soul;*
+>
+> *And to every builder who has ever looked at a bloated, sluggish system and believed, in their heart, that we could build something far more beautiful.*
+>
 > *This work is dedicated to you. May it serve as a humble gift back to the open world that taught me how to create.*
 
 ### A Letter from the Author
 
 Behind every line of code in **LUMI-JOY** lies a simple, deeply human story: the quiet joy of tinkering, the thrill of chasing elegance, and a lifelong love for software that feels truly *alive*.
 
-For years, as Large Language Models emerged, we wrapped these magnificent reasoning models inside heavy, tangled layers of enterprise web architecture ("framework soup"). With every layer of microservice RPC complexity, our tools grew slower, state drifted, and the magic of interacting with intelligence was buried under software friction.
+Serving as a community mentor and ambassador for Hermes, organizing meetups, and collaborating with the brilliant researchers and builders at Nous Research opened my eyes to what open science can achieve when people come together with generosity and curiosity. LUMI-JOY was built directly from that inspiration—a tribute to our open community.
 
-Late one night in August 2026, I thought back to the software that first sparked my childhood wonder: the legendary game engines of computing history. Pioneers like John Carmack taught us a sacred discipline—that memory is precious, every single frame matters, and code written with reverence for real-time physics can render entire virtual universes in milliseconds.
-
-By reframing an AI agent runtime as a deterministic game engine kernel (`tick()`), allocating a contiguous **16MB Zero-GC Contiguous ArrayBuffer Slab** like a classic C++ arena allocator, and capturing frame-perfect state snapshots (`GameStateSnapshot`), LUMI-JOY proved that software friction was an illusion—enforcing sub-millisecond fast-path latency ($<1.0\text{ ms}$), throughput exceeding $1,000\text{ frames/second}$, and $O(1)$ time-travel state rewind ($<0.1\text{ ms}$ warmed p95).
-
-— **William Andrew Cruz** (`bozoegg` / `CardSorting`), *Primary Author & Inventor*  
+— **William Andrew Cruz** (`bozoegg` / `CardSorting`), *Primary Author, Inventor & Hermes Ambassador*
 📖 *Read the complete [Author's Preface & Dedication](PREFACE.md).*
 
 ---
@@ -73,10 +73,10 @@ LUMI-JOY eliminates software friction by applying proven principles from high-pe
 
 | Core Architecture Pillar | Implementation Mechanism | Concrete Impact & Measured Result |
 | :--- | :--- | :--- |
-| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.17\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
+| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.09\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
 | ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming and rapid multi-tool loops |
-| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$5761.61\text{ frames/second}$** throughput ($>5.7\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.027\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
+| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$10961.37\text{ frames/second}$** throughput ($>10.9\times$ above the $1,000\text{ fps}$ SLA) |
+| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.023\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
 | 🖥️ **Differential Terminal User Interface** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive box borders, syntax highlighting, fuzzy autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
 
 ### 🎯 Who This Is For & Why It Matters
@@ -180,6 +180,55 @@ Traditional AI agent frameworks treat LLM interactions as loose async request/re
 
 ---
 
+## 🏛️ Architectural Heritage & Ancestral Lineage: The Hermes-Agent-Main Osmosis
+
+**LUMI-JOY** stands proudly on the shoulders of open-source giants. It was forged through the **AKD-DSO (Architectural Knowledge Distillation & Deterministic Substrate Optimization)** Osmosis paradigm, taking foundational inspiration, structural domain patterns, and functional breadth directly from its ancestral teacher: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) (**Nous Research**).
+
+### 🌟 Deep Credit to Nous Research & The Hermes Agent Community
+
+We express our deepest admiration, professional respect, and gratitude to **Nous Research** ([nousresearch.com](https://nousresearch.com)), their pioneering research scientists, engineers, and the vibrant open-source contributor community on GitHub and Discord (`#plugins-skills-and-skins`).
+
+The open AI community owes an immense debt to Nous Research for championing unconstrained reasoning models and open agent architectures:
+- **Pioneering Open Weights & Unconstrained Reasoning**: From the breakthrough Nous-Hermes, Hermes 2, and Hermes 3 model families to modern agentic tool-use, Nous Research has consistently proven that open-source intelligence can compete with and surpass closed frontier systems.
+- **The Self-Improving Agent Loop**: `hermes-agent` invented the open paradigm of closed learning loops—where an agent autonomously creates skills from experiential problem solving, refines them during execution, and shares them via the open [`agentskills.io`](https://agentskills.io) standard.
+- **True Multi-Platform Universality**: Proving that an agent shouldn't be confined to a browser or laptop by orchestrating unified sessions across Telegram, Discord, Slack, WhatsApp, Signal, Matrix, and 15+ other platforms.
+- **Empowering User Sovereignty**: Designing agents that run anywhere—from a $5 VPS to high-performance GPU clusters—with zero telemetry lock-in and complete model neutrality.
+
+### 💖 A Personal Reflection from the Author: The Power of Open Science & Collaboration
+
+> *"As an ambassador and community mentor for Hermes, contributing to Nous Research through local meetups, workshops, and open collaborations has been one of the greatest honors of my engineering journey. Nous Research embodies the purest ethos of open science: breaking down artificial moats, sharing weights and knowledge freely, and welcoming anyone with curiosity to sit at the table and build.*
+>
+> *Every time our community gathers—engineers, students, dreamers, and researchers swapping ideas over terminal prompts—I am reminded of why open source matters. LUMI-JOY was built not in isolation, but as a direct reflection of that collaborative fire: taking the brilliant design patterns pioneered in Hermes Agent and distilling them into a lightning-fast, deterministic game-engine substrate for the entire open-source world to build upon."*
+> — **William Andrew Cruz** (`bozoegg` / `CardSorting`), *Hermes Ambassador & Community Mentor*
+
+### 🔄 The Osmotic Distillation Journey
+
+While the ancestral teacher implemented these capabilities in a rich, multi-platform Python ecosystem, **LUMI-JOY** embarked on an intensive, highly scrutinized architectural distillation pass. We audited every major subsystem of `hermes-agent`, extracted its pure domain intent, and transmuted it into a unified, zero-GC, typed TypeScript deterministic game engine monolith operating over Broccolidb with frame-perfect $O(1)$ state snapshotting.
+
+### 🧬 The 15 Distilled Osmotic Subsystems
+
+| # | Ancestral Teacher Subsystem (`hermes-agent-main`) | Distilled Student Subsystem (`LUMI-JOY`) | Phase / ADR | Osmotic Transformation & Architectural Advantage |
+|:---:|---|---|---|---|
+| **1** | `skills/` & Skills Ingestor | **Evolutionary Skill Tree System** (`EvolutionarySkillEngine`, `DeterministicSkillCurator`, `SkillTreeToolSuite`) | Phase 61 / [ADR-013](.wiki/adr/ADR-013-deterministic-evolutionary-skill-tree-dag.md) | Transmuted into a topological DAG with prerequisite unlocks, Trojan Unicode sanitization, exponential decay, and frame-perfect $O(1)$ rollback. |
+| **2** | `cron/` Scheduler & Job Loops | **Self-Healing Cron Kernel & Blueprints** (`MonolithCronScheduler`, `DeterministicBlueprintCatalog`, `CronToolSuite`) | Phase 64 / [ADR-016](.wiki/adr/ADR-016-deterministic-cron-kernel-and-job-blueprints.md) | Replaced unbounded background threads with single-threaded deterministic frame-tick synchronization, recursive trigger guards, and Broccolidb ring buffers. |
+| **3** | `tools/browser_tool.py` (Playwright / CDP) | **Intelligent CDP Browser Supervisor** (`CdpBrowserSupervisorEngine`, `DomTreeSanitizer`, `CdpToolSuite`) | Phase 65 / [ADR-017](.wiki/adr/ADR-017-deterministic-cdp-browser-supervisor.md) | Eliminated massive raw DOM string bloat with structural semantic tree sanitization, CSS selector synthesis, and interactive session capture. |
+| **4** | `credential_pool.py` & Key Rotation | **Deterministic Token-Bucket Credential Pool** (`ContinuousTokenBucketRateGovernor`, `DeterministicCredentialPool`, `CredentialToolSuite`) | Phase 66 / [ADR-018](.wiki/adr/ADR-018-deterministic-credential-pool-and-circuit-breaker.md) | Replaced random sleep loops with mathematical continuous token-bucket rate governance, provider-tier prioritization, and automated tri-state circuit breaking. |
+| **5** | `gateway/` (20+ Messaging Platforms) | **Multi-Platform Messaging Gateway** (`GatewayDispatcherEngine`, `GatewayDeliveryLedger`, `Telegram/Discord/Slack/WebhookAdapters`) | Phase 67 / [ADR-019](.wiki/adr/ADR-019-unified-multi-platform-messaging-gateway.md) | Unified multi-platform messaging into typed streaming protocol adapters with idempotency deduplication and sub-millisecond dispatching. |
+| **6** | Context Compaction & Truncation | **Semantic Context Compression & Compaction** (`TrajectoryCompactorEngine`, `HeadTailBudgetGovernor`, `DeterministicToolPruner`) | Phase 68 / [ADR-020](.wiki/adr/ADR-020-deterministic-semantic-context-compression.md) | Eliminated naive string truncation with structural tool call pair pruning, head/tail token budgeting, and zero-loss semantic trajectory summarization. |
+| **7** | `hermes_state.py` (SQLite FTS5 Search) | **Deterministic Inverted-Index & Search Engine** (`DeterministicSessionSearchEngine`, `FtsQuerySanitizer`, `BroccoliSearchSubstrate`) | Phase 69 / [ADR-021](.wiki/adr/ADR-021-deterministic-session-search-engine.md) | Replaced C SQLite binary dependencies with an in-memory BM25-ranked inverted index operating in Broccolidb with instant sub-millisecond recall. |
+| **8** | `tools/environments/` (Local / Docker / SSH) | **Multi-Backend Execution Environments** (`EnvironmentSupervisorEngine`, `LocalEnvironmentAdapter`, `DockerEnvironmentAdapter`, `SecretScrubber`) | Phase 70 / [ADR-022](.wiki/adr/ADR-022-deterministic-execution-environments-and-container-sandboxes.md) | Added automated entropy-based secret scrubbing, container resource limits, and frame-level state isolation across execution backends. |
+| **9** | `agent/error_classifier.py` (2,000 LOC Regex) | **Intelligent Error Taxonomy & Fault Recovery** (`DeterministicErrorClassifier`, `JitteredBackoffGovernor`, `FaultRecoverySupervisor`) | Phase 71 / [ADR-023](.wiki/adr/ADR-023-deterministic-error-taxonomy-and-automated-fault-recovery.md) | Replaced raw regex substring matching and non-deterministic random jitter with typed fault taxonomy, Mulberry32 PRNG backoff, and actionable recovery directives. |
+| **10** | `acp_adapter/` (2,500 LOC Server) | **Agent Client Protocol (ACP) IDE Bridge** (`AcpBridgeServer`, `AcpProtocolCodec`, `AcpPermissionGate`, `AcpToolSuite`) | Phase 72 / [ADR-024](.wiki/adr/ADR-024-deterministic-agent-client-protocol-and-ide-bridge.md) | Transmuted async Python queues into strict JSON-RPC 2.0 codecs, interactive permission gates, and real-time streaming progress multiplexers for VS Code, Zed, and JetBrains. |
+| **11** | `tools/mcp_tool.py` (7,750 LOC Client) | **Model Context Protocol (MCP) Client Supervisor** (`McpSupervisorEngine`, `McpTransportCodec`, `McpSecurityScrubber`, `McpClientToolSuite`) | Phase 73 / [ADR-025](.wiki/adr/ADR-025-deterministic-mcp-client-supervisor-and-sandbox-router.md) | Transmuted async daemon loops and unscrubbed subprocesses into typed JSON-RPC 2.0 streaming codecs, automated credential scrubbing, and Broccolidb tool discovery. |
+| **12** | `tools/process_registry.py` (6,875 LOC Process Engine) | **Interactive Process Registry & PTY Supervisor** (`ProcessSupervisorEngine`, `ProcessOutputRingBuffer`, `ProcessSecuritySandbox`, `ProcessToolSuite`) | Phase 74 / [ADR-026](.wiki/adr/ADR-026-deterministic-process-registry-and-pty-supervisor.md) | Transmuted zombie daemon leaks and rolling string slicing into zero-GC 256KB circular byte buffers, command safety gates, and Broccolidb process substrates. |
+| **13** | `tools/approval.py` (7,100+ LOC Approval Gate) | **Human-in-the-Loop Approval & Interactive Security Arbiter** (`InteractiveSecurityArbiter`, `SecurityRiskClassifier`, `ApprovalHashLedger`, `ArbiterToolSuite`) | Phase 75 / [ADR-027](.wiki/adr/ADR-027-deterministic-human-in-the-loop-approval-and-security-arbiter.md) | Transmuted sprawling regex heuristics and thread-unsafe environment variables into typed risk taxonomies, SHA-256 allowlist ledgers, and emergency E-Stop killswitches. |
+| **14** | `agent/curator.py` & `agent/memory_manager.py` (11,000+ LOC Memory Subsystem) | **Persistent Memory Substrate, Knowledge Graph & Continuous Learning Curator** (`ContinuousLearningCurator`, `SemanticKnowledgeGraph`, `BroccoliLearningSubstrate`, `LearningSnapshotManager`, `LearningCuratorToolSuite`) | Phase 76 / [ADR-028](.wiki/adr/ADR-028-deterministic-knowledge-graph-and-continuous-learning-curator.md) | Transmuted sprawling ThreadPool daemon syncs and ad-hoc Markdown files into typed entity-relation graph DAGs, in-memory Broccolidb storage, mathematical exponential decay, and prompt envelopes. |
+| **15** | `tools/file_tools.py` & `tools/patch_parser.py` (9,400+ LOC File System Subsystem) | **Deterministic Unified Patch Engine, Atomic Mutation Substrate & VFS** (`DeterministicPatchEngine`, `BroccoliPatchSubstrate`, `PatchSnapshotManager`, `AtomicMutationSupervisor`, `FileMutationToolSuite`) | Phase 77 / [ADR-029](.wiki/adr/ADR-029-deterministic-unified-patch-engine-and-atomic-mutation-substrate.md) | Transmuted blocking direct filesystem calls and partial-write corruption into typed patch ASTs, in-memory Broccolidb staging substrates, pre-flight dry-runs, and frame-perfect rollback. |
+| **Core** | `SOUL.md` Agent Persona Dynamics | **Soul & Ethos Kernel System** (`AnchoredSoulMutator`, `DeterministicSoulParser`, `SoulToolSuite`) | Phase 62 / [ADR-014](.wiki/adr/ADR-014-deterministic-evolutionary-soul-kernel.md) | Axiomatic threat firewalls, core axiom immutability, bounded trait tuning, and byte-stable prefix caching. |
+| **Core** | Subagents & Delegation | **Autonomous Swarm Delegation & Sandboxes** (`MonolithSwarmDelegator`, `AnchoredWorktreeManager`, `SwarmToolSuite`) | Phase 63 / [ADR-015](.wiki/adr/ADR-015-deterministic-swarm-delegation-and-worktree-isolation.md) | Copy-on-write VFS session forking, isolated Git worktree sandboxes, and frame budget governors preventing recursive subagent deadlocks. |
+
+---
+
 ## 🌟 Business & Technical ROI Highlights
 
 - **⚡ Enforced Fast-Path Latency**: Direct function dispatch eliminates micro-package IPC/RPC queues; `ArchitectureGuardrailGate` requires mean local frame latency below $1.0\text{ ms}$.
@@ -191,11 +240,11 @@ Traditional AI agent frameworks treat LLM interactions as loose async request/re
 
 ### Latest verified workspace baseline
 
-The authoritative run was generated on **2026-08-15T04:28:34.865Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+The authoritative run was generated on **2026-08-15T20:42:06.673Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
 
 | Verification lane | Latest result |
 |---|---:|
-| Pass 192 composition manifest | 142/142 components |
+| Pass 192 composition manifest | 252/252 components |
 | Runtime capability smoke | 9/9 checks |
 | Heterogeneous benchmark suite | 5/5 cases |
 | Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |
@@ -472,7 +521,7 @@ To prevent code regression, file overwrites, and structural drift as new evoluti
 Traditional AI agent frameworks suffer from state drift, non-reproducible turns, microservice overhead, and V8 Garbage Collection pauses. Modeling the agent runtime like a **Deterministic Game Engine** establishes frame ticks (`tick()`), immutable state snapshots (`GameStateSnapshot`), sub-millisecond state rewind (`rewindToSnapshot()`), and a pre-allocated 16MB contiguous slab memory substrate (`ArenaAllocator`). This guarantees frame-perfect isolation, instant time-travel debugging, and zero-GC performance stability.
 
 ### Q: How does LUMI-JOY reduce AI infrastructure and cloud operating costs?
-By eliminating internal microservice RPC queues, LUMI-JOY keeps deterministic local orchestration in-process. The enforced floor is **$1,000$ local frames/second**; the latest host run observed **$5761.61$ frames/second**. These figures are local framework measurements—not provider responses, model tokens, or a universal server-capacity promise—and should be regenerated on deployment hardware.
+By eliminating internal microservice RPC queues, LUMI-JOY keeps deterministic local orchestration in-process. The enforced floor is **$1,000$ local frames/second**; the latest host run observed **$10961.37$ frames/second**. These figures are local framework measurements—not provider responses, model tokens, or a universal server-capacity promise—and should be regenerated on deployment hardware.
 
 ### Q: Which LLM providers and AI models are supported?
 LUMI-JOY natively supports major provider ecosystems including **OpenAI** (`gpt-4o`, `gpt-5`, `Codex`), **Anthropic** (`Claude 3.5 Sonnet`), and standard OpenAI-compatible proxy gateways. It features automatic model resolution, fallback routing, and PKCE OAuth 2.0 authentication.
@@ -494,6 +543,7 @@ Engineering teams can install LUMI-JOY in under 60 seconds with `npm install` an
 ## 📚 Roadmap & Documentation Index
 
 - 🚀 [Auto-Rolling Evolution Roadmap](.wiki/roadmap/AUTOROLLING-ROADMAP.md)
+- 🏛️ [The Hermes-Agent-Main Distillation & Osmosis Matrix](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis)
 - 📋 [Workspace Changelog](CHANGELOG.md)
 - 🎓 [Academic Research Paper: AKD-DSO Specification](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
 - 📦 [True 1-to-1 Package Mapping Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md)
@@ -509,6 +559,15 @@ Engineering teams can install LUMI-JOY in under 60 seconds with `npm install` an
 - 📖 [ADR Index & Decision Records](.wiki/adr/README.md)
 
 ---
+
+---
+
+## 🙏 Acknowledgments & Ancestral Attribution
+
+- ☤ **Ancestral Teacher & Inspiration**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) created and open-sourced by **Nous Research** and its incredible community of contributors (licensed under the MIT License). Special thanks to the Nous Research team for pushing the boundaries of open models, autonomous agents, and AI self-improvement.
+- 🧠 **Research Foundations**: Built on the open paradigms of autonomous skill evolution, dialectic agent memory (`Honcho`), and open-weights model intelligence advanced by the open AI research community.
+- 🎮 **Game Engine Pioneers**: Inspired by the deterministic architecture, memory arenas, and frame-tick discipline of classic game engines (id Software, John Carmack et al.).
+- 🌐 **Open Standards**: Fully compatible with the [`agentskills.io`](https://agentskills.io) open standard and the Agent Client Protocol (ACP) for modern IDEs.
 
 ---
 

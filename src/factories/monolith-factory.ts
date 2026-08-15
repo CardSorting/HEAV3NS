@@ -143,6 +143,134 @@ import { StderrGuardFilter } from "../tooling/extensions/telemetry/stderr-guard.
 import { TTSRCoordinator } from "../tooling/extensions/telemetry/ttsr-coordinator.js";
 import { CentennialPassMarker } from "../tooling/extensions/policy/centennial-pass-marker.js";
 
+import { DeterministicSkillTreeParser } from "../tooling/extensions/skills/deterministic-skill-tree-parser.js";
+import { AnchoredSkillMutator } from "../tooling/extensions/skills/anchored-skill-mutator.js";
+import { SkillTreeToolSuite } from "../tooling/extensions/skills/skill-tree-tool-suite.js";
+import { BroccoliSkillTreeSubstrate } from "../sessions/extensions/skills/broccoli-skill-tree-substrate.js";
+import { SkillTreeSnapshotManager } from "../sessions/extensions/skills/skill-tree-snapshot-manager.js";
+import { DeterministicSkillCurator } from "../sessions/extensions/skills/deterministic-skill-curator.js";
+import { EvolutionarySkillTreeEngine } from "../agents/extensions/skills/evolutionary-skill-tree-engine.js";
+import { SkillTreePromptComposer } from "../agents/extensions/skills/skill-tree-prompt-composer.js";
+import { AntiDegenerationGuard } from "../agents/extensions/skills/anti-degeneration-guard.js";
+
+import { DeterministicSoulParser } from "../tooling/extensions/soul/deterministic-soul-parser.js";
+import { AnchoredSoulMutator } from "../tooling/extensions/soul/anchored-soul-mutator.js";
+import { SoulToolSuite } from "../tooling/extensions/soul/soul-tool-suite.js";
+import { BroccoliSoulSubstrate } from "../sessions/extensions/soul/broccoli-soul-substrate.js";
+import { SoulSnapshotManager } from "../sessions/extensions/soul/soul-snapshot-manager.js";
+import { SoulThreatGuard } from "../agents/extensions/soul/soul-threat-guard.js";
+import { SoulPromptComposer } from "../agents/extensions/soul/soul-prompt-composer.js";
+
+import { AnchoredWorktreeManager } from "../tooling/extensions/delegation/anchored-worktree-manager.js";
+import { SwarmToolSuite } from "../tooling/extensions/delegation/swarm-tool-suite.js";
+import { SubagentVfsBrancher } from "../sessions/extensions/delegation/subagent-vfs-brancher.js";
+import { SubagentBudgetGovernor } from "../sessions/extensions/delegation/subagent-budget-governor.js";
+import { SubagentLifecycleGuard } from "../agents/extensions/delegation/subagent-lifecycle-guard.js";
+import { MonolithSwarmDelegator } from "../agents/extensions/delegation/monolith-swarm-delegator.js";
+
+import { DeterministicBlueprintCatalog } from "../tooling/extensions/cron/deterministic-blueprint-catalog.js";
+import { AnchoredCronJobManager } from "../tooling/extensions/cron/anchored-cron-job-manager.js";
+import { CronToolSuite } from "../tooling/extensions/cron/cron-tool-suite.js";
+import { BroccoliCronSubstrate } from "../sessions/extensions/cron/broccoli-cron-substrate.js";
+import { CronSnapshotManager } from "../sessions/extensions/cron/cron-snapshot-manager.js";
+import { CronLifecycleGuard } from "../agents/extensions/cron/cron-lifecycle-guard.js";
+import { MonolithCronScheduler } from "../agents/extensions/cron/monolith-cron-scheduler.js";
+
+import { CdpNavigationGuard } from "../agents/extensions/cdp/cdp-navigation-guard.js";
+import { CdpDialogPolicyEngine } from "../agents/extensions/cdp/cdp-dialog-policy-engine.js";
+import { CdpDomSnapshotter } from "../tooling/extensions/cdp/cdp-dom-snapshotter.js";
+import { CdpProtocolClient } from "../tooling/extensions/cdp/cdp-protocol-client.js";
+import { BroccoliBrowserSubstrate } from "../sessions/extensions/cdp/broccoli-browser-substrate.js";
+import { BrowserSnapshotManager } from "../sessions/extensions/cdp/browser-snapshot-manager.js";
+import { CdpSupervisorEngine } from "../agents/extensions/cdp/cdp-supervisor-engine.js";
+import { CdpToolSuite } from "../tooling/extensions/cdp/cdp-tool-suite.js";
+
+import { TokenBucketRateGovernor as CredentialRateGovernor } from "../tooling/extensions/credential/token-bucket-rate-governor.js";
+import { DeterministicCredentialPool } from "../tooling/extensions/credential/deterministic-credential-pool.js";
+import { CredentialToolSuite } from "../tooling/extensions/credential/credential-tool-suite.js";
+import { BroccoliCredentialSubstrate } from "../sessions/extensions/credential/broccoli-credential-substrate.js";
+import { CredentialSnapshotManager } from "../sessions/extensions/credential/credential-snapshot-manager.js";
+import { CredentialCircuitBreaker } from "../agents/extensions/credential/credential-circuit-breaker.js";
+import { MonolithCredentialManager } from "../agents/extensions/credential/monolith-credential-manager.js";
+
+import { TelegramProtocolAdapter } from "../tooling/extensions/gateway/platform-adapters/telegram-protocol-adapter.js";
+import { DiscordProtocolAdapter } from "../tooling/extensions/gateway/platform-adapters/discord-protocol-adapter.js";
+import { SlackProtocolAdapter } from "../tooling/extensions/gateway/platform-adapters/slack-protocol-adapter.js";
+import { WebhookProtocolAdapter } from "../tooling/extensions/gateway/platform-adapters/webhook-protocol-adapter.js";
+import { GatewayToolSuite } from "../tooling/extensions/gateway/gateway-tool-suite.js";
+import { GatewayDeliveryLedger } from "../sessions/extensions/gateway/gateway-delivery-ledger.js";
+import { BroccoliGatewaySubstrate } from "../sessions/extensions/gateway/broccoli-gateway-substrate.js";
+import { GatewaySnapshotManager } from "../sessions/extensions/gateway/gateway-snapshot-manager.js";
+import { GatewayDispatcherEngine } from "../agents/extensions/gateway/gateway-dispatcher-engine.js";
+
+import { HeadTailBudgetGovernor } from "../tooling/extensions/compaction/head-tail-budget-governor.js";
+import { DeterministicToolPruner } from "../tooling/extensions/compaction/deterministic-tool-pruner.js";
+import { BroccoliCompressionSubstrate } from "../sessions/extensions/compaction/broccoli-compression-substrate.js";
+import { CompressionSnapshotManager } from "../sessions/extensions/compaction/compression-snapshot-manager.js";
+import { TrajectoryCompactorEngine } from "../agents/extensions/compaction/trajectory-compactor-engine.js";
+import { CompressionToolSuite } from "../tooling/extensions/compaction/compression-tool-suite.js";
+
+import { FtsQuerySanitizer } from "../tooling/extensions/search/fts-query-sanitizer.js";
+import { BroccoliSearchSubstrate } from "../sessions/extensions/search/broccoli-search-substrate.js";
+import { SearchSnapshotManager } from "../sessions/extensions/search/search-snapshot-manager.js";
+import { DeterministicSessionSearchEngine } from "../tooling/extensions/search/deterministic-session-search-engine.js";
+import { SearchToolSuite } from "../tooling/extensions/search/search-tool-suite.js";
+
+import { SecretScrubber } from "../tooling/extensions/environments/secret-scrubber.js";
+import { LocalEnvironmentAdapter } from "../tooling/extensions/environments/local-environment-adapter.js";
+import { DockerEnvironmentAdapter } from "../tooling/extensions/environments/docker-environment-adapter.js";
+import { BroccoliEnvironmentSubstrate } from "../sessions/extensions/environments/broccoli-environment-substrate.js";
+import { EnvironmentSnapshotManager } from "../sessions/extensions/environments/environment-snapshot-manager.js";
+import { EnvironmentSupervisorEngine } from "../agents/extensions/environments/environment-supervisor-engine.js";
+import { EnvironmentToolSuite } from "../tooling/extensions/environments/environment-tool-suite.js";
+
+import { JitteredBackoffGovernor } from "../tooling/extensions/faults/jittered-backoff-governor.js";
+import { DeterministicErrorClassifier } from "../tooling/extensions/faults/deterministic-error-classifier.js";
+import { BroccoliFaultSubstrate } from "../sessions/extensions/faults/broccoli-fault-substrate.js";
+import { FaultSnapshotManager } from "../sessions/extensions/faults/fault-snapshot-manager.js";
+import { FaultRecoverySupervisor } from "../agents/extensions/faults/fault-recovery-supervisor.js";
+import { FaultDiagnosticToolSuite } from "../tooling/extensions/faults/fault-diagnostic-tool-suite.js";
+
+import { AcpProtocolCodec } from "../tooling/extensions/acp/acp-protocol-codec.js";
+import { AcpPermissionGate } from "../tooling/extensions/acp/acp-permission-gate.js";
+import { BroccoliAcpSubstrate } from "../sessions/extensions/acp/broccoli-acp-substrate.js";
+import { AcpSnapshotManager } from "../sessions/extensions/acp/acp-snapshot-manager.js";
+import { AcpBridgeServer } from "../agents/extensions/acp/acp-bridge-server.js";
+import { AcpToolSuite } from "../tooling/extensions/acp/acp-tool-suite.js";
+
+import { McpTransportCodec } from "../tooling/extensions/mcp/mcp-transport-codec.js";
+import { McpSecurityScrubber } from "../tooling/extensions/mcp/mcp-security-scrubber.js";
+import { BroccoliMcpSubstrate } from "../sessions/extensions/mcp/broccoli-mcp-substrate.js";
+import { McpSnapshotManager } from "../sessions/extensions/mcp/mcp-snapshot-manager.js";
+import { McpSupervisorEngine } from "../agents/extensions/mcp/mcp-supervisor-engine.js";
+import { McpClientToolSuite } from "../tooling/extensions/mcp/mcp-client-tool-suite.js";
+
+import { ProcessOutputRingBuffer } from "../tooling/extensions/process/process-output-ring-buffer.js";
+import { ProcessSecuritySandbox } from "../tooling/extensions/process/process-security-sandbox.js";
+import { BroccoliProcessSubstrate } from "../sessions/extensions/process/broccoli-process-substrate.js";
+import { ProcessSnapshotManager } from "../sessions/extensions/process/process-snapshot-manager.js";
+import { ProcessSupervisorEngine } from "../agents/extensions/process/process-supervisor-engine.js";
+import { ProcessToolSuite } from "../tooling/extensions/process/process-tool-suite.js";
+
+import { SecurityRiskClassifier } from "../tooling/extensions/arbiter/security-risk-classifier.js";
+import { ApprovalHashLedger } from "../tooling/extensions/arbiter/approval-hash-ledger.js";
+import { BroccoliArbiterSubstrate } from "../sessions/extensions/arbiter/broccoli-arbiter-substrate.js";
+import { ArbiterSnapshotManager } from "../sessions/extensions/arbiter/arbiter-snapshot-manager.js";
+import { InteractiveSecurityArbiter } from "../agents/extensions/arbiter/interactive-security-arbiter.js";
+import { ArbiterToolSuite } from "../tooling/extensions/arbiter/arbiter-tool-suite.js";
+
+import { SemanticKnowledgeGraph } from "../sessions/extensions/memory/semantic-knowledge-graph.js";
+import { BroccoliLearningSubstrate } from "../sessions/extensions/memory/broccoli-learning-substrate.js";
+import { LearningSnapshotManager } from "../sessions/extensions/memory/learning-snapshot-manager.js";
+import { ContinuousLearningCurator } from "../agents/extensions/memory/continuous-learning-curator.js";
+import { LearningCuratorToolSuite } from "../tooling/extensions/memory/learning-curator-tool-suite.js";
+
+import { DeterministicPatchEngine } from "../tooling/extensions/patch/deterministic-patch-engine.js";
+import { BroccoliPatchSubstrate } from "../sessions/extensions/patch/broccoli-patch-substrate.js";
+import { PatchSnapshotManager } from "../sessions/extensions/patch/patch-snapshot-manager.js";
+import { AtomicMutationSupervisor } from "../agents/extensions/patch/atomic-mutation-supervisor.js";
+import { FileMutationToolSuite } from "../tooling/extensions/patch/file-mutation-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -294,6 +422,116 @@ export class MonolithFactory {
     hands: AnchoredHands;
     ears: ProgressStreamingEars;
     skillsIngestor: SkillsIngestor;
+    skillTreeParser: DeterministicSkillTreeParser;
+    anchoredSkillMutator: AnchoredSkillMutator;
+    skillTreeToolSuite: SkillTreeToolSuite;
+    skillTreeSubstrate: BroccoliSkillTreeSubstrate;
+    skillTreeSnapshotManager: SkillTreeSnapshotManager;
+    deterministicSkillCurator: DeterministicSkillCurator;
+    evolutionarySkillEngine: EvolutionarySkillTreeEngine;
+    skillTreePromptComposer: SkillTreePromptComposer;
+    antiDegenerationGuard: AntiDegenerationGuard;
+    deterministicSoulParser: DeterministicSoulParser;
+    anchoredSoulMutator: AnchoredSoulMutator;
+    soulToolSuite: SoulToolSuite;
+    broccoliSoulSubstrate: BroccoliSoulSubstrate;
+    soulSnapshotManager: SoulSnapshotManager;
+    soulThreatGuard: SoulThreatGuard;
+    soulPromptComposer: SoulPromptComposer;
+    anchoredWorktreeManager: AnchoredWorktreeManager;
+    subagentBudgetGovernor: SubagentBudgetGovernor;
+    subagentLifecycleGuard: SubagentLifecycleGuard;
+    subagentVfsBrancher: SubagentVfsBrancher;
+    monolithSwarmDelegator: MonolithSwarmDelegator;
+    swarmToolSuite: SwarmToolSuite;
+    deterministicBlueprintCatalog: DeterministicBlueprintCatalog;
+    anchoredCronJobManager: AnchoredCronJobManager;
+    cronToolSuite: CronToolSuite;
+    broccoliCronSubstrate: BroccoliCronSubstrate;
+    cronSnapshotManager: CronSnapshotManager;
+    cronLifecycleGuard: CronLifecycleGuard;
+    monolithCronScheduler: MonolithCronScheduler;
+    cdpNavigationGuard: CdpNavigationGuard;
+    cdpDialogPolicyEngine: CdpDialogPolicyEngine;
+    cdpDomSnapshotter: CdpDomSnapshotter;
+    cdpProtocolClient: CdpProtocolClient;
+    broccoliBrowserSubstrate: BroccoliBrowserSubstrate;
+    browserSnapshotManager: BrowserSnapshotManager;
+    cdpSupervisorEngine: CdpSupervisorEngine;
+    cdpToolSuite: CdpToolSuite;
+    broccoliCredentialSubstrate: BroccoliCredentialSubstrate;
+    deterministicCredentialPool: DeterministicCredentialPool;
+    credentialCircuitBreaker: CredentialCircuitBreaker;
+    monolithCredentialManager: MonolithCredentialManager;
+    credentialSnapshotManager: CredentialSnapshotManager;
+    credentialToolSuite: CredentialToolSuite;
+    telegramProtocolAdapter: TelegramProtocolAdapter;
+    discordProtocolAdapter: DiscordProtocolAdapter;
+    slackProtocolAdapter: SlackProtocolAdapter;
+    webhookProtocolAdapter: WebhookProtocolAdapter;
+    broccoliGatewaySubstrate: BroccoliGatewaySubstrate;
+    gatewayDeliveryLedger: GatewayDeliveryLedger;
+    gatewaySnapshotManager: GatewaySnapshotManager;
+    gatewayDispatcherEngine: GatewayDispatcherEngine;
+    gatewayToolSuite: GatewayToolSuite;
+    headTailBudgetGovernor: HeadTailBudgetGovernor;
+    deterministicToolPruner: DeterministicToolPruner;
+    broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
+    compressionSnapshotManager: CompressionSnapshotManager;
+    trajectoryCompactorEngine: TrajectoryCompactorEngine;
+    compressionToolSuite: CompressionToolSuite;
+    ftsQuerySanitizer: FtsQuerySanitizer;
+    broccoliSearchSubstrate: BroccoliSearchSubstrate;
+    searchSnapshotManager: SearchSnapshotManager;
+    deterministicSessionSearchEngine: DeterministicSessionSearchEngine;
+    searchToolSuite: SearchToolSuite;
+    secretScrubber: SecretScrubber;
+    localEnvironmentAdapter: LocalEnvironmentAdapter;
+    dockerEnvironmentAdapter: DockerEnvironmentAdapter;
+    broccoliEnvironmentSubstrate: BroccoliEnvironmentSubstrate;
+    environmentSnapshotManager: EnvironmentSnapshotManager;
+    environmentSupervisorEngine: EnvironmentSupervisorEngine;
+    environmentToolSuite: EnvironmentToolSuite;
+    jitteredBackoffGovernor: JitteredBackoffGovernor;
+    deterministicErrorClassifier: DeterministicErrorClassifier;
+    broccoliFaultSubstrate: BroccoliFaultSubstrate;
+    faultSnapshotManager: FaultSnapshotManager;
+    faultRecoverySupervisor: FaultRecoverySupervisor;
+    faultDiagnosticToolSuite: FaultDiagnosticToolSuite;
+    acpProtocolCodec: AcpProtocolCodec;
+    acpPermissionGate: AcpPermissionGate;
+    broccoliAcpSubstrate: BroccoliAcpSubstrate;
+    acpSnapshotManager: AcpSnapshotManager;
+    acpBridgeServer: AcpBridgeServer;
+    acpToolSuite: AcpToolSuite;
+    mcpTransportCodec: McpTransportCodec;
+    mcpSecurityScrubber: McpSecurityScrubber;
+    broccoliMcpSubstrate: BroccoliMcpSubstrate;
+    mcpSnapshotManager: McpSnapshotManager;
+    mcpSupervisorEngine: McpSupervisorEngine;
+    mcpClientToolSuite: McpClientToolSuite;
+    processOutputRingBuffer: ProcessOutputRingBuffer;
+    processSecuritySandbox: ProcessSecuritySandbox;
+    broccoliProcessSubstrate: BroccoliProcessSubstrate;
+    processSnapshotManager: ProcessSnapshotManager;
+    processSupervisorEngine: ProcessSupervisorEngine;
+    processToolSuite: ProcessToolSuite;
+    securityRiskClassifier: SecurityRiskClassifier;
+    approvalHashLedger: ApprovalHashLedger;
+    broccoliArbiterSubstrate: BroccoliArbiterSubstrate;
+    arbiterSnapshotManager: ArbiterSnapshotManager;
+    interactiveSecurityArbiter: InteractiveSecurityArbiter;
+    arbiterToolSuite: ArbiterToolSuite;
+    semanticKnowledgeGraph: SemanticKnowledgeGraph;
+    broccoliLearningSubstrate: BroccoliLearningSubstrate;
+    learningSnapshotManager: LearningSnapshotManager;
+    continuousLearningCurator: ContinuousLearningCurator;
+    learningCuratorToolSuite: LearningCuratorToolSuite;
+    deterministicPatchEngine: DeterministicPatchEngine;
+    broccoliPatchSubstrate: BroccoliPatchSubstrate;
+    patchSnapshotManager: PatchSnapshotManager;
+    atomicMutationSupervisor: AtomicMutationSupervisor;
+    fileMutationToolSuite: FileMutationToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -466,6 +704,222 @@ export class MonolithFactory {
 
     const ears = new ProgressStreamingEars();
     const skillsIngestor = new SkillsIngestor(eyes);
+    const skillTreeParser = new DeterministicSkillTreeParser();
+    const skillTreeSubstrate = new BroccoliSkillTreeSubstrate(skillTreeParser);
+    const anchoredSkillMutator = new AnchoredSkillMutator(hands, eyes);
+    const skillTreeToolSuite = new SkillTreeToolSuite(skillTreeSubstrate, anchoredSkillMutator, skillTreeParser, eyes);
+    const skillTreeSnapshotManager = new SkillTreeSnapshotManager(skillTreeSubstrate);
+    const deterministicSkillCurator = new DeterministicSkillCurator(skillTreeSubstrate);
+    const evolutionarySkillEngine = new EvolutionarySkillTreeEngine(skillTreeSubstrate);
+    const skillTreePromptComposer = new SkillTreePromptComposer();
+    const antiDegenerationGuard = new AntiDegenerationGuard();
+
+    const deterministicSoulParser = new DeterministicSoulParser();
+    const anchoredSoulMutator = new AnchoredSoulMutator(deterministicSoulParser, hands);
+    const soulToolSuite = new SoulToolSuite(deterministicSoulParser, anchoredSoulMutator);
+    const broccoliSoulSubstrate = new BroccoliSoulSubstrate(deterministicSoulParser);
+    soulToolSuite.setSubstrate(broccoliSoulSubstrate);
+    const soulSnapshotManager = new SoulSnapshotManager(broccoliSoulSubstrate, deterministicSoulParser);
+    const soulThreatGuard = new SoulThreatGuard();
+    const soulPromptComposer = new SoulPromptComposer();
+
+    const subagentLifecycleGuard = new SubagentLifecycleGuard();
+    const subagentBudgetGovernor = new SubagentBudgetGovernor();
+    const subagentVfsBrancher = new SubagentVfsBrancher();
+    subagentVfsBrancher.registerParentVfs(sessionId, sessionVfs);
+    const anchoredWorktreeManager = new AnchoredWorktreeManager(hands);
+    const monolithSwarmDelegator = new MonolithSwarmDelegator(
+      subagentLifecycleGuard,
+      subagentBudgetGovernor,
+      subagentVfsBrancher,
+      anchoredWorktreeManager
+    );
+    const swarmToolSuite = new SwarmToolSuite(monolithSwarmDelegator);
+
+    const deterministicBlueprintCatalog = new DeterministicBlueprintCatalog();
+    const anchoredCronJobManager = new AnchoredCronJobManager();
+    const broccoliCronSubstrate = new BroccoliCronSubstrate(anchoredCronJobManager);
+    const cronSnapshotManager = new CronSnapshotManager(broccoliCronSubstrate);
+    const cronLifecycleGuard = new CronLifecycleGuard();
+    const monolithCronScheduler = new MonolithCronScheduler(broccoliCronSubstrate, cronLifecycleGuard);
+    const cronToolSuite = new CronToolSuite(monolithCronScheduler, deterministicBlueprintCatalog);
+
+    const cdpNavigationGuard = new CdpNavigationGuard();
+    const cdpDomSnapshotter = new CdpDomSnapshotter();
+    const cdpProtocolClient = new CdpProtocolClient();
+    const broccoliBrowserSubstrate = new BroccoliBrowserSubstrate();
+    const browserSnapshotManager = new BrowserSnapshotManager(broccoliBrowserSubstrate);
+    const cdpDialogPolicyEngine = new CdpDialogPolicyEngine(broccoliBrowserSubstrate, "auto_dismiss", cdpProtocolClient);
+    const cdpSupervisorEngine = new CdpSupervisorEngine(
+      broccoliBrowserSubstrate,
+      cdpNavigationGuard,
+      cdpDialogPolicyEngine,
+      cdpDomSnapshotter,
+      cdpProtocolClient
+    );
+    const cdpToolSuite = new CdpToolSuite(cdpSupervisorEngine);
+
+    const broccoliCredentialSubstrate = new BroccoliCredentialSubstrate();
+    const credentialRateGovernor = new CredentialRateGovernor();
+    const deterministicCredentialPool = new DeterministicCredentialPool(broccoliCredentialSubstrate, credentialRateGovernor);
+    const credentialCircuitBreaker = new CredentialCircuitBreaker();
+    const monolithCredentialManager = new MonolithCredentialManager(
+      broccoliCredentialSubstrate,
+      deterministicCredentialPool,
+      credentialCircuitBreaker,
+      credentialRateGovernor
+    );
+    const credentialSnapshotManager = new CredentialSnapshotManager(broccoliCredentialSubstrate);
+    const credentialToolSuite = new CredentialToolSuite(deterministicCredentialPool);
+
+    const telegramProtocolAdapter = new TelegramProtocolAdapter();
+    const discordProtocolAdapter = new DiscordProtocolAdapter();
+    const slackProtocolAdapter = new SlackProtocolAdapter();
+    const webhookProtocolAdapter = new WebhookProtocolAdapter();
+    const broccoliGatewaySubstrate = new BroccoliGatewaySubstrate();
+    const gatewayDeliveryLedger = new GatewayDeliveryLedger();
+    const gatewaySnapshotManager = new GatewaySnapshotManager(broccoliGatewaySubstrate, gatewayDeliveryLedger);
+    const gatewayDispatcherEngine = new GatewayDispatcherEngine(
+      broccoliGatewaySubstrate,
+      gatewayDeliveryLedger,
+      [telegramProtocolAdapter, discordProtocolAdapter, slackProtocolAdapter, webhookProtocolAdapter]
+    );
+    const gatewayToolSuite = new GatewayToolSuite(
+      gatewayDispatcherEngine,
+      broccoliGatewaySubstrate,
+      gatewayDeliveryLedger
+    );
+
+    const headTailBudgetGovernor = new HeadTailBudgetGovernor();
+    const deterministicToolPruner = new DeterministicToolPruner();
+    const broccoliCompressionSubstrate = new BroccoliCompressionSubstrate();
+    const compressionSnapshotManager = new CompressionSnapshotManager(broccoliCompressionSubstrate);
+    const trajectoryCompactorEngine = new TrajectoryCompactorEngine(
+      broccoliCompressionSubstrate,
+      headTailBudgetGovernor,
+      deterministicToolPruner
+    );
+    const compressionToolSuite = new CompressionToolSuite(
+      broccoliCompressionSubstrate,
+      headTailBudgetGovernor,
+      deterministicToolPruner,
+      trajectoryCompactorEngine
+    );
+
+
+    const ftsQuerySanitizer = new FtsQuerySanitizer();
+    const broccoliSearchSubstrate = new BroccoliSearchSubstrate();
+    const searchSnapshotManager = new SearchSnapshotManager(broccoliSearchSubstrate);
+    const deterministicSessionSearchEngine = new DeterministicSessionSearchEngine(
+      broccoliSearchSubstrate,
+      ftsQuerySanitizer
+    );
+    const searchToolSuite = new SearchToolSuite(
+      deterministicSessionSearchEngine,
+      broccoliSearchSubstrate
+    );
+
+    const secretScrubber = new SecretScrubber();
+    const localEnvironmentAdapter = new LocalEnvironmentAdapter(secretScrubber);
+    const dockerEnvironmentAdapter = new DockerEnvironmentAdapter(secretScrubber);
+    const broccoliEnvironmentSubstrate = new BroccoliEnvironmentSubstrate();
+    const environmentSnapshotManager = new EnvironmentSnapshotManager(broccoliEnvironmentSubstrate);
+    const environmentSupervisorEngine = new EnvironmentSupervisorEngine(
+      broccoliEnvironmentSubstrate,
+      [localEnvironmentAdapter, dockerEnvironmentAdapter]
+    );
+    const environmentToolSuite = new EnvironmentToolSuite(
+      environmentSupervisorEngine,
+      broccoliEnvironmentSubstrate
+    );
+
+    const jitteredBackoffGovernor = new JitteredBackoffGovernor();
+    const deterministicErrorClassifier = new DeterministicErrorClassifier(jitteredBackoffGovernor);
+    const broccoliFaultSubstrate = new BroccoliFaultSubstrate();
+    const faultSnapshotManager = new FaultSnapshotManager(broccoliFaultSubstrate);
+    const faultRecoverySupervisor = new FaultRecoverySupervisor(
+      deterministicErrorClassifier,
+      jitteredBackoffGovernor,
+      broccoliFaultSubstrate
+    );
+    const faultDiagnosticToolSuite = new FaultDiagnosticToolSuite(
+      faultRecoverySupervisor,
+      broccoliFaultSubstrate
+    );
+
+    const acpProtocolCodec = new AcpProtocolCodec();
+    const broccoliAcpSubstrate = new BroccoliAcpSubstrate();
+    const acpPermissionGate = new AcpPermissionGate(broccoliAcpSubstrate);
+    const acpSnapshotManager = new AcpSnapshotManager(broccoliAcpSubstrate);
+    const acpBridgeServer = new AcpBridgeServer(
+      acpProtocolCodec,
+      acpPermissionGate,
+      broccoliAcpSubstrate
+    );
+    const acpToolSuite = new AcpToolSuite(
+      acpPermissionGate,
+      broccoliAcpSubstrate
+    );
+
+    const mcpTransportCodec = new McpTransportCodec();
+    const mcpSecurityScrubber = new McpSecurityScrubber();
+    const broccoliMcpSubstrate = new BroccoliMcpSubstrate();
+    const mcpSnapshotManager = new McpSnapshotManager(broccoliMcpSubstrate);
+    const mcpSupervisorEngine = new McpSupervisorEngine(
+      broccoliMcpSubstrate,
+      mcpTransportCodec,
+      mcpSecurityScrubber
+    );
+    const mcpClientToolSuite = new McpClientToolSuite(
+      mcpSupervisorEngine,
+      broccoliMcpSubstrate
+    );
+
+    const processOutputRingBuffer = new ProcessOutputRingBuffer();
+    const processSecuritySandbox = new ProcessSecuritySandbox();
+    const broccoliProcessSubstrate = new BroccoliProcessSubstrate();
+    const processSnapshotManager = new ProcessSnapshotManager(broccoliProcessSubstrate);
+    const processSupervisorEngine = new ProcessSupervisorEngine(
+      broccoliProcessSubstrate,
+      processSecuritySandbox
+    );
+    const processToolSuite = new ProcessToolSuite(
+      processSupervisorEngine,
+      broccoliProcessSubstrate
+    );
+
+    const securityRiskClassifier = new SecurityRiskClassifier();
+    const approvalHashLedger = new ApprovalHashLedger();
+    const broccoliArbiterSubstrate = new BroccoliArbiterSubstrate();
+    const arbiterSnapshotManager = new ArbiterSnapshotManager(broccoliArbiterSubstrate);
+    const interactiveSecurityArbiter = new InteractiveSecurityArbiter(
+      broccoliArbiterSubstrate,
+      approvalHashLedger,
+      securityRiskClassifier
+    );
+    const arbiterToolSuite = new ArbiterToolSuite(
+      interactiveSecurityArbiter,
+      broccoliArbiterSubstrate
+    );
+
+    const semanticKnowledgeGraph = new SemanticKnowledgeGraph();
+    const broccoliLearningSubstrate = new BroccoliLearningSubstrate(semanticKnowledgeGraph);
+    const learningSnapshotManager = new LearningSnapshotManager(broccoliLearningSubstrate);
+    const continuousLearningCurator = new ContinuousLearningCurator(broccoliLearningSubstrate);
+    const learningCuratorToolSuite = new LearningCuratorToolSuite(
+      continuousLearningCurator,
+      broccoliLearningSubstrate
+    );
+
+    const deterministicPatchEngine = new DeterministicPatchEngine();
+    const broccoliPatchSubstrate = new BroccoliPatchSubstrate();
+    const patchSnapshotManager = new PatchSnapshotManager(broccoliPatchSubstrate);
+    const atomicMutationSupervisor = new AtomicMutationSupervisor(
+      deterministicPatchEngine,
+      broccoliPatchSubstrate
+    );
+    const fileMutationToolSuite = new FileMutationToolSuite(atomicMutationSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -481,7 +935,24 @@ export class MonolithFactory {
       hands,
       ears,
       skillsIngestor,
-      sessionMemoryStore
+      sessionMemoryStore,
+      skillTreeToolSuite,
+      soulToolSuite,
+      swarmToolSuite,
+      cronToolSuite,
+      cdpToolSuite,
+      credentialToolSuite,
+      gatewayToolSuite,
+      compressionToolSuite,
+      searchToolSuite,
+      environmentToolSuite,
+      faultDiagnosticToolSuite,
+      acpToolSuite,
+      mcpClientToolSuite,
+      processToolSuite,
+      arbiterToolSuite,
+      learningCuratorToolSuite,
+      fileMutationToolSuite
     );
 
     const promptComposer = new PromptComposer();
@@ -643,6 +1114,116 @@ export class MonolithFactory {
       hands,
       ears,
       skillsIngestor,
+      skillTreeParser,
+      anchoredSkillMutator,
+      skillTreeToolSuite,
+      skillTreeSubstrate,
+      skillTreeSnapshotManager,
+      deterministicSkillCurator,
+      evolutionarySkillEngine,
+      skillTreePromptComposer,
+      antiDegenerationGuard,
+      deterministicSoulParser,
+      anchoredSoulMutator,
+      soulToolSuite,
+      broccoliSoulSubstrate,
+      soulSnapshotManager,
+      soulThreatGuard,
+      soulPromptComposer,
+      anchoredWorktreeManager,
+      subagentBudgetGovernor,
+      subagentLifecycleGuard,
+      subagentVfsBrancher,
+      monolithSwarmDelegator,
+      swarmToolSuite,
+      deterministicBlueprintCatalog,
+      anchoredCronJobManager,
+      cronToolSuite,
+      broccoliCronSubstrate,
+      cronSnapshotManager,
+      cronLifecycleGuard,
+      monolithCronScheduler,
+      cdpNavigationGuard,
+      cdpDialogPolicyEngine,
+      cdpDomSnapshotter,
+      cdpProtocolClient,
+      broccoliBrowserSubstrate,
+      browserSnapshotManager,
+      cdpSupervisorEngine,
+      cdpToolSuite,
+      broccoliCredentialSubstrate,
+      deterministicCredentialPool,
+      credentialCircuitBreaker,
+      monolithCredentialManager,
+      credentialSnapshotManager,
+      credentialToolSuite,
+      telegramProtocolAdapter,
+      discordProtocolAdapter,
+      slackProtocolAdapter,
+      webhookProtocolAdapter,
+      broccoliGatewaySubstrate,
+      gatewayDeliveryLedger,
+      gatewaySnapshotManager,
+      gatewayDispatcherEngine,
+      gatewayToolSuite,
+      headTailBudgetGovernor,
+      deterministicToolPruner,
+      broccoliCompressionSubstrate,
+      compressionSnapshotManager,
+      trajectoryCompactorEngine,
+      compressionToolSuite,
+      ftsQuerySanitizer,
+      broccoliSearchSubstrate,
+      searchSnapshotManager,
+      deterministicSessionSearchEngine,
+      searchToolSuite,
+      secretScrubber,
+      localEnvironmentAdapter,
+      dockerEnvironmentAdapter,
+      broccoliEnvironmentSubstrate,
+      environmentSnapshotManager,
+      environmentSupervisorEngine,
+      environmentToolSuite,
+      jitteredBackoffGovernor,
+      deterministicErrorClassifier,
+      broccoliFaultSubstrate,
+      faultSnapshotManager,
+      faultRecoverySupervisor,
+      faultDiagnosticToolSuite,
+      acpProtocolCodec,
+      acpPermissionGate,
+      broccoliAcpSubstrate,
+      acpSnapshotManager,
+      acpBridgeServer,
+      acpToolSuite,
+      mcpTransportCodec,
+      mcpSecurityScrubber,
+      broccoliMcpSubstrate,
+      mcpSnapshotManager,
+      mcpSupervisorEngine,
+      mcpClientToolSuite,
+      processOutputRingBuffer,
+      processSecuritySandbox,
+      broccoliProcessSubstrate,
+      processSnapshotManager,
+      processSupervisorEngine,
+      processToolSuite,
+      securityRiskClassifier,
+      approvalHashLedger,
+      broccoliArbiterSubstrate,
+      arbiterSnapshotManager,
+      interactiveSecurityArbiter,
+      arbiterToolSuite,
+      semanticKnowledgeGraph,
+      broccoliLearningSubstrate,
+      learningSnapshotManager,
+      continuousLearningCurator,
+      learningCuratorToolSuite,
+      deterministicPatchEngine,
+      broccoliPatchSubstrate,
+      patchSnapshotManager,
+      atomicMutationSupervisor,
+      fileMutationToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

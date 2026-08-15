@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T04:28:34.865Z",
+  "generatedAt": "2026-08-15T20:42:06.673Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,10 +19,10 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.66,
-    "componentCount": 142,
-    "requiredComponentCount": 142,
-    "composedRequiredComponentCount": 142,
+    "durationMs": 2.26,
+    "componentCount": 252,
+    "requiredComponentCount": 252,
+    "composedRequiredComponentCount": 252,
     "missingComponents": [],
     "unexpectedComponents": [],
     "duplicateManifestComponents": [],
@@ -33,14 +33,14 @@
         "name": "Current evolution capabilities are composed",
         "passed": true,
         "durationMs": 0.03,
-        "detail": "142 required capabilities across 142 components"
+        "detail": "252 required capabilities across 252 components"
       },
       {
         "id": "contracts.inheritance",
         "category": "architecture",
         "name": "Core abstract contracts remain connected",
         "passed": true,
-        "durationMs": 0.07,
+        "durationMs": 0.09,
         "detail": "agent, session, hands, ears, and tool-registry contracts verified"
       },
       {
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 1.1,
-        "detail": "frame 1 completed in 0.78 ms"
+        "durationMs": 0.82,
+        "detail": "frame 1 completed in 0.54 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.3,
+        "durationMs": 0.25,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -64,7 +64,7 @@
         "category": "governance",
         "name": "Completion gate fails closed without evaluated evidence",
         "passed": true,
-        "durationMs": 0.49,
+        "durationMs": 0.42,
         "detail": "5 fail-closed states rejected; 2/2 evaluated required criteria accepted"
       },
       {
@@ -72,7 +72,7 @@
         "category": "safety",
         "name": "Modern command safety and diagnostics are active",
         "passed": true,
-        "durationMs": 0.26,
+        "durationMs": 0.23,
         "detail": "interactive editor blocking and port-collision guidance verified"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.09,
+        "durationMs": 0.07,
         "detail": "head/tail output retention verified"
       },
       {
@@ -88,7 +88,7 @@
         "category": "governance",
         "name": "Strategic integrity audit contract is complete",
         "passed": true,
-        "durationMs": 0.04,
+        "durationMs": 0.03,
         "detail": "architect, critic, and SRE review sections verified"
       },
       {
@@ -96,7 +96,7 @@
         "category": "health",
         "name": "Subsystem health aggregation remains optimal",
         "passed": true,
-        "durationMs": 0.09,
+        "durationMs": 0.06,
         "detail": "3/3 registered subsystems healthy"
       }
     ]
@@ -107,30 +107,30 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 68.45,
-    "totalDurationMs": 342.26,
-    "throughputTps": 14.61,
-    "throughputPerMinute": 877,
+    "meanLatencyMs": 61.22,
+    "totalDurationMs": 306.08,
+    "throughputTps": 16.34,
+    "throughputPerMinute": 980,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.14,
+        "durationMs": 0.07,
         "assertions": []
       },
       {
         "testName": "VFS File Perception & Reading",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.06,
+        "durationMs": 0.12,
         "assertions": []
       },
       {
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 341.9,
+        "durationMs": 305.75,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -178,7 +178,7 @@
         "testName": "Slash Command Router Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.08,
+        "durationMs": 0.07,
         "assertions": []
       },
       {
@@ -206,21 +206,21 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.17 ms",
+        "measuredValue": "0.09 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "5761.61 frames/sec",
+        "measuredValue": "10961.37 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.027 ms p95",
+        "measuredValue": "0.023 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },

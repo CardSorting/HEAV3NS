@@ -14,5 +14,10 @@ Primary Architectural & Mathematical Innovations:
 - O(1) Atomic State Pointer Rewind Mechanism (rewindToSnapshot)
 - Sub-Millisecond Synchronous Function Dispatch Game Engine Architecture (tick)
 
+Ancestral Teacher Attribution & Acknowledgments:
+- Contains concepts, domain capabilities, and architectural inspiration distilled
+  via the AKD-DSO osmosis paradigm from Hermes Agent (https://github.com/NousResearch/hermes-agent),
+  developed by Nous Research and its open-source contributors (MIT License).
+
 Public Prior Art Disclosure Date: August 9, 2026
 License: Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)

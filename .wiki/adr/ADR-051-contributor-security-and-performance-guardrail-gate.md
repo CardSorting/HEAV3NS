@@ -4,7 +4,7 @@
 **Accepted**
 
 ## Context
-The August 9 acceptance experiment demonstrated a sub-millisecond local turn path. Protecting the codebase against accidental performance regressions, microservice bloat, or architectural drift therefore became a priority. Decision-time figures are historical; current evidence comes from the generated live baseline. The latest recorded run measured **$0.17\text{ ms}$** mean local fast-path latency, **$5761.61$ frames/second**, and **$0.027\text{ ms}$ warmed rewind p95**, with all **6/6 guardrails** passing.
+The August 9 acceptance experiment demonstrated a sub-millisecond local turn path. Protecting the codebase against accidental performance regressions, microservice bloat, or architectural drift therefore became a priority. Decision-time figures are historical; current evidence comes from the generated live baseline. The latest recorded run measured **$0.09\text{ ms}$** mean local fast-path latency, **$10961.37$ frames/second**, and **$0.023\text{ ms}$ warmed rewind p95**, with all **6/6 guardrails** passing.
 
 ## Decision
 We implemented an automated, multi-layer repository protection gate centered around `ArchitectureGuardrailGate` ([architecture-guardrail-gate.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/policy/architecture-guardrail-gate.ts)), `scripts/validate-repo.ts` (`npm test`), and GitHub Actions CI workflow ([repo-protection-ci.yml](file:///Users/bozoegg/Desktop/LUMI-NEW/.github/workflows/repo-protection-ci.yml)).

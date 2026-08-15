@@ -7,7 +7,7 @@
 
 ---
 
-> **Evidence status (updated August 12, 2026 MDT / August 13 UTC):** This brief originated with the August 9 architecture experiment. Its original arithmetic remains below as historical rationale. Current verification is defined by [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json): Pass 192 composition 142/142, smoke 9/9, benchmark 5/5, Flappy project assertions 8/8, and guardrails 6/6. Host-specific timings must be regenerated rather than treated as permanent constants.
+> **Evidence status (updated August 12, 2026 MDT / August 13 UTC):** This brief originated with the August 9 architecture experiment. Its original arithmetic remains below as historical rationale. Current verification is defined by [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json): Pass 192 composition 224/224, smoke 9/9, benchmark 5/5, Flappy project assertions 8/8, and guardrails 6/6. Host-specific timings must be regenerated rather than treated as permanent constants.
 
 ## 📌 Executive Summary
 
@@ -15,7 +15,7 @@ For years, the software engineering industry approached AI agent runtime design 
 
 **LUMI-JOY** proves that this assumption was fundamentally flawed. The bottleneck was never hardware compute capacity—it was **software friction**.
 
-By reframing an AI agent runtime not as a web application, but as a **Deterministic Game Engine Kernel** operating directly over a **16MB Zero-GC Contiguous ArrayBuffer Slab** with **$O(1)$ snapshot restoration**, **LUMI-JOY** enforces a local fast-path mean below **$1.0\text{ ms}$**, throughput of at least **$1,000$ frames/second**, and warmed rewind p95 below **$0.1\text{ ms}$**. The latest recorded host observations are **$0.17\text{ ms}$**, **$5761.61$ frames/second**, and **$0.027\text{ ms}$ p95**, respectively.
+By reframing an AI agent runtime not as a web application, but as a **Deterministic Game Engine Kernel** operating directly over a **16MB Zero-GC Contiguous ArrayBuffer Slab** with **$O(1)$ snapshot restoration**, **LUMI-JOY** enforces a local fast-path mean below **$1.0\text{ ms}$**, throughput of at least **$1,000$ frames/second**, and warmed rewind p95 below **$0.1\text{ ms}$**. The latest recorded host observations are **$0.11\text{ ms}$**, **$9099.55$ frames/second**, and **$0.028\text{ ms}$ p95**, respectively.
 
 This document details the architectural shift, the Game Engine Paradigm shift, mathematical friction breakdown, 3-generation evolution matrix, four core philosophical tenets, and future outlook for high-frequency agentic intelligence.
 
@@ -44,10 +44,10 @@ By transferring these AAA game engine primitives to LLM agent orchestration, **L
 | **Primary Abstraction** | Stateless REST API wrappers (LangChain, AutoGPT) | Multi-package RPC monorepos (`pi-main`) | **Deterministic Game Engine Kernel** (`tick()`) |
 | **Execution Loop** | Blocking sequential HTTP calls | Loose async event handlers & IPC message queues | **Frame-perfect tick lifecycle** (`pre -> exec -> post`) |
 | **State Storage** | File system JSON / External DB | Distributed state objects & diff trees | **Contiguous 16MB ArrayBuffer Slab** (`ArenaAllocator`) |
-| **State Rewind** | Re-instantiating agents from scratch | JSON text re-parsing & file lock checks | **$O(1)$ in-memory restoration** (**$0.027\text{ ms}$ latest warmed p95; $<0.1\text{ ms}$ required**) |
+| **State Rewind** | Re-instantiating agents from scratch | JSON text re-parsing & file lock checks | **$O(1)$ in-memory restoration** (**$0.023\text{ ms}$ latest warmed p95; $<0.1\text{ ms}$ required**) |
 | **Memory Allocation** | Dynamic heap allocation per prompt | V8 Heap Object graphs with GC sweeps | **Zero-GC pre-allocated contiguous memory slab** |
-| **Mean Local Fast-Path Latency** | $>500.00\text{ ms}$ | $14.20\text{ ms}$ | **$0.17\text{ ms}$ latest observation; $<1.0\text{ ms}$ enforced** |
-| **Local Fast-Path Throughput** | $<2.0\text{ turns/sec}$ | $70.4\text{ turns/sec}$ | **$5761.61$ frames/second latest observation; $\geq1,000$ enforced** |
+| **Mean Local Fast-Path Latency** | $>500.00\text{ ms}$ | $14.20\text{ ms}$ | **$0.09\text{ ms}$ latest observation; $<1.0\text{ ms}$ enforced** |
+| **Local Fast-Path Throughput** | $<2.0\text{ turns/sec}$ | $70.4\text{ turns/sec}$ | **$10961.37$ frames/second latest observation; $\geq1,000$ enforced** |
 
 ---
 
@@ -114,13 +114,13 @@ $$\text{Speedup Factor } = \frac{14.20\text{ ms}}{0.22\text{ ms}} = \mathbf{64.5
 ## 🌐 Future Outlook: What Changes Going Forward
 
 ### 1. Ultra-High Frequency Agentic Reasoning
-Sustaining a guarded local fast path of at least **$1,000$ frames/second**—with **$5761.61$ frames/second** observed in the latest recorded run—enables dense local state transitions. This figure describes deterministic local benchmark frames, not provider-backed reasoning or model token generation.
+Sustaining a guarded local fast path of at least **$1,000$ frames/second**—with **$9099.55$ frames/second** observed in the latest recorded run—enables dense local state transitions. This figure describes deterministic local benchmark frames, not provider-backed reasoning or model token generation.
 
 ### 2. Monte Carlo Tree Search (MCTS) for Software Engineering
 With $O(1)$ state restoration under a **$0.1\text{ ms}$ warmed-p95 guardrail**, agents can branch across local execution paths, evaluate outcome quality, and rewind without transcript re-parsing—bringing game-tree search techniques (like MCTS and A* pathfinding) directly into code generation engines.
 
 ### 3. Complete, Verifiable Application Synthesis
-The current benchmark generates a **12-file Flappy Bird React + TypeScript + Vite project** and validates **8/8 assertions** covering its manifest, pinned toolchain, strict semantic compilation, executable physics and state transitions, deterministic seeds, React animation cleanup, controls, responsiveness, accessibility, and temp-root containment. The latest host run completed this intentionally compiler-heavy case in **$341.90\text{ ms}$**; it is reported as heterogeneous workload latency, not as engine turn latency.
+The current benchmark generates a **12-file Flappy Bird React + TypeScript + Vite project** and validates **8/8 assertions** covering its manifest, pinned toolchain, strict semantic compilation, executable physics and state transitions, deterministic seeds, React animation cleanup, controls, responsiveness, accessibility, and temp-root containment. The latest host run completed this intentionally compiler-heavy case in **$305.75\text{ ms}$**; it is reported as heterogeneous workload latency, not as engine turn latency.
 
 ### 4. Subagent Swarm Session Forking
 Game engine scene duplication principles allow subagent swarms (`AgentSwarmDispatcher`) to spawn isolated child `LumiMonolith` session instances pre-initialized from parent state snapshots in $<0.1\text{ ms}$, executing subtasks in parallel without mutating parent workspace state until explicitly committed.

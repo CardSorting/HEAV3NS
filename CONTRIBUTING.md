@@ -85,7 +85,7 @@ npm run smoke
 npm run baseline:update
 ```
 
-The latest checked-in run (2026-08-15T04:28:34.865Z) passed 142/142 composition entries, 9/9 smoke checks, 5/5 benchmark cases, 8/8 deep assertions for the generated 12-file Flappy Bird React + TypeScript + Vite project, and 6/6 guardrails. Treat timings as host-sensitive; consult `docs/LIVE_BASELINE.json` instead of copying them into source documentation.
+The latest checked-in run (2026-08-15T20:42:06.673Z) passed 252/252 composition entries, 9/9 smoke checks, 5/5 benchmark cases, 8/8 deep assertions for the generated 12-file Flappy Bird React + TypeScript + Vite project, and 6/6 guardrails. Treat timings as host-sensitive; consult `docs/LIVE_BASELINE.json` instead of copying them into source documentation.
 
 ### 5. Streaming Regression Checklist
 
