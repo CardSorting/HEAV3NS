@@ -13,7 +13,13 @@ Roadmap completion and runtime completion are different concepts:
 - `npm run smoke` validates the current Pass 192 composition against an exact typed component manifest and exercises critical runtime completion, rewind, safety, output, and integrity contracts. Missing, uninitialized, unexpected, or duplicate manifest entries degrade the run. It is current-worktree evidence, but it does not replace feature-specific tests or the full verification gate.
 - Runtime turn completion is governed separately by [ADR-082](../adr/ADR-082-structured-agent-activity-streaming.md): an item or retry attempt can complete while the logical turn remains active, and public success exists only when `EngineTickResult.outcome` is `completed`.
 
-The latest generated current-worktree verification (2026-08-15T20:42:06.673Z) passed **252/252** exact composition entries, **9/9** smoke checks, **5/5** heterogeneous benchmark cases, **8/8** deep Flappy Bird project assertions, and **6/6** architecture/performance guardrails. [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) is authoritative for exact measurements.
+- **Current Verified Baseline (2026-08-16T07:05:11.963Z)**: **377/377** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
+- **Exact Composition Manifest**: **377/377** required capabilities verified.
+- **Runtime Capability Smoke**: **9/9** checks passing.
+- **Heterogeneous Benchmark**: **5/5** cases passing, including a 12-file Flappy Bird React + TypeScript + Vite project synthesized and verified against **8/8** strict assertions.
+- **Repository Guardrails**: **6/6** passing (`Zero-GC Slab Invariant`, `Turn Tick Latency SLA`, `Throughput SLA`, `State Rewind SLA`, `Zero-Barrel Rule`, `Base Class Immutability Rule`).
+- **Live Baseline Authority**: [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json).
+- **Audit & Benchmark Views**: [`docs/BENCHMARK_REPORT.md`](../../docs/BENCHMARK_REPORT.md) and [`docs/GRAND_ARCHITECTURAL_AUDIT.md`](../../docs/GRAND_ARCHITECTURAL_AUDIT.md).
 
 A future pass must remain `[IN PROGRESS]` until code, composition, tests, and documentation are all present. Creating a source file, receiving one provider frame, finishing a retry attempt, or drafting an ADR is not enough to mark a pass complete.
 

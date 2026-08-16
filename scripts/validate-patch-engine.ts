@@ -242,9 +242,9 @@ async function runValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 8: Grand Monolith Composition (252 Components)
+    // Suite 8: Grand Monolith Composition
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/8] Grand Monolith Composition (252 Components)...");
+    console.log("[Suite 8/8] Grand Monolith Composition...");
     const monolith = MonolithFactory.createEngine();
     const verification = GrandMonolithSynthesizer.verifyComposition(monolith);
 

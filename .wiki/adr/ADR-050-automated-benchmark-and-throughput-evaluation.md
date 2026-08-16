@@ -40,12 +40,12 @@ The current implementation also exposes `lumi --baseline`. It runs the capabilit
 
 ## Current Verification (August 13, 2026 UTC)
 
-- Exact Pass 192 composition: **252/252**.
-- Runtime capability smoke: **9/9**.
-- Heterogeneous benchmark: **5/5**.
-- Complete Flappy Bird React + TypeScript + Vite synthesis: **12/12 generated files**, **8/8 assertions**, **$305.75\text{ ms}$ observed**.
-- Architecture/performance guardrails: **6/6**.
-- Dedicated local fast path: **$0.09\text{ ms}$ mean** and **$10961.37$ frames/second** observed against requirements of $<1.0\text{ ms}$ and $\geq1,000$ frames/second.
-- Snapshot rewind: **$0.023\text{ ms}$ warmed p95** observed against a $<0.1\text{ ms}$ requirement.
+- Pinned benchmark contract:
+  - **Total Evaluated Tests**: 5
+  - **Pass Rate**: 100%
+  - **Throughput Enforced**: $\ge 1,000\text{ frames/second}$ (latest host run: **$6749.16\text{ frames/second}$** across **377/377 components**)
+  - **Turn Tick Latency SLA**: $< 1.0\text{ ms}$ (latest host run: **$0.15\text{ ms}$**)
+  - **State Rewind Latency SLA**: $< 0.1\text{ ms p95}$ (latest host run: **$0.018\text{ ms p95}$**)
+  - **Flappy Bird React Synthesis**: 12/12 files synthesized in memory, 8/8 assertions passing, verified at **$355.45\text{ ms}$**.
 
 The heterogeneous suite reports mean case latency and cases/second because it includes strict compiler work. It must not be compared directly with the dedicated frame-performance guardrail. See [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) and the generated [benchmark report](../../docs/BENCHMARK_REPORT.md).

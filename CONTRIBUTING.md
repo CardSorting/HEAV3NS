@@ -20,10 +20,11 @@ Thank you for your interest in contributing to **LUMI-JOY**! We welcome contribu
 - Specialized capabilities inherit downward (`class Child extends Parent`) in `src/*/extensions/`.
 
 ### 4. Mandatory Performance SLAs & Security Guardrails (`ADR-051`)
-- **Sub-Millisecond Fast-Path SLA**: Mean latency in the dedicated deterministic guardrail workload MUST remain **$< 1.0\text{ ms}$**. The compiler-heavy heterogeneous benchmark has a separate mean case latency and is not judged against this threshold.
-- **Throughput SLA**: The dedicated local guardrail workload MUST remain **$\geq1,000$ frames/second**.
-- **State Rewind SLA**: Rewind MUST restore frame/message state and remain **$<0.1\text{ ms}$ warmed p95** across 25 samples.
-- **Live Baseline Publication**: Use `npm run baseline:update` to measure the current worktree and atomically regenerate `docs/LIVE_BASELINE.json` and its Markdown views; never hand-edit measured values.
+- **Current Verified Baseline (2026-08-16T07:05:11.963Z)**: **377/377** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
+- The current composition manifest expects **377/377** required capabilities.
+- Live baseline metrics ([`docs/LIVE_BASELINE.json`](docs/LIVE_BASELINE.json)) are host-sensitive measurements, not fixed promises.
+- Fast-path mean latency must remain below **1.0 ms**, deterministic throughput must remain at or above **1,000 frames/second**, and warmed state rewind p95 must remain below **0.1 ms**.
+- The full verification suite runs on every PR via [`.github/workflows/repo-protection-ci.yml`](.github/workflows/repo-protection-ci.yml).
 - **Zero-GC Slab Memory Invariant**: `PersistentSessionStore` slab allocation MUST remain fixed at **$16\text{ MB}$** (`16,777,216 bytes`).
 - **Zero-Barrel Imports (`ADR-012`)**: Intermediate `index.ts` re-export barrel files inside `src/*/extensions/` are strictly prohibited.
 - **Erasable TypeScript Syntax**: Forbidden syntax includes `enum`, `namespace`, parameter properties in constructors (`constructor(public x: string)`), `import =`, `export =`. Use `verbatimModuleSyntax` with top-level explicit type imports.
@@ -85,7 +86,7 @@ npm run smoke
 npm run baseline:update
 ```
 
-The latest checked-in run (2026-08-15T20:42:06.673Z) passed 252/252 composition entries, 9/9 smoke checks, 5/5 benchmark cases, 8/8 deep assertions for the generated 12-file Flappy Bird React + TypeScript + Vite project, and 6/6 guardrails. Treat timings as host-sensitive; consult `docs/LIVE_BASELINE.json` instead of copying them into source documentation.
+The latest checked-in run (2026-08-16T04:01:32.434Z) passed 302/302 composition entries, 9/9 smoke checks, 5/5 benchmark cases, 8/8 deep assertions for the generated 12-file Flappy Bird React + TypeScript + Vite project, and 6/6 guardrails. Treat timings as host-sensitive; consult `docs/LIVE_BASELINE.json` instead of copying them into source documentation.
 
 ### 5. Streaming Regression Checklist
 

@@ -7,7 +7,7 @@
 
 ## 📌 Executive Statement
 
-**LUMI-JOY** enforces strict automated repository protection rules around deterministic fast-path performance and architecture. The latest generated run passed **6/6 guardrails**, with a **$0.09\text{ ms}$** local fast-path mean, **$10961.37$ frames/second**, and **$0.023\text{ ms}$ warmed rewind p95** on Node.js `v23.5.0`/macOS ARM64. These observations are host-sensitive; the durable requirements are the thresholds below, and [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) is the measurement authority.
+**LUMI-JOY** enforces strict automated repository protection rules around deterministic fast-path performance and architecture. The latest generated run passed **6/6 guardrails**, with a **$0.15\text{ ms}$** local fast-path mean, **$6749.16$ frames/second**, and **$0.018\text{ ms}$ warmed rewind p95** on Node.js `v23.5.0`/macOS ARM64. These observations are host-sensitive; the durable requirements are the thresholds below, and [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) is the measurement authority.
 
 ---
 

@@ -271,6 +271,157 @@ import { PatchSnapshotManager } from "../sessions/extensions/patch/patch-snapsho
 import { AtomicMutationSupervisor } from "../agents/extensions/patch/atomic-mutation-supervisor.js";
 import { FileMutationToolSuite } from "../tooling/extensions/patch/file-mutation-tool-suite.js";
 
+import { DeterministicLspEngine } from "../tooling/extensions/lsp/deterministic-lsp-engine.js";
+import { BroccoliLspSubstrate } from "../sessions/extensions/lsp/broccoli-lsp-substrate.js";
+import { LspSnapshotManager } from "../sessions/extensions/lsp/lsp-snapshot-manager.js";
+import { SemanticCodeSupervisor } from "../agents/extensions/lsp/semantic-code-supervisor.js";
+import { LspCodeIntelligenceToolSuite } from "../tooling/extensions/lsp/lsp-code-intelligence-tool-suite.js";
+
+import { DeterministicAudioCodec } from "../tooling/extensions/voice/deterministic-audio-codec.js";
+import { BroccoliVoiceSubstrate } from "../sessions/extensions/voice/broccoli-voice-substrate.js";
+import { VoiceSnapshotManager } from "../sessions/extensions/voice/voice-snapshot-manager.js";
+import { VoiceSpeechSupervisor } from "../agents/extensions/voice/voice-speech-supervisor.js";
+import { VoiceSpeechToolSuite } from "../tooling/extensions/voice/voice-speech-tool-suite.js";
+
+import { DeterministicImageCodec } from "../tooling/extensions/vision/deterministic-image-codec.js";
+import { BroccoliVisionSubstrate } from "../sessions/extensions/vision/broccoli-vision-substrate.js";
+import { VisionSnapshotManager } from "../sessions/extensions/vision/vision-snapshot-manager.js";
+import { MultimodalVisionSupervisor } from "../agents/extensions/vision/multimodal-vision-supervisor.js";
+import { MultimodalVisionToolSuite } from "../tooling/extensions/vision/multimodal-vision-tool-suite.js";
+
+import { DeterministicKanbanEngine } from "../tooling/extensions/kanban/deterministic-kanban-engine.js";
+import { BroccoliKanbanSubstrate } from "../sessions/extensions/kanban/broccoli-kanban-substrate.js";
+import { KanbanSnapshotManager } from "../sessions/extensions/kanban/kanban-snapshot-manager.js";
+import { KanbanBoardSupervisor } from "../agents/extensions/kanban/kanban-board-supervisor.js";
+import { KanbanOrchestrationToolSuite } from "../tooling/extensions/kanban/kanban-orchestration-tool-suite.js";
+
+import { DeterministicWebEngine } from "../tooling/extensions/web/deterministic-web-engine.js";
+import { BroccoliWebSubstrate } from "../sessions/extensions/web/broccoli-web-substrate.js";
+import { WebSnapshotManager } from "../sessions/extensions/web/web-snapshot-manager.js";
+import { WebIntelligenceSupervisor } from "../agents/extensions/web/web-intelligence-supervisor.js";
+import { WebIntelligenceToolSuite } from "../tooling/extensions/web/web-intelligence-tool-suite.js";
+
+import { DeterministicCodeExecutor } from "../tooling/extensions/execution/deterministic-code-executor.js";
+import { BroccoliExecutionSubstrate } from "../sessions/extensions/execution/broccoli-execution-substrate.js";
+import { ExecutionSnapshotManager } from "../sessions/extensions/execution/execution-snapshot-manager.js";
+import { CodeExecutionSupervisor } from "../agents/extensions/execution/code-execution-supervisor.js";
+import { CodeExecutionToolSuite } from "../tooling/extensions/execution/code-execution-tool-suite.js";
+
+import { DeterministicBatchEvaluator } from "../tooling/extensions/batch/deterministic-batch-evaluator.js";
+import { BroccoliBatchSubstrate } from "../sessions/extensions/batch/broccoli-batch-substrate.js";
+import { BatchSnapshotManager } from "../sessions/extensions/batch/batch-snapshot-manager.js";
+import { BatchEvaluationSupervisor } from "../agents/extensions/batch/batch-evaluation-supervisor.js";
+import { BatchEvaluationToolSuite } from "../tooling/extensions/batch/batch-evaluation-tool-suite.js";
+
+import { DeterministicClarifyEngine } from "../tooling/extensions/clarify/deterministic-clarify-engine.js";
+import { BroccoliClarifySubstrate } from "../sessions/extensions/clarify/broccoli-clarify-substrate.js";
+import { ClarifySnapshotManager } from "../sessions/extensions/clarify/clarify-snapshot-manager.js";
+import { ClarifyInquirySupervisor } from "../agents/extensions/clarify/clarify-inquiry-supervisor.js";
+import { ClarifyInquiryToolSuite } from "../tooling/extensions/clarify/clarify-inquiry-tool-suite.js";
+
+import { DeterministicThreatScanner } from "../tooling/extensions/threat/deterministic-threat-scanner.js";
+import { BroccoliThreatSubstrate } from "../sessions/extensions/threat/broccoli-threat-substrate.js";
+import { ThreatSnapshotManager } from "../sessions/extensions/threat/threat-snapshot-manager.js";
+import { ThreatFirewallSupervisor } from "../agents/extensions/threat/threat-firewall-supervisor.js";
+import { ThreatFirewallToolSuite } from "../tooling/extensions/threat/threat-firewall-tool-suite.js";
+
+import { DeterministicCasStore } from "../tooling/extensions/checkpoint/deterministic-cas-store.js";
+import { BroccoliCheckpointSubstrate } from "../sessions/extensions/checkpoint/broccoli-checkpoint-substrate.js";
+import { CheckpointSnapshotManager } from "../sessions/extensions/checkpoint/checkpoint-snapshot-manager.js";
+import { CheckpointKernelSupervisor } from "../agents/extensions/checkpoint/checkpoint-kernel-supervisor.js";
+import { CheckpointKernelToolSuite } from "../tooling/extensions/checkpoint/checkpoint-kernel-tool-suite.js";
+
+import { DeterministicDisplayDriver } from "../tooling/extensions/computer-use/deterministic-display-driver.js";
+import { BroccoliDisplaySubstrate } from "../sessions/extensions/computer-use/broccoli-display-substrate.js";
+import { DisplaySnapshotManager } from "../sessions/extensions/computer-use/display-snapshot-manager.js";
+import { ComputerUseSupervisor } from "../agents/extensions/computer-use/computer-use-supervisor.js";
+import { ComputerUseToolSuite } from "../tooling/extensions/computer-use/computer-use-tool-suite.js";
+
+import { DeterministicSkillsHub } from "../tooling/extensions/skills-hub/deterministic-skills-hub.js";
+import { BroccoliSkillsHubSubstrate } from "../sessions/extensions/skills-hub/broccoli-skills-hub-substrate.js";
+import { SkillsHubSnapshotManager } from "../sessions/extensions/skills-hub/skills-hub-snapshot-manager.js";
+import { SkillsHubSupervisor } from "../agents/extensions/skills-hub/skills-hub-supervisor.js";
+import { SkillsHubToolSuite } from "../tooling/extensions/skills-hub/skills-hub-tool-suite.js";
+
+import { DeterministicCostGovernor } from "../tooling/extensions/cost/deterministic-cost-governor.js";
+import { BroccoliCostSubstrate } from "../sessions/extensions/cost/broccoli-cost-substrate.js";
+import { CostSnapshotManager } from "../sessions/extensions/cost/cost-snapshot-manager.js";
+import { CostGovernanceSupervisor } from "../agents/extensions/cost/cost-governance-supervisor.js";
+import { CostGovernanceToolSuite } from "../tooling/extensions/cost/cost-governance-tool-suite.js";
+
+import { DeterministicToolDiscloser } from "../tooling/extensions/disclosure/deterministic-tool-discloser.js";
+import { BroccoliDisclosureSubstrate } from "../sessions/extensions/disclosure/broccoli-disclosure-substrate.js";
+import { ToolDisclosureSnapshotManager } from "../sessions/extensions/disclosure/disclosure-snapshot-manager.js";
+import { ToolDisclosureSupervisor } from "../agents/extensions/disclosure/tool-disclosure-supervisor.js";
+import { ToolDisclosureToolSuite } from "../tooling/extensions/disclosure/tool-disclosure-tool-suite.js";
+
+import { DeterministicEvidenceLedger } from "../tooling/extensions/evidence/deterministic-evidence-ledger.js";
+import { BroccoliEvidenceSubstrate } from "../sessions/extensions/evidence/broccoli-evidence-substrate.js";
+import { EvidenceSnapshotManager } from "../sessions/extensions/evidence/evidence-snapshot-manager.js";
+import { VerificationEvidenceSupervisor } from "../agents/extensions/evidence/verification-evidence-supervisor.js";
+import { VerificationEvidenceToolSuite } from "../tooling/extensions/evidence/verification-evidence-tool-suite.js";
+
+import { DeterministicPromptCacher } from "../tooling/extensions/prompt/deterministic-prompt-cacher.js";
+import { BroccoliPromptCacheSubstrate } from "../sessions/extensions/prompt/broccoli-prompt-cache-substrate.js";
+import { PromptCacheSnapshotManager } from "../sessions/extensions/prompt/prompt-cache-snapshot-manager.js";
+import { PromptCacheSupervisor } from "../agents/extensions/prompt/prompt-cache-supervisor.js";
+import { PromptCacheToolSuite } from "../tooling/extensions/prompt/prompt-cache-tool-suite.js";
+
+import { DeterministicToolSegmenter } from "../tooling/extensions/execution_guard/deterministic-tool-segmenter.js";
+import { BroccoliExecutionGuardSubstrate } from "../sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";
+import { ExecutionGuardSnapshotManager } from "../sessions/extensions/execution_guard/execution-guard-snapshot-manager.js";
+import { ToolExecutionGuardSupervisor } from "../agents/extensions/execution_guard/tool-execution-guard-supervisor.js";
+import { ToolExecutionGuardToolSuite } from "../tooling/extensions/execution_guard/tool-execution-guard-tool-suite.js";
+
+import { DeterministicSecretRedactor } from "../tooling/extensions/redaction/deterministic-secret-redactor.js";
+import { BroccoliRedactionSubstrate } from "../sessions/extensions/redaction/broccoli-redaction-substrate.js";
+import { RedactionSnapshotManager } from "../sessions/extensions/redaction/redaction-snapshot-manager.js";
+import { SecretRedactionSupervisor } from "../agents/extensions/redaction/secret-redaction-supervisor.js";
+import { SecretRedactionToolSuite } from "../tooling/extensions/redaction/secret-redaction-tool-suite.js";
+
+import { DeterministicReviewEvaluator } from "../tooling/extensions/review/deterministic-review-evaluator.js";
+import { BroccoliReviewSubstrate } from "../sessions/extensions/review/broccoli-review-substrate.js";
+import { ReviewSnapshotManager } from "../sessions/extensions/review/review-snapshot-manager.js";
+import { BackgroundReviewSupervisor } from "../agents/extensions/review/background-review-supervisor.js";
+import { BackgroundReviewToolSuite } from "../tooling/extensions/review/background-review-tool-suite.js";
+
+import { DeterministicDiagnosticDoctor } from "../tooling/extensions/doctor/deterministic-diagnostic-doctor.js";
+import { BroccoliDoctorSubstrate } from "../sessions/extensions/doctor/broccoli-doctor-substrate.js";
+import { DoctorSnapshotManager } from "../sessions/extensions/doctor/doctor-snapshot-manager.js";
+import { DiagnosticDoctorSupervisor } from "../agents/extensions/doctor/diagnostic-doctor-supervisor.js";
+import { DiagnosticDoctorToolSuite } from "../tooling/extensions/doctor/diagnostic-doctor-tool-suite.js";
+
+import { DeterministicAuthFederator } from "../tooling/extensions/auth/deterministic-auth-federator.js";
+import { BroccoliAuthSubstrate } from "../sessions/extensions/auth/broccoli-auth-substrate.js";
+import { AuthSnapshotManager } from "../sessions/extensions/auth/auth-snapshot-manager.js";
+import { IdentityFederationSupervisor } from "../agents/extensions/auth/identity-federation-supervisor.js";
+import { IdentityFederationToolSuite } from "../tooling/extensions/auth/identity-federation-tool-suite.js";
+
+import { DeterministicSessionArchiver } from "../tooling/extensions/archive/deterministic-session-archiver.js";
+import { BroccoliArchiveSubstrate } from "../sessions/extensions/archive/broccoli-archive-substrate.js";
+import { ArchiveSnapshotManager } from "../sessions/extensions/archive/archive-snapshot-manager.js";
+import { SessionArchiveSupervisor } from "../agents/extensions/archive/session-archive-supervisor.js";
+import { SessionArchiveToolSuite } from "../tooling/extensions/archive/session-archive-tool-suite.js";
+
+import { DeterministicSkinEngine } from "../tooling/extensions/skin/deterministic-skin-engine.js";
+import { BroccoliSkinSubstrate } from "../sessions/extensions/skin/broccoli-skin-substrate.js";
+import { SkinSnapshotManager } from "../sessions/extensions/skin/skin-snapshot-manager.js";
+import { TerminalSkinSupervisor } from "../agents/extensions/skin/terminal-skin-supervisor.js";
+import { TerminalSkinToolSuite } from "../tooling/extensions/skin/terminal-skin-tool-suite.js";
+
+import { DeterministicAuxiliaryRouter, type DynamicRouterOptions } from "../tooling/extensions/router/deterministic-auxiliary-router.js";
+import { BroccoliAuxiliarySubstrate } from "../sessions/extensions/router/broccoli-auxiliary-substrate.js";
+import { AuxiliarySnapshotManager } from "../sessions/extensions/router/auxiliary-snapshot-manager.js";
+import { AuxiliaryRouterSupervisor } from "../agents/extensions/router/auxiliary-router-supervisor.js";
+import { AuxiliaryRouterToolSuite } from "../tooling/extensions/router/auxiliary-router-tool-suite.js";
+
+import { DeterministicReasoningScrubber } from "../tooling/extensions/reasoning/deterministic-reasoning-scrubber.js";
+import { BroccoliReasoningSubstrate } from "../sessions/extensions/reasoning/broccoli-reasoning-substrate.js";
+import { ReasoningSnapshotManager } from "../sessions/extensions/reasoning/reasoning-snapshot-manager.js";
+import { ReasoningSupervisor } from "../agents/extensions/reasoning/reasoning-supervisor.js";
+import { ReasoningToolSuite } from "../tooling/extensions/reasoning/reasoning-tool-suite.js";
+import type { ReasoningScrubberOptions } from "../core/contracts/reasoning.contracts.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -279,6 +430,8 @@ export interface MonolithFactoryOptions {
   config?: AgentConfig;
   maxTurnHistory?: number;
   fallbackModels?: readonly string[];
+  auxiliaryOptions?: DynamicRouterOptions;
+  reasoningOptions?: ReasoningScrubberOptions;
 }
 
 export class MonolithFactory {
@@ -532,6 +685,131 @@ export class MonolithFactory {
     patchSnapshotManager: PatchSnapshotManager;
     atomicMutationSupervisor: AtomicMutationSupervisor;
     fileMutationToolSuite: FileMutationToolSuite;
+    deterministicLspEngine: DeterministicLspEngine;
+    broccoliLspSubstrate: BroccoliLspSubstrate;
+    lspSnapshotManager: LspSnapshotManager;
+    semanticCodeSupervisor: SemanticCodeSupervisor;
+    lspCodeIntelligenceToolSuite: LspCodeIntelligenceToolSuite;
+    deterministicAudioCodec: DeterministicAudioCodec;
+    broccoliVoiceSubstrate: BroccoliVoiceSubstrate;
+    voiceSnapshotManager: VoiceSnapshotManager;
+    voiceSpeechSupervisor: VoiceSpeechSupervisor;
+    voiceSpeechToolSuite: VoiceSpeechToolSuite;
+    deterministicImageCodec: DeterministicImageCodec;
+    broccoliVisionSubstrate: BroccoliVisionSubstrate;
+    visionSnapshotManager: VisionSnapshotManager;
+    multimodalVisionSupervisor: MultimodalVisionSupervisor;
+    multimodalVisionToolSuite: MultimodalVisionToolSuite;
+    deterministicKanbanEngine: DeterministicKanbanEngine;
+    broccoliKanbanSubstrate: BroccoliKanbanSubstrate;
+    kanbanSnapshotManager: KanbanSnapshotManager;
+    kanbanBoardSupervisor: KanbanBoardSupervisor;
+    kanbanOrchestrationToolSuite: KanbanOrchestrationToolSuite;
+    deterministicWebEngine: DeterministicWebEngine;
+    broccoliWebSubstrate: BroccoliWebSubstrate;
+    webSnapshotManager: WebSnapshotManager;
+    webIntelligenceSupervisor: WebIntelligenceSupervisor;
+    webIntelligenceToolSuite: WebIntelligenceToolSuite;
+    deterministicCodeExecutor: DeterministicCodeExecutor;
+    broccoliExecutionSubstrate: BroccoliExecutionSubstrate;
+    executionSnapshotManager: ExecutionSnapshotManager;
+    codeExecutionSupervisor: CodeExecutionSupervisor;
+    codeExecutionToolSuite: CodeExecutionToolSuite;
+    deterministicBatchEvaluator: DeterministicBatchEvaluator;
+    broccoliBatchSubstrate: BroccoliBatchSubstrate;
+    batchSnapshotManager: BatchSnapshotManager;
+    batchEvaluationSupervisor: BatchEvaluationSupervisor;
+    batchEvaluationToolSuite: BatchEvaluationToolSuite;
+    deterministicClarifyEngine: DeterministicClarifyEngine;
+    broccoliClarifySubstrate: BroccoliClarifySubstrate;
+    clarifySnapshotManager: ClarifySnapshotManager;
+    clarifyInquirySupervisor: ClarifyInquirySupervisor;
+    clarifyInquiryToolSuite: ClarifyInquiryToolSuite;
+    deterministicThreatScanner: DeterministicThreatScanner;
+    broccoliThreatSubstrate: BroccoliThreatSubstrate;
+    threatSnapshotManager: ThreatSnapshotManager;
+    threatFirewallSupervisor: ThreatFirewallSupervisor;
+    threatFirewallToolSuite: ThreatFirewallToolSuite;
+    deterministicCasStore: DeterministicCasStore;
+    broccoliCheckpointSubstrate: BroccoliCheckpointSubstrate;
+    checkpointSnapshotManager: CheckpointSnapshotManager;
+    checkpointKernelSupervisor: CheckpointKernelSupervisor;
+    checkpointKernelToolSuite: CheckpointKernelToolSuite;
+    deterministicDisplayDriver: DeterministicDisplayDriver;
+    broccoliDisplaySubstrate: BroccoliDisplaySubstrate;
+    displaySnapshotManager: DisplaySnapshotManager;
+    computerUseSupervisor: ComputerUseSupervisor;
+    computerUseToolSuite: ComputerUseToolSuite;
+    deterministicSkillsHub: DeterministicSkillsHub;
+    broccoliSkillsHubSubstrate: BroccoliSkillsHubSubstrate;
+    skillsHubSnapshotManager: SkillsHubSnapshotManager;
+    skillsHubSupervisor: SkillsHubSupervisor;
+    skillsHubToolSuite: SkillsHubToolSuite;
+    deterministicCostGovernor: DeterministicCostGovernor;
+    broccoliCostSubstrate: BroccoliCostSubstrate;
+    costSnapshotManager: CostSnapshotManager;
+    costGovernanceSupervisor: CostGovernanceSupervisor;
+    costGovernanceToolSuite: CostGovernanceToolSuite;
+    deterministicToolDiscloser: DeterministicToolDiscloser;
+    broccoliDisclosureSubstrate: BroccoliDisclosureSubstrate;
+    toolDisclosureSnapshotManager: ToolDisclosureSnapshotManager;
+    toolDisclosureSupervisor: ToolDisclosureSupervisor;
+    toolDisclosureToolSuite: ToolDisclosureToolSuite;
+    deterministicEvidenceLedger: DeterministicEvidenceLedger;
+    broccoliEvidenceSubstrate: BroccoliEvidenceSubstrate;
+    evidenceSnapshotManager: EvidenceSnapshotManager;
+    verificationEvidenceSupervisor: VerificationEvidenceSupervisor;
+    verificationEvidenceToolSuite: VerificationEvidenceToolSuite;
+    deterministicPromptCacher: DeterministicPromptCacher;
+    broccoliPromptCacheSubstrate: BroccoliPromptCacheSubstrate;
+    promptCacheSnapshotManager: PromptCacheSnapshotManager;
+    promptCacheSupervisor: PromptCacheSupervisor;
+    promptCacheToolSuite: PromptCacheToolSuite;
+    deterministicToolSegmenter: DeterministicToolSegmenter;
+    broccoliExecutionGuardSubstrate: BroccoliExecutionGuardSubstrate;
+    executionGuardSnapshotManager: ExecutionGuardSnapshotManager;
+    toolExecutionGuardSupervisor: ToolExecutionGuardSupervisor;
+    toolExecutionGuardToolSuite: ToolExecutionGuardToolSuite;
+    deterministicSecretRedactor: DeterministicSecretRedactor;
+    broccoliRedactionSubstrate: BroccoliRedactionSubstrate;
+    redactionSnapshotManager: RedactionSnapshotManager;
+    secretRedactionSupervisor: SecretRedactionSupervisor;
+    secretRedactionToolSuite: SecretRedactionToolSuite;
+    deterministicReviewEvaluator: DeterministicReviewEvaluator;
+    broccoliReviewSubstrate: BroccoliReviewSubstrate;
+    reviewSnapshotManager: ReviewSnapshotManager;
+    backgroundReviewSupervisor: BackgroundReviewSupervisor;
+    backgroundReviewToolSuite: BackgroundReviewToolSuite;
+    deterministicDiagnosticDoctor: DeterministicDiagnosticDoctor;
+    broccoliDoctorSubstrate: BroccoliDoctorSubstrate;
+    doctorSnapshotManager: DoctorSnapshotManager;
+    diagnosticDoctorSupervisor: DiagnosticDoctorSupervisor;
+    diagnosticDoctorToolSuite: DiagnosticDoctorToolSuite;
+    deterministicAuthFederator: DeterministicAuthFederator;
+    broccoliAuthSubstrate: BroccoliAuthSubstrate;
+    authSnapshotManager: AuthSnapshotManager;
+    identityFederationSupervisor: IdentityFederationSupervisor;
+    identityFederationToolSuite: IdentityFederationToolSuite;
+    deterministicSessionArchiver: DeterministicSessionArchiver;
+    broccoliArchiveSubstrate: BroccoliArchiveSubstrate;
+    archiveSnapshotManager: ArchiveSnapshotManager;
+    sessionArchiveSupervisor: SessionArchiveSupervisor;
+    sessionArchiveToolSuite: SessionArchiveToolSuite;
+    deterministicSkinEngine: DeterministicSkinEngine;
+    broccoliSkinSubstrate: BroccoliSkinSubstrate;
+    skinSnapshotManager: SkinSnapshotManager;
+    terminalSkinSupervisor: TerminalSkinSupervisor;
+    terminalSkinToolSuite: TerminalSkinToolSuite;
+    deterministicAuxiliaryRouter: DeterministicAuxiliaryRouter;
+    broccoliAuxiliarySubstrate: BroccoliAuxiliarySubstrate;
+    auxiliarySnapshotManager: AuxiliarySnapshotManager;
+    auxiliaryRouterSupervisor: AuxiliaryRouterSupervisor;
+    auxiliaryRouterToolSuite: AuxiliaryRouterToolSuite;
+    deterministicReasoningScrubber: DeterministicReasoningScrubber;
+    broccoliReasoningSubstrate: BroccoliReasoningSubstrate;
+    reasoningSnapshotManager: ReasoningSnapshotManager;
+    reasoningSupervisor: ReasoningSupervisor;
+    reasoningToolSuite: ReasoningToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -920,6 +1198,234 @@ export class MonolithFactory {
     );
     const fileMutationToolSuite = new FileMutationToolSuite(atomicMutationSupervisor);
 
+    const deterministicLspEngine = new DeterministicLspEngine();
+    const broccoliLspSubstrate = new BroccoliLspSubstrate(deterministicLspEngine);
+    const lspSnapshotManager = new LspSnapshotManager(broccoliLspSubstrate);
+    const semanticCodeSupervisor = new SemanticCodeSupervisor(
+      deterministicLspEngine,
+      broccoliLspSubstrate
+    );
+    const lspCodeIntelligenceToolSuite = new LspCodeIntelligenceToolSuite(semanticCodeSupervisor);
+
+    const deterministicAudioCodec = new DeterministicAudioCodec();
+    const broccoliVoiceSubstrate = new BroccoliVoiceSubstrate();
+    const voiceSnapshotManager = new VoiceSnapshotManager(broccoliVoiceSubstrate);
+    const voiceSpeechSupervisor = new VoiceSpeechSupervisor(
+      deterministicAudioCodec,
+      broccoliVoiceSubstrate
+    );
+    const voiceSpeechToolSuite = new VoiceSpeechToolSuite(voiceSpeechSupervisor);
+
+    const deterministicImageCodec = new DeterministicImageCodec();
+    const broccoliVisionSubstrate = new BroccoliVisionSubstrate();
+    const visionSnapshotManager = new VisionSnapshotManager(broccoliVisionSubstrate);
+    const multimodalVisionSupervisor = new MultimodalVisionSupervisor(
+      deterministicImageCodec,
+      broccoliVisionSubstrate
+    );
+    const multimodalVisionToolSuite = new MultimodalVisionToolSuite(multimodalVisionSupervisor);
+
+    const deterministicKanbanEngine = new DeterministicKanbanEngine();
+    const broccoliKanbanSubstrate = new BroccoliKanbanSubstrate();
+    const kanbanSnapshotManager = new KanbanSnapshotManager(broccoliKanbanSubstrate);
+    const kanbanBoardSupervisor = new KanbanBoardSupervisor(
+      deterministicKanbanEngine,
+      broccoliKanbanSubstrate
+    );
+    const kanbanOrchestrationToolSuite = new KanbanOrchestrationToolSuite(kanbanBoardSupervisor);
+
+    const deterministicWebEngine = new DeterministicWebEngine();
+    const broccoliWebSubstrate = new BroccoliWebSubstrate();
+    const webSnapshotManager = new WebSnapshotManager(broccoliWebSubstrate);
+    const webIntelligenceSupervisor = new WebIntelligenceSupervisor(
+      deterministicWebEngine,
+      broccoliWebSubstrate
+    );
+    const webIntelligenceToolSuite = new WebIntelligenceToolSuite(webIntelligenceSupervisor);
+
+    const deterministicCodeExecutor = new DeterministicCodeExecutor();
+    const broccoliExecutionSubstrate = new BroccoliExecutionSubstrate();
+    const executionSnapshotManager = new ExecutionSnapshotManager(broccoliExecutionSubstrate);
+    const codeExecutionSupervisor = new CodeExecutionSupervisor(
+      deterministicCodeExecutor,
+      broccoliExecutionSubstrate
+    );
+    const codeExecutionToolSuite = new CodeExecutionToolSuite(codeExecutionSupervisor);
+
+    const deterministicBatchEvaluator = new DeterministicBatchEvaluator();
+    const broccoliBatchSubstrate = new BroccoliBatchSubstrate();
+    const batchSnapshotManager = new BatchSnapshotManager(broccoliBatchSubstrate);
+    const batchEvaluationSupervisor = new BatchEvaluationSupervisor(
+      deterministicBatchEvaluator,
+      broccoliBatchSubstrate
+    );
+    const batchEvaluationToolSuite = new BatchEvaluationToolSuite(batchEvaluationSupervisor);
+
+    const deterministicClarifyEngine = new DeterministicClarifyEngine();
+    const broccoliClarifySubstrate = new BroccoliClarifySubstrate();
+    const clarifySnapshotManager = new ClarifySnapshotManager(broccoliClarifySubstrate);
+    const clarifyInquirySupervisor = new ClarifyInquirySupervisor(
+      deterministicClarifyEngine,
+      broccoliClarifySubstrate
+    );
+    const clarifyInquiryToolSuite = new ClarifyInquiryToolSuite(clarifyInquirySupervisor);
+
+    const deterministicThreatScanner = new DeterministicThreatScanner();
+    const broccoliThreatSubstrate = new BroccoliThreatSubstrate();
+    const threatSnapshotManager = new ThreatSnapshotManager(broccoliThreatSubstrate);
+    const threatFirewallSupervisor = new ThreatFirewallSupervisor(
+      deterministicThreatScanner,
+      broccoliThreatSubstrate
+    );
+    const threatFirewallToolSuite = new ThreatFirewallToolSuite(threatFirewallSupervisor);
+
+    const deterministicCasStore = new DeterministicCasStore();
+    const broccoliCheckpointSubstrate = new BroccoliCheckpointSubstrate();
+    const checkpointSnapshotManager = new CheckpointSnapshotManager(broccoliCheckpointSubstrate);
+    const checkpointKernelSupervisor = new CheckpointKernelSupervisor(
+      deterministicCasStore,
+      broccoliCheckpointSubstrate
+    );
+    const checkpointKernelToolSuite = new CheckpointKernelToolSuite(checkpointKernelSupervisor);
+
+    const deterministicDisplayDriver = new DeterministicDisplayDriver();
+    const broccoliDisplaySubstrate = new BroccoliDisplaySubstrate();
+    const displaySnapshotManager = new DisplaySnapshotManager(broccoliDisplaySubstrate);
+    const computerUseSupervisor = new ComputerUseSupervisor(
+      deterministicDisplayDriver,
+      broccoliDisplaySubstrate
+    );
+    const computerUseToolSuite = new ComputerUseToolSuite(computerUseSupervisor);
+
+    const deterministicSkillsHub = new DeterministicSkillsHub();
+    const broccoliSkillsHubSubstrate = new BroccoliSkillsHubSubstrate();
+    const skillsHubSnapshotManager = new SkillsHubSnapshotManager(broccoliSkillsHubSubstrate);
+    const skillsHubSupervisor = new SkillsHubSupervisor(
+      deterministicSkillsHub,
+      broccoliSkillsHubSubstrate
+    );
+    const skillsHubToolSuite = new SkillsHubToolSuite(skillsHubSupervisor);
+
+    const deterministicCostGovernor = new DeterministicCostGovernor();
+    const broccoliCostSubstrate = new BroccoliCostSubstrate();
+    const costSnapshotManager = new CostSnapshotManager(broccoliCostSubstrate);
+    const costGovernanceSupervisor = new CostGovernanceSupervisor(
+      deterministicCostGovernor,
+      broccoliCostSubstrate
+    );
+    const costGovernanceToolSuite = new CostGovernanceToolSuite(costGovernanceSupervisor);
+
+    const deterministicToolDiscloser = new DeterministicToolDiscloser();
+    const broccoliDisclosureSubstrate = new BroccoliDisclosureSubstrate();
+    const toolDisclosureSnapshotManager = new ToolDisclosureSnapshotManager(broccoliDisclosureSubstrate);
+    const toolDisclosureSupervisor = new ToolDisclosureSupervisor(
+      deterministicToolDiscloser,
+      broccoliDisclosureSubstrate
+    );
+    const toolDisclosureToolSuite = new ToolDisclosureToolSuite(toolDisclosureSupervisor);
+
+    const deterministicEvidenceLedger = new DeterministicEvidenceLedger();
+    const broccoliEvidenceSubstrate = new BroccoliEvidenceSubstrate();
+    const evidenceSnapshotManager = new EvidenceSnapshotManager(broccoliEvidenceSubstrate);
+    const verificationEvidenceSupervisor = new VerificationEvidenceSupervisor(
+      deterministicEvidenceLedger,
+      broccoliEvidenceSubstrate
+    );
+    const verificationEvidenceToolSuite = new VerificationEvidenceToolSuite(verificationEvidenceSupervisor);
+
+    const deterministicPromptCacher = new DeterministicPromptCacher();
+    const broccoliPromptCacheSubstrate = new BroccoliPromptCacheSubstrate();
+    const promptCacheSnapshotManager = new PromptCacheSnapshotManager(broccoliPromptCacheSubstrate);
+    const promptCacheSupervisor = new PromptCacheSupervisor(
+      deterministicPromptCacher,
+      broccoliPromptCacheSubstrate
+    );
+    const promptCacheToolSuite = new PromptCacheToolSuite(promptCacheSupervisor);
+
+    const deterministicToolSegmenter = new DeterministicToolSegmenter();
+    const broccoliExecutionGuardSubstrate = new BroccoliExecutionGuardSubstrate();
+    const executionGuardSnapshotManager = new ExecutionGuardSnapshotManager(broccoliExecutionGuardSubstrate);
+    const toolExecutionGuardSupervisor = new ToolExecutionGuardSupervisor(
+      deterministicToolSegmenter,
+      broccoliExecutionGuardSubstrate
+    );
+    const toolExecutionGuardToolSuite = new ToolExecutionGuardToolSuite(toolExecutionGuardSupervisor);
+
+    const deterministicSecretRedactor = new DeterministicSecretRedactor();
+    const broccoliRedactionSubstrate = new BroccoliRedactionSubstrate();
+    const redactionSnapshotManager = new RedactionSnapshotManager(broccoliRedactionSubstrate);
+    const secretRedactionSupervisor = new SecretRedactionSupervisor(
+      deterministicSecretRedactor,
+      broccoliRedactionSubstrate
+    );
+    const secretRedactionToolSuite = new SecretRedactionToolSuite(secretRedactionSupervisor);
+
+    const deterministicReviewEvaluator = new DeterministicReviewEvaluator();
+    const broccoliReviewSubstrate = new BroccoliReviewSubstrate();
+    const reviewSnapshotManager = new ReviewSnapshotManager(broccoliReviewSubstrate);
+    const backgroundReviewSupervisor = new BackgroundReviewSupervisor(
+      deterministicReviewEvaluator,
+      broccoliReviewSubstrate
+    );
+    const backgroundReviewToolSuite = new BackgroundReviewToolSuite(backgroundReviewSupervisor);
+
+    const deterministicDiagnosticDoctor = new DeterministicDiagnosticDoctor();
+    const broccoliDoctorSubstrate = new BroccoliDoctorSubstrate();
+    const doctorSnapshotManager = new DoctorSnapshotManager(broccoliDoctorSubstrate);
+    const diagnosticDoctorSupervisor = new DiagnosticDoctorSupervisor(
+      deterministicDiagnosticDoctor,
+      broccoliDoctorSubstrate
+    );
+    const diagnosticDoctorToolSuite = new DiagnosticDoctorToolSuite(diagnosticDoctorSupervisor);
+
+    const deterministicAuthFederator = new DeterministicAuthFederator();
+    const broccoliAuthSubstrate = new BroccoliAuthSubstrate();
+    const authSnapshotManager = new AuthSnapshotManager(broccoliAuthSubstrate);
+    const identityFederationSupervisor = new IdentityFederationSupervisor(
+      deterministicAuthFederator,
+      broccoliAuthSubstrate
+    );
+    const identityFederationToolSuite = new IdentityFederationToolSuite(identityFederationSupervisor);
+
+    const deterministicSessionArchiver = new DeterministicSessionArchiver();
+    const broccoliArchiveSubstrate = new BroccoliArchiveSubstrate();
+    const archiveSnapshotManager = new ArchiveSnapshotManager(broccoliArchiveSubstrate);
+    const sessionArchiveSupervisor = new SessionArchiveSupervisor(
+      deterministicSessionArchiver,
+      broccoliArchiveSubstrate
+    );
+    const sessionArchiveToolSuite = new SessionArchiveToolSuite(sessionArchiveSupervisor);
+
+    const deterministicSkinEngine = new DeterministicSkinEngine();
+    const broccoliSkinSubstrate = new BroccoliSkinSubstrate();
+    const skinSnapshotManager = new SkinSnapshotManager(broccoliSkinSubstrate);
+    const terminalSkinSupervisor = new TerminalSkinSupervisor(
+      deterministicSkinEngine,
+      broccoliSkinSubstrate
+    );
+    const terminalSkinToolSuite = new TerminalSkinToolSuite(terminalSkinSupervisor);
+
+    const deterministicAuxiliaryRouter = new DeterministicAuxiliaryRouter(options.auxiliaryOptions);
+    if (config.modelName) {
+      deterministicAuxiliaryRouter.setUserSessionModel("user-session", config.modelName);
+    }
+    const broccoliAuxiliarySubstrate = new BroccoliAuxiliarySubstrate();
+    const auxiliarySnapshotManager = new AuxiliarySnapshotManager(broccoliAuxiliarySubstrate);
+    const auxiliaryRouterSupervisor = new AuxiliaryRouterSupervisor(
+      deterministicAuxiliaryRouter,
+      broccoliAuxiliarySubstrate
+    );
+    const auxiliaryRouterToolSuite = new AuxiliaryRouterToolSuite(auxiliaryRouterSupervisor);
+
+    const deterministicReasoningScrubber = new DeterministicReasoningScrubber(options.reasoningOptions);
+    const broccoliReasoningSubstrate = new BroccoliReasoningSubstrate();
+    const reasoningSnapshotManager = new ReasoningSnapshotManager(broccoliReasoningSubstrate);
+    const reasoningSupervisor = new ReasoningSupervisor(
+      deterministicReasoningScrubber,
+      broccoliReasoningSubstrate
+    );
+    const reasoningToolSuite = new ReasoningToolSuite(reasoningSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -952,7 +1458,38 @@ export class MonolithFactory {
       processToolSuite,
       arbiterToolSuite,
       learningCuratorToolSuite,
-      fileMutationToolSuite
+      fileMutationToolSuite,
+      lspCodeIntelligenceToolSuite,
+      voiceSpeechToolSuite,
+      multimodalVisionToolSuite,
+      kanbanOrchestrationToolSuite,
+      webIntelligenceToolSuite,
+      codeExecutionToolSuite,
+      batchEvaluationToolSuite,
+      clarifyInquiryToolSuite,
+      threatFirewallToolSuite,
+      checkpointKernelToolSuite,
+      computerUseToolSuite,
+      skillsHubToolSuite,
+      costGovernanceToolSuite,
+      toolDisclosureToolSuite,
+      verificationEvidenceToolSuite,
+      promptCacheToolSuite,
+      toolExecutionGuardToolSuite,
+      secretRedactionToolSuite,
+      backgroundReviewToolSuite,
+      diagnosticDoctorToolSuite,
+      identityFederationToolSuite,
+      sessionArchiveToolSuite,
+      terminalSkinToolSuite,
+      auxiliaryRouterToolSuite,
+      reasoningToolSuite
+    );
+
+    // Bind supervisor in-process tool calling
+    codeExecutionSupervisor.setToolDispatcher(
+      async (name, args) => toolRegistry.executeTool(name, args, cwd),
+      toolRegistry.listTools().map((t) => t.name)
     );
 
     const promptComposer = new PromptComposer();
@@ -1224,6 +1761,131 @@ export class MonolithFactory {
       patchSnapshotManager,
       atomicMutationSupervisor,
       fileMutationToolSuite,
+      deterministicLspEngine,
+      broccoliLspSubstrate,
+      lspSnapshotManager,
+      semanticCodeSupervisor,
+      lspCodeIntelligenceToolSuite,
+      deterministicAudioCodec,
+      broccoliVoiceSubstrate,
+      voiceSnapshotManager,
+      voiceSpeechSupervisor,
+      voiceSpeechToolSuite,
+      deterministicImageCodec,
+      broccoliVisionSubstrate,
+      visionSnapshotManager,
+      multimodalVisionSupervisor,
+      multimodalVisionToolSuite,
+      deterministicKanbanEngine,
+      broccoliKanbanSubstrate,
+      kanbanSnapshotManager,
+      kanbanBoardSupervisor,
+      kanbanOrchestrationToolSuite,
+      deterministicWebEngine,
+      broccoliWebSubstrate,
+      webSnapshotManager,
+      webIntelligenceSupervisor,
+      webIntelligenceToolSuite,
+      deterministicCodeExecutor,
+      broccoliExecutionSubstrate,
+      executionSnapshotManager,
+      codeExecutionSupervisor,
+      codeExecutionToolSuite,
+      deterministicBatchEvaluator,
+      broccoliBatchSubstrate,
+      batchSnapshotManager,
+      batchEvaluationSupervisor,
+      batchEvaluationToolSuite,
+      deterministicClarifyEngine,
+      broccoliClarifySubstrate,
+      clarifySnapshotManager,
+      clarifyInquirySupervisor,
+      clarifyInquiryToolSuite,
+      deterministicThreatScanner,
+      broccoliThreatSubstrate,
+      threatSnapshotManager,
+      threatFirewallSupervisor,
+      threatFirewallToolSuite,
+      deterministicCasStore,
+      broccoliCheckpointSubstrate,
+      checkpointSnapshotManager,
+      checkpointKernelSupervisor,
+      checkpointKernelToolSuite,
+      deterministicDisplayDriver,
+      broccoliDisplaySubstrate,
+      displaySnapshotManager,
+      computerUseSupervisor,
+      computerUseToolSuite,
+      deterministicSkillsHub,
+      broccoliSkillsHubSubstrate,
+      skillsHubSnapshotManager,
+      skillsHubSupervisor,
+      skillsHubToolSuite,
+      deterministicCostGovernor,
+      broccoliCostSubstrate,
+      costSnapshotManager,
+      costGovernanceSupervisor,
+      costGovernanceToolSuite,
+      deterministicToolDiscloser,
+      broccoliDisclosureSubstrate,
+      toolDisclosureSnapshotManager,
+      toolDisclosureSupervisor,
+      toolDisclosureToolSuite,
+      deterministicEvidenceLedger,
+      broccoliEvidenceSubstrate,
+      evidenceSnapshotManager,
+      verificationEvidenceSupervisor,
+      verificationEvidenceToolSuite,
+      deterministicPromptCacher,
+      broccoliPromptCacheSubstrate,
+      promptCacheSnapshotManager,
+      promptCacheSupervisor,
+      promptCacheToolSuite,
+      deterministicToolSegmenter,
+      broccoliExecutionGuardSubstrate,
+      executionGuardSnapshotManager,
+      toolExecutionGuardSupervisor,
+      toolExecutionGuardToolSuite,
+      deterministicSecretRedactor,
+      broccoliRedactionSubstrate,
+      redactionSnapshotManager,
+      secretRedactionSupervisor,
+      secretRedactionToolSuite,
+      deterministicReviewEvaluator,
+      broccoliReviewSubstrate,
+      reviewSnapshotManager,
+      backgroundReviewSupervisor,
+      backgroundReviewToolSuite,
+      deterministicDiagnosticDoctor,
+      broccoliDoctorSubstrate,
+      doctorSnapshotManager,
+      diagnosticDoctorSupervisor,
+      diagnosticDoctorToolSuite,
+      deterministicAuthFederator,
+      broccoliAuthSubstrate,
+      authSnapshotManager,
+      identityFederationSupervisor,
+      identityFederationToolSuite,
+      deterministicSessionArchiver,
+      broccoliArchiveSubstrate,
+      archiveSnapshotManager,
+      sessionArchiveSupervisor,
+      sessionArchiveToolSuite,
+      deterministicSkinEngine,
+      broccoliSkinSubstrate,
+      skinSnapshotManager,
+      terminalSkinSupervisor,
+      terminalSkinToolSuite,
+      deterministicAuxiliaryRouter,
+      broccoliAuxiliarySubstrate,
+      auxiliarySnapshotManager,
+      auxiliaryRouterSupervisor,
+      auxiliaryRouterToolSuite,
+      deterministicReasoningScrubber,
+      broccoliReasoningSubstrate,
+      reasoningSnapshotManager,
+      reasoningSupervisor,
+      reasoningToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

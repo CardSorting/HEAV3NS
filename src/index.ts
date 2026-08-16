@@ -234,6 +234,156 @@ import { PatchSnapshotManager } from "./sessions/extensions/patch/patch-snapshot
 import { AtomicMutationSupervisor } from "./agents/extensions/patch/atomic-mutation-supervisor.js";
 import { FileMutationToolSuite } from "./tooling/extensions/patch/file-mutation-tool-suite.js";
 
+import { DeterministicLspEngine } from "./tooling/extensions/lsp/deterministic-lsp-engine.js";
+import { BroccoliLspSubstrate } from "./sessions/extensions/lsp/broccoli-lsp-substrate.js";
+import { LspSnapshotManager } from "./sessions/extensions/lsp/lsp-snapshot-manager.js";
+import { SemanticCodeSupervisor } from "./agents/extensions/lsp/semantic-code-supervisor.js";
+import { LspCodeIntelligenceToolSuite } from "./tooling/extensions/lsp/lsp-code-intelligence-tool-suite.js";
+
+import { DeterministicAudioCodec } from "./tooling/extensions/voice/deterministic-audio-codec.js";
+import { BroccoliVoiceSubstrate } from "./sessions/extensions/voice/broccoli-voice-substrate.js";
+import { VoiceSnapshotManager } from "./sessions/extensions/voice/voice-snapshot-manager.js";
+import { VoiceSpeechSupervisor } from "./agents/extensions/voice/voice-speech-supervisor.js";
+import { VoiceSpeechToolSuite } from "./tooling/extensions/voice/voice-speech-tool-suite.js";
+
+import { DeterministicImageCodec } from "./tooling/extensions/vision/deterministic-image-codec.js";
+import { BroccoliVisionSubstrate } from "./sessions/extensions/vision/broccoli-vision-substrate.js";
+import { VisionSnapshotManager } from "./sessions/extensions/vision/vision-snapshot-manager.js";
+import { MultimodalVisionSupervisor } from "./agents/extensions/vision/multimodal-vision-supervisor.js";
+import { MultimodalVisionToolSuite } from "./tooling/extensions/vision/multimodal-vision-tool-suite.js";
+
+import { DeterministicKanbanEngine } from "./tooling/extensions/kanban/deterministic-kanban-engine.js";
+import { BroccoliKanbanSubstrate } from "./sessions/extensions/kanban/broccoli-kanban-substrate.js";
+import { KanbanSnapshotManager } from "./sessions/extensions/kanban/kanban-snapshot-manager.js";
+import { KanbanBoardSupervisor } from "./agents/extensions/kanban/kanban-board-supervisor.js";
+import { KanbanOrchestrationToolSuite } from "./tooling/extensions/kanban/kanban-orchestration-tool-suite.js";
+
+import { DeterministicWebEngine } from "./tooling/extensions/web/deterministic-web-engine.js";
+import { BroccoliWebSubstrate } from "./sessions/extensions/web/broccoli-web-substrate.js";
+import { WebSnapshotManager } from "./sessions/extensions/web/web-snapshot-manager.js";
+import { WebIntelligenceSupervisor } from "./agents/extensions/web/web-intelligence-supervisor.js";
+import { WebIntelligenceToolSuite } from "./tooling/extensions/web/web-intelligence-tool-suite.js";
+
+import { DeterministicCodeExecutor } from "./tooling/extensions/execution/deterministic-code-executor.js";
+import { BroccoliExecutionSubstrate } from "./sessions/extensions/execution/broccoli-execution-substrate.js";
+import { ExecutionSnapshotManager } from "./sessions/extensions/execution/execution-snapshot-manager.js";
+import { CodeExecutionSupervisor } from "./agents/extensions/execution/code-execution-supervisor.js";
+import { CodeExecutionToolSuite } from "./tooling/extensions/execution/code-execution-tool-suite.js";
+
+import { DeterministicBatchEvaluator } from "./tooling/extensions/batch/deterministic-batch-evaluator.js";
+import { BroccoliBatchSubstrate } from "./sessions/extensions/batch/broccoli-batch-substrate.js";
+import { BatchSnapshotManager } from "./sessions/extensions/batch/batch-snapshot-manager.js";
+import { BatchEvaluationSupervisor } from "./agents/extensions/batch/batch-evaluation-supervisor.js";
+import { BatchEvaluationToolSuite } from "./tooling/extensions/batch/batch-evaluation-tool-suite.js";
+
+import { DeterministicClarifyEngine } from "./tooling/extensions/clarify/deterministic-clarify-engine.js";
+import { BroccoliClarifySubstrate } from "./sessions/extensions/clarify/broccoli-clarify-substrate.js";
+import { ClarifySnapshotManager } from "./sessions/extensions/clarify/clarify-snapshot-manager.js";
+import { ClarifyInquirySupervisor } from "./agents/extensions/clarify/clarify-inquiry-supervisor.js";
+import { ClarifyInquiryToolSuite } from "./tooling/extensions/clarify/clarify-inquiry-tool-suite.js";
+
+import { DeterministicThreatScanner } from "./tooling/extensions/threat/deterministic-threat-scanner.js";
+import { BroccoliThreatSubstrate } from "./sessions/extensions/threat/broccoli-threat-substrate.js";
+import { ThreatSnapshotManager } from "./sessions/extensions/threat/threat-snapshot-manager.js";
+import { ThreatFirewallSupervisor } from "./agents/extensions/threat/threat-firewall-supervisor.js";
+import { ThreatFirewallToolSuite } from "./tooling/extensions/threat/threat-firewall-tool-suite.js";
+
+import { DeterministicCasStore } from "./tooling/extensions/checkpoint/deterministic-cas-store.js";
+import { BroccoliCheckpointSubstrate } from "./sessions/extensions/checkpoint/broccoli-checkpoint-substrate.js";
+import { CheckpointSnapshotManager } from "./sessions/extensions/checkpoint/checkpoint-snapshot-manager.js";
+import { CheckpointKernelSupervisor } from "./agents/extensions/checkpoint/checkpoint-kernel-supervisor.js";
+import { CheckpointKernelToolSuite } from "./tooling/extensions/checkpoint/checkpoint-kernel-tool-suite.js";
+
+import { DeterministicDisplayDriver } from "./tooling/extensions/computer-use/deterministic-display-driver.js";
+import { BroccoliDisplaySubstrate } from "./sessions/extensions/computer-use/broccoli-display-substrate.js";
+import { DisplaySnapshotManager } from "./sessions/extensions/computer-use/display-snapshot-manager.js";
+import { ComputerUseSupervisor } from "./agents/extensions/computer-use/computer-use-supervisor.js";
+import { ComputerUseToolSuite } from "./tooling/extensions/computer-use/computer-use-tool-suite.js";
+
+import { DeterministicSkillsHub } from "./tooling/extensions/skills-hub/deterministic-skills-hub.js";
+import { BroccoliSkillsHubSubstrate } from "./sessions/extensions/skills-hub/broccoli-skills-hub-substrate.js";
+import { SkillsHubSnapshotManager } from "./sessions/extensions/skills-hub/skills-hub-snapshot-manager.js";
+import { SkillsHubSupervisor } from "./agents/extensions/skills-hub/skills-hub-supervisor.js";
+import { SkillsHubToolSuite } from "./tooling/extensions/skills-hub/skills-hub-tool-suite.js";
+
+import { DeterministicCostGovernor } from "./tooling/extensions/cost/deterministic-cost-governor.js";
+import { BroccoliCostSubstrate } from "./sessions/extensions/cost/broccoli-cost-substrate.js";
+import { CostSnapshotManager } from "./sessions/extensions/cost/cost-snapshot-manager.js";
+import { CostGovernanceSupervisor } from "./agents/extensions/cost/cost-governance-supervisor.js";
+import { CostGovernanceToolSuite } from "./tooling/extensions/cost/cost-governance-tool-suite.js";
+
+import { DeterministicToolDiscloser } from "./tooling/extensions/disclosure/deterministic-tool-discloser.js";
+import { BroccoliDisclosureSubstrate } from "./sessions/extensions/disclosure/broccoli-disclosure-substrate.js";
+import { ToolDisclosureSnapshotManager } from "./sessions/extensions/disclosure/disclosure-snapshot-manager.js";
+import { ToolDisclosureSupervisor } from "./agents/extensions/disclosure/tool-disclosure-supervisor.js";
+import { ToolDisclosureToolSuite } from "./tooling/extensions/disclosure/tool-disclosure-tool-suite.js";
+
+import { DeterministicEvidenceLedger } from "./tooling/extensions/evidence/deterministic-evidence-ledger.js";
+import { BroccoliEvidenceSubstrate } from "./sessions/extensions/evidence/broccoli-evidence-substrate.js";
+import { EvidenceSnapshotManager } from "./sessions/extensions/evidence/evidence-snapshot-manager.js";
+import { VerificationEvidenceSupervisor } from "./agents/extensions/evidence/verification-evidence-supervisor.js";
+import { VerificationEvidenceToolSuite } from "./tooling/extensions/evidence/verification-evidence-tool-suite.js";
+
+import { DeterministicPromptCacher } from "./tooling/extensions/prompt/deterministic-prompt-cacher.js";
+import { BroccoliPromptCacheSubstrate } from "./sessions/extensions/prompt/broccoli-prompt-cache-substrate.js";
+import { PromptCacheSnapshotManager } from "./sessions/extensions/prompt/prompt-cache-snapshot-manager.js";
+import { PromptCacheSupervisor } from "./agents/extensions/prompt/prompt-cache-supervisor.js";
+import { PromptCacheToolSuite } from "./tooling/extensions/prompt/prompt-cache-tool-suite.js";
+
+import { DeterministicToolSegmenter } from "./tooling/extensions/execution_guard/deterministic-tool-segmenter.js";
+import { BroccoliExecutionGuardSubstrate } from "./sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";
+import { ExecutionGuardSnapshotManager } from "./sessions/extensions/execution_guard/execution-guard-snapshot-manager.js";
+import { ToolExecutionGuardSupervisor } from "./agents/extensions/execution_guard/tool-execution-guard-supervisor.js";
+import { ToolExecutionGuardToolSuite } from "./tooling/extensions/execution_guard/tool-execution-guard-tool-suite.js";
+
+import { DeterministicSecretRedactor } from "./tooling/extensions/redaction/deterministic-secret-redactor.js";
+import { BroccoliRedactionSubstrate } from "./sessions/extensions/redaction/broccoli-redaction-substrate.js";
+import { RedactionSnapshotManager } from "./sessions/extensions/redaction/redaction-snapshot-manager.js";
+import { SecretRedactionSupervisor } from "./agents/extensions/redaction/secret-redaction-supervisor.js";
+import { SecretRedactionToolSuite } from "./tooling/extensions/redaction/secret-redaction-tool-suite.js";
+
+import { DeterministicReviewEvaluator } from "./tooling/extensions/review/deterministic-review-evaluator.js";
+import { BroccoliReviewSubstrate } from "./sessions/extensions/review/broccoli-review-substrate.js";
+import { ReviewSnapshotManager } from "./sessions/extensions/review/review-snapshot-manager.js";
+import { BackgroundReviewSupervisor } from "./agents/extensions/review/background-review-supervisor.js";
+import { BackgroundReviewToolSuite } from "./tooling/extensions/review/background-review-tool-suite.js";
+
+import { DeterministicDiagnosticDoctor } from "./tooling/extensions/doctor/deterministic-diagnostic-doctor.js";
+import { BroccoliDoctorSubstrate } from "./sessions/extensions/doctor/broccoli-doctor-substrate.js";
+import { DoctorSnapshotManager } from "./sessions/extensions/doctor/doctor-snapshot-manager.js";
+import { DiagnosticDoctorSupervisor } from "./agents/extensions/doctor/diagnostic-doctor-supervisor.js";
+import { DiagnosticDoctorToolSuite } from "./tooling/extensions/doctor/diagnostic-doctor-tool-suite.js";
+
+import { DeterministicAuthFederator } from "./tooling/extensions/auth/deterministic-auth-federator.js";
+import { BroccoliAuthSubstrate } from "./sessions/extensions/auth/broccoli-auth-substrate.js";
+import { AuthSnapshotManager } from "./sessions/extensions/auth/auth-snapshot-manager.js";
+import { IdentityFederationSupervisor } from "./agents/extensions/auth/identity-federation-supervisor.js";
+import { IdentityFederationToolSuite } from "./tooling/extensions/auth/identity-federation-tool-suite.js";
+
+import { DeterministicSessionArchiver } from "./tooling/extensions/archive/deterministic-session-archiver.js";
+import { BroccoliArchiveSubstrate } from "./sessions/extensions/archive/broccoli-archive-substrate.js";
+import { ArchiveSnapshotManager } from "./sessions/extensions/archive/archive-snapshot-manager.js";
+import { SessionArchiveSupervisor } from "./agents/extensions/archive/session-archive-supervisor.js";
+import { SessionArchiveToolSuite } from "./tooling/extensions/archive/session-archive-tool-suite.js";
+
+import { DeterministicSkinEngine } from "./tooling/extensions/skin/deterministic-skin-engine.js";
+import { BroccoliSkinSubstrate } from "./sessions/extensions/skin/broccoli-skin-substrate.js";
+import { SkinSnapshotManager } from "./sessions/extensions/skin/skin-snapshot-manager.js";
+import { TerminalSkinSupervisor } from "./agents/extensions/skin/terminal-skin-supervisor.js";
+import { TerminalSkinToolSuite } from "./tooling/extensions/skin/terminal-skin-tool-suite.js";
+
+import { DeterministicAuxiliaryRouter } from "./tooling/extensions/router/deterministic-auxiliary-router.js";
+import { BroccoliAuxiliarySubstrate } from "./sessions/extensions/router/broccoli-auxiliary-substrate.js";
+import { AuxiliarySnapshotManager } from "./sessions/extensions/router/auxiliary-snapshot-manager.js";
+import { AuxiliaryRouterSupervisor } from "./agents/extensions/router/auxiliary-router-supervisor.js";
+import { AuxiliaryRouterToolSuite } from "./tooling/extensions/router/auxiliary-router-tool-suite.js";
+
+import { DeterministicReasoningScrubber } from "./tooling/extensions/reasoning/deterministic-reasoning-scrubber.js";
+import { BroccoliReasoningSubstrate } from "./sessions/extensions/reasoning/broccoli-reasoning-substrate.js";
+import { ReasoningSnapshotManager } from "./sessions/extensions/reasoning/reasoning-snapshot-manager.js";
+import { ReasoningSupervisor } from "./agents/extensions/reasoning/reasoning-supervisor.js";
+import { ReasoningToolSuite } from "./tooling/extensions/reasoning/reasoning-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -547,7 +697,7 @@ export { BroccoliStreamingToolExecutor } from "./tooling/extensions/registry/bro
 export type { ToolExecutionPhase, ToolExecutionProgress, StreamingToolExecutorOptions } from "./tooling/extensions/registry/broccolidb-streaming-tool-executor.js";
 export { BroccoliTaskStateEngine } from "./sessions/extensions/persistence/broccolidb-task-state.js";
 export { BroccoliLspProtocolBridge } from "./tooling/extensions/perception/broccolidb-lsp-bridge.js";
-export type { LspLocation, LspDiagnostic } from "./tooling/extensions/perception/broccolidb-lsp-bridge.js";
+export type { LspLocation, LspDiagnostic as BroccoliLspDiagnostic } from "./tooling/extensions/perception/broccolidb-lsp-bridge.js";
 export { BroccoliBlastRadiusCalculator } from "./agents/extensions/intelligence/broccolidb-blast-radius.js";
 export type { BlastRadiusResult, FileDependencyNode } from "./agents/extensions/intelligence/broccolidb-blast-radius.js";
 export { BroccoliCognitiveSuggestionEngine } from "./agents/extensions/intelligence/broccolidb-cognitive-suggestion.js";
@@ -941,6 +1091,371 @@ export type {
   FilePaginatedReadResult,
 } from "./core/contracts/patch-mutation.contracts.js";
 
+export { DeterministicLspEngine } from "./tooling/extensions/lsp/deterministic-lsp-engine.js";
+export { BroccoliLspSubstrate } from "./sessions/extensions/lsp/broccoli-lsp-substrate.js";
+export { LspSnapshotManager } from "./sessions/extensions/lsp/lsp-snapshot-manager.js";
+export { SemanticCodeSupervisor } from "./agents/extensions/lsp/semantic-code-supervisor.js";
+export { LspCodeIntelligenceToolSuite } from "./tooling/extensions/lsp/lsp-code-intelligence-tool-suite.js";
+export type {
+  LspDiagnosticSeverity,
+  LspPosition,
+  LspRange,
+  LspDiagnosticRelatedInformation,
+  LspDiagnostic,
+  LspSymbolKind,
+  LspSymbolInformation,
+  LspHoverInfo,
+  LspDefinition,
+  LspReferenceLocation,
+  LspDocumentState,
+  LspWorkspaceSnapshot,
+  LspQueryOptions,
+} from "./core/contracts/lsp.contracts.js";
+
+export { DeterministicAudioCodec } from "./tooling/extensions/voice/deterministic-audio-codec.js";
+export { BroccoliVoiceSubstrate } from "./sessions/extensions/voice/broccoli-voice-substrate.js";
+export { VoiceSnapshotManager } from "./sessions/extensions/voice/voice-snapshot-manager.js";
+export { VoiceSpeechSupervisor } from "./agents/extensions/voice/voice-speech-supervisor.js";
+export { VoiceSpeechToolSuite } from "./tooling/extensions/voice/voice-speech-tool-suite.js";
+export type {
+  AudioFormat,
+  AudioSampleRate,
+  VoiceProvider,
+  VoiceProfile,
+  AudioChunk,
+  TranscriptionWord,
+  TranscriptionResult,
+  SpeechSynthesisResult,
+  VadDecision,
+  VoiceSessionState,
+  VoiceWorkspaceSnapshot,
+} from "./core/contracts/voice.contracts.js";
+
+export { DeterministicImageCodec } from "./tooling/extensions/vision/deterministic-image-codec.js";
+export { BroccoliVisionSubstrate } from "./sessions/extensions/vision/broccoli-vision-substrate.js";
+export { VisionSnapshotManager } from "./sessions/extensions/vision/vision-snapshot-manager.js";
+export { MultimodalVisionSupervisor } from "./agents/extensions/vision/multimodal-vision-supervisor.js";
+export { MultimodalVisionToolSuite } from "./tooling/extensions/vision/multimodal-vision-tool-suite.js";
+export type {
+  ImageFormat,
+  ImageDimensions,
+  ImageMetadata,
+  VisualInspectionResult,
+  ImageGenerationRequest,
+  ImageGenerationResult,
+  VisionSessionState,
+  VisionWorkspaceSnapshot,
+} from "./core/contracts/vision.contracts.js";
+
+export { DeterministicKanbanEngine } from "./tooling/extensions/kanban/deterministic-kanban-engine.js";
+export { BroccoliKanbanSubstrate } from "./sessions/extensions/kanban/broccoli-kanban-substrate.js";
+export { KanbanSnapshotManager } from "./sessions/extensions/kanban/kanban-snapshot-manager.js";
+export { KanbanBoardSupervisor } from "./agents/extensions/kanban/kanban-board-supervisor.js";
+export { KanbanOrchestrationToolSuite } from "./tooling/extensions/kanban/kanban-orchestration-tool-suite.js";
+export type {
+  KanbanColumn,
+  KanbanPriority,
+  KanbanTask,
+  KanbanBoard,
+  KanbanTaskMutation,
+  KanbanQueryFilter,
+  KanbanWorkspaceSnapshot,
+} from "./core/contracts/kanban.contracts.js";
+
+export { DeterministicWebEngine } from "./tooling/extensions/web/deterministic-web-engine.js";
+export { BroccoliWebSubstrate } from "./sessions/extensions/web/broccoli-web-substrate.js";
+export { WebSnapshotManager } from "./sessions/extensions/web/web-snapshot-manager.js";
+export { WebIntelligenceSupervisor } from "./agents/extensions/web/web-intelligence-supervisor.js";
+export { WebIntelligenceToolSuite } from "./tooling/extensions/web/web-intelligence-tool-suite.js";
+export type {
+  UrlSecurityVerdict,
+  WebExtractionFormat,
+  WebSearchHit,
+  WebSearchResult,
+  WebContentExtraction,
+  WebSessionState,
+  WebWorkspaceSnapshot,
+} from "./core/contracts/web.contracts.js";
+
+export { DeterministicCodeExecutor } from "./tooling/extensions/execution/deterministic-code-executor.js";
+export { BroccoliExecutionSubstrate } from "./sessions/extensions/execution/broccoli-execution-substrate.js";
+export { ExecutionSnapshotManager } from "./sessions/extensions/execution/execution-snapshot-manager.js";
+export { CodeExecutionSupervisor } from "./agents/extensions/execution/code-execution-supervisor.js";
+export { CodeExecutionToolSuite } from "./tooling/extensions/execution/code-execution-tool-suite.js";
+export type {
+  CodeExecutionLanguage,
+  ProgrammaticToolCall,
+  CodeExecutionResult,
+  SandboxContext,
+  ExecutionRecord,
+  ExecutionWorkspaceSnapshot,
+} from "./core/contracts/execution.contracts.js";
+
+export { DeterministicBatchEvaluator } from "./tooling/extensions/batch/deterministic-batch-evaluator.js";
+export { BroccoliBatchSubstrate } from "./sessions/extensions/batch/broccoli-batch-substrate.js";
+export { BatchSnapshotManager } from "./sessions/extensions/batch/batch-snapshot-manager.js";
+export { BatchEvaluationSupervisor } from "./agents/extensions/batch/batch-evaluation-supervisor.js";
+export { BatchEvaluationToolSuite } from "./tooling/extensions/batch/batch-evaluation-tool-suite.js";
+export type {
+  BatchTaskStatus,
+  BatchTaskItem,
+  BatchTaskResult,
+  BatchRunMetrics,
+  BatchExecutionConfig,
+  BatchWorkspaceSnapshot,
+} from "./core/contracts/batch.contracts.js";
+
+export { DeterministicClarifyEngine } from "./tooling/extensions/clarify/deterministic-clarify-engine.js";
+export { BroccoliClarifySubstrate } from "./sessions/extensions/clarify/broccoli-clarify-substrate.js";
+export { ClarifySnapshotManager } from "./sessions/extensions/clarify/clarify-snapshot-manager.js";
+export { ClarifyInquirySupervisor } from "./agents/extensions/clarify/clarify-inquiry-supervisor.js";
+export { ClarifyInquiryToolSuite } from "./tooling/extensions/clarify/clarify-inquiry-tool-suite.js";
+export type {
+  ClarifyInputMode,
+  ClarifyChoice,
+  ClarifyInquiry,
+  ClarifyResolution,
+  ClarifyWorkspaceSnapshot,
+} from "./core/contracts/clarify.contracts.js";
+
+export { DeterministicThreatScanner } from "./tooling/extensions/threat/deterministic-threat-scanner.js";
+export { BroccoliThreatSubstrate } from "./sessions/extensions/threat/broccoli-threat-substrate.js";
+export { ThreatSnapshotManager } from "./sessions/extensions/threat/threat-snapshot-manager.js";
+export { ThreatFirewallSupervisor } from "./agents/extensions/threat/threat-firewall-supervisor.js";
+export { ThreatFirewallToolSuite } from "./tooling/extensions/threat/threat-firewall-tool-suite.js";
+export type {
+  ThreatSeverity,
+  ThreatCategory,
+  ThreatTrustLevel,
+  ThreatFinding,
+  ThreatScanResult,
+  ThreatWorkspaceSnapshot,
+} from "./core/contracts/threat.contracts.js";
+
+export { DeterministicCasStore } from "./tooling/extensions/checkpoint/deterministic-cas-store.js";
+export { BroccoliCheckpointSubstrate } from "./sessions/extensions/checkpoint/broccoli-checkpoint-substrate.js";
+export { CheckpointSnapshotManager } from "./sessions/extensions/checkpoint/checkpoint-snapshot-manager.js";
+export { CheckpointKernelSupervisor } from "./agents/extensions/checkpoint/checkpoint-kernel-supervisor.js";
+export { CheckpointKernelToolSuite } from "./tooling/extensions/checkpoint/checkpoint-kernel-tool-suite.js";
+export type {
+  CasBlob,
+  TreeEntry,
+  CheckpointNode,
+  CheckpointRollbackResult,
+  CheckpointWorkspaceSnapshot,
+} from "./core/contracts/checkpoint.contracts.js";
+
+export { DeterministicDisplayDriver } from "./tooling/extensions/computer-use/deterministic-display-driver.js";
+export { BroccoliDisplaySubstrate } from "./sessions/extensions/computer-use/broccoli-display-substrate.js";
+export { DisplaySnapshotManager } from "./sessions/extensions/computer-use/display-snapshot-manager.js";
+export { ComputerUseSupervisor } from "./agents/extensions/computer-use/computer-use-supervisor.js";
+export { ComputerUseToolSuite } from "./tooling/extensions/computer-use/computer-use-tool-suite.js";
+export type {
+  ComputerActionType,
+  UiElementBounds,
+  UiElement,
+  VirtualWindow,
+  VirtualDisplayFrame,
+  ComputerActionResult,
+  ComputerWorkspaceSnapshot,
+} from "./core/contracts/computer-use.contracts.js";
+
+export { DeterministicSkillsHub } from "./tooling/extensions/skills-hub/deterministic-skills-hub.js";
+export { BroccoliSkillsHubSubstrate } from "./sessions/extensions/skills-hub/broccoli-skills-hub-substrate.js";
+export { SkillsHubSnapshotManager } from "./sessions/extensions/skills-hub/skills-hub-snapshot-manager.js";
+export { SkillsHubSupervisor } from "./agents/extensions/skills-hub/skills-hub-supervisor.js";
+export { SkillsHubToolSuite } from "./tooling/extensions/skills-hub/skills-hub-tool-suite.js";
+export type {
+  SkillPackage,
+  SkillRegistryManifest,
+  SkillInstallationResult,
+  SkillsHubWorkspaceSnapshot,
+} from "./core/contracts/skills-hub.contracts.js";
+
+export { DeterministicCostGovernor } from "./tooling/extensions/cost/deterministic-cost-governor.js";
+export { BroccoliCostSubstrate } from "./sessions/extensions/cost/broccoli-cost-substrate.js";
+export { CostSnapshotManager } from "./sessions/extensions/cost/cost-snapshot-manager.js";
+export { CostGovernanceSupervisor } from "./agents/extensions/cost/cost-governance-supervisor.js";
+export { CostGovernanceToolSuite } from "./tooling/extensions/cost/cost-governance-tool-suite.js";
+export type {
+  ModelPricingTier,
+  TokenUsageLedgerEntry,
+  BudgetCapConfig,
+  CostGovernanceResult,
+  CostGovernanceWorkspaceSnapshot,
+} from "./core/contracts/cost-governance.contracts.js";
+
+export { DeterministicToolDiscloser } from "./tooling/extensions/disclosure/deterministic-tool-discloser.js";
+export { BroccoliDisclosureSubstrate } from "./sessions/extensions/disclosure/broccoli-disclosure-substrate.js";
+export { ToolDisclosureSnapshotManager } from "./sessions/extensions/disclosure/disclosure-snapshot-manager.js";
+export { ToolDisclosureSupervisor } from "./agents/extensions/disclosure/tool-disclosure-supervisor.js";
+export { ToolDisclosureToolSuite } from "./tooling/extensions/disclosure/tool-disclosure-tool-suite.js";
+export type {
+  DeferredToolDefinition,
+  DisclosureTier,
+  DisclosureManifest,
+  ToolSearchResult,
+  ToolDisclosureWorkspaceSnapshot,
+} from "./core/contracts/tool-disclosure.contracts.js";
+
+export { DeterministicEvidenceLedger } from "./tooling/extensions/evidence/deterministic-evidence-ledger.js";
+export { BroccoliEvidenceSubstrate } from "./sessions/extensions/evidence/broccoli-evidence-substrate.js";
+export { EvidenceSnapshotManager } from "./sessions/extensions/evidence/evidence-snapshot-manager.js";
+export { VerificationEvidenceSupervisor } from "./agents/extensions/evidence/verification-evidence-supervisor.js";
+export { VerificationEvidenceToolSuite } from "./tooling/extensions/evidence/verification-evidence-tool-suite.js";
+export type {
+  EvidenceKind,
+  EvidenceScope,
+  VerificationEvidenceRecord,
+  VerificationStopGateEvaluation,
+  SessionInsightsReport,
+  VerificationEvidenceWorkspaceSnapshot,
+} from "./core/contracts/verification-evidence.contracts.js";
+
+export { DeterministicPromptCacher } from "./tooling/extensions/prompt/deterministic-prompt-cacher.js";
+export { BroccoliPromptCacheSubstrate } from "./sessions/extensions/prompt/broccoli-prompt-cache-substrate.js";
+export { PromptCacheSnapshotManager } from "./sessions/extensions/prompt/prompt-cache-snapshot-manager.js";
+export { PromptCacheSupervisor } from "./agents/extensions/prompt/prompt-cache-supervisor.js";
+export { PromptCacheToolSuite } from "./tooling/extensions/prompt/prompt-cache-tool-suite.js";
+export type {
+  CacheBreakpointType,
+  PromptCacheMarker,
+  PromptCacheBreakpoint,
+  ByteStablePromptEnvelope,
+  ReasoningSanitizationResult,
+  PromptCacheWorkspaceSnapshot,
+} from "./core/contracts/prompt-cache.contracts.js";
+
+export { DeterministicToolSegmenter } from "./tooling/extensions/execution_guard/deterministic-tool-segmenter.js";
+export { BroccoliExecutionGuardSubstrate } from "./sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";
+export { ExecutionGuardSnapshotManager } from "./sessions/extensions/execution_guard/execution-guard-snapshot-manager.js";
+export { ToolExecutionGuardSupervisor } from "./agents/extensions/execution_guard/tool-execution-guard-supervisor.js";
+export { ToolExecutionGuardToolSuite } from "./tooling/extensions/execution_guard/tool-execution-guard-tool-suite.js";
+export type {
+  ToolExecutionMode,
+  ToolCallItem,
+  ToolExecutionBatchSegment,
+  LoopGuardrailDecision,
+  ToolLoopViolationRecord,
+  ToolExecutionWorkspaceSnapshot,
+} from "./core/contracts/tool-execution-segment.contracts.js";
+
+export { DeterministicSecretRedactor } from "./tooling/extensions/redaction/deterministic-secret-redactor.js";
+export { BroccoliRedactionSubstrate } from "./sessions/extensions/redaction/broccoli-redaction-substrate.js";
+export { RedactionSnapshotManager } from "./sessions/extensions/redaction/redaction-snapshot-manager.js";
+export { SecretRedactionSupervisor } from "./agents/extensions/redaction/secret-redaction-supervisor.js";
+export { SecretRedactionToolSuite } from "./tooling/extensions/redaction/secret-redaction-tool-suite.js";
+export type {
+  RedactionCategory,
+  RedactionMatch,
+  RedactionResult,
+  PathSafetyDecision,
+  SecretRedactionWorkspaceSnapshot,
+} from "./core/contracts/secret-redaction.contracts.js";
+
+export { DeterministicReviewEvaluator } from "./tooling/extensions/review/deterministic-review-evaluator.js";
+export { BroccoliReviewSubstrate } from "./sessions/extensions/review/broccoli-review-substrate.js";
+export { ReviewSnapshotManager } from "./sessions/extensions/review/review-snapshot-manager.js";
+export { BackgroundReviewSupervisor } from "./agents/extensions/review/background-review-supervisor.js";
+export { BackgroundReviewToolSuite } from "./tooling/extensions/review/background-review-tool-suite.js";
+export type {
+  ReviewTriggerPolicy,
+  CandidateFactItem,
+  CandidateSkillItem,
+  TurnReviewDigest,
+  TurnReviewResult,
+  SessionInsightsBreakdown,
+  SessionTitleSuggestion,
+  ReviewWorkspaceSnapshot,
+} from "./core/contracts/background-review.contracts.js";
+
+export { DeterministicDiagnosticDoctor } from "./tooling/extensions/doctor/deterministic-diagnostic-doctor.js";
+export { BroccoliDoctorSubstrate } from "./sessions/extensions/doctor/broccoli-doctor-substrate.js";
+export { DoctorSnapshotManager } from "./sessions/extensions/doctor/doctor-snapshot-manager.js";
+export { DiagnosticDoctorSupervisor } from "./agents/extensions/doctor/diagnostic-doctor-supervisor.js";
+export { DiagnosticDoctorToolSuite } from "./tooling/extensions/doctor/diagnostic-doctor-tool-suite.js";
+export type {
+  DiagnosticSeverity,
+  DiagnosticCheckCategory,
+  DiagnosticCheckResult,
+  SystemDiagnosticReport,
+  OrphanedTurnRepairItem,
+  SessionSalvageReport,
+  DoctorWorkspaceSnapshot,
+} from "./core/contracts/diagnostic-doctor.contracts.js";
+
+export { DeterministicAuthFederator } from "./tooling/extensions/auth/deterministic-auth-federator.js";
+export { BroccoliAuthSubstrate } from "./sessions/extensions/auth/broccoli-auth-substrate.js";
+export { AuthSnapshotManager } from "./sessions/extensions/auth/auth-snapshot-manager.js";
+export { IdentityFederationSupervisor } from "./agents/extensions/auth/identity-federation-supervisor.js";
+export { IdentityFederationToolSuite } from "./tooling/extensions/auth/identity-federation-tool-suite.js";
+export type {
+  AuthProviderId,
+  AuthFlowType,
+  SubscriptionTier,
+  PkceChallengePair,
+  DeviceAuthorizationPending,
+  TokenLeaseRecord,
+  SubscriptionEntitlement,
+  AuthWorkspaceSnapshot,
+} from "./core/contracts/identity-federation.contracts.js";
+
+export { DeterministicSessionArchiver } from "./tooling/extensions/archive/deterministic-session-archiver.js";
+export { BroccoliArchiveSubstrate } from "./sessions/extensions/archive/broccoli-archive-substrate.js";
+export { ArchiveSnapshotManager } from "./sessions/extensions/archive/archive-snapshot-manager.js";
+export { SessionArchiveSupervisor } from "./agents/extensions/archive/session-archive-supervisor.js";
+export { SessionArchiveToolSuite } from "./tooling/extensions/archive/session-archive-tool-suite.js";
+export type {
+  SessionExportFormat,
+  ExportedTurnItem,
+  SessionArchiveManifest,
+  ExportOptions,
+  ExportedDocumentResult,
+  ArchiveWorkspaceSnapshot,
+} from "./core/contracts/session-archive.contracts.js";
+
+export { DeterministicSkinEngine } from "./tooling/extensions/skin/deterministic-skin-engine.js";
+export { BroccoliSkinSubstrate } from "./sessions/extensions/skin/broccoli-skin-substrate.js";
+export { SkinSnapshotManager } from "./sessions/extensions/skin/skin-snapshot-manager.js";
+export { TerminalSkinSupervisor } from "./agents/extensions/skin/terminal-skin-supervisor.js";
+export { TerminalSkinToolSuite } from "./tooling/extensions/skin/terminal-skin-tool-suite.js";
+export type {
+  SkinPalette,
+  SpinnerConfig,
+  SkinBranding,
+  TerminalSkinPreset,
+  BannerRenderOptions,
+  SkinWorkspaceSnapshot,
+} from "./core/contracts/terminal-skin.contracts.js";
+
+export { DeterministicAuxiliaryRouter } from "./tooling/extensions/router/deterministic-auxiliary-router.js";
+export { BroccoliAuxiliarySubstrate } from "./sessions/extensions/router/broccoli-auxiliary-substrate.js";
+export { AuxiliarySnapshotManager } from "./sessions/extensions/router/auxiliary-snapshot-manager.js";
+export { AuxiliaryRouterSupervisor } from "./agents/extensions/router/auxiliary-router-supervisor.js";
+export { AuxiliaryRouterToolSuite } from "./tooling/extensions/router/auxiliary-router-tool-suite.js";
+export type {
+  AuxiliaryTaskType,
+  AuxiliaryProviderConfig,
+  AuxiliaryRoutingRequest,
+  AuxiliaryDispatchAttempt,
+  AuxiliaryRoutingResult,
+  AuxiliaryWorkspaceSnapshot,
+} from "./core/contracts/auxiliary-router.contracts.js";
+
+export { DeterministicReasoningScrubber } from "./tooling/extensions/reasoning/deterministic-reasoning-scrubber.js";
+export { BroccoliReasoningSubstrate } from "./sessions/extensions/reasoning/broccoli-reasoning-substrate.js";
+export { ReasoningSnapshotManager } from "./sessions/extensions/reasoning/reasoning-snapshot-manager.js";
+export { ReasoningSupervisor } from "./agents/extensions/reasoning/reasoning-supervisor.js";
+export { ReasoningToolSuite } from "./tooling/extensions/reasoning/reasoning-tool-suite.js";
+export type {
+  ReasoningTagPair,
+  ReasoningBlock,
+  ScrubbedStreamChunk,
+  ReasoningTimeoutConfig,
+  ReasoningScrubberOptions,
+  ReasoningWorkspaceSnapshot,
+} from "./core/contracts/reasoning.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -1146,6 +1661,131 @@ export class LumiMonolith implements IAgentEngine {
   readonly patchSnapshotManager: PatchSnapshotManager;
   readonly atomicMutationSupervisor: AtomicMutationSupervisor;
   readonly fileMutationToolSuite: FileMutationToolSuite;
+  readonly deterministicLspEngine: DeterministicLspEngine;
+  readonly broccoliLspSubstrate: BroccoliLspSubstrate;
+  readonly lspSnapshotManager: LspSnapshotManager;
+  readonly semanticCodeSupervisor: SemanticCodeSupervisor;
+  readonly lspCodeIntelligenceToolSuite: LspCodeIntelligenceToolSuite;
+  readonly deterministicAudioCodec: DeterministicAudioCodec;
+  readonly broccoliVoiceSubstrate: BroccoliVoiceSubstrate;
+  readonly voiceSnapshotManager: VoiceSnapshotManager;
+  readonly voiceSpeechSupervisor: VoiceSpeechSupervisor;
+  readonly voiceSpeechToolSuite: VoiceSpeechToolSuite;
+  readonly deterministicImageCodec: DeterministicImageCodec;
+  readonly broccoliVisionSubstrate: BroccoliVisionSubstrate;
+  readonly visionSnapshotManager: VisionSnapshotManager;
+  readonly multimodalVisionSupervisor: MultimodalVisionSupervisor;
+  readonly multimodalVisionToolSuite: MultimodalVisionToolSuite;
+  readonly deterministicKanbanEngine: DeterministicKanbanEngine;
+  readonly broccoliKanbanSubstrate: BroccoliKanbanSubstrate;
+  readonly kanbanSnapshotManager: KanbanSnapshotManager;
+  readonly kanbanBoardSupervisor: KanbanBoardSupervisor;
+  readonly kanbanOrchestrationToolSuite: KanbanOrchestrationToolSuite;
+  readonly deterministicWebEngine: DeterministicWebEngine;
+  readonly broccoliWebSubstrate: BroccoliWebSubstrate;
+  readonly webSnapshotManager: WebSnapshotManager;
+  readonly webIntelligenceSupervisor: WebIntelligenceSupervisor;
+  readonly webIntelligenceToolSuite: WebIntelligenceToolSuite;
+  readonly deterministicCodeExecutor: DeterministicCodeExecutor;
+  readonly broccoliExecutionSubstrate: BroccoliExecutionSubstrate;
+  readonly executionSnapshotManager: ExecutionSnapshotManager;
+  readonly codeExecutionSupervisor: CodeExecutionSupervisor;
+  readonly codeExecutionToolSuite: CodeExecutionToolSuite;
+  readonly deterministicBatchEvaluator: DeterministicBatchEvaluator;
+  readonly broccoliBatchSubstrate: BroccoliBatchSubstrate;
+  readonly batchSnapshotManager: BatchSnapshotManager;
+  readonly batchEvaluationSupervisor: BatchEvaluationSupervisor;
+  readonly batchEvaluationToolSuite: BatchEvaluationToolSuite;
+  readonly deterministicClarifyEngine: DeterministicClarifyEngine;
+  readonly broccoliClarifySubstrate: BroccoliClarifySubstrate;
+  readonly clarifySnapshotManager: ClarifySnapshotManager;
+  readonly clarifyInquirySupervisor: ClarifyInquirySupervisor;
+  readonly clarifyInquiryToolSuite: ClarifyInquiryToolSuite;
+  readonly deterministicThreatScanner: DeterministicThreatScanner;
+  readonly broccoliThreatSubstrate: BroccoliThreatSubstrate;
+  readonly threatSnapshotManager: ThreatSnapshotManager;
+  readonly threatFirewallSupervisor: ThreatFirewallSupervisor;
+  readonly threatFirewallToolSuite: ThreatFirewallToolSuite;
+  readonly deterministicCasStore: DeterministicCasStore;
+  readonly broccoliCheckpointSubstrate: BroccoliCheckpointSubstrate;
+  readonly checkpointSnapshotManager: CheckpointSnapshotManager;
+  readonly checkpointKernelSupervisor: CheckpointKernelSupervisor;
+  readonly checkpointKernelToolSuite: CheckpointKernelToolSuite;
+  readonly deterministicDisplayDriver: DeterministicDisplayDriver;
+  readonly broccoliDisplaySubstrate: BroccoliDisplaySubstrate;
+  readonly displaySnapshotManager: DisplaySnapshotManager;
+  readonly computerUseSupervisor: ComputerUseSupervisor;
+  readonly computerUseToolSuite: ComputerUseToolSuite;
+  readonly deterministicSkillsHub: DeterministicSkillsHub;
+  readonly broccoliSkillsHubSubstrate: BroccoliSkillsHubSubstrate;
+  readonly skillsHubSnapshotManager: SkillsHubSnapshotManager;
+  readonly skillsHubSupervisor: SkillsHubSupervisor;
+  readonly skillsHubToolSuite: SkillsHubToolSuite;
+  readonly deterministicCostGovernor: DeterministicCostGovernor;
+  readonly broccoliCostSubstrate: BroccoliCostSubstrate;
+  readonly costSnapshotManager: CostSnapshotManager;
+  readonly costGovernanceSupervisor: CostGovernanceSupervisor;
+  readonly costGovernanceToolSuite: CostGovernanceToolSuite;
+  readonly deterministicToolDiscloser: DeterministicToolDiscloser;
+  readonly broccoliDisclosureSubstrate: BroccoliDisclosureSubstrate;
+  readonly toolDisclosureSnapshotManager: ToolDisclosureSnapshotManager;
+  readonly toolDisclosureSupervisor: ToolDisclosureSupervisor;
+  readonly toolDisclosureToolSuite: ToolDisclosureToolSuite;
+  readonly deterministicEvidenceLedger: DeterministicEvidenceLedger;
+  readonly broccoliEvidenceSubstrate: BroccoliEvidenceSubstrate;
+  readonly evidenceSnapshotManager: EvidenceSnapshotManager;
+  readonly verificationEvidenceSupervisor: VerificationEvidenceSupervisor;
+  readonly verificationEvidenceToolSuite: VerificationEvidenceToolSuite;
+  readonly deterministicPromptCacher: DeterministicPromptCacher;
+  readonly broccoliPromptCacheSubstrate: BroccoliPromptCacheSubstrate;
+  readonly promptCacheSnapshotManager: PromptCacheSnapshotManager;
+  readonly promptCacheSupervisor: PromptCacheSupervisor;
+  readonly promptCacheToolSuite: PromptCacheToolSuite;
+  readonly deterministicToolSegmenter: DeterministicToolSegmenter;
+  readonly broccoliExecutionGuardSubstrate: BroccoliExecutionGuardSubstrate;
+  readonly executionGuardSnapshotManager: ExecutionGuardSnapshotManager;
+  readonly toolExecutionGuardSupervisor: ToolExecutionGuardSupervisor;
+  readonly toolExecutionGuardToolSuite: ToolExecutionGuardToolSuite;
+  readonly deterministicSecretRedactor: DeterministicSecretRedactor;
+  readonly broccoliRedactionSubstrate: BroccoliRedactionSubstrate;
+  readonly redactionSnapshotManager: RedactionSnapshotManager;
+  readonly secretRedactionSupervisor: SecretRedactionSupervisor;
+  readonly secretRedactionToolSuite: SecretRedactionToolSuite;
+  readonly deterministicReviewEvaluator: DeterministicReviewEvaluator;
+  readonly broccoliReviewSubstrate: BroccoliReviewSubstrate;
+  readonly reviewSnapshotManager: ReviewSnapshotManager;
+  readonly backgroundReviewSupervisor: BackgroundReviewSupervisor;
+  readonly backgroundReviewToolSuite: BackgroundReviewToolSuite;
+  readonly deterministicDiagnosticDoctor: DeterministicDiagnosticDoctor;
+  readonly broccoliDoctorSubstrate: BroccoliDoctorSubstrate;
+  readonly doctorSnapshotManager: DoctorSnapshotManager;
+  readonly diagnosticDoctorSupervisor: DiagnosticDoctorSupervisor;
+  readonly diagnosticDoctorToolSuite: DiagnosticDoctorToolSuite;
+  readonly deterministicAuthFederator: DeterministicAuthFederator;
+  readonly broccoliAuthSubstrate: BroccoliAuthSubstrate;
+  readonly authSnapshotManager: AuthSnapshotManager;
+  readonly identityFederationSupervisor: IdentityFederationSupervisor;
+  readonly identityFederationToolSuite: IdentityFederationToolSuite;
+  readonly deterministicSessionArchiver: DeterministicSessionArchiver;
+  readonly broccoliArchiveSubstrate: BroccoliArchiveSubstrate;
+  readonly archiveSnapshotManager: ArchiveSnapshotManager;
+  readonly sessionArchiveSupervisor: SessionArchiveSupervisor;
+  readonly sessionArchiveToolSuite: SessionArchiveToolSuite;
+  readonly deterministicSkinEngine: DeterministicSkinEngine;
+  readonly broccoliSkinSubstrate: BroccoliSkinSubstrate;
+  readonly skinSnapshotManager: SkinSnapshotManager;
+  readonly terminalSkinSupervisor: TerminalSkinSupervisor;
+  readonly terminalSkinToolSuite: TerminalSkinToolSuite;
+  readonly deterministicAuxiliaryRouter: DeterministicAuxiliaryRouter;
+  readonly broccoliAuxiliarySubstrate: BroccoliAuxiliarySubstrate;
+  readonly auxiliarySnapshotManager: AuxiliarySnapshotManager;
+  readonly auxiliaryRouterSupervisor: AuxiliaryRouterSupervisor;
+  readonly auxiliaryRouterToolSuite: AuxiliaryRouterToolSuite;
+  readonly deterministicReasoningScrubber: DeterministicReasoningScrubber;
+  readonly broccoliReasoningSubstrate: BroccoliReasoningSubstrate;
+  readonly reasoningSnapshotManager: ReasoningSnapshotManager;
+  readonly reasoningSupervisor: ReasoningSupervisor;
+  readonly reasoningToolSuite: ReasoningToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -1342,6 +1982,131 @@ export class LumiMonolith implements IAgentEngine {
     this.patchSnapshotManager = components.patchSnapshotManager;
     this.atomicMutationSupervisor = components.atomicMutationSupervisor;
     this.fileMutationToolSuite = components.fileMutationToolSuite;
+    this.deterministicLspEngine = components.deterministicLspEngine;
+    this.broccoliLspSubstrate = components.broccoliLspSubstrate;
+    this.lspSnapshotManager = components.lspSnapshotManager;
+    this.semanticCodeSupervisor = components.semanticCodeSupervisor;
+    this.lspCodeIntelligenceToolSuite = components.lspCodeIntelligenceToolSuite;
+    this.deterministicAudioCodec = components.deterministicAudioCodec;
+    this.broccoliVoiceSubstrate = components.broccoliVoiceSubstrate;
+    this.voiceSnapshotManager = components.voiceSnapshotManager;
+    this.voiceSpeechSupervisor = components.voiceSpeechSupervisor;
+    this.voiceSpeechToolSuite = components.voiceSpeechToolSuite;
+    this.deterministicImageCodec = components.deterministicImageCodec;
+    this.broccoliVisionSubstrate = components.broccoliVisionSubstrate;
+    this.visionSnapshotManager = components.visionSnapshotManager;
+    this.multimodalVisionSupervisor = components.multimodalVisionSupervisor;
+    this.multimodalVisionToolSuite = components.multimodalVisionToolSuite;
+    this.deterministicKanbanEngine = components.deterministicKanbanEngine;
+    this.broccoliKanbanSubstrate = components.broccoliKanbanSubstrate;
+    this.kanbanSnapshotManager = components.kanbanSnapshotManager;
+    this.kanbanBoardSupervisor = components.kanbanBoardSupervisor;
+    this.kanbanOrchestrationToolSuite = components.kanbanOrchestrationToolSuite;
+    this.deterministicWebEngine = components.deterministicWebEngine;
+    this.broccoliWebSubstrate = components.broccoliWebSubstrate;
+    this.webSnapshotManager = components.webSnapshotManager;
+    this.webIntelligenceSupervisor = components.webIntelligenceSupervisor;
+    this.webIntelligenceToolSuite = components.webIntelligenceToolSuite;
+    this.deterministicCodeExecutor = components.deterministicCodeExecutor;
+    this.broccoliExecutionSubstrate = components.broccoliExecutionSubstrate;
+    this.executionSnapshotManager = components.executionSnapshotManager;
+    this.codeExecutionSupervisor = components.codeExecutionSupervisor;
+    this.codeExecutionToolSuite = components.codeExecutionToolSuite;
+    this.deterministicBatchEvaluator = components.deterministicBatchEvaluator;
+    this.broccoliBatchSubstrate = components.broccoliBatchSubstrate;
+    this.batchSnapshotManager = components.batchSnapshotManager;
+    this.batchEvaluationSupervisor = components.batchEvaluationSupervisor;
+    this.batchEvaluationToolSuite = components.batchEvaluationToolSuite;
+    this.deterministicClarifyEngine = components.deterministicClarifyEngine;
+    this.broccoliClarifySubstrate = components.broccoliClarifySubstrate;
+    this.clarifySnapshotManager = components.clarifySnapshotManager;
+    this.clarifyInquirySupervisor = components.clarifyInquirySupervisor;
+    this.clarifyInquiryToolSuite = components.clarifyInquiryToolSuite;
+    this.deterministicThreatScanner = components.deterministicThreatScanner;
+    this.broccoliThreatSubstrate = components.broccoliThreatSubstrate;
+    this.threatSnapshotManager = components.threatSnapshotManager;
+    this.threatFirewallSupervisor = components.threatFirewallSupervisor;
+    this.threatFirewallToolSuite = components.threatFirewallToolSuite;
+    this.deterministicCasStore = components.deterministicCasStore;
+    this.broccoliCheckpointSubstrate = components.broccoliCheckpointSubstrate;
+    this.checkpointSnapshotManager = components.checkpointSnapshotManager;
+    this.checkpointKernelSupervisor = components.checkpointKernelSupervisor;
+    this.checkpointKernelToolSuite = components.checkpointKernelToolSuite;
+    this.deterministicDisplayDriver = components.deterministicDisplayDriver;
+    this.broccoliDisplaySubstrate = components.broccoliDisplaySubstrate;
+    this.displaySnapshotManager = components.displaySnapshotManager;
+    this.computerUseSupervisor = components.computerUseSupervisor;
+    this.computerUseToolSuite = components.computerUseToolSuite;
+    this.deterministicSkillsHub = components.deterministicSkillsHub;
+    this.broccoliSkillsHubSubstrate = components.broccoliSkillsHubSubstrate;
+    this.skillsHubSnapshotManager = components.skillsHubSnapshotManager;
+    this.skillsHubSupervisor = components.skillsHubSupervisor;
+    this.skillsHubToolSuite = components.skillsHubToolSuite;
+    this.deterministicCostGovernor = components.deterministicCostGovernor;
+    this.broccoliCostSubstrate = components.broccoliCostSubstrate;
+    this.costSnapshotManager = components.costSnapshotManager;
+    this.costGovernanceSupervisor = components.costGovernanceSupervisor;
+    this.costGovernanceToolSuite = components.costGovernanceToolSuite;
+    this.deterministicToolDiscloser = components.deterministicToolDiscloser;
+    this.broccoliDisclosureSubstrate = components.broccoliDisclosureSubstrate;
+    this.toolDisclosureSnapshotManager = components.toolDisclosureSnapshotManager;
+    this.toolDisclosureSupervisor = components.toolDisclosureSupervisor;
+    this.toolDisclosureToolSuite = components.toolDisclosureToolSuite;
+    this.deterministicEvidenceLedger = components.deterministicEvidenceLedger;
+    this.broccoliEvidenceSubstrate = components.broccoliEvidenceSubstrate;
+    this.evidenceSnapshotManager = components.evidenceSnapshotManager;
+    this.verificationEvidenceSupervisor = components.verificationEvidenceSupervisor;
+    this.verificationEvidenceToolSuite = components.verificationEvidenceToolSuite;
+    this.deterministicPromptCacher = components.deterministicPromptCacher;
+    this.broccoliPromptCacheSubstrate = components.broccoliPromptCacheSubstrate;
+    this.promptCacheSnapshotManager = components.promptCacheSnapshotManager;
+    this.promptCacheSupervisor = components.promptCacheSupervisor;
+    this.promptCacheToolSuite = components.promptCacheToolSuite;
+    this.deterministicToolSegmenter = components.deterministicToolSegmenter;
+    this.broccoliExecutionGuardSubstrate = components.broccoliExecutionGuardSubstrate;
+    this.executionGuardSnapshotManager = components.executionGuardSnapshotManager;
+    this.toolExecutionGuardSupervisor = components.toolExecutionGuardSupervisor;
+    this.toolExecutionGuardToolSuite = components.toolExecutionGuardToolSuite;
+    this.deterministicSecretRedactor = components.deterministicSecretRedactor;
+    this.broccoliRedactionSubstrate = components.broccoliRedactionSubstrate;
+    this.redactionSnapshotManager = components.redactionSnapshotManager;
+    this.secretRedactionSupervisor = components.secretRedactionSupervisor;
+    this.secretRedactionToolSuite = components.secretRedactionToolSuite;
+    this.deterministicReviewEvaluator = components.deterministicReviewEvaluator;
+    this.broccoliReviewSubstrate = components.broccoliReviewSubstrate;
+    this.reviewSnapshotManager = components.reviewSnapshotManager;
+    this.backgroundReviewSupervisor = components.backgroundReviewSupervisor;
+    this.backgroundReviewToolSuite = components.backgroundReviewToolSuite;
+    this.deterministicDiagnosticDoctor = components.deterministicDiagnosticDoctor;
+    this.broccoliDoctorSubstrate = components.broccoliDoctorSubstrate;
+    this.doctorSnapshotManager = components.doctorSnapshotManager;
+    this.diagnosticDoctorSupervisor = components.diagnosticDoctorSupervisor;
+    this.diagnosticDoctorToolSuite = components.diagnosticDoctorToolSuite;
+    this.deterministicAuthFederator = components.deterministicAuthFederator;
+    this.broccoliAuthSubstrate = components.broccoliAuthSubstrate;
+    this.authSnapshotManager = components.authSnapshotManager;
+    this.identityFederationSupervisor = components.identityFederationSupervisor;
+    this.identityFederationToolSuite = components.identityFederationToolSuite;
+    this.deterministicSessionArchiver = components.deterministicSessionArchiver;
+    this.broccoliArchiveSubstrate = components.broccoliArchiveSubstrate;
+    this.archiveSnapshotManager = components.archiveSnapshotManager;
+    this.sessionArchiveSupervisor = components.sessionArchiveSupervisor;
+    this.sessionArchiveToolSuite = components.sessionArchiveToolSuite;
+    this.deterministicSkinEngine = components.deterministicSkinEngine;
+    this.broccoliSkinSubstrate = components.broccoliSkinSubstrate;
+    this.skinSnapshotManager = components.skinSnapshotManager;
+    this.terminalSkinSupervisor = components.terminalSkinSupervisor;
+    this.terminalSkinToolSuite = components.terminalSkinToolSuite;
+    this.deterministicAuxiliaryRouter = components.deterministicAuxiliaryRouter;
+    this.broccoliAuxiliarySubstrate = components.broccoliAuxiliarySubstrate;
+    this.auxiliarySnapshotManager = components.auxiliarySnapshotManager;
+    this.auxiliaryRouterSupervisor = components.auxiliaryRouterSupervisor;
+    this.auxiliaryRouterToolSuite = components.auxiliaryRouterToolSuite;
+    this.deterministicReasoningScrubber = components.deterministicReasoningScrubber;
+    this.broccoliReasoningSubstrate = components.broccoliReasoningSubstrate;
+    this.reasoningSnapshotManager = components.reasoningSnapshotManager;
+    this.reasoningSupervisor = components.reasoningSupervisor;
+    this.reasoningToolSuite = components.reasoningToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

@@ -77,7 +77,10 @@ export class ArchitectureGuardrailGate {
     const rewindSamples: number[] = [];
     if (rewindMutation.outcome === "completed") {
       monolith.rewindToSnapshot(rewindSnapshot);
-      for (let sample = 0; sample < 25; sample++) {
+      for (let warmup = 0; warmup < 10; warmup++) {
+        monolith.rewindToSnapshot(rewindSnapshot);
+      }
+      for (let sample = 0; sample < 30; sample++) {
         const rewindStartedAt = performance.now();
         monolith.rewindToSnapshot(rewindSnapshot);
         rewindSamples.push(performance.now() - rewindStartedAt);

@@ -29,6 +29,31 @@ import type { ProcessToolSuite } from "../process/process-tool-suite.js";
 import type { ArbiterToolSuite } from "../arbiter/arbiter-tool-suite.js";
 import type { LearningCuratorToolSuite } from "../memory/learning-curator-tool-suite.js";
 import type { FileMutationToolSuite } from "../patch/file-mutation-tool-suite.js";
+import type { LspCodeIntelligenceToolSuite } from "../lsp/lsp-code-intelligence-tool-suite.js";
+import type { VoiceSpeechToolSuite } from "../voice/voice-speech-tool-suite.js";
+import type { MultimodalVisionToolSuite } from "../vision/multimodal-vision-tool-suite.js";
+import type { KanbanOrchestrationToolSuite } from "../kanban/kanban-orchestration-tool-suite.js";
+import type { WebIntelligenceToolSuite } from "../web/web-intelligence-tool-suite.js";
+import type { CodeExecutionToolSuite } from "../execution/code-execution-tool-suite.js";
+import type { BatchEvaluationToolSuite } from "../batch/batch-evaluation-tool-suite.js";
+import type { ClarifyInquiryToolSuite } from "../clarify/clarify-inquiry-tool-suite.js";
+import type { ThreatFirewallToolSuite } from "../threat/threat-firewall-tool-suite.js";
+import type { CheckpointKernelToolSuite } from "../checkpoint/checkpoint-kernel-tool-suite.js";
+import type { ComputerUseToolSuite } from "../computer-use/computer-use-tool-suite.js";
+import type { SkillsHubToolSuite } from "../skills-hub/skills-hub-tool-suite.js";
+import type { CostGovernanceToolSuite } from "../cost/cost-governance-tool-suite.js";
+import type { ToolDisclosureToolSuite } from "../disclosure/tool-disclosure-tool-suite.js";
+import type { VerificationEvidenceToolSuite } from "../evidence/verification-evidence-tool-suite.js";
+import type { PromptCacheToolSuite } from "../prompt/prompt-cache-tool-suite.js";
+import type { ToolExecutionGuardToolSuite } from "../execution_guard/tool-execution-guard-tool-suite.js";
+import type { SecretRedactionToolSuite } from "../redaction/secret-redaction-tool-suite.js";
+import type { BackgroundReviewToolSuite } from "../review/background-review-tool-suite.js";
+import type { DiagnosticDoctorToolSuite } from "../doctor/diagnostic-doctor-tool-suite.js";
+import type { IdentityFederationToolSuite } from "../auth/identity-federation-tool-suite.js";
+import type { SessionArchiveToolSuite } from "../archive/session-archive-tool-suite.js";
+import type { TerminalSkinToolSuite } from "../skin/terminal-skin-tool-suite.js";
+import type { AuxiliaryRouterToolSuite } from "../router/auxiliary-router-tool-suite.js";
+import type { ReasoningToolSuite } from "../reasoning/reasoning-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -49,6 +74,31 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly arbiterToolSuite?: ArbiterToolSuite;
   readonly learningCuratorToolSuite?: LearningCuratorToolSuite;
   readonly fileMutationToolSuite?: FileMutationToolSuite;
+  readonly lspCodeIntelligenceToolSuite?: LspCodeIntelligenceToolSuite;
+  readonly voiceSpeechToolSuite?: VoiceSpeechToolSuite;
+  readonly multimodalVisionToolSuite?: MultimodalVisionToolSuite;
+  readonly kanbanOrchestrationToolSuite?: KanbanOrchestrationToolSuite;
+  readonly webIntelligenceToolSuite?: WebIntelligenceToolSuite;
+  readonly codeExecutionToolSuite?: CodeExecutionToolSuite;
+  readonly batchEvaluationToolSuite?: BatchEvaluationToolSuite;
+  readonly clarifyInquiryToolSuite?: ClarifyInquiryToolSuite;
+  readonly threatFirewallToolSuite?: ThreatFirewallToolSuite;
+  readonly checkpointKernelToolSuite?: CheckpointKernelToolSuite;
+  readonly computerUseToolSuite?: ComputerUseToolSuite;
+  readonly skillsHubToolSuite?: SkillsHubToolSuite;
+  readonly costGovernanceToolSuite?: CostGovernanceToolSuite;
+  readonly toolDisclosureToolSuite?: ToolDisclosureToolSuite;
+  readonly verificationEvidenceToolSuite?: VerificationEvidenceToolSuite;
+  readonly promptCacheToolSuite?: PromptCacheToolSuite;
+  readonly toolExecutionGuardToolSuite?: ToolExecutionGuardToolSuite;
+  readonly secretRedactionToolSuite?: SecretRedactionToolSuite;
+  readonly backgroundReviewToolSuite?: BackgroundReviewToolSuite;
+  readonly diagnosticDoctorToolSuite?: DiagnosticDoctorToolSuite;
+  readonly identityFederationToolSuite?: IdentityFederationToolSuite;
+  readonly sessionArchiveToolSuite?: SessionArchiveToolSuite;
+  readonly terminalSkinToolSuite?: TerminalSkinToolSuite;
+  readonly auxiliaryRouterToolSuite?: AuxiliaryRouterToolSuite;
+  readonly reasoningToolSuite?: ReasoningToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -77,7 +127,32 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     processToolSuite?: ProcessToolSuite,
     arbiterToolSuite?: ArbiterToolSuite,
     learningCuratorToolSuite?: LearningCuratorToolSuite,
-    fileMutationToolSuite?: FileMutationToolSuite
+    fileMutationToolSuite?: FileMutationToolSuite,
+    lspCodeIntelligenceToolSuite?: LspCodeIntelligenceToolSuite,
+    voiceSpeechToolSuite?: VoiceSpeechToolSuite,
+    multimodalVisionToolSuite?: MultimodalVisionToolSuite,
+    kanbanOrchestrationToolSuite?: KanbanOrchestrationToolSuite,
+    webIntelligenceToolSuite?: WebIntelligenceToolSuite,
+    codeExecutionToolSuite?: CodeExecutionToolSuite,
+    batchEvaluationToolSuite?: BatchEvaluationToolSuite,
+    clarifyInquiryToolSuite?: ClarifyInquiryToolSuite,
+    threatFirewallToolSuite?: ThreatFirewallToolSuite,
+    checkpointKernelToolSuite?: CheckpointKernelToolSuite,
+    computerUseToolSuite?: ComputerUseToolSuite,
+    skillsHubToolSuite?: SkillsHubToolSuite,
+    costGovernanceToolSuite?: CostGovernanceToolSuite,
+    toolDisclosureToolSuite?: ToolDisclosureToolSuite,
+    verificationEvidenceToolSuite?: VerificationEvidenceToolSuite,
+    promptCacheToolSuite?: PromptCacheToolSuite,
+    toolExecutionGuardToolSuite?: ToolExecutionGuardToolSuite,
+    secretRedactionToolSuite?: SecretRedactionToolSuite,
+    backgroundReviewToolSuite?: BackgroundReviewToolSuite,
+    diagnosticDoctorToolSuite?: DiagnosticDoctorToolSuite,
+    identityFederationToolSuite?: IdentityFederationToolSuite,
+    sessionArchiveToolSuite?: SessionArchiveToolSuite,
+    terminalSkinToolSuite?: TerminalSkinToolSuite,
+    auxiliaryRouterToolSuite?: AuxiliaryRouterToolSuite,
+    reasoningToolSuite?: ReasoningToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -98,6 +173,31 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.arbiterToolSuite = arbiterToolSuite;
     this.learningCuratorToolSuite = learningCuratorToolSuite;
     this.fileMutationToolSuite = fileMutationToolSuite;
+    this.lspCodeIntelligenceToolSuite = lspCodeIntelligenceToolSuite;
+    this.voiceSpeechToolSuite = voiceSpeechToolSuite;
+    this.multimodalVisionToolSuite = multimodalVisionToolSuite;
+    this.kanbanOrchestrationToolSuite = kanbanOrchestrationToolSuite;
+    this.webIntelligenceToolSuite = webIntelligenceToolSuite;
+    this.codeExecutionToolSuite = codeExecutionToolSuite;
+    this.batchEvaluationToolSuite = batchEvaluationToolSuite;
+    this.clarifyInquiryToolSuite = clarifyInquiryToolSuite;
+    this.threatFirewallToolSuite = threatFirewallToolSuite;
+    this.checkpointKernelToolSuite = checkpointKernelToolSuite;
+    this.computerUseToolSuite = computerUseToolSuite;
+    this.skillsHubToolSuite = skillsHubToolSuite;
+    this.costGovernanceToolSuite = costGovernanceToolSuite;
+    this.toolDisclosureToolSuite = toolDisclosureToolSuite;
+    this.verificationEvidenceToolSuite = verificationEvidenceToolSuite;
+    this.promptCacheToolSuite = promptCacheToolSuite;
+    this.toolExecutionGuardToolSuite = toolExecutionGuardToolSuite;
+    this.secretRedactionToolSuite = secretRedactionToolSuite;
+    this.backgroundReviewToolSuite = backgroundReviewToolSuite;
+    this.diagnosticDoctorToolSuite = diagnosticDoctorToolSuite;
+    this.identityFederationToolSuite = identityFederationToolSuite;
+    this.sessionArchiveToolSuite = sessionArchiveToolSuite;
+    this.terminalSkinToolSuite = terminalSkinToolSuite;
+    this.auxiliaryRouterToolSuite = auxiliaryRouterToolSuite;
+    this.reasoningToolSuite = reasoningToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -375,6 +475,131 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.fileMutationToolSuite) {
       for (const tool of this.fileMutationToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.lspCodeIntelligenceToolSuite) {
+      for (const tool of this.lspCodeIntelligenceToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.voiceSpeechToolSuite) {
+      for (const tool of this.voiceSpeechToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.multimodalVisionToolSuite) {
+      for (const tool of this.multimodalVisionToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.kanbanOrchestrationToolSuite) {
+      for (const tool of this.kanbanOrchestrationToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.webIntelligenceToolSuite) {
+      for (const tool of this.webIntelligenceToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.codeExecutionToolSuite) {
+      for (const tool of this.codeExecutionToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.batchEvaluationToolSuite) {
+      for (const tool of this.batchEvaluationToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.clarifyInquiryToolSuite) {
+      for (const tool of this.clarifyInquiryToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.threatFirewallToolSuite) {
+      for (const tool of this.threatFirewallToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.checkpointKernelToolSuite) {
+      for (const tool of this.checkpointKernelToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.computerUseToolSuite) {
+      for (const tool of this.computerUseToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.skillsHubToolSuite) {
+      for (const tool of this.skillsHubToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.costGovernanceToolSuite) {
+      for (const tool of this.costGovernanceToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.toolDisclosureToolSuite) {
+      for (const tool of this.toolDisclosureToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.verificationEvidenceToolSuite) {
+      for (const tool of this.verificationEvidenceToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.promptCacheToolSuite) {
+      for (const tool of this.promptCacheToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.toolExecutionGuardToolSuite) {
+      for (const tool of this.toolExecutionGuardToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.secretRedactionToolSuite) {
+      for (const tool of this.secretRedactionToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.backgroundReviewToolSuite) {
+      for (const tool of this.backgroundReviewToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.diagnosticDoctorToolSuite) {
+      for (const tool of this.diagnosticDoctorToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.identityFederationToolSuite) {
+      for (const tool of this.identityFederationToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.sessionArchiveToolSuite) {
+      for (const tool of this.sessionArchiveToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.terminalSkinToolSuite) {
+      for (const tool of this.terminalSkinToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.auxiliaryRouterToolSuite) {
+      for (const tool of this.auxiliaryRouterToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.reasoningToolSuite) {
+      for (const tool of this.reasoningToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

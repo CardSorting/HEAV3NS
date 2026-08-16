@@ -12,15 +12,14 @@ Welcome to the central documentation wiki for **LUMI-JOY**, a self-evolving agen
 
 ### Latest generated verification
 
-Generated at **2026-08-15T20:42:06.673Z** on Node.js `v23.5.0`, macOS ARM64:
+Generated at **2026-08-16T07:05:11.963Z** on Node.js `v23.5.0`, macOS ARM64:
 
-| Lane | Result |
-|---|---:|
-| Pass 192 exact composition | 252/252 |
-| Runtime smoke | 9/9 |
-| Heterogeneous benchmark | 5/5 |
-| Flappy Bird React + TypeScript + Vite deep assertions | 8/8 |
-| Architecture/performance guardrails | 6/6 |
+- **Exact Pass 192 Composition**: **377/377** required capabilities verified.
+- **Runtime Capability Smoke**: **9/9** checks passing.
+- **Heterogeneous Benchmark**: **5/5** cases passing, including a 12-file Flappy Bird React + TypeScript + Vite project synthesized and verified against **8/8** strict assertions.
+- **Repository Guardrails**: **6/6** passing (`Zero-GC Slab Invariant`, `Turn Tick Latency SLA`, `Throughput SLA`, `State Rewind SLA`, `Zero-Barrel Rule`, `Base Class Immutability Rule`).
+- **Live Baseline Document**: [`docs/LIVE_BASELINE.json`](../docs/LIVE_BASELINE.json).
+- **Human-Readable Reports**: [`docs/BENCHMARK_REPORT.md`](../docs/BENCHMARK_REPORT.md) and [`docs/GRAND_ARCHITECTURAL_AUDIT.md`](../docs/GRAND_ARCHITECTURAL_AUDIT.md).
 
 The live JSON remains authoritative if this summary and a regenerated run ever differ.
 
