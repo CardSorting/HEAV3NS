@@ -458,6 +458,12 @@ import { BroccoliV4aPatchSubstrate } from "./sessions/extensions/v4a_patch/brocc
 import { V4aPatchSnapshotManager } from "./sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.js";
 import { V4aPatchToolSuite } from "./tooling/extensions/v4a_patch/v4a-patch-tool-suite.js";
 
+import { DeterministicWebsitePolicy } from "./agents/extensions/website_policy/deterministic-website-policy.js";
+import { WebsitePolicySupervisor } from "./agents/extensions/website_policy/website-policy-supervisor.js";
+import { BroccoliWebsitePolicySubstrate } from "./sessions/extensions/website_policy/broccoli-website-policy-substrate.js";
+import { WebsitePolicySnapshotManager } from "./sessions/extensions/website_policy/website-policy-snapshot-manager.js";
+import { WebsitePolicyToolSuite } from "./tooling/extensions/website_policy/website-policy-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1901,6 +1907,21 @@ export type {
   V4aPatchWorkspaceSnapshot,
 } from "./core/contracts/v4a-patch.contracts.js";
 
+export { DeterministicWebsitePolicy } from "./agents/extensions/website_policy/deterministic-website-policy.js";
+export { WebsitePolicySupervisor } from "./agents/extensions/website_policy/website-policy-supervisor.js";
+export { BroccoliWebsitePolicySubstrate } from "./sessions/extensions/website_policy/broccoli-website-policy-substrate.js";
+export { WebsitePolicySnapshotManager } from "./sessions/extensions/website_policy/website-policy-snapshot-manager.js";
+export { WebsitePolicyToolSuite } from "./tooling/extensions/website_policy/website-policy-tool-suite.js";
+export type {
+  WebsitePolicySource,
+  WebsitePolicyRule,
+  WebsiteAccessCheckResult,
+  WebsitePolicyConfig,
+  WebsitePolicyMetrics,
+  WebsitePolicyWorkspaceSnapshot,
+} from "./core/contracts/website-policy.contracts.js";
+export { DEFAULT_WEBSITE_POLICY_CONFIG } from "./core/contracts/website-policy.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2293,6 +2314,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliV4aPatchSubstrate: BroccoliV4aPatchSubstrate;
   readonly v4aPatchSnapshotManager: V4aPatchSnapshotManager;
   readonly v4aPatchToolSuite: V4aPatchToolSuite;
+  readonly deterministicWebsitePolicy: DeterministicWebsitePolicy;
+  readonly websitePolicySupervisor: WebsitePolicySupervisor;
+  readonly broccoliWebsitePolicySubstrate: BroccoliWebsitePolicySubstrate;
+  readonly websitePolicySnapshotManager: WebsitePolicySnapshotManager;
+  readonly websitePolicyToolSuite: WebsitePolicyToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2676,6 +2702,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliV4aPatchSubstrate = components.broccoliV4aPatchSubstrate;
     this.v4aPatchSnapshotManager = components.v4aPatchSnapshotManager;
     this.v4aPatchToolSuite = components.v4aPatchToolSuite;
+    this.deterministicWebsitePolicy = components.deterministicWebsitePolicy;
+    this.websitePolicySupervisor = components.websitePolicySupervisor;
+    this.broccoliWebsitePolicySubstrate = components.broccoliWebsitePolicySubstrate;
+    this.websitePolicySnapshotManager = components.websitePolicySnapshotManager;
+    this.websitePolicyToolSuite = components.websitePolicyToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

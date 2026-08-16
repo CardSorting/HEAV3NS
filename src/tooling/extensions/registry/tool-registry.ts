@@ -66,6 +66,7 @@ import type { DocExtractorToolSuite } from "../doc_extractor/doc-extractor-tool-
 import type { SpillVaultToolSuite } from "../spill_vault/spill-vault-tool-suite.js";
 import type { UrlSafetyToolSuite } from "../url_safety/url-safety-tool-suite.js";
 import type { V4aPatchToolSuite } from "../v4a_patch/v4a-patch-tool-suite.js";
+import type { WebsitePolicyToolSuite } from "../website_policy/website-policy-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -123,6 +124,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly spillVaultToolSuite?: SpillVaultToolSuite;
   readonly urlSafetyToolSuite?: UrlSafetyToolSuite;
   readonly v4aPatchToolSuite?: V4aPatchToolSuite;
+  readonly websitePolicyToolSuite?: WebsitePolicyToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -188,7 +190,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     docExtractorToolSuite?: DocExtractorToolSuite,
     spillVaultToolSuite?: SpillVaultToolSuite,
     urlSafetyToolSuite?: UrlSafetyToolSuite,
-    v4aPatchToolSuite?: V4aPatchToolSuite
+    v4aPatchToolSuite?: V4aPatchToolSuite,
+    websitePolicyToolSuite?: WebsitePolicyToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -246,6 +249,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.spillVaultToolSuite = spillVaultToolSuite;
     this.urlSafetyToolSuite = urlSafetyToolSuite;
     this.v4aPatchToolSuite = v4aPatchToolSuite;
+    this.websitePolicyToolSuite = websitePolicyToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -708,6 +712,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.v4aPatchToolSuite) {
       for (const tool of this.v4aPatchToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.websitePolicyToolSuite) {
+      for (const tool of this.websitePolicyToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

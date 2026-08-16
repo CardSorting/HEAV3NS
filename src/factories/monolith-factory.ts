@@ -497,6 +497,12 @@ import { BroccoliV4aPatchSubstrate } from "../sessions/extensions/v4a_patch/broc
 import { V4aPatchSnapshotManager } from "../sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.js";
 import { V4aPatchToolSuite } from "../tooling/extensions/v4a_patch/v4a-patch-tool-suite.js";
 
+import { DeterministicWebsitePolicy } from "../agents/extensions/website_policy/deterministic-website-policy.js";
+import { WebsitePolicySupervisor } from "../agents/extensions/website_policy/website-policy-supervisor.js";
+import { BroccoliWebsitePolicySubstrate } from "../sessions/extensions/website_policy/broccoli-website-policy-substrate.js";
+import { WebsitePolicySnapshotManager } from "../sessions/extensions/website_policy/website-policy-snapshot-manager.js";
+import { WebsitePolicyToolSuite } from "../tooling/extensions/website_policy/website-policy-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -948,6 +954,11 @@ export class MonolithFactory {
     broccoliV4aPatchSubstrate: BroccoliV4aPatchSubstrate;
     v4aPatchSnapshotManager: V4aPatchSnapshotManager;
     v4aPatchToolSuite: V4aPatchToolSuite;
+    deterministicWebsitePolicy: DeterministicWebsitePolicy;
+    websitePolicySupervisor: WebsitePolicySupervisor;
+    broccoliWebsitePolicySubstrate: BroccoliWebsitePolicySubstrate;
+    websitePolicySnapshotManager: WebsitePolicySnapshotManager;
+    websitePolicyToolSuite: WebsitePolicyToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1676,6 +1687,15 @@ export class MonolithFactory {
     );
     const v4aPatchToolSuite = new V4aPatchToolSuite(v4aPatchSupervisor);
 
+    const deterministicWebsitePolicy = new DeterministicWebsitePolicy();
+    const broccoliWebsitePolicySubstrate = new BroccoliWebsitePolicySubstrate();
+    const websitePolicySnapshotManager = new WebsitePolicySnapshotManager(broccoliWebsitePolicySubstrate);
+    const websitePolicySupervisor = new WebsitePolicySupervisor(
+      broccoliWebsitePolicySubstrate,
+      deterministicWebsitePolicy
+    );
+    const websitePolicyToolSuite = new WebsitePolicyToolSuite(websitePolicySupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1745,7 +1765,8 @@ export class MonolithFactory {
       docExtractorToolSuite,
       spillVaultToolSuite,
       urlSafetyToolSuite,
-      v4aPatchToolSuite
+      v4aPatchToolSuite,
+      websitePolicyToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2210,6 +2231,11 @@ export class MonolithFactory {
       broccoliV4aPatchSubstrate,
       v4aPatchSnapshotManager,
       v4aPatchToolSuite,
+      deterministicWebsitePolicy,
+      websitePolicySupervisor,
+      broccoliWebsitePolicySubstrate,
+      websitePolicySnapshotManager,
+      websitePolicyToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

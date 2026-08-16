@@ -143,6 +143,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "broccoliVisionSubstrate",
   "broccoliVoiceSubstrate",
   "broccoliWebSubstrate",
+  "broccoliWebsitePolicySubstrate",
   "browserSnapshotManager",
   "budgetCalculator",
   "cdpDialogPolicyEngine",
@@ -230,6 +231,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "deterministicUrlSafety",
   "deterministicV4aPatch",
   "deterministicWebEngine",
+  "deterministicWebsitePolicy",
   "diagnosticDoctorSupervisor",
   "diagnosticDoctorToolSuite",
   "diffSynthesizer",
@@ -446,6 +448,9 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "webIntelligenceSupervisor",
   "webIntelligenceToolSuite",
   "webSnapshotManager",
+  "websitePolicySnapshotManager",
+  "websitePolicySupervisor",
+  "websitePolicyToolSuite",
   "writeCoalescer",
 ] as const satisfies readonly (keyof ReturnType<typeof MonolithFactory.createEngine>)[];
 
