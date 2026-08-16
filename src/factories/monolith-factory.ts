@@ -443,6 +443,12 @@ import { BroccoliHeredocTerminalSubstrate } from "../sessions/extensions/heredoc
 import { HeredocTerminalSnapshotManager } from "../sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
 import { HeredocTerminalToolSuite } from "../tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
 
+import { DeterministicStealthBrowser } from "../agents/extensions/stealth_browser/deterministic-stealth-browser.js";
+import { StealthBrowserSupervisor } from "../agents/extensions/stealth_browser/stealth-browser-supervisor.js";
+import { BroccoliStealthBrowserSubstrate } from "../sessions/extensions/stealth_browser/broccoli-stealth-browser-substrate.js";
+import { StealthBrowserSnapshotManager } from "../sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.js";
+import { StealthBrowserToolSuite } from "../tooling/extensions/stealth_browser/stealth-browser-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -849,6 +855,11 @@ export class MonolithFactory {
     broccoliHeredocTerminalSubstrate: BroccoliHeredocTerminalSubstrate;
     heredocTerminalSnapshotManager: HeredocTerminalSnapshotManager;
     heredocTerminalToolSuite: HeredocTerminalToolSuite;
+    deterministicStealthBrowser: DeterministicStealthBrowser;
+    stealthBrowserSupervisor: StealthBrowserSupervisor;
+    broccoliStealthBrowserSubstrate: BroccoliStealthBrowserSubstrate;
+    stealthBrowserSnapshotManager: StealthBrowserSnapshotManager;
+    stealthBrowserToolSuite: StealthBrowserToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1496,6 +1507,15 @@ export class MonolithFactory {
     );
     const heredocTerminalToolSuite = new HeredocTerminalToolSuite(heredocTerminalSupervisor);
 
+    const deterministicStealthBrowser = new DeterministicStealthBrowser();
+    const broccoliStealthBrowserSubstrate = new BroccoliStealthBrowserSubstrate();
+    const stealthBrowserSnapshotManager = new StealthBrowserSnapshotManager(broccoliStealthBrowserSubstrate);
+    const stealthBrowserSupervisor = new StealthBrowserSupervisor(
+      broccoliStealthBrowserSubstrate,
+      deterministicStealthBrowser
+    );
+    const stealthBrowserToolSuite = new StealthBrowserToolSuite(stealthBrowserSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1556,7 +1576,8 @@ export class MonolithFactory {
       reasoningToolSuite,
       fuzzyMatcherToolSuite,
       titleInsightsToolSuite,
-      heredocTerminalToolSuite
+      heredocTerminalToolSuite,
+      stealthBrowserToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -1976,6 +1997,11 @@ export class MonolithFactory {
       broccoliHeredocTerminalSubstrate,
       heredocTerminalSnapshotManager,
       heredocTerminalToolSuite,
+      deterministicStealthBrowser,
+      stealthBrowserSupervisor,
+      broccoliStealthBrowserSubstrate,
+      stealthBrowserSnapshotManager,
+      stealthBrowserToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

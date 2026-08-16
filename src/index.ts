@@ -404,6 +404,12 @@ import { BroccoliHeredocTerminalSubstrate } from "./sessions/extensions/heredoc_
 import { HeredocTerminalSnapshotManager } from "./sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
 import { HeredocTerminalToolSuite } from "./tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
 
+import { DeterministicStealthBrowser } from "./agents/extensions/stealth_browser/deterministic-stealth-browser.js";
+import { StealthBrowserSupervisor } from "./agents/extensions/stealth_browser/stealth-browser-supervisor.js";
+import { BroccoliStealthBrowserSubstrate } from "./sessions/extensions/stealth_browser/broccoli-stealth-browser-substrate.js";
+import { StealthBrowserSnapshotManager } from "./sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.js";
+import { StealthBrowserToolSuite } from "./tooling/extensions/stealth_browser/stealth-browser-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1665,6 +1671,32 @@ export type {
   HeredocTerminalWorkspaceSnapshot,
 } from "./core/contracts/heredoc-terminal.contracts.js";
 
+export { DeterministicStealthBrowser } from "./agents/extensions/stealth_browser/deterministic-stealth-browser.js";
+export { StealthBrowserSupervisor } from "./agents/extensions/stealth_browser/stealth-browser-supervisor.js";
+export { BroccoliStealthBrowserSubstrate } from "./sessions/extensions/stealth_browser/broccoli-stealth-browser-substrate.js";
+export { StealthBrowserSnapshotManager } from "./sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.js";
+export { StealthBrowserToolSuite } from "./tooling/extensions/stealth_browser/stealth-browser-tool-suite.js";
+export {
+  LOOPBACK_HOSTS,
+  DOCKER_INTERNAL_HOST,
+  DEFAULT_VIEWPORT,
+} from "./core/contracts/stealth-browser.contracts.js";
+export type {
+  RefInteractionAction,
+  StorageType,
+  StealthBrowserViewport,
+  StealthBrowserTab,
+  AccessibilityRefNode,
+  AccessibilitySnapshot,
+  StealthFingerprintProfile,
+  CookieRecord,
+  StorageEntry,
+  RefInteractionResult,
+  UrlRewriteResult,
+  StealthBrowserLogRecord,
+  StealthBrowserWorkspaceSnapshot,
+} from "./core/contracts/stealth-browser.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2012,6 +2044,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliHeredocTerminalSubstrate: BroccoliHeredocTerminalSubstrate;
   readonly heredocTerminalSnapshotManager: HeredocTerminalSnapshotManager;
   readonly heredocTerminalToolSuite: HeredocTerminalToolSuite;
+  readonly deterministicStealthBrowser: DeterministicStealthBrowser;
+  readonly stealthBrowserSupervisor: StealthBrowserSupervisor;
+  readonly broccoliStealthBrowserSubstrate: BroccoliStealthBrowserSubstrate;
+  readonly stealthBrowserSnapshotManager: StealthBrowserSnapshotManager;
+  readonly stealthBrowserToolSuite: StealthBrowserToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2350,6 +2387,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliHeredocTerminalSubstrate = components.broccoliHeredocTerminalSubstrate;
     this.heredocTerminalSnapshotManager = components.heredocTerminalSnapshotManager;
     this.heredocTerminalToolSuite = components.heredocTerminalToolSuite;
+    this.deterministicStealthBrowser = components.deterministicStealthBrowser;
+    this.stealthBrowserSupervisor = components.stealthBrowserSupervisor;
+    this.broccoliStealthBrowserSubstrate = components.broccoliStealthBrowserSubstrate;
+    this.stealthBrowserSnapshotManager = components.stealthBrowserSnapshotManager;
+    this.stealthBrowserToolSuite = components.stealthBrowserToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
