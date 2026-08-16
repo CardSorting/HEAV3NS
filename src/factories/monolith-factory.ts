@@ -491,6 +491,12 @@ import { BroccoliUrlSafetySubstrate } from "../sessions/extensions/url_safety/br
 import { UrlSafetySnapshotManager } from "../sessions/extensions/url_safety/url-safety-snapshot-manager.js";
 import { UrlSafetyToolSuite } from "../tooling/extensions/url_safety/url-safety-tool-suite.js";
 
+import { DeterministicV4aPatch } from "../agents/extensions/v4a_patch/deterministic-v4a-patch.js";
+import { V4aPatchSupervisor } from "../agents/extensions/v4a_patch/v4a-patch-supervisor.js";
+import { BroccoliV4aPatchSubstrate } from "../sessions/extensions/v4a_patch/broccoli-v4a-patch-substrate.js";
+import { V4aPatchSnapshotManager } from "../sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.js";
+import { V4aPatchToolSuite } from "../tooling/extensions/v4a_patch/v4a-patch-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -937,6 +943,11 @@ export class MonolithFactory {
     broccoliUrlSafetySubstrate: BroccoliUrlSafetySubstrate;
     urlSafetySnapshotManager: UrlSafetySnapshotManager;
     urlSafetyToolSuite: UrlSafetyToolSuite;
+    deterministicV4aPatch: DeterministicV4aPatch;
+    v4aPatchSupervisor: V4aPatchSupervisor;
+    broccoliV4aPatchSubstrate: BroccoliV4aPatchSubstrate;
+    v4aPatchSnapshotManager: V4aPatchSnapshotManager;
+    v4aPatchToolSuite: V4aPatchToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1656,6 +1667,15 @@ export class MonolithFactory {
     );
     const urlSafetyToolSuite = new UrlSafetyToolSuite(urlSafetySupervisor);
 
+    const deterministicV4aPatch = new DeterministicV4aPatch();
+    const broccoliV4aPatchSubstrate = new BroccoliV4aPatchSubstrate();
+    const v4aPatchSnapshotManager = new V4aPatchSnapshotManager(broccoliV4aPatchSubstrate);
+    const v4aPatchSupervisor = new V4aPatchSupervisor(
+      broccoliV4aPatchSubstrate,
+      deterministicV4aPatch
+    );
+    const v4aPatchToolSuite = new V4aPatchToolSuite(v4aPatchSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1724,7 +1744,8 @@ export class MonolithFactory {
       speechNormalizerToolSuite,
       docExtractorToolSuite,
       spillVaultToolSuite,
-      urlSafetyToolSuite
+      urlSafetyToolSuite,
+      v4aPatchToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2184,6 +2205,11 @@ export class MonolithFactory {
       broccoliUrlSafetySubstrate,
       urlSafetySnapshotManager,
       urlSafetyToolSuite,
+      deterministicV4aPatch,
+      v4aPatchSupervisor,
+      broccoliV4aPatchSubstrate,
+      v4aPatchSnapshotManager,
+      v4aPatchToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

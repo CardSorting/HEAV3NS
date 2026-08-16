@@ -65,6 +65,7 @@ import type { SpeechNormalizerToolSuite } from "../speech_normalizer/speech-norm
 import type { DocExtractorToolSuite } from "../doc_extractor/doc-extractor-tool-suite.js";
 import type { SpillVaultToolSuite } from "../spill_vault/spill-vault-tool-suite.js";
 import type { UrlSafetyToolSuite } from "../url_safety/url-safety-tool-suite.js";
+import type { V4aPatchToolSuite } from "../v4a_patch/v4a-patch-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -121,6 +122,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly docExtractorToolSuite?: DocExtractorToolSuite;
   readonly spillVaultToolSuite?: SpillVaultToolSuite;
   readonly urlSafetyToolSuite?: UrlSafetyToolSuite;
+  readonly v4aPatchToolSuite?: V4aPatchToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -185,7 +187,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     speechNormalizerToolSuite?: SpeechNormalizerToolSuite,
     docExtractorToolSuite?: DocExtractorToolSuite,
     spillVaultToolSuite?: SpillVaultToolSuite,
-    urlSafetyToolSuite?: UrlSafetyToolSuite
+    urlSafetyToolSuite?: UrlSafetyToolSuite,
+    v4aPatchToolSuite?: V4aPatchToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -242,6 +245,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.docExtractorToolSuite = docExtractorToolSuite;
     this.spillVaultToolSuite = spillVaultToolSuite;
     this.urlSafetyToolSuite = urlSafetyToolSuite;
+    this.v4aPatchToolSuite = v4aPatchToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -699,6 +703,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.urlSafetyToolSuite) {
       for (const tool of this.urlSafetyToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.v4aPatchToolSuite) {
+      for (const tool of this.v4aPatchToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

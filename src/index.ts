@@ -452,6 +452,12 @@ import { BroccoliUrlSafetySubstrate } from "./sessions/extensions/url_safety/bro
 import { UrlSafetySnapshotManager } from "./sessions/extensions/url_safety/url-safety-snapshot-manager.js";
 import { UrlSafetyToolSuite } from "./tooling/extensions/url_safety/url-safety-tool-suite.js";
 
+import { DeterministicV4aPatch } from "./agents/extensions/v4a_patch/deterministic-v4a-patch.js";
+import { V4aPatchSupervisor } from "./agents/extensions/v4a_patch/v4a-patch-supervisor.js";
+import { BroccoliV4aPatchSubstrate } from "./sessions/extensions/v4a_patch/broccoli-v4a-patch-substrate.js";
+import { V4aPatchSnapshotManager } from "./sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.js";
+import { V4aPatchToolSuite } from "./tooling/extensions/v4a_patch/v4a-patch-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1877,6 +1883,24 @@ export {
   DEFAULT_URL_SAFETY_CONFIG,
 } from "./core/contracts/url-safety.contracts.js";
 
+export { DeterministicV4aPatch } from "./agents/extensions/v4a_patch/deterministic-v4a-patch.js";
+export { V4aPatchSupervisor } from "./agents/extensions/v4a_patch/v4a-patch-supervisor.js";
+export { BroccoliV4aPatchSubstrate } from "./sessions/extensions/v4a_patch/broccoli-v4a-patch-substrate.js";
+export { V4aPatchSnapshotManager } from "./sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.js";
+export { V4aPatchToolSuite } from "./tooling/extensions/v4a_patch/v4a-patch-tool-suite.js";
+export type {
+  V4aOperationType,
+  V4aHunkLine,
+  V4aHunk,
+  V4aPatchOperation,
+  V4aPatchParseResult,
+  V4aApplyResult,
+  WorkingDiffMode,
+  WorkingDiffResult,
+  V4aPatchMetrics,
+  V4aPatchWorkspaceSnapshot,
+} from "./core/contracts/v4a-patch.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2264,6 +2288,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliUrlSafetySubstrate: BroccoliUrlSafetySubstrate;
   readonly urlSafetySnapshotManager: UrlSafetySnapshotManager;
   readonly urlSafetyToolSuite: UrlSafetyToolSuite;
+  readonly deterministicV4aPatch: DeterministicV4aPatch;
+  readonly v4aPatchSupervisor: V4aPatchSupervisor;
+  readonly broccoliV4aPatchSubstrate: BroccoliV4aPatchSubstrate;
+  readonly v4aPatchSnapshotManager: V4aPatchSnapshotManager;
+  readonly v4aPatchToolSuite: V4aPatchToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2642,6 +2671,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliUrlSafetySubstrate = components.broccoliUrlSafetySubstrate;
     this.urlSafetySnapshotManager = components.urlSafetySnapshotManager;
     this.urlSafetyToolSuite = components.urlSafetyToolSuite;
+    this.deterministicV4aPatch = components.deterministicV4aPatch;
+    this.v4aPatchSupervisor = components.v4aPatchSupervisor;
+    this.broccoliV4aPatchSubstrate = components.broccoliV4aPatchSubstrate;
+    this.v4aPatchSnapshotManager = components.v4aPatchSnapshotManager;
+    this.v4aPatchToolSuite = components.v4aPatchToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
