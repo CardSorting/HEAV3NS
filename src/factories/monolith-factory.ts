@@ -563,6 +563,12 @@ import { BroccoliStreamDiagSubstrate } from "../sessions/extensions/stream_diag/
 import { StreamDiagSnapshotManager } from "../sessions/extensions/stream_diag/stream-diag-snapshot-manager.js";
 import { StreamDiagToolSuite } from "../tooling/extensions/stream_diag/stream-diag-tool-suite.js";
 
+import { DeterministicTurnRetryEngine } from "../agents/extensions/turn_retry/deterministic-turn-retry-engine.js";
+import { TurnRetrySupervisor } from "../agents/extensions/turn_retry/turn-retry-supervisor.js";
+import { BroccoliTurnRetrySubstrate } from "../sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
+import { TurnRetrySnapshotManager } from "../sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
+import { TurnRetryToolSuite } from "../tooling/extensions/turn_retry/turn-retry-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1069,6 +1075,11 @@ export class MonolithFactory {
     broccoliStreamDiagSubstrate: BroccoliStreamDiagSubstrate;
     streamDiagSnapshotManager: StreamDiagSnapshotManager;
     streamDiagToolSuite: StreamDiagToolSuite;
+    deterministicTurnRetryEngine: DeterministicTurnRetryEngine;
+    turnRetrySupervisor: TurnRetrySupervisor;
+    broccoliTurnRetrySubstrate: BroccoliTurnRetrySubstrate;
+    turnRetrySnapshotManager: TurnRetrySnapshotManager;
+    turnRetryToolSuite: TurnRetryToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1897,6 +1908,15 @@ export class MonolithFactory {
     );
     const streamDiagToolSuite = new StreamDiagToolSuite(streamDiagSupervisor);
 
+    const deterministicTurnRetryEngine = new DeterministicTurnRetryEngine();
+    const broccoliTurnRetrySubstrate = new BroccoliTurnRetrySubstrate();
+    const turnRetrySnapshotManager = new TurnRetrySnapshotManager(broccoliTurnRetrySubstrate);
+    const turnRetrySupervisor = new TurnRetrySupervisor(
+      broccoliTurnRetrySubstrate,
+      deterministicTurnRetryEngine
+    );
+    const turnRetryToolSuite = new TurnRetryToolSuite(turnRetrySupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1977,7 +1997,8 @@ export class MonolithFactory {
       contextBreakdownToolSuite,
       osvScannerToolSuite,
       subdirHintsToolSuite,
-      streamDiagToolSuite
+      streamDiagToolSuite,
+      turnRetryToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2497,6 +2518,11 @@ export class MonolithFactory {
       broccoliStreamDiagSubstrate,
       streamDiagSnapshotManager,
       streamDiagToolSuite,
+      deterministicTurnRetryEngine,
+      turnRetrySupervisor,
+      broccoliTurnRetrySubstrate,
+      turnRetrySnapshotManager,
+      turnRetryToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

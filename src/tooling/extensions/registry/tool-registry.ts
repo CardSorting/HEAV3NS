@@ -77,6 +77,7 @@ import type { ContextBreakdownToolSuite } from "../context_breakdown/context-bre
 import type { OsvScannerToolSuite } from "../osv/osv-scanner-tool-suite.js";
 import type { SubdirHintsToolSuite } from "../subdir_hints/subdir-hints-tool-suite.js";
 import type { StreamDiagToolSuite } from "../stream_diag/stream-diag-tool-suite.js";
+import type { TurnRetryToolSuite } from "../turn_retry/turn-retry-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -145,6 +146,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly osvScannerToolSuite?: OsvScannerToolSuite;
   readonly subdirHintsToolSuite?: SubdirHintsToolSuite;
   readonly streamDiagToolSuite?: StreamDiagToolSuite;
+  readonly turnRetryToolSuite?: TurnRetryToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -221,7 +223,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     contextBreakdownToolSuite?: ContextBreakdownToolSuite,
     osvScannerToolSuite?: OsvScannerToolSuite,
     subdirHintsToolSuite?: SubdirHintsToolSuite,
-    streamDiagToolSuite?: StreamDiagToolSuite
+    streamDiagToolSuite?: StreamDiagToolSuite,
+    turnRetryToolSuite?: TurnRetryToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -290,6 +293,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.osvScannerToolSuite = osvScannerToolSuite;
     this.subdirHintsToolSuite = subdirHintsToolSuite;
     this.streamDiagToolSuite = streamDiagToolSuite;
+    this.turnRetryToolSuite = turnRetryToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -807,6 +811,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.streamDiagToolSuite) {
       for (const tool of this.streamDiagToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.turnRetryToolSuite) {
+      for (const tool of this.turnRetryToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

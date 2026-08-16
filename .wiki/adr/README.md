@@ -149,6 +149,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md)**: OSV malware scanner, package ecosystem parser, and pre-flight execution firewall subsystem.
 - **[ADR-105](ADR-105-progressive-subdirectory-context-discovery.md)**: Progressive subdirectory context discovery, dynamic instruction hints, and prefix-cache-safe tool attachment subsystem.
 - **[ADR-106](ADR-106-stream-diagnostics-and-forensic-header-capture.md)**: LLM stream diagnostics, upstream edge forensic header capture, and exception chain breadcrumb subsystem.
+- **[ADR-107](ADR-107-turn-retry-state-machine-and-recovery-guards.md)**: Turn retry state machine, one-shot recovery guards, and adaptive payload restart subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

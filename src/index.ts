@@ -524,6 +524,12 @@ import { BroccoliStreamDiagSubstrate } from "./sessions/extensions/stream_diag/b
 import { StreamDiagSnapshotManager } from "./sessions/extensions/stream_diag/stream-diag-snapshot-manager.js";
 import { StreamDiagToolSuite } from "./tooling/extensions/stream_diag/stream-diag-tool-suite.js";
 
+import { DeterministicTurnRetryEngine } from "./agents/extensions/turn_retry/deterministic-turn-retry-engine.js";
+import { TurnRetrySupervisor } from "./agents/extensions/turn_retry/turn-retry-supervisor.js";
+import { BroccoliTurnRetrySubstrate } from "./sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
+import { TurnRetrySnapshotManager } from "./sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
+import { TurnRetryToolSuite } from "./tooling/extensions/turn_retry/turn-retry-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2138,6 +2144,27 @@ export {
   DEFAULT_STREAM_DIAG_CONFIG,
 } from "./core/contracts/stream-diag.contracts.js";
 
+export { DeterministicTurnRetryEngine } from "./agents/extensions/turn_retry/deterministic-turn-retry-engine.js";
+export { TurnRetrySupervisor } from "./agents/extensions/turn_retry/turn-retry-supervisor.js";
+export { BroccoliTurnRetrySubstrate } from "./sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
+export { TurnRetrySnapshotManager } from "./sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
+export { TurnRetryToolSuite } from "./tooling/extensions/turn_retry/turn-retry-tool-suite.js";
+export type {
+  TurnRetryGuards,
+  TurnRestartSignals,
+  TurnRecoveryBranch,
+  TurnRestartSignalKey,
+  TurnRetryStateDescriptor,
+  TurnRetryConfig,
+  TurnRetryMetrics,
+  TurnRetryWorkspaceSnapshot,
+} from "./core/contracts/turn-retry.contracts.js";
+export {
+  DEFAULT_TURN_RETRY_GUARDS,
+  DEFAULT_TURN_RESTART_SIGNALS,
+  DEFAULT_TURN_RETRY_CONFIG,
+} from "./core/contracts/turn-retry.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2585,6 +2612,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliStreamDiagSubstrate: BroccoliStreamDiagSubstrate;
   readonly streamDiagSnapshotManager: StreamDiagSnapshotManager;
   readonly streamDiagToolSuite: StreamDiagToolSuite;
+  readonly deterministicTurnRetryEngine: DeterministicTurnRetryEngine;
+  readonly turnRetrySupervisor: TurnRetrySupervisor;
+  readonly broccoliTurnRetrySubstrate: BroccoliTurnRetrySubstrate;
+  readonly turnRetrySnapshotManager: TurnRetrySnapshotManager;
+  readonly turnRetryToolSuite: TurnRetryToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3023,6 +3055,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliStreamDiagSubstrate = components.broccoliStreamDiagSubstrate;
     this.streamDiagSnapshotManager = components.streamDiagSnapshotManager;
     this.streamDiagToolSuite = components.streamDiagToolSuite;
+    this.deterministicTurnRetryEngine = components.deterministicTurnRetryEngine;
+    this.turnRetrySupervisor = components.turnRetrySupervisor;
+    this.broccoliTurnRetrySubstrate = components.broccoliTurnRetrySubstrate;
+    this.turnRetrySnapshotManager = components.turnRetrySnapshotManager;
+    this.turnRetryToolSuite = components.turnRetryToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
