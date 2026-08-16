@@ -78,12 +78,13 @@ The following 74 foundation and edge capabilities have been systematically absor
 | **#73** | Native Nous Portal Provider, Attribution Tagging & Tool-Pool Entitlement Subsystem | [ADR-116](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-116-native-nous-portal-provider.md) |
 | **#74** | Persistent Session Goals, Quality Gates & Deterministic Goal Loop Subsystem | [ADR-117](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-117-persistent-session-goals-and-ralph-loop.md) |
 | **#75** | World-Class Kanban Architecture, Task DAG, Typed Blockers & Multi-Agent Issue Orchestration | [ADR-118](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-118-world-class-kanban-architecture.md) |
+| **#76** | Persistent Multi-Profile Isolation, Environment Routing & Persona Cloning Subsystem | [ADR-119](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md) |
 
 ---
 
-## 🔒 549 Frozen Component Manifest (Alphabetical Lock)
+## 🔒 554 Frozen Component Manifest (Alphabetical Lock)
 
-The following 549 components form the authoritative Grand Monolith:
+The following 554 components form the authoritative Grand Monolith:
 
 ```
 agentEngine, agentRegistry, agentSlashRouter, agentStateLedger, agentSwarmDispatcher,

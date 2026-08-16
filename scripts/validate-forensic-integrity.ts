@@ -34,8 +34,8 @@ async function runForensicAudit(): Promise<void> {
 
   assert.strictEqual(
     CURRENT_REQUIRED_COMPONENTS.length,
-    549,
-    `Expected exactly 549 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
+    554,
+    `Expected exactly 554 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
   );
 
   const seen = new Set<string>();
@@ -56,7 +56,7 @@ async function runForensicAudit(): Promise<void> {
       `Component at index ${i} ('${CURRENT_REQUIRED_COMPONENTS[i]}') is out of alphabetical order (expected '${sortedList[i]}')`
     );
   }
-  console.log(`  [✓] All 549 components strictly unique & alphabetically sorted.`);
+  console.log(`  [✓] All 554 components strictly unique & alphabetically sorted.`);
 
   // ---------------------------------------------------------------------------
   // Check 2: Monolith Factory & LumiMonolith 100% Binding Coverage
@@ -146,7 +146,7 @@ async function runForensicAudit(): Promise<void> {
   // ---------------------------------------------------------------------------
   // Check 5: ADR Indexing & Documentation Provenance
   // ---------------------------------------------------------------------------
-  console.log("\n[Check 5/6] Auditing Architectural Decision Records (ADR-001 -> ADR-118)...");
+  console.log("\n[Check 5/6] Auditing Architectural Decision Records (ADR-001 -> ADR-119)...");
 
   const adrDir = path.resolve(process.cwd(), ".wiki/adr");
   const readmePath = path.join(adrDir, "README.md");
@@ -155,7 +155,7 @@ async function runForensicAudit(): Promise<void> {
   const readmeContent = fs.readFileSync(readmePath, "utf-8");
   const adrFiles = fs.readdirSync(adrDir).filter((f) => f.startsWith("ADR-") && f.endsWith(".md"));
 
-  assert.ok(adrFiles.length >= 118, `Expected at least 118 ADR files, found ${adrFiles.length}`);
+  assert.ok(adrFiles.length >= 119, `Expected at least 119 ADR files, found ${adrFiles.length}`);
 
   const unindexedADRs: string[] = [];
   for (const adrFile of adrFiles) {

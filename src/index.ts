@@ -590,6 +590,12 @@ import { BroccoliGoalSubstrate } from "./sessions/extensions/goals/broccoli-goal
 import { GoalSnapshotManager } from "./sessions/extensions/goals/goal-snapshot-manager.js";
 import { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
 
+import { DeterministicProfileEngine } from "./agents/extensions/profiles/deterministic-profile-engine.js";
+import { ProfileSupervisor } from "./agents/extensions/profiles/profile-supervisor.js";
+import { BroccoliProfileSubstrate } from "./sessions/extensions/profiles/broccoli-profile-substrate.js";
+import { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-snapshot-manager.js";
+import { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2432,6 +2438,23 @@ export {
   GATE_OUTPUT_TAIL_CHARS,
 } from "./core/contracts/goal.contracts.js";
 
+export { DeterministicProfileEngine } from "./agents/extensions/profiles/deterministic-profile-engine.js";
+export { ProfileSupervisor } from "./agents/extensions/profiles/profile-supervisor.js";
+export { BroccoliProfileSubstrate } from "./sessions/extensions/profiles/broccoli-profile-substrate.js";
+export { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-snapshot-manager.js";
+export { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
+export type {
+  ProfileCloneKind,
+  ProfileCloneOptions,
+  ProfileDescriptor,
+  ProfileExportBundle,
+  ProfileMutation,
+  ProfileReasoningEffort,
+  ProfileStatus,
+  ProfileWorkspaceSnapshot,
+} from "./core/contracts/profile.contracts.js";
+export { PROFILE_ID_REGEX } from "./core/contracts/profile.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2934,6 +2957,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliGoalSubstrate: BroccoliGoalSubstrate;
   readonly goalSnapshotManager: GoalSnapshotManager;
   readonly goalToolSuite: GoalToolSuite;
+  readonly deterministicProfileEngine: DeterministicProfileEngine;
+  readonly profileSupervisor: ProfileSupervisor;
+  readonly broccoliProfileSubstrate: BroccoliProfileSubstrate;
+  readonly profileSnapshotManager: ProfileSnapshotManager;
+  readonly profileToolSuite: ProfileToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3427,6 +3455,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliGoalSubstrate = components.broccoliGoalSubstrate;
     this.goalSnapshotManager = components.goalSnapshotManager;
     this.goalToolSuite = components.goalToolSuite;
+    this.deterministicProfileEngine = components.deterministicProfileEngine;
+    this.profileSupervisor = components.profileSupervisor;
+    this.broccoliProfileSubstrate = components.broccoliProfileSubstrate;
+    this.profileSnapshotManager = components.profileSnapshotManager;
+    this.profileToolSuite = components.profileToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

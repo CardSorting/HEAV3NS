@@ -249,9 +249,9 @@ async function runGoalValidationSuites(): Promise<void> {
   console.log("  [✓] All 6 model tools executed cleanly.");
 
   // ---------------------------------------------------------------------------
-  // Suite 8: Micro-Benchmarks & Grand Monolith Composition (549 Components)
+  // Suite 8: Micro-Benchmarks & Grand Monolith Composition (554 Components)
   // ---------------------------------------------------------------------------
-  console.log("[Suite 8/8] Micro-Benchmarks & Grand Monolith Composition (549 Components)...");
+  console.log("[Suite 8/8] Micro-Benchmarks & Grand Monolith Composition (554 Components)...");
 
   const iterations = 50_000;
   const startBench = performance.now();
@@ -272,11 +272,11 @@ async function runGoalValidationSuites(): Promise<void> {
 
   const verification = GrandMonolithSynthesizer.verifyComposition(monolith.components);
   assert.strictEqual(verification.cohesionStatus, "OPTIMAL");
-  assert.strictEqual(verification.componentCount, 549);
+  assert.strictEqual(verification.componentCount, 554);
   assert.strictEqual(verification.missingComponents.length, 0);
   assert.strictEqual(verification.unexpectedComponents.length, 0);
   assert.strictEqual(verification.duplicateManifestComponents.length, 0);
-  console.log(`  [✓] Grand Monolith successfully verified with ${verification.componentCount}/549 components in OPTIMAL cohesion.`);
+  console.log(`  [✓] Grand Monolith successfully verified with ${verification.componentCount}/554 components in OPTIMAL cohesion.`);
 
   console.log("\n================================================================");
   console.log("   ALL 8 GOAL SYSTEM VALIDATION SUITES PASSED CLEANLY!         ");

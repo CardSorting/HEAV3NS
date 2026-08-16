@@ -629,6 +629,12 @@ import { BroccoliGoalSubstrate } from "../sessions/extensions/goals/broccoli-goa
 import { GoalSnapshotManager } from "../sessions/extensions/goals/goal-snapshot-manager.js";
 import { GoalToolSuite } from "../tooling/extensions/goals/goal-tool-suite.js";
 
+import { DeterministicProfileEngine } from "../agents/extensions/profiles/deterministic-profile-engine.js";
+import { ProfileSupervisor } from "../agents/extensions/profiles/profile-supervisor.js";
+import { BroccoliProfileSubstrate } from "../sessions/extensions/profiles/broccoli-profile-substrate.js";
+import { ProfileSnapshotManager } from "../sessions/extensions/profiles/profile-snapshot-manager.js";
+import { ProfileToolSuite } from "../tooling/extensions/profiles/profile-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1190,6 +1196,11 @@ export class MonolithFactory {
     broccoliGoalSubstrate: BroccoliGoalSubstrate;
     goalSnapshotManager: GoalSnapshotManager;
     goalToolSuite: GoalToolSuite;
+    deterministicProfileEngine: DeterministicProfileEngine;
+    profileSupervisor: ProfileSupervisor;
+    broccoliProfileSubstrate: BroccoliProfileSubstrate;
+    profileSnapshotManager: ProfileSnapshotManager;
+    profileToolSuite: ProfileToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2114,6 +2125,12 @@ export class MonolithFactory {
     const goalSupervisor = new GoalSupervisor(broccoliGoalSubstrate, deterministicGoalEngine);
     const goalToolSuite = new GoalToolSuite(goalSupervisor);
 
+    const broccoliProfileSubstrate = new BroccoliProfileSubstrate();
+    const deterministicProfileEngine = new DeterministicProfileEngine();
+    const profileSnapshotManager = new ProfileSnapshotManager(broccoliProfileSubstrate);
+    const profileSupervisor = new ProfileSupervisor(deterministicProfileEngine, broccoliProfileSubstrate);
+    const profileToolSuite = new ProfileToolSuite(profileSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2205,7 +2222,8 @@ export class MonolithFactory {
       selfRepoGuardToolSuite,
       schemaSanitizerToolSuite,
       nousPortalToolSuite,
-      goalToolSuite
+      goalToolSuite,
+      profileToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2780,6 +2798,11 @@ export class MonolithFactory {
       broccoliGoalSubstrate,
       goalSnapshotManager,
       goalToolSuite,
+      deterministicProfileEngine,
+      profileSupervisor,
+      broccoliProfileSubstrate,
+      profileSnapshotManager,
+      profileToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
