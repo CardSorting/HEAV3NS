@@ -461,6 +461,12 @@ import { BroccoliPreflightSubstrate } from "../sessions/extensions/preflight_sca
 import { PreflightSnapshotManager } from "../sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
 import { PreflightToolSuite } from "../tooling/extensions/preflight_scanner/preflight-tool-suite.js";
 
+import { DeterministicAudioSniffer } from "../agents/extensions/audio_container/deterministic-audio-sniffer.js";
+import { AudioContainerSupervisor } from "../agents/extensions/audio_container/audio-container-supervisor.js";
+import { BroccoliAudioContainerSubstrate } from "../sessions/extensions/audio_container/broccoli-audio-container-substrate.js";
+import { AudioContainerSnapshotManager } from "../sessions/extensions/audio_container/audio-container-snapshot-manager.js";
+import { AudioContainerToolSuite } from "../tooling/extensions/audio_container/audio-container-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -882,6 +888,11 @@ export class MonolithFactory {
     broccoliPreflightSubstrate: BroccoliPreflightSubstrate;
     preflightSnapshotManager: PreflightSnapshotManager;
     preflightToolSuite: PreflightToolSuite;
+    deterministicAudioSniffer: DeterministicAudioSniffer;
+    audioContainerSupervisor: AudioContainerSupervisor;
+    broccoliAudioContainerSubstrate: BroccoliAudioContainerSubstrate;
+    audioContainerSnapshotManager: AudioContainerSnapshotManager;
+    audioContainerToolSuite: AudioContainerToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1556,6 +1567,15 @@ export class MonolithFactory {
     );
     const preflightToolSuite = new PreflightToolSuite(preflightScannerSupervisor);
 
+    const deterministicAudioSniffer = new DeterministicAudioSniffer();
+    const broccoliAudioContainerSubstrate = new BroccoliAudioContainerSubstrate();
+    const audioContainerSnapshotManager = new AudioContainerSnapshotManager(broccoliAudioContainerSubstrate);
+    const audioContainerSupervisor = new AudioContainerSupervisor(
+      broccoliAudioContainerSubstrate,
+      deterministicAudioSniffer
+    );
+    const audioContainerToolSuite = new AudioContainerToolSuite(audioContainerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1619,7 +1639,8 @@ export class MonolithFactory {
       heredocTerminalToolSuite,
       stealthBrowserToolSuite,
       skillsSyncToolSuite,
-      preflightToolSuite
+      preflightToolSuite,
+      audioContainerToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2054,6 +2075,11 @@ export class MonolithFactory {
       broccoliPreflightSubstrate,
       preflightSnapshotManager,
       preflightToolSuite,
+      deterministicAudioSniffer,
+      audioContainerSupervisor,
+      broccoliAudioContainerSubstrate,
+      audioContainerSnapshotManager,
+      audioContainerToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

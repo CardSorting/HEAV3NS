@@ -60,6 +60,7 @@ import type { HeredocTerminalToolSuite } from "../heredoc_terminal/heredoc-termi
 import type { StealthBrowserToolSuite } from "../stealth_browser/stealth-browser-tool-suite.js";
 import type { SkillsSyncToolSuite } from "../skills_sync/skills-sync-tool-suite.js";
 import type { PreflightToolSuite } from "../preflight_scanner/preflight-tool-suite.js";
+import type { AudioContainerToolSuite } from "../audio_container/audio-container-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -111,6 +112,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly stealthBrowserToolSuite?: StealthBrowserToolSuite;
   readonly skillsSyncToolSuite?: SkillsSyncToolSuite;
   readonly preflightToolSuite?: PreflightToolSuite;
+  readonly audioContainerToolSuite?: AudioContainerToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -170,7 +172,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     heredocTerminalToolSuite?: HeredocTerminalToolSuite,
     stealthBrowserToolSuite?: StealthBrowserToolSuite,
     skillsSyncToolSuite?: SkillsSyncToolSuite,
-    preflightToolSuite?: PreflightToolSuite
+    preflightToolSuite?: PreflightToolSuite,
+    audioContainerToolSuite?: AudioContainerToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -222,6 +225,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.stealthBrowserToolSuite = stealthBrowserToolSuite;
     this.skillsSyncToolSuite = skillsSyncToolSuite;
     this.preflightToolSuite = preflightToolSuite;
+    this.audioContainerToolSuite = audioContainerToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -654,6 +658,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.preflightToolSuite) {
       for (const tool of this.preflightToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.audioContainerToolSuite) {
+      for (const tool of this.audioContainerToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

@@ -422,6 +422,12 @@ import { BroccoliPreflightSubstrate } from "./sessions/extensions/preflight_scan
 import { PreflightSnapshotManager } from "./sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
 import { PreflightToolSuite } from "./tooling/extensions/preflight_scanner/preflight-tool-suite.js";
 
+import { DeterministicAudioSniffer } from "./agents/extensions/audio_container/deterministic-audio-sniffer.js";
+import { AudioContainerSupervisor } from "./agents/extensions/audio_container/audio-container-supervisor.js";
+import { BroccoliAudioContainerSubstrate } from "./sessions/extensions/audio_container/broccoli-audio-container-substrate.js";
+import { AudioContainerSnapshotManager } from "./sessions/extensions/audio_container/audio-container-snapshot-manager.js";
+import { AudioContainerToolSuite } from "./tooling/extensions/audio_container/audio-container-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1753,6 +1759,25 @@ export type {
   PreflightWorkspaceSnapshot,
 } from "./core/contracts/preflight-scanner.contracts.js";
 
+export { DeterministicAudioSniffer } from "./agents/extensions/audio_container/deterministic-audio-sniffer.js";
+export { AudioContainerSupervisor } from "./agents/extensions/audio_container/audio-container-supervisor.js";
+export { BroccoliAudioContainerSubstrate } from "./sessions/extensions/audio_container/broccoli-audio-container-substrate.js";
+export { AudioContainerSnapshotManager } from "./sessions/extensions/audio_container/audio-container-snapshot-manager.js";
+export { AudioContainerToolSuite } from "./tooling/extensions/audio_container/audio-container-tool-suite.js";
+export type {
+  AudioContainerId,
+  AudioMimeType,
+  AudioContainerDescriptor,
+  AudioSniffResult,
+  AudioCacheEntry,
+  AudioWorkspaceSnapshot,
+} from "./core/contracts/audio-container.contracts.js";
+export {
+  CONTAINER_TO_EXT,
+  CONTAINER_TO_MIME,
+  MP4_AUDIO_BRANDS,
+} from "./core/contracts/audio-container.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2115,6 +2140,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliPreflightSubstrate: BroccoliPreflightSubstrate;
   readonly preflightSnapshotManager: PreflightSnapshotManager;
   readonly preflightToolSuite: PreflightToolSuite;
+  readonly deterministicAudioSniffer: DeterministicAudioSniffer;
+  readonly audioContainerSupervisor: AudioContainerSupervisor;
+  readonly broccoliAudioContainerSubstrate: BroccoliAudioContainerSubstrate;
+  readonly audioContainerSnapshotManager: AudioContainerSnapshotManager;
+  readonly audioContainerToolSuite: AudioContainerToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2468,6 +2498,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliPreflightSubstrate = components.broccoliPreflightSubstrate;
     this.preflightSnapshotManager = components.preflightSnapshotManager;
     this.preflightToolSuite = components.preflightToolSuite;
+    this.deterministicAudioSniffer = components.deterministicAudioSniffer;
+    this.audioContainerSupervisor = components.audioContainerSupervisor;
+    this.broccoliAudioContainerSubstrate = components.broccoliAudioContainerSubstrate;
+    this.audioContainerSnapshotManager = components.audioContainerSnapshotManager;
+    this.audioContainerToolSuite = components.audioContainerToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
