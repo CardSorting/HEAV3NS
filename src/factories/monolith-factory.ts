@@ -611,6 +611,12 @@ import { BroccoliSelfRepoGuardSubstrate } from "../sessions/extensions/self_repo
 import { SelfRepoGuardSnapshotManager } from "../sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
 import { SelfRepoGuardToolSuite } from "../tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
 
+import { DeterministicSchemaSanitizerEngine } from "../agents/extensions/schema_sanitizer/deterministic-schema-sanitizer-engine.js";
+import { SchemaSanitizerSupervisor } from "../agents/extensions/schema_sanitizer/schema-sanitizer-supervisor.js";
+import { BroccoliSchemaSanitizerSubstrate } from "../sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
+import { SchemaSanitizerSnapshotManager } from "../sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
+import { SchemaSanitizerToolSuite } from "../tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1157,6 +1163,11 @@ export class MonolithFactory {
     broccoliSelfRepoGuardSubstrate: BroccoliSelfRepoGuardSubstrate;
     selfRepoGuardSnapshotManager: SelfRepoGuardSnapshotManager;
     selfRepoGuardToolSuite: SelfRepoGuardToolSuite;
+    deterministicSchemaSanitizerEngine: DeterministicSchemaSanitizerEngine;
+    schemaSanitizerSupervisor: SchemaSanitizerSupervisor;
+    broccoliSchemaSanitizerSubstrate: BroccoliSchemaSanitizerSubstrate;
+    schemaSanitizerSnapshotManager: SchemaSanitizerSnapshotManager;
+    schemaSanitizerToolSuite: SchemaSanitizerToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2057,6 +2068,15 @@ export class MonolithFactory {
     );
     const selfRepoGuardToolSuite = new SelfRepoGuardToolSuite(selfRepoGuardSupervisor);
 
+    const deterministicSchemaSanitizerEngine = new DeterministicSchemaSanitizerEngine();
+    const broccoliSchemaSanitizerSubstrate = new BroccoliSchemaSanitizerSubstrate();
+    const schemaSanitizerSnapshotManager = new SchemaSanitizerSnapshotManager(broccoliSchemaSanitizerSubstrate);
+    const schemaSanitizerSupervisor = new SchemaSanitizerSupervisor(
+      broccoliSchemaSanitizerSubstrate,
+      deterministicSchemaSanitizerEngine
+    );
+    const schemaSanitizerToolSuite = new SchemaSanitizerToolSuite(schemaSanitizerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2145,7 +2165,8 @@ export class MonolithFactory {
       skillLinterToolSuite,
       terminalCleanerToolSuite,
       streamingScrubberToolSuite,
-      selfRepoGuardToolSuite
+      selfRepoGuardToolSuite,
+      schemaSanitizerToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2705,6 +2726,11 @@ export class MonolithFactory {
       broccoliSelfRepoGuardSubstrate,
       selfRepoGuardSnapshotManager,
       selfRepoGuardToolSuite,
+      deterministicSchemaSanitizerEngine,
+      schemaSanitizerSupervisor,
+      broccoliSchemaSanitizerSubstrate,
+      schemaSanitizerSnapshotManager,
+      schemaSanitizerToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

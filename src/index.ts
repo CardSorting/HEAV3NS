@@ -572,6 +572,12 @@ import { BroccoliSelfRepoGuardSubstrate } from "./sessions/extensions/self_repo_
 import { SelfRepoGuardSnapshotManager } from "./sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
 import { SelfRepoGuardToolSuite } from "./tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
 
+import { DeterministicSchemaSanitizerEngine } from "./agents/extensions/schema_sanitizer/deterministic-schema-sanitizer-engine.js";
+import { SchemaSanitizerSupervisor } from "./agents/extensions/schema_sanitizer/schema-sanitizer-supervisor.js";
+import { BroccoliSchemaSanitizerSubstrate } from "./sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
+import { SchemaSanitizerSnapshotManager } from "./sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
+import { SchemaSanitizerToolSuite } from "./tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2341,6 +2347,25 @@ export {
   WORKTREE_TARGET_ACTIONS,
 } from "./core/contracts/self-repo-guard.contracts.js";
 
+export { DeterministicSchemaSanitizerEngine } from "./agents/extensions/schema_sanitizer/deterministic-schema-sanitizer-engine.js";
+export { SchemaSanitizerSupervisor } from "./agents/extensions/schema_sanitizer/schema-sanitizer-supervisor.js";
+export { BroccoliSchemaSanitizerSubstrate } from "./sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
+export { SchemaSanitizerSnapshotManager } from "./sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
+export { SchemaSanitizerToolSuite } from "./tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
+export type {
+  SchemaSanitizationResult,
+  SchemaSanitizerConfig,
+  SchemaSanitizerMetrics,
+  SchemaSanitizerWorkspaceSnapshot,
+} from "./core/contracts/schema-sanitizer.contracts.js";
+export {
+  DEFAULT_SCHEMA_SANITIZER_CONFIG,
+  FORBIDDEN_REF_SIBLING_KEYWORDS,
+  PROPERTY_KEY_INVALID_CHARS_REGEX,
+  PROPERTY_KEY_REGEX,
+  TOP_LEVEL_FORBIDDEN_COMBINATORS,
+} from "./core/contracts/schema-sanitizer.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2828,6 +2853,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSelfRepoGuardSubstrate: BroccoliSelfRepoGuardSubstrate;
   readonly selfRepoGuardSnapshotManager: SelfRepoGuardSnapshotManager;
   readonly selfRepoGuardToolSuite: SelfRepoGuardToolSuite;
+  readonly deterministicSchemaSanitizerEngine: DeterministicSchemaSanitizerEngine;
+  readonly schemaSanitizerSupervisor: SchemaSanitizerSupervisor;
+  readonly broccoliSchemaSanitizerSubstrate: BroccoliSchemaSanitizerSubstrate;
+  readonly schemaSanitizerSnapshotManager: SchemaSanitizerSnapshotManager;
+  readonly schemaSanitizerToolSuite: SchemaSanitizerToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3306,6 +3336,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSelfRepoGuardSubstrate = components.broccoliSelfRepoGuardSubstrate;
     this.selfRepoGuardSnapshotManager = components.selfRepoGuardSnapshotManager;
     this.selfRepoGuardToolSuite = components.selfRepoGuardToolSuite;
+    this.deterministicSchemaSanitizerEngine = components.deterministicSchemaSanitizerEngine;
+    this.schemaSanitizerSupervisor = components.schemaSanitizerSupervisor;
+    this.broccoliSchemaSanitizerSubstrate = components.broccoliSchemaSanitizerSubstrate;
+    this.schemaSanitizerSnapshotManager = components.schemaSanitizerSnapshotManager;
+    this.schemaSanitizerToolSuite = components.schemaSanitizerToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
