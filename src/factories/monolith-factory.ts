@@ -50,6 +50,8 @@ import { LockAuthorityEngine } from "../sessions/extensions/substrate/lock-autho
 import { NativeMutationTransactionSubstrate } from "../sessions/extensions/substrate/native-mutation-substrate.js";
 import { WriteCoalescerSubstrate } from "../sessions/extensions/substrate/write-coalescer.js";
 import { BroccoliSubstrateStore } from "../sessions/extensions/substrate/broccoli-substrate-store.js";
+import { BroccoliDatabaseKernel } from "../sessions/extensions/substrate/broccolidb-kernel.js";
+import { DatabaseToolSuite } from "../tooling/extensions/database/database-tools.js";
 import { BroccoliCasCompactor } from "../sessions/extensions/compaction/broccolidb-cas-compactor.js";
 import { ConvergenceEngineSubstrate } from "../agents/extensions/swarm/convergence-engine.js";
 import { BroccoliTaskDagScheduler } from "../agents/extensions/swarm/broccoli-task-dag-scheduler.js";
@@ -677,6 +679,8 @@ export class MonolithFactory {
     writeCoalescer: WriteCoalescerSubstrate;
     convergenceEngine: ConvergenceEngineSubstrate;
     broccoliSubstrateStore: BroccoliSubstrateStore;
+    databaseKernel: BroccoliDatabaseKernel;
+    databaseToolSuite: DatabaseToolSuite;
     broccoliTaskDagScheduler: BroccoliTaskDagScheduler;
     broccoliCircuitBreaker: BroccoliCircuitBreaker;
     tokenBucketRateGovernor: TokenBucketRateGovernor;
@@ -1236,7 +1240,9 @@ export class MonolithFactory {
     const mutationSubstrate = new NativeMutationTransactionSubstrate(cwd);
     const writeCoalescer = new WriteCoalescerSubstrate();
     const convergenceEngine = new ConvergenceEngineSubstrate();
-    const broccoliSubstrateStore = new BroccoliSubstrateStore();
+    const databaseKernel = new BroccoliDatabaseKernel({ workspaceRoot: cwd });
+    const databaseToolSuite = new DatabaseToolSuite(databaseKernel);
+    const broccoliSubstrateStore = new BroccoliSubstrateStore(databaseKernel);
     const broccoliTaskDagScheduler = new BroccoliTaskDagScheduler();
     const broccoliCircuitBreaker = new BroccoliCircuitBreaker();
     const tokenBucketRateGovernor = new TokenBucketRateGovernor();
@@ -2223,7 +2229,8 @@ export class MonolithFactory {
       schemaSanitizerToolSuite,
       nousPortalToolSuite,
       goalToolSuite,
-      profileToolSuite
+      profileToolSuite,
+      databaseToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2803,6 +2810,8 @@ export class MonolithFactory {
       broccoliProfileSubstrate,
       profileSnapshotManager,
       profileToolSuite,
+      databaseKernel,
+      databaseToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

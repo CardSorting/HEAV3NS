@@ -18,8 +18,8 @@ This document provides a formal, industry-standard 1-to-1 technical mapping betw
    packages/coding-agent      ───────────►          AgentEngine, InteractiveModeController & LumiMonolith
    packages/ai                ───────────►          ModelResolver & CodexProgressAdapter (src/agents)
    packages/tui               ───────────►          TuiAltScreen & AgentActivityTimeline (src/tui)
-   packages/broccolidb        ───────────►          [Pass 6 Blueprint] Zero-GC Slab Caching
-   packages/codemarie         ───────────►          [Pass 7 Blueprint] Symbol Search in Eyes
+   packages/broccolidb        ───────────►          BroccoliDatabaseKernel (Hybrid WAL + CAS + Reactive Tables - ADR-120)
+   packages/codemarie         ───────────►          AstPerceptionEyes (AST Symbol Perception - Pass 7)
 ```
 
 ---
@@ -148,8 +148,8 @@ formatJsonRpcEvent(event: ToolingEvent): JsonRpcNotification {
 | `packages/telemetry` | Microsecond execution timing | `ProtocolEars.startTimer()` / `endTimer()` | **Absorbed** |
 | `packages/coding-agent` | Core agent loop, interactive mode, cancellation | `AgentEngine`, `InteractiveModeController` & `LumiMonolith` | **Absorbed** |
 | `packages/ai` | Model resolution and provider event lifecycle | `ModelResolver`, `CodexProviderBridge` & `CodexProgressAdapter` | **Absorbed** |
-| `packages/broccolidb` | Slab array memory store | Blueprint for Pass 6 | Planned |
-| `packages/codemarie` | AST structural symbol search | Blueprint for Pass 7 | Planned |
+| `packages/broccolidb` | Slab array memory & database kernel | `BroccoliDatabaseKernel`, `BroccoliDbTable`, `BroccoliWriteAheadLog`, `BroccoliCASStorageService` (ADR-120) | **Absorbed** |
+| `packages/codemarie` | AST structural symbol search | `AstPerceptionEyes` | **Absorbed** |
 | `packages/tui` | Differential terminal rendering and persistent agent activity | `TuiAltScreen` & `AgentActivityTimeline` | **Absorbed** |
 
 ### Current Streaming Refinement

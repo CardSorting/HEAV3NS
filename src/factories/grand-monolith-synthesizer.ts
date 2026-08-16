@@ -214,6 +214,8 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "cronLifecycleGuard",
   "cronSnapshotManager",
   "cronToolSuite",
+  "databaseKernel",
+  "databaseToolSuite",
   "deadlineSnapshotManager",
   "deadlineSupervisor",
   "deadlineToolSuite",

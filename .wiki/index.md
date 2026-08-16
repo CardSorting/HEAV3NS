@@ -29,7 +29,9 @@ The live JSON remains authoritative if this summary and a regenerated run ever d
 
 ### 0. Architectural Cutoff & Workspace Freeze (Authoritative)
 - 🔒 [Architectural Cutoff & Workspace Freeze Specification](architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
-  - Authoritative cutoff date (**August 16, 2026**), **539 locked components manifest**, anti-duplication policy, contract immutability rules, and forensic integrity gates.
+  - Authoritative cutoff date (**August 16, 2026**), **556 locked components manifest**, anti-duplication policy, contract immutability rules, and forensic integrity gates.
+- 🥦 [BroccoliDB Zenith-Tier Hybrid Storage Kernel Specification](architecture/BROCCOLIDB-HYBRID-KERNEL-SPECIFICATION.md)
+  - Pure TypeScript zero-dependency hybrid storage topology (L1 reactive tables, L2 micro-batched WAL, L3 sharded CAS, L4 double-buffered checkpoints, L5 re-entrant mutex, L6 4-pillar health probe).
 
 ### 1. Auto-Rolling Roadmap & Changelog
 - 🚀 [Auto-Rolling Evolution Roadmap](roadmap/AUTOROLLING-ROADMAP.md)
@@ -75,6 +77,7 @@ The live JSON remains authoritative if this summary and a regenerated run ever d
   - [ADR-008: Deterministic Game Engine Architecture](adr/ADR-008-deterministic-game-engine-architecture.md)
   - [ADR-083: Token-Aware Multi-Turn Context Lifecycle](adr/ADR-083-token-aware-multi-turn-context-lifecycle.md)
   - [ADR-084: Attempt Completion Gate Strategy & Autonomous Turn Progression](adr/ADR-084-attempt-completion-gate-strategy.md)
+  - [ADR-120: Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel](adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)
 
 ### 8. Developer & Agent Guides
 - ⚡ [Runtime Universal Pass & Executive Agent Operations](agent/runtime-universal-pass.md)

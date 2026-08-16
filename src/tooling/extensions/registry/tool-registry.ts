@@ -89,6 +89,7 @@ import type { SchemaSanitizerToolSuite } from "../schema_sanitizer/schema-saniti
 import type { NousPortalToolSuite } from "../nous_portal/nous-portal-tool-suite.js";
 import type { GoalToolSuite } from "../goals/goal-tool-suite.js";
 import type { ProfileToolSuite } from "../profiles/profile-tool-suite.js";
+import type { DatabaseToolSuite } from "../database/database-tools.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -169,6 +170,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly nousPortalToolSuite?: NousPortalToolSuite;
   readonly goalToolSuite?: GoalToolSuite;
   readonly profileToolSuite?: ProfileToolSuite;
+  readonly databaseToolSuite?: DatabaseToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -257,7 +259,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     schemaSanitizerToolSuite?: SchemaSanitizerToolSuite,
     nousPortalToolSuite?: NousPortalToolSuite,
     goalToolSuite?: GoalToolSuite,
-    profileToolSuite?: ProfileToolSuite
+    profileToolSuite?: ProfileToolSuite,
+    databaseToolSuite?: DatabaseToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -338,6 +341,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.nousPortalToolSuite = nousPortalToolSuite;
     this.goalToolSuite = goalToolSuite;
     this.profileToolSuite = profileToolSuite;
+    this.databaseToolSuite = databaseToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -915,6 +919,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.profileToolSuite) {
       for (const tool of this.profileToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.databaseToolSuite) {
+      for (const tool of this.databaseToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

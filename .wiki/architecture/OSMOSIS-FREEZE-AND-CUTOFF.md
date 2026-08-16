@@ -3,7 +3,7 @@
 ## 📅 Authoritative Cutoff Date & Status
 - **Authoritative Cutoff Timestamp**: **August 16, 2026**
 - **Osmosis Evolution Status**: **FROZEN & SOLIDIFIED**
-- **Grand Monolith Component Count**: **549 Components (100% Locked)**
+- **Grand Monolith Component Count**: **556 Components (100% Locked)**
 - **Baseline Version**: **Pass 192 + Runtime Hardening**
 - **Ancestral Teacher Reference**: Hermes Agent (`hermes-agent-main` / Nous Research, snapshot as of August 16, 2026)
 
@@ -17,7 +17,7 @@ To maintain pristine cohesion, prevent feature regressions, and eliminate duplic
 
 ### 1. Zero Duplicate Capability Policy
 Before proposing, designing, or implementing any new component, tool, substrate, or supervisor:
-- Consult the **549 Frozen Component Manifest** below.
+- Consult the **556 Frozen Component Manifest** below.
 - If a capability (e.g. tool execution guarding, AST sanitization, stream diagnostics, cost tracking, background review, reasoning scrubbing, self-repository guard, schema sanitization, native nous portal, persistent session goals) is already present, **you must extend or interface with the existing component rather than creating a duplicate**.
 - Any new component that duplicates an existing capability without a formal superseding ADR will be rejected automatically by repository guardrails.
 
@@ -148,7 +148,7 @@ computerUseToolSuite, config, connectionController, contextBreakdownSnapshotMana
 contextBreakdownSupervisor, contextBreakdownToolSuite, continuousLearningCurator,
 convergenceEngine, conversationInsightsEngine, costGovernanceSupervisor, costGovernanceToolSuite,
 costSnapshotManager, credentialPersistence, credentialPoolSnapshotManager, credentialPoolSupervisor,
-credentialPoolToolSuite, credentialSources, deadlineSnapshotManager, deadlineSupervisor,
+credentialPoolToolSuite, credentialSources, databaseKernel, databaseToolSuite, deadlineSnapshotManager, deadlineSupervisor,
 deadlineToolSuite, decisionLog, deterministicAudioContainerEngine, deterministicAudioNormalizer,
 deterministicAuxiliaryRouter, deterministicBillingUsageEngine, deterministicContextBreakdown,
 deterministicCostGovernor, deterministicDeadlineEngine, deterministicDocExtractorEngine,

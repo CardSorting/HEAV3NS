@@ -68,6 +68,19 @@ To protect NVMe/SSD storage and prevent I/O blocking during rapid turns, the wri
 - Debounces file flushes (`debounceMs: 300ms`, `maxDelayMs: 2000ms`).
 - Applies `.unref()` to internal timers to ensure clean process termination when the CLI exits.
 
+### 2.3 BroccoliDB Hybrid Storage Kernel (`src/sessions/extensions/substrate/broccolidb-kernel.ts`)
+The Zenith-tier hybrid database kernel ($\mathcal{K}_{\text{broccoli}}$ / [ADR-120](../.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)) resolves the tension between volatile memory speed and durable disk persistence with zero external C++ native dependencies:
+- **L1 In-Memory Reactive Tables (`BroccoliDbTable<T>`)**: Primary key map and secondary multi-map inverted indices delivering sub-microsecond query latencies ($< 0.5\ \mu\text{s}$).
+- **L2 Append-Only Write-Ahead Log (`BroccoliWriteAheadLog`)**: Micro-batched write coalescing ($20\text{ms}$ buffer), cryptographic SHA-256 frame hash chaining ($h_i = \text{SHA256}(h_{i-1} \parallel f_i)$), and zero-data-loss cold-start replay.
+- **L3 256-Way Sharded CAS Vault (`BroccoliCASStorageService`)**: Sharded blob deduplication (`.broccolidb/cas/`), adaptive Brotli compression ($\ge 1024\text{B}$, $\ge 10\%$ savings), cryptographic bit-rot quarantine (`.broccolidb/cas/corrupt/`), and mark-sweep garbage collection.
+- **L4 Double-Buffered Checkpointing**: Atomic base snapshots (`.broccolidb/checkpoint.db`) written via `.tmp -> rename` and safe log truncation.
+- **L5 Re-Entrant Mutex (`ReentrantAsyncMutex`)**: `AsyncLocalStorage`-based nested lock acquisition, 30s dead-man leases, and randomized Poisson jitter backoff.
+- **L6 4-Pillar Diagnostic Probe**: Real-time auditing for Disk Invariants, CAS Integrity, WAL Journal Drift, and Table Consistency.
+
+### 2.4 Substrate Store Adapter (`src/sessions/extensions/substrate/broccoli-substrate-store.ts`)
+- Bridges all session extension domains (goals, tasks, profiles, reasoning, kanban, memories) to the hybrid kernel with 100% backwards compatibility.
+- Exposes model database tools (`db_inspect_status`, `db_query_table`, `db_checkpoint_wal`, `db_cas_audit`, `db_timeline_history`, `db_rollback_timeline`).
+
 ---
 
 ## 3. Executive Terminal User Interface (TUI)

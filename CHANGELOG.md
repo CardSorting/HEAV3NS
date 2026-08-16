@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added (Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel — Phase 71 / ADR-120)
+
+- **Zenith-Tier Master Database Kernel (`BroccoliDatabaseKernel`)**: Implemented deterministic hybrid database kernel orchestrating in-memory reactive tables, append-only WAL streaming, sharded CAS vault, and double-buffered atomic checkpoints ([ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)).
+- **Zero-Dependency 256-Way Sharded CAS (`BroccoliCASStorageService`)**: Added content-addressable storage with adaptive Brotli compression ($\ge 1024\text{B}$ with $\ge 10\%$ savings), cryptographic SHA-256 read verification, bit-rot quarantine (`.broccolidb/cas/corrupt/`), and 2-phase mark-sweep garbage collection.
+- **Append-Only Write-Ahead Log (`BroccoliWriteAheadLog`)**: Implemented micro-batched write coalescing ($20\text{ms}$ buffer), cryptographic frame hash chaining, cold-start crash replay, and safe log rotation.
+- **Generic Reactive In-Memory Table (`BroccoliDbTable<T>`)**: Added $<0.5\ \mu\text{s}$ primary key and secondary index multi-map lookups with predicate queries, sorting, pagination, and $O(1)$ snapshot rollbacks.
+- **Re-Entrant Async Mutex (`ReentrantAsyncMutex`)**: Added `AsyncLocalStorage`-based nested lock resolution with 30s dead-man leases and adaptive randomized Poisson jitter backoff.
+- **Unified 4-Pillar Forensic Diagnostic Probe (`health()`)**: Added live auditing across Disk Invariants, CAS Integrity, WAL Journal Drift, and Table Schema Parity with traffic-light health dashboard.
+- **Time Machine & Database Model Tools (`DatabaseToolSuite`)**: Registered `db_inspect_status`, `db_query_table`, `db_checkpoint_wal`, `db_cas_audit`, `db_timeline_history`, and `db_rollback_timeline` in `ValidatingToolRegistry`.
+
 ### Added (Deterministic Execution Environments & Container Sandboxes — Phase 70 / ADR-022)
 
 - **Deterministic Secret Scrubber (`SecretScrubber`)**: Added automated sanitization of sensitive environment variables (`*_API_KEY`, `*_TOKEN`, `*_SECRET`, `LUMI_*`) and inline token redaction in command payloads ([ADR-022](.wiki/adr/ADR-022-deterministic-execution-environments-and-container-sandboxes.md)).

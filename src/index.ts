@@ -596,6 +596,13 @@ import { BroccoliProfileSubstrate } from "./sessions/extensions/profiles/broccol
 import { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-snapshot-manager.js";
 import { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
 
+import { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
+import { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
+import { BroccoliCASStorageService } from "./sessions/extensions/substrate/broccolidb-cas.js";
+import { BroccoliWriteAheadLog } from "./sessions/extensions/substrate/broccolidb-wal.js";
+import { ReentrantAsyncMutex, DatabaseLockError, DeadlockTimeoutError } from "./sessions/extensions/substrate/broccolidb-mutex.js";
+import { DatabaseToolSuite } from "./tooling/extensions/database/database-tools.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -771,6 +778,18 @@ export type {
   IAcpSnapshotManager,
   IAcpBridgeServer,
 } from "./core/contracts/acp.contracts.js";
+export type {
+  DbDurabilityMode,
+  WalOperationType,
+  WalFrame,
+  DbQueryOptions,
+  IDbTable,
+  CasBlobDescriptor,
+  CasStorageStats,
+  TimelineCheckpointRecord,
+  DbHealthReport,
+  IBroccoliDatabaseKernel,
+} from "./core/contracts/broccolidb.contracts.js";
 export {
   estimateMessageTokens,
   estimateMessagesTokens,
@@ -983,6 +1002,12 @@ export type { ForensicVerificationResult } from "./tooling/extensions/permission
 export { BroccoliSemanticAxiomEngine } from "./tooling/extensions/permissions/broccolidb-semantic-axiom.js";
 export type { AxiomViolation } from "./tooling/extensions/permissions/broccolidb-semantic-axiom.js";
 export { BroccoliSimulationEngine } from "./tooling/extensions/permissions/broccolidb-simulation-engine.js";
+export { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
+export { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
+export { BroccoliCASStorageService } from "./sessions/extensions/substrate/broccolidb-cas.js";
+export { BroccoliWriteAheadLog } from "./sessions/extensions/substrate/broccolidb-wal.js";
+export { ReentrantAsyncMutex, DatabaseLockError, DeadlockTimeoutError } from "./sessions/extensions/substrate/broccolidb-mutex.js";
+export { DatabaseToolSuite } from "./tooling/extensions/database/database-tools.js";
 export type { SimulationResult } from "./tooling/extensions/permissions/broccolidb-simulation-engine.js";
 export { BroccoliCommandSanitizer } from "./tooling/extensions/permissions/broccolidb-command-sanitizer.js";
 export type { CommandValidationResult } from "./tooling/extensions/permissions/broccolidb-command-sanitizer.js";
@@ -2976,6 +3001,8 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliProfileSubstrate: BroccoliProfileSubstrate;
   readonly profileSnapshotManager: ProfileSnapshotManager;
   readonly profileToolSuite: ProfileToolSuite;
+  readonly databaseKernel: BroccoliDatabaseKernel;
+  readonly databaseToolSuite: DatabaseToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3474,6 +3501,8 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliProfileSubstrate = components.broccoliProfileSubstrate;
     this.profileSnapshotManager = components.profileSnapshotManager;
     this.profileToolSuite = components.profileToolSuite;
+    this.databaseKernel = components.databaseKernel;
+    this.databaseToolSuite = components.databaseToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

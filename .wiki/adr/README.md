@@ -117,6 +117,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-103](ADR-103-context-window-token-composition-and-metering.md) | Context Window Token Composition Breakdown & Category Metering Subsystem | Accepted | 2026-08-16 | Context & Token Telemetry (Target #60 / Phase 127) |
 | [ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md) | Open Source Vulnerability (OSV) Malware Scanner, Package Ecosystem Parser & Pre-Flight Execution Firewall Subsystem | Accepted | 2026-08-16 | Security & Supply Chain Defense (Target #61 / Phase 128) |
 | [ADR-105](ADR-105-progressive-subdirectory-context-discovery.md) | Progressive Subdirectory Context Discovery, Dynamic Instruction Hints & Prefix-Cache-Safe Tool Attachment Subsystem | Accepted | 2026-08-16 | Context & Dynamic Instructions (Target #62 / Phase 129) |
+| [ADR-120](ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md) | Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel Subsystem | Accepted | 2026-08-16 | Substrate & Storage Architecture (Phase 71 / ADR-120) |
 
 ## Domain Grouping
 
@@ -166,6 +167,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-117](ADR-117-persistent-session-goals-and-ralph-loop.md)**: Persistent session goals, quality gates, and deterministic goal loop subsystem.
 - **[ADR-118](ADR-118-world-class-kanban-architecture.md)**: World-class Kanban architecture, task DAG, typed blockers, and multi-agent issue orchestration.
 - **[ADR-119](ADR-119-persistent-multi-profile-isolation-and-routing.md)**: Persistent multi-profile isolation, environment routing, and persona cloning subsystem.
+- **[ADR-120](ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)**: Deterministic hybrid in-memory + handrolled BroccoliDB kernel, WAL streaming, CAS deduplication, and atomic checkpoints.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

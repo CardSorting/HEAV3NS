@@ -2,13 +2,14 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 118: Zero-Dependency Broccoli Substrate Store
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (repository.ts, workspace.ts).
- * Replaces SQLite/Kysely with pure TypeScript in-memory indexing, entity table mapping,
- * JSON snapshot persistence, and atomic transaction rollback checkpoints. Zero external dependencies.
+ * Upgraded in Phase 71 / ADR-120 to seamlessly integrate with the Deterministic
+ * Hybrid In-Memory + Handrolled BroccoliDB Kernel while preserving 100% backwards compatibility.
+ * Zero external dependencies.
  */
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import type { BroccoliDatabaseKernel } from "./broccolidb-kernel.js";
 
 export interface SubstrateEntity {
   id: string;
@@ -37,9 +38,21 @@ export class BroccoliSubstrateStore {
   private readonly entities = new Map<string, SubstrateEntity>();
   private readonly checkpoints = new Map<string, Map<string, SubstrateEntity>>();
   private readonly dbPath?: string;
+  private readonly kernel?: BroccoliDatabaseKernel;
 
-  constructor(dbPath?: string) {
-    this.dbPath = dbPath;
+  constructor(dbPathOrKernel?: string | BroccoliDatabaseKernel) {
+    if (typeof dbPathOrKernel === "string") {
+      this.dbPath = dbPathOrKernel;
+    } else if (dbPathOrKernel && typeof dbPathOrKernel === "object") {
+      this.kernel = dbPathOrKernel;
+    }
+  }
+
+  /**
+   * Returns the underlying hybrid database kernel if attached.
+   */
+  public getKernel(): BroccoliDatabaseKernel | undefined {
+    return this.kernel;
   }
 
   /**
@@ -59,6 +72,12 @@ export class BroccoliSubstrateStore {
     };
 
     this.entities.set(key, entity);
+
+    if (this.kernel) {
+      const dbTable = this.kernel.getTable(table);
+      dbTable.put(id, entity.data);
+    }
+
     return entity;
   }
 
@@ -102,7 +121,14 @@ export class BroccoliSubstrateStore {
    */
   public deleteEntity(table: string, id: string): boolean {
     const key = `${table}:${id}`;
-    return this.entities.delete(key);
+    const deleted = this.entities.delete(key);
+
+    if (this.kernel && deleted) {
+      const dbTable = this.kernel.getTable(table);
+      dbTable.delete(id);
+    }
+
+    return deleted;
   }
 
   /**
@@ -117,6 +143,11 @@ export class BroccoliSubstrateStore {
     }
 
     this.checkpoints.set(checkpointId, snapshot);
+
+    if (this.kernel) {
+      void this.kernel.checkpoint(checkpointId);
+    }
+
     return {
       checkpointId,
       timestamp: Date.now(),
@@ -135,6 +166,11 @@ export class BroccoliSubstrateStore {
     for (const [k, v] of snapshot.entries()) {
       this.entities.set(k, { ...v, data: { ...v.data } });
     }
+
+    if (this.kernel) {
+      void this.kernel.rollback(checkpointId);
+    }
+
     return true;
   }
 
@@ -142,6 +178,11 @@ export class BroccoliSubstrateStore {
    * Saves store state to disk as JSON if dbPath was provided.
    */
   public async persistToDisk(): Promise<void> {
+    if (this.kernel) {
+      await this.kernel.checkpoint("substrate_store_persist");
+      return;
+    }
+
     if (!this.dbPath) return;
     const serializable = Array.from(this.entities.values());
     await fs.mkdir(path.dirname(this.dbPath), { recursive: true });

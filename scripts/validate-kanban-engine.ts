@@ -320,8 +320,8 @@ async function runValidationSuite() {
     const monolith = MonolithFactory.createEngine();
     const verification = GrandMonolithSynthesizer.verifyComposition(monolith);
     assert.strictEqual(verification.cohesionStatus, "OPTIMAL");
-    assert.strictEqual(verification.componentCount, 554);
-    console.log(`  ✓ All Kanban model tools executed cleanly & Grand Monolith verified (${verification.componentCount}/554 components in OPTIMAL cohesion)`);
+    assert.strictEqual(verification.componentCount, 556);
+    console.log(`  ✓ All Kanban model tools executed cleanly & Grand Monolith verified (${verification.componentCount}/556 components in OPTIMAL cohesion)`);
     passedSuites++;
 
     console.log("\n================================================================================");
