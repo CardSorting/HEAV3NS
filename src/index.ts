@@ -440,6 +440,12 @@ import { BroccoliDocExtractorSubstrate } from "./sessions/extensions/doc_extract
 import { DocExtractorSnapshotManager } from "./sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.js";
 import { DocExtractorToolSuite } from "./tooling/extensions/doc_extractor/doc-extractor-tool-suite.js";
 
+import { DeterministicSpillVault } from "./agents/extensions/spill_vault/deterministic-spill-vault.js";
+import { SpillVaultSupervisor } from "./agents/extensions/spill_vault/spill-vault-supervisor.js";
+import { BroccoliSpillVaultSubstrate } from "./sessions/extensions/spill_vault/broccoli-spill-vault-substrate.js";
+import { SpillVaultSnapshotManager } from "./sessions/extensions/spill_vault/spill-vault-snapshot-manager.js";
+import { SpillVaultToolSuite } from "./tooling/extensions/spill_vault/spill-vault-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1824,6 +1830,28 @@ export {
   EXTRACTABLE_EXTENSIONS,
 } from "./core/contracts/doc-extractor.contracts.js";
 
+export { DeterministicSpillVault } from "./agents/extensions/spill_vault/deterministic-spill-vault.js";
+export { SpillVaultSupervisor } from "./agents/extensions/spill_vault/spill-vault-supervisor.js";
+export { BroccoliSpillVaultSubstrate } from "./sessions/extensions/spill_vault/broccoli-spill-vault-substrate.js";
+export { SpillVaultSnapshotManager } from "./sessions/extensions/spill_vault/spill-vault-snapshot-manager.js";
+export { SpillVaultToolSuite } from "./tooling/extensions/spill_vault/spill-vault-tool-suite.js";
+export type {
+  SpillPrivacyTier,
+  PersistedResultDescriptor,
+  TurnBudgetConfig,
+  TurnBudgetEnforcementResult,
+  SpillVaultMetrics,
+  SpillVaultWorkspaceSnapshot,
+} from "./core/contracts/spill-vault.contracts.js";
+export {
+  DEFAULT_MAX_RESULT_CHARS,
+  DEFAULT_MAX_TURN_BUDGET_CHARS,
+  DEFAULT_PREVIEW_HEAD,
+  DEFAULT_PREVIEW_TAIL,
+  PERSISTED_OUTPUT_TAG,
+  PERSISTED_OUTPUT_CLOSING_TAG,
+} from "./core/contracts/spill-vault.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2201,6 +2229,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliDocExtractorSubstrate: BroccoliDocExtractorSubstrate;
   readonly docExtractorSnapshotManager: DocExtractorSnapshotManager;
   readonly docExtractorToolSuite: DocExtractorToolSuite;
+  readonly deterministicSpillVault: DeterministicSpillVault;
+  readonly spillVaultSupervisor: SpillVaultSupervisor;
+  readonly broccoliSpillVaultSubstrate: BroccoliSpillVaultSubstrate;
+  readonly spillVaultSnapshotManager: SpillVaultSnapshotManager;
+  readonly spillVaultToolSuite: SpillVaultToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2569,6 +2602,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliDocExtractorSubstrate = components.broccoliDocExtractorSubstrate;
     this.docExtractorSnapshotManager = components.docExtractorSnapshotManager;
     this.docExtractorToolSuite = components.docExtractorToolSuite;
+    this.deterministicSpillVault = components.deterministicSpillVault;
+    this.spillVaultSupervisor = components.spillVaultSupervisor;
+    this.broccoliSpillVaultSubstrate = components.broccoliSpillVaultSubstrate;
+    this.spillVaultSnapshotManager = components.spillVaultSnapshotManager;
+    this.spillVaultToolSuite = components.spillVaultToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

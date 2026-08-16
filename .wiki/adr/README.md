@@ -100,6 +100,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-090](ADR-090-audio-container-magic-byte-sniffer-and-extension-repair.md) | Audio Container Magic-Byte Sniffer, Streaming Audio Cache & Voice Extension Repair Subsystem | Accepted | 2026-08-16 | Audio & Multimodal Voice (Target #47 / Phase 114) |
 | [ADR-091](ADR-091-deterministic-speech-text-normalizer-and-symbol-expansion.md) | Deterministic Speech Text Normalizer, Non-Spoken Block Stripper & Symbol Expansion Subsystem | Accepted | 2026-08-16 | Audio & Multimodal Voice (Target #48 / Phase 115) |
 | [ADR-092](ADR-092-binary-extension-perception-and-opaque-doc-extractor.md) | Binary Extension Perception, Opaque Document Destruction Guard & Structured Document Extractor Subsystem | Accepted | 2026-08-16 | File & Document Intelligence (Target #49 / Phase 116) |
+| [ADR-093](ADR-093-spill-safe-file-vault-and-turn-budget-governor.md) | Spill-Safe File Vault, Context-Overflow Result Persistence & Multi-Tier Turn Budget Governor Subsystem | Accepted | 2026-08-16 | Context & Memory Safety (Target #50 / Phase 117) |
 
 ## Domain Grouping
 
@@ -122,6 +123,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-090](ADR-090-audio-container-magic-byte-sniffer-and-extension-repair.md)**: Magic-byte audio container sniffer (OGG, FLAC, WAV, MP3, AAC, M4A, WEBM), RIFF/WEBP exclusion, ISO ftyp brand resolution, sync word disambiguation, and streaming audio cache vault.
 - **[ADR-091](ADR-091-deterministic-speech-text-normalizer-and-symbol-expansion.md)**: Deterministic speech text normalizer, non-spoken block stripper (<think> reasoning, mutation footers), Markdown phonetic flattening, symbol/unit expansion, and single-line payload generation.
 - **[ADR-092](ADR-092-binary-extension-perception-and-opaque-doc-extractor.md)**: Binary extension perception across 80+ extensions, opaque document destruction guard, Jupyter (.ipynb), Word (.docx), Excel (.xlsx), and PDF (.pdf) structured text extractor.
+- **[ADR-093](ADR-093-spill-safe-file-vault-and-turn-budget-governor.md)**: Symlink-safe exclusive spill file vault (O_EXCL, 0o700/0o600), context-overflow tool result persistence (<persisted-output>), multi-tier turn budget governor, and hook context spilling.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

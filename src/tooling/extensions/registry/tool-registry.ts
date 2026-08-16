@@ -63,6 +63,7 @@ import type { PreflightToolSuite } from "../preflight_scanner/preflight-tool-sui
 import type { AudioContainerToolSuite } from "../audio_container/audio-container-tool-suite.js";
 import type { SpeechNormalizerToolSuite } from "../speech_normalizer/speech-normalizer-tool-suite.js";
 import type { DocExtractorToolSuite } from "../doc_extractor/doc-extractor-tool-suite.js";
+import type { SpillVaultToolSuite } from "../spill_vault/spill-vault-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -117,6 +118,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly audioContainerToolSuite?: AudioContainerToolSuite;
   readonly speechNormalizerToolSuite?: SpeechNormalizerToolSuite;
   readonly docExtractorToolSuite?: DocExtractorToolSuite;
+  readonly spillVaultToolSuite?: SpillVaultToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -179,7 +181,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     preflightToolSuite?: PreflightToolSuite,
     audioContainerToolSuite?: AudioContainerToolSuite,
     speechNormalizerToolSuite?: SpeechNormalizerToolSuite,
-    docExtractorToolSuite?: DocExtractorToolSuite
+    docExtractorToolSuite?: DocExtractorToolSuite,
+    spillVaultToolSuite?: SpillVaultToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -234,6 +237,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.audioContainerToolSuite = audioContainerToolSuite;
     this.speechNormalizerToolSuite = speechNormalizerToolSuite;
     this.docExtractorToolSuite = docExtractorToolSuite;
+    this.spillVaultToolSuite = spillVaultToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -681,6 +685,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.docExtractorToolSuite) {
       for (const tool of this.docExtractorToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.spillVaultToolSuite) {
+      for (const tool of this.spillVaultToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

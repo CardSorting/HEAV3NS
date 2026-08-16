@@ -479,6 +479,12 @@ import { BroccoliDocExtractorSubstrate } from "../sessions/extensions/doc_extrac
 import { DocExtractorSnapshotManager } from "../sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.js";
 import { DocExtractorToolSuite } from "../tooling/extensions/doc_extractor/doc-extractor-tool-suite.js";
 
+import { DeterministicSpillVault } from "../agents/extensions/spill_vault/deterministic-spill-vault.js";
+import { SpillVaultSupervisor } from "../agents/extensions/spill_vault/spill-vault-supervisor.js";
+import { BroccoliSpillVaultSubstrate } from "../sessions/extensions/spill_vault/broccoli-spill-vault-substrate.js";
+import { SpillVaultSnapshotManager } from "../sessions/extensions/spill_vault/spill-vault-snapshot-manager.js";
+import { SpillVaultToolSuite } from "../tooling/extensions/spill_vault/spill-vault-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -915,6 +921,11 @@ export class MonolithFactory {
     broccoliDocExtractorSubstrate: BroccoliDocExtractorSubstrate;
     docExtractorSnapshotManager: DocExtractorSnapshotManager;
     docExtractorToolSuite: DocExtractorToolSuite;
+    deterministicSpillVault: DeterministicSpillVault;
+    spillVaultSupervisor: SpillVaultSupervisor;
+    broccoliSpillVaultSubstrate: BroccoliSpillVaultSubstrate;
+    spillVaultSnapshotManager: SpillVaultSnapshotManager;
+    spillVaultToolSuite: SpillVaultToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1616,6 +1627,15 @@ export class MonolithFactory {
     );
     const docExtractorToolSuite = new DocExtractorToolSuite(docExtractorSupervisor);
 
+    const deterministicSpillVault = new DeterministicSpillVault();
+    const broccoliSpillVaultSubstrate = new BroccoliSpillVaultSubstrate();
+    const spillVaultSnapshotManager = new SpillVaultSnapshotManager(broccoliSpillVaultSubstrate);
+    const spillVaultSupervisor = new SpillVaultSupervisor(
+      broccoliSpillVaultSubstrate,
+      deterministicSpillVault
+    );
+    const spillVaultToolSuite = new SpillVaultToolSuite(spillVaultSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1682,7 +1702,8 @@ export class MonolithFactory {
       preflightToolSuite,
       audioContainerToolSuite,
       speechNormalizerToolSuite,
-      docExtractorToolSuite
+      docExtractorToolSuite,
+      spillVaultToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2132,6 +2153,11 @@ export class MonolithFactory {
       broccoliDocExtractorSubstrate,
       docExtractorSnapshotManager,
       docExtractorToolSuite,
+      deterministicSpillVault,
+      spillVaultSupervisor,
+      broccoliSpillVaultSubstrate,
+      spillVaultSnapshotManager,
+      spillVaultToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
