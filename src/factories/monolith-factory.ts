@@ -485,6 +485,12 @@ import { BroccoliSpillVaultSubstrate } from "../sessions/extensions/spill_vault/
 import { SpillVaultSnapshotManager } from "../sessions/extensions/spill_vault/spill-vault-snapshot-manager.js";
 import { SpillVaultToolSuite } from "../tooling/extensions/spill_vault/spill-vault-tool-suite.js";
 
+import { DeterministicUrlSafety } from "../agents/extensions/url_safety/deterministic-url-safety.js";
+import { UrlSafetySupervisor } from "../agents/extensions/url_safety/url-safety-supervisor.js";
+import { BroccoliUrlSafetySubstrate } from "../sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
+import { UrlSafetySnapshotManager } from "../sessions/extensions/url_safety/url-safety-snapshot-manager.js";
+import { UrlSafetyToolSuite } from "../tooling/extensions/url_safety/url-safety-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -926,6 +932,11 @@ export class MonolithFactory {
     broccoliSpillVaultSubstrate: BroccoliSpillVaultSubstrate;
     spillVaultSnapshotManager: SpillVaultSnapshotManager;
     spillVaultToolSuite: SpillVaultToolSuite;
+    deterministicUrlSafety: DeterministicUrlSafety;
+    urlSafetySupervisor: UrlSafetySupervisor;
+    broccoliUrlSafetySubstrate: BroccoliUrlSafetySubstrate;
+    urlSafetySnapshotManager: UrlSafetySnapshotManager;
+    urlSafetyToolSuite: UrlSafetyToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1636,6 +1647,15 @@ export class MonolithFactory {
     );
     const spillVaultToolSuite = new SpillVaultToolSuite(spillVaultSupervisor);
 
+    const deterministicUrlSafety = new DeterministicUrlSafety();
+    const broccoliUrlSafetySubstrate = new BroccoliUrlSafetySubstrate();
+    const urlSafetySnapshotManager = new UrlSafetySnapshotManager(broccoliUrlSafetySubstrate);
+    const urlSafetySupervisor = new UrlSafetySupervisor(
+      broccoliUrlSafetySubstrate,
+      deterministicUrlSafety
+    );
+    const urlSafetyToolSuite = new UrlSafetyToolSuite(urlSafetySupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1703,7 +1723,8 @@ export class MonolithFactory {
       audioContainerToolSuite,
       speechNormalizerToolSuite,
       docExtractorToolSuite,
-      spillVaultToolSuite
+      spillVaultToolSuite,
+      urlSafetyToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2158,6 +2179,11 @@ export class MonolithFactory {
       broccoliSpillVaultSubstrate,
       spillVaultSnapshotManager,
       spillVaultToolSuite,
+      deterministicUrlSafety,
+      urlSafetySupervisor,
+      broccoliUrlSafetySubstrate,
+      urlSafetySnapshotManager,
+      urlSafetyToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

@@ -446,6 +446,12 @@ import { BroccoliSpillVaultSubstrate } from "./sessions/extensions/spill_vault/b
 import { SpillVaultSnapshotManager } from "./sessions/extensions/spill_vault/spill-vault-snapshot-manager.js";
 import { SpillVaultToolSuite } from "./tooling/extensions/spill_vault/spill-vault-tool-suite.js";
 
+import { DeterministicUrlSafety } from "./agents/extensions/url_safety/deterministic-url-safety.js";
+import { UrlSafetySupervisor } from "./agents/extensions/url_safety/url-safety-supervisor.js";
+import { BroccoliUrlSafetySubstrate } from "./sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
+import { UrlSafetySnapshotManager } from "./sessions/extensions/url_safety/url-safety-snapshot-manager.js";
+import { UrlSafetyToolSuite } from "./tooling/extensions/url_safety/url-safety-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1852,6 +1858,25 @@ export {
   PERSISTED_OUTPUT_CLOSING_TAG,
 } from "./core/contracts/spill-vault.contracts.js";
 
+export { DeterministicUrlSafety } from "./agents/extensions/url_safety/deterministic-url-safety.js";
+export { UrlSafetySupervisor } from "./agents/extensions/url_safety/url-safety-supervisor.js";
+export { BroccoliUrlSafetySubstrate } from "./sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
+export { UrlSafetySnapshotManager } from "./sessions/extensions/url_safety/url-safety-snapshot-manager.js";
+export { UrlSafetyToolSuite } from "./tooling/extensions/url_safety/url-safety-tool-suite.js";
+export type {
+  IpAddressCategory,
+  UrlSafetyVerdict,
+  UrlSafetyCheckResult,
+  UrlSafetyConfig,
+  UrlSafetyMetrics,
+  UrlSafetyWorkspaceSnapshot,
+} from "./core/contracts/url-safety.contracts.js";
+export {
+  CLOUD_METADATA_IPS,
+  CLOUD_METADATA_HOSTS,
+  DEFAULT_URL_SAFETY_CONFIG,
+} from "./core/contracts/url-safety.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2234,6 +2259,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSpillVaultSubstrate: BroccoliSpillVaultSubstrate;
   readonly spillVaultSnapshotManager: SpillVaultSnapshotManager;
   readonly spillVaultToolSuite: SpillVaultToolSuite;
+  readonly deterministicUrlSafety: DeterministicUrlSafety;
+  readonly urlSafetySupervisor: UrlSafetySupervisor;
+  readonly broccoliUrlSafetySubstrate: BroccoliUrlSafetySubstrate;
+  readonly urlSafetySnapshotManager: UrlSafetySnapshotManager;
+  readonly urlSafetyToolSuite: UrlSafetyToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2607,6 +2637,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSpillVaultSubstrate = components.broccoliSpillVaultSubstrate;
     this.spillVaultSnapshotManager = components.spillVaultSnapshotManager;
     this.spillVaultToolSuite = components.spillVaultToolSuite;
+    this.deterministicUrlSafety = components.deterministicUrlSafety;
+    this.urlSafetySupervisor = components.urlSafetySupervisor;
+    this.broccoliUrlSafetySubstrate = components.broccoliUrlSafetySubstrate;
+    this.urlSafetySnapshotManager = components.urlSafetySnapshotManager;
+    this.urlSafetyToolSuite = components.urlSafetyToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
