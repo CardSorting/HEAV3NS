@@ -2,7 +2,8 @@
  * fuzzy-matcher.contracts.ts
  *
  * Core contracts for deterministic 9-strategy fuzzy line matching, Unicode typography
- * normalization, block-anchor resolution, indentation preservation, and edit idempotency (Phase 103 / ADR-057).
+ * normalization, block-anchor resolution, indentation preservation, escape drift detection,
+ * closest-line mismatch diagnostics, and edit idempotency (Phase 103 / ADR-057).
  */
 
 export type FuzzyStrategyName =
@@ -26,6 +27,31 @@ export interface ContextWindow {
   readonly afterContext: readonly string[];
 }
 
+export interface ClosestLineCandidate {
+  readonly lineNumber: number;
+  readonly lineContent: string;
+  readonly similarity: number;
+  readonly snippet: string;
+  readonly whitespaceDifference?: {
+    readonly fileHasVisual: string;
+    readonly youSentVisual: string;
+  };
+}
+
+export interface MismatchDiagnosis {
+  readonly hasCandidate: boolean;
+  readonly formattedHint: string;
+  readonly candidates: readonly ClosestLineCandidate[];
+  readonly whitespaceIssueDetected: boolean;
+}
+
+export interface EscapeDriftDetection {
+  readonly detected: boolean;
+  readonly reason: "quote_escape" | "backslash_doubling" | null;
+  readonly message: string | null;
+  readonly suspectSequence?: string;
+}
+
 export interface FuzzyMatchResult {
   readonly success: boolean;
   readonly modifiedContent: string;
@@ -38,6 +64,8 @@ export interface FuzzyMatchResult {
   readonly diffPreview?: string;
   readonly linesAffected?: number;
   readonly contextWindows?: readonly ContextWindow[];
+  readonly diagnosticHint?: string;
+  readonly escapeDrift?: EscapeDriftDetection;
 }
 
 export interface FuzzyMatcherOptions {
@@ -47,6 +75,7 @@ export interface FuzzyMatcherOptions {
   readonly preserveIndentation?: boolean; // default true: adapt new_string base indent to target block
   readonly normalizeLineEndings?: boolean; // default true: handle CRLF/LF gracefully
   readonly dryRun?: boolean;
+  readonly preserveUnicodeForUnchanged?: boolean; // default true: keep original Unicode for unchanged spans
 }
 
 export interface FuzzyExecutionRecord {
@@ -68,5 +97,6 @@ export interface FuzzyWorkspaceSnapshot {
   readonly similarityThreshold: number;
   readonly preserveIndentation: boolean;
   readonly normalizeLineEndings: boolean;
+  readonly preserveUnicodeForUnchanged: boolean;
   readonly enabledStrategies: readonly FuzzyStrategyName[];
 }

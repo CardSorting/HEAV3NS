@@ -265,6 +265,37 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_diagnose_mismatch",
+        description: "Diagnoses why a search string failed to match within file content, returning closest candidate line snippets and visible whitespace differences (→ = tab, · = space).",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content that failed to match",
+            required: true,
+          },
+          oldString: {
+            type: "string",
+            description: "The search string that failed to match",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.oldString !== "string") {
+            return { success: false, error: "Missing required string parameters ('content', 'oldString')." };
+          }
+
+          const diagnosis = this.supervisor.diagnoseMismatch(args.oldString, args.content);
+          return {
+            success: true,
+            hasCandidate: diagnosis.hasCandidate,
+            whitespaceIssueDetected: diagnosis.whitespaceIssueDetected,
+            formattedHint: diagnosis.formattedHint,
+            candidatesCount: diagnosis.candidates.length,
+            candidates: diagnosis.candidates,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},
@@ -282,6 +313,7 @@ export class FuzzyMatcherToolSuite {
             similarityThreshold: threshold,
             activeUnicodeMappingsCount: Object.keys(unicodeMap).length,
             preserveIndentation: this.supervisor.getPreserveIndentation(),
+            preserveUnicodeForUnchanged: this.supervisor.getPreserveUnicodeForUnchanged(),
           };
         },
       },

@@ -20,6 +20,7 @@ export class BroccoliFuzzySubstrate {
   private preserveIndentation: boolean;
   private normalizeLineEndings: boolean;
   private enabledStrategies: Set<FuzzyStrategyName>;
+  private preserveUnicodeForUnchanged: boolean;
   private totalReplacements: number;
 
   constructor() {
@@ -32,6 +33,7 @@ export class BroccoliFuzzySubstrate {
     this.similarityThreshold = 0.5;
     this.preserveIndentation = true;
     this.normalizeLineEndings = true;
+    this.preserveUnicodeForUnchanged = true;
     this.enabledStrategies = new Set<FuzzyStrategyName>(ALL_STRATEGIES);
     this.totalReplacements = 0;
   }
@@ -95,6 +97,14 @@ export class BroccoliFuzzySubstrate {
     return this.normalizeLineEndings;
   }
 
+  setPreserveUnicodeForUnchanged(enabled: boolean): void {
+    this.preserveUnicodeForUnchanged = enabled;
+  }
+
+  getPreserveUnicodeForUnchanged(): boolean {
+    return this.preserveUnicodeForUnchanged;
+  }
+
   setEnabledStrategies(strategies: readonly FuzzyStrategyName[]): void {
     this.enabledStrategies = new Set<FuzzyStrategyName>(strategies);
   }
@@ -116,6 +126,7 @@ export class BroccoliFuzzySubstrate {
       similarityThreshold: this.similarityThreshold,
       preserveIndentation: this.preserveIndentation,
       normalizeLineEndings: this.normalizeLineEndings,
+      preserveUnicodeForUnchanged: this.preserveUnicodeForUnchanged,
       enabledStrategies: this.getEnabledStrategies(),
     };
   }
@@ -126,6 +137,7 @@ export class BroccoliFuzzySubstrate {
     this.similarityThreshold = snapshot.similarityThreshold;
     this.preserveIndentation = snapshot.preserveIndentation ?? true;
     this.normalizeLineEndings = snapshot.normalizeLineEndings ?? true;
+    this.preserveUnicodeForUnchanged = snapshot.preserveUnicodeForUnchanged ?? true;
 
     this.enabledStrategies = new Set<FuzzyStrategyName>(snapshot.enabledStrategies ?? ALL_STRATEGIES);
 

@@ -2,14 +2,15 @@
  * validate-fuzzy-matcher.ts
  *
  * Comprehensive validation suite for Target #41: Deterministic 9-Strategy Fuzzy Line Matcher,
- * Unicode Typography Normalizer, Block-Anchor Resolver & Edit Idempotency Substrate (Phase 103 / ADR-057).
+ * Unicode Typography Normalizer, Block-Anchor Resolver, Escape-Drift Guard,
+ * Whitespace-Visualizing Diagnostician & Edit Idempotency Substrate (Phase 103 / ADR-057).
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { performance } from "node:perf_hooks";
-import { DeterministicFuzzyMatcher, ALL_STRATEGIES } from "../src/tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
+import { DeterministicFuzzyMatcher } from "../src/tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
 import { BroccoliFuzzySubstrate } from "../src/sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
 import { FuzzySnapshotManager } from "../src/sessions/extensions/fuzzy/fuzzy-snapshot-manager.js";
 import { FuzzyMatcherSupervisor } from "../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
@@ -58,9 +59,9 @@ async function runValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 2: Line-Trimmed, Whitespace-Normalized & Indentation Adaptation
+    // Suite 2: Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/8] Line-Trimmed, Whitespace-Normalized & Indentation Adaptation...");
+    console.log("[Suite 2/8] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
     const whitespaceContent = "class UserService {\n    findUser(id: string) {\n        return db.users.get(id);\n    }\n}";
 
     // Line trimmed with trailing space difference
@@ -71,48 +72,58 @@ async function runValidationSuite() {
       throw new Error(`Line-trimmed match failed: ${JSON.stringify(resLineTrim)}`);
     }
 
-    // Indentation Adaptation: target has 8 spaces, model gives 2 spaces
-    const targetBlock = "        const x = 1;\n        const y = 2;\n        const z = 3;";
-    const modelOld = "const x = 1;\nconst y = 2;\nconst z = 3;";
-    const modelNew = "const x = 10;\nconst y = 20;\nconst z = 30;";
-    const resAdapt = matcher.findAndReplace(targetBlock, modelOld, modelNew);
-    if (!resAdapt.success || !resAdapt.modifiedContent.startsWith("        const x = 10;")) {
-      throw new Error(`Indentation adaptation failed: ${resAdapt.modifiedContent}`);
+    // Relative Indentation Adaptation: target has 8 spaces, model gives 0 spaces with nested body
+    const nestedTarget = "        if (active) {\n            doAction();\n        }";
+    const modelZeroIndentOld = "if (active) {\n    doAction();\n}";
+    const modelZeroIndentNew = "if (active) {\n    doSafeAction();\n    logAction();\n}";
+    const resRelativeIndent = matcher.findAndReplace(nestedTarget, modelZeroIndentOld, modelZeroIndentNew);
+    if (!resRelativeIndent.success || !resRelativeIndent.modifiedContent.includes("        if (active) {\n            doSafeAction();\n            logAction();\n        }")) {
+      throw new Error(`Relative indentation adaptation failed: ${resRelativeIndent.modifiedContent}`);
     }
-    console.log("  ✓ Successfully adapted indentation and matched across line-trimming variations");
+    console.log("  ✓ Successfully preserved relative nesting indentation across differing base depths");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 3: Indentation-Flexible & Boundary-Trimmed Matching
+    // Suite 3: Indentation-Flexible & Selective Control Character Unescaping (\t, \r)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/8] Indentation-Flexible & Boundary-Trimmed Matching...");
-    const indentedContent = "        if (condition) {\n            doSomething();\n            doSomethingElse();\n        }";
+    console.log("[Suite 3/8] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
+    const tabFileContent = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
 
-    // Model provides 0 base indentation but identical relative indentation
-    const zeroIndentOld = "if (condition) {\n    doSomething();\n    doSomethingElse();\n}";
-    const indentedNew = "        if (condition) {\n            doSomethingSafe();\n        }";
+    // Model provides literal \t in new_string where file has real tabs
+    const tabOld = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
+    const tabNew = "function process() {\n\\tconst a = 100;\n\\treturn a;\n}";
 
-    const resIndent = matcher.findAndReplace(indentedContent, zeroIndentOld, indentedNew);
-    if (!resIndent.success || (resIndent.strategyUsed !== "indentation_flexible" && resIndent.strategyUsed !== "line_trimmed")) {
-      throw new Error(`Indentation-flexible match failed: ${JSON.stringify(resIndent)}`);
+    const resTab = matcher.findAndReplace(tabFileContent, tabOld, tabNew);
+    if (!resTab.success || !resTab.modifiedContent.includes("\tconst a = 100;")) {
+      throw new Error(`Selective tab unescaping failed: ${JSON.stringify(resTab)}`);
     }
-    console.log("  ✓ Preserved relative block indentation structure across differing indentation depths");
+    console.log("  ✓ Selectively unescaped control characters matching real file tab bytes");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 4: Literal Escape Sequence Normalization (\n, \t) & Dry-Run Diff
+    // Suite 4: Escape Drift & Backslash Doubling Guards
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/8] Literal Escape Sequence Normalization (\\n, \\t) & Dry-Run Diff...");
-    const multilineContent = "line 1\nline 2\nline 3";
-    const escapedOld = "line 1\\nline 2";
-    const escapedNew = "line 1\nline 2 (updated)";
+    console.log("[Suite 4/8] Escape Drift & Backslash Doubling Guards...");
+    const quoteFileContent = "const msg = 'hello world';";
 
-    // Test Dry-Run
-    const resDry = matcher.findAndReplace(multilineContent, escapedOld, escapedNew, false, { dryRun: true });
-    if (!resDry.success || resDry.modifiedContent !== multilineContent || !resDry.diffPreview || resDry.strategyUsed !== "escape_normalized") {
-      throw new Error(`Dry-run diff generation failed: ${JSON.stringify(resDry)}`);
+    // Model introduces spurious \' escaping in tool args that does not exist in file
+    const driftOld = "const msg = \\'hello world\\';";
+    const driftNew = "const msg = \\'hello LUMI-JOY\\';";
+
+    const resDrift = matcher.findAndReplace(quoteFileContent, driftOld, driftNew);
+    if (resDrift.success || !resDrift.error?.includes("Escape-drift detected")) {
+      throw new Error(`Escape drift detection failed: ${JSON.stringify(resDrift)}`);
     }
-    console.log("  ✓ Generated unified diff preview in dry-run mode and unescaped literal \\n sequences");
+
+    // Doubled backslashes (JSON double escaping)
+    const backslashContent = "const path = 'C:\\\\Users\\\\Admin';";
+    const doubledOld = "const path = 'C:\\\\\\\\Users\\\\\\\\Admin';";
+    const doubledNew = "const path = 'C:\\\\\\\\Users\\\\\\\\Lumi';";
+    const resDoubled = matcher.findAndReplace(backslashContent, doubledOld, doubledNew);
+    if (resDoubled.success || !resDoubled.error?.includes("Escape-drift detected")) {
+      throw new Error(`Backslash doubling detection failed: ${JSON.stringify(resDoubled)}`);
+    }
+    console.log("  ✓ Blocked spurious transport-level escape drift and JSON backslash doubling");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
@@ -133,32 +144,28 @@ async function runValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 6: Block-Anchor & Context-Aware Similarity with Context Windows
+    // Suite 6: Whitespace Visualization & Closest Line Diagnostics
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/8] Block-Anchor & Context-Aware Similarity with Context Windows...");
-    const blockContent = [
-      "function processData(input: RawData): ProcessedData {",
-      "  const validated = validateInput(input);",
-      "  const transformed = transform(validated);",
-      "  return transformed;",
-      "}",
-    ].join("\n");
+    console.log("[Suite 6/8] Whitespace Visualization & Closest Line Diagnostics...");
+    const mismatchContent = "function configureServer() {\n    const port = 8080;\n    return port;\n}";
+    const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
-    const blockOld = [
-      "function processData(input: RawData): ProcessedData {",
-      "  const validated = validateInput(input); // intermediate",
-      "  const transformed = transform(validated);",
-      "  return transformed;",
-      "}",
-    ].join("\n");
-
-    const blockNew = "function processData(input: RawData): ProcessedData {\n  return transform(validateInput(input));\n}";
-
-    const resBlock = matcher.findAndReplace(blockContent, blockOld, blockNew);
-    if (!resBlock.success || (resBlock.strategyUsed !== "block_anchor" && resBlock.strategyUsed !== "context_aware") || !resBlock.contextWindows || resBlock.contextWindows.length === 0) {
-      throw new Error(`Block-anchor similarity match failed: ${JSON.stringify(resBlock)}`);
+    const diagnosis = matcher.diagnoseMismatch(failedSearch, mismatchContent);
+    if (!diagnosis.hasCandidate || !diagnosis.whitespaceIssueDetected) {
+      throw new Error(`Mismatch diagnosis failed: ${JSON.stringify(diagnosis)}`);
     }
-    console.log("  ✓ Resolved block anchors and contextual similarity with surrounding context windows");
+
+    const visual = matcher.visualizeWhitespace("  \tconst a = 1;");
+    if (visual !== "··→const a = 1;") {
+      throw new Error(`Whitespace visualization failed: ${visual}`);
+    }
+
+    const completelyDifferentContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
+    const noMatchRes = matcher.findAndReplace(completelyDifferentContent, "const databaseClusterConnectionString = 'cluster.internal:5432';", "const databaseHost = '0.0.0.0';");
+    if (noMatchRes.success || !noMatchRes.error?.includes("Did you mean one of these sections?")) {
+      throw new Error(`Diagnostic no-match hint failed: ${JSON.stringify(noMatchRes)}`);
+    }
+    console.log("  ✓ Diagnosed whitespace mismatches with visible glyphs (→ / ·) and contextual line hints");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
@@ -175,6 +182,7 @@ async function runValidationSuite() {
     supervisor.setCustomUnicodeMapping("§", "$");
     supervisor.setSimilarityThreshold(0.75);
     supervisor.setPreserveIndentation(false);
+    supervisor.setPreserveUnicodeForUnchanged(false);
     supervisor.disableStrategy("context_aware");
 
     if (substrate.getHistory().length !== 1 || substrate.getSimilarityThreshold() !== 0.75 || substrate.getPreserveIndentation() !== false) {
@@ -204,11 +212,21 @@ async function runValidationSuite() {
     const findReplaceTool = tools.find((t) => t.name === "fuzzy_find_and_replace")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
+    const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
     const configTool = tools.find((t) => t.name === "fuzzy_configure_strategies")!;
     const inspectTool = tools.find((t) => t.name === "fuzzy_inspect_strategies")!;
 
-    if (!findReplaceTool || !dryRunTool || !idempotencyTool || !configTool || !inspectTool) {
+    if (!findReplaceTool || !dryRunTool || !idempotencyTool || !diagnoseTool || !configTool || !inspectTool) {
       throw new Error("Missing required Fuzzy Matcher model tools");
+    }
+
+    // Test Diagnose Tool
+    const diagRes = await diagnoseTool.execute({
+      content: mismatchContent,
+      oldString: failedSearch,
+    }, tempDir) as { success: boolean; hasCandidate: boolean; whitespaceIssueDetected: boolean };
+    if (!diagRes.success || !diagRes.hasCandidate || !diagRes.whitespaceIssueDetected) {
+      throw new Error("fuzzy_diagnose_mismatch execution failed");
     }
 
     // Test Dry Run Tool

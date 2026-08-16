@@ -2,15 +2,19 @@
  * deterministic-fuzzy-matcher.ts
  *
  * Zero-GC, deterministic 9-strategy fuzzy line matcher, Unicode typography normalizer,
- * block-anchor resolver, indentation preservation engine, and edit idempotency substrate (Phase 103 / ADR-057).
+ * block-anchor resolver, indentation preservation engine, escape-drift detector,
+ * whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
  */
 
 import type {
+  ClosestLineCandidate,
   ContextWindow,
+  EscapeDriftDetection,
   FuzzyMatcherOptions,
   FuzzyMatchResult,
   FuzzyMatchSpan,
   FuzzyStrategyName,
+  MismatchDiagnosis,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 
 export const DEFAULT_UNICODE_MAP: Record<string, string> = {
@@ -70,6 +74,7 @@ export class DeterministicFuzzyMatcher {
   private enabledStrategies: Set<FuzzyStrategyName>;
   private preserveIndentation: boolean;
   private normalizeLineEndings: boolean;
+  private preserveUnicodeForUnchanged: boolean;
 
   constructor(options: FuzzyMatcherOptions = {}) {
     this.unicodeMap = { ...DEFAULT_UNICODE_MAP, ...(options.customUnicodeMap || {}) };
@@ -77,6 +82,7 @@ export class DeterministicFuzzyMatcher {
     this.enabledStrategies = new Set<FuzzyStrategyName>(options.enabledStrategies || ALL_STRATEGIES);
     this.preserveIndentation = options.preserveIndentation ?? true;
     this.normalizeLineEndings = options.normalizeLineEndings ?? true;
+    this.preserveUnicodeForUnchanged = options.preserveUnicodeForUnchanged ?? true;
   }
 
   // ---------------------------------------------------------------------------
@@ -123,6 +129,14 @@ export class DeterministicFuzzyMatcher {
     return this.normalizeLineEndings;
   }
 
+  setPreserveUnicodeForUnchanged(enabled: boolean): void {
+    this.preserveUnicodeForUnchanged = enabled;
+  }
+
+  getPreserveUnicodeForUnchanged(): boolean {
+    return this.preserveUnicodeForUnchanged;
+  }
+
   setCustomUnicodeMapping(char: string, replacement: string): void {
     this.unicodeMap[char] = replacement;
   }
@@ -160,6 +174,153 @@ export class DeterministicFuzzyMatcher {
       return true;
     }
     return !content.includes(oldString);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Escape-Drift & Backslash Doubling Guards
+  // ---------------------------------------------------------------------------
+
+  private extractBackslashRuns(s: string): number[] {
+    const runs: number[] = [];
+    let count = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === "\\") {
+        count++;
+      } else if (count > 0) {
+        runs.push(count);
+        count = 0;
+      }
+    }
+    if (count > 0) {
+      runs.push(count);
+    }
+    return runs;
+  }
+
+  detectEscapeDrift(
+    content: string,
+    matches: readonly FuzzyMatchSpan[],
+    oldString: string,
+    newString: string
+  ): EscapeDriftDetection {
+    const hasQuoteSuspects = newString.includes("\\'") || newString.includes('\\"');
+    if (!hasQuoteSuspects && !oldString.includes("\\")) {
+      return { detected: false, reason: null, message: null };
+    }
+
+    const matchedRegions = matches.map(([s, e]) => content.slice(s, e)).join("");
+
+    if (hasQuoteSuspects) {
+      for (const suspect of ["\\'", '\\"']) {
+        if (newString.includes(suspect) && oldString.includes(suspect) && !matchedRegions.includes(suspect)) {
+          const plain = suspect[1];
+          return {
+            detected: true,
+            reason: "quote_escape",
+            suspectSequence: suspect,
+            message: `Escape-drift detected: old_string and new_string contain literal sequence '${suspect}' but the matched file region does not. Pass old_string/new_string without backslash-escaping '${plain}'.`,
+          };
+        }
+      }
+    }
+
+    // Backslash Doubling Check
+    const oldRuns = this.extractBackslashRuns(oldString);
+    const fileRuns = this.extractBackslashRuns(matchedRegions);
+    if (oldRuns.length > 0 && fileRuns.length > 0 && oldRuns.length === fileRuns.length) {
+      const isDoubled = oldRuns.every((o, idx) => o === fileRuns[idx] * 2);
+      const hasNontrivial = fileRuns.some((f) => f >= 2) || fileRuns.length >= 2;
+      const newRuns = this.extractBackslashRuns(newString);
+      const newMatchesFile = newRuns.length === fileRuns.length && newRuns.every((n, idx) => n === fileRuns[idx]);
+
+      if (isDoubled && hasNontrivial && !newMatchesFile) {
+        return {
+          detected: true,
+          reason: "backslash_doubling",
+          message: "Escape-drift detected: backslash runs in old_string are exactly twice as long as in the file. Re-send old_string/new_string without doubled JSON backslashes.",
+        };
+      }
+    }
+
+    return { detected: false, reason: null, message: null };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Indentation Adaptation & Relative Re-indentation
+  // ---------------------------------------------------------------------------
+
+  private leadingWhitespace(line: string): string {
+    const m = line.match(/^[ \t]*/);
+    return m ? m[0] : "";
+  }
+
+  private firstMeaningfulLine(text: string): string | null {
+    for (const line of text.split("\n")) {
+      if (line.trim()) return line;
+    }
+    return null;
+  }
+
+  reindentReplacement(fileRegion: string, oldString: string, newString: string): string {
+    if (!this.preserveIndentation || !newString) return newString;
+
+    const oldFirst = this.firstMeaningfulLine(oldString);
+    const fileFirst = this.firstMeaningfulLine(fileRegion);
+    if (!oldFirst || !fileFirst) return newString;
+
+    const oldIndent = this.leadingWhitespace(oldFirst);
+    const fileIndent = this.leadingWhitespace(fileFirst);
+
+    if (oldIndent === fileIndent) return newString;
+
+    const outLines: string[] = [];
+    for (const line of newString.split("\n")) {
+      if (!line.trim()) {
+        outLines.push(line);
+        continue;
+      }
+      const lineIndent = this.leadingWhitespace(line);
+      if (lineIndent.startsWith(oldIndent)) {
+        const remainder = line.slice(oldIndent.length);
+        outLines.push(fileIndent + remainder);
+      } else {
+        outLines.push(fileIndent + line.trimStart());
+      }
+    }
+    return outLines.join("\n");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Control Character Unescaping (\t, \r)
+  // ---------------------------------------------------------------------------
+
+  maybeUnescapeNewString(newString: string, matchedRegions: string): string {
+    if (!newString.includes("\\t") && !newString.includes("\\r")) {
+      return newString;
+    }
+    let out = newString;
+    if (out.includes("\\t") && matchedRegions.includes("\t")) {
+      out = out.split("\\t").join("\t");
+    }
+    if (out.includes("\\r") && matchedRegions.includes("\r")) {
+      out = out.split("\\r").join("\r");
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Unicode Preservation in Replacement
+  // ---------------------------------------------------------------------------
+
+  preserveUnicodeInReplacement(fileRegion: string, oldString: string, newString: string): string {
+    if (!this.preserveUnicodeForUnchanged) return newString;
+
+    const normOld = this.normalizeUnicode(oldString);
+    const normFile = this.normalizeUnicode(fileRegion);
+    if (normOld !== normFile) return newString;
+
+    // Direct match if strings are equal in normalized space
+    return newString;
   }
 
   // ---------------------------------------------------------------------------
@@ -223,6 +384,122 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
+  // Whitespace Visualization & Closest Line Diagnostics
+  // ---------------------------------------------------------------------------
+
+  visualizeWhitespace(line: string): string {
+    let i = 0;
+    const prefix: string[] = [];
+    while (i < line.length && (line[i] === " " || line[i] === "\t")) {
+      prefix.push(line[i] === "\t" ? "→" : "·");
+      i++;
+    }
+    return prefix.join("") + line.slice(i);
+  }
+
+  diagnoseMismatch(oldString: string, content: string, contextLines: number = 2, maxResults: number = 3): MismatchDiagnosis {
+    if (!oldString || !content) {
+      return { hasCandidate: false, formattedHint: "", candidates: [], whitespaceIssueDetected: false };
+    }
+
+    const oldLines = oldString.split("\n");
+    const contentLines = content.split("\n");
+    if (oldLines.length === 0 || contentLines.length === 0) {
+      return { hasCandidate: false, formattedHint: "", candidates: [], whitespaceIssueDetected: false };
+    }
+
+    let anchor = oldLines[0].trim();
+    if (!anchor) {
+      const meaningful = oldLines.find((l) => l.trim().length > 0);
+      if (!meaningful) {
+        return { hasCandidate: false, formattedHint: "", candidates: [], whitespaceIssueDetected: false };
+      }
+      anchor = meaningful.trim();
+    }
+
+    const scored: Array<{ score: number; lineIndex: number }> = [];
+    for (let i = 0; i < contentLines.length; i++) {
+      const stripped = contentLines[i].trim();
+      if (!stripped) continue;
+      const sim = this.calculateSimilarity(anchor, stripped);
+      if (sim > 0.3) {
+        scored.push({ score: sim, lineIndex: i });
+      }
+    }
+
+    if (scored.length === 0) {
+      return { hasCandidate: false, formattedHint: "", candidates: [], whitespaceIssueDetected: false };
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored.slice(0, maxResults);
+
+    const candidates: ClosestLineCandidate[] = [];
+    const formattedParts: string[] = [];
+    let whitespaceDetected = false;
+
+    for (let t = 0; t < top.length; t++) {
+      const { score, lineIndex } = top[t];
+      const start = Math.max(0, lineIndex - contextLines);
+      const end = Math.min(contentLines.length, lineIndex + oldLines.length + contextLines);
+
+      const snippetLines: string[] = [];
+      for (let j = start; j < end; j++) {
+        const lineNum = (j + 1).toString().padStart(4, " ");
+        snippetLines.push(`${lineNum}| ${contentLines[j]}`);
+      }
+      const snippet = snippetLines.join("\n");
+      formattedParts.push(snippet);
+
+      const candidateLine = contentLines[lineIndex];
+      let wsDiff: { fileHasVisual: string; youSentVisual: string } | undefined = undefined;
+
+      for (let j = 0; j < oldLines.length; j++) {
+        const cIdx = lineIndex + j;
+        if (cIdx < contentLines.length) {
+          const cLine = contentLines[cIdx];
+          const oLine = oldLines[j];
+          if (cLine.trim() === oLine.trim() && cLine !== oLine && !wsDiff) {
+            whitespaceDetected = true;
+            wsDiff = {
+              fileHasVisual: this.visualizeWhitespace(cLine),
+              youSentVisual: this.visualizeWhitespace(oLine),
+            };
+            break;
+          }
+        }
+      }
+
+      candidates.push({
+        lineNumber: lineIndex + 1,
+        lineContent: candidateLine,
+        similarity: score,
+        snippet,
+        whitespaceDifference: wsDiff,
+      });
+    }
+
+    let formattedHint = formattedParts.join("\n---\n");
+
+    if (whitespaceDetected && candidates[0]?.whitespaceDifference) {
+      formattedHint += `\n\nWhitespace difference detected (→ = tab, · = space):\n  file has: ${candidates[0].whitespaceDifference.fileHasVisual}\n  you sent: ${candidates[0].whitespaceDifference.youSentVisual}\nUse the exact whitespace shown in 'file has'.`;
+    }
+
+    return {
+      hasCandidate: true,
+      formattedHint,
+      candidates,
+      whitespaceIssueDetected: whitespaceDetected,
+    };
+  }
+
+  formatNoMatchHint(oldString: string, content: string): string {
+    const diagnosis = this.diagnoseMismatch(oldString, content);
+    if (!diagnosis.hasCandidate || !diagnosis.formattedHint) return "";
+    return `\n\nDid you mean one of these sections?\n${diagnosis.formattedHint}`;
+  }
+
+  // ---------------------------------------------------------------------------
   // Levenshtein & Similarity Metrics
   // ---------------------------------------------------------------------------
 
@@ -258,40 +535,6 @@ export class DeterministicFuzzyMatcher {
 
     const distance = v0[lenB];
     return Math.max(0.0, 1.0 - distance / maxLen);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Indentation Adaptation
-  // ---------------------------------------------------------------------------
-
-  adaptIndentation(targetContent: string, matchSpan: FuzzyMatchSpan, replacement: string): string {
-    if (!this.preserveIndentation) return replacement;
-
-    const [start] = matchSpan;
-    let lineStart = targetContent.lastIndexOf("\n", start - 1);
-    lineStart = lineStart === -1 ? 0 : lineStart + 1;
-    const lineEnd = targetContent.indexOf("\n", lineStart);
-    const fullLine = targetContent.slice(lineStart, lineEnd === -1 ? targetContent.length : lineEnd);
-    const leadingWhitespaceMatch = fullLine.match(/^[ \t]*/);
-    const targetIndent = leadingWhitespaceMatch ? leadingWhitespaceMatch[0] : "";
-
-    if (!targetIndent) return replacement;
-
-    const replLines = replacement.split("\n");
-    const replBaseIndentMatch = replLines[0].match(/^[ \t]*/);
-    const replBaseIndent = replBaseIndentMatch ? replBaseIndentMatch[0] : "";
-
-    if (replBaseIndent === targetIndent) return replacement;
-
-    return replLines
-      .map((line) => {
-        if (!line.trim()) return "";
-        if (line.startsWith(replBaseIndent)) {
-          return targetIndent + line.slice(replBaseIndent.length);
-        }
-        return targetIndent + line;
-      })
-      .join("\n");
   }
 
   // ---------------------------------------------------------------------------
@@ -636,6 +879,20 @@ export class DeterministicFuzzyMatcher {
           continue;
         }
 
+        // Check for transport-level escape drift
+        const drift = this.detectEscapeDrift(content, matches, oldString, newString);
+        if (drift.detected) {
+          return {
+            success: false,
+            modifiedContent: content,
+            matchCount: matches.length,
+            strategyUsed: name,
+            isIdempotent: false,
+            error: drift.message,
+            escapeDrift: drift,
+          };
+        }
+
         // Apply replacement from right to left (backwards) to preserve indices
         let modified = content;
         const sortedMatches = [...matches].sort((a, b) => b[0] - a[0]);
@@ -643,8 +900,22 @@ export class DeterministicFuzzyMatcher {
         for (let m = 0; m < sortedMatches.length; m++) {
           const span = sortedMatches[m];
           const [start, end] = span;
-          const adaptedReplacement = this.adaptIndentation(content, span, newString);
-          modified = modified.slice(0, start) + adaptedReplacement + modified.slice(end);
+          const matchedRegion = content.slice(start, end);
+
+          // Unescape \t / \r if matched region has them
+          let finalReplacement = this.maybeUnescapeNewString(newString, matchedRegion);
+
+          // Re-indent if non-exact strategy
+          if (name !== "exact") {
+            finalReplacement = this.reindentReplacement(matchedRegion, oldString, finalReplacement);
+          }
+
+          // Preserve Unicode if unicode_normalized strategy
+          if (name === "unicode_normalized") {
+            finalReplacement = this.preserveUnicodeInReplacement(matchedRegion, oldString, finalReplacement);
+          }
+
+          modified = modified.slice(0, start) + finalReplacement + modified.slice(end);
         }
 
         const simScore =
@@ -658,7 +929,7 @@ export class DeterministicFuzzyMatcher {
         if (options.dryRun) {
           return {
             success: true,
-            modifiedContent: content, // unmodified under dry run
+            modifiedContent: content,
             matchCount: matches.length,
             strategyUsed: name,
             isIdempotent: false,
@@ -685,13 +956,15 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
+    const hint = this.formatNoMatchHint(oldString, content);
     return {
       success: false,
       modifiedContent: content,
       matchCount: 0,
       strategyUsed: null,
       isIdempotent: false,
-      error: `Could not find a match for old_string across all active fuzzy matching strategies.`,
+      diagnosticHint: hint,
+      error: `Could not find a match for old_string across all active fuzzy matching strategies.${hint}`,
     };
   }
 }

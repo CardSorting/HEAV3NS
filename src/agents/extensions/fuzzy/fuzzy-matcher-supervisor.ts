@@ -138,6 +138,29 @@ export class FuzzyMatcherSupervisor {
     return this.matcher.getNormalizeLineEndings();
   }
 
+  setPreserveUnicodeForUnchanged(enabled: boolean): void {
+    this.matcher.setPreserveUnicodeForUnchanged(enabled);
+    this.substrate.setPreserveUnicodeForUnchanged(enabled);
+  }
+
+  getPreserveUnicodeForUnchanged(): boolean {
+    return this.matcher.getPreserveUnicodeForUnchanged();
+  }
+
+  /**
+   * Diagnoses why old_string failed to match content, finding similar lines and detecting whitespace issues.
+   */
+  diagnoseMismatch(oldString: string, content: string): ReturnType<DeterministicFuzzyMatcher["diagnoseMismatch"]> {
+    return this.matcher.diagnoseMismatch(oldString, content);
+  }
+
+  /**
+   * Generates a "Did you mean..." hint string for no-match situations.
+   */
+  formatNoMatchHint(oldString: string, content: string): string {
+    return this.matcher.formatNoMatchHint(oldString, content);
+  }
+
   // ---------------------------------------------------------------------------
   // Analytics & History
   // ---------------------------------------------------------------------------
