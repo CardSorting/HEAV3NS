@@ -11,6 +11,8 @@ import type {
   ConflictMarkerChunk,
   ConflictResolutionResult,
   ConflictResolutionStrategy,
+  DocSyncOptions,
+  DocSyncResult,
   FuzzyExecutionRecord,
   FuzzyMatchResult,
   FuzzyMultiMatchResult,
@@ -33,6 +35,8 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  MultiRegionSkeletonOptions,
+  MultiRegionSkeletonResult,
   MultiSourceHunkInput,
   MultiSourcePatchSynthesisResult,
   NGramSimilarityOptions,
@@ -41,8 +45,12 @@ import type {
   PatchDriftResult,
   PatienceDiffOptions,
   PatienceDiffResult,
+  PruneUnusedOptions,
+  PruneUnusedResult,
   RecordedConflictEntry,
   RecordedConflictPreimage,
+  RelocateCodeBlockOptions,
+  RelocateCodeBlockResult,
   RerereReplayResult,
   ScopeBoundedMatchOptions,
   ScopeBoundedMatchResult,
@@ -650,6 +658,42 @@ export class FuzzyMatcherSupervisor {
     options?: ImportOptimizationOptions
   ): ImportOptimizationResult {
     return this.matcher.optimizeAndHarmonizeImports(content, options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pass 11: Chunk-Level Relocator, DocSync, Multi-Region Skeleton & Pruner
+  // ---------------------------------------------------------------------------
+
+  relocateCodeBlock(
+    content: string,
+    sourceBlock: string,
+    targetAnchor: string,
+    options?: RelocateCodeBlockOptions
+  ): RelocateCodeBlockResult {
+    return this.matcher.relocateCodeBlock(content, sourceBlock, targetAnchor, options);
+  }
+
+  synchronizeDocCommentsAndTypes(
+    content: string,
+    identifierName: string,
+    options?: DocSyncOptions
+  ): DocSyncResult {
+    return this.matcher.synchronizeDocCommentsAndTypes(content, identifierName, options);
+  }
+
+  spliceMultiRegionSkeleton(
+    content: string,
+    skeletonText: string,
+    options?: MultiRegionSkeletonOptions
+  ): MultiRegionSkeletonResult {
+    return this.matcher.spliceMultiRegionSkeleton(content, skeletonText, options);
+  }
+
+  pruneUnusedImportsAndSymbols(
+    content: string,
+    options?: PruneUnusedOptions
+  ): PruneUnusedResult {
+    return this.matcher.pruneUnusedImportsAndSymbols(content, options);
   }
 
   clearHistory(): void {

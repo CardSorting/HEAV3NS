@@ -18,6 +18,8 @@ import type {
   ConflictResolutionResult,
   ConflictResolutionStrategy,
   ContextWindow,
+  DocSyncOptions,
+  DocSyncResult,
   EscapeDriftDetection,
   FuzzyMatcherOptions,
   FuzzyMatchResult,
@@ -51,6 +53,8 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  MultiRegionSkeletonOptions,
+  MultiRegionSkeletonResult,
   MultiSourceHunkInput,
   MultiSourcePatchSynthesisResult,
   MultiSourceSynthesizedPatch,
@@ -63,13 +67,19 @@ import type {
   PatienceDiffHunk,
   PatienceDiffOptions,
   PatienceDiffResult,
+  PruneUnusedOptions,
+  PruneUnusedResult,
   RecordedConflictEntry,
   RecordedConflictPreimage,
+  RelocateCodeBlockOptions,
+  RelocateCodeBlockResult,
+  RelocateMutation,
   RerereReplayResult,
   ScopeBoundedMatchOptions,
   ScopeBoundedMatchResult,
   SearchReplaceBlock,
   SemanticConflictExplanation,
+  SkeletonRegionMatch,
   SemanticTreeApplyResult,
   SemanticTreeDiffOptions,
   SemanticTreeDiffResult,
@@ -4892,6 +4902,96 @@ export class DeterministicFuzzyMatcher {
     return content.slice(startOffset, endOffset);
   }
 
+  private extractBalancedCodeBlockWithSpan(
+    content: string,
+    startOffset: number
+  ): { code: string; startOffset: number; endOffset: number; isBalanced: boolean } {
+    let braceDepth = 0;
+    let started = false;
+    let inString: string | null = null;
+    let endOffset = content.length;
+
+    for (let i = startOffset; i < content.length; i++) {
+      const char = content[i];
+      const prev = i > 0 ? content[i - 1] : "";
+
+      if (inString) {
+        if (char === inString && prev !== "\\") {
+          inString = null;
+        }
+        continue;
+      }
+
+      if ((char === '"' || char === "'" || char === "`") && prev !== "\\") {
+        inString = char;
+        continue;
+      }
+
+      if (char === "{") {
+        braceDepth++;
+        started = true;
+      } else if (char === "}") {
+        braceDepth--;
+        if (started && braceDepth === 0) {
+          endOffset = i + 1;
+          return {
+            code: content.slice(startOffset, endOffset),
+            startOffset,
+            endOffset,
+            isBalanced: true,
+          };
+        }
+      } else if (char === ";" && !started) {
+        endOffset = i + 1;
+        return {
+          code: content.slice(startOffset, endOffset),
+          startOffset,
+          endOffset,
+          isBalanced: true,
+        };
+      }
+    }
+
+    return {
+      code: content.slice(startOffset, endOffset),
+      startOffset,
+      endOffset,
+      isBalanced: started ? braceDepth === 0 : true,
+    };
+  }
+
+  private findFirstMatchSpan(
+    content: string,
+    target: string
+  ): { span: FuzzyMatchSpan; strategy: FuzzyStrategyName } | null {
+    const strategies: Array<{
+      name: FuzzyStrategyName;
+      fn: (c: string, t: string) => FuzzyMatchSpan[];
+    }> = [
+      { name: "exact", fn: this.strategyExact.bind(this) },
+      { name: "line_trimmed", fn: this.strategyLineTrimmed.bind(this) },
+      { name: "whitespace_normalized", fn: this.strategyWhitespaceNormalized.bind(this) },
+      { name: "indentation_flexible", fn: this.strategyIndentationFlexible.bind(this) },
+      { name: "escape_normalized", fn: this.strategyEscapeNormalized.bind(this) },
+      { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
+      { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
+      { name: "token_normalized", fn: this.strategyTokenNormalized.bind(this) },
+      { name: "ellipsis_wildcard", fn: this.strategyEllipsisWildcard.bind(this) },
+      { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
+      { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
+      { name: "context_aware", fn: this.strategyContextAware.bind(this) },
+    ];
+
+    for (const strat of strategies) {
+      if (!this.enabledStrategies.has(strat.name)) continue;
+      const spans = strat.fn(content, target);
+      if (spans.length > 0) {
+        return { span: spans[0], strategy: strat.name };
+      }
+    }
+    return null;
+  }
+
   /**
    * Generates a semantic tree diff comparing top-level declarations between two code contents.
    */
@@ -5342,5 +5442,547 @@ export class DeterministicFuzzyMatcher {
       error: null,
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // Pass 11: Chunk-Level Code Relocator, DocSync, Skeleton, and Import Pruner
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Fuzzy relocates a code block across distant regions of a file, with optional internal mutations,
+   * blank-line compaction at source, and relative indentation harmonization at target anchor.
+   */
+  relocateCodeBlock(
+    content: string,
+    sourceBlock: string,
+    targetAnchor: string,
+    options?: RelocateCodeBlockOptions
+  ): RelocateCodeBlockResult {
+    if (!content || !sourceBlock || !targetAnchor) {
+      return {
+        success: false,
+        modifiedContent: content,
+        sourceExtracted: "",
+        targetAnchorFound: false,
+        relativeIndentApplied: 0,
+        error: "Missing required parameters (content, sourceBlock, targetAnchor).",
+      };
+    }
+
+    // Step 1: Find source block
+    const sourceMatch = this.findFirstMatchSpan(content, sourceBlock);
+    if (!sourceMatch) {
+      return {
+        success: false,
+        modifiedContent: content,
+        sourceExtracted: "",
+        targetAnchorFound: false,
+        relativeIndentApplied: 0,
+        error: "Source block could not be matched using any enabled fuzzy strategy.",
+      };
+    }
+
+    const [srcStart, srcEnd] = sourceMatch.span;
+    let extractedCode = content.slice(srcStart, srcEnd);
+
+    // Apply optional internal mutations to extracted code
+    if (options?.internalMutations && options.internalMutations.length > 0) {
+      for (const mut of options.internalMutations) {
+        const mutRes = this.findAndReplace(extractedCode, mut.search, mut.replace);
+        if (mutRes.success) {
+          extractedCode = mutRes.modifiedContent;
+        }
+      }
+    }
+
+    // Step 2: Remove source block from content cleanly
+    let beforeSource = content.slice(0, srcStart);
+    let afterSource = content.slice(srcEnd);
+
+    if (options?.cleanupBlankLines !== false) {
+      if (beforeSource.endsWith("\n") && afterSource.startsWith("\n")) {
+        afterSource = afterSource.slice(1);
+      }
+    }
+
+    const contentWithoutSource = beforeSource + afterSource;
+
+    // Step 3: Find target anchor in contentWithoutSource
+    const anchorMatch = this.findFirstMatchSpan(contentWithoutSource, targetAnchor);
+    if (!anchorMatch) {
+      return {
+        success: false,
+        modifiedContent: content,
+        sourceExtracted: extractedCode,
+        targetAnchorFound: false,
+        relativeIndentApplied: 0,
+        error: "Target anchor could not be matched in content.",
+      };
+    }
+
+    const [anchorStart, anchorEnd] = anchorMatch.span;
+    const placement = options?.placement || "after";
+
+    // Step 4: Indentation harmonization if requested
+    let finalBlockToInsert = extractedCode;
+    let relativeIndentApplied = 0;
+    if (options?.harmonizeIndentation !== false) {
+      const linesBeforeAnchor = contentWithoutSource.slice(0, anchorStart).split("\n");
+      const anchorLinePrefix = linesBeforeAnchor[linesBeforeAnchor.length - 1];
+      const anchorIndentMatch = anchorLinePrefix.match(/^[ \t]*/);
+      const anchorIndent = anchorIndentMatch ? anchorIndentMatch[0] : "";
+
+      const srcLines = extractedCode.split("\n");
+      const firstNonEmpty = srcLines.find((l) => l.trim().length > 0);
+      const baseIndentMatch = firstNonEmpty ? firstNonEmpty.match(/^[ \t]*/) : null;
+      const baseIndent = baseIndentMatch ? baseIndentMatch[0] : "";
+
+      const reindentedLines = srcLines.map((line) => {
+        if (line.trim().length === 0) return line;
+        if (line.startsWith(baseIndent)) {
+          return anchorIndent + line.slice(baseIndent.length);
+        }
+        return anchorIndent + line.trimStart();
+      });
+      finalBlockToInsert = reindentedLines.join("\n");
+      relativeIndentApplied = anchorIndent.length;
+    }
+
+    // Step 5: Splice at placement locus
+    let modifiedContent = "";
+    if (placement === "before") {
+      const prefix = contentWithoutSource.slice(0, anchorStart);
+      const suffix = contentWithoutSource.slice(anchorStart);
+      const sep = prefix.endsWith("\n") ? "" : "\n";
+      const postSep = finalBlockToInsert.endsWith("\n") ? "" : "\n";
+      modifiedContent = prefix + sep + finalBlockToInsert + postSep + suffix;
+    } else if (placement === "replace_anchor") {
+      const prefix = contentWithoutSource.slice(0, anchorStart);
+      const suffix = contentWithoutSource.slice(anchorEnd);
+      modifiedContent = prefix + finalBlockToInsert + suffix;
+    } else {
+      const prefix = contentWithoutSource.slice(0, anchorEnd);
+      const suffix = contentWithoutSource.slice(anchorEnd);
+      const sep = prefix.endsWith("\n") ? "" : "\n";
+      const postSep = finalBlockToInsert.endsWith("\n") ? "" : (suffix.startsWith("\n") ? "" : "\n");
+      modifiedContent = prefix + sep + finalBlockToInsert + postSep + suffix;
+    }
+
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent,
+      sourceExtracted: extractedCode,
+      targetAnchorFound: true,
+      relativeIndentApplied,
+      error: null,
+    };
+  }
+
+  /**
+   * Synchronizes JSDoc/TSDoc comments with evolving function, method, or class signatures.
+   * Aligns @param tags with current AST parameters, updates return types, and preserves existing descriptions.
+   */
+  synchronizeDocCommentsAndTypes(
+    content: string,
+    identifierName: string,
+    options?: DocSyncOptions
+  ): DocSyncResult {
+    if (!content || !identifierName) {
+      return {
+        success: false,
+        modifiedContent: content,
+        targetIdentifier: identifierName || "",
+        addedParamsCount: 0,
+        removedParamsCount: 0,
+        returnTypeUpdated: false,
+        originalDocBlock: null,
+        updatedDocBlock: null,
+        error: "Missing required parameters (content, identifierName).",
+      };
+    }
+
+    // Locate function, method, or class declaration
+    const declRegex = new RegExp(
+      `(?:/\\*\\*([\\s\\S]*?)\\*/\\s*)?((?:export\\s+)?(?:async\\s+)?(?:function\\s+)?(?:(?:public|private|protected|static|readonly)\\s+)*${identifierName}\\s*(?:<[^>]*>)?\\s*\\(([^)]*)\\)\\s*(?::\\s*([^{;]+))?)`,
+      "m"
+    );
+
+    const match = content.match(declRegex);
+    if (!match || match.index === undefined) {
+      return {
+        success: false,
+        modifiedContent: content,
+        targetIdentifier: identifierName,
+        addedParamsCount: 0,
+        removedParamsCount: 0,
+        returnTypeUpdated: false,
+        originalDocBlock: null,
+        updatedDocBlock: null,
+        error: `Could not locate declaration for '${identifierName}'.`,
+      };
+    }
+
+    const fullMatch = match[0];
+    const rawDoc = match[1];
+    const rawParams = match[3] || "";
+    const rawReturn = (match[4] || "").trim();
+
+    // Parse actual parameters from signature
+    const actualParams: Array<{ name: string; type?: string }> = [];
+    if (rawParams.trim().length > 0) {
+      const paramChunks = rawParams.split(",");
+      for (const p of paramChunks) {
+        const clean = p.trim();
+        if (!clean) continue;
+        const [namePart, typePart] = clean.split(":");
+        const pName = namePart.replace(/[?=]/g, "").trim().split(/\s+/).pop() || "";
+        if (pName) {
+          actualParams.push({ name: pName, type: typePart?.trim() });
+        }
+      }
+    }
+
+    // Parse existing JSDoc tags if present
+    const existingParamTags = new Map<string, { type?: string; desc?: string }>();
+    let mainDescriptionLines: string[] = [];
+    let existingReturnDesc = "";
+
+    if (rawDoc) {
+      const docLines = rawDoc.split("\n");
+      for (const dLine of docLines) {
+        const line = dLine.replace(/^\s*\*\s?/, "");
+        const paramMatch = line.match(/^@param(?:\s+\{([^}]+)\})?\s+([a-zA-Z0-9_$]+)(?:\s+(.*))?$/);
+        if (paramMatch) {
+          existingParamTags.set(paramMatch[2], {
+            type: paramMatch[1],
+            desc: paramMatch[3] || "",
+          });
+        } else if (line.match(/^@returns?/)) {
+          existingReturnDesc = line.replace(/^@returns?(?:\s+\{[^}]+\})?\s*/, "").trim();
+        } else if (!line.startsWith("@") && line.trim().length > 0) {
+          mainDescriptionLines.push(line.trim());
+        }
+      }
+    }
+
+    let addedParamsCount = 0;
+    let removedParamsCount = 0;
+    let returnTypeUpdated = false;
+
+    const newDocLines: string[] = [];
+    if (mainDescriptionLines.length > 0) {
+      for (const mLine of mainDescriptionLines) {
+        newDocLines.push(` * ${mLine}`);
+      }
+      newDocLines.push(" *");
+    } else {
+      newDocLines.push(` * Synchronized documentation for ${identifierName}.`);
+      newDocLines.push(" *");
+    }
+
+    for (const ap of actualParams) {
+      const existing = existingParamTags.get(ap.name);
+      if (existing) {
+        const typeStr = ap.type || existing.type;
+        const typeTag = typeStr ? `{${typeStr}} ` : "";
+        const descStr = existing.desc || options?.defaultParamDescription || "";
+        newDocLines.push(` * @param ${typeTag}${ap.name}${descStr ? " " + descStr : ""}`);
+      } else {
+        if (options?.addMissingParamTags !== false) {
+          const typeTag = ap.type ? `{${ap.type}} ` : "";
+          const descStr = options?.defaultParamDescription || `The ${ap.name} parameter.`;
+          newDocLines.push(` * @param ${typeTag}${ap.name} ${descStr}`);
+          addedParamsCount++;
+        }
+      }
+    }
+
+    const actualParamNames = new Set(actualParams.map((p) => p.name));
+    for (const ep of existingParamTags.keys()) {
+      if (!actualParamNames.has(ep)) {
+        removedParamsCount++;
+      }
+    }
+
+    if (rawReturn && rawReturn !== "void") {
+      const retTypeTag = `{${rawReturn}} `;
+      const retDesc = existingReturnDesc || "The execution outcome.";
+      newDocLines.push(` * @returns ${retTypeTag}${retDesc}`);
+      returnTypeUpdated = true;
+    }
+
+    const updatedDocBlock = `/**\n${newDocLines.join("\n")}\n */`;
+
+    const signatureOnly = fullMatch.slice(rawDoc ? match[0].indexOf(match[2]) : 0);
+    const newDeclaration = `${updatedDocBlock}\n${signatureOnly}`;
+
+    const modifiedContent = content.replace(fullMatch, newDeclaration);
+
+    return {
+      success: true,
+      modifiedContent,
+      targetIdentifier: identifierName,
+      addedParamsCount,
+      removedParamsCount,
+      returnTypeUpdated,
+      originalDocBlock: rawDoc ? `/**${rawDoc}*/` : null,
+      updatedDocBlock,
+      error: null,
+    };
+  }
+
+  /**
+   * Parses multi-region skeletons containing multiple ellipsis omissions across distant file loci
+   * and splices each modified region into its structural context in descending offset order.
+   */
+  spliceMultiRegionSkeleton(
+    content: string,
+    skeletonText: string,
+    options?: MultiRegionSkeletonOptions
+  ): MultiRegionSkeletonResult {
+    if (!content || !skeletonText) {
+      return {
+        success: false,
+        modifiedContent: content,
+        regionsSplicedCount: 0,
+        regionMatches: [],
+        error: "Missing required parameters (content, skeletonText).",
+      };
+    }
+
+    const ellipsisPattern = /(?:(?:\/\/|\/\*|#|<!--)\s*\.\.\.(?:[^\n*]*\*\/|[^\n]*)|^\s*\.\.\.\s*$)/gm;
+    const splitChunks = skeletonText.split(ellipsisPattern).map((c) => c.trim()).filter((c) => c.length > 0);
+
+    if (splitChunks.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        regionsSplicedCount: 0,
+        regionMatches: [],
+        error: "No concrete replacement regions found in skeleton.",
+      };
+    }
+
+    const matches: SkeletonRegionMatch[] = [];
+    const currentContent = content;
+
+    for (let i = 0; i < splitChunks.length; i++) {
+      const chunk = splitChunks[i];
+      const chunkLines = chunk.split("\n").filter((l) => l.trim().length > 0);
+      if (chunkLines.length === 0) continue;
+
+      const firstLine = chunkLines[0];
+      const match = this.findFirstMatchSpan(currentContent, firstLine);
+      if (match) {
+        const [anchorStart] = match.span;
+        const blockExt = this.extractBalancedCodeBlockWithSpan(currentContent, anchorStart);
+        if (blockExt.isBalanced) {
+          matches.push({
+            regionIndex: i,
+            searchAnchor: firstLine,
+            replacementBlock: chunk,
+            startOffset: blockExt.startOffset,
+            endOffset: blockExt.endOffset,
+          });
+        } else {
+          matches.push({
+            regionIndex: i,
+            searchAnchor: firstLine,
+            replacementBlock: chunk,
+            startOffset: match.span[0],
+            endOffset: match.span[1],
+          });
+        }
+      }
+    }
+
+    if (matches.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        regionsSplicedCount: 0,
+        regionMatches: [],
+        error: "None of the skeleton regions could be anchored to the source content.",
+      };
+    }
+
+    const sortedMatches = [...matches].sort((a, b) => b.startOffset - a.startOffset);
+
+    for (let j = 0; j < sortedMatches.length - 1; j++) {
+      if (sortedMatches[j].startOffset < sortedMatches[j + 1].endOffset) {
+        return {
+          success: false,
+          modifiedContent: content,
+          regionsSplicedCount: 0,
+          regionMatches: matches,
+          error: "Overlapping skeleton regions detected.",
+        };
+      }
+    }
+
+    let modifiedContent = content;
+    for (const m of sortedMatches) {
+      const before = modifiedContent.slice(0, m.startOffset);
+      const after = modifiedContent.slice(m.endOffset);
+      modifiedContent = before + m.replacementBlock + after;
+    }
+
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent,
+      regionsSplicedCount: sortedMatches.length,
+      regionMatches: matches,
+      error: null,
+    };
+  }
+
+  /**
+   * Scans source code content, cross-references all imported specifiers against usage occurrences
+   * in the file body, and prunes unused specifiers and empty import statements.
+   */
+  pruneUnusedImportsAndSymbols(
+    content: string,
+    options?: PruneUnusedOptions
+  ): PruneUnusedResult {
+    if (!content) {
+      return {
+        success: false,
+        modifiedContent: content,
+        prunedSpecifiersCount: 0,
+        prunedStatementsCount: 0,
+        prunedSpecifiers: [],
+        error: "Missing required parameter 'content'.",
+      };
+    }
+
+    const rawImports = this.parseImportStatements(content);
+    if (rawImports.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        prunedSpecifiersCount: 0,
+        prunedStatementsCount: 0,
+        prunedSpecifiers: [],
+        error: null,
+      };
+    }
+
+    const lastImportEndLine = Math.max(...rawImports.map((i) => i.endLine));
+    const lines = content.split("\n");
+    const bodyText = lines.slice(lastImportEndLine).join("\n");
+
+    const prunedSpecifiers: string[] = [];
+    let prunedStatementsCount = 0;
+    const modifiedImportLines: Array<{ lineIndex: number; newText: string | null }> = [];
+
+    for (const imp of rawImports) {
+      if (!imp.defaultImport && !imp.namespaceImport && imp.namedImports.length === 0) {
+        continue;
+      }
+
+      const keptNamed: ImportSpecifierItem[] = [];
+      for (const named of imp.namedImports) {
+        const symbolToSearch = named.localName;
+        const symbolRegex = new RegExp(`\\b${symbolToSearch}\\b`);
+        if (symbolRegex.test(bodyText)) {
+          keptNamed.push(named);
+        } else {
+          prunedSpecifiers.push(named.localName);
+        }
+      }
+
+      let keptDefault = imp.defaultImport;
+      if (keptDefault) {
+        const defaultRegex = new RegExp(`\\b${keptDefault}\\b`);
+        if (!defaultRegex.test(bodyText)) {
+          prunedSpecifiers.push(keptDefault);
+          keptDefault = undefined;
+        }
+      }
+
+      let keptNamespace = imp.namespaceImport;
+      if (keptNamespace) {
+        const nsRegex = new RegExp(`\\b${keptNamespace}\\b`);
+        if (!nsRegex.test(bodyText)) {
+          prunedSpecifiers.push(keptNamespace);
+          keptNamespace = undefined;
+        }
+      }
+
+      if (!keptDefault && !keptNamespace && keptNamed.length === 0) {
+        prunedStatementsCount++;
+        for (let l = imp.startLine - 1; l < imp.endLine; l++) {
+          modifiedImportLines.push({ lineIndex: l, newText: null });
+        }
+      } else {
+        const parts: string[] = [];
+        if (keptDefault) parts.push(keptDefault);
+        if (keptNamespace) parts.push(`* as ${keptNamespace}`);
+        if (keptNamed.length > 0) {
+          const namedStrs = keptNamed.map((n) =>
+            n.importedName === n.localName ? n.importedName : `${n.importedName} as ${n.localName}`
+          );
+          parts.push(`{ ${namedStrs.join(", ")} }`);
+        }
+        const typePrefix = imp.isTypeOnlyStatement ? "type " : "";
+        const rebuilt = `import ${typePrefix}${parts.join(", ")} from "${imp.moduleSpecifier}";`;
+
+        modifiedImportLines.push({ lineIndex: imp.startLine - 1, newText: rebuilt });
+        for (let l = imp.startLine; l < imp.endLine; l++) {
+          modifiedImportLines.push({ lineIndex: l, newText: null });
+        }
+      }
+    }
+
+    if (prunedSpecifiers.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        prunedSpecifiersCount: 0,
+        prunedStatementsCount: 0,
+        prunedSpecifiers: [],
+        error: null,
+      };
+    }
+
+    const lineMap = new Map<number, string | null>();
+    for (const m of modifiedImportLines) {
+      lineMap.set(m.lineIndex, m.newText);
+    }
+
+    const outputLines: string[] = [];
+    for (let idx = 0; idx < lines.length; idx++) {
+      if (lineMap.has(idx)) {
+        const val = lineMap.get(idx);
+        if (val !== null && val !== undefined) {
+          outputLines.push(val);
+        }
+      } else {
+        outputLines.push(lines[idx]);
+      }
+    }
+
+    let modifiedContent = outputLines.join("\n");
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent,
+      prunedSpecifiersCount: prunedSpecifiers.length,
+      prunedStatementsCount,
+      prunedSpecifiers,
+      error: null,
+    };
+  }
 }
+
 

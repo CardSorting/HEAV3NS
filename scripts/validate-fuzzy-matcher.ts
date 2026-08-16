@@ -24,14 +24,14 @@ async function runValidationSuite() {
   console.log("================================================================================\n");
 
   let passedSuites = 0;
-  const totalSuites = 37;
+  const totalSuites = 42;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lumi-fuzzy-val-"));
 
   try {
     // ---------------------------------------------------------------------------
     // Suite 1: Exact Match, Edit Idempotency & Line-Ending Preservation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/37] Exact Match, Edit Idempotency & Line-Ending Preservation...");
+    console.log("[Suite 1/42] Exact Match, Edit Idempotency & Line-Ending Preservation...");
     const matcher = new DeterministicFuzzyMatcher();
 
     const baseContent = "function calculateTotal(items: number[]): number {\n  return items.reduce((a, b) => a + b, 0);\n}";
@@ -68,7 +68,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 2: Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/37] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
+    console.log("[Suite 2/42] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
     const whitespaceContent = "class UserService {\n    findUser(id: string) {\n        return db.users.get(id);\n    }\n}";
 
     // Line trimmed with trailing space difference
@@ -93,7 +93,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 3: Indentation-Flexible & Selective Control Character Unescaping (\t, \r)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/37] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
+    console.log("[Suite 3/42] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
     const tabFileContent = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
 
     // Model provides literal \t in new_string where file has real tabs
@@ -110,7 +110,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 4: Escape Drift & Backslash Doubling Guards
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/37] Escape Drift & Backslash Doubling Guards...");
+    console.log("[Suite 4/42] Escape Drift & Backslash Doubling Guards...");
     const quoteFileContent = "const msg = 'hello world';";
 
     // Model introduces spurious \' escaping in tool args that does not exist in file
@@ -136,7 +136,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 5: Comment Tolerance, Token Normalization & Ellipsis Wildcard
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/37] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
+    console.log("[Suite 5/42] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
     const commentedCode = "function start() {\n    // Setup database connection\n    initDb();\n    /* Start listener */\n    listen();\n}";
     const searchNoComments = "function start() {\n    initDb();\n    listen();\n}";
     const replacementCode = "function start() {\n    initDbV2();\n    listenV2();\n}";
@@ -177,7 +177,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/37] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
+    console.log("[Suite 6/42] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
     const mismatchContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
     const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
@@ -204,7 +204,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 7: Atomic Multi-Hunk Patch Engine & O(1) Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 7/37] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
+    console.log("[Suite 7/42] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
     const multiFile = "const A = 1;\nconst B = 2;\nconst C = 3;\nconst D = 4;\nconst E = 5;";
 
     const hunks = [
@@ -258,7 +258,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 8: Model Tool Suite Execution & Monolith 382-Component Synthesis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/37] Model Tool Suite Execution (36 Tools) & Monolith 382-Component Synthesis...");
+    console.log("[Suite 8/42] Model Tool Suite Execution (40 Tools) & Monolith 382-Component Synthesis...");
     const toolSuite = new FuzzyMatcherToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
@@ -293,6 +293,10 @@ async function runValidationSuite() {
     const applyTreeDiffTool = tools.find((t) => t.name === "fuzzy_apply_semantic_tree_diff")!;
     const multiSourcePatchTool = tools.find((t) => t.name === "fuzzy_synthesize_multi_source_patch")!;
     const optimizeImportsTool = tools.find((t) => t.name === "fuzzy_optimize_and_harmonize_imports")!;
+    const relocateCodeTool = tools.find((t) => t.name === "fuzzy_relocate_code_block")!;
+    const syncDocCommentsTool = tools.find((t) => t.name === "fuzzy_synchronize_doc_comments")!;
+    const spliceSkeletonTool = tools.find((t) => t.name === "fuzzy_splice_multi_region_skeleton")!;
+    const pruneImportsTool = tools.find((t) => t.name === "fuzzy_prune_unused_imports")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
     const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
@@ -331,13 +335,17 @@ async function runValidationSuite() {
       !applyTreeDiffTool ||
       !multiSourcePatchTool ||
       !optimizeImportsTool ||
+      !relocateCodeTool ||
+      !syncDocCommentsTool ||
+      !spliceSkeletonTool ||
+      !pruneImportsTool ||
       !dryRunTool ||
       !idempotencyTool ||
       !diagnoseTool ||
       !configTool ||
       !inspectTool
     ) {
-      throw new Error("Missing required Fuzzy Matcher model tools (expected 36 tools)");
+      throw new Error("Missing required Fuzzy Matcher model tools (expected 40 tools)");
     }
 
     // Test Apply Patch Tool
@@ -372,7 +380,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 9: SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 9/37] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
+    console.log("[Suite 9/42] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
     const blockFile = `
 function computeStats(values: number[]) {
   const min = Math.min(...values);
@@ -423,7 +431,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 10: Line-Hint Centered Disambiguation Matching
     // ---------------------------------------------------------------------------
-    console.log("[Suite 10/37] Line-Hint Centered Disambiguation Matching...");
+    console.log("[Suite 10/42] Line-Hint Centered Disambiguation Matching...");
     const duplicateLinesFile = [
       "// Block 1",
       "function foo() {",
@@ -478,7 +486,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 11: Multi-File Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 11/37] Multi-File Unified Patch Application...");
+    console.log("[Suite 11/42] Multi-File Unified Patch Application...");
     const multiFilePatch = `
 --- a/src/math.ts
 +++ b/src/math.ts
@@ -516,7 +524,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 12: Git Conflict Marker Parsing & Deterministic Resolution
     // ---------------------------------------------------------------------------
-    console.log("[Suite 12/37] Git Conflict Marker Parsing & Deterministic Resolution...");
+    console.log("[Suite 12/42] Git Conflict Marker Parsing & Deterministic Resolution...");
     const conflictContent = `
 function calculateTax(amount: number): number {
 <<<<<<< HEAD
@@ -563,7 +571,7 @@ function calculateTax(amount: number): number {
     // ---------------------------------------------------------------------------
     // Suite 13: Indentation Style Detection & Proportional Harmonizer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 13/37] Indentation Style Detection & Proportional Harmonizer...");
+    console.log("[Suite 13/42] Indentation Style Detection & Proportional Harmonizer...");
     const fourSpaceTarget = `
 class OrderProcessor {
     processOrder(orderId: string) {
@@ -608,7 +616,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 14: Syntax-Aware Structural Block Boundary Snapping
     // ---------------------------------------------------------------------------
-    console.log("[Suite 14/37] Syntax-Aware Structural Block Boundary Snapping...");
+    console.log("[Suite 14/42] Syntax-Aware Structural Block Boundary Snapping...");
     const codeSnippet = "const userIdentifier = 'admin_user';";
     // Slicing mid-word at start (index 8 is inside 'userIdentifier') and end (index 15)
     const snapRes = matcher.snapToSyntaxBoundaries(codeSnippet, 8, 15);
@@ -621,7 +629,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 15: Atomic Multi-File Workspace Transactions & Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 15/37] Atomic Multi-File Workspace Transactions & Rollback...");
+    console.log("[Suite 15/42] Atomic Multi-File Workspace Transactions & Rollback...");
     const initialFiles: Record<string, string> = {
       "fileA.ts": "export const A = 1;\nexport const B = 2;",
       "fileB.ts": "export const C = 3;\nexport const D = 4;",
@@ -675,7 +683,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 16: Fuzzy 3-Way Merge & Semantic Reconciliation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 16/37] Fuzzy 3-Way Merge & Semantic Reconciliation...");
+    console.log("[Suite 16/42] Fuzzy 3-Way Merge & Semantic Reconciliation...");
     const baseContent3Way = "function compute(a: number, b: number): number {\n  return a + b;\n}";
     const oursContent3Way = "// Fast compute implementation\nfunction compute(a: number, b: number): number {\n  return a + b;\n}";
     const theirsContent3Way = "function compute(a: number, b: number): number {\n  return (a + b) | 0;\n}";
@@ -729,7 +737,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 17: LSP Standard TextEdit & WorkspaceEdit Applicator & Converter
     // ---------------------------------------------------------------------------
-    console.log("[Suite 17/37] LSP Standard TextEdit & WorkspaceEdit Applicator & Converter...");
+    console.log("[Suite 17/42] LSP Standard TextEdit & WorkspaceEdit Applicator & Converter...");
     const lspFileContent = "const alpha = 10;\nconst beta = 20;\nconst gamma = 30;";
     // Replace beta (line 1, char 6 to char 15) with 'beta = 200'
     const lspEdits = [
@@ -783,7 +791,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 18: Structural Syntax & Balanced Bracket / Tag Auto-Healer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 18/37] Structural Syntax & Balanced Bracket / Tag Auto-Healer...");
+    console.log("[Suite 18/42] Structural Syntax & Balanced Bracket / Tag Auto-Healer...");
     const brokenCode1 = "function calculate() {\n  const total = items.reduce((a, b) => a + b, 0);\n";
     const repairRes1 = matcher.validateAndRepairCodeBlock(brokenCode1);
     if (repairRes1.isValid || !repairRes1.repairedCode.endsWith("}")) {
@@ -818,7 +826,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 19: Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 19/37] Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer...");
+    console.log("[Suite 19/42] Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer...");
     const ambiguousContent = `
 // Config Section 1
 const serverPort = 3000;
@@ -852,7 +860,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 20: Patience Diff Generation & Semantic Unique Line Alignment
     // ---------------------------------------------------------------------------
-    console.log("[Suite 20/37] Patience Diff Generation & Semantic Unique Line Alignment...");
+    console.log("[Suite 20/42] Patience Diff Generation & Semantic Unique Line Alignment...");
     const patienceOld = [
       "function add(a: number, b: number): number {",
       "  return a + b;",
@@ -908,7 +916,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 21: Lexical Token Stream Alignment & Formatting-Tolerant Replacement
     // ---------------------------------------------------------------------------
-    console.log("[Suite 21/37] Lexical Token Stream Alignment & Formatting-Tolerant Replacement...");
+    console.log("[Suite 21/42] Lexical Token Stream Alignment & Formatting-Tolerant Replacement...");
     const multiLineDestructure = [
       "const {",
       "  userId,",
@@ -943,7 +951,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 22: Semantic Merge Conflict Explainer & Auto-Resolution Analysis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 22/37] Semantic Merge Conflict Explainer & Auto-Resolution Analysis...");
+    console.log("[Suite 22/42] Semantic Merge Conflict Explainer & Auto-Resolution Analysis...");
     const baseAncestor = "const host = 'localhost';\nconst port = 3000;\nconst ssl = false;";
     const oursBranch = "const host = '127.0.0.1';\nconst port = 3000;\nconst ssl = false;";
     const theirsBranch = "const host = '0.0.0.0';\nconst port = 3000;\nconst ssl = false;";
@@ -976,7 +984,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 23: Deterministic Inverse Patch Generation & Single/Multi-File Reversals
     // ---------------------------------------------------------------------------
-    console.log("[Suite 23/37] Deterministic Inverse Patch Generation & Single/Multi-File Reversals...");
+    console.log("[Suite 23/42] Deterministic Inverse Patch Generation & Single/Multi-File Reversals...");
     const originalFileA = "export const API_VERSION = '1.0.0';\nexport const ENABLE_LOGS = false;";
     const modifiedFileA = "export const API_VERSION = '2.0.0';\nexport const ENABLE_LOGS = true;";
 
@@ -1023,7 +1031,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 24: Scope-Bounded Fuzzy Matching & Enclosing Block Splicing
     // ---------------------------------------------------------------------------
-    console.log("[Suite 24/37] Scope-Bounded Fuzzy Matching & Enclosing Block Splicing...");
+    console.log("[Suite 24/42] Scope-Bounded Fuzzy Matching & Enclosing Block Splicing...");
     const multiClassContent = [
       "class OrderService {",
       "  process() {",
@@ -1071,7 +1079,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 25: N-Gram Token Cosine Similarity Matrix Search
     // ---------------------------------------------------------------------------
-    console.log("[Suite 25/37] N-Gram Token Cosine Similarity Matrix Search...");
+    console.log("[Suite 25/42] N-Gram Token Cosine Similarity Matrix Search...");
     const largeDoc = [
       "// Section 1: Authentication",
       "function auth() {",
@@ -1117,7 +1125,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 26: Multi-File Fuzzy Symbol Refactoring & Word-Boundary Renaming
     // ---------------------------------------------------------------------------
-    console.log("[Suite 26/37] Multi-File Fuzzy Symbol Refactoring & Word-Boundary Renaming...");
+    console.log("[Suite 26/42] Multi-File Fuzzy Symbol Refactoring & Word-Boundary Renaming...");
     const workspaceCodeFiles = {
       "src/models.ts": "export interface Order {\n  orderId: string;\n  orderIdLegacy?: string;\n}",
       "src/handlers.ts": "export function handle(orderId: string) {\n  // Handling orderId\n  console.log('ID:', orderId);\n  return orderId;\n}",
@@ -1157,7 +1165,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 27: Adaptive Patch Drift Compensation & Offset Fuzzing
     // ---------------------------------------------------------------------------
-    console.log("[Suite 27/37] Adaptive Patch Drift Compensation & Offset Fuzzing...");
+    console.log("[Suite 27/42] Adaptive Patch Drift Compensation & Offset Fuzzing...");
     const driftedFile = [
       "// Extra preamble line 1",
       "// Extra preamble line 2",
@@ -1209,7 +1217,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 28: Git Rerere Conflict Resolution Recording & Automatic Replay
     // ---------------------------------------------------------------------------
-    console.log("[Suite 28/37] Git Rerere Conflict Resolution Recording & Automatic Replay...");
+    console.log("[Suite 28/42] Git Rerere Conflict Resolution Recording & Automatic Replay...");
     const baseConflictSnippet = "const timeout = 5000;";
     const oursConflictSnippet = "const timeout = 10000; // Increased for slow network";
     const theirsConflictSnippet = "const timeout = 15000; // Increased for cloud CI";
@@ -1276,7 +1284,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 29: AST Function Signature Refactoring & Call-Site Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 29/37] AST Function Signature Refactoring & Call-Site Adaptation...");
+    console.log("[Suite 29/42] AST Function Signature Refactoring & Call-Site Adaptation...");
     const signatureFile = [
       "export function calculatePrice(basePrice: number, taxRate: number, discount: number): number {",
       "  return basePrice * (1 + taxRate) - discount;",
@@ -1334,7 +1342,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 30: Multi-Cursor Parallel Non-Overlapping Edit Splicing
     // ---------------------------------------------------------------------------
-    console.log("[Suite 30/37] Multi-Cursor Parallel Non-Overlapping Edit Splicing...");
+    console.log("[Suite 30/42] Multi-Cursor Parallel Non-Overlapping Edit Splicing...");
     const multiCursorContent = [
       "const PORT = 3000;",
       "const HOST = 'localhost';",
@@ -1388,7 +1396,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 31: Histogram Line-Diff Algorithm & Low-Frequency Anchor Clustering
     // ---------------------------------------------------------------------------
-    console.log("[Suite 31/37] Histogram Line-Diff Algorithm & Low-Frequency Anchor Clustering...");
+    console.log("[Suite 31/42] Histogram Line-Diff Algorithm & Low-Frequency Anchor Clustering...");
     const oldConfigCode = [
       "{",
       '  "name": "lumi-app",',
@@ -1446,7 +1454,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 32: End-to-End Multi-Pass Idempotency & Resilient Round-Trip Splicing
     // ---------------------------------------------------------------------------
-    console.log("[Suite 32/37] End-to-End Multi-Pass Idempotency & Resilient Round-Trip Splicing...");
+    console.log("[Suite 32/42] End-to-End Multi-Pass Idempotency & Resilient Round-Trip Splicing...");
     const masterSource = [
       "// LUMI Engine Kernel v2",
       "export class KernelDriver {",
@@ -1491,7 +1499,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 33: Structural Hole Pattern Matching & Template Expansion
     // ---------------------------------------------------------------------------
-    console.log("[Suite 33/37] Structural Hole Pattern Matching & Template Expansion...");
+    console.log("[Suite 33/42] Structural Hole Pattern Matching & Template Expansion...");
     const sampleCodeForPattern = [
       "try {",
       "  const res = fetchUser(id);",
@@ -1533,7 +1541,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 34: Semantic AST Tree Diff Generation & Structural Node Mutation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 34/37] Semantic AST Tree Diff Generation & Structural Node Mutation...");
+    console.log("[Suite 34/42] Semantic AST Tree Diff Generation & Structural Node Mutation...");
     const oldAstCode = [
       "import { readFile } from 'node:fs';",
       "",
@@ -1606,7 +1614,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 35: Swarm Multi-Source Patch Synthesis & Topological Hunk Ordering
     // ---------------------------------------------------------------------------
-    console.log("[Suite 35/37] Swarm Multi-Source Patch Synthesis & Topological Hunk Ordering...");
+    console.log("[Suite 35/42] Swarm Multi-Source Patch Synthesis & Topological Hunk Ordering...");
     const baseServerCode = [
       "export class HttpServer {",
       "  start(): void {",
@@ -1685,7 +1693,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 36: Fuzzy Import Specifier Harmonization & Barrel-Bypass Optimization
     // ---------------------------------------------------------------------------
-    console.log("[Suite 36/37] Fuzzy Import Specifier Harmonization & Barrel-Bypass Optimization...");
+    console.log("[Suite 36/42] Fuzzy Import Specifier Harmonization & Barrel-Bypass Optimization...");
     const messyImportsCode = [
       'import { z } from "zod";',
       'import { readFile } from "node:fs";',
@@ -1742,7 +1750,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 37: Full-Spectrum Multi-Paradigm Splicing & State Invariant Verification
     // ---------------------------------------------------------------------------
-    console.log("[Suite 37/37] Full-Spectrum Multi-Paradigm Splicing & State Invariant Verification...");
+    console.log("[Suite 37/42] Full-Spectrum Multi-Paradigm Splicing & State Invariant Verification...");
     const omniContent = [
       'import { join } from "node:path";',
       'import { resolve } from "node:path";',
@@ -1780,8 +1788,263 @@ const serverHost = '0.0.0.0';
     console.log("  ✓ Full-spectrum multi-paradigm splicing and state invariant verification verified");
     passedSuites++;
 
+    // ---------------------------------------------------------------------------
+    // Suite 38: Semantic Chunk-Level Fuzzy Code Relocator & Indentation Splicing
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 38/42] Semantic Chunk-Level Fuzzy Code Relocator & Indentation Splicing...");
+    const sampleRelocateCode = [
+      "export class WorkerPipeline {",
+      "  private id: string = 'worker-1';",
+      "",
+      "  function gammaHelper(): void {",
+      "    console.log('gamma helper');",
+      "  }",
+      "",
+      "  function alphaPrimary(): void {",
+      "    console.log('alpha primary');",
+      "  }",
+      "}",
+    ].join("\n");
+
+    const sourceToMove = "function gammaHelper(): void {\n    console.log('gamma helper');\n  }";
+    const targetAnchorLoc = "function alphaPrimary(): void {";
+
+    const relocateRes = matcher.relocateCodeBlock(
+      sampleRelocateCode,
+      sourceToMove,
+      targetAnchorLoc,
+      {
+        placement: "before",
+        internalMutations: [{ search: "gamma helper", replace: "gamma helper v2" }],
+        harmonizeIndentation: true,
+      }
+    );
+
+    if (
+      !relocateRes.success ||
+      !relocateRes.modifiedContent.includes("gamma helper v2") ||
+      relocateRes.modifiedContent.indexOf("gammaHelper") > relocateRes.modifiedContent.indexOf("alphaPrimary")
+    ) {
+      throw new Error(`Relocate code block failed: ${JSON.stringify(relocateRes)}`);
+    }
+
+    // Tool execution test
+    const relocateToolRes = (await relocateCodeTool.execute(
+      {
+        content: sampleRelocateCode,
+        sourceBlock: sourceToMove,
+        targetAnchor: targetAnchorLoc,
+        placement: "before",
+        internalMutations: JSON.stringify([{ search: "gamma helper", replace: "gamma helper v2" }]),
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string };
+    if (!relocateToolRes.success || !relocateToolRes.modifiedContent.includes("gamma helper v2")) {
+      throw new Error("fuzzy_relocate_code_block tool execution failed");
+    }
+    console.log("  ✓ Semantic chunk-level fuzzy code relocator & indentation splicing verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 39: Bidirectional JSDoc/TSDoc & Type Annotation Synchronization
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 39/42] Bidirectional JSDoc/TSDoc & Type Annotation Synchronization...");
+    const codeWithStaleDoc = [
+      "/**",
+      " * Calculates final invoice total.",
+      " * @param {number} oldParam The obsolete legacy tax.",
+      " */",
+      "export function calculateInvoice(subtotal: number, taxRate: number, shipping: number): number {",
+      "  return (subtotal * (1 + taxRate)) + shipping;",
+      "}",
+    ].join("\n");
+
+    const docSyncRes = matcher.synchronizeDocCommentsAndTypes(codeWithStaleDoc, "calculateInvoice", {
+      addMissingParamTags: true,
+      removeObsoleteParamTags: true,
+      updateReturnTag: true,
+    });
+
+    if (
+      !docSyncRes.success ||
+      docSyncRes.addedParamsCount !== 3 ||
+      docSyncRes.removedParamsCount !== 1 ||
+      !docSyncRes.modifiedContent.includes("@param {number} subtotal") ||
+      !docSyncRes.modifiedContent.includes("@param {number} taxRate") ||
+      !docSyncRes.modifiedContent.includes("@param {number} shipping") ||
+      docSyncRes.modifiedContent.includes("@param {number} oldParam") ||
+      !docSyncRes.modifiedContent.includes("@returns {number}")
+    ) {
+      throw new Error(`Doc sync failed: ${JSON.stringify(docSyncRes)}`);
+    }
+
+    // Tool execution test
+    const docSyncToolRes = (await syncDocCommentsTool.execute(
+      {
+        content: codeWithStaleDoc,
+        identifierName: "calculateInvoice",
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string; addedParamsCount: number };
+    if (!docSyncToolRes.success || docSyncToolRes.addedParamsCount !== 3) {
+      throw new Error("fuzzy_synchronize_doc_comments tool execution failed");
+    }
+    console.log("  ✓ Bidirectional JSDoc/TSDoc & type annotation synchronization verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 40: Multi-Region Semantic Skeleton & Ellipsis Block Splicing
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 40/42] Multi-Region Semantic Skeleton & Ellipsis Block Splicing...");
+    const fullClassCode = [
+      "export class PaymentService {",
+      "  validateCard(cardNum: string): boolean {",
+      "    return cardNum.length === 16;",
+      "  }",
+      "",
+      "  processCharge(amount: number): boolean {",
+      "    console.log('Charging', amount);",
+      "    return true;",
+      "  }",
+      "",
+      "  sendReceipt(email: string): void {",
+      "    console.log('Receipt sent to', email);",
+      "  }",
+      "}",
+    ].join("\n");
+
+    const skeletonPatch = [
+      "// ... existing code ...",
+      "  processCharge(amount: number): boolean {",
+      "    console.log('Charging with Stripe v3:', amount);",
+      "    return true;",
+      "  }",
+      "// ... existing code ...",
+      "  sendReceipt(email: string): void {",
+      "    console.log('Encrypted receipt sent to', email);",
+      "  }",
+      "// ... existing code ...",
+    ].join("\n");
+
+    const skeletonRes = matcher.spliceMultiRegionSkeleton(fullClassCode, skeletonPatch);
+    if (
+      !skeletonRes.success ||
+      skeletonRes.regionsSplicedCount !== 2 ||
+      !skeletonRes.modifiedContent.includes("Charging with Stripe v3:") ||
+      !skeletonRes.modifiedContent.includes("Encrypted receipt sent to") ||
+      !skeletonRes.modifiedContent.includes("return cardNum.length === 16;")
+    ) {
+      throw new Error(`Multi-region skeleton splicing failed: ${JSON.stringify(skeletonRes)}`);
+    }
+
+    // Tool execution test
+    const skeletonToolRes = (await spliceSkeletonTool.execute(
+      {
+        content: fullClassCode,
+        skeletonText: skeletonPatch,
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string; regionsSplicedCount: number };
+    if (!skeletonToolRes.success || skeletonToolRes.regionsSplicedCount !== 2) {
+      throw new Error("fuzzy_splice_multi_region_skeleton tool execution failed");
+    }
+    console.log("  ✓ Multi-region semantic skeleton & ellipsis block splicing verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 41: Deterministic Dead Code & Ghost Import Pruning
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 41/42] Deterministic Dead Code & Ghost Import Pruning...");
+    const dirtyImportsCode = [
+      'import { readFile, writeFile, existsSync } from "node:fs";',
+      'import { map, zip, filter } from "lodash";',
+      'import "reflect-metadata";',
+      '',
+      'export function processData(file: string, items: string[]): string[] {',
+      '  const raw = readFile(file);',
+      '  return map(items, (i) => i.trim());',
+      '}',
+    ].join("\n");
+
+    const pruneRes = matcher.pruneUnusedImportsAndSymbols(dirtyImportsCode);
+    if (
+      !pruneRes.success ||
+      pruneRes.prunedSpecifiersCount !== 4 ||
+      !pruneRes.prunedSpecifiers.includes("writeFile") ||
+      !pruneRes.prunedSpecifiers.includes("existsSync") ||
+      !pruneRes.prunedSpecifiers.includes("zip") ||
+      !pruneRes.prunedSpecifiers.includes("filter") ||
+      !pruneRes.modifiedContent.includes('import { readFile } from "node:fs";') ||
+      !pruneRes.modifiedContent.includes('import { map } from "lodash";') ||
+      !pruneRes.modifiedContent.includes('import "reflect-metadata";')
+    ) {
+      throw new Error(`Import pruning failed: ${JSON.stringify(pruneRes)}`);
+    }
+
+    // Tool execution test
+    const pruneToolRes = (await pruneImportsTool.execute(
+      {
+        content: dirtyImportsCode,
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string; prunedSpecifiersCount: number };
+    if (!pruneToolRes.success || pruneToolRes.prunedSpecifiersCount !== 4) {
+      throw new Error("fuzzy_prune_unused_imports tool execution failed");
+    }
+    console.log("  ✓ Deterministic dead code & ghost import pruning verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 42: Full-Engine Invariant, Monolith Composition & State Rollback Integration
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 42/42] Full-Engine Invariant, Monolith Composition & State Rollback Integration...");
+    const initialEngineCode = [
+      'import { resolve, join } from "node:path";',
+      '',
+      'export class PipelineKernel {',
+      '  executeTask(taskId: string): boolean {',
+      '    return taskId.length > 0;',
+      '  }',
+      '}',
+    ].join("\n");
+
+    // 1. Doc sync on executeTask
+    const pass1Doc = matcher.synchronizeDocCommentsAndTypes(initialEngineCode, "executeTask");
+    if (!pass1Doc.success || !pass1Doc.modifiedContent.includes("@param {string} taskId")) {
+      throw new Error("Integration Step 1 failed");
+    }
+
+    // 2. Relocate class
+    const helperCode = "function pipelineHelper(): void {\n  console.log('helper');\n}\n\n";
+    const withHelper = helperCode + pass1Doc.modifiedContent;
+    const pass2Reloc = matcher.relocateCodeBlock(
+      withHelper,
+      "function pipelineHelper(): void {\n  console.log('helper');\n}",
+      "class PipelineKernel {",
+      { placement: "after" }
+    );
+    if (!pass2Reloc.success || !pass2Reloc.modifiedContent.includes("pipelineHelper")) {
+      throw new Error("Integration Step 2 failed");
+    }
+
+    // 3. Prune unused imports
+    const pass3Prune = matcher.pruneUnusedImportsAndSymbols(pass2Reloc.modifiedContent);
+    if (!pass3Prune.success) {
+      throw new Error("Integration Step 3 failed");
+    }
+
+    // 4. Snapshot frame & Verify O(1) rollback
+    const snapFrame = snapshotManager.captureFrame(200);
+    if (!snapFrame) throw new Error("Integration Step 4 frame capture failed");
+
+    const rewound = snapshotManager.rewindToFrame(200);
+    if (!rewound) throw new Error("Integration Step 4 rewind failed");
+
+    console.log("  ✓ Full-engine invariant, monolith composition & state rollback integration verified");
+    passedSuites++;
+
     console.log("\n================================================================================");
-    console.log(` [✓] ALL ${passedSuites}/${totalSuites} PHASE 105 FUZZY MATCHER VALIDATION SUITES PASSED! `);
+    console.log(` [✓] ALL ${passedSuites}/${totalSuites} PHASE 106 FUZZY MATCHER VALIDATION SUITES PASSED! `);
     console.log("================================================================================\n");
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });

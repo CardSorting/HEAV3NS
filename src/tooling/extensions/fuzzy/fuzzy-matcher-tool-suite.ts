@@ -1693,6 +1693,234 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_relocate_code_block",
+        description: "Fuzzy relocates a code block across distant regions of a file with optional internal mutations, blank-line compaction, and relative indentation harmonization.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          sourceBlock: {
+            type: "string",
+            description: "The code block to extract and relocate",
+            required: true,
+          },
+          targetAnchor: {
+            type: "string",
+            description: "The target anchor code point where the extracted block should be relocated",
+            required: true,
+          },
+          placement: {
+            type: "string",
+            description: "Placement relative to target anchor ('before' | 'after' | 'replace_anchor', default: 'after')",
+            required: false,
+          },
+          internalMutations: {
+            type: "string",
+            description: "Optional array (or JSON string) of internal search/replace mutations to apply to extracted block",
+            required: false,
+          },
+          harmonizeIndentation: {
+            type: "boolean",
+            description: "Whether to adapt indentation to match target anchor (default: true)",
+            required: false,
+          },
+          cleanupBlankLines: {
+            type: "boolean",
+            description: "Whether to compact blank lines around removed source block (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (
+            typeof args.content !== "string" ||
+            typeof args.sourceBlock !== "string" ||
+            typeof args.targetAnchor !== "string"
+          ) {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'sourceBlock', 'targetAnchor').",
+            };
+          }
+
+          let mutationsArr: any = args.internalMutations;
+          if (typeof mutationsArr === "string") {
+            try {
+              mutationsArr = JSON.parse(mutationsArr);
+            } catch {
+              mutationsArr = undefined;
+            }
+          }
+
+          const result = this.supervisor.relocateCodeBlock(
+            args.content,
+            args.sourceBlock,
+            args.targetAnchor,
+            {
+              placement: (args.placement as any) || "after",
+              internalMutations: Array.isArray(mutationsArr) ? mutationsArr : undefined,
+              harmonizeIndentation:
+                typeof args.harmonizeIndentation === "boolean" ? args.harmonizeIndentation : true,
+              cleanupBlankLines:
+                typeof args.cleanupBlankLines === "boolean" ? args.cleanupBlankLines : true,
+            }
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            sourceExtracted: result.sourceExtracted,
+            targetAnchorFound: result.targetAnchorFound,
+            relativeIndentApplied: result.relativeIndentApplied,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_synchronize_doc_comments",
+        description: "Synchronizes JSDoc/TSDoc comments with evolving function, method, or class AST parameter lists and return types.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          identifierName: {
+            type: "string",
+            description: "The function, method, or class identifier name to synchronize doc comments for",
+            required: true,
+          },
+          addMissingParamTags: {
+            type: "boolean",
+            description: "Whether to add @param tags for newly added parameters (default: true)",
+            required: false,
+          },
+          removeObsoleteParamTags: {
+            type: "boolean",
+            description: "Whether to remove @param tags for deleted parameters (default: true)",
+            required: false,
+          },
+          updateReturnTag: {
+            type: "boolean",
+            description: "Whether to update @returns tag with return type (default: true)",
+            required: false,
+          },
+          defaultParamDescription: {
+            type: "string",
+            description: "Default description text for newly added parameter tags",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.identifierName !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'identifierName').",
+            };
+          }
+          const result = this.supervisor.synchronizeDocCommentsAndTypes(
+            args.content,
+            args.identifierName,
+            {
+              addMissingParamTags:
+                typeof args.addMissingParamTags === "boolean" ? args.addMissingParamTags : true,
+              removeObsoleteParamTags:
+                typeof args.removeObsoleteParamTags === "boolean" ? args.removeObsoleteParamTags : true,
+              updateReturnTag:
+                typeof args.updateReturnTag === "boolean" ? args.updateReturnTag : true,
+              defaultParamDescription:
+                typeof args.defaultParamDescription === "string"
+                  ? args.defaultParamDescription
+                  : undefined,
+            }
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            targetIdentifier: result.targetIdentifier,
+            addedParamsCount: result.addedParamsCount,
+            removedParamsCount: result.removedParamsCount,
+            returnTypeUpdated: result.returnTypeUpdated,
+            originalDocBlock: result.originalDocBlock,
+            updatedDocBlock: result.updatedDocBlock,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_splice_multi_region_skeleton",
+        description: "Parses multi-region skeletons containing multiple ellipsis omissions across distant file loci and splices each modified region into its structural context.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          skeletonText: {
+            type: "string",
+            description: "The skeleton text containing multiple non-ellipsis code regions separated by ellipsis markers",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.skeletonText !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'skeletonText').",
+            };
+          }
+          const result = this.supervisor.spliceMultiRegionSkeleton(
+            args.content,
+            args.skeletonText
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            regionsSplicedCount: result.regionsSplicedCount,
+            regionMatches: result.regionMatches,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_prune_unused_imports",
+        description: "Scans source code content, cross-references all imported specifiers against body usage, and prunes unused specifiers and empty import statements.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content whose unused imports should be pruned",
+            required: true,
+          },
+          preserveSideEffectImports: {
+            type: "boolean",
+            description: "Whether to preserve bare side-effect imports (e.g. import 'reflect-metadata'; default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.pruneUnusedImportsAndSymbols(args.content, {
+            preserveSideEffectImports:
+              typeof args.preserveSideEffectImports === "boolean"
+                ? args.preserveSideEffectImports
+                : true,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            prunedSpecifiersCount: result.prunedSpecifiersCount,
+            prunedStatementsCount: result.prunedStatementsCount,
+            prunedSpecifiers: result.prunedSpecifiers,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

@@ -800,5 +800,96 @@ export interface ImportOptimizationResult {
   readonly error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Semantic Chunk-Level Fuzzy Code Relocator Contracts (Pass 11)
+// ---------------------------------------------------------------------------
+
+export interface RelocateMutation {
+  readonly search: string;
+  readonly replace: string;
+}
+
+export interface RelocateCodeBlockOptions {
+  readonly placement?: "before" | "after" | "replace_anchor";
+  readonly internalMutations?: readonly RelocateMutation[];
+  readonly harmonizeIndentation?: boolean;
+  readonly cleanupBlankLines?: boolean;
+}
+
+export interface RelocateCodeBlockResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly sourceExtracted: string;
+  readonly targetAnchorFound: boolean;
+  readonly relativeIndentApplied: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Bidirectional JSDoc/TSDoc & Type Synchronizer Contracts (Pass 11)
+// ---------------------------------------------------------------------------
+
+export interface DocSyncOptions {
+  readonly addMissingParamTags?: boolean;
+  readonly removeObsoleteParamTags?: boolean;
+  readonly updateReturnTag?: boolean;
+  readonly defaultParamDescription?: string;
+}
+
+export interface DocSyncResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly targetIdentifier: string;
+  readonly addedParamsCount: number;
+  readonly removedParamsCount: number;
+  readonly returnTypeUpdated: boolean;
+  readonly originalDocBlock: string | null;
+  readonly updatedDocBlock: string | null;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Region Semantic Skeleton & Ellipsis Splicer Contracts (Pass 11)
+// ---------------------------------------------------------------------------
+
+export interface MultiRegionSkeletonOptions {
+  readonly ellipsisTokens?: readonly string[];
+  readonly strictOrder?: boolean;
+}
+
+export interface SkeletonRegionMatch {
+  readonly regionIndex: number;
+  readonly searchAnchor: string;
+  readonly replacementBlock: string;
+  readonly startOffset: number;
+  readonly endOffset: number;
+}
+
+export interface MultiRegionSkeletonResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly regionsSplicedCount: number;
+  readonly regionMatches: readonly SkeletonRegionMatch[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic Dead Code & Ghost Import Pruner Contracts (Pass 11)
+// ---------------------------------------------------------------------------
+
+export interface PruneUnusedOptions {
+  readonly preserveSideEffectImports?: boolean;
+  readonly ignorePatterns?: readonly string[];
+}
+
+export interface PruneUnusedResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly prunedSpecifiersCount: number;
+  readonly prunedStatementsCount: number;
+  readonly prunedSpecifiers: readonly string[];
+  readonly error: string | null;
+}
+
 
 
