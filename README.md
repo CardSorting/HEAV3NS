@@ -75,8 +75,8 @@ LUMI-JOY eliminates software friction by applying proven principles from high-pe
 | :--- | :--- | :--- |
 | 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.13\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
 | ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming and rapid multi-tool loops |
-| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$7960.17\text{ frames/second}$** throughput ($>7.9\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.021\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
+| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$7751.91\text{ frames/second}$** throughput ($>7.7\times$ above the $1,000\text{ fps}$ SLA) |
+| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.022\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
 | 🖥️ **Differential Terminal User Interface** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive box borders, syntax highlighting, fuzzy autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
 
 ### 🎯 Who This Is For & Why It Matters
@@ -264,7 +264,7 @@ While the ancestral teacher implemented these capabilities in a rich, multi-plat
 
 ### Latest verified workspace baseline
 
-The authoritative run was generated on **2026-08-16T07:54:59.840Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+The authoritative run was generated on **2026-08-16T08:02:32.200Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
 
 | Verification lane | Latest result |
 |---|---:|
@@ -545,7 +545,7 @@ To prevent code regression, file overwrites, and structural drift as new evoluti
 Traditional AI agent frameworks suffer from state drift, non-reproducible turns, microservice overhead, and V8 Garbage Collection pauses. Modeling the agent runtime like a **Deterministic Game Engine** establishes frame ticks (`tick()`), immutable state snapshots (`GameStateSnapshot`), sub-millisecond state rewind (`rewindToSnapshot()`), and a pre-allocated 16MB contiguous slab memory substrate (`ArenaAllocator`). This guarantees frame-perfect isolation, instant time-travel debugging, and zero-GC performance stability.
 
 ### Q: How does LUMI-JOY reduce AI infrastructure and cloud operating costs?
-By eliminating internal microservice RPC queues, LUMI-JOY keeps deterministic local orchestration in-process. The enforced floor is **$1,000$ local frames/second**; the latest host run observed **$7960.17$ frames/second**. These figures are local framework measurements—not provider responses, model tokens, or a universal server-capacity promise—and should be regenerated on deployment hardware.
+By eliminating internal microservice RPC queues, LUMI-JOY keeps deterministic local orchestration in-process. The enforced floor is **$1,000$ local frames/second**; the latest host run observed **$7751.91$ frames/second**. These figures are local framework measurements—not provider responses, model tokens, or a universal server-capacity promise—and should be regenerated on deployment hardware.
 
 ### Q: Which LLM providers and AI models are supported?
 LUMI-JOY natively supports major provider ecosystems including **OpenAI** (`gpt-4o`, `gpt-5`, `Codex`), **Anthropic** (`Claude 3.5 Sonnet`), and standard OpenAI-compatible proxy gateways. It features automatic model resolution, fallback routing, and PKCE OAuth 2.0 authentication.

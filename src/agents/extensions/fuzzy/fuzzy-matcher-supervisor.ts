@@ -7,6 +7,7 @@
 
 import { performance } from "node:perf_hooks";
 import type {
+  CandidateRankingResult,
   ConflictMarkerChunk,
   ConflictResolutionResult,
   ConflictResolutionStrategy,
@@ -17,10 +18,16 @@ import type {
   FuzzyStrategyName,
   IndentationHarmonizationResult,
   IndentationStyle,
+  LspApplyResult,
+  LspTextEdit,
+  LspWorkspaceEdit,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
   SyntaxBoundarySnapResult,
+  SyntaxRepairResult,
+  ThreeWayMergeOptions,
+  ThreeWayMergeResult,
   UnifiedPatchResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -212,6 +219,57 @@ export class FuzzyMatcherSupervisor {
     options: { dryRun?: boolean } = {}
   ): MultiFileTransactionResult {
     return this.matcher.applyMultiFileTransaction(fileContents, transactions, options);
+  }
+
+  /**
+   * Performs a 3-way merge between baseContent, oursContent, and theirsContent.
+   */
+  threeWayMerge(
+    baseContent: string,
+    oursContent: string,
+    theirsContent: string,
+    options: ThreeWayMergeOptions = {}
+  ): ThreeWayMergeResult {
+    return this.matcher.threeWayMerge(baseContent, oursContent, theirsContent, options);
+  }
+
+  /**
+   * Applies an array of LSP-compliant 0-indexed TextEdit objects to content.
+   */
+  applyLspTextEdits(content: string, edits: readonly LspTextEdit[]): LspApplyResult {
+    return this.matcher.applyLspTextEdits(content, edits);
+  }
+
+  /**
+   * Converts fuzzy replacement hunks into standard 0-indexed LSP TextEdit objects.
+   */
+  fuzzyHunksToLspEdits(content: string, hunks: readonly FuzzyReplacementHunk[]): LspTextEdit[] {
+    return this.matcher.fuzzyHunksToLspEdits(content, hunks);
+  }
+
+  /**
+   * Applies an LSP WorkspaceEdit across multiple files in memory with atomic rollback.
+   */
+  applyLspWorkspaceEdit(
+    fileContents: Record<string, string>,
+    workspaceEdit: LspWorkspaceEdit,
+    options: { dryRun?: boolean } = {}
+  ): MultiFileTransactionResult {
+    return this.matcher.applyLspWorkspaceEdit(fileContents, workspaceEdit, options);
+  }
+
+  /**
+   * Validates structural syntax of a code snippet and auto-repairs unbalanced brackets or unclosed strings.
+   */
+  validateAndRepairCodeBlock(codeSnippet: string): SyntaxRepairResult {
+    return this.matcher.validateAndRepairCodeBlock(codeSnippet);
+  }
+
+  /**
+   * Computes semantic Jaccard and Levenshtein similarity to rank candidate match spans for a search snippet.
+   */
+  rankCandidateMatches(content: string, searchSnippet: string, limit: number = 5): CandidateRankingResult {
+    return this.matcher.rankCandidateMatches(content, searchSnippet, limit);
   }
 
   /**

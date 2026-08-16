@@ -24,14 +24,14 @@ async function runValidationSuite() {
   console.log("================================================================================\n");
 
   let passedSuites = 0;
-  const totalSuites = 15;
+  const totalSuites = 19;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lumi-fuzzy-val-"));
 
   try {
     // ---------------------------------------------------------------------------
     // Suite 1: Exact Match, Edit Idempotency & Line-Ending Preservation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/15] Exact Match, Edit Idempotency & Line-Ending Preservation...");
+    console.log("[Suite 1/19] Exact Match, Edit Idempotency & Line-Ending Preservation...");
     const matcher = new DeterministicFuzzyMatcher();
 
     const baseContent = "function calculateTotal(items: number[]): number {\n  return items.reduce((a, b) => a + b, 0);\n}";
@@ -68,7 +68,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 2: Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/15] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
+    console.log("[Suite 2/19] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
     const whitespaceContent = "class UserService {\n    findUser(id: string) {\n        return db.users.get(id);\n    }\n}";
 
     // Line trimmed with trailing space difference
@@ -93,7 +93,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 3: Indentation-Flexible & Selective Control Character Unescaping (\t, \r)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/15] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
+    console.log("[Suite 3/19] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
     const tabFileContent = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
 
     // Model provides literal \t in new_string where file has real tabs
@@ -110,7 +110,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 4: Escape Drift & Backslash Doubling Guards
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/15] Escape Drift & Backslash Doubling Guards...");
+    console.log("[Suite 4/19] Escape Drift & Backslash Doubling Guards...");
     const quoteFileContent = "const msg = 'hello world';";
 
     // Model introduces spurious \' escaping in tool args that does not exist in file
@@ -136,7 +136,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 5: Comment Tolerance, Token Normalization & Ellipsis Wildcard
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/15] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
+    console.log("[Suite 5/19] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
     const commentedCode = "function start() {\n    // Setup database connection\n    initDb();\n    /* Start listener */\n    listen();\n}";
     const searchNoComments = "function start() {\n    initDb();\n    listen();\n}";
     const replacementCode = "function start() {\n    initDbV2();\n    listenV2();\n}";
@@ -177,7 +177,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/15] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
+    console.log("[Suite 6/19] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
     const mismatchContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
     const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
@@ -204,7 +204,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 7: Atomic Multi-Hunk Patch Engine & O(1) Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 7/15] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
+    console.log("[Suite 7/19] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
     const multiFile = "const A = 1;\nconst B = 2;\nconst C = 3;\nconst D = 4;\nconst E = 5;";
 
     const hunks = [
@@ -258,7 +258,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 8: Model Tool Suite Execution & Monolith 382-Component Synthesis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/15] Model Tool Suite Execution & Monolith 382-Component Synthesis...");
+    console.log("[Suite 8/19] Model Tool Suite Execution & Monolith 382-Component Synthesis...");
     const toolSuite = new FuzzyMatcherToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
@@ -271,6 +271,10 @@ async function runValidationSuite() {
     const resolveConflictTool = tools.find((t) => t.name === "fuzzy_resolve_conflict_markers")!;
     const harmonizeIndentTool = tools.find((t) => t.name === "fuzzy_harmonize_indentation")!;
     const multiFileTxTool = tools.find((t) => t.name === "fuzzy_apply_multi_file_transaction")!;
+    const threeWayTool = tools.find((t) => t.name === "fuzzy_three_way_merge")!;
+    const applyLspTool = tools.find((t) => t.name === "fuzzy_apply_lsp_edits")!;
+    const repairSyntaxTool = tools.find((t) => t.name === "fuzzy_repair_syntax_block")!;
+    const rankCandidateTool = tools.find((t) => t.name === "fuzzy_rank_candidate_matches")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
     const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
@@ -287,6 +291,10 @@ async function runValidationSuite() {
       !resolveConflictTool ||
       !harmonizeIndentTool ||
       !multiFileTxTool ||
+      !threeWayTool ||
+      !applyLspTool ||
+      !repairSyntaxTool ||
+      !rankCandidateTool ||
       !dryRunTool ||
       !idempotencyTool ||
       !diagnoseTool ||
@@ -328,7 +336,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 9: SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 9/15] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
+    console.log("[Suite 9/19] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
     const blockFile = `
 function computeStats(values: number[]) {
   const min = Math.min(...values);
@@ -379,7 +387,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 10: Line-Hint Centered Disambiguation Matching
     // ---------------------------------------------------------------------------
-    console.log("[Suite 10/15] Line-Hint Centered Disambiguation Matching...");
+    console.log("[Suite 10/19] Line-Hint Centered Disambiguation Matching...");
     const duplicateLinesFile = [
       "// Block 1",
       "function foo() {",
@@ -434,7 +442,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 11: Multi-File Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 11/15] Multi-File Unified Patch Application...");
+    console.log("[Suite 11/19] Multi-File Unified Patch Application...");
     const multiFilePatch = `
 --- a/src/math.ts
 +++ b/src/math.ts
@@ -472,7 +480,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 12: Git Conflict Marker Parsing & Deterministic Resolution
     // ---------------------------------------------------------------------------
-    console.log("[Suite 12/15] Git Conflict Marker Parsing & Deterministic Resolution...");
+    console.log("[Suite 12/19] Git Conflict Marker Parsing & Deterministic Resolution...");
     const conflictContent = `
 function calculateTax(amount: number): number {
 <<<<<<< HEAD
@@ -519,7 +527,7 @@ function calculateTax(amount: number): number {
     // ---------------------------------------------------------------------------
     // Suite 13: Indentation Style Detection & Proportional Harmonizer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 13/15] Indentation Style Detection & Proportional Harmonizer...");
+    console.log("[Suite 13/19] Indentation Style Detection & Proportional Harmonizer...");
     const fourSpaceTarget = `
 class OrderProcessor {
     processOrder(orderId: string) {
@@ -564,7 +572,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 14: Syntax-Aware Structural Block Boundary Snapping
     // ---------------------------------------------------------------------------
-    console.log("[Suite 14/15] Syntax-Aware Structural Block Boundary Snapping...");
+    console.log("[Suite 14/19] Syntax-Aware Structural Block Boundary Snapping...");
     const codeSnippet = "const userIdentifier = 'admin_user';";
     // Slicing mid-word at start (index 8 is inside 'userIdentifier') and end (index 15)
     const snapRes = matcher.snapToSyntaxBoundaries(codeSnippet, 8, 15);
@@ -577,7 +585,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 15: Atomic Multi-File Workspace Transactions & Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 15/15] Atomic Multi-File Workspace Transactions & Rollback...");
+    console.log("[Suite 15/19] Atomic Multi-File Workspace Transactions & Rollback...");
     const initialFiles: Record<string, string> = {
       "fileA.ts": "export const A = 1;\nexport const B = 2;",
       "fileB.ts": "export const C = 3;\nexport const D = 4;",
@@ -626,6 +634,183 @@ if (orderId) {
       throw new Error("fuzzy_apply_multi_file_transaction tool execution failed");
     }
     console.log("  ✓ Atomic multi-file workspace transactions & transactional rollbacks verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 16: Fuzzy 3-Way Merge & Semantic Reconciliation
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 16/19] Fuzzy 3-Way Merge & Semantic Reconciliation...");
+    const baseContent3Way = "function compute(a: number, b: number): number {\n  return a + b;\n}";
+    const oursContent3Way = "// Fast compute implementation\nfunction compute(a: number, b: number): number {\n  return a + b;\n}";
+    const theirsContent3Way = "function compute(a: number, b: number): number {\n  return (a + b) | 0;\n}";
+
+    // Non-conflicting clean 3-way merge
+    const mergeCleanRes = matcher.threeWayMerge(baseContent3Way, oursContent3Way, theirsContent3Way);
+    if (
+      !mergeCleanRes.success ||
+      mergeCleanRes.conflictCount !== 0 ||
+      !mergeCleanRes.mergedContent.includes("// Fast compute implementation") ||
+      !mergeCleanRes.mergedContent.includes("return (a + b) | 0;")
+    ) {
+      throw new Error(`Non-conflicting 3-way merge failed: ${JSON.stringify(mergeCleanRes)}`);
+    }
+
+    // Conflicting 3-way merge
+    const oursConflicting = "function compute(a: number, b: number): number {\n  return a * 2 + b;\n}";
+    const theirsConflicting = "function compute(a: number, b: number): number {\n  return a * 3 + b;\n}";
+
+    const mergeConflictRes = matcher.threeWayMerge(baseContent3Way, oursConflicting, theirsConflicting, {
+      conflictResolution: "markers",
+      oursLabel: "LOCAL",
+      theirsLabel: "REMOTE",
+    });
+
+    if (
+      mergeConflictRes.success ||
+      mergeConflictRes.conflictCount !== 1 ||
+      !mergeConflictRes.mergedContent.includes("<<<<<<< LOCAL") ||
+      !mergeConflictRes.mergedContent.includes(">>>>>>> REMOTE")
+    ) {
+      throw new Error(`Conflicting 3-way merge failed: ${JSON.stringify(mergeConflictRes)}`);
+    }
+
+    // Test tool integration for 3-way merge
+    const threeWayToolRes = (await threeWayTool.execute(
+      {
+        baseContent: baseContent3Way,
+        oursContent: oursContent3Way,
+        theirsContent: theirsContent3Way,
+        conflictResolution: "ours",
+      },
+      tempDir
+    )) as { success: boolean; mergedContent: string };
+    if (!threeWayToolRes.success || !threeWayToolRes.mergedContent.includes("Fast compute implementation")) {
+      throw new Error("fuzzy_three_way_merge tool execution failed");
+    }
+    console.log("  ✓ 3-way merge, clean reconciliation, and conflict marker emission verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 17: LSP Standard TextEdit & WorkspaceEdit Applicator & Converter
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 17/19] LSP Standard TextEdit & WorkspaceEdit Applicator & Converter...");
+    const lspFileContent = "const alpha = 10;\nconst beta = 20;\nconst gamma = 30;";
+    // Replace beta (line 1, char 6 to char 15) with 'beta = 200'
+    const lspEdits = [
+      {
+        range: {
+          start: { line: 1, character: 6 },
+          end: { line: 1, character: 15 },
+        },
+        newText: "beta = 200",
+      },
+    ];
+
+    const lspApplyRes = matcher.applyLspTextEdits(lspFileContent, lspEdits);
+    if (!lspApplyRes.success || !lspApplyRes.modifiedContent.includes("const beta = 200;")) {
+      throw new Error(`LSP TextEdit application failed: ${JSON.stringify(lspApplyRes)}`);
+    }
+
+    // Test converting fuzzy replacement hunks to LSP edits
+    const convertedLspEdits = matcher.fuzzyHunksToLspEdits(lspFileContent, [
+      { oldString: "const gamma = 30;", newString: "const gamma = 300;" },
+    ]);
+    if (convertedLspEdits.length !== 1 || convertedLspEdits[0].range.start.line !== 2) {
+      throw new Error(`fuzzyHunksToLspEdits failed: ${JSON.stringify(convertedLspEdits)}`);
+    }
+
+    // Test applying workspace edit
+    const workspaceEdit = {
+      changes: {
+        "file1.ts": [{ range: { start: { line: 0, character: 6 }, end: { line: 0, character: 11 } }, newText: "x = 10" }],
+      },
+    };
+    const wsRes = matcher.applyLspWorkspaceEdit({ "file1.ts": "const x = 1;" }, workspaceEdit);
+    if (!wsRes.success || !wsRes.committedFiles["file1.ts"].includes("const x = 10;")) {
+      throw new Error(`LSP WorkspaceEdit application failed: ${JSON.stringify(wsRes)}`);
+    }
+
+    // Test tool integration for LSP TextEdit
+    const lspToolRes = (await applyLspTool.execute(
+      {
+        content: lspFileContent,
+        edits: lspEdits,
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string };
+    if (!lspToolRes.success || !lspToolRes.modifiedContent.includes("const beta = 200;")) {
+      throw new Error("fuzzy_apply_lsp_edits tool execution failed");
+    }
+    console.log("  ✓ LSP TextEdit & WorkspaceEdit coordinate mapping, conversion, and application verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 18: Structural Syntax & Balanced Bracket / Tag Auto-Healer
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 18/19] Structural Syntax & Balanced Bracket / Tag Auto-Healer...");
+    const brokenCode1 = "function calculate() {\n  const total = items.reduce((a, b) => a + b, 0);\n";
+    const repairRes1 = matcher.validateAndRepairCodeBlock(brokenCode1);
+    if (repairRes1.isValid || !repairRes1.repairedCode.endsWith("}")) {
+      throw new Error(`Syntax repair failed on unclosed curly brace: ${JSON.stringify(repairRes1)}`);
+    }
+
+    const brokenCode2 = "const apiKey = 'secret_token_12345";
+    const repairRes2 = matcher.validateAndRepairCodeBlock(brokenCode2);
+    if (repairRes2.isValid || !repairRes2.repairedCode.endsWith("'")) {
+      throw new Error(`Syntax repair failed on unclosed string literal: ${JSON.stringify(repairRes2)}`);
+    }
+
+    const nestedBroken = "const payload = { config: [ { id: 'test'";
+    const repairRes3 = matcher.validateAndRepairCodeBlock(nestedBroken);
+    if (repairRes3.isValid || !repairRes3.repairedCode.endsWith("}]}") && !repairRes3.repairedCode.endsWith("']}}") && !repairRes3.repairedCode.includes("}]")) {
+      throw new Error(`Syntax repair failed on nested unbalanced brackets: ${JSON.stringify(repairRes3)}`);
+    }
+
+    // Test tool integration for syntax repair
+    const syntaxToolRes = (await repairSyntaxTool.execute(
+      {
+        codeSnippet: brokenCode1,
+      },
+      tempDir
+    )) as { success: boolean; repairedCode: string };
+    if (!syntaxToolRes.success || !syntaxToolRes.repairedCode.endsWith("}")) {
+      throw new Error("fuzzy_repair_syntax_block tool execution failed");
+    }
+    console.log("  ✓ Structural syntax validation, bracket balancing, and string auto-healer verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 19: Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 19/19] Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer...");
+    const ambiguousContent = `
+// Config Section 1
+const serverPort = 3000;
+const serverHost = '127.0.0.1';
+
+// Config Section 2
+const serverPort = 8080;
+const serverHost = '0.0.0.0';
+`;
+
+    const rankingRes = matcher.rankCandidateMatches(ambiguousContent, "const serverPort = 8080;\nconst serverHost = '0.0.0.0';", 3);
+    if (!rankingRes.bestMatch || rankingRes.bestMatch.combinedScore !== 1.0 || rankingRes.bestMatch.startLine !== 7) {
+      throw new Error(`Candidate ranking failed: ${JSON.stringify(rankingRes)}`);
+    }
+
+    // Test tool integration for candidate ranking
+    const rankToolRes = (await rankCandidateTool.execute(
+      {
+        content: ambiguousContent,
+        searchSnippet: "const serverPort = 8080;",
+        limit: 2,
+      },
+      tempDir
+    )) as { success: boolean; bestMatch: { combinedScore: number } };
+    if (!rankToolRes.success || !rankToolRes.bestMatch || rankToolRes.bestMatch.combinedScore < 0.9) {
+      throw new Error("fuzzy_rank_candidate_matches tool execution failed");
+    }
+    console.log("  ✓ Multi-candidate semantic Jaccard & Levenshtein ranking verified");
     passedSuites++;
 
     console.log("\n================================================================================");

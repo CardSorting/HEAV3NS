@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T07:54:59.840Z",
+  "generatedAt": "2026-08-16T08:02:32.200Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,7 +19,7 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.49,
+    "durationMs": 2.6,
     "componentCount": 382,
     "requiredComponentCount": 382,
     "composedRequiredComponentCount": 382,
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 0.86,
-        "detail": "frame 1 completed in 0.56 ms"
+        "durationMs": 0.9,
+        "detail": "frame 1 completed in 0.59 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.29,
+        "durationMs": 0.3,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -64,7 +64,7 @@
         "category": "governance",
         "name": "Completion gate fails closed without evaluated evidence",
         "passed": true,
-        "durationMs": 0.47,
+        "durationMs": 0.48,
         "detail": "5 fail-closed states rejected; 2/2 evaluated required criteria accepted"
       },
       {
@@ -72,7 +72,7 @@
         "category": "safety",
         "name": "Modern command safety and diagnostics are active",
         "passed": true,
-        "durationMs": 0.24,
+        "durationMs": 0.26,
         "detail": "interactive editor blocking and port-collision guidance verified"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.08,
+        "durationMs": 0.09,
         "detail": "head/tail output retention verified"
       },
       {
@@ -96,7 +96,7 @@
         "category": "health",
         "name": "Subsystem health aggregation remains optimal",
         "passed": true,
-        "durationMs": 0.06,
+        "durationMs": 0.07,
         "detail": "3/3 registered subsystems healthy"
       }
     ]
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 71.59,
-    "totalDurationMs": 357.96,
-    "throughputTps": 13.97,
-    "throughputPerMinute": 838,
+    "meanLatencyMs": 69.77,
+    "totalDurationMs": 348.83,
+    "throughputTps": 14.33,
+    "throughputPerMinute": 860,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -130,7 +130,7 @@
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 357.62,
+        "durationMs": 348.49,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -185,7 +185,7 @@
         "testName": "Snapshot State Rewind Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.08,
+        "durationMs": 0.07,
         "assertions": []
       }
     ]
@@ -213,14 +213,14 @@
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "7960.17 frames/sec",
+        "measuredValue": "7751.91 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.021 ms p95",
+        "measuredValue": "0.022 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },

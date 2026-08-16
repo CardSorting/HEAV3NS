@@ -226,3 +226,92 @@ export interface FuzzyWorkspaceSnapshot {
   readonly preserveUnicodeForUnchanged: boolean;
   readonly enabledStrategies: readonly FuzzyStrategyName[];
 }
+
+export type ThreeWayMergeConflictResolution =
+  | "markers"
+  | "ours"
+  | "theirs"
+  | "both_ours_first"
+  | "both_theirs_first";
+
+export interface ThreeWayMergeOptions {
+  readonly conflictResolution?: ThreeWayMergeConflictResolution;
+  readonly oursLabel?: string;
+  readonly theirsLabel?: string;
+  readonly baseLabel?: string;
+}
+
+export interface ThreeWayMergeHunk {
+  readonly type: "clean_base" | "clean_ours" | "clean_theirs" | "conflict";
+  readonly baseLines: readonly string[];
+  readonly oursLines: readonly string[];
+  readonly theirsLines: readonly string[];
+}
+
+export interface ThreeWayMergeResult {
+  readonly success: boolean;
+  readonly mergedContent: string;
+  readonly cleanHunksApplied: number;
+  readonly conflictCount: number;
+  readonly conflictChunks: readonly ConflictMarkerChunk[];
+  readonly error: string | null;
+}
+
+export interface LspPosition {
+  readonly line: number;
+  readonly character: number;
+}
+
+export interface LspRange {
+  readonly start: LspPosition;
+  readonly end: LspPosition;
+}
+
+export interface LspTextEdit {
+  readonly range: LspRange;
+  readonly newText: string;
+}
+
+export interface LspWorkspaceEdit {
+  readonly changes: Record<string, readonly LspTextEdit[]>;
+}
+
+export interface LspApplyResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly editsApplied: number;
+  readonly error: string | null;
+}
+
+export interface SyntaxBalanceIssue {
+  readonly type: "unmatched_bracket" | "unclosed_string" | "unclosed_tag";
+  readonly token: string;
+  readonly line: number;
+  readonly column: number;
+  readonly message: string;
+}
+
+export interface SyntaxRepairResult {
+  readonly isValid: boolean;
+  readonly repairedCode: string;
+  readonly issuesFound: readonly SyntaxBalanceIssue[];
+  readonly repairsApplied: readonly string[];
+}
+
+export interface CandidateMatchScore {
+  readonly span: FuzzyMatchSpan;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly jaccardSimilarity: number;
+  readonly levenshteinSimilarity: number;
+  readonly combinedScore: number;
+  readonly candidateSnippet: string;
+  readonly contextLines: readonly string[];
+}
+
+export interface CandidateRankingResult {
+  readonly bestMatch: CandidateMatchScore | null;
+  readonly candidates: readonly CandidateMatchScore[];
+  readonly totalEvaluated: number;
+  readonly searchSnippet: string;
+}

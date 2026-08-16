@@ -10,6 +10,8 @@
  */
 
 import type {
+  CandidateMatchScore,
+  CandidateRankingResult,
   ClosestLineCandidate,
   ConflictMarkerChunk,
   ConflictResolutionResult,
@@ -24,12 +26,23 @@ import type {
   FuzzyStrategyName,
   IndentationHarmonizationResult,
   IndentationStyle,
+  LspApplyResult,
+  LspPosition,
+  LspRange,
+  LspTextEdit,
+  LspWorkspaceEdit,
   MismatchDiagnosis,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
   SearchReplaceBlock,
+  SyntaxBalanceIssue,
   SyntaxBoundarySnapResult,
+  SyntaxRepairResult,
+  ThreeWayMergeConflictResolution,
+  ThreeWayMergeHunk,
+  ThreeWayMergeOptions,
+  ThreeWayMergeResult,
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
@@ -739,6 +752,58 @@ export class DeterministicFuzzyMatcher {
 
     const distance = v0[lenB];
     return Math.max(0.0, 1.0 - distance / maxLen);
+  }
+
+  levenshteinDistance(a: string, b: string): number {
+    if (a === b) return 0;
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const lenA = a.length;
+    const lenB = b.length;
+    let v0 = new Int32Array(lenB + 1);
+    let v1 = new Int32Array(lenB + 1);
+
+    for (let i = 0; i <= lenB; i++) {
+      v0[i] = i;
+    }
+
+    for (let i = 0; i < lenA; i++) {
+      v1[0] = i + 1;
+      const charA = a[i];
+      for (let j = 0; j < lenB; j++) {
+        const cost = charA === b[j] ? 0 : 1;
+        v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
+      }
+      for (let j = 0; j <= lenB; j++) {
+        v0[j] = v1[j];
+      }
+    }
+    return v0[lenB];
+  }
+
+  findMatchSpans(content: string, target: string): FuzzyMatchSpan[] {
+    const strategies = [
+      this.strategyExact.bind(this),
+      this.strategyLineTrimmed.bind(this),
+      this.strategyWhitespaceNormalized.bind(this),
+      this.strategyIndentationFlexible.bind(this),
+      this.strategyEscapeNormalized.bind(this),
+      this.strategyTrimmedBoundary.bind(this),
+      this.strategyCommentTolerant.bind(this),
+      this.strategyTokenNormalized.bind(this),
+      this.strategyEllipsisWildcard.bind(this),
+      this.strategyUnicodeNormalized.bind(this),
+      this.strategyBlockAnchor.bind(this),
+      this.strategyContextAware.bind(this),
+    ];
+    for (let i = 0; i < strategies.length; i++) {
+      const matches = strategies[i](content, target);
+      if (matches.length > 0) {
+        return matches;
+      }
+    }
+    return [];
   }
 
   // ---------------------------------------------------------------------------
@@ -2264,6 +2329,548 @@ export class DeterministicFuzzyMatcher {
       strategiesUsed,
       diffPreview: diff,
       error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Fuzzy 3-Way Merge & Reconciliation Engine
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Performs a 3-way merge between baseContent, oursContent, and theirsContent.
+   */
+  threeWayMerge(
+    baseContent: string,
+    oursContent: string,
+    theirsContent: string,
+    options: ThreeWayMergeOptions = {}
+  ): ThreeWayMergeResult {
+    const nativeEol = this.detectLineEnding(baseContent || oursContent);
+    const baseLines = baseContent.replace(/\r\n/g, "\n").split("\n");
+    const oursLines = oursContent.replace(/\r\n/g, "\n").split("\n");
+    const theirsLines = theirsContent.replace(/\r\n/g, "\n").split("\n");
+
+    const oursLabel = options.oursLabel || "OURS";
+    const theirsLabel = options.theirsLabel || "THEIRS";
+    const baseLabel = options.baseLabel || "BASE";
+    const resolution = options.conflictResolution || "markers";
+
+    // Fast path: if ours equals theirs, return ours
+    if (oursContent === theirsContent) {
+      return {
+        success: true,
+        mergedContent: this.applyLineEnding(oursContent, nativeEol),
+        cleanHunksApplied: 1,
+        conflictCount: 0,
+        conflictChunks: [],
+        error: null,
+      };
+    }
+
+    // Fast path: if ours equals base, return theirs
+    if (oursContent === baseContent) {
+      return {
+        success: true,
+        mergedContent: this.applyLineEnding(theirsContent, nativeEol),
+        cleanHunksApplied: 1,
+        conflictCount: 0,
+        conflictChunks: [],
+        error: null,
+      };
+    }
+
+    // Fast path: if theirs equals base, return ours
+    if (theirsContent === baseContent) {
+      return {
+        success: true,
+        mergedContent: this.applyLineEnding(oursContent, nativeEol),
+        cleanHunksApplied: 1,
+        conflictCount: 0,
+        conflictChunks: [],
+        error: null,
+      };
+    }
+
+    const mergedLines: string[] = [];
+    const conflictChunks: ConflictMarkerChunk[] = [];
+    let cleanHunksApplied = 0;
+    let conflictCount = 0;
+
+    let bIdx = 0;
+    let oIdx = 0;
+    let tIdx = 0;
+
+    const findNextCommon = (bStart: number, oStart: number, tStart: number): { b: number; o: number; t: number } | null => {
+      for (let b = bStart; b < baseLines.length; b++) {
+        const target = baseLines[b];
+        const o = oursLines.indexOf(target, oStart);
+        const t = theirsLines.indexOf(target, tStart);
+        if (o !== -1 && t !== -1) {
+          return { b, o, t };
+        }
+      }
+      return null;
+    };
+
+    while (bIdx < baseLines.length || oIdx < oursLines.length || tIdx < theirsLines.length) {
+      const common = findNextCommon(bIdx, oIdx, tIdx);
+      const bEnd = common ? common.b : baseLines.length;
+      const oEnd = common ? common.o : oursLines.length;
+      const tEnd = common ? common.t : theirsLines.length;
+
+      const bChunk = baseLines.slice(bIdx, bEnd);
+      const oChunk = oursLines.slice(oIdx, oEnd);
+      const tChunk = theirsLines.slice(tIdx, tEnd);
+
+      const oChanged = oChunk.join("\n") !== bChunk.join("\n");
+      const tChanged = tChunk.join("\n") !== bChunk.join("\n");
+
+      if (!oChanged && !tChanged) {
+        mergedLines.push(...bChunk);
+      } else if (oChanged && !tChanged) {
+        mergedLines.push(...oChunk);
+        cleanHunksApplied++;
+      } else if (!oChanged && tChanged) {
+        mergedLines.push(...tChunk);
+        cleanHunksApplied++;
+      } else if (oChunk.join("\n") === tChunk.join("\n")) {
+        mergedLines.push(...oChunk);
+        cleanHunksApplied++;
+      } else {
+        conflictCount++;
+        const startLine = mergedLines.length + 1;
+
+        if (resolution === "ours") {
+          mergedLines.push(...oChunk);
+        } else if (resolution === "theirs") {
+          mergedLines.push(...tChunk);
+        } else if (resolution === "both_ours_first") {
+          mergedLines.push(...oChunk, ...tChunk);
+        } else if (resolution === "both_theirs_first") {
+          mergedLines.push(...tChunk, ...oChunk);
+        } else {
+          mergedLines.push(`<<<<<<< ${oursLabel}`);
+          mergedLines.push(...oChunk);
+          if (bChunk.length > 0) {
+            mergedLines.push(`||||||| ${baseLabel}`);
+            mergedLines.push(...bChunk);
+          }
+          mergedLines.push("=======");
+          mergedLines.push(...tChunk);
+          mergedLines.push(`>>>>>>> ${theirsLabel}`);
+        }
+
+        const endLine = mergedLines.length;
+        conflictChunks.push({
+          startLine,
+          endLine,
+          oursHeader: oursLabel,
+          oursContent: oChunk.join("\n"),
+          baseContent: bChunk.join("\n"),
+          theirsHeader: theirsLabel,
+          theirsContent: tChunk.join("\n"),
+        });
+      }
+
+      if (common) {
+        mergedLines.push(baseLines[common.b]);
+        bIdx = common.b + 1;
+        oIdx = common.o + 1;
+        tIdx = common.t + 1;
+      } else {
+        break;
+      }
+    }
+
+    let finalContent = mergedLines.join("\n");
+    if (this.normalizeLineEndings) {
+      finalContent = this.applyLineEnding(finalContent, nativeEol);
+    }
+
+    return {
+      success: resolution !== "markers" || conflictCount === 0,
+      mergedContent: finalContent,
+      cleanHunksApplied,
+      conflictCount,
+      conflictChunks,
+      error: conflictCount > 0 && resolution === "markers" ? `Encountered ${conflictCount} merge conflict(s).` : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // LSP TextEdit & WorkspaceEdit Interoperability Engine
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Applies an array of LSP-compliant 0-indexed TextEdit objects to content.
+   */
+  applyLspTextEdits(content: string, edits: readonly LspTextEdit[]): LspApplyResult {
+    if (edits.length === 0) {
+      return { success: true, modifiedContent: content, editsApplied: 0, error: null };
+    }
+
+    const nativeEol = this.detectLineEnding(content);
+    const lines = content.replace(/\r\n/g, "\n").split("\n");
+    const lineOffsets: number[] = [0];
+    for (let i = 0; i < lines.length; i++) {
+      lineOffsets.push(lineOffsets[i] + lines[i].length + 1);
+    }
+
+    interface ResolvedEdit {
+      startOffset: number;
+      endOffset: number;
+      newText: string;
+      originalIndex: number;
+    }
+
+    const resolved: ResolvedEdit[] = [];
+    for (let i = 0; i < edits.length; i++) {
+      const edit = edits[i];
+      const startLine = edit.range.start.line;
+      const startChar = edit.range.start.character;
+      const endLine = edit.range.end.line;
+      const endChar = edit.range.end.character;
+
+      if (startLine < 0 || startLine >= lines.length) {
+        return { success: false, modifiedContent: content, editsApplied: 0, error: `Invalid start line ${startLine} in edit #${i + 1}.` };
+      }
+      if (endLine < 0 || endLine >= lines.length) {
+        return { success: false, modifiedContent: content, editsApplied: 0, error: `Invalid end line ${endLine} in edit #${i + 1}.` };
+      }
+
+      const startOffset = Math.min(lineOffsets[startLine] + startChar, content.length);
+      const endOffset = Math.min(lineOffsets[endLine] + endChar, content.length);
+
+      if (startOffset > endOffset) {
+        return { success: false, modifiedContent: content, editsApplied: 0, error: `Start offset (${startOffset}) exceeds end offset (${endOffset}) in edit #${i + 1}.` };
+      }
+
+      resolved.push({ startOffset, endOffset, newText: edit.newText, originalIndex: i });
+    }
+
+    const sortedAsc = [...resolved].sort((a, b) => a.startOffset - b.startOffset);
+    for (let i = 0; i < sortedAsc.length - 1; i++) {
+      if (sortedAsc[i].endOffset > sortedAsc[i + 1].startOffset) {
+        return {
+          success: false,
+          modifiedContent: content,
+          editsApplied: 0,
+          error: `Overlapping LSP edits detected between edit #${sortedAsc[i].originalIndex + 1} and edit #${sortedAsc[i + 1].originalIndex + 1}.`,
+        };
+      }
+    }
+
+    let modified = content;
+    const sortedDesc = [...resolved].sort((a, b) => b.startOffset - a.startOffset);
+    for (const edit of sortedDesc) {
+      modified = modified.slice(0, edit.startOffset) + edit.newText + modified.slice(edit.endOffset);
+    }
+
+    if (this.normalizeLineEndings) {
+      modified = this.applyLineEnding(modified, nativeEol);
+    }
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      editsApplied: edits.length,
+      error: null,
+    };
+  }
+
+  /**
+   * Converts fuzzy replacement hunks into standard 0-indexed LSP TextEdit objects.
+   */
+  fuzzyHunksToLspEdits(content: string, hunks: readonly FuzzyReplacementHunk[]): LspTextEdit[] {
+    const lspEdits: LspTextEdit[] = [];
+    const lines = content.replace(/\r\n/g, "\n").split("\n");
+    const lineOffsets: number[] = [0];
+    for (let i = 0; i < lines.length; i++) {
+      lineOffsets.push(lineOffsets[i] + lines[i].length + 1);
+    }
+
+    const offsetToPosition = (offset: number): LspPosition => {
+      for (let l = lineOffsets.length - 1; l >= 0; l--) {
+        if (offset >= lineOffsets[l]) {
+          return { line: l, character: offset - lineOffsets[l] };
+        }
+      }
+      return { line: 0, character: offset };
+    };
+
+    for (const hunk of hunks) {
+      const matches = this.findMatchSpans(content, hunk.oldString);
+      if (matches.length > 0) {
+        const matchSpan = matches[0];
+        lspEdits.push({
+          range: {
+            start: offsetToPosition(matchSpan[0]),
+            end: offsetToPosition(matchSpan[1]),
+          },
+          newText: hunk.newString,
+        });
+      }
+    }
+
+    return lspEdits;
+  }
+
+  /**
+   * Applies an LSP WorkspaceEdit across multiple files in memory with atomic rollback.
+   */
+  applyLspWorkspaceEdit(
+    fileContents: Record<string, string>,
+    workspaceEdit: LspWorkspaceEdit,
+    options: { dryRun?: boolean } = {}
+  ): MultiFileTransactionResult {
+    const committedFiles: Record<string, string> = {};
+    const fileErrors: Record<string, string> = {};
+    const targetPaths = Object.keys(workspaceEdit.changes);
+
+    for (const filePath of targetPaths) {
+      const currentContent = fileContents[filePath];
+      if (currentContent === undefined) {
+        fileErrors[filePath] = `Target file '${filePath}' not found in workspace file map.`;
+        return {
+          success: false,
+          committedFiles: {},
+          totalFilesTargeted: targetPaths.length,
+          totalFilesModified: 0,
+          rollbackTriggered: true,
+          fileErrors,
+          error: `Transaction rolled back: File '${filePath}' not found.`,
+        };
+      }
+
+      const edits = workspaceEdit.changes[filePath];
+      const res = this.applyLspTextEdits(currentContent, edits);
+      if (!res.success) {
+        fileErrors[filePath] = res.error || "Failed to apply LSP edits";
+        return {
+          success: false,
+          committedFiles: {},
+          totalFilesTargeted: targetPaths.length,
+          totalFilesModified: 0,
+          rollbackTriggered: true,
+          fileErrors,
+          error: `Transaction rolled back: Failed on '${filePath}' (${res.error}).`,
+        };
+      }
+
+      committedFiles[filePath] = res.modifiedContent;
+    }
+
+    if (options.dryRun) {
+      return {
+        success: true,
+        committedFiles: {},
+        totalFilesTargeted: targetPaths.length,
+        totalFilesModified: targetPaths.length,
+        rollbackTriggered: false,
+        fileErrors: {},
+        error: null,
+      };
+    }
+
+    return {
+      success: true,
+      committedFiles,
+      totalFilesTargeted: targetPaths.length,
+      totalFilesModified: targetPaths.length,
+      rollbackTriggered: false,
+      fileErrors: {},
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Structural Syntax & Balanced Bracket / Tag Auto-Healer
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Validates structural syntax of a code snippet and auto-repairs unbalanced brackets or unclosed strings.
+   */
+  validateAndRepairCodeBlock(codeSnippet: string): SyntaxRepairResult {
+    const issues: SyntaxBalanceIssue[] = [];
+    const repairs: string[] = [];
+
+    const bracketStack: Array<{ char: string; line: number; col: number }> = [];
+    const bracketPairs: Record<string, string> = { "(": ")", "{": "}", "[": "]" };
+    const closeToOpen: Record<string, string> = { ")": "(", "}": "{", "]": "[" };
+
+    let inString: "'" | '"' | "`" | null = null;
+    let stringStart = { line: 1, col: 1 };
+    let escaped = false;
+
+    let line = 1;
+    let col = 0;
+
+    for (let i = 0; i < codeSnippet.length; i++) {
+      const char = codeSnippet[i];
+      col++;
+
+      if (char === "\n") {
+        if (inString === "'" || inString === '"') {
+          issues.push({
+            type: "unclosed_string",
+            token: inString,
+            line: stringStart.line,
+            column: stringStart.col,
+            message: `Unclosed string literal ${inString} before newline.`,
+          });
+          inString = null;
+        }
+        line++;
+        col = 0;
+        escaped = false;
+        continue;
+      }
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+
+      if (inString) {
+        if (char === inString) {
+          inString = null;
+        }
+        continue;
+      }
+
+      if (char === "'" || char === '"' || char === "`") {
+        inString = char;
+        stringStart = { line, col };
+        continue;
+      }
+
+      if (bracketPairs[char]) {
+        bracketStack.push({ char, line, col });
+      } else if (closeToOpen[char]) {
+        const top = bracketStack[bracketStack.length - 1];
+        if (top && top.char === closeToOpen[char]) {
+          bracketStack.pop();
+        } else {
+          issues.push({
+            type: "unmatched_bracket",
+            token: char,
+            line,
+            column: col,
+            message: `Unmatched closing bracket '${char}'.`,
+          });
+        }
+      }
+    }
+
+    let repaired = codeSnippet;
+
+    if (inString) {
+      issues.push({
+        type: "unclosed_string",
+        token: inString,
+        line: stringStart.line,
+        column: stringStart.col,
+        message: `Unclosed string literal ${inString} at end of snippet.`,
+      });
+      repaired += inString;
+      repairs.push(`Appended closing quote ${inString}`);
+    }
+
+    while (bracketStack.length > 0) {
+      const top = bracketStack.pop()!;
+      const closing = bracketPairs[top.char];
+      issues.push({
+        type: "unmatched_bracket",
+        token: top.char,
+        line: top.line,
+        column: top.col,
+        message: `Unclosed opening bracket '${top.char}'.`,
+      });
+      repaired += closing;
+      repairs.push(`Appended closing bracket '${closing}'`);
+    }
+
+    return {
+      isValid: issues.length === 0,
+      repairedCode: repaired,
+      issuesFound: issues,
+      repairsApplied: repairs,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Computes semantic Jaccard and Levenshtein similarity to rank candidate match spans for a search snippet.
+   */
+  rankCandidateMatches(content: string, searchSnippet: string, limit: number = 5): CandidateRankingResult {
+    if (!content || !searchSnippet) {
+      return { bestMatch: null, candidates: [], totalEvaluated: 0, searchSnippet };
+    }
+
+    const searchTokens = new Set(searchSnippet.trim().split(/\s+/).filter(Boolean));
+    const searchLines = searchSnippet.split(/\r?\n/).length;
+    const contentLines = content.split(/\r?\n/);
+
+    const candidates: CandidateMatchScore[] = [];
+    const windowSize = Math.max(1, searchLines);
+
+    for (let startLine = 0; startLine <= contentLines.length - windowSize; startLine++) {
+      const endLine = startLine + windowSize;
+      const candidateLines = contentLines.slice(startLine, endLine);
+      const candidateSnippet = candidateLines.join("\n");
+
+      const candidateTokens = new Set(candidateSnippet.trim().split(/\s+/).filter(Boolean));
+
+      let intersection = 0;
+      for (const token of searchTokens) {
+        if (candidateTokens.has(token)) intersection++;
+      }
+      const union = searchTokens.size + candidateTokens.size - intersection;
+      const jaccard = union > 0 ? intersection / union : 0;
+
+      const levDist = this.levenshteinDistance(searchSnippet.trim(), candidateSnippet.trim());
+      const maxLen = Math.max(searchSnippet.trim().length, candidateSnippet.trim().length, 1);
+      const levSim = Math.max(0, 1 - levDist / maxLen);
+
+      const combinedScore = 0.6 * jaccard + 0.4 * levSim;
+
+      if (combinedScore > 0.1) {
+        const startOffset = contentLines.slice(0, startLine).join("\n").length + (startLine > 0 ? 1 : 0);
+        const endOffset = startOffset + candidateSnippet.length;
+
+        const contextStart = Math.max(0, startLine - 2);
+        const contextEnd = Math.min(contentLines.length, endLine + 2);
+        const contextLines = contentLines.slice(contextStart, contextEnd);
+
+        candidates.push({
+          span: [startOffset, endOffset],
+          startLine: startLine + 1,
+          endLine,
+          jaccardSimilarity: Number(jaccard.toFixed(4)),
+          levenshteinSimilarity: Number(levSim.toFixed(4)),
+          combinedScore: Number(combinedScore.toFixed(4)),
+          candidateSnippet,
+          contextLines,
+        });
+      }
+    }
+
+    candidates.sort((a, b) => b.combinedScore - a.combinedScore);
+    const topCandidates = candidates.slice(0, limit);
+
+    return {
+      bestMatch: topCandidates[0] || null,
+      candidates: topCandidates,
+      totalEvaluated: candidates.length,
+      searchSnippet,
     };
   }
 }

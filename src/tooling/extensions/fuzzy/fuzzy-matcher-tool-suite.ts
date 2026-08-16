@@ -9,7 +9,9 @@ import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.j
 import type {
   ConflictResolutionStrategy,
   FuzzyStrategyName,
+  LspTextEdit,
   MultiFileTransactionHunk,
+  ThreeWayMergeConflictResolution,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { FuzzyMatcherSupervisor } from "../../../agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
 
@@ -663,6 +665,147 @@ export class FuzzyMatcherToolSuite {
             rollbackTriggered: result.rollbackTriggered,
             fileErrors: result.fileErrors,
             error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_three_way_merge",
+        description: "Performs a 3-way merge between baseContent, oursContent, and theirsContent, automatically applying clean non-conflicting hunks and handling conflicts.",
+        parameters: {
+          baseContent: {
+            type: "string",
+            description: "The common ancestor base file content",
+            required: true,
+          },
+          oursContent: {
+            type: "string",
+            description: "The local / current version of the file content",
+            required: true,
+          },
+          theirsContent: {
+            type: "string",
+            description: "The incoming / edited version of the file content",
+            required: true,
+          },
+          conflictResolution: {
+            type: "string",
+            description: "Resolution mode: 'markers' (default, emits git conflict markers), 'ours', 'theirs', 'both_ours_first', 'both_theirs_first'",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.baseContent !== "string" || typeof args.oursContent !== "string" || typeof args.theirsContent !== "string") {
+            return { success: false, error: "Missing required string parameters ('baseContent', 'oursContent', 'theirsContent')." };
+          }
+          const resolution = (typeof args.conflictResolution === "string" ? args.conflictResolution : "markers") as ThreeWayMergeConflictResolution;
+          const result = this.supervisor.threeWayMerge(args.baseContent, args.oursContent, args.theirsContent, { conflictResolution: resolution });
+          return {
+            success: result.success,
+            mergedContent: result.mergedContent,
+            cleanHunksApplied: result.cleanHunksApplied,
+            conflictCount: result.conflictCount,
+            conflictChunks: result.conflictChunks,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_apply_lsp_edits",
+        description: "Applies an array of LSP-compliant 0-indexed TextEdit objects ({ range: { start: { line, character }, end: { line, character } }, newText: string }) to content.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content to patch",
+            required: true,
+          },
+          edits: {
+            type: "string",
+            description: "JSON-encoded array or list of LSP TextEdit objects",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return { success: false, error: "Missing required parameter 'content' (string)." };
+          }
+          let editList: LspTextEdit[];
+          if (typeof args.edits === "string") {
+            try {
+              editList = JSON.parse(args.edits);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for edits parameter: ${msg}` };
+            }
+          } else if (Array.isArray(args.edits)) {
+            editList = args.edits as LspTextEdit[];
+          } else {
+            return { success: false, error: "Missing required parameter 'edits' (string or array)." };
+          }
+
+          const result = this.supervisor.applyLspTextEdits(args.content, editList);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            editsApplied: result.editsApplied,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_repair_syntax_block",
+        description: "Inspects code snippet syntax for unclosed strings, unbalanced brackets ({}, (), []), and automatically auto-heals them.",
+        parameters: {
+          codeSnippet: {
+            type: "string",
+            description: "The code snippet to validate and repair",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.codeSnippet !== "string") {
+            return { success: false, error: "Missing required parameter 'codeSnippet' (string)." };
+          }
+          const result = this.supervisor.validateAndRepairCodeBlock(args.codeSnippet);
+          return {
+            success: true,
+            isValid: result.isValid,
+            repairedCode: result.repairedCode,
+            issuesFound: result.issuesFound,
+            repairsApplied: result.repairsApplied,
+          };
+        },
+      },
+      {
+        name: "fuzzy_rank_candidate_matches",
+        description: "Ranks candidate match windows within content using combined token Jaccard similarity and character Levenshtein distance.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content to search within",
+            required: true,
+          },
+          searchSnippet: {
+            type: "string",
+            description: "The search snippet to rank candidates for",
+            required: true,
+          },
+          limit: {
+            type: "number",
+            description: "Maximum number of candidate matches to return (default: 5)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.searchSnippet !== "string") {
+            return { success: false, error: "Missing required string parameters ('content', 'searchSnippet')." };
+          }
+          const limit = typeof args.limit === "number" ? args.limit : 5;
+          const result = this.supervisor.rankCandidateMatches(args.content, args.searchSnippet, limit);
+          return {
+            success: true,
+            bestMatch: result.bestMatch,
+            candidates: result.candidates,
+            totalEvaluated: result.totalEvaluated,
           };
         },
       },

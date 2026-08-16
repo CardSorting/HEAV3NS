@@ -33,6 +33,10 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
      10. `unicode_normalized`: Unicode typography normalization matrix with exact coordinate mapping
      11. `block_anchor`: First + last line anchored with Levenshtein similarity for interior lines
      12. `context_aware`: Sliding window similarity with configurable threshold ($\ge 0.5$)
+    - **Fuzzy 3-Way Merge & Reconciliation Engine (`threeWayMerge`)**: Line-level 3-way merging between base, ours, and theirs with automated non-conflicting hunk application and customizable conflict handling (`"markers"`, `"ours"`, `"theirs"`, `"both_ours_first"`, `"both_theirs_first"`).
+    - **LSP `TextEdit` & `WorkspaceEdit` Standard Converter & Applicator (`applyLspTextEdits`, `fuzzyHunksToLspEdits`, `applyLspWorkspaceEdit`)**: Native conversion between fuzzy hunks, unified diffs, and LSP-standard 0-indexed `Range`/`TextEdit`/`WorkspaceEdit` models with coordinate mapping and atomic workspace rollback.
+    - **Structural Syntax & Balanced Bracket / Tag Auto-Healer (`validateAndRepairCodeBlock`)**: Detection and auto-repair of unmatched brackets (`{}`, `()`, `[]`), unclosed strings/literals (`` ` ``, `'`, `"`), and unclosed JSX/XML tags in replacement snippets.
+    - **Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer (`rankCandidateMatches`)**: Candidate ranking engine for ambiguous match spans using token Jaccard similarity, Levenshtein distance, and anchor line alignment.
     - **Git Conflict Marker Parser & Deterministic Resolver (`parseConflictMarkers` & `resolveConflictMarkers`)**: Parses 2-way and 3-way conflict markers (`<<<<<<< OURS ... ||||||| BASE ... ======= ... >>>>>>> THEIRS`) and resolves them deterministically (`take_ours`, `take_theirs`, `take_both_ours_first`, `take_both_theirs_first`, or custom callback) with line-ending preservation.
     - **Indentation Style Detection & Proportional Harmonizer (`detectIndentationStyle` & `harmonizeIndentation`)**: Computes leading whitespace histograms to detect spaces (2, 4, 8) vs tabs and automatically adapts snippet indentation to match the target file style.
     - **Syntax-Aware Structural Boundary Snapping (`snapToSyntaxBoundaries`)**: Snaps character coordinates to whole word tokens and balanced syntax blocks to prevent syntax truncation.
@@ -63,10 +67,10 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
    - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`FuzzyMatcherSupervisor` ([fuzzy-matcher-supervisor.ts](../../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.ts))**:
-   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, conflict marker resolution, indentation harmonization, syntax boundary snapping, multi-file transactions, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
+   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, 3-way merging, LSP edits, syntax auto-repair, candidate ranking, conflict marker resolution, indentation harmonization, syntax boundary snapping, multi-file transactions, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
 
 5. **`FuzzyMatcherToolSuite` ([fuzzy-matcher-tool-suite.ts](../../src/tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.ts))**:
-   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_apply_search_replace_blocks`, `fuzzy_find_and_replace_at_line`, `fuzzy_resolve_conflict_markers`, `fuzzy_harmonize_indentation`, `fuzzy_apply_multi_file_transaction`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
+   - Exposes 18 tools: `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_apply_search_replace_blocks`, `fuzzy_find_and_replace_at_line`, `fuzzy_resolve_conflict_markers`, `fuzzy_harmonize_indentation`, `fuzzy_apply_multi_file_transaction`, `fuzzy_three_way_merge`, `fuzzy_apply_lsp_edits`, `fuzzy_repair_syntax_block`, `fuzzy_rank_candidate_matches`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
 
 6. **Grand Monolith Graduation (382 Components in OPTIMAL Cohesion)**:
    - Verified across `MonolithFactory` and `GrandMonolithSynthesizer`.
