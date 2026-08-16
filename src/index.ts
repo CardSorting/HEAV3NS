@@ -390,6 +390,13 @@ import { FuzzySnapshotManager } from "./sessions/extensions/fuzzy/fuzzy-snapshot
 import { FuzzyMatcherSupervisor } from "./agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
 import { FuzzyMatcherToolSuite } from "./tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.js";
 
+import { DeterministicTitleGenerator } from "./agents/extensions/title_insights/deterministic-title-generator.js";
+import { ConversationInsightsEngine } from "./agents/extensions/title_insights/conversation-insights-engine.js";
+import { TitleInsightsSupervisor } from "./agents/extensions/title_insights/title-insights-supervisor.js";
+import { BroccoliTitleInsightsSubstrate } from "./sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
+import { TitleInsightsSnapshotManager } from "./sessions/extensions/title_insights/title-insights-snapshot-manager.js";
+import { TitleInsightsToolSuite } from "./tooling/extensions/title_insights/title-insights-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1593,6 +1600,38 @@ export type {
   FuzzyWorkspaceSnapshot,
 } from "./core/contracts/fuzzy-matcher.contracts.js";
 
+export { DeterministicTitleGenerator } from "./agents/extensions/title_insights/deterministic-title-generator.js";
+export { ConversationInsightsEngine } from "./agents/extensions/title_insights/conversation-insights-engine.js";
+export { TitleInsightsSupervisor } from "./agents/extensions/title_insights/title-insights-supervisor.js";
+export { BroccoliTitleInsightsSubstrate } from "./sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
+export { TitleInsightsSnapshotManager } from "./sessions/extensions/title_insights/title-insights-snapshot-manager.js";
+export { TitleInsightsToolSuite } from "./tooling/extensions/title_insights/title-insights-tool-suite.js";
+export {
+  CONTROL_WRAPPERS,
+  MACHINE_PREFIXES,
+  MAX_DERIVED_TITLE_CHARS,
+  MAX_TITLE_INPUT_CHARS,
+  MAX_MODEL_TITLE_CHARS,
+} from "./core/contracts/title-insights.contracts.js";
+export type {
+  SessionTitleProvenance,
+  SessionTitleRecord,
+  TitleGenerationOptions,
+  TitleGenerationResult,
+  InsightDateRange,
+  SessionTokenEconomics,
+  ToolUsageMetric,
+  SkillUsageMetric,
+  ModelUsageMetric,
+  PlatformUsageMetric,
+  ActivityTrendMetric,
+  TopSessionMetric,
+  SessionInsightsOverview,
+  ConversationInsightsReport,
+  SessionActivityEvent,
+  TitleInsightsWorkspaceSnapshot,
+} from "./core/contracts/title-insights.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -1928,6 +1967,12 @@ export class LumiMonolith implements IAgentEngine {
   readonly fuzzySnapshotManager: FuzzySnapshotManager;
   readonly fuzzyMatcherSupervisor: FuzzyMatcherSupervisor;
   readonly fuzzyMatcherToolSuite: FuzzyMatcherToolSuite;
+  readonly deterministicTitleGenerator: DeterministicTitleGenerator;
+  readonly conversationInsightsEngine: ConversationInsightsEngine;
+  readonly titleInsightsSupervisor: TitleInsightsSupervisor;
+  readonly broccoliTitleInsightsSubstrate: BroccoliTitleInsightsSubstrate;
+  readonly titleInsightsSnapshotManager: TitleInsightsSnapshotManager;
+  readonly titleInsightsToolSuite: TitleInsightsToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2254,6 +2299,12 @@ export class LumiMonolith implements IAgentEngine {
     this.fuzzySnapshotManager = components.fuzzySnapshotManager;
     this.fuzzyMatcherSupervisor = components.fuzzyMatcherSupervisor;
     this.fuzzyMatcherToolSuite = components.fuzzyMatcherToolSuite;
+    this.deterministicTitleGenerator = components.deterministicTitleGenerator;
+    this.conversationInsightsEngine = components.conversationInsightsEngine;
+    this.titleInsightsSupervisor = components.titleInsightsSupervisor;
+    this.broccoliTitleInsightsSubstrate = components.broccoliTitleInsightsSubstrate;
+    this.titleInsightsSnapshotManager = components.titleInsightsSnapshotManager;
+    this.titleInsightsToolSuite = components.titleInsightsToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

@@ -429,6 +429,13 @@ import { FuzzyMatcherSupervisor } from "../agents/extensions/fuzzy/fuzzy-matcher
 import { FuzzyMatcherToolSuite } from "../tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.js";
 import type { FuzzyMatcherOptions } from "../core/contracts/fuzzy-matcher.contracts.js";
 
+import { DeterministicTitleGenerator } from "../agents/extensions/title_insights/deterministic-title-generator.js";
+import { ConversationInsightsEngine } from "../agents/extensions/title_insights/conversation-insights-engine.js";
+import { TitleInsightsSupervisor } from "../agents/extensions/title_insights/title-insights-supervisor.js";
+import { BroccoliTitleInsightsSubstrate } from "../sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
+import { TitleInsightsSnapshotManager } from "../sessions/extensions/title_insights/title-insights-snapshot-manager.js";
+import { TitleInsightsToolSuite } from "../tooling/extensions/title_insights/title-insights-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -823,6 +830,12 @@ export class MonolithFactory {
     fuzzySnapshotManager: FuzzySnapshotManager;
     fuzzyMatcherSupervisor: FuzzyMatcherSupervisor;
     fuzzyMatcherToolSuite: FuzzyMatcherToolSuite;
+    deterministicTitleGenerator: DeterministicTitleGenerator;
+    conversationInsightsEngine: ConversationInsightsEngine;
+    titleInsightsSupervisor: TitleInsightsSupervisor;
+    broccoliTitleInsightsSubstrate: BroccoliTitleInsightsSubstrate;
+    titleInsightsSnapshotManager: TitleInsightsSnapshotManager;
+    titleInsightsToolSuite: TitleInsightsToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1448,6 +1461,17 @@ export class MonolithFactory {
     );
     const fuzzyMatcherToolSuite = new FuzzyMatcherToolSuite(fuzzyMatcherSupervisor);
 
+    const deterministicTitleGenerator = new DeterministicTitleGenerator();
+    const broccoliTitleInsightsSubstrate = new BroccoliTitleInsightsSubstrate();
+    const titleInsightsSnapshotManager = new TitleInsightsSnapshotManager(broccoliTitleInsightsSubstrate);
+    const conversationInsightsEngine = new ConversationInsightsEngine(broccoliTitleInsightsSubstrate);
+    const titleInsightsSupervisor = new TitleInsightsSupervisor(
+      broccoliTitleInsightsSubstrate,
+      deterministicTitleGenerator,
+      conversationInsightsEngine
+    );
+    const titleInsightsToolSuite = new TitleInsightsToolSuite(titleInsightsSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1506,7 +1530,8 @@ export class MonolithFactory {
       terminalSkinToolSuite,
       auxiliaryRouterToolSuite,
       reasoningToolSuite,
-      fuzzyMatcherToolSuite
+      fuzzyMatcherToolSuite,
+      titleInsightsToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -1914,6 +1939,12 @@ export class MonolithFactory {
       fuzzySnapshotManager,
       fuzzyMatcherSupervisor,
       fuzzyMatcherToolSuite,
+      deterministicTitleGenerator,
+      conversationInsightsEngine,
+      titleInsightsSupervisor,
+      broccoliTitleInsightsSubstrate,
+      titleInsightsSnapshotManager,
+      titleInsightsToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

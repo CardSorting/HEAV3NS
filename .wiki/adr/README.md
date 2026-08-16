@@ -92,6 +92,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-082](ADR-082-structured-agent-activity-streaming.md) | Structured Agent Activity Streaming and Persistent Terminal Timeline | Accepted | 2026-08-12 | Agent Execution & Terminal UX |
 | [ADR-083](ADR-083-token-aware-multi-turn-context-lifecycle.md) | Token-Aware Multi-Turn Context Lifecycle | Accepted | 2026-08-12 | Context Engineering |
 | [ADR-084](ADR-084-attempt-completion-gate-strategy.md) | Attempt Completion Gate Strategy & Autonomous Turn Progression | Accepted | 2026-08-13 | Quality Engineering & Autonomous Control |
+| [ADR-085](ADR-085-deterministic-session-titling-provenance-and-conversation-insights.md) | Two-Stage Epistemic Session Title Generation, Strict Provenance Hierarchy (`user > llm > derived`) & Conversation Insights Subsystem | Accepted | 2026-08-16 | Session Intelligence & Analytics (Target #42 / Phase 109) |
 
 ## Domain Grouping
 
@@ -106,6 +107,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-082](ADR-082-structured-agent-activity-streaming.md)**: Provider-independent progress lifecycle, Codex SDK event adaptation, persistent terminal activity timeline, cancellation, and safe observability boundaries.
 - **[ADR-083](ADR-083-token-aware-multi-turn-context-lifecycle.md)**: Token-aware active context projections, durable transcripts, versioned compaction envelopes, and stateful provider rehydration.
 - **[ADR-084](ADR-084-attempt-completion-gate-strategy.md)**: Zenith-tier attempt completion gate strategy, differential regression detection, cognitive remediation directives, anti-oscillation guards, and circuit breaker governance.
+- **[ADR-085](ADR-085-deterministic-session-titling-provenance-and-conversation-insights.md)**: Two-stage epistemic session title generation, strict provenance hierarchy (`user > llm > derived`), control-wrapper stripping, and multi-dimensional conversation insights analytics.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

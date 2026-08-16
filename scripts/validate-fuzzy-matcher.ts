@@ -260,9 +260,9 @@ async function runValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 8: Model Tool Suite Execution & Monolith 382-Component Synthesis
+    // Suite 8: Model Tool Suite Execution & Monolith 388-Component Synthesis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/52] Model Tool Suite Execution (48 Tools) & Monolith 382-Component Synthesis...");
+    console.log("[Suite 8/52] Model Tool Suite Execution (48 Tools) & Monolith 388-Component Synthesis...");
     const toolSuite = new FuzzyMatcherToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
@@ -391,8 +391,8 @@ async function runValidationSuite() {
       throw new Error(`Composition status is ${verification.cohesionStatus}, expected OPTIMAL`);
     }
 
-    if (verification.componentCount !== 382 || verification.requiredComponentCount !== 382) {
-      throw new Error(`Expected exactly 382 components, got ${verification.componentCount}`);
+    if (verification.componentCount !== 388 || verification.requiredComponentCount !== 388) {
+      throw new Error(`Expected exactly 388 components, got ${verification.componentCount}`);
     }
     console.log(`  ✓ Grand Monolith successfully verified with ${verification.componentCount}/${verification.requiredComponentCount} components in OPTIMAL cohesion`);
     passedSuites++;
