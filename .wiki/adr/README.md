@@ -153,6 +153,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-108](ADR-108-dollar-denominated-billing-usage-and-topup-rollover.md)**: Dollar-denominated billing usage, top-up balance rollover, and low-balance alerting subsystem.
 - **[ADR-109](ADR-109-async-context-propagation-and-fail-closed-approval.md)**: Async context propagation, security callback inheritance, and fail-closed approval lifecycle subsystem.
 - **[ADR-110](ADR-110-toolchain-environment-diagnostic-prober.md)**: Toolchain environment diagnostic prober, prompt hint generator, and non-blocking substrate subsystem.
+- **[ADR-111](ADR-111-deterministic-skill-tree-linter.md)**: Deterministic skill tree linter, frontmatter conventions verifier, and anti-scaffolding guard subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

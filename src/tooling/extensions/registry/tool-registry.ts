@@ -81,6 +81,7 @@ import type { TurnRetryToolSuite } from "../turn_retry/turn-retry-tool-suite.js"
 import type { BillingUsageToolSuite } from "../billing_usage/billing-usage-tool-suite.js";
 import type { ThreadContextToolSuite } from "../thread_context/thread-context-tool-suite.js";
 import type { EnvProbeToolSuite } from "../env_probe/env-probe-tool-suite.js";
+import type { SkillLinterToolSuite } from "../skill_linter/skill-linter-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -153,6 +154,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly billingUsageToolSuite?: BillingUsageToolSuite;
   readonly threadContextToolSuite?: ThreadContextToolSuite;
   readonly envProbeToolSuite?: EnvProbeToolSuite;
+  readonly skillLinterToolSuite?: SkillLinterToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -233,7 +235,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     turnRetryToolSuite?: TurnRetryToolSuite,
     billingUsageToolSuite?: BillingUsageToolSuite,
     threadContextToolSuite?: ThreadContextToolSuite,
-    envProbeToolSuite?: EnvProbeToolSuite
+    envProbeToolSuite?: EnvProbeToolSuite,
+    skillLinterToolSuite?: SkillLinterToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -306,6 +309,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.billingUsageToolSuite = billingUsageToolSuite;
     this.threadContextToolSuite = threadContextToolSuite;
     this.envProbeToolSuite = envProbeToolSuite;
+    this.skillLinterToolSuite = skillLinterToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -843,6 +847,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.envProbeToolSuite) {
       for (const tool of this.envProbeToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.skillLinterToolSuite) {
+      for (const tool of this.skillLinterToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

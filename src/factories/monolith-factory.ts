@@ -587,6 +587,12 @@ import { BroccoliEnvProbeSubstrate } from "../sessions/extensions/env_probe/broc
 import { EnvProbeSnapshotManager } from "../sessions/extensions/env_probe/env-probe-snapshot-manager.js";
 import { EnvProbeToolSuite } from "../tooling/extensions/env_probe/env-probe-tool-suite.js";
 
+import { DeterministicSkillLinterEngine } from "../agents/extensions/skill_linter/deterministic-skill-linter-engine.js";
+import { SkillLinterSupervisor } from "../agents/extensions/skill_linter/skill-linter-supervisor.js";
+import { BroccoliSkillLinterSubstrate } from "../sessions/extensions/skill_linter/broccoli-skill-linter-substrate.js";
+import { SkillLinterSnapshotManager } from "../sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
+import { SkillLinterToolSuite } from "../tooling/extensions/skill_linter/skill-linter-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1113,6 +1119,11 @@ export class MonolithFactory {
     broccoliEnvProbeSubstrate: BroccoliEnvProbeSubstrate;
     envProbeSnapshotManager: EnvProbeSnapshotManager;
     envProbeToolSuite: EnvProbeToolSuite;
+    deterministicSkillLinterEngine: DeterministicSkillLinterEngine;
+    skillLinterSupervisor: SkillLinterSupervisor;
+    broccoliSkillLinterSubstrate: BroccoliSkillLinterSubstrate;
+    skillLinterSnapshotManager: SkillLinterSnapshotManager;
+    skillLinterToolSuite: SkillLinterToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1977,6 +1988,15 @@ export class MonolithFactory {
     );
     const envProbeToolSuite = new EnvProbeToolSuite(envProbeSupervisor);
 
+    const deterministicSkillLinterEngine = new DeterministicSkillLinterEngine();
+    const broccoliSkillLinterSubstrate = new BroccoliSkillLinterSubstrate();
+    const skillLinterSnapshotManager = new SkillLinterSnapshotManager(broccoliSkillLinterSubstrate);
+    const skillLinterSupervisor = new SkillLinterSupervisor(
+      broccoliSkillLinterSubstrate,
+      deterministicSkillLinterEngine
+    );
+    const skillLinterToolSuite = new SkillLinterToolSuite(skillLinterSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2061,7 +2081,8 @@ export class MonolithFactory {
       turnRetryToolSuite,
       billingUsageToolSuite,
       threadContextToolSuite,
-      envProbeToolSuite
+      envProbeToolSuite,
+      skillLinterToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2601,6 +2622,11 @@ export class MonolithFactory {
       broccoliEnvProbeSubstrate,
       envProbeSnapshotManager,
       envProbeToolSuite,
+      deterministicSkillLinterEngine,
+      skillLinterSupervisor,
+      broccoliSkillLinterSubstrate,
+      skillLinterSnapshotManager,
+      skillLinterToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

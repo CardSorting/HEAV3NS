@@ -548,6 +548,12 @@ import { BroccoliEnvProbeSubstrate } from "./sessions/extensions/env_probe/brocc
 import { EnvProbeSnapshotManager } from "./sessions/extensions/env_probe/env-probe-snapshot-manager.js";
 import { EnvProbeToolSuite } from "./tooling/extensions/env_probe/env-probe-tool-suite.js";
 
+import { DeterministicSkillLinterEngine } from "./agents/extensions/skill_linter/deterministic-skill-linter-engine.js";
+import { SkillLinterSupervisor } from "./agents/extensions/skill_linter/skill-linter-supervisor.js";
+import { BroccoliSkillLinterSubstrate } from "./sessions/extensions/skill_linter/broccoli-skill-linter-substrate.js";
+import { SkillLinterSnapshotManager } from "./sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
+import { SkillLinterToolSuite } from "./tooling/extensions/skill_linter/skill-linter-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2239,6 +2245,27 @@ export {
   DEFAULT_ENV_PROBE_CONFIG,
 } from "./core/contracts/env-probe.contracts.js";
 
+export { DeterministicSkillLinterEngine } from "./agents/extensions/skill_linter/deterministic-skill-linter-engine.js";
+export { SkillLinterSupervisor } from "./agents/extensions/skill_linter/skill-linter-supervisor.js";
+export { BroccoliSkillLinterSubstrate } from "./sessions/extensions/skill_linter/broccoli-skill-linter-substrate.js";
+export { SkillLinterSnapshotManager } from "./sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
+export { SkillLinterToolSuite } from "./tooling/extensions/skill_linter/skill-linter-tool-suite.js";
+export type {
+  SkillLintSeverity,
+  SkillLintRuleCode,
+  SkillLintFinding,
+  SkillLintReport,
+  SkillLinterConfig,
+  SkillLinterMetrics,
+  SkillLinterWorkspaceSnapshot,
+} from "./core/contracts/skill-linter.contracts.js";
+export {
+  DEFAULT_SKILL_LINTER_CONFIG,
+  SHELL_UTIL_TO_TOOL_MAP,
+  MARKETING_BUZZWORDS,
+  FORBIDDEN_SCAFFOLDING_FILES,
+} from "./core/contracts/skill-linter.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2706,6 +2733,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliEnvProbeSubstrate: BroccoliEnvProbeSubstrate;
   readonly envProbeSnapshotManager: EnvProbeSnapshotManager;
   readonly envProbeToolSuite: EnvProbeToolSuite;
+  readonly deterministicSkillLinterEngine: DeterministicSkillLinterEngine;
+  readonly skillLinterSupervisor: SkillLinterSupervisor;
+  readonly broccoliSkillLinterSubstrate: BroccoliSkillLinterSubstrate;
+  readonly skillLinterSnapshotManager: SkillLinterSnapshotManager;
+  readonly skillLinterToolSuite: SkillLinterToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3164,6 +3196,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliEnvProbeSubstrate = components.broccoliEnvProbeSubstrate;
     this.envProbeSnapshotManager = components.envProbeSnapshotManager;
     this.envProbeToolSuite = components.envProbeToolSuite;
+    this.deterministicSkillLinterEngine = components.deterministicSkillLinterEngine;
+    this.skillLinterSupervisor = components.skillLinterSupervisor;
+    this.broccoliSkillLinterSubstrate = components.broccoliSkillLinterSubstrate;
+    this.skillLinterSnapshotManager = components.skillLinterSnapshotManager;
+    this.skillLinterToolSuite = components.skillLinterToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
