@@ -521,6 +521,12 @@ import { BroccoliWorktreeSubstrate } from "../sessions/extensions/worktree/brocc
 import { WorktreeSnapshotManager } from "../sessions/extensions/worktree/worktree-snapshot-manager.js";
 import { WorktreeToolSuite } from "../tooling/extensions/worktree/worktree-tool-suite.js";
 
+import { DeterministicSpeechTranscriber } from "../agents/extensions/transcription/deterministic-speech-transcriber.js";
+import { TranscriptionSupervisor } from "../agents/extensions/transcription/transcription-supervisor.js";
+import { BroccoliTranscriptionSubstrate } from "../sessions/extensions/transcription/broccoli-transcription-substrate.js";
+import { TranscriptionSnapshotManager } from "../sessions/extensions/transcription/transcription-snapshot-manager.js";
+import { TranscriptionToolSuite } from "../tooling/extensions/transcription/transcription-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -992,6 +998,11 @@ export class MonolithFactory {
     broccoliWorktreeSubstrate: BroccoliWorktreeSubstrate;
     worktreeSnapshotManager: WorktreeSnapshotManager;
     worktreeToolSuite: WorktreeToolSuite;
+    deterministicSpeechTranscriber: DeterministicSpeechTranscriber;
+    transcriptionSupervisor: TranscriptionSupervisor;
+    broccoliTranscriptionSubstrate: BroccoliTranscriptionSubstrate;
+    transcriptionSnapshotManager: TranscriptionSnapshotManager;
+    transcriptionToolSuite: TranscriptionToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1756,6 +1767,15 @@ export class MonolithFactory {
     );
     const worktreeToolSuite = new WorktreeToolSuite(worktreeSupervisor);
 
+    const deterministicSpeechTranscriber = new DeterministicSpeechTranscriber();
+    const broccoliTranscriptionSubstrate = new BroccoliTranscriptionSubstrate();
+    const transcriptionSnapshotManager = new TranscriptionSnapshotManager(broccoliTranscriptionSubstrate);
+    const transcriptionSupervisor = new TranscriptionSupervisor(
+      broccoliTranscriptionSubstrate,
+      deterministicSpeechTranscriber
+    );
+    const transcriptionToolSuite = new TranscriptionToolSuite(transcriptionSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1829,7 +1849,8 @@ export class MonolithFactory {
       websitePolicyToolSuite,
       wakeWordToolSuite,
       mediaSourceToolSuite,
-      worktreeToolSuite
+      worktreeToolSuite,
+      transcriptionToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2314,6 +2335,11 @@ export class MonolithFactory {
       broccoliWorktreeSubstrate,
       worktreeSnapshotManager,
       worktreeToolSuite,
+      deterministicSpeechTranscriber,
+      transcriptionSupervisor,
+      broccoliTranscriptionSubstrate,
+      transcriptionSnapshotManager,
+      transcriptionToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

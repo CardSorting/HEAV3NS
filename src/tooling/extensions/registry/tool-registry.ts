@@ -70,6 +70,7 @@ import type { WebsitePolicyToolSuite } from "../website_policy/website-policy-to
 import type { WakeWordToolSuite } from "../wake_word/wake-word-tool-suite.js";
 import type { MediaSourceToolSuite } from "../media_source/media-source-tool-suite.js";
 import type { WorktreeToolSuite } from "../worktree/worktree-tool-suite.js";
+import type { TranscriptionToolSuite } from "../transcription/transcription-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -131,6 +132,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly wakeWordToolSuite?: WakeWordToolSuite;
   readonly mediaSourceToolSuite?: MediaSourceToolSuite;
   readonly worktreeToolSuite?: WorktreeToolSuite;
+  readonly transcriptionToolSuite?: TranscriptionToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -200,7 +202,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     websitePolicyToolSuite?: WebsitePolicyToolSuite,
     wakeWordToolSuite?: WakeWordToolSuite,
     mediaSourceToolSuite?: MediaSourceToolSuite,
-    worktreeToolSuite?: WorktreeToolSuite
+    worktreeToolSuite?: WorktreeToolSuite,
+    transcriptionToolSuite?: TranscriptionToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -262,6 +265,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.wakeWordToolSuite = wakeWordToolSuite;
     this.mediaSourceToolSuite = mediaSourceToolSuite;
     this.worktreeToolSuite = worktreeToolSuite;
+    this.transcriptionToolSuite = transcriptionToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -744,6 +748,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.worktreeToolSuite) {
       for (const tool of this.worktreeToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.transcriptionToolSuite) {
+      for (const tool of this.transcriptionToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

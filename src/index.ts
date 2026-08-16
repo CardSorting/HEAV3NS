@@ -482,6 +482,12 @@ import { BroccoliWorktreeSubstrate } from "./sessions/extensions/worktree/brocco
 import { WorktreeSnapshotManager } from "./sessions/extensions/worktree/worktree-snapshot-manager.js";
 import { WorktreeToolSuite } from "./tooling/extensions/worktree/worktree-tool-suite.js";
 
+import { DeterministicSpeechTranscriber } from "./agents/extensions/transcription/deterministic-speech-transcriber.js";
+import { TranscriptionSupervisor } from "./agents/extensions/transcription/transcription-supervisor.js";
+import { BroccoliTranscriptionSubstrate } from "./sessions/extensions/transcription/broccoli-transcription-substrate.js";
+import { TranscriptionSnapshotManager } from "./sessions/extensions/transcription/transcription-snapshot-manager.js";
+import { TranscriptionToolSuite } from "./tooling/extensions/transcription/transcription-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1984,6 +1990,23 @@ export type {
 } from "./core/contracts/worktree.contracts.js";
 export { DEFAULT_WORKTREE_CONFIG } from "./core/contracts/worktree.contracts.js";
 
+export { DeterministicSpeechTranscriber } from "./agents/extensions/transcription/deterministic-speech-transcriber.js";
+export { TranscriptionSupervisor } from "./agents/extensions/transcription/transcription-supervisor.js";
+export { BroccoliTranscriptionSubstrate } from "./sessions/extensions/transcription/broccoli-transcription-substrate.js";
+export { TranscriptionSnapshotManager } from "./sessions/extensions/transcription/transcription-snapshot-manager.js";
+export { TranscriptionToolSuite } from "./tooling/extensions/transcription/transcription-tool-suite.js";
+export type {
+  TranscriptionProvider,
+  WordTimestamp,
+  TranscriptionSegment,
+  AudioTranscriptionResult,
+  TranscriptionConfig,
+  TranscriptionMetrics,
+  CachedTranscriptRecord,
+  TranscriptionWorkspaceSnapshot,
+} from "./core/contracts/transcription.contracts.js";
+export { DEFAULT_TRANSCRIPTION_CONFIG } from "./core/contracts/transcription.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2396,6 +2419,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliWorktreeSubstrate: BroccoliWorktreeSubstrate;
   readonly worktreeSnapshotManager: WorktreeSnapshotManager;
   readonly worktreeToolSuite: WorktreeToolSuite;
+  readonly deterministicSpeechTranscriber: DeterministicSpeechTranscriber;
+  readonly transcriptionSupervisor: TranscriptionSupervisor;
+  readonly broccoliTranscriptionSubstrate: BroccoliTranscriptionSubstrate;
+  readonly transcriptionSnapshotManager: TranscriptionSnapshotManager;
+  readonly transcriptionToolSuite: TranscriptionToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2799,6 +2827,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliWorktreeSubstrate = components.broccoliWorktreeSubstrate;
     this.worktreeSnapshotManager = components.worktreeSnapshotManager;
     this.worktreeToolSuite = components.worktreeToolSuite;
+    this.deterministicSpeechTranscriber = components.deterministicSpeechTranscriber;
+    this.transcriptionSupervisor = components.transcriptionSupervisor;
+    this.broccoliTranscriptionSubstrate = components.broccoliTranscriptionSubstrate;
+    this.transcriptionSnapshotManager = components.transcriptionSnapshotManager;
+    this.transcriptionToolSuite = components.transcriptionToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
