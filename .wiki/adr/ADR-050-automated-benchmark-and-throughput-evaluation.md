@@ -43,9 +43,9 @@ The current implementation also exposes `lumi --baseline`. It runs the capabilit
 - Pinned benchmark contract:
   - **Total Evaluated Tests**: 5
   - **Pass Rate**: 100%
-  - **Throughput Enforced**: $\ge 1,000\text{ frames/second}$ (latest host run: **$8603.70\text{ frames/second}$** across **382/382 components**)
-  - **Turn Tick Latency SLA**: $< 1.0\text{ ms}$ (latest host run: **$0.12\text{ ms}$**)
-  - **State Rewind Latency SLA**: $< 0.1\text{ ms p95}$ (latest host run: **$0.02\text{ ms p95}$**)
-  - **Flappy Bird React Synthesis**: 12/12 files synthesized in memory, 8/8 assertions passing, verified at **$348.34\text{ ms}$**.
+  - **Throughput Enforced**: $\ge 1,000\text{ frames/second}$ (latest host run: **$6981.83\text{ frames/second}$** across **382/382 components**)
+  - **Turn Tick Latency SLA**: $< 1.0\text{ ms}$ (latest host run: **$0.14\text{ ms}$**)
+  - **State Rewind Latency SLA**: $< 0.1\text{ ms p95}$ (latest host run: **$0.042\text{ ms p95}$**)
+  - **Flappy Bird React Synthesis**: 12/12 files synthesized in memory, 8/8 assertions passing, verified at **$372.73\text{ ms}$**.
 
 The heterogeneous suite reports mean case latency and cases/second because it includes strict compiler work. It must not be compared directly with the dedicated frame-performance guardrail. See [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) and the generated [benchmark report](../../docs/BENCHMARK_REPORT.md).

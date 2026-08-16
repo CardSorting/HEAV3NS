@@ -33,21 +33,24 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
      10. `unicode_normalized`: Unicode typography normalization matrix with exact coordinate mapping
      11. `block_anchor`: First + last line anchored with Levenshtein similarity for interior lines
      12. `context_aware`: Sliding window similarity with configurable threshold ($\ge 0.5$)
-   - **Unified Diff Parser & Applicator (`parseUnifiedPatch` & `applyUnifiedPatch`)**: Parses standard unified diffs and applies them directly to file contents with line offset fuzz tolerance.
-   - **Line-Ending Auto-Preservation (`detectLineEnding` & `applyLineEnding`)**: Automatically detects whether a file uses `\r\n` or `\n` and outputs the result in the native line ending format.
-   - **Unicode Coordinate Mapping (`buildOrigToNormMap` & `mapPositionsNormToOrig`)**: Maps normalized character positions back to exact original character indices, preventing drift when single Unicode glyphs expand to multi-character ASCII sequences.
-   - **Unicode Preservation in Replacement (`preserveUnicodeInReplacement`)**: Opcode/LCS-level diff between `norm_old` and `new_string` copies original `fileRegion[orig_start:orig_end]` for unchanged spans, preserving existing file smart quotes and em-dashes.
-   - **Atomic Multi-Hunk Batch Engine (`findAndReplaceMulti`)**:
-     - Pre-flight validates all hunks simultaneously across the 12 strategies.
-     - Detects and rejects overlapping spans (`OVERLAPPING_HUNKS_ERROR`).
-     - Applies mutations in descending start-offset order to prevent subsequent hunk index corruption.
-     - All-or-nothing transactional guarantee: fails with zero disk/memory mutation if any hunk fails.
-   - **Myers Unified Diff Patch Engine (`generateUnifiedDiff`)**: Generates standard unified diff patches with `@@ -start,count +start,count @@` hunk headers.
-   - **Escape Drift & Doubling Guard**: `detectEscapeDrift` detects spurious `\'` / `\"` and doubled backslashes, blocking file corruption.
-   - **Relative Indentation Re-Anchor**: `reindentReplacement` computes relative indentation of `new_string` lines anchored to `old_string`'s base and re-anchors them onto the file's base indent.
-   - **Selective Control Unescaping**: `maybeUnescapeNewString` unescapes `\t` and `\r` only when matched file regions contain real control bytes.
-   - **Whitespace Visualizer & Diagnostician with Word Highlights**: `visualizeWhitespace` (`→` = tab, `·` = space) and `diagnoseMismatch` generate precise contextual `"Did you mean..."` guidance and word-level token diffs (`wordHighlights`).
-   - **Conservative Idempotency**: `isAlreadyApplied` short-circuits already applied edits.
+    - **SEARCH/REPLACE Block Parser & Applicator (`parseSearchReplaceBlocks` & `applySearchReplaceBlocks`)**: Parses standard `<<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE` blocks (Aider / LLM conventions) with file header detection and applies them with atomic multi-hunk validation.
+    - **Line-Hint Centered Disambiguation Matching (`findAndReplaceAtLine`)**: Constrains candidate search to an expected line number window (`lineHint ± lineTolerance`) to disambiguate repeated identical lines across large files.
+    - **Multi-File Unified Diff Engine (`parseMultiFileUnifiedPatch` & `applyMultiFileUnifiedPatch`)**: Parses and applies multi-file unified diff patches across memory file maps.
+    - **Unified Diff Parser & Applicator (`parseUnifiedPatch` & `applyUnifiedPatch`)**: Parses standard unified diffs and applies them directly to file contents with line offset fuzz tolerance.
+    - **Line-Ending Auto-Preservation (`detectLineEnding` & `applyLineEnding`)**: Automatically detects whether a file uses `\r\n` or `\n` and outputs the result in the native line ending format.
+    - **Unicode Coordinate Mapping (`buildOrigToNormMap` & `mapPositionsNormToOrig`)**: Maps normalized character positions back to exact original character indices, preventing drift when single Unicode glyphs expand to multi-character ASCII sequences.
+    - **Unicode Preservation in Replacement (`preserveUnicodeInReplacement`)**: Opcode/LCS-level diff between `norm_old` and `new_string` copies original `fileRegion[orig_start:orig_end]` for unchanged spans, preserving existing file smart quotes and em-dashes.
+    - **Atomic Multi-Hunk Batch Engine (`findAndReplaceMulti`)**:
+      - Pre-flight validates all hunks simultaneously across the 12 strategies.
+      - Detects and rejects overlapping spans (`OVERLAPPING_HUNKS_ERROR`).
+      - Applies mutations in descending start-offset order to prevent subsequent hunk index corruption.
+      - All-or-nothing transactional guarantee: fails with zero disk/memory mutation if any hunk fails.
+    - **Myers Unified Diff Patch Engine (`generateUnifiedDiff`)**: Generates standard unified diff patches with `@@ -start,count +start,count @@` hunk headers.
+    - **Escape Drift & Doubling Guard**: `detectEscapeDrift` detects spurious `\'` / `\"` and doubled backslashes, blocking file corruption.
+    - **Relative Indentation Re-Anchor**: `reindentReplacement` computes relative indentation of `new_string` lines anchored to `old_string`'s base and re-anchors them onto the file's base indent.
+    - **Selective Control Unescaping**: `maybeUnescapeNewString` unescapes `\t` and `\r` only when matched file regions contain real control bytes.
+    - **Whitespace Visualizer & Diagnostician with Word Highlights**: `visualizeWhitespace` (`→` = tab, `·` = space) and `diagnoseMismatch` generate precise contextual `"Did you mean..."` guidance and word-level token diffs (`wordHighlights`).
+    - **Conservative Idempotency**: `isAlreadyApplied` short-circuits already applied edits.
 
 2. **`BroccoliFuzzySubstrate` ([broccoli-fuzzy-substrate.ts](../../src/sessions/extensions/fuzzy/broccoli-fuzzy-substrate.ts))**:
    - In-memory Broccolidb repository for executions, strategy frequency analytics, custom Unicode maps, similarity thresholds, and configuration flags.
@@ -56,10 +59,10 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
    - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`FuzzyMatcherSupervisor` ([fuzzy-matcher-supervisor.ts](../../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.ts))**:
-   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
+   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, multi-file patches, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
 
 5. **`FuzzyMatcherToolSuite` ([fuzzy-matcher-tool-suite.ts](../../src/tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.ts))**:
-   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
+   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_apply_search_replace_blocks`, `fuzzy_find_and_replace_at_line`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
 
 6. **Grand Monolith Graduation (382 Components in OPTIMAL Cohesion)**:
    - Verified across `MonolithFactory` and `GrandMonolithSynthesizer`.

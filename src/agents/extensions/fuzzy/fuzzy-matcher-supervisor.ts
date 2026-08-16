@@ -12,6 +12,7 @@ import type {
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  MultiFilePatchResult,
   UnifiedPatchResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -119,6 +120,41 @@ export class FuzzyMatcherSupervisor {
    */
   applyUnifiedPatch(content: string, patch: string): UnifiedPatchResult {
     return this.matcher.applyUnifiedPatch(content, patch);
+  }
+
+  /**
+   * Applies standard SEARCH/REPLACE blocks (Aider / LLM convention) to content.
+   */
+  applySearchReplaceBlocks(
+    content: string,
+    blockText: string,
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMultiMatchResult {
+    return this.matcher.applySearchReplaceBlocks(content, blockText, options);
+  }
+
+  /**
+   * Finds and replaces text centered near an expected line number hint.
+   */
+  findAndReplaceAtLine(
+    content: string,
+    oldString: string,
+    newString: string,
+    lineHint: number,
+    lineTolerance: number = 15,
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMatchResult {
+    return this.matcher.findAndReplaceAtLine(content, oldString, newString, lineHint, lineTolerance, options);
+  }
+
+  /**
+   * Applies a unified diff patch spanning multiple files in memory.
+   */
+  applyMultiFileUnifiedPatch(
+    fileContents: Record<string, string>,
+    multiFilePatch: string
+  ): MultiFilePatchResult {
+    return this.matcher.applyMultiFileUnifiedPatch(fileContents, multiFilePatch);
   }
 
   /**

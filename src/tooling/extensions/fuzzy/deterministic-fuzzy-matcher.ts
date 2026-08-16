@@ -2,6 +2,7 @@
  * deterministic-fuzzy-matcher.ts
  *
  * Zero-GC, deterministic 12-strategy fuzzy line matcher, atomic multi-hunk patch engine,
+ * SEARCH/REPLACE block parser & applicator, line-hint biased fuzzy matcher, multi-file patch engine,
  * ellipsis-wildcard block resolver, unified diff patch parser & applicator,
  * Unicode typography coordinate mapper & preservation engine, block-anchor resolver,
  * token-normalized code matcher, indentation preservation engine, escape-drift detector,
@@ -19,6 +20,8 @@ import type {
   FuzzyReplacementHunk,
   FuzzyStrategyName,
   MismatchDiagnosis,
+  MultiFilePatchResult,
+  SearchReplaceBlock,
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
@@ -819,8 +822,15 @@ export class DeterministicFuzzyMatcher {
           newCount: hunkHeaderMatch[4] !== undefined ? parseInt(hunkHeaderMatch[4], 10) : 1,
           lines: [],
         };
-      } else if (currentHunk && (line.startsWith("+") || line.startsWith("-") || line.startsWith(" ") || line === "")) {
-        currentHunk.lines.push(line);
+      } else if (currentHunk) {
+        if (line.startsWith("+") || line.startsWith("-") || line.startsWith(" ")) {
+          currentHunk.lines.push(line);
+        } else if (line === "") {
+          const currentOld = currentHunk.lines.filter((l) => l.startsWith("-") || l.startsWith(" ") || l === "").length;
+          if (currentOld < currentHunk.oldCount) {
+            currentHunk.lines.push(line);
+          }
+        }
       }
     }
 
@@ -851,7 +861,6 @@ export class DeterministicFuzzyMatcher {
       const hunk = hunks[h];
       const targetStart = Math.max(0, hunk.oldStart - 1 + lineDelta);
 
-      // Collect expected old lines and replacement new lines
       const expectedOld: string[] = [];
       const replacementNew: string[] = [];
 
@@ -870,7 +879,6 @@ export class DeterministicFuzzyMatcher {
         }
       }
 
-      // Check if lines match around targetStart with small search window
       let matchIdx = -1;
       const searchRadius = 5;
       const minIdx = Math.max(0, targetStart - searchRadius);
@@ -915,6 +923,219 @@ export class DeterministicFuzzyMatcher {
       hunksApplied: appliedCount,
       diffPreview: diff,
       error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // SEARCH/REPLACE Block Parser & Applicator (Aider / LLM Standard Pattern)
+  // ---------------------------------------------------------------------------
+
+  parseSearchReplaceBlocks(blockText: string): SearchReplaceBlock[] {
+    const blocks: SearchReplaceBlock[] = [];
+    const lines = blockText.split("\n");
+
+    let state: "IDLE" | "SEARCH" | "REPLACE" = "IDLE";
+    let currentFilename: string | undefined = undefined;
+    let searchLines: string[] = [];
+    let replaceLines: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith("<<<<<<< SEARCH") || trimmed === "<<<<<<<") {
+        state = "SEARCH";
+        searchLines = [];
+        replaceLines = [];
+      } else if (state === "SEARCH" && (trimmed.startsWith("=======") || trimmed === "=======")) {
+        state = "REPLACE";
+      } else if (state === "REPLACE" && (trimmed.startsWith(">>>>>>> REPLACE") || trimmed === ">>>>>>>")) {
+        blocks.push({
+          filename: currentFilename,
+          oldString: searchLines.join("\n"),
+          newString: replaceLines.join("\n"),
+        });
+        state = "IDLE";
+        searchLines = [];
+        replaceLines = [];
+      } else if (state === "SEARCH") {
+        searchLines.push(line);
+      } else if (state === "REPLACE") {
+        replaceLines.push(line);
+      } else if (state === "IDLE") {
+        // Check for filename header like "### filename" or "filename"
+        if (trimmed.startsWith("### ") || trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+          currentFilename = trimmed.replace(/^#+\s*/, "").trim();
+        } else if (trimmed.length > 0 && !trimmed.startsWith("`") && trimmed.includes(".")) {
+          currentFilename = trimmed;
+        }
+      }
+    }
+
+    return blocks;
+  }
+
+  applySearchReplaceBlocks(
+    content: string,
+    blockText: string,
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMultiMatchResult {
+    const blocks = this.parseSearchReplaceBlocks(blockText);
+    if (blocks.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        totalHunks: 0,
+        appliedHunks: 0,
+        isFullyIdempotent: false,
+        strategiesUsed: [],
+        error: "No valid <<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE blocks found.",
+      };
+    }
+
+    const hunks: FuzzyReplacementHunk[] = blocks.map((b) => ({
+      oldString: b.oldString,
+      newString: b.newString,
+    }));
+
+    return this.findAndReplaceMulti(content, hunks, options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Line-Hint Centered Fuzzy Matcher (Disambiguation by Line Number)
+  // ---------------------------------------------------------------------------
+
+  findAndReplaceAtLine(
+    content: string,
+    oldString: string,
+    newString: string,
+    lineHint: number,
+    lineTolerance: number = 15,
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMatchResult {
+    const lines = content.split("\n");
+    const totalLines = lines.length;
+
+    const oldLinesCount = oldString.split("\n").length;
+    const startLineIdx = Math.max(0, lineHint - 1 - lineTolerance);
+    const endLineIdx = Math.min(totalLines, lineHint - 1 + oldLinesCount + lineTolerance);
+
+    const windowLines = lines.slice(startLineIdx, endLineIdx);
+    const windowContent = windowLines.join("\n");
+
+    const windowResult = this.findAndReplace(windowContent, oldString, newString, false, options);
+    if (!windowResult.success) {
+      return windowResult;
+    }
+
+    // Splice window result back into content
+    const prefix = lines.slice(0, startLineIdx).join("\n");
+    const suffix = lines.slice(endLineIdx).join("\n");
+
+    let fullModified = "";
+    if (prefix.length > 0 && suffix.length > 0) {
+      fullModified = prefix + "\n" + windowResult.modifiedContent + "\n" + suffix;
+    } else if (prefix.length > 0) {
+      fullModified = prefix + "\n" + windowResult.modifiedContent;
+    } else if (suffix.length > 0) {
+      fullModified = windowResult.modifiedContent + "\n" + suffix;
+    } else {
+      fullModified = windowResult.modifiedContent;
+    }
+
+    if (this.normalizeLineEndings) {
+      fullModified = this.applyLineEnding(fullModified, this.detectLineEnding(content));
+    }
+
+    const diff = this.generateUnifiedDiff(content, fullModified);
+
+    return {
+      success: true,
+      modifiedContent: options.dryRun ? content : fullModified,
+      matchCount: 1,
+      strategyUsed: windowResult.strategyUsed,
+      isIdempotent: windowResult.isIdempotent,
+      similarityScore: windowResult.similarityScore,
+      diffPreview: diff,
+      linesAffected: newString.split("\n").length,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-File Unified Patch Parser & Applicator
+  // ---------------------------------------------------------------------------
+
+  parseMultiFileUnifiedPatch(multiFilePatch: string): Record<string, string> {
+    const files: Record<string, string[]> = {};
+    const lines = multiFilePatch.split("\n");
+    let currentFile: string | null = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const diffGitMatch = line.match(/^diff --git a\/(.+?) b\/(.+?)$/);
+      const minusHeaderMatch = line.match(/^--- (?:a\/)?(.+?)(?:\t.*)?$/);
+      const plusHeaderMatch = line.match(/^\+\+\+ (?:b\/)?(.+?)(?:\t.*)?$/);
+
+      if (diffGitMatch) {
+        currentFile = diffGitMatch[2];
+        if (!files[currentFile]) files[currentFile] = [];
+        files[currentFile].push(line);
+      } else if (minusHeaderMatch && !minusHeaderMatch[1].startsWith("/dev/null") && i + 1 < lines.length && lines[i + 1].startsWith("+++ ")) {
+        // Look ahead to check if this is a new file header
+        const nextPlus = lines[i + 1].match(/^\+\+\+ (?:b\/)?(.+?)(?:\t.*)?$/);
+        currentFile = (nextPlus && !nextPlus[1].startsWith("/dev/null")) ? nextPlus[1] : minusHeaderMatch[1];
+        if (!files[currentFile]) files[currentFile] = [];
+        files[currentFile].push(line);
+      } else if (currentFile) {
+        files[currentFile].push(line);
+      }
+    }
+
+    const result: Record<string, string> = {};
+    for (const [filename, patchLines] of Object.entries(files)) {
+      result[filename] = patchLines.join("\n");
+    }
+    return result;
+  }
+
+  applyMultiFileUnifiedPatch(
+    fileContents: Record<string, string>,
+    multiFilePatch: string
+  ): MultiFilePatchResult {
+    const parsedPatches = this.parseMultiFileUnifiedPatch(multiFilePatch);
+    const fileResults: Record<string, UnifiedPatchResult> = {};
+    let successfulCount = 0;
+    const filenames = Object.keys(parsedPatches);
+
+    if (filenames.length === 0) {
+      return {
+        success: false,
+        fileResults: {},
+        totalFiles: 0,
+        successfulFiles: 0,
+        error: "No file patches detected in multi-file diff.",
+      };
+    }
+
+    for (let i = 0; i < filenames.length; i++) {
+      const file = filenames[i];
+      const patch = parsedPatches[file];
+      const content = fileContents[file] || "";
+
+      const res = this.applyUnifiedPatch(content, patch);
+      fileResults[file] = res;
+      if (res.success) {
+        successfulCount++;
+      }
+    }
+
+    return {
+      success: successfulCount === filenames.length,
+      fileResults,
+      totalFiles: filenames.length,
+      successfulFiles: successfulCount,
+      error: successfulCount === filenames.length ? null : "One or more files failed to patch cleanly.",
     };
   }
 
@@ -1184,7 +1405,6 @@ export class DeterministicFuzzyMatcher {
     const matches: FuzzyMatchSpan[] = [];
 
     for (let i = 0; i <= contentLines.length - prefixLines.length - suffixLines.length; i++) {
-      // Check prefix
       let prefixMatch = true;
       for (let p = 0; p < prefixLines.length; p++) {
         if (contentLines[i + p].trim() !== prefixLines[p]) {
@@ -1194,7 +1414,6 @@ export class DeterministicFuzzyMatcher {
       }
       if (!prefixMatch) continue;
 
-      // Find closest suffix after prefix
       const searchStart = i + prefixLines.length;
       for (let s = searchStart; s <= contentLines.length - suffixLines.length; s++) {
         let suffixMatch = true;
@@ -1355,7 +1574,7 @@ export class DeterministicFuzzyMatcher {
 
     const nativeEol = this.detectLineEnding(content);
 
-    // Check idempotency (where newString is present and oldString is gone)
+    // Check idempotency
     if (this.isAlreadyApplied(content, oldString, newString)) {
       return {
         success: true,
@@ -1408,11 +1627,9 @@ export class DeterministicFuzzyMatcher {
         }
 
         if (replaceAll && similarityStrategies.has(name)) {
-          // Similarity & wildcard strategies are unsafe for mass replace_all
           continue;
         }
 
-        // Check for transport-level escape drift
         const drift = this.detectEscapeDrift(content, matches, oldString, newString);
         if (drift.detected) {
           return {
@@ -1426,7 +1643,6 @@ export class DeterministicFuzzyMatcher {
           };
         }
 
-        // Apply replacement from right to left (backwards) to preserve indices
         let modified = content;
         const sortedMatches = [...matches].sort((a, b) => b[0] - a[0]);
 
@@ -1435,15 +1651,12 @@ export class DeterministicFuzzyMatcher {
           const [start, end] = span;
           const matchedRegion = content.slice(start, end);
 
-          // Unescape \t / \r if matched region has them
           let finalReplacement = this.maybeUnescapeNewString(newString, matchedRegion);
 
-          // Re-indent if non-exact strategy
           if (name !== "exact" && name !== "ellipsis_wildcard") {
             finalReplacement = this.reindentReplacement(matchedRegion, oldString, finalReplacement);
           }
 
-          // Preserve Unicode if unicode_normalized strategy
           if (name === "unicode_normalized") {
             finalReplacement = this.preserveUnicodeInReplacement(matchedRegion, oldString, finalReplacement);
           }
@@ -1528,7 +1741,6 @@ export class DeterministicFuzzyMatcher {
 
     const nativeEol = this.detectLineEnding(content);
 
-    // Step 1: Pre-flight validate and resolve match spans for all hunks
     interface ResolvedHunk {
       readonly index: number;
       readonly span: FuzzyMatchSpan;
@@ -1645,7 +1857,6 @@ export class DeterministicFuzzyMatcher {
       };
     }
 
-    // Step 2: Detect overlapping spans
     const sortedByStart = [...resolved].sort((a, b) => a.span[0] - b.span[0]);
     for (let i = 0; i < sortedByStart.length - 1; i++) {
       const cur = sortedByStart[i];
@@ -1665,7 +1876,6 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
-    // Step 3: Apply replacements descending by start offset
     let modified = content;
     const sortedDescending = [...resolved].sort((a, b) => b.span[0] - a.span[0]);
 

@@ -243,6 +243,103 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_apply_search_replace_blocks",
+        description: "Parses and applies standard <<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE blocks directly to file content with atomic multi-hunk validation.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content to be modified",
+            required: true,
+          },
+          blockText: {
+            type: "string",
+            description: "The SEARCH/REPLACE block text string",
+            required: true,
+          },
+          dryRun: {
+            type: "boolean",
+            description: "If true, simulates without committing modifications",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.blockText !== "string") {
+            return { success: false, error: "Missing required string parameters ('content', 'blockText')." };
+          }
+
+          const dryRun = args.dryRun === true;
+          const result = this.supervisor.applySearchReplaceBlocks(args.content, args.blockText, { dryRun });
+
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            totalHunks: result.totalHunks,
+            appliedHunks: result.appliedHunks,
+            isFullyIdempotent: result.isFullyIdempotent,
+            strategiesUsed: result.strategiesUsed,
+            diffPreview: result.diffPreview,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_find_and_replace_at_line",
+        description: "Finds and replaces code centered near an expected line number hint (lineHint ± lineTolerance) to disambiguate identical lines across large files.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content to search",
+            required: true,
+          },
+          oldString: {
+            type: "string",
+            description: "The string to match",
+            required: true,
+          },
+          newString: {
+            type: "string",
+            description: "The replacement string",
+            required: true,
+          },
+          lineHint: {
+            type: "number",
+            description: "Expected line number (1-indexed) where edit occurs",
+            required: true,
+          },
+          lineTolerance: {
+            type: "number",
+            description: "Search radius in lines around lineHint (default: 15)",
+            required: false,
+          },
+          dryRun: {
+            type: "boolean",
+            description: "If true, simulates without committing modifications",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.oldString !== "string" || typeof args.newString !== "string" || typeof args.lineHint !== "number") {
+            return { success: false, error: "Missing required parameters ('content', 'oldString', 'newString', 'lineHint')." };
+          }
+
+          const lineTolerance = typeof args.lineTolerance === "number" ? args.lineTolerance : 15;
+          const dryRun = args.dryRun === true;
+
+          const result = this.supervisor.findAndReplaceAtLine(args.content, args.oldString, args.newString, args.lineHint, lineTolerance, { dryRun });
+
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            matchCount: result.matchCount,
+            strategyUsed: result.strategyUsed,
+            isIdempotent: result.isIdempotent,
+            similarityScore: result.similarityScore,
+            diffPreview: result.diffPreview,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_dry_run_replace",
         description: "Simulates a search-and-replace edit, returning the unified diff preview, match count, strategy used, and surrounding context without mutating content.",
         parameters: {

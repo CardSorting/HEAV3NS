@@ -2,6 +2,7 @@
  * fuzzy-matcher.contracts.ts
  *
  * Core contracts for deterministic 12-strategy fuzzy line matching, atomic multi-hunk patching,
+ * SEARCH/REPLACE block parsing & application, line-hint biased matching, multi-file patch orchestration,
  * ellipsis-wildcard block matching, unified diff patch parsing & application,
  * Unicode typography coordinate mapping & preservation, block-anchor resolution,
  * token-normalized code matching, escape-drift detection, and closest-line mismatch diagnostics (Phase 103 / ADR-057).
@@ -98,6 +99,12 @@ export interface FuzzyMultiMatchResult {
   readonly failedHunkError?: string;
 }
 
+export interface SearchReplaceBlock {
+  readonly filename?: string;
+  readonly oldString: string;
+  readonly newString: string;
+}
+
 export interface UnifiedPatchHunk {
   readonly oldStart: number;
   readonly oldCount: number;
@@ -113,6 +120,14 @@ export interface UnifiedPatchResult {
   readonly hunksApplied: number;
   readonly error: string | null;
   readonly diffPreview?: string;
+}
+
+export interface MultiFilePatchResult {
+  readonly success: boolean;
+  readonly fileResults: Record<string, UnifiedPatchResult>;
+  readonly totalFiles: number;
+  readonly successfulFiles: number;
+  readonly error: string | null;
 }
 
 export interface FuzzyMatcherOptions {
