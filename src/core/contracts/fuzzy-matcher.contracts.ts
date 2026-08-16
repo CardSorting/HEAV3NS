@@ -315,3 +315,114 @@ export interface CandidateRankingResult {
   readonly totalEvaluated: number;
   readonly searchSnippet: string;
 }
+
+// ---------------------------------------------------------------------------
+// Patience Diff & Semantic Hunk Clustering Contracts
+// ---------------------------------------------------------------------------
+
+export interface PatienceDiffOptions {
+  readonly contextLines?: number;
+  readonly ignoreWhitespace?: boolean;
+}
+
+export interface PatienceDiffHunk {
+  readonly oldStart: number;
+  readonly oldCount: number;
+  readonly newStart: number;
+  readonly newCount: number;
+  readonly lines: readonly string[];
+}
+
+export interface PatienceDiffResult {
+  readonly diffText: string;
+  readonly hunks: readonly PatienceDiffHunk[];
+  readonly uniqueCommonLinesMatched: number;
+  readonly totalLinesChanged: number;
+  readonly hasChanges: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Lexical Token Stream Align Contracts
+// ---------------------------------------------------------------------------
+
+export type LexicalTokenType = "IDENT" | "KEYWORD" | "PUNCT" | "STRING" | "NUMBER" | "COMMENT" | "WHITESPACE";
+
+export interface LexicalToken {
+  readonly type: LexicalTokenType;
+  readonly value: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface TokenStreamMatchOptions {
+  readonly ignoreComments?: boolean;
+  readonly ignoreWhitespace?: boolean;
+  readonly caseSensitive?: boolean;
+}
+
+export interface TokenStreamMatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly matchSpan: FuzzyMatchSpan | null;
+  readonly tokensMatched: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Semantic Merge Conflict Explainer Contracts
+// ---------------------------------------------------------------------------
+
+export interface MergeResolutionCandidate {
+  readonly strategy: string;
+  readonly description: string;
+  readonly resolvedContent: string;
+  readonly confidenceScore: number;
+}
+
+export interface ConflictBlockAnalysis {
+  readonly conflictIndex: number;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly baseSnippet: string;
+  readonly oursSnippet: string;
+  readonly theirsSnippet: string;
+  readonly conflictCategory: "overlapping_edit" | "addition_collision" | "deletion_conflict" | "reformat_conflict";
+  readonly proposedResolutions: readonly MergeResolutionCandidate[];
+}
+
+export interface SemanticConflictExplanation {
+  readonly totalConflicts: number;
+  readonly analyses: readonly ConflictBlockAnalysis[];
+  readonly summary: string;
+  readonly autoResolvable: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic Inverse Patch Contracts
+// ---------------------------------------------------------------------------
+
+export interface InversePatchHunk {
+  readonly oldStart: number;
+  readonly oldCount: number;
+  readonly newStart: number;
+  readonly newCount: number;
+  readonly lines: readonly string[];
+}
+
+export interface InversePatchResult {
+  readonly success: boolean;
+  readonly inverseDiff: string;
+  readonly invertedHunks: readonly InversePatchHunk[];
+  readonly originalLength: number;
+  readonly modifiedLength: number;
+  readonly error: string | null;
+}
+
+export interface MultiFileInversePatchResult {
+  readonly success: boolean;
+  readonly inversePatchText: string;
+  readonly fileInverseDiffs: Record<string, string>;
+  readonly totalFiles: number;
+  readonly error: string | null;
+}
+

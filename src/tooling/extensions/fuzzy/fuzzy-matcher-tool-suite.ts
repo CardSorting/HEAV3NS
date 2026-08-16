@@ -810,6 +810,150 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_generate_patience_diff",
+        description: "Generates a Patience Diff, aligning unique common lines as semantic anchors to avoid ambiguous closing-brace matching.",
+        parameters: {
+          oldText: {
+            type: "string",
+            description: "Original source text",
+            required: true,
+          },
+          newText: {
+            type: "string",
+            description: "Modified new source text",
+            required: true,
+          },
+          filename: {
+            type: "string",
+            description: "Filename for diff header (default: 'file')",
+            required: false,
+          },
+          contextLines: {
+            type: "number",
+            description: "Number of context lines surrounding changes (default: 3)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.oldText !== "string" || typeof args.newText !== "string") {
+            return { success: false, error: "Missing required string parameters ('oldText', 'newText')." };
+          }
+          const filename = typeof args.filename === "string" ? args.filename : "file";
+          const contextLines = typeof args.contextLines === "number" ? args.contextLines : 3;
+          const result = this.supervisor.generatePatienceDiff(args.oldText, args.newText, filename, { contextLines });
+          return {
+            success: true,
+            diffText: result.diffText,
+            hunks: result.hunks,
+            uniqueCommonLinesMatched: result.uniqueCommonLinesMatched,
+            totalLinesChanged: result.totalLinesChanged,
+            hasChanges: result.hasChanges,
+          };
+        },
+      },
+      {
+        name: "fuzzy_token_stream_replace",
+        description: "Matches and replaces code across lexical token streams, ignoring formatting variations like single vs multi-line destructuring and trailing commas.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "Target source code to search and replace within",
+            required: true,
+          },
+          oldSnippet: {
+            type: "string",
+            description: "Search code snippet (token-stream matched)",
+            required: true,
+          },
+          newSnippet: {
+            type: "string",
+            description: "Replacement code snippet to insert",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.oldSnippet !== "string" || typeof args.newSnippet !== "string") {
+            return { success: false, error: "Missing required string parameters ('content', 'oldSnippet', 'newSnippet')." };
+          }
+          const result = this.supervisor.findAndReplaceTokenStream(args.content, args.oldSnippet, args.newSnippet);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            matchSpan: result.matchSpan,
+            tokensMatched: result.tokensMatched,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_explain_merge_conflict",
+        description: "Analyzes 3-way merge conflict regions, extracting base ancestor snippets, local changes, remote changes, and proposing confidence-rated auto-resolutions.",
+        parameters: {
+          baseContent: {
+            type: "string",
+            description: "Common ancestor / base version content",
+            required: true,
+          },
+          oursContent: {
+            type: "string",
+            description: "Local / current branch content",
+            required: true,
+          },
+          theirsContent: {
+            type: "string",
+            description: "Remote / incoming branch content",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.baseContent !== "string" || typeof args.oursContent !== "string" || typeof args.theirsContent !== "string") {
+            return { success: false, error: "Missing required string parameters ('baseContent', 'oursContent', 'theirsContent')." };
+          }
+          const result = this.supervisor.explainMergeConflict(args.baseContent, args.oursContent, args.theirsContent);
+          return {
+            success: true,
+            totalConflicts: result.totalConflicts,
+            analyses: result.analyses,
+            summary: result.summary,
+            autoResolvable: result.autoResolvable,
+          };
+        },
+      },
+      {
+        name: "fuzzy_generate_inverse_patch",
+        description: "Generates a verified reversible inverse diff that cleanly undoes mutations back to original content.",
+        parameters: {
+          originalContent: {
+            type: "string",
+            description: "Original pre-mutation content",
+            required: true,
+          },
+          modifiedContent: {
+            type: "string",
+            description: "Modified post-mutation content to reverse",
+            required: true,
+          },
+          filename: {
+            type: "string",
+            description: "Filename for diff header (default: 'file')",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.originalContent !== "string" || typeof args.modifiedContent !== "string") {
+            return { success: false, error: "Missing required string parameters ('originalContent', 'modifiedContent')." };
+          }
+          const filename = typeof args.filename === "string" ? args.filename : "file";
+          const result = this.supervisor.generateInversePatch(args.originalContent, args.modifiedContent, filename);
+          return {
+            success: result.success,
+            inverseDiff: result.inverseDiff,
+            invertedHunks: result.invertedHunks,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

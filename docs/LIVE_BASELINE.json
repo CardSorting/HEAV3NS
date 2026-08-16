@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T08:02:32.200Z",
+  "generatedAt": "2026-08-16T08:08:33.651Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,7 +19,7 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.6,
+    "durationMs": 2.74,
     "componentCount": 382,
     "requiredComponentCount": 382,
     "composedRequiredComponentCount": 382,
@@ -40,7 +40,7 @@
         "category": "architecture",
         "name": "Core abstract contracts remain connected",
         "passed": true,
-        "durationMs": 0.13,
+        "durationMs": 0.17,
         "detail": "agent, session, hands, ears, and tool-registry contracts verified"
       },
       {
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 0.9,
-        "detail": "frame 1 completed in 0.59 ms"
+        "durationMs": 0.98,
+        "detail": "frame 1 completed in 0.61 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.3,
+        "durationMs": 0.29,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -72,7 +72,7 @@
         "category": "safety",
         "name": "Modern command safety and diagnostics are active",
         "passed": true,
-        "durationMs": 0.26,
+        "durationMs": 0.24,
         "detail": "interactive editor blocking and port-collision guidance verified"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.09,
+        "durationMs": 0.08,
         "detail": "head/tail output retention verified"
       },
       {
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 69.77,
-    "totalDurationMs": 348.83,
-    "throughputTps": 14.33,
-    "throughputPerMinute": 860,
+    "meanLatencyMs": 69.34,
+    "totalDurationMs": 346.71,
+    "throughputTps": 14.42,
+    "throughputPerMinute": 865,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -130,7 +130,7 @@
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 348.49,
+        "durationMs": 346.38,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -178,7 +178,7 @@
         "testName": "Slash Command Router Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.09,
+        "durationMs": 0.08,
         "assertions": []
       },
       {
@@ -206,21 +206,21 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.13 ms",
+        "measuredValue": "0.16 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "7751.91 frames/sec",
+        "measuredValue": "6263.88 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.022 ms p95",
+        "measuredValue": "0.019 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },

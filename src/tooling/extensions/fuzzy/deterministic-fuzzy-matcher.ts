@@ -13,6 +13,7 @@ import type {
   CandidateMatchScore,
   CandidateRankingResult,
   ClosestLineCandidate,
+  ConflictBlockAnalysis,
   ConflictMarkerChunk,
   ConflictResolutionResult,
   ConflictResolutionStrategy,
@@ -26,16 +27,26 @@ import type {
   FuzzyStrategyName,
   IndentationHarmonizationResult,
   IndentationStyle,
+  InversePatchHunk,
+  InversePatchResult,
+  LexicalToken,
+  LexicalTokenType,
   LspApplyResult,
   LspPosition,
   LspRange,
   LspTextEdit,
   LspWorkspaceEdit,
+  MergeResolutionCandidate,
   MismatchDiagnosis,
+  MultiFileInversePatchResult,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  PatienceDiffHunk,
+  PatienceDiffOptions,
+  PatienceDiffResult,
   SearchReplaceBlock,
+  SemanticConflictExplanation,
   SyntaxBalanceIssue,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
@@ -43,6 +54,8 @@ import type {
   ThreeWayMergeHunk,
   ThreeWayMergeOptions,
   ThreeWayMergeResult,
+  TokenStreamMatchOptions,
+  TokenStreamMatchResult,
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
@@ -2873,4 +2886,638 @@ export class DeterministicFuzzyMatcher {
       searchSnippet,
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // Patience Diff & Semantic Hunk Clustering
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generates a Patience Diff, which aligns unique common lines as semantic anchors
+   * to avoid ambiguous closing-brace matching and produce clean function/block diffs.
+   */
+  generatePatienceDiff(
+    oldText: string,
+    newText: string,
+    filename: string = "file",
+    options: PatienceDiffOptions = {}
+  ): PatienceDiffResult {
+    const oldLines = oldText.split("\n");
+    const newLines = newText.split("\n");
+    const contextLines = options.contextLines ?? 3;
+
+    if (oldText === newText) {
+      return {
+        diffText: "",
+        hunks: [],
+        uniqueCommonLinesMatched: 0,
+        totalLinesChanged: 0,
+        hasChanges: false,
+      };
+    }
+
+    // Find unique lines in an array
+    const findUniqueLines = (lines: readonly string[]): Map<string, number> => {
+      const counts = new Map<string, number>();
+      const indices = new Map<string, number>();
+      for (let i = 0; i < lines.length; i++) {
+        const line = options.ignoreWhitespace ? lines[i].trim() : lines[i];
+        counts.set(line, (counts.get(line) || 0) + 1);
+        indices.set(line, i);
+      }
+      const unique = new Map<string, number>();
+      for (const [line, count] of counts.entries()) {
+        if (count === 1) {
+          unique.set(line, indices.get(line)!);
+        }
+      }
+      return unique;
+    };
+
+    const oldUnique = findUniqueLines(oldLines);
+    const newUnique = findUniqueLines(newLines);
+    const commonUnique: Array<{ oldIdx: number; newIdx: number; line: string }> = [];
+
+    for (const [line, oldIdx] of oldUnique.entries()) {
+      if (newUnique.has(line)) {
+        commonUnique.push({ oldIdx, newIdx: newUnique.get(line)!, line });
+      }
+    }
+
+    commonUnique.sort((a, b) => a.oldIdx - b.oldIdx);
+
+    // Compute Longest Increasing Subsequence (LIS) on newIdx
+    const lis: Array<{ oldIdx: number; newIdx: number; line: string }> = [];
+    if (commonUnique.length > 0) {
+      const piles: number[] = [];
+      const pileIndices: number[] = [];
+      const parent = new Array<number>(commonUnique.length).fill(-1);
+
+      for (let i = 0; i < commonUnique.length; i++) {
+        const val = commonUnique[i].newIdx;
+        let left = 0;
+        let right = piles.length;
+        while (left < right) {
+          const mid = (left + right) >> 1;
+          if (piles[mid] < val) left = mid + 1;
+          else right = mid;
+        }
+        piles[left] = val;
+        pileIndices[left] = i;
+        if (left > 0) {
+          parent[i] = pileIndices[left - 1];
+        }
+      }
+
+      let curr = pileIndices[piles.length - 1];
+      while (curr !== -1) {
+        lis.push(commonUnique[curr]);
+        curr = parent[curr];
+      }
+      lis.reverse();
+    }
+
+    // Partition oldLines and newLines by the matched anchors and construct diff
+    const computeSliceDiff = (
+      aStart: number,
+      aEnd: number,
+      bStart: number,
+      bEnd: number
+    ): Array<{ type: "equal" | "delete" | "insert"; line: string; oldLineNum: number; newLineNum: number }> => {
+      const a = oldLines.slice(aStart, aEnd);
+      const b = newLines.slice(bStart, bEnd);
+      const m = a.length;
+      const n = b.length;
+      const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (a[i - 1] === b[j - 1]) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+          }
+        }
+      }
+
+      let i = m;
+      let j = n;
+      const res: Array<{ type: "equal" | "delete" | "insert"; line: string; oldLineNum: number; newLineNum: number }> = [];
+
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+          res.push({ type: "equal", line: a[i - 1], oldLineNum: aStart + i, newLineNum: bStart + j });
+          i--;
+          j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          res.push({ type: "insert", line: b[j - 1], oldLineNum: aStart + i, newLineNum: bStart + j });
+          j--;
+        } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+          res.push({ type: "delete", line: a[i - 1], oldLineNum: aStart + i, newLineNum: bStart + j });
+          i--;
+        }
+      }
+      return res.reverse();
+    };
+
+    const diffOps: Array<{ type: "equal" | "delete" | "insert"; line: string; oldLineNum: number; newLineNum: number }> = [];
+    let lastOld = 0;
+    let lastNew = 0;
+
+    for (const anchor of lis) {
+      if (anchor.oldIdx > lastOld || anchor.newIdx > lastNew) {
+        const sliceOps = computeSliceDiff(lastOld, anchor.oldIdx, lastNew, anchor.newIdx);
+        diffOps.push(...sliceOps);
+      }
+      diffOps.push({
+        type: "equal",
+        line: oldLines[anchor.oldIdx],
+        oldLineNum: anchor.oldIdx + 1,
+        newLineNum: anchor.newIdx + 1,
+      });
+      lastOld = anchor.oldIdx + 1;
+      lastNew = anchor.newIdx + 1;
+    }
+
+    if (lastOld < oldLines.length || lastNew < newLines.length) {
+      const sliceOps = computeSliceDiff(lastOld, oldLines.length, lastNew, newLines.length);
+      diffOps.push(...sliceOps);
+    }
+
+    // Cluster operations into hunks with context
+    const hunks: PatienceDiffHunk[] = [];
+
+    const changedIndices = new Set<number>();
+    for (let idx = 0; idx < diffOps.length; idx++) {
+      if (diffOps[idx].type !== "equal") {
+        for (let c = Math.max(0, idx - contextLines); c <= Math.min(diffOps.length - 1, idx + contextLines); c++) {
+          changedIndices.add(c);
+        }
+      }
+    }
+
+    let i = 0;
+    let totalLinesChanged = 0;
+    while (i < diffOps.length) {
+      if (!changedIndices.has(i)) {
+        i++;
+        continue;
+      }
+
+      const currentHunkOps: typeof diffOps = [];
+      while (i < diffOps.length && changedIndices.has(i)) {
+        currentHunkOps.push(diffOps[i]);
+        if (diffOps[i].type !== "equal") totalLinesChanged++;
+        i++;
+      }
+
+      if (currentHunkOps.length > 0) {
+        let oldStart = 0;
+        let oldCount = 0;
+        let newStart = 0;
+        let newCount = 0;
+        const lines: string[] = [];
+
+        for (const op of currentHunkOps) {
+          if (op.type === "equal") {
+            if (oldStart === 0) oldStart = op.oldLineNum;
+            if (newStart === 0) newStart = op.newLineNum;
+            oldCount++;
+            newCount++;
+            lines.push(` ${op.line}`);
+          } else if (op.type === "delete") {
+            if (oldStart === 0) oldStart = op.oldLineNum;
+            if (newStart === 0) newStart = op.newLineNum;
+            oldCount++;
+            lines.push(`-${op.line}`);
+          } else if (op.type === "insert") {
+            if (oldStart === 0) oldStart = op.oldLineNum;
+            if (newStart === 0) newStart = op.newLineNum;
+            newCount++;
+            lines.push(`+${op.line}`);
+          }
+        }
+
+        hunks.push({
+          oldStart: oldStart || 1,
+          oldCount,
+          newStart: newStart || 1,
+          newCount,
+          lines,
+        });
+      }
+    }
+
+    const diffLines: string[] = [`--- a/${filename}`, `+++ b/${filename}`];
+    for (const hunk of hunks) {
+      diffLines.push(`@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@`);
+      diffLines.push(...hunk.lines);
+    }
+
+    return {
+      diffText: diffLines.join("\n"),
+      hunks,
+      uniqueCommonLinesMatched: lis.length,
+      totalLinesChanged,
+      hasChanges: hunks.length > 0,
+    };
+  }
+
+  /**
+   * Applies a patience diff patch to content.
+   */
+  applyPatiencePatch(content: string, patch: string): UnifiedPatchResult {
+    return this.applyUnifiedPatch(content, patch);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Lexical Token Stream Align Matcher
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Tokenizes arbitrary source code into a stream of typed lexical tokens.
+   */
+  tokenizeCode(code: string): LexicalToken[] {
+    const tokens: LexicalToken[] = [];
+    let pos = 0;
+    const len = code.length;
+
+    const keywords = new Set([
+      "function", "const", "let", "var", "return", "if", "else", "for", "while",
+      "switch", "case", "break", "continue", "import", "export", "from", "default",
+      "class", "interface", "type", "extends", "implements", "async", "await",
+      "try", "catch", "finally", "throw", "new", "typeof", "instanceof", "in",
+      "of", "void", "delete", "true", "false", "null", "undefined",
+    ]);
+
+    while (pos < len) {
+      const char = code[pos];
+
+      // Whitespace
+      if (/\s/.test(char)) {
+        const start = pos;
+        while (pos < len && /\s/.test(code[pos])) pos++;
+        tokens.push({ type: "WHITESPACE", value: code.slice(start, pos), start, end: pos });
+        continue;
+      }
+
+      // Line Comment
+      if (char === "/" && code[pos + 1] === "/") {
+        const start = pos;
+        while (pos < len && code[pos] !== "\n") pos++;
+        tokens.push({ type: "COMMENT", value: code.slice(start, pos), start, end: pos });
+        continue;
+      }
+
+      // Block Comment
+      if (char === "/" && code[pos + 1] === "*") {
+        const start = pos;
+        pos += 2;
+        while (pos < len && !(code[pos] === "*" && code[pos + 1] === "/")) pos++;
+        if (pos < len) pos += 2;
+        tokens.push({ type: "COMMENT", value: code.slice(start, pos), start, end: pos });
+        continue;
+      }
+
+      // String literal
+      if (char === '"' || char === "'" || char === "`") {
+        const quote = char;
+        const start = pos;
+        pos++;
+        while (pos < len && code[pos] !== quote) {
+          if (code[pos] === "\\") pos++;
+          pos++;
+        }
+        if (pos < len) pos++;
+        tokens.push({ type: "STRING", value: code.slice(start, pos), start, end: pos });
+        continue;
+      }
+
+      // Number literal
+      if (/[0-9]/.test(char)) {
+        const start = pos;
+        while (pos < len && /[0-9.xXa-fA-F_]/.test(code[pos])) pos++;
+        tokens.push({ type: "NUMBER", value: code.slice(start, pos), start, end: pos });
+        continue;
+      }
+
+      // Identifiers / Keywords
+      if (/[a-zA-Z_$]/.test(char)) {
+        const start = pos;
+        while (pos < len && /[a-zA-Z0-9_$]/.test(code[pos])) pos++;
+        const val = code.slice(start, pos);
+        const type = keywords.has(val) ? "KEYWORD" : "IDENT";
+        tokens.push({ type, value: val, start, end: pos });
+        continue;
+      }
+
+      // Punctuation & Operators
+      tokens.push({ type: "PUNCT", value: char, start: pos, end: pos + 1 });
+      pos++;
+    }
+
+    return tokens;
+  }
+
+  /**
+   * Matches code across lexical token streams, allowing robust search and replacement
+   * despite formatting changes (e.g. single-line vs multi-line destructuring, trailing commas).
+   */
+  findAndReplaceTokenStream(
+    content: string,
+    oldSnippet: string,
+    newSnippet: string,
+    options: TokenStreamMatchOptions = {}
+  ): TokenStreamMatchResult {
+    const contentTokens = this.tokenizeCode(content);
+    const snippetTokens = this.tokenizeCode(oldSnippet);
+
+    const filterTokens = (toks: LexicalToken[]): LexicalToken[] => {
+      const filtered: LexicalToken[] = [];
+      for (let i = 0; i < toks.length; i++) {
+        const t = toks[i];
+        if (t.type === "WHITESPACE" && (options.ignoreWhitespace ?? true)) continue;
+        if (t.type === "COMMENT" && (options.ignoreComments ?? true)) continue;
+
+        // Skip trailing comma before closing brace/bracket/paren
+        if (t.type === "PUNCT" && t.value === ",") {
+          let nextIdx = i + 1;
+          const ignoreWs = options.ignoreWhitespace ?? true;
+          const ignoreComments = options.ignoreComments ?? true;
+          while (
+            nextIdx < toks.length &&
+            ((ignoreWs && toks[nextIdx].type === "WHITESPACE") ||
+              (ignoreComments && toks[nextIdx].type === "COMMENT"))
+          ) {
+            nextIdx++;
+          }
+          if (
+            nextIdx < toks.length &&
+            toks[nextIdx].type === "PUNCT" &&
+            (toks[nextIdx].value === "}" || toks[nextIdx].value === "]" || toks[nextIdx].value === ")")
+          ) {
+            continue;
+          }
+        }
+
+        filtered.push(t);
+      }
+      return filtered;
+    };
+
+    const targetStream = filterTokens(contentTokens);
+    const searchStream = filterTokens(snippetTokens);
+
+    if (searchStream.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchSpan: null,
+        tokensMatched: 0,
+        error: "Search snippet contains no significant lexical tokens.",
+      };
+    }
+
+    // Find searchStream inside targetStream
+    let matchTargetStartIdx = -1;
+    for (let i = 0; i <= targetStream.length - searchStream.length; i++) {
+      let matched = true;
+      for (let j = 0; j < searchStream.length; j++) {
+        const t1 = targetStream[i + j];
+        const t2 = searchStream[j];
+        if (t1.type !== t2.type) {
+          matched = false;
+          break;
+        }
+        const val1 = options.caseSensitive ?? true ? t1.value : t1.value.toLowerCase();
+        const val2 = options.caseSensitive ?? true ? t2.value : t2.value.toLowerCase();
+        if (val1 !== val2) {
+          matched = false;
+          break;
+        }
+      }
+      if (matched) {
+        matchTargetStartIdx = i;
+        break;
+      }
+    }
+
+    if (matchTargetStartIdx === -1) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchSpan: null,
+        tokensMatched: 0,
+        error: `Could not match lexical token stream of ${searchStream.length} tokens in target content.`,
+      };
+    }
+
+    const firstMatchedToken = targetStream[matchTargetStartIdx];
+    const lastMatchedToken = targetStream[matchTargetStartIdx + searchStream.length - 1];
+
+    const matchSpan: FuzzyMatchSpan = [firstMatchedToken.start, lastMatchedToken.end];
+
+    // Splice replacement
+    const modifiedContent =
+      content.slice(0, matchSpan[0]) + newSnippet + content.slice(matchSpan[1]);
+
+    return {
+      success: true,
+      modifiedContent,
+      matchSpan,
+      tokensMatched: searchStream.length,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Semantic Merge Conflict Explainer
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Analyzes 3-way merge conflict regions, identifying base ancestor snippets,
+   * local changes, remote changes, and proposing high-confidence auto-resolutions.
+   */
+  explainMergeConflict(
+    baseContent: string,
+    oursContent: string,
+    theirsContent: string
+  ): SemanticConflictExplanation {
+    const mergeResult = this.threeWayMerge(baseContent, oursContent, theirsContent, {
+      conflictResolution: "markers",
+      oursLabel: "OURS",
+      theirsLabel: "THEIRS",
+    });
+
+    if (mergeResult.success || mergeResult.conflictCount === 0) {
+      return {
+        totalConflicts: 0,
+        analyses: [],
+        summary: "No merge conflicts detected. Branches reconciled cleanly.",
+        autoResolvable: true,
+      };
+    }
+
+    const conflictRegex = /<<<<<<< OURS\n([\s\S]*?)\n\|\|\|\|\|\|\| BASE\n([\s\S]*?)\n=======\n([\s\S]*?)\n>>>>>>> THEIRS/g;
+    const analyses: ConflictBlockAnalysis[] = [];
+    let match: RegExpExecArray | null;
+    let conflictIndex = 0;
+
+    while ((match = conflictRegex.exec(mergeResult.mergedContent)) !== null) {
+      conflictIndex++;
+      const oursSnippet = match[1];
+      const baseSnippet = match[2];
+      const theirsSnippet = match[3];
+
+      const matchStartOffset = match.index;
+      const startLine = mergeResult.mergedContent.slice(0, matchStartOffset).split("\n").length;
+      const endLine = startLine + match[0].split("\n").length - 1;
+
+      let conflictCategory: ConflictBlockAnalysis["conflictCategory"] = "overlapping_edit";
+      if (oursSnippet.trim() === theirsSnippet.trim()) {
+        conflictCategory = "reformat_conflict";
+      } else if (oursSnippet.length === 0 && theirsSnippet.length > 0) {
+        conflictCategory = "deletion_conflict";
+      } else if (baseSnippet.length === 0 && oursSnippet.length > 0 && theirsSnippet.length > 0) {
+        conflictCategory = "addition_collision";
+      }
+
+      const proposedResolutions: MergeResolutionCandidate[] = [
+        {
+          strategy: "take_ours",
+          description: "Keep local branch modifications",
+          resolvedContent: oursSnippet,
+          confidenceScore: 0.8,
+        },
+        {
+          strategy: "take_theirs",
+          description: "Accept remote branch modifications",
+          resolvedContent: theirsSnippet,
+          confidenceScore: 0.8,
+        },
+        {
+          strategy: "combine_both",
+          description: "Concatenate local changes followed by remote changes",
+          resolvedContent: `${oursSnippet}\n${theirsSnippet}`,
+          confidenceScore: conflictCategory === "addition_collision" ? 0.85 : 0.5,
+        },
+      ];
+
+      if (conflictCategory === "reformat_conflict") {
+        proposedResolutions.unshift({
+          strategy: "harmonized_reformat",
+          description: "Adopt consistent indentation and whitespace across both edits",
+          resolvedContent: oursSnippet,
+          confidenceScore: 0.98,
+        });
+      }
+
+      analyses.push({
+        conflictIndex,
+        startLine,
+        endLine,
+        baseSnippet,
+        oursSnippet,
+        theirsSnippet,
+        conflictCategory,
+        proposedResolutions,
+      });
+    }
+
+    const autoResolvable = analyses.every(
+      (a) => a.conflictCategory === "reformat_conflict" || a.conflictCategory === "addition_collision"
+    );
+
+    return {
+      totalConflicts: analyses.length,
+      analyses,
+      summary: `Found ${analyses.length} conflict(s). ${autoResolvable ? "All conflicts are automatically resolvable." : "Manual or supervised review recommended."}`,
+      autoResolvable,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Deterministic Inverse Patch Generator
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generates a reversible inverse diff that undoes changes from modifiedContent back to originalContent.
+   */
+  generateInversePatch(
+    originalContent: string,
+    modifiedContent: string,
+    filename: string = "file"
+  ): InversePatchResult {
+    if (originalContent === modifiedContent) {
+      return {
+        success: true,
+        inverseDiff: "",
+        invertedHunks: [],
+        originalLength: originalContent.length,
+        modifiedLength: modifiedContent.length,
+        error: null,
+      };
+    }
+
+    const inverseDiff = this.generateUnifiedDiff(modifiedContent, originalContent, filename);
+    const parsedHunks = this.parseUnifiedPatch(inverseDiff);
+
+    const testReversal = this.applyUnifiedPatch(modifiedContent, inverseDiff);
+    if (!testReversal.success || testReversal.modifiedContent !== originalContent) {
+      return {
+        success: false,
+        inverseDiff,
+        invertedHunks: parsedHunks,
+        originalLength: originalContent.length,
+        modifiedLength: modifiedContent.length,
+        error: "Inverse patch failed self-verification check against original content.",
+      };
+    }
+
+    return {
+      success: true,
+      inverseDiff,
+      invertedHunks: parsedHunks,
+      originalLength: originalContent.length,
+      modifiedLength: modifiedContent.length,
+      error: null,
+    };
+  }
+
+  /**
+   * Generates a multi-file inverse patch to cleanly revert modifications across an entire workspace.
+   */
+  generateMultiFileInversePatch(
+    originalFiles: Record<string, string>,
+    modifiedFiles: Record<string, string>
+  ): MultiFileInversePatchResult {
+    const fileInverseDiffs: Record<string, string> = {};
+    const allPatchParts: string[] = [];
+
+    for (const [filePath, origContent] of Object.entries(originalFiles)) {
+      const modContent = modifiedFiles[filePath] ?? origContent;
+      if (origContent !== modContent) {
+        const invRes = this.generateInversePatch(origContent, modContent, filePath);
+        if (!invRes.success) {
+          return {
+            success: false,
+            inversePatchText: "",
+            fileInverseDiffs: {},
+            totalFiles: 0,
+            error: `Failed generating inverse patch for '${filePath}': ${invRes.error}`,
+          };
+        }
+        fileInverseDiffs[filePath] = invRes.inverseDiff;
+        allPatchParts.push(invRes.inverseDiff);
+      }
+    }
+
+    return {
+      success: true,
+      inversePatchText: allPatchParts.join("\n\n"),
+      fileInverseDiffs,
+      totalFiles: Object.keys(fileInverseDiffs).length,
+      error: null,
+    };
+  }
 }
+

@@ -18,16 +18,23 @@ import type {
   FuzzyStrategyName,
   IndentationHarmonizationResult,
   IndentationStyle,
+  InversePatchResult,
   LspApplyResult,
   LspTextEdit,
   LspWorkspaceEdit,
+  MultiFileInversePatchResult,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  PatienceDiffOptions,
+  PatienceDiffResult,
+  SemanticConflictExplanation,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
   ThreeWayMergeOptions,
   ThreeWayMergeResult,
+  TokenStreamMatchOptions,
+  TokenStreamMatchResult,
   UnifiedPatchResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -270,6 +277,69 @@ export class FuzzyMatcherSupervisor {
    */
   rankCandidateMatches(content: string, searchSnippet: string, limit: number = 5): CandidateRankingResult {
     return this.matcher.rankCandidateMatches(content, searchSnippet, limit);
+  }
+
+  /**
+   * Generates a Patience Diff, aligning unique common lines as semantic anchors.
+   */
+  generatePatienceDiff(
+    oldText: string,
+    newText: string,
+    filename: string = "file",
+    options: PatienceDiffOptions = {}
+  ): PatienceDiffResult {
+    return this.matcher.generatePatienceDiff(oldText, newText, filename, options);
+  }
+
+  /**
+   * Applies a patience diff patch to content.
+   */
+  applyPatiencePatch(content: string, patch: string): UnifiedPatchResult {
+    return this.matcher.applyPatiencePatch(content, patch);
+  }
+
+  /**
+   * Matches and replaces code across lexical token streams, ignoring whitespace and formatting variations.
+   */
+  findAndReplaceTokenStream(
+    content: string,
+    oldSnippet: string,
+    newSnippet: string,
+    options: TokenStreamMatchOptions = {}
+  ): TokenStreamMatchResult {
+    return this.matcher.findAndReplaceTokenStream(content, oldSnippet, newSnippet, options);
+  }
+
+  /**
+   * Explains 3-way merge conflicts with structural category analysis and confidence-rated auto-resolutions.
+   */
+  explainMergeConflict(
+    baseContent: string,
+    oursContent: string,
+    theirsContent: string
+  ): SemanticConflictExplanation {
+    return this.matcher.explainMergeConflict(baseContent, oursContent, theirsContent);
+  }
+
+  /**
+   * Generates a reversible inverse diff that cleanly undoes mutations back to original content.
+   */
+  generateInversePatch(
+    originalContent: string,
+    modifiedContent: string,
+    filename: string = "file"
+  ): InversePatchResult {
+    return this.matcher.generateInversePatch(originalContent, modifiedContent, filename);
+  }
+
+  /**
+   * Generates a multi-file inverse patch to cleanly revert modifications across an entire workspace.
+   */
+  generateMultiFileInversePatch(
+    originalFiles: Record<string, string>,
+    modifiedFiles: Record<string, string>
+  ): MultiFileInversePatchResult {
+    return this.matcher.generateMultiFileInversePatch(originalFiles, modifiedFiles);
   }
 
   /**
