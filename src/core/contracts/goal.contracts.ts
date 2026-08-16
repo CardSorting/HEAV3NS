@@ -1,5 +1,5 @@
 /**
- * Persistent Session Goals, Quality Gates & Deterministic Goal Loop Contracts
+ * Persistent Session Goals, Quality Gates, Milestone DAGs & Swarm Coordination Contracts
  * Reference: hermes-agent-main/hermes_cli/goals.py, hermes_cli/loops.py
  * Subsystem: Target #74 / ADR-117
  */
@@ -47,15 +47,29 @@ export interface GoalGate {
   lastOutputTail: string;
   lastFailedFingerprint: string;
   autoRemediateCommand?: string;
+  remediatedCount?: number;
 }
 
 export interface GoalMilestone {
   id: string;
   title: string;
+  description?: string;
   status: MilestoneStatus;
   progressPercent: number;
+  dependsOn?: string[];
   blockers?: string[];
+  assignedSessionId?: string;
   completedAtMs?: number;
+}
+
+export interface GoalStepEvent {
+  turnIndex: number;
+  timestampMs: number;
+  actionSummary: string;
+  gatesEvaluated: number;
+  gatesPassed: number;
+  milestonesCompleted: string[];
+  verdict: GoalVerdict;
 }
 
 export interface GoalTemplate {
@@ -70,9 +84,35 @@ export interface GoalTemplate {
     command: string;
     policy: GoalGatePolicy;
     timeoutSeconds?: number;
+    autoRemediateCommand?: string;
   }[];
-  defaultMilestones: string[];
+  defaultMilestones: {
+    id: string;
+    title: string;
+    dependsOn?: string[];
+  }[];
   maxTurns: number;
+}
+
+export interface GoalDiffResult {
+  sessionIdA: string;
+  sessionIdB: string;
+  identical: boolean;
+  differences: {
+    field: string;
+    valueA: unknown;
+    valueB: unknown;
+  }[];
+  milestoneDelta: {
+    onlyInA: string[];
+    onlyInB: string[];
+    shared: string[];
+  };
+  gateDelta: {
+    onlyInA: string[];
+    onlyInB: string[];
+    shared: string[];
+  };
 }
 
 export interface GoalRetroSummary {
@@ -90,11 +130,14 @@ export interface GoalRetroSummary {
   finalVerdict?: GoalVerdict;
   finalReason?: string;
   contractAdherenceScore: number;
+  trajectoryEventsCount: number;
 }
 
 export interface GoalState {
   sessionId: string;
   goal: string;
+  parentGoalSessionId?: string;
+  childGoalSessionIds?: string[];
   templateId?: string;
   category?: GoalCategory;
   icon?: string;
@@ -111,6 +154,7 @@ export interface GoalState {
   consecutiveTransportFailures: number;
   subgoals: string[];
   milestones: GoalMilestone[];
+  trajectory: GoalStepEvent[];
   waitingOnPid?: number;
   waitingOnSession?: string;
   waitingUntil?: number;
@@ -131,12 +175,14 @@ export interface GoalEvaluationResult {
   waitForSeconds?: number;
   gateFailed?: boolean;
   milestonesUpdated?: boolean;
+  remediationAttempted?: boolean;
 }
 
 export interface GoalQueryFilter {
   status?: GoalStatus;
   category?: GoalCategory;
   templateId?: string;
+  parentSessionId?: string;
   text?: string;
   minProgress?: number;
   maxProgress?: number;
@@ -151,5 +197,6 @@ export interface GoalStateSnapshot {
   totalInvocations: number;
   totalCompletedGoals: number;
   totalGatesEvaluated: number;
+  totalRemediationsTriggered: number;
   lastUpdatedMs: number;
 }

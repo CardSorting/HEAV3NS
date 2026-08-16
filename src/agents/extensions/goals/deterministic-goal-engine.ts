@@ -1,5 +1,5 @@
 /**
- * Deterministic Goal Engine, Contract Parser, Quality Gate Pipeline & Template Catalog
+ * Deterministic Goal Engine, Contract Parser, Quality Gate Pipeline, Milestone DAG & Diffing Engine
  * Reference: hermes-agent-main/hermes_cli/goals.py, hermes_cli/loops.py
  * Subsystem: Target #74 / ADR-117
  */
@@ -9,12 +9,14 @@ import { promisify } from "node:util";
 import type {
   GoalCategory,
   GoalContract,
+  GoalDiffResult,
   GoalEvaluationResult,
   GoalGate,
   GoalMilestone,
   GoalQueryFilter,
   GoalRetroSummary,
   GoalState,
+  GoalStepEvent,
   GoalTemplate,
   GoalVerdict,
 } from "../../../core/contracts/goal.contracts.js";
@@ -83,10 +85,10 @@ export class DeterministicGoalEngine {
           { name: "Unit Test Suite", command: "npm test", policy: "blocking", timeoutSeconds: 300 },
         ],
         defaultMilestones: [
-          "Reproduce bug with a deterministic test case",
-          "Identify root cause in source codebase",
-          "Apply line-anchored bug fix",
-          "Verify all tests pass cleanly",
+          { id: "m-1", title: "Reproduce bug with a deterministic test case", dependsOn: [] },
+          { id: "m-2", title: "Identify root cause in source codebase", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Apply line-anchored bug fix", dependsOn: ["m-2"] },
+          { id: "m-4", title: "Verify all tests pass cleanly", dependsOn: ["m-3"] },
         ],
         maxTurns: 20,
       },
@@ -108,10 +110,10 @@ export class DeterministicGoalEngine {
           { name: "Regression Suite", command: "npm test", policy: "blocking", timeoutSeconds: 300 },
         ],
         defaultMilestones: [
-          "Define data contracts and interfaces",
-          "Implement zero-GC substrate and engine logic",
-          "Expose model tool suite and supervisor coordination",
-          "Verify with end-to-end automated validation suite",
+          { id: "m-1", title: "Define data contracts and interfaces", dependsOn: [] },
+          { id: "m-2", title: "Implement zero-GC substrate and engine logic", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Expose model tool suite and supervisor coordination", dependsOn: ["m-2"] },
+          { id: "m-4", title: "Verify with end-to-end automated validation suite", dependsOn: ["m-3"] },
         ],
         maxTurns: 25,
       },
@@ -133,10 +135,10 @@ export class DeterministicGoalEngine {
           { name: "Test Suite", command: "npm test", policy: "blocking", timeoutSeconds: 300 },
         ],
         defaultMilestones: [
-          "Establish baseline passing test suite",
-          "Extract focused classes and decouple dependencies",
-          "Wire into factory composition roots",
-          "Verify identical behavior and microsecond SLAs",
+          { id: "m-1", title: "Establish baseline passing test suite", dependsOn: [] },
+          { id: "m-2", title: "Extract focused classes and decouple dependencies", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Wire into factory composition roots", dependsOn: ["m-2"] },
+          { id: "m-4", title: "Verify identical behavior and microsecond SLAs", dependsOn: ["m-3"] },
         ],
         maxTurns: 20,
       },
@@ -157,9 +159,9 @@ export class DeterministicGoalEngine {
           { name: "Forensic Integrity", command: "node --import tsx scripts/validate-forensic-integrity.ts", policy: "blocking", timeoutSeconds: 60 },
         ],
         defaultMilestones: [
-          "Audit component manifest and ordering",
-          "Audit zero barrel file and base class immutability invariants",
-          "Verify frame tick determinism and microsecond rewind SLAs",
+          { id: "m-1", title: "Audit component manifest and ordering", dependsOn: [] },
+          { id: "m-2", title: "Audit zero barrel file and base class immutability invariants", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Verify frame tick determinism and microsecond rewind SLAs", dependsOn: ["m-2"] },
         ],
         maxTurns: 15,
       },
@@ -180,9 +182,9 @@ export class DeterministicGoalEngine {
           { name: "Production Build", command: "npm run build", policy: "blocking", timeoutSeconds: 120 },
         ],
         defaultMilestones: [
-          "Run full verification test suite",
-          "Compile production distribution bundle",
-          "Verify documentation and live baseline sync",
+          { id: "m-1", title: "Run full verification test suite", dependsOn: [] },
+          { id: "m-2", title: "Compile production distribution bundle", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Verify documentation and live baseline sync", dependsOn: ["m-2"] },
         ],
         maxTurns: 15,
       },
@@ -201,9 +203,9 @@ export class DeterministicGoalEngine {
         },
         recommendedGates: [],
         defaultMilestones: [
-          "Map core data contracts and entry points",
-          "Trace execution flow and state transitions",
-          "Document findings and architectural takeaways",
+          { id: "m-1", title: "Map core data contracts and entry points", dependsOn: [] },
+          { id: "m-2", title: "Trace execution flow and state transitions", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Document findings and architectural takeaways", dependsOn: ["m-2"] },
         ],
         maxTurns: 15,
       },
@@ -229,7 +231,7 @@ export class DeterministicGoalEngine {
   }
 
   /**
-   * Instantiates a new goal state from a template.
+   * Instantiates a new goal state from a template with topological milestone DAG.
    */
   public instantiateTemplate(
     templateId: string,
@@ -244,11 +246,13 @@ export class DeterministicGoalEngine {
       outcome: targetOutcome || tmpl.defaultContract.outcome,
     };
 
-    const milestones: GoalMilestone[] = tmpl.defaultMilestones.map((m, idx) => ({
-      id: `m-${idx + 1}`,
-      title: m,
-      status: "pending",
+    const milestones: GoalMilestone[] = tmpl.defaultMilestones.map((m) => ({
+      id: m.id,
+      title: m.title,
+      status: (m.dependsOn && m.dependsOn.length > 0) ? "blocked" : "pending",
       progressPercent: 0,
+      dependsOn: m.dependsOn ? [...m.dependsOn] : [],
+      blockers: m.dependsOn ? [...m.dependsOn] : [],
     }));
 
     const gates: GoalGate[] = tmpl.recommendedGates.map((g, idx) => ({
@@ -261,6 +265,7 @@ export class DeterministicGoalEngine {
       attempts: 0,
       lastOutputTail: "",
       lastFailedFingerprint: "",
+      autoRemediateCommand: g.autoRemediateCommand,
     }));
 
     const now = Date.now();
@@ -280,6 +285,7 @@ export class DeterministicGoalEngine {
       consecutiveTransportFailures: 0,
       subgoals: [],
       milestones,
+      trajectory: [],
       contract,
       gates,
     };
@@ -337,6 +343,79 @@ export class DeterministicGoalEngine {
   }
 
   /**
+   * Performs structural diff comparison between two session goal states.
+   */
+  public diffGoals(goalA: GoalState, goalB: GoalState): GoalDiffResult {
+    const differences: { field: string; valueA: unknown; valueB: unknown }[] = [];
+
+    const scalarFields: (keyof GoalState)[] = [
+      "goal",
+      "status",
+      "category",
+      "templateId",
+      "maxTurns",
+      "progressPercent",
+    ];
+
+    for (const field of scalarFields) {
+      if (goalA[field] !== goalB[field]) {
+        differences.push({
+          field,
+          valueA: goalA[field] ?? null,
+          valueB: goalB[field] ?? null,
+        });
+      }
+    }
+
+    // Milestones delta
+    const msA = new Set(goalA.milestones.map((m) => m.title));
+    const msB = new Set(goalB.milestones.map((m) => m.title));
+    const onlyMsA = Array.from(msA).filter((t) => !msB.has(t));
+    const onlyMsB = Array.from(msB).filter((t) => !msA.has(t));
+    const sharedMs = Array.from(msA).filter((t) => msB.has(t));
+
+    if (onlyMsA.length > 0 || onlyMsB.length > 0) {
+      differences.push({
+        field: "milestones",
+        valueA: Array.from(msA),
+        valueB: Array.from(msB),
+      });
+    }
+
+    // Gates delta
+    const gatesA = new Set(goalA.gates.map((g) => g.command));
+    const gatesB = new Set(goalB.gates.map((g) => g.command));
+    const onlyGatesA = Array.from(gatesA).filter((c) => !gatesB.has(c));
+    const onlyGatesB = Array.from(gatesB).filter((c) => !gatesA.has(c));
+    const sharedGates = Array.from(gatesA).filter((c) => gatesB.has(c));
+
+    if (onlyGatesA.length > 0 || onlyGatesB.length > 0) {
+      differences.push({
+        field: "gates",
+        valueA: Array.from(gatesA),
+        valueB: Array.from(gatesB),
+      });
+    }
+
+    return {
+      sessionIdA: goalA.sessionId,
+      sessionIdB: goalB.sessionId,
+      identical: differences.length === 0,
+      differences,
+      milestoneDelta: {
+        onlyInA: onlyMsA,
+        onlyInB: onlyMsB,
+        shared: sharedMs,
+      },
+      gateDelta: {
+        onlyInA: onlyGatesA,
+        onlyInB: onlyGatesB,
+        shared: sharedGates,
+      },
+    };
+  }
+
+  /**
    * Parses Natural Query DSL expressions like 'is:active category:bugfix sort:progress'
    */
   public parseQueryDSL(query: string): GoalQueryFilter {
@@ -358,6 +437,8 @@ export class DeterministicGoalEngine {
         filter.category = token.split(":")[1] as GoalCategory;
       } else if (lower.startsWith("template:") || lower.startsWith("tmpl:")) {
         filter.templateId = token.split(":")[1];
+      } else if (lower.startsWith("parent:")) {
+        filter.parentSessionId = token.split(":")[1];
       } else if (lower.startsWith("sort:")) {
         const sortVal = token.split(":")[1].toLowerCase();
         if (sortVal === "recent" || sortVal === "progress" || sortVal === "turns") {
@@ -388,7 +469,6 @@ export class DeterministicGoalEngine {
     for (const m of milestones) {
       if (m.status === "completed") continue;
 
-      // Look for completion markers mentioning the milestone
       const lowerResp = responseText.toLowerCase();
       const lowerTitle = m.title.toLowerCase();
 
@@ -405,6 +485,10 @@ export class DeterministicGoalEngine {
         m.completedAtMs = Date.now();
         modified = true;
       }
+    }
+
+    if (modified) {
+      this.substrate.resolveMilestoneDAG(milestones);
     }
 
     return modified;
@@ -442,10 +526,12 @@ export class DeterministicGoalEngine {
 
     if (milestones && milestones.length > 0) {
       const msLines = milestones.map((m) => {
-        const check = m.status === "completed" ? "[x]" : "[ ]";
-        return `${check} ${m.title} (${m.status})`;
+        let tag = "[ ]";
+        if (m.status === "completed") tag = "[x]";
+        else if (m.status === "blocked") tag = `[BLOCKED by ${m.blockers?.join(", ")}]`;
+        return `${tag} ${m.title} (${m.status})`;
       });
-      prompt += `Milestone Progress:\n${msLines.join("\n")}\n\n`;
+      prompt += `Milestone DAG Progress:\n${msLines.join("\n")}\n\n`;
     } else if (subgoals && subgoals.length > 0) {
       const subgoalsBlock = subgoals.map((s, i) => `${i + 1}. ${s}`).join("\n");
       prompt += `Additional criteria added mid-loop:\n${subgoalsBlock}\n\n`;
@@ -487,11 +573,12 @@ export class DeterministicGoalEngine {
       finalVerdict: state.lastVerdict,
       finalReason: state.lastReason,
       contractAdherenceScore: Math.max(0, adherenceScore),
+      trajectoryEventsCount: state.trajectory ? state.trajectory.length : 0,
     };
   }
 
   /**
-   * Evaluates quality gates and turn progression after an agent frame step.
+   * Evaluates quality gates, performs auto-remediation if configured, and evaluates turn progression.
    */
   public async evaluateAfterTurn(options: {
     state: GoalState;
@@ -529,6 +616,8 @@ export class DeterministicGoalEngine {
       state.lastReason = state.pausedReason;
       this.substrate.setGoal(state);
 
+      this.recordStep(state, "Max turn budget reached", 0, 0, "continue");
+
       return {
         shouldContinue: false,
         verdict: "continue",
@@ -538,14 +627,19 @@ export class DeterministicGoalEngine {
       };
     }
 
-    // 2. Evaluate quality gates
+    // 2. Evaluate quality gates with auto-remediation
     let blockingGateFailed = false;
+    let remediationAttempted = false;
+    let gatesEvaluated = 0;
+    let gatesPassed = 0;
+
     for (const gate of state.gates) {
       this.substrate.recordGateEvaluation();
       gate.attempts += 1;
+      gatesEvaluated += 1;
+      const timeoutMs = (gate.timeoutSeconds || DEFAULT_GATE_TIMEOUT_SECONDS) * 1000;
 
       try {
-        const timeoutMs = (gate.timeoutSeconds || DEFAULT_GATE_TIMEOUT_SECONDS) * 1000;
         const { stdout, stderr } = await execAsync(gate.command, {
           cwd: cwd || process.cwd(),
           timeout: timeoutMs,
@@ -554,10 +648,36 @@ export class DeterministicGoalEngine {
         gate.lastExitCode = 0;
         const combined = (stdout || "") + (stderr || "");
         gate.lastOutputTail = combined.slice(-GATE_OUTPUT_TAIL_CHARS);
+        gatesPassed += 1;
       } catch (err: any) {
         gate.lastExitCode = typeof err.code === "number" ? err.code : 1;
         const combined = (err.stdout || "") + (err.stderr || "") + (err.message || "");
         gate.lastOutputTail = combined.slice(-GATE_OUTPUT_TAIL_CHARS);
+
+        // Attempt auto-remediation if available
+        if (gate.autoRemediateCommand && (gate.remediatedCount || 0) < 2) {
+          try {
+            remediationAttempted = true;
+            this.substrate.recordRemediation();
+            gate.remediatedCount = (gate.remediatedCount || 0) + 1;
+            await execAsync(gate.autoRemediateCommand, {
+              cwd: cwd || process.cwd(),
+              timeout: 60000,
+            });
+
+            // Re-run gate command after remediation
+            const retryRes = await execAsync(gate.command, {
+              cwd: cwd || process.cwd(),
+              timeout: timeoutMs,
+            });
+            gate.lastExitCode = 0;
+            gate.lastOutputTail = ((retryRes.stdout || "") + (retryRes.stderr || "")).slice(-GATE_OUTPUT_TAIL_CHARS);
+            gatesPassed += 1;
+            continue;
+          } catch {
+            // Remediation didn't clear the issue; continue to fail gate
+          }
+        }
 
         if (gate.policy === "blocking" || gate.policy === undefined) {
           blockingGateFailed = true;
@@ -572,6 +692,8 @@ export class DeterministicGoalEngine {
       state.lastReason = reason;
       this.substrate.setGoal(state);
 
+      this.recordStep(state, `Blocking gate '${failedGate?.command}' failed`, gatesEvaluated, gatesPassed, "continue");
+
       return {
         shouldContinue: true,
         verdict: "continue",
@@ -579,10 +701,11 @@ export class DeterministicGoalEngine {
         continuationPrompt: this.renderContinuationPrompt(state.goal, state.contract, state.subgoals, state.milestones),
         gateFailed: true,
         milestonesUpdated,
+        remediationAttempted,
       };
     }
 
-    // 3. Evaluate completion from response text / judge
+    // 3. Evaluate completion from response text
     const lowerResp = lastResponse.toLowerCase();
     const isExplicitlyDone =
       lowerResp.includes("[goal:done]") ||
@@ -597,6 +720,8 @@ export class DeterministicGoalEngine {
       this.substrate.setGoal(state);
       this.substrate.recordCompletion();
 
+      this.recordStep(state, "Goal completed successfully", gatesEvaluated, gatesPassed, "done");
+
       const retro = this.generateRetrospective(state);
       this.substrate.archiveGoal(retro);
 
@@ -605,6 +730,7 @@ export class DeterministicGoalEngine {
         verdict: "done",
         reason: state.lastReason,
         milestonesUpdated,
+        remediationAttempted,
       };
     }
 
@@ -613,12 +739,35 @@ export class DeterministicGoalEngine {
     state.lastReason = "Continuing toward goal outcome.";
     this.substrate.setGoal(state);
 
+    this.recordStep(state, "Continuing toward goal", gatesEvaluated, gatesPassed, "continue");
+
     return {
       shouldContinue: true,
       verdict: "continue",
       reason: state.lastReason,
       continuationPrompt: this.renderContinuationPrompt(state.goal, state.contract, state.subgoals, state.milestones),
       milestonesUpdated,
+      remediationAttempted,
     };
+  }
+
+  private recordStep(
+    state: GoalState,
+    summary: string,
+    gatesEvaluated: number,
+    gatesPassed: number,
+    verdict: GoalVerdict
+  ): void {
+    const completedMs = state.milestones.filter((m) => m.status === "completed").map((m) => m.id);
+    const event: GoalStepEvent = {
+      turnIndex: state.turnsUsed,
+      timestampMs: Date.now(),
+      actionSummary: summary,
+      gatesEvaluated,
+      gatesPassed,
+      milestonesCompleted: completedMs,
+      verdict,
+    };
+    this.substrate.recordStepEvent(state.sessionId, event);
   }
 }

@@ -1,11 +1,12 @@
 /**
- * Goal Supervisor coordinating Goal Lifecycle, Quality Gates, Milestone DAGs & Slash Command UX
+ * Goal Supervisor coordinating Goal Lifecycle, Quality Gates, Milestone DAGs, Diffing & Slash Command UX
  * Reference: hermes-agent-main/hermes_cli/goals.py, hermes_cli/loops.py
  * Subsystem: Target #74 / ADR-117
  */
 
 import type {
   GoalContract,
+  GoalDiffResult,
   GoalEvaluationResult,
   GoalGate,
   GoalGatePolicy,
@@ -13,6 +14,7 @@ import type {
   GoalQueryFilter,
   GoalRetroSummary,
   GoalState,
+  GoalStepEvent,
   GoalTemplate,
 } from "../../../core/contracts/goal.contracts.js";
 import {
@@ -42,9 +44,10 @@ export class GoalSupervisor {
       maxTurns?: number;
       contract?: GoalContract;
       gates?: GoalGate[];
-      milestones?: string[];
+      milestones?: string[] | GoalMilestone[];
       category?: string;
       icon?: string;
+      parentGoalSessionId?: string;
     } = {}
   ): GoalState {
     this.substrate.recordInvocation();
@@ -52,17 +55,25 @@ export class GoalSupervisor {
     const effectiveGoal = headline || rawText;
     const mergedContract = { ...contract, ...(options.contract || {}) };
 
-    const milestones: GoalMilestone[] = (options.milestones || []).map((m, idx) => ({
-      id: `m-${idx + 1}`,
-      title: m,
-      status: "pending",
-      progressPercent: 0,
-    }));
+    let milestones: GoalMilestone[] = [];
+    if (Array.isArray(options.milestones)) {
+      if (options.milestones.length > 0 && typeof options.milestones[0] === "string") {
+        milestones = (options.milestones as string[]).map((m, idx) => ({
+          id: `m-${idx + 1}`,
+          title: m,
+          status: "pending",
+          progressPercent: 0,
+        }));
+      } else {
+        milestones = (options.milestones as GoalMilestone[]).map((m) => ({ ...m }));
+      }
+    }
 
     const state: GoalState = {
       sessionId,
       goal: effectiveGoal,
-      category: options.category as any || "general",
+      parentGoalSessionId: options.parentGoalSessionId,
+      category: (options.category as any) || "general",
       icon: options.icon || "🎯",
       status: "active",
       turnsUsed: 0,
@@ -74,11 +85,17 @@ export class GoalSupervisor {
       consecutiveTransportFailures: 0,
       subgoals: [],
       milestones,
+      trajectory: [],
       contract: mergedContract,
       gates: options.gates ? options.gates.map((g) => ({ ...g })) : [],
     };
 
     this.substrate.setGoal(state);
+
+    if (options.parentGoalSessionId) {
+      this.substrate.linkChildGoal(options.parentGoalSessionId, sessionId);
+    }
+
     return state;
   }
 
@@ -111,7 +128,14 @@ export class GoalSupervisor {
     return this.substrate.listGoals(queryOrFilter);
   }
 
-  addMilestone(sessionId: string, title: string): boolean {
+  diffGoals(sessionIdA: string, sessionIdB: string): GoalDiffResult | undefined {
+    const goalA = this.substrate.getGoal(sessionIdA);
+    const goalB = this.substrate.getGoal(sessionIdB);
+    if (!goalA || !goalB) return undefined;
+    return this.engine.diffGoals(goalA, goalB);
+  }
+
+  addMilestone(sessionId: string, title: string, dependsOn: string[] = []): boolean {
     const state = this.substrate.getGoal(sessionId);
     if (!state) return false;
 
@@ -119,8 +143,10 @@ export class GoalSupervisor {
     state.milestones.push({
       id: newId,
       title: title.trim(),
-      status: "pending",
+      status: dependsOn.length > 0 ? "blocked" : "pending",
       progressPercent: 0,
+      dependsOn: [...dependsOn],
+      blockers: [...dependsOn],
     });
 
     this.substrate.setGoal(state);
@@ -142,6 +168,28 @@ export class GoalSupervisor {
     return true;
   }
 
+  delegateSubGoal(
+    parentSessionId: string,
+    childSessionId: string,
+    subGoalTitle: string,
+    options: { maxTurns?: number; category?: string } = {}
+  ): GoalState | undefined {
+    const parent = this.substrate.getGoal(parentSessionId);
+    if (!parent) return undefined;
+
+    const child = this.setGoal(childSessionId, subGoalTitle, {
+      maxTurns: options.maxTurns || 15,
+      category: options.category || parent.category,
+      parentGoalSessionId: parentSessionId,
+      contract: {
+        ...parent.contract,
+        outcome: subGoalTitle,
+      },
+    });
+
+    return child;
+  }
+
   addSubgoal(sessionId: string, criterion: string): boolean {
     const state = this.substrate.getGoal(sessionId);
     if (!state) return false;
@@ -153,7 +201,13 @@ export class GoalSupervisor {
   addGate(
     sessionId: string,
     command: string,
-    options: { name?: string; policy?: GoalGatePolicy; timeoutSeconds?: number; maxRetries?: number } = {}
+    options: {
+      name?: string;
+      policy?: GoalGatePolicy;
+      timeoutSeconds?: number;
+      maxRetries?: number;
+      autoRemediateCommand?: string;
+    } = {}
   ): boolean {
     const state = this.substrate.getGoal(sessionId);
     if (!state) return false;
@@ -168,6 +222,7 @@ export class GoalSupervisor {
       attempts: 0,
       lastOutputTail: "",
       lastFailedFingerprint: "",
+      autoRemediateCommand: options.autoRemediateCommand,
     };
 
     state.gates.push(gate);
@@ -203,6 +258,11 @@ export class GoalSupervisor {
     state.status = "cleared";
     this.substrate.setGoal(state);
     return true;
+  }
+
+  getTrajectory(sessionId: string): readonly GoalStepEvent[] {
+    const state = this.substrate.getGoal(sessionId);
+    return state?.trajectory ? [...state.trajectory] : [];
   }
 
   getRetrospective(sessionId: string): GoalRetroSummary | undefined {
@@ -287,10 +347,12 @@ export class GoalSupervisor {
       ];
 
       if (state.milestones.length > 0) {
-        out.push(``, `\x1b[1;34mMilestones Checklist:\x1b[0m`);
+        out.push(``, `\x1b[1;34mMilestone DAG Progress:\x1b[0m`);
         for (const m of state.milestones) {
-          const check = m.status === "completed" ? "\x1b[32m[✓]\x1b[0m" : "\x1b[90m[ ]\x1b[0m";
-          out.push(`  ${check} \x1b[1m${m.title}\x1b[0m (${m.status})`);
+          let statusIcon = "\x1b[90m[ ]\x1b[0m";
+          if (m.status === "completed") statusIcon = "\x1b[32m[✓]\x1b[0m";
+          else if (m.status === "blocked") statusIcon = `\x1b[31m[🔒 Blocked by ${m.blockers?.join(",")}]\x1b[0m`;
+          out.push(`  ${statusIcon} \x1b[1m${m.title}\x1b[0m (${m.status})`);
         }
       }
 
@@ -302,7 +364,65 @@ export class GoalSupervisor {
         }
       }
 
-      out.push(``, `\x1b[90mCommands: /goal milestone add <title> | /goal gate add <cmd> | /goal pause | /goal retro\x1b[0m`);
+      out.push(``, `\x1b[90mCommands: /goal tree | /goal diff <a b> | /goal milestone add <title> | /goal retro\x1b[0m`);
+      return { success: true, output: out.join("\n") };
+    }
+
+    // /goal tree
+    if (subCmd === "tree" || subCmd === "dag") {
+      const state = this.substrate.getGoal(sessionId);
+      if (!state) return { success: false, output: "No active goal set for this session." };
+
+      const out = [
+        `\x1b[1;36m=== Milestone Dependency DAG: ${state.goal} ===\x1b[0m`,
+        ...state.milestones.map((m, idx) => {
+          const prefix = idx === state.milestones.length - 1 ? "└── " : "├── ";
+          const icon = m.status === "completed" ? "✓" : m.status === "blocked" ? "🔒" : "⏳";
+          const depStr = m.dependsOn && m.dependsOn.length > 0 ? ` (depends on: ${m.dependsOn.join(", ")})` : "";
+          return `${prefix}[${icon}] \x1b[1m${m.id}: ${m.title}\x1b[0m [${m.status}]${depStr}`;
+        }),
+      ];
+      return { success: true, output: out.join("\n") };
+    }
+
+    // /goal diff <idA> <idB>
+    if (subCmd === "diff" || subCmd === "compare") {
+      const idA = parts[2];
+      const idB = parts[3];
+      if (!idA || !idB) return { success: false, output: "Usage: /goal diff <session_id_a> <session_id_b>" };
+
+      const diff = this.diffGoals(idA, idB);
+      if (!diff) return { success: false, output: `One or both session goals ('${idA}', '${idB}') not found.` };
+
+      if (diff.identical) {
+        return { success: true, output: `\x1b[1;32m✓ Goals in sessions '${idA}' and '${idB}' are structurally identical.\x1b[0m` };
+      }
+
+      const out = [
+        `\x1b[1;36m=== Goal Structural Diff: ${idA} <-> ${idB} ===\x1b[0m`,
+        ...diff.differences.map((d) => `  \x1b[1m${d.field.padEnd(16)}\x1b[0m: \x1b[31m${JSON.stringify(d.valueA)}\x1b[0m -> \x1b[32m${JSON.stringify(d.valueB)}\x1b[0m`),
+      ];
+      if (diff.milestoneDelta.onlyInA.length > 0) {
+        out.push(`  Milestones only in ${idA}: \x1b[31m${diff.milestoneDelta.onlyInA.join(", ")}\x1b[0m`);
+      }
+      if (diff.milestoneDelta.onlyInB.length > 0) {
+        out.push(`  Milestones only in ${idB}: \x1b[32m${diff.milestoneDelta.onlyInB.join(", ")}\x1b[0m`);
+      }
+      return { success: true, output: out.join("\n") };
+    }
+
+    // /goal trajectory
+    if (subCmd === "trajectory" || subCmd === "timeline") {
+      const targetSid = parts[2] || sessionId;
+      const trajectory = this.getTrajectory(targetSid);
+      if (!trajectory || trajectory.length === 0) {
+        return { success: true, output: `No recorded trajectory events for session '${targetSid}'.` };
+      }
+
+      const out = [
+        `\x1b[1;36m=== Goal Execution Trajectory (${trajectory.length} Events) ===\x1b[0m`,
+        ...trajectory.map((e) => `  \x1b[33m[Turn ${e.turnIndex}]\x1b[0m \x1b[90m${new Date(e.timestampMs).toISOString().slice(11, 19)}\x1b[0m - ${e.actionSummary} (\x1b[32m${e.verdict}\x1b[0m)`),
+      ];
       return { success: true, output: out.join("\n") };
     }
 
@@ -437,6 +557,9 @@ export class GoalSupervisor {
       output: [
         `\x1b[1;36m=== /goal Command Navigation ===\x1b[0m`,
         `  /goal                        - Show active goal dashboard, progress & gates`,
+        `  /goal tree                   - View ASCII milestone dependency DAG tree`,
+        `  /goal diff <idA> <idB>       - Compare structural differences between goals`,
+        `  /goal trajectory [id]        - Chronological timeline audit trail`,
         `  /goal set <text>             - Set active standing goal with contract`,
         `  /goal template <id> [outcome]- Instantiate goal from template`,
         `  /goal templates              - Browse built-in templates`,

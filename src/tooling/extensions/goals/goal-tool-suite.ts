@@ -1,5 +1,5 @@
 /**
- * Model Tool Suite for Goal Management, Quality Gates, Milestone DAGs & Retrospectives
+ * Model Tool Suite for Goal Management, Quality Gates, Milestone DAGs, Diffing & Retrospectives
  * Subsystem: Target #74 / ADR-117
  */
 
@@ -59,7 +59,7 @@ export class GoalToolSuite {
       },
       {
         name: "goal_status",
-        description: "Inspect active goal, milestone progression, quality gates, and wait status for a session.",
+        description: "Inspect active goal, milestone DAG progression, quality gates, and wait status for a session.",
         parameters: {
           sessionId: {
             type: "string",
@@ -139,7 +139,7 @@ export class GoalToolSuite {
       },
       {
         name: "goal_milestone",
-        description: "Add a milestone checkpoint or mark an existing milestone as completed.",
+        description: "Add a milestone checkpoint (with optional DAG dependencies) or mark an existing milestone as completed.",
         parameters: {
           action: {
             type: "string",
@@ -151,6 +151,11 @@ export class GoalToolSuite {
             description: "Milestone title (for 'add') or milestone ID/title (for 'complete').",
             required: true,
           },
+          dependsOn: {
+            type: "string",
+            description: "Optional comma-separated IDs of prerequisites milestones.",
+            required: false,
+          },
           sessionId: {
             type: "string",
             description: "Session identifier.",
@@ -161,14 +166,18 @@ export class GoalToolSuite {
           const action = String(args.action || "").toLowerCase();
           const titleOrId = String(args.titleOrId || "").trim();
           const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const dependsOn =
+            typeof args.dependsOn === "string" && args.dependsOn.length > 0
+              ? args.dependsOn.split(",").map((d) => d.trim()).filter(Boolean)
+              : [];
 
           if (!titleOrId) return { success: false, error: "titleOrId is required" };
 
           if (action === "add") {
-            const ok = this.supervisor.addMilestone(sessionId, titleOrId);
+            const ok = this.supervisor.addMilestone(sessionId, titleOrId, dependsOn);
             return {
               success: ok,
-              message: ok ? `Added milestone '${titleOrId}'` : "No active goal found",
+              message: ok ? `Added milestone '${titleOrId}' (depends on: ${dependsOn.join(",") || "none"})` : "No active goal found",
             };
           }
 
@@ -197,6 +206,11 @@ export class GoalToolSuite {
             description: "'blocking' (strictly fails closed) | 'advisory' (warns only). Default: 'blocking'.",
             required: false,
           },
+          autoRemediateCommand: {
+            type: "string",
+            description: "Optional shell command to automatically execute if the gate fails before aborting.",
+            required: false,
+          },
           sessionId: {
             type: "string",
             description: "Session identifier.",
@@ -211,13 +225,64 @@ export class GoalToolSuite {
         execute: async (args: Record<string, unknown>, _cwd: string) => {
           const command = String(args.command || "");
           const policy = args.policy === "advisory" ? "advisory" : "blocking";
+          const autoRemediateCommand = typeof args.autoRemediateCommand === "string" ? args.autoRemediateCommand : undefined;
           const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
           const timeoutSeconds = typeof args.timeoutSeconds === "number" ? args.timeoutSeconds : undefined;
 
-          const success = this.supervisor.addGate(sessionId, command, { policy, timeoutSeconds });
+          const success = this.supervisor.addGate(sessionId, command, { policy, timeoutSeconds, autoRemediateCommand });
           return {
             success,
             message: success ? `Added ${policy} quality gate '$ ${command}' to session '${sessionId}'.` : `No active goal found for session '${sessionId}'.`,
+          };
+        },
+      },
+      {
+        name: "goal_diff",
+        description: "Perform a structural diff comparison between two session goals.",
+        parameters: {
+          sessionIdA: {
+            type: "string",
+            description: "First session ID.",
+            required: true,
+          },
+          sessionIdB: {
+            type: "string",
+            description: "Second session ID.",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const idA = String(args.sessionIdA || "").trim();
+          const idB = String(args.sessionIdB || "").trim();
+          if (!idA || !idB) return { success: false, error: "sessionIdA and sessionIdB are required" };
+
+          const diff = this.supervisor.diffGoals(idA, idB);
+          if (!diff) return { success: false, error: `One or both goals ('${idA}', '${idB}') not found` };
+
+          return {
+            success: true,
+            diff,
+          };
+        },
+      },
+      {
+        name: "goal_trajectory",
+        description: "Inspect chronological step execution events and gate evaluations trajectory for a session goal.",
+        parameters: {
+          sessionId: {
+            type: "string",
+            description: "Session identifier.",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const trajectory = this.supervisor.getTrajectory(sessionId);
+
+          return {
+            success: true,
+            totalEvents: trajectory.length,
+            trajectory,
           };
         },
       },

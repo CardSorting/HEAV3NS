@@ -2424,6 +2424,7 @@ export { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
 export type {
   GoalCategory,
   GoalContract,
+  GoalDiffResult,
   GoalEvaluationResult,
   GoalGate,
   GoalGatePolicy,
@@ -2433,6 +2434,7 @@ export type {
   GoalState,
   GoalStateSnapshot,
   GoalStatus,
+  GoalStepEvent,
   GoalTemplate,
   GoalVerdict,
   MilestoneStatus,

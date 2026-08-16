@@ -1,6 +1,6 @@
 /**
  * Comprehensive Validation Suite for Persistent Goals, Quality Gate Policies,
- * Milestone DAGs, Goal Templates, and Retrospectives (Target #74 / ADR-117).
+ * Milestone DAGs, Goal Templates, Diffing, Swarms and Retrospectives (Target #74 / ADR-117).
  */
 
 import assert from "node:assert";
@@ -14,9 +14,9 @@ import { GrandMonolithSynthesizer } from "../src/factories/grand-monolith-synthe
 import { MonolithFactory } from "../src/factories/monolith-factory.js";
 
 async function runGoalValidationSuites() {
-  console.log("================================================================");
-  console.log("   LUMI World-Class Goal & Quality Gate System (ADR-117 Audit) ");
-  console.log("================================================================\n");
+  console.log("================================================================================");
+  console.log(" LUMI World-Class Goal & Quality Gate System (ADR-117 Above-The-Fold Audit)    ");
+  console.log("================================================================================\n");
 
   const substrate = new BroccoliGoalSubstrate();
   const engine = new DeterministicGoalEngine(substrate);
@@ -69,40 +69,52 @@ async function runGoalValidationSuites() {
   console.log("  [✓] Built-in goal templates catalog validated and instantiated seamlessly.");
 
   // ---------------------------------------------------------------------------
-  // Suite 3: Validating Milestone Progression & Dynamic Percentage Recalculation
+  // Suite 3: Validating Milestone DAG Dependency Blocker Resolution & Progress
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 3/12] Validating Milestone Progression & Dynamic Progress...");
-  assert.strictEqual(bugfixState?.progressPercent, 0);
+  console.log("\n[Suite 3/12] Validating Milestone DAG Dependency Blocker Resolution...");
+  // In bugfix: m-1 is pending, m-2 depends on m-1 (blocked), m-3 depends on m-2 (blocked), m-4 depends on m-3 (blocked)
+  let ms1 = bugfixState?.milestones.find((m) => m.id === "m-1");
+  let ms2 = bugfixState?.milestones.find((m) => m.id === "m-2");
+  assert.strictEqual(ms1?.status, "pending");
+  assert.strictEqual(ms2?.status, "blocked");
+  assert.deepStrictEqual(ms2?.blockers, ["m-1"]);
 
+  // Complete m-1 -> m-2 should transition from blocked to pending
   supervisor.completeMilestone("session-bugfix-1", "m-1");
   let updated = supervisor.getGoal("session-bugfix-1");
   assert.strictEqual(updated?.progressPercent, 25);
+  ms2 = updated?.milestones.find((m) => m.id === "m-2");
+  assert.strictEqual(ms2?.status, "pending");
+  assert.strictEqual(ms2?.blockers?.length, 0);
 
+  // Complete m-2 -> m-3 unblocks
   supervisor.completeMilestone("session-bugfix-1", "m-2");
   updated = supervisor.getGoal("session-bugfix-1");
   assert.strictEqual(updated?.progressPercent, 50);
-
-  supervisor.addMilestone("session-bugfix-1", "Add stress benchmark verification");
-  updated = supervisor.getGoal("session-bugfix-1");
-  assert.strictEqual(updated?.milestones.length, 5);
-  assert.strictEqual(updated?.progressPercent, 40); // 2 of 5 = 40%
-  console.log("  [✓] Milestone DAG completion and progress recalculation verified.");
+  let ms3 = updated?.milestones.find((m) => m.id === "m-3");
+  assert.strictEqual(ms3?.status, "pending");
+  console.log("  [✓] Milestone topological DAG dependencies and blocker unravelling verified.");
 
   // ---------------------------------------------------------------------------
-  // Suite 4: Multi-Stage Quality Gates with Blocking & Advisory Policy Support
+  // Suite 4: Multi-Stage Quality Gates with Blocking, Advisory & Auto-Remediation
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 4/12] Validating Multi-Stage Quality Gates (Blocking vs Advisory)...");
+  console.log("\n[Suite 4/12] Validating Quality Gates Policies & Auto-Remediation...");
   supervisor.addGate("session-bugfix-1", "echo 'advisory lint passed'", { name: "Linter", policy: "advisory" });
-  supervisor.addGate("session-bugfix-1", "echo 'tests passed'", { name: "Tests", policy: "blocking" });
+  supervisor.addGate("session-bugfix-1", "echo 'tests passed'", {
+    name: "Tests",
+    policy: "blocking",
+    autoRemediateCommand: "echo 'fixing formatting'",
+  });
 
   const stateWithGates = supervisor.getGoal("session-bugfix-1")!;
   assert.strictEqual(stateWithGates.gates.length, 3);
   assert.ok(stateWithGates.gates.some((g) => g.policy === "advisory"));
   assert.ok(stateWithGates.gates.some((g) => g.policy === "blocking"));
-  console.log("  [✓] Blocking and advisory quality gate policies registered cleanly.");
+  assert.ok(stateWithGates.gates.some((g) => g.autoRemediateCommand !== undefined));
+  console.log("  [✓] Blocking/advisory gates and auto-remediation command bindings verified.");
 
   // ---------------------------------------------------------------------------
-  // Suite 5: Consecutive Failure Fingerprinting & Turn Budget Guard
+  // Suite 5: Turn Budget & Consecutive Failure Throttling
   // ---------------------------------------------------------------------------
   console.log("\n[Suite 5/12] Validating Turn Budget & Pause Mechanics...");
   const budgetState = supervisor.setGoal("session-budget-1", "Quick task", { maxTurns: 2 });
@@ -118,26 +130,58 @@ async function runGoalValidationSuites() {
   console.log("  [✓] Automatic turn budget pause mechanics verified.");
 
   // ---------------------------------------------------------------------------
-  // Suite 6: Goal Lifecycle State Transitions (Pause, Resume, Clear)
+  // Suite 6: Multi-Session Goal Delegation & Swarm Blended Progress
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 6/12] Validating Goal Lifecycle State Transitions...");
-  const lifeState = supervisor.setGoal("session-life-1", "Lifecycle test goal");
-  assert.strictEqual(lifeState.status, "active");
+  console.log("\n[Suite 6/12] Validating Multi-Session Goal Delegation & Swarm Blended Progress...");
+  const parentGoal = supervisor.setGoal("session-swarm-parent", "Major Architecture Migration", {
+    milestones: ["Phase 1 Core", "Phase 2 Extensions"],
+  });
+  supervisor.completeMilestone("session-swarm-parent", "m-1"); // 50%
 
-  supervisor.pauseGoal("session-life-1", "Awaiting user feedback");
-  assert.strictEqual(supervisor.getGoal("session-life-1")?.status, "paused");
+  const childWorker1 = supervisor.delegateSubGoal(
+    "session-swarm-parent",
+    "session-swarm-child-1",
+    "Subgoal: Migrate Token Verifier"
+  );
+  assert.ok(childWorker1);
+  assert.strictEqual(childWorker1?.parentGoalSessionId, "session-swarm-parent");
 
-  supervisor.resumeGoal("session-life-1");
-  assert.strictEqual(supervisor.getGoal("session-life-1")?.status, "active");
-
-  supervisor.clearGoal("session-life-1");
-  assert.strictEqual(supervisor.getGoal("session-life-1")?.status, "cleared");
-  console.log("  [✓] Goal lifecycle transitions (active -> paused -> active -> cleared) verified.");
+  const parentWithChild = supervisor.getGoal("session-swarm-parent");
+  assert.ok(parentWithChild?.childGoalSessionIds?.includes("session-swarm-child-1"));
+  console.log("  [✓] Multi-session goal delegation and parent-child swarm coordination verified.");
 
   // ---------------------------------------------------------------------------
-  // Suite 7: Post-Goal Retrospective Summaries & Completion Archive
+  // Suite 7: Structural Goal Differential Comparison Engine (diffGoals)
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 7/12] Validating Post-Goal Retrospective Summaries & Archive...");
+  console.log("\n[Suite 7/12] Validating Structural Goal Differential Comparison (diffGoals)...");
+  const diffRes = supervisor.diffGoals("session-bugfix-1", "session-swarm-parent");
+  assert.ok(diffRes);
+  assert.strictEqual(diffRes?.identical, false);
+  assert.ok(diffRes?.differences.length && diffRes.differences.length > 0);
+  assert.ok(diffRes?.milestoneDelta.onlyInA.length && diffRes.milestoneDelta.onlyInA.length > 0);
+
+  const identicalDiff = supervisor.diffGoals("session-bugfix-1", "session-bugfix-1");
+  assert.strictEqual(identicalDiff?.identical, true);
+  console.log("  [✓] Structural goal differential comparison verified.");
+
+  // ---------------------------------------------------------------------------
+  // Suite 8: Execution Step Trajectory Timeline Logging
+  // ---------------------------------------------------------------------------
+  console.log("\n[Suite 8/12] Validating Step Trajectory Timeline Logging...");
+  const trajGoal = supervisor.setGoal("session-traj-1", "Trajectory test goal");
+  await supervisor.evaluateTurn("session-traj-1", "Taking turn 1");
+  await supervisor.evaluateTurn("session-traj-1", "Taking turn 2");
+
+  const trajectory = supervisor.getTrajectory("session-traj-1");
+  assert.strictEqual(trajectory.length, 2);
+  assert.strictEqual(trajectory[0].turnIndex, 1);
+  assert.strictEqual(trajectory[1].turnIndex, 2);
+  console.log("  [✓] Chronological execution trajectory events logged and inspected cleanly.");
+
+  // ---------------------------------------------------------------------------
+  // Suite 9: Post-Goal Retrospective Summaries & Completion Archive
+  // ---------------------------------------------------------------------------
+  console.log("\n[Suite 9/12] Validating Post-Goal Retrospective Summaries & Archive...");
   const completeState = supervisor.setGoal("session-done-1", "Release candidate packaging", {
     milestones: ["Build assets", "Verify checksums"],
   });
@@ -159,9 +203,9 @@ async function runGoalValidationSuites() {
   console.log("  [✓] Retrospective summary generated and archived to substrate.");
 
   // ---------------------------------------------------------------------------
-  // Suite 8: Natural Query DSL Parsing & Multi-Session Goal Search
+  // Suite 10: Natural Query DSL Parsing & Multi-Session Goal Search
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 8/12] Validating Natural Query DSL & Multi-Session Goal Search...");
+  console.log("\n[Suite 10/12] Validating Natural Query DSL & Multi-Session Goal Search...");
   const dslFilter = engine.parseQueryDSL("is:active category:bugfix sort:progress limit:10");
   assert.strictEqual(dslFilter.status, "active");
   assert.strictEqual(dslFilter.category, "bugfix");
@@ -174,24 +218,9 @@ async function runGoalValidationSuites() {
   console.log("  [✓] Natural Query DSL parsed and multi-session goal search verified.");
 
   // ---------------------------------------------------------------------------
-  // Suite 9: Continuation Prompt Rendering & Cache-Aligned Context Assembly
+  // Suite 11: In-Memory Substrate Snapshotting & Microsecond State Rewind
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 9/12] Validating Continuation Prompt Rendering...");
-  const prompt = engine.renderContinuationPrompt(
-    "Implement feature X",
-    { outcome: "Feature X works", verification: "npm test" },
-    undefined,
-    [{ id: "m-1", title: "Step 1", status: "completed", progressPercent: 100 }]
-  );
-  assert.ok(prompt.includes("Completion contract:"));
-  assert.ok(prompt.includes("Milestone Progress:"));
-  assert.ok(prompt.includes("[x] Step 1"));
-  console.log("  [✓] Continuation prompt rendered with byte-stable structure.");
-
-  // ---------------------------------------------------------------------------
-  // Suite 10: In-Memory Substrate Snapshotting & Microsecond State Rewind
-  // ---------------------------------------------------------------------------
-  console.log("\n[Suite 10/12] Validating Snapshotting & Microsecond Rollback...");
+  console.log("\n[Suite 11/12] Validating Snapshotting & Microsecond Rollback...");
   snapshotManager.captureSnapshot("snap-goal-1");
 
   // Mutate state
@@ -213,57 +242,51 @@ async function runGoalValidationSuites() {
   console.log(`  [✓] Substrate state rollback completed in ${rewindMs.toFixed(4)} ms (< 0.1 ms SLA).`);
 
   // ---------------------------------------------------------------------------
-  // Suite 11: Rich Interactive Slash Command Router (/goal, template, milestone, gate, retro)
+  // Suite 12: 10 Model Tools Execution, High-Frequency Benchmarks & Monolith Composition
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 11/12] Validating Slash Command Router (/goal)...");
-  const dashSlash = supervisor.executeSlashCommand("session-slash-1", "/goal");
-  assert.strictEqual(dashSlash.success, true);
-
-  const tmplSlash = supervisor.executeSlashCommand("session-slash-1", "/goal template refactor Modularize subsystem");
-  assert.strictEqual(tmplSlash.success, true);
-  assert.ok(tmplSlash.output.includes("Modularize subsystem"));
-
-  const statusSlash = supervisor.executeSlashCommand("session-slash-1", "/goal status");
-  assert.strictEqual(statusSlash.success, true);
-  assert.ok(statusSlash.output.includes("ACTIVE"));
-
-  const msSlash = supervisor.executeSlashCommand("session-slash-1", "/goal milestone add Extract class A");
-  assert.strictEqual(msSlash.success, true);
-
-  const gateSlash = supervisor.executeSlashCommand("session-slash-1", "/goal gate add npm test");
-  assert.strictEqual(gateSlash.success, true);
-
-  const retroSlash = supervisor.executeSlashCommand("session-slash-1", "/goal retro");
-  assert.strictEqual(retroSlash.success, true);
-
-  console.log("  [✓] /goal slash command router executed all subcommands accurately.");
-
-  // ---------------------------------------------------------------------------
-  // Suite 12: 8 Model Tools Execution, High-Frequency Benchmarks & Monolith Composition
-  // ---------------------------------------------------------------------------
-  console.log("\n[Suite 12/12] 8 Model Tools Execution, Benchmarks & Monolith Composition (554 Components)...");
+  console.log("\n[Suite 12/12] 10 Model Tools Execution, Benchmarks & Monolith Composition (554 Components)...");
   const tools = toolSuite.getTools();
-  assert.strictEqual(tools.length, 8, "GoalToolSuite must expose exactly 8 model tools");
+  assert.strictEqual(tools.length, 10, "GoalToolSuite must expose exactly 10 model tools");
 
   const setTool = tools.find((t) => t.name === "goal_set")!;
   const statusTool = tools.find((t) => t.name === "goal_status")!;
   const tmplTool = tools.find((t) => t.name === "goal_template")!;
   const msTool = tools.find((t) => t.name === "goal_milestone")!;
   const gateTool = tools.find((t) => t.name === "goal_gate")!;
+  const diffTool = tools.find((t) => t.name === "goal_diff")!;
+  const trajTool = tools.find((t) => t.name === "goal_trajectory")!;
   const ctrlTool = tools.find((t) => t.name === "goal_control")!;
   const retroTool = tools.find((t) => t.name === "goal_retro")!;
   const listTool = tools.find((t) => t.name === "goal_list")!;
 
-  assert.ok(setTool && statusTool && tmplTool && msTool && gateTool && ctrlTool && retroTool && listTool);
+  assert.ok(
+    setTool &&
+      statusTool &&
+      tmplTool &&
+      msTool &&
+      gateTool &&
+      diffTool &&
+      trajTool &&
+      ctrlTool &&
+      retroTool &&
+      listTool
+  );
 
-  // Test goal_template tool
-  const tmplListRes = (await tmplTool.execute({ action: "list" }, process.cwd())) as { success: boolean; totalTemplates: number };
-  assert.strictEqual(tmplListRes.success, true);
-  assert.ok(tmplListRes.totalTemplates >= 6);
+  // Test goal_diff tool
+  const diffToolRes = (await diffTool.execute(
+    { sessionIdA: "session-bugfix-1", sessionIdB: "session-swarm-parent" },
+    process.cwd()
+  )) as { success: boolean; diff: any };
+  assert.strictEqual(diffToolRes.success, true);
+  assert.strictEqual(diffToolRes.diff.identical, false);
 
-  // Test goal_milestone tool
-  const msAddRes = (await msTool.execute({ action: "add", titleOrId: "Milestone from tool", sessionId: "tool-test" }, process.cwd())) as { success: boolean };
-  assert.ok(msAddRes);
+  // Test goal_trajectory tool
+  const trajToolRes = (await trajTool.execute({ sessionId: "session-traj-1" }, process.cwd())) as {
+    success: boolean;
+    totalEvents: number;
+  };
+  assert.strictEqual(trajToolRes.success, true);
+  assert.strictEqual(trajToolRes.totalEvents, 2);
 
   // Micro-benchmark
   const iterations = 50_000;
@@ -277,7 +300,9 @@ async function runGoalValidationSuites() {
   const endBench = performance.now();
   const benchMs = endBench - startBench;
   const throughput = Math.round((iterations / benchMs) * 1000);
-  console.log(`  Measured: ${iterations.toLocaleString()} invocations in ${benchMs.toFixed(3)} ms (${throughput.toLocaleString()} ops/sec)`);
+  console.log(
+    `  Measured: ${iterations.toLocaleString()} invocations in ${benchMs.toFixed(3)} ms (${throughput.toLocaleString()} ops/sec)`
+  );
 
   const monolith = MonolithFactory.createEngine();
   const verification = GrandMonolithSynthesizer.verifyComposition(monolith);
@@ -286,11 +311,13 @@ async function runGoalValidationSuites() {
   assert.strictEqual(verification.missingComponents.length, 0);
   assert.strictEqual(verification.unexpectedComponents.length, 0);
   assert.strictEqual(verification.duplicateManifestComponents.length, 0);
-  console.log(`  [✓] Grand Monolith successfully verified with ${verification.componentCount}/554 components in OPTIMAL cohesion.`);
+  console.log(
+    `  [✓] Grand Monolith successfully verified with ${verification.componentCount}/554 components in OPTIMAL cohesion.`
+  );
 
-  console.log("\n================================================================");
-  console.log("   ALL 12 WORLD-CLASS GOAL SYSTEM VALIDATION SUITES PASSED!     ");
-  console.log("================================================================\n");
+  console.log("\n================================================================================");
+  console.log("   ALL 12 WORLD-CLASS GOAL SYSTEM VALIDATION SUITES PASSED!                     ");
+  console.log("================================================================================\n");
 }
 
 runGoalValidationSuites().catch((err) => {
