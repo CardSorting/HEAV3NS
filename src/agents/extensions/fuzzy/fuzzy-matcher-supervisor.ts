@@ -10,6 +10,8 @@ import type {
   CandidateRankingResult,
   CodemodPipelineResult,
   CodemodRule,
+  ConditionalInversionOptions,
+  ConditionalInversionResult,
   ConflictMarkerChunk,
   ConflictResolutionResult,
   ConflictResolutionStrategy,
@@ -24,6 +26,8 @@ import type {
   FuzzyStrategyName,
   HistogramDiffOptions,
   HistogramDiffResult,
+  ImportAliasResolutionOptions,
+  ImportAliasResolutionResult,
   ImportOptimizationOptions,
   ImportOptimizationResult,
   ImportStatementAnalysis,
@@ -45,6 +49,10 @@ import type {
   MultiSourcePatchSynthesisResult,
   NGramSimilarityOptions,
   NGramSimilarityResult,
+  NullabilityGuardOptions,
+  NullabilityGuardResult,
+  PatchBranchCandidate,
+  PatchBranchExploreResult,
   PatchDriftOptions,
   PatchDriftResult,
   PatienceDiffOptions,
@@ -736,6 +744,39 @@ export class FuzzyMatcherSupervisor {
     proposedPatches: readonly WorkspaceFilePatch[]
   ): WorkspacePatchImpactResult {
     return this.matcher.analyzeWorkspacePatchImpact(workspaceFiles, proposedPatches);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pass 13: Speculative Branching, Nullability Guards, Aliases & Inversion
+  // ---------------------------------------------------------------------------
+
+  explorePatchBranches(
+    content: string,
+    branches: readonly PatchBranchCandidate[]
+  ): PatchBranchExploreResult {
+    return this.matcher.explorePatchBranches(content, branches);
+  }
+
+  synthesizeNullabilityGuards(
+    content: string,
+    targetIdentifier: string,
+    options?: NullabilityGuardOptions
+  ): NullabilityGuardResult {
+    return this.matcher.synthesizeNullabilityGuards(content, targetIdentifier, options);
+  }
+
+  resolveImportAliasesAndReexports(
+    content: string,
+    options?: ImportAliasResolutionOptions
+  ): ImportAliasResolutionResult {
+    return this.matcher.resolveImportAliasesAndReexports(content, options);
+  }
+
+  invertConditionalBranches(
+    content: string,
+    options?: ConditionalInversionOptions
+  ): ConditionalInversionResult {
+    return this.matcher.invertConditionalBranches(content, options);
   }
 
   clearHistory(): void {

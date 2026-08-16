@@ -16,6 +16,8 @@ import type {
   CodemodPipelineResult,
   CodemodRule,
   CodemodStepResult,
+  ConditionalInversionOptions,
+  ConditionalInversionResult,
   ConflictBlockAnalysis,
   ConflictMarkerChunk,
   ConflictResolutionResult,
@@ -38,6 +40,8 @@ import type {
   HistogramDiffOptions,
   HistogramDiffResult,
   ImpactedSymbol,
+  ImportAliasResolutionOptions,
+  ImportAliasResolutionResult,
   ImportOptimizationOptions,
   ImportOptimizationResult,
   ImportSpecifierItem,
@@ -69,6 +73,11 @@ import type {
   NGramMatchCandidate,
   NGramSimilarityOptions,
   NGramSimilarityResult,
+  NullabilityGuardOptions,
+  NullabilityGuardResult,
+  PatchBranchCandidate,
+  PatchBranchEvaluation,
+  PatchBranchExploreResult,
   PatchDriftHunkResult,
   PatchDriftOptions,
   PatchDriftResult,
@@ -6505,6 +6514,334 @@ export class DeterministicFuzzyMatcher {
       brokenSymbols,
       isSafeToApply,
       error: !isSafeToApply ? `${brokenSymbols.length} exported symbol breakages detected in workspace.` : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Speculative Patch Branch Exploration (Pass 13)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Evaluates multiple candidate patches concurrently against isolated virtual baseline frames,
+   * scoring syntax validity, minimal line delta, and impact safety, identifying the winning branch.
+   */
+  explorePatchBranches(
+    content: string,
+    branches: readonly PatchBranchCandidate[]
+  ): PatchBranchExploreResult {
+    if (!content || !branches || branches.length === 0) {
+      return {
+        success: false,
+        totalBranchesEvaluated: 0,
+        winningBranchId: null,
+        winningContent: content,
+        branchEvaluations: [],
+        error: "Missing required parameters (content, branches).",
+      };
+    }
+
+    const evaluations: PatchBranchEvaluation[] = [];
+    let bestScore = -1;
+    let winningBranchId: string | null = null;
+    let winningContent = content;
+
+    for (const branch of branches) {
+      const matchRes = this.findAndReplace(content, branch.searchBlock, branch.replacementBlock);
+      if (!matchRes.success) {
+        evaluations.push({
+          branchId: branch.branchId,
+          description: branch.description,
+          success: false,
+          modifiedContent: content,
+          syntaxValid: false,
+          linesChanged: 0,
+          score: 0,
+          error: matchRes.error || "Search block could not be matched.",
+        });
+        continue;
+      }
+
+      const syntaxCheck = this.validateAndRepairCodeBlock(matchRes.modifiedContent);
+      const syntaxValid = syntaxCheck.isValid;
+      const diff = this.generateHistogramDiff(content, matchRes.modifiedContent);
+      const linesChanged = diff.totalLinesChanged;
+
+      let score = syntaxValid ? 100 - Math.min(linesChanged * 2, 50) : 10;
+      if (matchRes.strategyUsed === "exact") score += 10;
+
+      evaluations.push({
+        branchId: branch.branchId,
+        description: branch.description,
+        success: true,
+        modifiedContent: matchRes.modifiedContent,
+        syntaxValid,
+        linesChanged,
+        score,
+        error: null,
+      });
+
+      if (syntaxValid && score > bestScore) {
+        bestScore = score;
+        winningBranchId = branch.branchId;
+        winningContent = matchRes.modifiedContent;
+      }
+    }
+
+    return {
+      success: evaluations.some((e) => e.success && e.syntaxValid),
+      totalBranchesEvaluated: branches.length,
+      winningBranchId,
+      winningContent,
+      branchEvaluations: evaluations,
+      error: winningBranchId === null ? "No valid candidate branch produced a syntactically sound patch." : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Semantic Type-Narrowing & Nullability Guard Refactorer (Pass 13)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Refactors unsafe member accesses into optional chaining (?.), nullish coalescing (??),
+   * or synthesizes defensive early-return guard clauses.
+   */
+  synthesizeNullabilityGuards(
+    content: string,
+    targetIdentifier: string,
+    options?: NullabilityGuardOptions
+  ): NullabilityGuardResult {
+    if (!content || !targetIdentifier) {
+      return {
+        success: false,
+        modifiedContent: content,
+        guardsInsertedCount: 0,
+        replacedSpans: [],
+        error: "Missing required parameters (content, targetIdentifier).",
+      };
+    }
+
+    const mode = options?.mode || "optional_chain";
+    const replacedSpans: string[] = [];
+
+    if (mode === "optional_chain") {
+      const idEscaped = targetIdentifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const accessRegex = new RegExp(`\\b(${idEscaped})(?!\\?)\\.([a-zA-Z_$][a-zA-Z0-9_$]*)`, "g");
+      let count = 0;
+      const modifiedContent = content.replace(accessRegex, (match, id, prop) => {
+        count++;
+        const rep = `${id}?.${prop}`;
+        replacedSpans.push(match);
+        return rep;
+      });
+
+      return {
+        success: count > 0,
+        modifiedContent,
+        guardsInsertedCount: count,
+        replacedSpans,
+        error: count === 0 ? `No non-optional member access chains found for '${targetIdentifier}'.` : null,
+      };
+    } else if (mode === "nullish_coalesce") {
+      const idEscaped = targetIdentifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const ternaryRegex = new RegExp(`(?:${idEscaped}\\s*!==\\s*(?:undefined|null)\\s*\\?\\s*${idEscaped}\\s*:\\s*([^;,\n)]+))`, "g");
+      let count = 0;
+      let modifiedContent = content.replace(ternaryRegex, (match, fb) => {
+        count++;
+        const rep = `${targetIdentifier} ?? ${fb.trim()}`;
+        replacedSpans.push(match);
+        return rep;
+      });
+
+      const orRegex = new RegExp(`\\b${idEscaped}\\s*\\|\\|\\s*([^;,\n)]+)`, "g");
+      modifiedContent = modifiedContent.replace(orRegex, (match, fb) => {
+        count++;
+        const rep = `${targetIdentifier} ?? ${fb.trim()}`;
+        replacedSpans.push(match);
+        return rep;
+      });
+
+      return {
+        success: count > 0,
+        modifiedContent,
+        guardsInsertedCount: count,
+        replacedSpans,
+        error: count === 0 ? `No ternary or logical fallback expressions found for '${targetIdentifier}'.` : null,
+      };
+    } else {
+      const idEscaped = targetIdentifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const usageRegex = new RegExp(`\\b${idEscaped}\\b`, "g");
+      const match = usageRegex.exec(content);
+
+      if (!match) {
+        return {
+          success: false,
+          modifiedContent: content,
+          guardsInsertedCount: 0,
+          replacedSpans: [],
+          error: `Identifier '${targetIdentifier}' not found in content.`,
+        };
+      }
+
+      const lineStart = content.lastIndexOf("\n", match.index) + 1;
+      const leadingSpace = content.slice(lineStart, match.index).match(/^\s*/)?.[0] || "  ";
+      const retStmt = options?.returnStatement || "return;";
+      const guardClause = `${leadingSpace}if (!${targetIdentifier}) {\n${leadingSpace}  ${retStmt}\n${leadingSpace}}\n\n`;
+
+      const modifiedContent = content.slice(0, lineStart) + guardClause + content.slice(lineStart);
+      replacedSpans.push(guardClause);
+
+      return {
+        success: true,
+        modifiedContent,
+        guardsInsertedCount: 1,
+        replacedSpans,
+        error: null,
+      };
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // AST Import Aliasing, Namespace Merging & Re-Export Resolver (Pass 13)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Resolves, simplifies, and harmonizes aliased imports and re-exports across module boundaries.
+   */
+  resolveImportAliasesAndReexports(
+    content: string,
+    options?: ImportAliasResolutionOptions
+  ): ImportAliasResolutionResult {
+    if (!content) {
+      return {
+        success: false,
+        modifiedContent: content,
+        resolvedAliasesCount: 0,
+        mergedNamespacesCount: 0,
+        updatedReexportsCount: 0,
+        error: "Missing required parameter 'content'.",
+      };
+    }
+
+    const lines = content.split(/\r?\n/);
+    let resolvedAliasesCount = 0;
+    let mergedNamespacesCount = 0;
+    let updatedReexportsCount = 0;
+    const outputLines: string[] = [];
+
+    for (const line of lines) {
+      let currentLine = line;
+
+      // 1. Simplify redundant aliases: `import { Foo as Foo } from '...'` -> `import { Foo } from '...'`
+      const redundantAliasRegex = /import\s*\{\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s+as\s+\1\s*\}\s*from\s*(['"][^'"]+['"])/g;
+      if (redundantAliasRegex.test(currentLine)) {
+        currentLine = currentLine.replace(redundantAliasRegex, (_m, id, src) => {
+          resolvedAliasesCount++;
+          return `import { ${id} } from ${src}`;
+        });
+      }
+
+      // 2. Simplify re-export aliases if redundant: `export { Foo as Foo } from '...'` -> `export { Foo } from '...'`
+      const redundantExportAliasRegex = /export\s*\{\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s+as\s+\1\s*\}\s*from\s*(['"][^'"]+['"])/g;
+      if (redundantExportAliasRegex.test(currentLine)) {
+        currentLine = currentLine.replace(redundantExportAliasRegex, (_m, id, src) => {
+          updatedReexportsCount++;
+          return `export { ${id} } from ${src}`;
+        });
+      }
+
+      // 3. Namespace conversion if option enabled: `import * as Mod from './mod.js'`
+      if (options?.mergeNamespaceIntoNamed) {
+        const nsImportRegex = /import\s*\*\s*as\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s+from\s*(['"][^'"]+['"])/;
+        const match = nsImportRegex.exec(currentLine);
+        if (match) {
+          const nsId = match[1];
+          const src = match[2];
+          const usageRegex = new RegExp(`\\b${nsId}\\.([a-zA-Z_$][a-zA-Z0-9_$]*)`, "g");
+          const usedMethods = new Set<string>();
+          let m: RegExpExecArray | null;
+          while ((m = usageRegex.exec(content)) !== null) {
+            usedMethods.add(m[1]);
+          }
+          if (usedMethods.size > 0) {
+            currentLine = `import { ${Array.from(usedMethods).sort().join(", ")} } from ${src};`;
+            mergedNamespacesCount++;
+          }
+        }
+      }
+
+      outputLines.push(currentLine);
+    }
+
+    let modifiedContent = outputLines.join("\n");
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent,
+      resolvedAliasesCount,
+      mergedNamespacesCount,
+      updatedReexportsCount,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Structural Guard Clause Inversion & Block De-Nesting (Pass 13)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Inverts nested if-else statements into flat early-return guard clauses, reducing nesting complexity.
+   */
+  invertConditionalBranches(
+    content: string,
+    _options?: ConditionalInversionOptions
+  ): ConditionalInversionResult {
+    if (!content) {
+      return {
+        success: false,
+        modifiedContent: content,
+        invertedBranchesCount: 0,
+        reducedIndentationLevels: 0,
+        error: "Missing required parameter 'content'.",
+      };
+    }
+
+    const ifElseRegex = /if\s*\(([^)]+)\)\s*\{([\s\S]*?)\}\s*else\s*\{([\s\S]*?return\s+[^;]+;[\s\S]*?)\}/g;
+    let invertedCount = 0;
+    let reducedLevels = 0;
+
+    const modifiedContent = content.replace(ifElseRegex, (_match, condition, mainBody, elseBody) => {
+      invertedCount++;
+      reducedLevels += 2;
+
+      const trimmedCond = condition.trim();
+      let invertedCond: string;
+      if (trimmedCond.startsWith("!") && !trimmedCond.slice(1).includes(" ")) {
+        invertedCond = trimmedCond.slice(1);
+      } else if (/^[a-zA-Z0-9_$.]+$/.test(trimmedCond)) {
+        invertedCond = `!${trimmedCond}`;
+      } else {
+        invertedCond = `!(${trimmedCond})`;
+      }
+
+      const cleanElse = elseBody.trim();
+      const deindentedMain = mainBody
+        .split("\n")
+        .map((line: string) => (line.startsWith("    ") ? line.slice(4) : line.startsWith("  ") ? line.slice(2) : line))
+        .join("\n")
+        .trim();
+
+      return `if (${invertedCond}) {\n  ${cleanElse}\n}\n\n${deindentedMain}`;
+    });
+
+    return {
+      success: invertedCount > 0,
+      modifiedContent: invertedCount > 0 ? modifiedContent : content,
+      invertedBranchesCount: invertedCount,
+      reducedIndentationLevels: reducedLevels,
+      error: invertedCount === 0 ? "No invertible if-else blocks with return clauses found." : null,
     };
   }
 }

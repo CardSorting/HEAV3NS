@@ -1014,6 +1014,91 @@ export interface WorkspacePatchImpactResult {
   readonly error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Speculative Patch Branch Exploration Contracts (Pass 13)
+// ---------------------------------------------------------------------------
+
+export interface PatchBranchCandidate {
+  readonly branchId: string;
+  readonly description: string;
+  readonly searchBlock: string;
+  readonly replacementBlock: string;
+}
+
+export interface PatchBranchEvaluation {
+  readonly branchId: string;
+  readonly description: string;
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly syntaxValid: boolean;
+  readonly linesChanged: number;
+  readonly score: number;
+  readonly error: string | null;
+}
+
+export interface PatchBranchExploreResult {
+  readonly success: boolean;
+  readonly totalBranchesEvaluated: number;
+  readonly winningBranchId: string | null;
+  readonly winningContent: string;
+  readonly branchEvaluations: readonly PatchBranchEvaluation[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Semantic Type-Narrowing & Nullability Guard Contracts (Pass 13)
+// ---------------------------------------------------------------------------
+
+export interface NullabilityGuardOptions {
+  readonly mode?: "optional_chain" | "nullish_coalesce" | "early_guard";
+  readonly fallbackValue?: string;
+  readonly returnStatement?: string;
+}
+
+export interface NullabilityGuardResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly guardsInsertedCount: number;
+  readonly replacedSpans: readonly string[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// AST Import Aliasing, Namespace Merging & Re-Export Contracts (Pass 13)
+// ---------------------------------------------------------------------------
+
+export interface ImportAliasResolutionOptions {
+  readonly mergeNamespaceIntoNamed?: boolean;
+  readonly canonicalizeAliases?: boolean;
+}
+
+export interface ImportAliasResolutionResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly resolvedAliasesCount: number;
+  readonly mergedNamespacesCount: number;
+  readonly updatedReexportsCount: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Structural Guard Clause Inversion & Block De-Nesting Contracts (Pass 13)
+// ---------------------------------------------------------------------------
+
+export interface ConditionalInversionOptions {
+  readonly maxNestingDepth?: number;
+  readonly invertOnlyIfHasElse?: boolean;
+}
+
+export interface ConditionalInversionResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly invertedBranchesCount: number;
+  readonly reducedIndentationLevels: number;
+  readonly error: string | null;
+}
+
+
 
 
 

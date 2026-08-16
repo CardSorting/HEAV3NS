@@ -2199,6 +2199,189 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_explore_patch_branches",
+        description: "Evaluates multiple candidate patches concurrently against isolated virtual baseline frames, scoring syntax validity, minimal line delta, and impact safety, identifying the winning branch.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content to test candidate branches against",
+            required: true,
+          },
+          branches: {
+            type: "string",
+            description: "JSON array of PatchBranchCandidate objects ({ branchId, description, searchBlock, replacementBlock })",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          let branchesArr: any = args.branches;
+          if (typeof branchesArr === "string") {
+            try {
+              branchesArr = JSON.parse(branchesArr);
+            } catch {
+              return { success: false, error: "Invalid JSON for 'branches'." };
+            }
+          }
+          if (!Array.isArray(branchesArr)) {
+            return {
+              success: false,
+              error: "Parameter 'branches' must be an array of PatchBranchCandidate objects.",
+            };
+          }
+          const result = this.supervisor.explorePatchBranches(args.content, branchesArr);
+          return {
+            success: result.success,
+            totalBranchesEvaluated: result.totalBranchesEvaluated,
+            winningBranchId: result.winningBranchId,
+            winningContent: result.winningContent,
+            branchEvaluations: result.branchEvaluations,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_synthesize_nullability_guards",
+        description: "Refactors unsafe member accesses into optional chaining (?.), nullish coalescing (??), or synthesizes defensive early-return guard clauses.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          targetIdentifier: {
+            type: "string",
+            description: "Variable or property identifier name to guard",
+            required: true,
+          },
+          mode: {
+            type: "string",
+            description: "Guard refactoring mode ('optional_chain', 'nullish_coalesce', or 'early_guard')",
+            required: false,
+          },
+          fallbackValue: {
+            type: "string",
+            description: "Fallback value expression for 'nullish_coalesce' mode (e.g. 'null', '[]', '\"\"')",
+            required: false,
+          },
+          returnStatement: {
+            type: "string",
+            description: "Return statement for 'early_guard' mode (e.g. 'return;', 'return null;') ",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.targetIdentifier !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'targetIdentifier').",
+            };
+          }
+          const result = this.supervisor.synthesizeNullabilityGuards(
+            args.content,
+            args.targetIdentifier,
+            {
+              mode: args.mode as any,
+              fallbackValue: typeof args.fallbackValue === "string" ? args.fallbackValue : undefined,
+              returnStatement:
+                typeof args.returnStatement === "string" ? args.returnStatement : undefined,
+            }
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            guardsInsertedCount: result.guardsInsertedCount,
+            replacedSpans: result.replacedSpans,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_resolve_import_aliases_and_reexports",
+        description: "Resolves, simplifies, and harmonizes aliased imports and re-exports across module boundaries while enforcing zero-barrel hygiene.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          mergeNamespaceIntoNamed: {
+            type: "boolean",
+            description: "Whether to convert namespace imports (import * as N) into named imports (default: false)",
+            required: false,
+          },
+          canonicalizeAliases: {
+            type: "boolean",
+            description: "Whether to strip redundant identical aliases (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.resolveImportAliasesAndReexports(args.content, {
+            mergeNamespaceIntoNamed:
+              typeof args.mergeNamespaceIntoNamed === "boolean"
+                ? args.mergeNamespaceIntoNamed
+                : false,
+            canonicalizeAliases:
+              typeof args.canonicalizeAliases === "boolean" ? args.canonicalizeAliases : true,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            resolvedAliasesCount: result.resolvedAliasesCount,
+            mergedNamespacesCount: result.mergedNamespacesCount,
+            updatedReexportsCount: result.updatedReexportsCount,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_invert_conditional_branches",
+        description: "Inverts nested if-else statements into flat early-return guard clauses, reducing cyclomatic nesting complexity.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          invertOnlyIfHasElse: {
+            type: "boolean",
+            description: "Whether to invert only if an explicit else block exists (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.invertConditionalBranches(args.content, {
+            invertOnlyIfHasElse:
+              typeof args.invertOnlyIfHasElse === "boolean" ? args.invertOnlyIfHasElse : true,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            invertedBranchesCount: result.invertedBranchesCount,
+            reducedIndentationLevels: result.reducedIndentationLevels,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

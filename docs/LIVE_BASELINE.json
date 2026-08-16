@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T08:56:11.632Z",
+  "generatedAt": "2026-08-16T09:11:40.735Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,7 +19,7 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.62,
+    "durationMs": 2.65,
     "componentCount": 382,
     "requiredComponentCount": 382,
     "composedRequiredComponentCount": 382,
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 0.92,
-        "detail": "frame 1 completed in 0.61 ms"
+        "durationMs": 0.93,
+        "detail": "frame 1 completed in 0.6 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.29,
+        "durationMs": 0.31,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.09,
+        "durationMs": 0.08,
         "detail": "head/tail output retention verified"
       },
       {
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 70.39,
-    "totalDurationMs": 351.96,
-    "throughputTps": 14.21,
-    "throughputPerMinute": 853,
+    "meanLatencyMs": 70.72,
+    "totalDurationMs": 353.6,
+    "throughputTps": 14.14,
+    "throughputPerMinute": 848,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -123,14 +123,14 @@
         "testName": "VFS File Perception & Reading",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.12,
+        "durationMs": 0.13,
         "assertions": []
       },
       {
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 351.62,
+        "durationMs": 353.27,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -185,7 +185,7 @@
         "testName": "Snapshot State Rewind Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.08,
+        "durationMs": 0.07,
         "assertions": []
       }
     ]
@@ -206,21 +206,21 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.13 ms",
+        "measuredValue": "0.12 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "7902.55 frames/sec",
+        "measuredValue": "8139.71 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.019 ms p95",
+        "measuredValue": "0.025 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },
