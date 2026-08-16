@@ -554,6 +554,12 @@ import { BroccoliSkillLinterSubstrate } from "./sessions/extensions/skill_linter
 import { SkillLinterSnapshotManager } from "./sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
 import { SkillLinterToolSuite } from "./tooling/extensions/skill_linter/skill-linter-tool-suite.js";
 
+import { DeterministicTerminalCleanerEngine } from "./agents/extensions/terminal_cleaner/deterministic-terminal-cleaner-engine.js";
+import { TerminalCleanerSupervisor } from "./agents/extensions/terminal_cleaner/terminal-cleaner-supervisor.js";
+import { BroccoliTerminalCleanerSubstrate } from "./sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
+import { TerminalCleanerSnapshotManager } from "./sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
+import { TerminalCleanerToolSuite } from "./tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2266,6 +2272,24 @@ export {
   FORBIDDEN_SCAFFOLDING_FILES,
 } from "./core/contracts/skill-linter.contracts.js";
 
+export { DeterministicTerminalCleanerEngine } from "./agents/extensions/terminal_cleaner/deterministic-terminal-cleaner-engine.js";
+export { TerminalCleanerSupervisor } from "./agents/extensions/terminal_cleaner/terminal-cleaner-supervisor.js";
+export { BroccoliTerminalCleanerSubstrate } from "./sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
+export { TerminalCleanerSnapshotManager } from "./sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
+export { TerminalCleanerToolSuite } from "./tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
+export type {
+  AnsiCleanMode,
+  BinaryAssetClassification,
+  TerminalCleanerConfig,
+  TerminalCleanerMetrics,
+  TerminalCleanerWorkspaceSnapshot,
+} from "./core/contracts/terminal-cleaner.contracts.js";
+export {
+  DEFAULT_TERMINAL_CLEANER_CONFIG,
+  TERMINAL_KNOWN_BINARY_EXTENSIONS,
+  TERMINAL_OPAQUE_DOCUMENT_EXTENSIONS,
+} from "./core/contracts/terminal-cleaner.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2738,6 +2762,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSkillLinterSubstrate: BroccoliSkillLinterSubstrate;
   readonly skillLinterSnapshotManager: SkillLinterSnapshotManager;
   readonly skillLinterToolSuite: SkillLinterToolSuite;
+  readonly deterministicTerminalCleanerEngine: DeterministicTerminalCleanerEngine;
+  readonly terminalCleanerSupervisor: TerminalCleanerSupervisor;
+  readonly broccoliTerminalCleanerSubstrate: BroccoliTerminalCleanerSubstrate;
+  readonly terminalCleanerSnapshotManager: TerminalCleanerSnapshotManager;
+  readonly terminalCleanerToolSuite: TerminalCleanerToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3201,6 +3230,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSkillLinterSubstrate = components.broccoliSkillLinterSubstrate;
     this.skillLinterSnapshotManager = components.skillLinterSnapshotManager;
     this.skillLinterToolSuite = components.skillLinterToolSuite;
+    this.deterministicTerminalCleanerEngine = components.deterministicTerminalCleanerEngine;
+    this.terminalCleanerSupervisor = components.terminalCleanerSupervisor;
+    this.broccoliTerminalCleanerSubstrate = components.broccoliTerminalCleanerSubstrate;
+    this.terminalCleanerSnapshotManager = components.terminalCleanerSnapshotManager;
+    this.terminalCleanerToolSuite = components.terminalCleanerToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

@@ -82,6 +82,7 @@ import type { BillingUsageToolSuite } from "../billing_usage/billing-usage-tool-
 import type { ThreadContextToolSuite } from "../thread_context/thread-context-tool-suite.js";
 import type { EnvProbeToolSuite } from "../env_probe/env-probe-tool-suite.js";
 import type { SkillLinterToolSuite } from "../skill_linter/skill-linter-tool-suite.js";
+import type { TerminalCleanerToolSuite } from "../terminal_cleaner/terminal-cleaner-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -155,6 +156,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly threadContextToolSuite?: ThreadContextToolSuite;
   readonly envProbeToolSuite?: EnvProbeToolSuite;
   readonly skillLinterToolSuite?: SkillLinterToolSuite;
+  readonly terminalCleanerToolSuite?: TerminalCleanerToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -236,7 +238,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     billingUsageToolSuite?: BillingUsageToolSuite,
     threadContextToolSuite?: ThreadContextToolSuite,
     envProbeToolSuite?: EnvProbeToolSuite,
-    skillLinterToolSuite?: SkillLinterToolSuite
+    skillLinterToolSuite?: SkillLinterToolSuite,
+    terminalCleanerToolSuite?: TerminalCleanerToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -310,6 +313,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.threadContextToolSuite = threadContextToolSuite;
     this.envProbeToolSuite = envProbeToolSuite;
     this.skillLinterToolSuite = skillLinterToolSuite;
+    this.terminalCleanerToolSuite = terminalCleanerToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -852,6 +856,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.skillLinterToolSuite) {
       for (const tool of this.skillLinterToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.terminalCleanerToolSuite) {
+      for (const tool of this.terminalCleanerToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

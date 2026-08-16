@@ -593,6 +593,12 @@ import { BroccoliSkillLinterSubstrate } from "../sessions/extensions/skill_linte
 import { SkillLinterSnapshotManager } from "../sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
 import { SkillLinterToolSuite } from "../tooling/extensions/skill_linter/skill-linter-tool-suite.js";
 
+import { DeterministicTerminalCleanerEngine } from "../agents/extensions/terminal_cleaner/deterministic-terminal-cleaner-engine.js";
+import { TerminalCleanerSupervisor } from "../agents/extensions/terminal_cleaner/terminal-cleaner-supervisor.js";
+import { BroccoliTerminalCleanerSubstrate } from "../sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
+import { TerminalCleanerSnapshotManager } from "../sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
+import { TerminalCleanerToolSuite } from "../tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1124,6 +1130,11 @@ export class MonolithFactory {
     broccoliSkillLinterSubstrate: BroccoliSkillLinterSubstrate;
     skillLinterSnapshotManager: SkillLinterSnapshotManager;
     skillLinterToolSuite: SkillLinterToolSuite;
+    deterministicTerminalCleanerEngine: DeterministicTerminalCleanerEngine;
+    terminalCleanerSupervisor: TerminalCleanerSupervisor;
+    broccoliTerminalCleanerSubstrate: BroccoliTerminalCleanerSubstrate;
+    terminalCleanerSnapshotManager: TerminalCleanerSnapshotManager;
+    terminalCleanerToolSuite: TerminalCleanerToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1997,6 +2008,15 @@ export class MonolithFactory {
     );
     const skillLinterToolSuite = new SkillLinterToolSuite(skillLinterSupervisor);
 
+    const deterministicTerminalCleanerEngine = new DeterministicTerminalCleanerEngine();
+    const broccoliTerminalCleanerSubstrate = new BroccoliTerminalCleanerSubstrate();
+    const terminalCleanerSnapshotManager = new TerminalCleanerSnapshotManager(broccoliTerminalCleanerSubstrate);
+    const terminalCleanerSupervisor = new TerminalCleanerSupervisor(
+      broccoliTerminalCleanerSubstrate,
+      deterministicTerminalCleanerEngine
+    );
+    const terminalCleanerToolSuite = new TerminalCleanerToolSuite(terminalCleanerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2082,7 +2102,8 @@ export class MonolithFactory {
       billingUsageToolSuite,
       threadContextToolSuite,
       envProbeToolSuite,
-      skillLinterToolSuite
+      skillLinterToolSuite,
+      terminalCleanerToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2627,6 +2648,11 @@ export class MonolithFactory {
       broccoliSkillLinterSubstrate,
       skillLinterSnapshotManager,
       skillLinterToolSuite,
+      deterministicTerminalCleanerEngine,
+      terminalCleanerSupervisor,
+      broccoliTerminalCleanerSubstrate,
+      terminalCleanerSnapshotManager,
+      terminalCleanerToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
