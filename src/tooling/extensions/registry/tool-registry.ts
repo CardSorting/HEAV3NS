@@ -61,6 +61,7 @@ import type { StealthBrowserToolSuite } from "../stealth_browser/stealth-browser
 import type { SkillsSyncToolSuite } from "../skills_sync/skills-sync-tool-suite.js";
 import type { PreflightToolSuite } from "../preflight_scanner/preflight-tool-suite.js";
 import type { AudioContainerToolSuite } from "../audio_container/audio-container-tool-suite.js";
+import type { SpeechNormalizerToolSuite } from "../speech_normalizer/speech-normalizer-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -113,6 +114,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsSyncToolSuite?: SkillsSyncToolSuite;
   readonly preflightToolSuite?: PreflightToolSuite;
   readonly audioContainerToolSuite?: AudioContainerToolSuite;
+  readonly speechNormalizerToolSuite?: SpeechNormalizerToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -173,7 +175,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     stealthBrowserToolSuite?: StealthBrowserToolSuite,
     skillsSyncToolSuite?: SkillsSyncToolSuite,
     preflightToolSuite?: PreflightToolSuite,
-    audioContainerToolSuite?: AudioContainerToolSuite
+    audioContainerToolSuite?: AudioContainerToolSuite,
+    speechNormalizerToolSuite?: SpeechNormalizerToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -226,6 +229,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.skillsSyncToolSuite = skillsSyncToolSuite;
     this.preflightToolSuite = preflightToolSuite;
     this.audioContainerToolSuite = audioContainerToolSuite;
+    this.speechNormalizerToolSuite = speechNormalizerToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -663,6 +667,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.audioContainerToolSuite) {
       for (const tool of this.audioContainerToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.speechNormalizerToolSuite) {
+      for (const tool of this.speechNormalizerToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

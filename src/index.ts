@@ -428,6 +428,12 @@ import { BroccoliAudioContainerSubstrate } from "./sessions/extensions/audio_con
 import { AudioContainerSnapshotManager } from "./sessions/extensions/audio_container/audio-container-snapshot-manager.js";
 import { AudioContainerToolSuite } from "./tooling/extensions/audio_container/audio-container-tool-suite.js";
 
+import { DeterministicSpeechTextNormalizer } from "./agents/extensions/speech_normalizer/deterministic-speech-text-normalizer.js";
+import { SpeechNormalizerSupervisor } from "./agents/extensions/speech_normalizer/speech-normalizer-supervisor.js";
+import { BroccoliSpeechNormalizerSubstrate } from "./sessions/extensions/speech_normalizer/broccoli-speech-normalizer-substrate.js";
+import { SpeechNormalizerSnapshotManager } from "./sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.js";
+import { SpeechNormalizerToolSuite } from "./tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1778,6 +1784,19 @@ export {
   MP4_AUDIO_BRANDS,
 } from "./core/contracts/audio-container.contracts.js";
 
+export { DeterministicSpeechTextNormalizer } from "./agents/extensions/speech_normalizer/deterministic-speech-text-normalizer.js";
+export { SpeechNormalizerSupervisor } from "./agents/extensions/speech_normalizer/speech-normalizer-supervisor.js";
+export { BroccoliSpeechNormalizerSubstrate } from "./sessions/extensions/speech_normalizer/broccoli-speech-normalizer-substrate.js";
+export { SpeechNormalizerSnapshotManager } from "./sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.js";
+export { SpeechNormalizerToolSuite } from "./tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.js";
+export type {
+  SpeechNormalizationOptions,
+  SpeechNormalizationResult,
+  LexiconCategory,
+  SpeechLexiconEntry,
+  SpeechWorkspaceSnapshot,
+} from "./core/contracts/speech-normalizer.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2145,6 +2164,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliAudioContainerSubstrate: BroccoliAudioContainerSubstrate;
   readonly audioContainerSnapshotManager: AudioContainerSnapshotManager;
   readonly audioContainerToolSuite: AudioContainerToolSuite;
+  readonly deterministicSpeechTextNormalizer: DeterministicSpeechTextNormalizer;
+  readonly speechNormalizerSupervisor: SpeechNormalizerSupervisor;
+  readonly broccoliSpeechNormalizerSubstrate: BroccoliSpeechNormalizerSubstrate;
+  readonly speechNormalizerSnapshotManager: SpeechNormalizerSnapshotManager;
+  readonly speechNormalizerToolSuite: SpeechNormalizerToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2503,6 +2527,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliAudioContainerSubstrate = components.broccoliAudioContainerSubstrate;
     this.audioContainerSnapshotManager = components.audioContainerSnapshotManager;
     this.audioContainerToolSuite = components.audioContainerToolSuite;
+    this.deterministicSpeechTextNormalizer = components.deterministicSpeechTextNormalizer;
+    this.speechNormalizerSupervisor = components.speechNormalizerSupervisor;
+    this.broccoliSpeechNormalizerSubstrate = components.broccoliSpeechNormalizerSubstrate;
+    this.speechNormalizerSnapshotManager = components.speechNormalizerSnapshotManager;
+    this.speechNormalizerToolSuite = components.speechNormalizerToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

@@ -467,6 +467,12 @@ import { BroccoliAudioContainerSubstrate } from "../sessions/extensions/audio_co
 import { AudioContainerSnapshotManager } from "../sessions/extensions/audio_container/audio-container-snapshot-manager.js";
 import { AudioContainerToolSuite } from "../tooling/extensions/audio_container/audio-container-tool-suite.js";
 
+import { DeterministicSpeechTextNormalizer } from "../agents/extensions/speech_normalizer/deterministic-speech-text-normalizer.js";
+import { SpeechNormalizerSupervisor } from "../agents/extensions/speech_normalizer/speech-normalizer-supervisor.js";
+import { BroccoliSpeechNormalizerSubstrate } from "../sessions/extensions/speech_normalizer/broccoli-speech-normalizer-substrate.js";
+import { SpeechNormalizerSnapshotManager } from "../sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.js";
+import { SpeechNormalizerToolSuite } from "../tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -893,6 +899,11 @@ export class MonolithFactory {
     broccoliAudioContainerSubstrate: BroccoliAudioContainerSubstrate;
     audioContainerSnapshotManager: AudioContainerSnapshotManager;
     audioContainerToolSuite: AudioContainerToolSuite;
+    deterministicSpeechTextNormalizer: DeterministicSpeechTextNormalizer;
+    speechNormalizerSupervisor: SpeechNormalizerSupervisor;
+    broccoliSpeechNormalizerSubstrate: BroccoliSpeechNormalizerSubstrate;
+    speechNormalizerSnapshotManager: SpeechNormalizerSnapshotManager;
+    speechNormalizerToolSuite: SpeechNormalizerToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1576,6 +1587,15 @@ export class MonolithFactory {
     );
     const audioContainerToolSuite = new AudioContainerToolSuite(audioContainerSupervisor);
 
+    const deterministicSpeechTextNormalizer = new DeterministicSpeechTextNormalizer();
+    const broccoliSpeechNormalizerSubstrate = new BroccoliSpeechNormalizerSubstrate();
+    const speechNormalizerSnapshotManager = new SpeechNormalizerSnapshotManager(broccoliSpeechNormalizerSubstrate);
+    const speechNormalizerSupervisor = new SpeechNormalizerSupervisor(
+      broccoliSpeechNormalizerSubstrate,
+      deterministicSpeechTextNormalizer
+    );
+    const speechNormalizerToolSuite = new SpeechNormalizerToolSuite(speechNormalizerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1640,7 +1660,8 @@ export class MonolithFactory {
       stealthBrowserToolSuite,
       skillsSyncToolSuite,
       preflightToolSuite,
-      audioContainerToolSuite
+      audioContainerToolSuite,
+      speechNormalizerToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2080,6 +2101,11 @@ export class MonolithFactory {
       broccoliAudioContainerSubstrate,
       audioContainerSnapshotManager,
       audioContainerToolSuite,
+      deterministicSpeechTextNormalizer,
+      speechNormalizerSupervisor,
+      broccoliSpeechNormalizerSubstrate,
+      speechNormalizerSnapshotManager,
+      speechNormalizerToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

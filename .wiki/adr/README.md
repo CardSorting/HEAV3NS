@@ -98,6 +98,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md) | Distributed Content-Addressed Skill Sync Protocol, CAS Ref Head, 3-Way Merge Resolution & Cryptographic Provenance Ledger | Accepted | 2026-08-16 | Skill Synchronization & Provenance (Target #45 / Phase 112) |
 | [ADR-089](ADR-089-pre-exec-security-scanner-and-supply-chain-provenance.md) | Pre-Exec Security Scanner, Supply-Chain Provenance Verification & Pre-Flight Threat Gate | Accepted | 2026-08-16 | Security & Threat Protection (Target #46 / Phase 113) |
 | [ADR-090](ADR-090-audio-container-magic-byte-sniffer-and-extension-repair.md) | Audio Container Magic-Byte Sniffer, Streaming Audio Cache & Voice Extension Repair Subsystem | Accepted | 2026-08-16 | Audio & Multimodal Voice (Target #47 / Phase 114) |
+| [ADR-091](ADR-091-deterministic-speech-text-normalizer-and-symbol-expansion.md) | Deterministic Speech Text Normalizer, Non-Spoken Block Stripper & Symbol Expansion Subsystem | Accepted | 2026-08-16 | Audio & Multimodal Voice (Target #48 / Phase 115) |
 
 ## Domain Grouping
 
@@ -118,6 +119,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md)**: Distributed content-addressed skill sync protocol, CAS ref head optimistic concurrency, 3-way merge resolution, and cryptographic provenance ledger.
 - **[ADR-089](ADR-089-pre-exec-security-scanner-and-supply-chain-provenance.md)**: Pre-exec security scanner, content-level threat detection, Cosign workflow supply-chain provenance verification, and fail-open circuit breaker.
 - **[ADR-090](ADR-090-audio-container-magic-byte-sniffer-and-extension-repair.md)**: Magic-byte audio container sniffer (OGG, FLAC, WAV, MP3, AAC, M4A, WEBM), RIFF/WEBP exclusion, ISO ftyp brand resolution, sync word disambiguation, and streaming audio cache vault.
+- **[ADR-091](ADR-091-deterministic-speech-text-normalizer-and-symbol-expansion.md)**: Deterministic speech text normalizer, non-spoken block stripper (<think> reasoning, mutation footers), Markdown phonetic flattening, symbol/unit expansion, and single-line payload generation.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.
