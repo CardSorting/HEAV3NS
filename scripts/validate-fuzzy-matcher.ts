@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { performance } from "node:perf_hooks";
+import type { CodemodRule } from "../src/core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../src/tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
 import { BroccoliFuzzySubstrate } from "../src/sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
 import { FuzzySnapshotManager } from "../src/sessions/extensions/fuzzy/fuzzy-snapshot-manager.js";
