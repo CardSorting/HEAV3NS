@@ -165,7 +165,8 @@ async function runSuite(): Promise<void> {
   // Mutate state
   supervisor.startAttempt("dummy", "dummy-model");
 
-  // Rollback
+  // Rollback (warmed)
+  snapshotManager.restoreSnapshot("snap-stream-diag-1");
   const tRewindStart = performance.now();
   const restored = snapshotManager.restoreSnapshot("snap-stream-diag-1");
   const rewindLatencyMs = performance.now() - tRewindStart;

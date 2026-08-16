@@ -575,6 +575,12 @@ import { BroccoliBillingUsageSubstrate } from "../sessions/extensions/billing_us
 import { BillingUsageSnapshotManager } from "../sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
 import { BillingUsageToolSuite } from "../tooling/extensions/billing_usage/billing-usage-tool-suite.js";
 
+import { DeterministicThreadContextEngine } from "../agents/extensions/thread_context/deterministic-thread-context-engine.js";
+import { ThreadContextSupervisor } from "../agents/extensions/thread_context/thread-context-supervisor.js";
+import { BroccoliThreadContextSubstrate } from "../sessions/extensions/thread_context/broccoli-thread-context-substrate.js";
+import { ThreadContextSnapshotManager } from "../sessions/extensions/thread_context/thread-context-snapshot-manager.js";
+import { ThreadContextToolSuite } from "../tooling/extensions/thread_context/thread-context-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1091,6 +1097,11 @@ export class MonolithFactory {
     broccoliBillingUsageSubstrate: BroccoliBillingUsageSubstrate;
     billingUsageSnapshotManager: BillingUsageSnapshotManager;
     billingUsageToolSuite: BillingUsageToolSuite;
+    deterministicThreadContextEngine: DeterministicThreadContextEngine;
+    threadContextSupervisor: ThreadContextSupervisor;
+    broccoliThreadContextSubstrate: BroccoliThreadContextSubstrate;
+    threadContextSnapshotManager: ThreadContextSnapshotManager;
+    threadContextToolSuite: ThreadContextToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1937,6 +1948,15 @@ export class MonolithFactory {
     );
     const billingUsageToolSuite = new BillingUsageToolSuite(billingUsageSupervisor);
 
+    const deterministicThreadContextEngine = new DeterministicThreadContextEngine();
+    const broccoliThreadContextSubstrate = new BroccoliThreadContextSubstrate();
+    const threadContextSnapshotManager = new ThreadContextSnapshotManager(broccoliThreadContextSubstrate);
+    const threadContextSupervisor = new ThreadContextSupervisor(
+      broccoliThreadContextSubstrate,
+      deterministicThreadContextEngine
+    );
+    const threadContextToolSuite = new ThreadContextToolSuite(threadContextSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2019,7 +2039,8 @@ export class MonolithFactory {
       subdirHintsToolSuite,
       streamDiagToolSuite,
       turnRetryToolSuite,
-      billingUsageToolSuite
+      billingUsageToolSuite,
+      threadContextToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2549,6 +2570,11 @@ export class MonolithFactory {
       broccoliBillingUsageSubstrate,
       billingUsageSnapshotManager,
       billingUsageToolSuite,
+      deterministicThreadContextEngine,
+      threadContextSupervisor,
+      broccoliThreadContextSubstrate,
+      threadContextSnapshotManager,
+      threadContextToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

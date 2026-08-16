@@ -536,6 +536,12 @@ import { BroccoliBillingUsageSubstrate } from "./sessions/extensions/billing_usa
 import { BillingUsageSnapshotManager } from "./sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
 import { BillingUsageToolSuite } from "./tooling/extensions/billing_usage/billing-usage-tool-suite.js";
 
+import { DeterministicThreadContextEngine } from "./agents/extensions/thread_context/deterministic-thread-context-engine.js";
+import { ThreadContextSupervisor } from "./agents/extensions/thread_context/thread-context-supervisor.js";
+import { BroccoliThreadContextSubstrate } from "./sessions/extensions/thread_context/broccoli-thread-context-substrate.js";
+import { ThreadContextSnapshotManager } from "./sessions/extensions/thread_context/thread-context-snapshot-manager.js";
+import { ThreadContextToolSuite } from "./tooling/extensions/thread_context/thread-context-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2192,6 +2198,24 @@ export {
   DEFAULT_BILLING_ACCOUNT_INFO,
 } from "./core/contracts/billing-usage.contracts.js";
 
+export { DeterministicThreadContextEngine } from "./agents/extensions/thread_context/deterministic-thread-context-engine.js";
+export { ThreadContextSupervisor } from "./agents/extensions/thread_context/thread-context-supervisor.js";
+export { BroccoliThreadContextSubstrate } from "./sessions/extensions/thread_context/broccoli-thread-context-substrate.js";
+export { ThreadContextSnapshotManager } from "./sessions/extensions/thread_context/thread-context-snapshot-manager.js";
+export { ThreadContextToolSuite } from "./tooling/extensions/thread_context/thread-context-tool-suite.js";
+export type {
+  SecurityApprovalCallback,
+  SudoPasswordCallback,
+  AsyncTurnContextDescriptor,
+  ContextPropagationConfig,
+  ExecutionDispatchEvent,
+  ContextPropagationMetrics,
+  ThreadContextWorkspaceSnapshot,
+} from "./core/contracts/thread-context.contracts.js";
+export {
+  DEFAULT_CONTEXT_PROPAGATION_CONFIG,
+} from "./core/contracts/thread-context.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2649,6 +2673,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliBillingUsageSubstrate: BroccoliBillingUsageSubstrate;
   readonly billingUsageSnapshotManager: BillingUsageSnapshotManager;
   readonly billingUsageToolSuite: BillingUsageToolSuite;
+  readonly deterministicThreadContextEngine: DeterministicThreadContextEngine;
+  readonly threadContextSupervisor: ThreadContextSupervisor;
+  readonly broccoliThreadContextSubstrate: BroccoliThreadContextSubstrate;
+  readonly threadContextSnapshotManager: ThreadContextSnapshotManager;
+  readonly threadContextToolSuite: ThreadContextToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3097,6 +3126,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliBillingUsageSubstrate = components.broccoliBillingUsageSubstrate;
     this.billingUsageSnapshotManager = components.billingUsageSnapshotManager;
     this.billingUsageToolSuite = components.billingUsageToolSuite;
+    this.deterministicThreadContextEngine = components.deterministicThreadContextEngine;
+    this.threadContextSupervisor = components.threadContextSupervisor;
+    this.broccoliThreadContextSubstrate = components.broccoliThreadContextSubstrate;
+    this.threadContextSnapshotManager = components.threadContextSnapshotManager;
+    this.threadContextToolSuite = components.threadContextToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

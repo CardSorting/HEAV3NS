@@ -79,6 +79,7 @@ import type { SubdirHintsToolSuite } from "../subdir_hints/subdir-hints-tool-sui
 import type { StreamDiagToolSuite } from "../stream_diag/stream-diag-tool-suite.js";
 import type { TurnRetryToolSuite } from "../turn_retry/turn-retry-tool-suite.js";
 import type { BillingUsageToolSuite } from "../billing_usage/billing-usage-tool-suite.js";
+import type { ThreadContextToolSuite } from "../thread_context/thread-context-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -149,6 +150,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly streamDiagToolSuite?: StreamDiagToolSuite;
   readonly turnRetryToolSuite?: TurnRetryToolSuite;
   readonly billingUsageToolSuite?: BillingUsageToolSuite;
+  readonly threadContextToolSuite?: ThreadContextToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -227,7 +229,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     subdirHintsToolSuite?: SubdirHintsToolSuite,
     streamDiagToolSuite?: StreamDiagToolSuite,
     turnRetryToolSuite?: TurnRetryToolSuite,
-    billingUsageToolSuite?: BillingUsageToolSuite
+    billingUsageToolSuite?: BillingUsageToolSuite,
+    threadContextToolSuite?: ThreadContextToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -298,6 +301,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.streamDiagToolSuite = streamDiagToolSuite;
     this.turnRetryToolSuite = turnRetryToolSuite;
     this.billingUsageToolSuite = billingUsageToolSuite;
+    this.threadContextToolSuite = threadContextToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -825,6 +829,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.billingUsageToolSuite) {
       for (const tool of this.billingUsageToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.threadContextToolSuite) {
+      for (const tool of this.threadContextToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }
