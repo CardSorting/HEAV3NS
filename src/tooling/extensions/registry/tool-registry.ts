@@ -76,6 +76,7 @@ import type { FileSafetyToolSuite } from "../file_safety/file-safety-tool-suite.
 import type { ContextBreakdownToolSuite } from "../context_breakdown/context-breakdown-tool-suite.js";
 import type { OsvScannerToolSuite } from "../osv/osv-scanner-tool-suite.js";
 import type { SubdirHintsToolSuite } from "../subdir_hints/subdir-hints-tool-suite.js";
+import type { StreamDiagToolSuite } from "../stream_diag/stream-diag-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -143,6 +144,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly contextBreakdownToolSuite?: ContextBreakdownToolSuite;
   readonly osvScannerToolSuite?: OsvScannerToolSuite;
   readonly subdirHintsToolSuite?: SubdirHintsToolSuite;
+  readonly streamDiagToolSuite?: StreamDiagToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -218,7 +220,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     fileSafetyToolSuite?: FileSafetyToolSuite,
     contextBreakdownToolSuite?: ContextBreakdownToolSuite,
     osvScannerToolSuite?: OsvScannerToolSuite,
-    subdirHintsToolSuite?: SubdirHintsToolSuite
+    subdirHintsToolSuite?: SubdirHintsToolSuite,
+    streamDiagToolSuite?: StreamDiagToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -286,6 +289,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.contextBreakdownToolSuite = contextBreakdownToolSuite;
     this.osvScannerToolSuite = osvScannerToolSuite;
     this.subdirHintsToolSuite = subdirHintsToolSuite;
+    this.streamDiagToolSuite = streamDiagToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -798,6 +802,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.subdirHintsToolSuite) {
       for (const tool of this.subdirHintsToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.streamDiagToolSuite) {
+      for (const tool of this.streamDiagToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

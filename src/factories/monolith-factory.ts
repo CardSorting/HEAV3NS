@@ -557,6 +557,12 @@ import { BroccoliSubdirHintsSubstrate } from "../sessions/extensions/subdir_hint
 import { SubdirHintsSnapshotManager } from "../sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
 import { SubdirHintsToolSuite } from "../tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
 
+import { DeterministicStreamDiagEngine } from "../agents/extensions/stream_diag/deterministic-stream-diag-engine.js";
+import { StreamDiagSupervisor } from "../agents/extensions/stream_diag/stream-diag-supervisor.js";
+import { BroccoliStreamDiagSubstrate } from "../sessions/extensions/stream_diag/broccoli-stream-diag-substrate.js";
+import { StreamDiagSnapshotManager } from "../sessions/extensions/stream_diag/stream-diag-snapshot-manager.js";
+import { StreamDiagToolSuite } from "../tooling/extensions/stream_diag/stream-diag-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1058,6 +1064,11 @@ export class MonolithFactory {
     broccoliSubdirHintsSubstrate: BroccoliSubdirHintsSubstrate;
     subdirHintsSnapshotManager: SubdirHintsSnapshotManager;
     subdirHintsToolSuite: SubdirHintsToolSuite;
+    deterministicStreamDiagEngine: DeterministicStreamDiagEngine;
+    streamDiagSupervisor: StreamDiagSupervisor;
+    broccoliStreamDiagSubstrate: BroccoliStreamDiagSubstrate;
+    streamDiagSnapshotManager: StreamDiagSnapshotManager;
+    streamDiagToolSuite: StreamDiagToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1877,6 +1888,15 @@ export class MonolithFactory {
     );
     const subdirHintsToolSuite = new SubdirHintsToolSuite(subdirHintsSupervisor);
 
+    const deterministicStreamDiagEngine = new DeterministicStreamDiagEngine();
+    const broccoliStreamDiagSubstrate = new BroccoliStreamDiagSubstrate();
+    const streamDiagSnapshotManager = new StreamDiagSnapshotManager(broccoliStreamDiagSubstrate);
+    const streamDiagSupervisor = new StreamDiagSupervisor(
+      broccoliStreamDiagSubstrate,
+      deterministicStreamDiagEngine
+    );
+    const streamDiagToolSuite = new StreamDiagToolSuite(streamDiagSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1956,7 +1976,8 @@ export class MonolithFactory {
       fileSafetyToolSuite,
       contextBreakdownToolSuite,
       osvScannerToolSuite,
-      subdirHintsToolSuite
+      subdirHintsToolSuite,
+      streamDiagToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2471,6 +2492,11 @@ export class MonolithFactory {
       broccoliSubdirHintsSubstrate,
       subdirHintsSnapshotManager,
       subdirHintsToolSuite,
+      deterministicStreamDiagEngine,
+      streamDiagSupervisor,
+      broccoliStreamDiagSubstrate,
+      streamDiagSnapshotManager,
+      streamDiagToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

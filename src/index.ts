@@ -518,6 +518,12 @@ import { BroccoliSubdirHintsSubstrate } from "./sessions/extensions/subdir_hints
 import { SubdirHintsSnapshotManager } from "./sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
 import { SubdirHintsToolSuite } from "./tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
 
+import { DeterministicStreamDiagEngine } from "./agents/extensions/stream_diag/deterministic-stream-diag-engine.js";
+import { StreamDiagSupervisor } from "./agents/extensions/stream_diag/stream-diag-supervisor.js";
+import { BroccoliStreamDiagSubstrate } from "./sessions/extensions/stream_diag/broccoli-stream-diag-substrate.js";
+import { StreamDiagSnapshotManager } from "./sessions/extensions/stream_diag/stream-diag-snapshot-manager.js";
+import { StreamDiagToolSuite } from "./tooling/extensions/stream_diag/stream-diag-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2115,6 +2121,23 @@ export type {
 } from "./core/contracts/subdirectory-hints.contracts.js";
 export { DEFAULT_SUBDIRECTORY_HINTS_CONFIG } from "./core/contracts/subdirectory-hints.contracts.js";
 
+export { DeterministicStreamDiagEngine } from "./agents/extensions/stream_diag/deterministic-stream-diag-engine.js";
+export { StreamDiagSupervisor } from "./agents/extensions/stream_diag/stream-diag-supervisor.js";
+export { BroccoliStreamDiagSubstrate } from "./sessions/extensions/stream_diag/broccoli-stream-diag-substrate.js";
+export { StreamDiagSnapshotManager } from "./sessions/extensions/stream_diag/stream-diag-snapshot-manager.js";
+export { StreamDiagToolSuite } from "./tooling/extensions/stream_diag/stream-diag-tool-suite.js";
+export type {
+  StreamDiagnosticAttempt,
+  StreamDropEvent,
+  StreamDiagConfig,
+  StreamDiagMetrics,
+  StreamDiagWorkspaceSnapshot,
+} from "./core/contracts/stream-diag.contracts.js";
+export {
+  STREAM_DIAG_DEFAULT_HEADERS,
+  DEFAULT_STREAM_DIAG_CONFIG,
+} from "./core/contracts/stream-diag.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2557,6 +2580,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSubdirHintsSubstrate: BroccoliSubdirHintsSubstrate;
   readonly subdirHintsSnapshotManager: SubdirHintsSnapshotManager;
   readonly subdirHintsToolSuite: SubdirHintsToolSuite;
+  readonly deterministicStreamDiagEngine: DeterministicStreamDiagEngine;
+  readonly streamDiagSupervisor: StreamDiagSupervisor;
+  readonly broccoliStreamDiagSubstrate: BroccoliStreamDiagSubstrate;
+  readonly streamDiagSnapshotManager: StreamDiagSnapshotManager;
+  readonly streamDiagToolSuite: StreamDiagToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2990,6 +3018,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSubdirHintsSubstrate = components.broccoliSubdirHintsSubstrate;
     this.subdirHintsSnapshotManager = components.subdirHintsSnapshotManager;
     this.subdirHintsToolSuite = components.subdirHintsToolSuite;
+    this.deterministicStreamDiagEngine = components.deterministicStreamDiagEngine;
+    this.streamDiagSupervisor = components.streamDiagSupervisor;
+    this.broccoliStreamDiagSubstrate = components.broccoliStreamDiagSubstrate;
+    this.streamDiagSnapshotManager = components.streamDiagSnapshotManager;
+    this.streamDiagToolSuite = components.streamDiagToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
