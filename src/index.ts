@@ -566,6 +566,12 @@ import { BroccoliStreamingScrubberSubstrate } from "./sessions/extensions/stream
 import { StreamingScrubberSnapshotManager } from "./sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
 import { StreamingScrubberToolSuite } from "./tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
 
+import { DeterministicSelfRepoGuardEngine } from "./agents/extensions/self_repo_guard/deterministic-self-repo-guard-engine.js";
+import { SelfRepoGuardSupervisor } from "./agents/extensions/self_repo_guard/self-repo-guard-supervisor.js";
+import { BroccoliSelfRepoGuardSubstrate } from "./sessions/extensions/self_repo_guard/broccoli-self-repo-guard-substrate.js";
+import { SelfRepoGuardSnapshotManager } from "./sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
+import { SelfRepoGuardToolSuite } from "./tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2313,6 +2319,28 @@ export {
   DEFAULT_STREAMING_THINK_SCRUBBER_CONFIG,
 } from "./core/contracts/streaming-think-scrubber.contracts.js";
 
+export { DeterministicSelfRepoGuardEngine } from "./agents/extensions/self_repo_guard/deterministic-self-repo-guard-engine.js";
+export { SelfRepoGuardSupervisor } from "./agents/extensions/self_repo_guard/self-repo-guard-supervisor.js";
+export { BroccoliSelfRepoGuardSubstrate } from "./sessions/extensions/self_repo_guard/broccoli-self-repo-guard-substrate.js";
+export { SelfRepoGuardSnapshotManager } from "./sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
+export { SelfRepoGuardToolSuite } from "./tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
+export type {
+  GitOperationSafety,
+  SelfRepoGuardConfig,
+  SelfRepoGuardIncident,
+  SelfRepoGuardMetrics,
+  SelfRepoGuardVerdict,
+  SelfRepoGuardWorkspaceSnapshot,
+} from "./core/contracts/self-repo-guard.contracts.js";
+export {
+  DEFAULT_SELF_REPO_GUARD_CONFIG,
+  RESET_WORKTREE_MODES,
+  SAFE_GIT_BUILTINS,
+  STASH_SAFE_ACTIONS,
+  WORKTREE_MUTATING_GIT_COMMANDS,
+  WORKTREE_TARGET_ACTIONS,
+} from "./core/contracts/self-repo-guard.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2795,6 +2823,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliStreamingScrubberSubstrate: BroccoliStreamingScrubberSubstrate;
   readonly streamingScrubberSnapshotManager: StreamingScrubberSnapshotManager;
   readonly streamingScrubberToolSuite: StreamingScrubberToolSuite;
+  readonly deterministicSelfRepoGuardEngine: DeterministicSelfRepoGuardEngine;
+  readonly selfRepoGuardSupervisor: SelfRepoGuardSupervisor;
+  readonly broccoliSelfRepoGuardSubstrate: BroccoliSelfRepoGuardSubstrate;
+  readonly selfRepoGuardSnapshotManager: SelfRepoGuardSnapshotManager;
+  readonly selfRepoGuardToolSuite: SelfRepoGuardToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3268,6 +3301,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliStreamingScrubberSubstrate = components.broccoliStreamingScrubberSubstrate;
     this.streamingScrubberSnapshotManager = components.streamingScrubberSnapshotManager;
     this.streamingScrubberToolSuite = components.streamingScrubberToolSuite;
+    this.deterministicSelfRepoGuardEngine = components.deterministicSelfRepoGuardEngine;
+    this.selfRepoGuardSupervisor = components.selfRepoGuardSupervisor;
+    this.broccoliSelfRepoGuardSubstrate = components.broccoliSelfRepoGuardSubstrate;
+    this.selfRepoGuardSnapshotManager = components.selfRepoGuardSnapshotManager;
+    this.selfRepoGuardToolSuite = components.selfRepoGuardToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

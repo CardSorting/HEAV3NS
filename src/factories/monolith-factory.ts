@@ -605,6 +605,12 @@ import { BroccoliStreamingScrubberSubstrate } from "../sessions/extensions/strea
 import { StreamingScrubberSnapshotManager } from "../sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
 import { StreamingScrubberToolSuite } from "../tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
 
+import { DeterministicSelfRepoGuardEngine } from "../agents/extensions/self_repo_guard/deterministic-self-repo-guard-engine.js";
+import { SelfRepoGuardSupervisor } from "../agents/extensions/self_repo_guard/self-repo-guard-supervisor.js";
+import { BroccoliSelfRepoGuardSubstrate } from "../sessions/extensions/self_repo_guard/broccoli-self-repo-guard-substrate.js";
+import { SelfRepoGuardSnapshotManager } from "../sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
+import { SelfRepoGuardToolSuite } from "../tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1146,6 +1152,11 @@ export class MonolithFactory {
     broccoliStreamingScrubberSubstrate: BroccoliStreamingScrubberSubstrate;
     streamingScrubberSnapshotManager: StreamingScrubberSnapshotManager;
     streamingScrubberToolSuite: StreamingScrubberToolSuite;
+    deterministicSelfRepoGuardEngine: DeterministicSelfRepoGuardEngine;
+    selfRepoGuardSupervisor: SelfRepoGuardSupervisor;
+    broccoliSelfRepoGuardSubstrate: BroccoliSelfRepoGuardSubstrate;
+    selfRepoGuardSnapshotManager: SelfRepoGuardSnapshotManager;
+    selfRepoGuardToolSuite: SelfRepoGuardToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2037,6 +2048,15 @@ export class MonolithFactory {
     );
     const streamingScrubberToolSuite = new StreamingScrubberToolSuite(streamingScrubberSupervisor);
 
+    const deterministicSelfRepoGuardEngine = new DeterministicSelfRepoGuardEngine();
+    const broccoliSelfRepoGuardSubstrate = new BroccoliSelfRepoGuardSubstrate();
+    const selfRepoGuardSnapshotManager = new SelfRepoGuardSnapshotManager(broccoliSelfRepoGuardSubstrate);
+    const selfRepoGuardSupervisor = new SelfRepoGuardSupervisor(
+      broccoliSelfRepoGuardSubstrate,
+      deterministicSelfRepoGuardEngine
+    );
+    const selfRepoGuardToolSuite = new SelfRepoGuardToolSuite(selfRepoGuardSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2124,7 +2144,8 @@ export class MonolithFactory {
       envProbeToolSuite,
       skillLinterToolSuite,
       terminalCleanerToolSuite,
-      streamingScrubberToolSuite
+      streamingScrubberToolSuite,
+      selfRepoGuardToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2679,6 +2700,11 @@ export class MonolithFactory {
       broccoliStreamingScrubberSubstrate,
       streamingScrubberSnapshotManager,
       streamingScrubberToolSuite,
+      deterministicSelfRepoGuardEngine,
+      selfRepoGuardSupervisor,
+      broccoliSelfRepoGuardSubstrate,
+      selfRepoGuardSnapshotManager,
+      selfRepoGuardToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
