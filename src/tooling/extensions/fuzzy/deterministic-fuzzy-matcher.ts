@@ -11,6 +11,9 @@
 
 import type {
   ClosestLineCandidate,
+  ConflictMarkerChunk,
+  ConflictResolutionResult,
+  ConflictResolutionStrategy,
   ContextWindow,
   EscapeDriftDetection,
   FuzzyMatcherOptions,
@@ -19,9 +22,14 @@ import type {
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  IndentationHarmonizationResult,
+  IndentationStyle,
   MismatchDiagnosis,
   MultiFilePatchResult,
+  MultiFileTransactionHunk,
+  MultiFileTransactionResult,
   SearchReplaceBlock,
+  SyntaxBoundarySnapResult,
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
@@ -1136,6 +1144,339 @@ export class DeterministicFuzzyMatcher {
       totalFiles: filenames.length,
       successfulFiles: successfulCount,
       error: successfulCount === filenames.length ? null : "One or more files failed to patch cleanly.",
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Git Conflict Marker Parser & Deterministic Resolver
+  // ---------------------------------------------------------------------------
+
+  parseConflictMarkers(content: string): ConflictMarkerChunk[] {
+    const chunks: ConflictMarkerChunk[] = [];
+    const lines = content.split("\n");
+
+    let state: "IDLE" | "OURS" | "BASE" | "THEIRS" = "IDLE";
+    let startLine = 0;
+    let oursHeader = "";
+    let theirsHeader = "";
+    let oursLines: string[] = [];
+    let baseLines: string[] = [];
+    let theirsLines: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith("<<<<<<<")) {
+        state = "OURS";
+        startLine = i + 1;
+        oursHeader = trimmed.replace(/^<{7}\s*/, "");
+        oursLines = [];
+        baseLines = [];
+        theirsLines = [];
+      } else if (state === "OURS" && trimmed.startsWith("|||||||")) {
+        state = "BASE";
+      } else if ((state === "OURS" || state === "BASE") && trimmed === "=======") {
+        state = "THEIRS";
+      } else if (state === "THEIRS" && trimmed.startsWith(">>>>>>>")) {
+        theirsHeader = trimmed.replace(/^>{7}\s*/, "");
+        chunks.push({
+          startLine,
+          endLine: i + 1,
+          oursHeader,
+          oursContent: oursLines.join("\n"),
+          baseContent: baseLines.length > 0 ? baseLines.join("\n") : undefined,
+          theirsHeader,
+          theirsContent: theirsLines.join("\n"),
+        });
+        state = "IDLE";
+      } else if (state === "OURS") {
+        oursLines.push(line);
+      } else if (state === "BASE") {
+        baseLines.push(line);
+      } else if (state === "THEIRS") {
+        theirsLines.push(line);
+      }
+    }
+
+    return chunks;
+  }
+
+  resolveConflictMarkers(
+    content: string,
+    strategy: ConflictResolutionStrategy | ((chunk: ConflictMarkerChunk) => string) = "take_ours"
+  ): ConflictResolutionResult {
+    const chunks = this.parseConflictMarkers(content);
+    if (chunks.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        conflictsFound: 0,
+        conflictsResolved: 0,
+        chunks: [],
+        error: null,
+      };
+    }
+
+    const lines = content.split("\n");
+    const sortedChunks = [...chunks].sort((a, b) => b.startLine - a.startLine);
+
+    for (const chunk of sortedChunks) {
+      let replacement = "";
+      if (typeof strategy === "function") {
+        replacement = strategy(chunk);
+      } else if (strategy === "take_ours") {
+        replacement = chunk.oursContent;
+      } else if (strategy === "take_theirs") {
+        replacement = chunk.theirsContent;
+      } else if (strategy === "take_both_ours_first") {
+        replacement =
+          chunk.oursContent +
+          (chunk.oursContent.length > 0 && chunk.theirsContent.length > 0 ? "\n" : "") +
+          chunk.theirsContent;
+      } else if (strategy === "take_both_theirs_first") {
+        replacement =
+          chunk.theirsContent +
+          (chunk.theirsContent.length > 0 && chunk.oursContent.length > 0 ? "\n" : "") +
+          chunk.oursContent;
+      }
+
+      const replacementLines = replacement.length > 0 ? replacement.split("\n") : [];
+      const deleteCount = chunk.endLine - chunk.startLine + 1;
+      lines.splice(chunk.startLine - 1, deleteCount, ...replacementLines);
+    }
+
+    let modifiedContent = lines.join("\n");
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent,
+      conflictsFound: chunks.length,
+      conflictsResolved: chunks.length,
+      chunks,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Indentation Style Detection & Proportional Harmonizer
+  // ---------------------------------------------------------------------------
+
+  detectIndentationStyle(content: string): IndentationStyle {
+    const lines = content.split("\n");
+    let tabLines = 0;
+    let spaceLines = 0;
+    const spaceIndents: number[] = [];
+
+    for (const line of lines) {
+      if (line.trim().length === 0) continue;
+      const leadingTabs = line.match(/^\t+/);
+      const leadingSpaces = line.match(/^ +/);
+
+      if (leadingTabs) {
+        tabLines++;
+      } else if (leadingSpaces) {
+        spaceLines++;
+        spaceIndents.push(leadingSpaces[0].length);
+      }
+    }
+
+    if (tabLines === 0 && spaceLines === 0) {
+      return { type: "spaces", size: 2, confidence: 1.0 };
+    }
+
+    if (tabLines > spaceLines * 2) {
+      return { type: "tabs", size: 1, confidence: tabLines / (tabLines + spaceLines) };
+    }
+
+    if (spaceLines > tabLines * 2) {
+      const counts: Record<number, number> = { 2: 0, 4: 0, 8: 0 };
+      for (const indent of spaceIndents) {
+        if (indent % 4 === 0) counts[4]++;
+        if (indent % 2 === 0) counts[2]++;
+        if (indent % 8 === 0) counts[8]++;
+      }
+
+      let detectedSize = 2;
+      if (counts[4] >= counts[2] * 0.7 && counts[4] > 0) {
+        detectedSize = 4;
+      }
+      return { type: "spaces", size: detectedSize, confidence: spaceLines / (tabLines + spaceLines) };
+    }
+
+    return { type: "mixed", size: 2, confidence: 0.5 };
+  }
+
+  harmonizeIndentation(targetContent: string, snippet: string): IndentationHarmonizationResult {
+    const targetStyle = this.detectIndentationStyle(targetContent);
+    const snippetStyle = this.detectIndentationStyle(snippet);
+
+    const snippetLines = snippet.split("\n");
+    let linesAdjusted = 0;
+    const harmonizedLines: string[] = [];
+
+    const snippetStep = snippetStyle.size || 2;
+    const targetStep = targetStyle.size || 2;
+
+    for (const line of snippetLines) {
+      if (line.trim().length === 0) {
+        harmonizedLines.push(line);
+        continue;
+      }
+
+      const match = line.match(/^([ \t]+)(.*)$/);
+      if (!match) {
+        harmonizedLines.push(line);
+        continue;
+      }
+
+      const indentStr = match[1];
+      const rest = match[2];
+
+      let logicalLevel = 0;
+      if (indentStr.includes("\t")) {
+        logicalLevel = indentStr.split("\t").length - 1;
+      } else {
+        logicalLevel = Math.round(indentStr.length / snippetStep);
+      }
+
+      let newIndent = "";
+      if (targetStyle.type === "tabs") {
+        newIndent = "\t".repeat(logicalLevel);
+      } else {
+        newIndent = " ".repeat(logicalLevel * targetStep);
+      }
+
+      if (newIndent !== indentStr) {
+        linesAdjusted++;
+      }
+      harmonizedLines.push(newIndent + rest);
+    }
+
+    return {
+      originalSnippet: snippet,
+      harmonizedSnippet: harmonizedLines.join("\n"),
+      detectedStyle: targetStyle,
+      linesAdjusted,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Syntax-Aware Structural Boundary Snapping
+  // ---------------------------------------------------------------------------
+
+  snapToSyntaxBoundaries(content: string, start: number, end: number): SyntaxBoundarySnapResult {
+    let snappedStart = Math.max(0, Math.min(content.length, start));
+    let snappedEnd = Math.max(0, Math.min(content.length, end));
+
+    // Snap start back if cutting in middle of word token
+    if (snappedStart > 0 && snappedStart < content.length) {
+      const prevChar = content[snappedStart - 1];
+      const currChar = content[snappedStart];
+      if (/[\w$]/.test(prevChar) && /[\w$]/.test(currChar)) {
+        while (snappedStart > 0 && /[\w$]/.test(content[snappedStart - 1])) {
+          snappedStart--;
+        }
+      }
+    }
+
+    // Snap end forward if cutting in middle of word token
+    if (snappedEnd > 0 && snappedEnd < content.length) {
+      const prevChar = content[snappedEnd - 1];
+      const currChar = content[snappedEnd];
+      if (/[\w$]/.test(prevChar) && /[\w$]/.test(currChar)) {
+        while (snappedEnd < content.length && /[\w$]/.test(content[snappedEnd])) {
+          snappedEnd++;
+        }
+      }
+    }
+
+    const adjustmentMade = snappedStart !== start || snappedEnd !== end;
+    return {
+      originalStart: start,
+      originalEnd: end,
+      snappedStart,
+      snappedEnd,
+      snappedSubstring: content.slice(snappedStart, snappedEnd),
+      adjustmentMade,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Atomic Multi-File Workspace Transaction Engine
+  // ---------------------------------------------------------------------------
+
+  applyMultiFileTransaction(
+    fileContents: Record<string, string>,
+    transactions: MultiFileTransactionHunk[],
+    options: { dryRun?: boolean } = {}
+  ): MultiFileTransactionResult {
+    const committedFiles: Record<string, string> = {};
+    const fileErrors: Record<string, string> = {};
+    let rollbackTriggered = false;
+
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      const filePath = tx.filePath;
+      let currentContent =
+        committedFiles[filePath] !== undefined ? committedFiles[filePath] : fileContents[filePath] || "";
+
+      if (tx.searchReplaceBlocks) {
+        const res = this.applySearchReplaceBlocks(currentContent, tx.searchReplaceBlocks, options);
+        if (!res.success) {
+          fileErrors[filePath] = res.error || `Failed applying SEARCH/REPLACE blocks to ${filePath}`;
+          rollbackTriggered = true;
+          break;
+        }
+        currentContent = res.modifiedContent;
+      }
+
+      if (tx.hunks && tx.hunks.length > 0) {
+        const res = this.findAndReplaceMulti(currentContent, tx.hunks, options);
+        if (!res.success) {
+          fileErrors[filePath] = res.error || `Failed applying hunks to ${filePath}`;
+          rollbackTriggered = true;
+          break;
+        }
+        currentContent = res.modifiedContent;
+      }
+
+      if (tx.unifiedPatch) {
+        const res = this.applyUnifiedPatch(currentContent, tx.unifiedPatch);
+        if (!res.success) {
+          fileErrors[filePath] = res.error || `Failed applying unified patch to ${filePath}`;
+          rollbackTriggered = true;
+          break;
+        }
+        currentContent = res.modifiedContent;
+      }
+
+      committedFiles[filePath] = currentContent;
+    }
+
+    if (rollbackTriggered) {
+      return {
+        success: false,
+        committedFiles: {},
+        totalFilesTargeted: transactions.length,
+        totalFilesModified: 0,
+        rollbackTriggered: true,
+        fileErrors,
+        error: `Transaction rolled back due to error(s): ${Object.values(fileErrors).join("; ")}`,
+      };
+    }
+
+    return {
+      success: true,
+      committedFiles,
+      totalFilesTargeted: transactions.length,
+      totalFilesModified: Object.keys(committedFiles).length,
+      rollbackTriggered: false,
+      fileErrors: {},
+      error: null,
     };
   }
 

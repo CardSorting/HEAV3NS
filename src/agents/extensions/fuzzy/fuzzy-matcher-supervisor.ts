@@ -7,12 +7,20 @@
 
 import { performance } from "node:perf_hooks";
 import type {
+  ConflictMarkerChunk,
+  ConflictResolutionResult,
+  ConflictResolutionStrategy,
   FuzzyExecutionRecord,
   FuzzyMatchResult,
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  IndentationHarmonizationResult,
+  IndentationStyle,
   MultiFilePatchResult,
+  MultiFileTransactionHunk,
+  MultiFileTransactionResult,
+  SyntaxBoundarySnapResult,
   UnifiedPatchResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -155,6 +163,55 @@ export class FuzzyMatcherSupervisor {
     multiFilePatch: string
   ): MultiFilePatchResult {
     return this.matcher.applyMultiFileUnifiedPatch(fileContents, multiFilePatch);
+  }
+
+  /**
+   * Parses git conflict markers from content into structured records.
+   */
+  parseConflictMarkers(content: string): ConflictMarkerChunk[] {
+    return this.matcher.parseConflictMarkers(content);
+  }
+
+  /**
+   * Resolves git conflict markers deterministically using specified strategy or custom resolver.
+   */
+  resolveConflictMarkers(
+    content: string,
+    strategy: ConflictResolutionStrategy | ((chunk: ConflictMarkerChunk) => string) = "take_ours"
+  ): ConflictResolutionResult {
+    return this.matcher.resolveConflictMarkers(content, strategy);
+  }
+
+  /**
+   * Detects the dominant indentation style (spaces vs tabs, size, confidence) of content.
+   */
+  detectIndentationStyle(content: string): IndentationStyle {
+    return this.matcher.detectIndentationStyle(content);
+  }
+
+  /**
+   * Harmonizes snippet indentation to proportionally match target document's prevailing style.
+   */
+  harmonizeIndentation(targetContent: string, snippet: string): IndentationHarmonizationResult {
+    return this.matcher.harmonizeIndentation(targetContent, snippet);
+  }
+
+  /**
+   * Snaps character start/end coordinates to the nearest balanced syntax and word boundaries.
+   */
+  snapToSyntaxBoundaries(content: string, start: number, end: number): SyntaxBoundarySnapResult {
+    return this.matcher.snapToSyntaxBoundaries(content, start, end);
+  }
+
+  /**
+   * Executes an atomic multi-file transaction across memory file maps with complete rollback on any error.
+   */
+  applyMultiFileTransaction(
+    fileContents: Record<string, string>,
+    transactions: MultiFileTransactionHunk[],
+    options: { dryRun?: boolean } = {}
+  ): MultiFileTransactionResult {
+    return this.matcher.applyMultiFileTransaction(fileContents, transactions, options);
   }
 
   /**

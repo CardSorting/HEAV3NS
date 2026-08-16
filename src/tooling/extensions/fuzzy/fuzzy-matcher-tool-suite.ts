@@ -6,7 +6,11 @@
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
-import type { FuzzyStrategyName } from "../../../core/contracts/fuzzy-matcher.contracts.js";
+import type {
+  ConflictResolutionStrategy,
+  FuzzyStrategyName,
+  MultiFileTransactionHunk,
+} from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { FuzzyMatcherSupervisor } from "../../../agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
 
 export class FuzzyMatcherToolSuite {
@@ -533,6 +537,132 @@ export class FuzzyMatcherToolSuite {
             formattedHint: diagnosis.formattedHint,
             candidatesCount: diagnosis.candidates.length,
             candidates: diagnosis.candidates,
+          };
+        },
+      },
+      {
+        name: "fuzzy_resolve_conflict_markers",
+        description: "Parses and deterministically resolves git merge conflict markers (<<<<<<< ... ======= ... >>>>>>>) within content.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content containing git conflict markers",
+            required: true,
+          },
+          strategy: {
+            type: "string",
+            description: "Resolution strategy: 'take_ours' (default), 'take_theirs', 'take_both_ours_first', or 'take_both_theirs_first'",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return { success: false, error: "Missing required parameter 'content' (string)." };
+          }
+          const strategy = (typeof args.strategy === "string" ? args.strategy : "take_ours") as ConflictResolutionStrategy;
+          const result = this.supervisor.resolveConflictMarkers(args.content, strategy);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            conflictsFound: result.conflictsFound,
+            conflictsResolved: result.conflictsResolved,
+            chunks: result.chunks,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_harmonize_indentation",
+        description: "Detects the prevailing indentation style of a target file and proportionally harmonizes a replacement snippet to match.",
+        parameters: {
+          targetContent: {
+            type: "string",
+            description: "The destination file content establishing the reference indentation style",
+            required: true,
+          },
+          snippet: {
+            type: "string",
+            description: "The code snippet whose indentation should be adapted to the target file style",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.targetContent !== "string" || typeof args.snippet !== "string") {
+            return { success: false, error: "Missing required string parameters ('targetContent', 'snippet')." };
+          }
+          const result = this.supervisor.harmonizeIndentation(args.targetContent, args.snippet);
+          return {
+            success: true,
+            originalSnippet: result.originalSnippet,
+            harmonizedSnippet: result.harmonizedSnippet,
+            detectedStyle: result.detectedStyle,
+            linesAdjusted: result.linesAdjusted,
+          };
+        },
+      },
+      {
+        name: "fuzzy_apply_multi_file_transaction",
+        description: "Executes an all-or-nothing multi-file transaction across memory file maps with complete rollback if any file edit fails.",
+        parameters: {
+          fileContents: {
+            type: "string",
+            description: "JSON-encoded object or map of filePath -> fileContent for all participating files",
+            required: true,
+          },
+          transactions: {
+            type: "string",
+            description: "JSON-encoded array or list of MultiFileTransactionHunk specifications per file",
+            required: true,
+          },
+          dryRun: {
+            type: "boolean",
+            description: "If true, validate and stage without mutating permanent files",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let fileContentsMap: Record<string, string>;
+          if (typeof args.fileContents === "string") {
+            try {
+              fileContentsMap = JSON.parse(args.fileContents);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for fileContents parameter: ${msg}` };
+            }
+          } else if (typeof args.fileContents === "object" && args.fileContents !== null) {
+            fileContentsMap = args.fileContents as Record<string, string>;
+          } else {
+            return { success: false, error: "Missing required parameter 'fileContents' (string or object)." };
+          }
+
+          let txList: MultiFileTransactionHunk[];
+          if (typeof args.transactions === "string") {
+            try {
+              txList = JSON.parse(args.transactions);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for transactions parameter: ${msg}` };
+            }
+          } else if (Array.isArray(args.transactions)) {
+            txList = args.transactions as MultiFileTransactionHunk[];
+          } else {
+            return { success: false, error: "Missing required parameter 'transactions' (string or array)." };
+          }
+
+          const dryRun = Boolean(args.dryRun);
+          const result = this.supervisor.applyMultiFileTransaction(
+            fileContentsMap,
+            txList,
+            { dryRun }
+          );
+          return {
+            success: result.success,
+            committedFiles: result.committedFiles,
+            totalFilesTargeted: result.totalFilesTargeted,
+            totalFilesModified: result.totalFilesModified,
+            rollbackTriggered: result.rollbackTriggered,
+            fileErrors: result.fileErrors,
+            error: result.error,
           };
         },
       },

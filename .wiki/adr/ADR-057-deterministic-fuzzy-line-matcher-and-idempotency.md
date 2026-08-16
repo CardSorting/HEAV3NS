@@ -33,6 +33,10 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
      10. `unicode_normalized`: Unicode typography normalization matrix with exact coordinate mapping
      11. `block_anchor`: First + last line anchored with Levenshtein similarity for interior lines
      12. `context_aware`: Sliding window similarity with configurable threshold ($\ge 0.5$)
+    - **Git Conflict Marker Parser & Deterministic Resolver (`parseConflictMarkers` & `resolveConflictMarkers`)**: Parses 2-way and 3-way conflict markers (`<<<<<<< OURS ... ||||||| BASE ... ======= ... >>>>>>> THEIRS`) and resolves them deterministically (`take_ours`, `take_theirs`, `take_both_ours_first`, `take_both_theirs_first`, or custom callback) with line-ending preservation.
+    - **Indentation Style Detection & Proportional Harmonizer (`detectIndentationStyle` & `harmonizeIndentation`)**: Computes leading whitespace histograms to detect spaces (2, 4, 8) vs tabs and automatically adapts snippet indentation to match the target file style.
+    - **Syntax-Aware Structural Boundary Snapping (`snapToSyntaxBoundaries`)**: Snaps character coordinates to whole word tokens and balanced syntax blocks to prevent syntax truncation.
+    - **Atomic Multi-File Workspace Transaction Engine (`applyMultiFileTransaction`)**: Staging engine executing multi-file mutations across hunks, search/replace blocks, and unified patches with all-or-nothing rollback on any file failure.
     - **SEARCH/REPLACE Block Parser & Applicator (`parseSearchReplaceBlocks` & `applySearchReplaceBlocks`)**: Parses standard `<<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE` blocks (Aider / LLM conventions) with file header detection and applies them with atomic multi-hunk validation.
     - **Line-Hint Centered Disambiguation Matching (`findAndReplaceAtLine`)**: Constrains candidate search to an expected line number window (`lineHint ± lineTolerance`) to disambiguate repeated identical lines across large files.
     - **Multi-File Unified Diff Engine (`parseMultiFileUnifiedPatch` & `applyMultiFileUnifiedPatch`)**: Parses and applies multi-file unified diff patches across memory file maps.
@@ -59,10 +63,10 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
    - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`FuzzyMatcherSupervisor` ([fuzzy-matcher-supervisor.ts](../../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.ts))**:
-   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, multi-file patches, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
+   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, conflict marker resolution, indentation harmonization, syntax boundary snapping, multi-file transactions, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
 
 5. **`FuzzyMatcherToolSuite` ([fuzzy-matcher-tool-suite.ts](../../src/tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.ts))**:
-   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_apply_search_replace_blocks`, `fuzzy_find_and_replace_at_line`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
+   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_apply_search_replace_blocks`, `fuzzy_find_and_replace_at_line`, `fuzzy_resolve_conflict_markers`, `fuzzy_harmonize_indentation`, `fuzzy_apply_multi_file_transaction`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
 
 6. **Grand Monolith Graduation (382 Components in OPTIMAL Cohesion)**:
    - Verified across `MonolithFactory` and `GrandMonolithSynthesizer`.

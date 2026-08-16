@@ -130,6 +130,70 @@ export interface MultiFilePatchResult {
   readonly error: string | null;
 }
 
+export interface ConflictMarkerChunk {
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly oursHeader: string;
+  readonly oursContent: string;
+  readonly baseContent?: string;
+  readonly theirsHeader: string;
+  readonly theirsContent: string;
+}
+
+export type ConflictResolutionStrategy =
+  | "take_ours"
+  | "take_theirs"
+  | "take_both_ours_first"
+  | "take_both_theirs_first";
+
+export interface ConflictResolutionResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly conflictsFound: number;
+  readonly conflictsResolved: number;
+  readonly chunks: readonly ConflictMarkerChunk[];
+  readonly error: string | null;
+}
+
+export interface IndentationStyle {
+  readonly type: "spaces" | "tabs" | "mixed";
+  readonly size: number; // e.g. 2, 4, 8 (or 1 for tabs)
+  readonly confidence: number; // 0..1
+}
+
+export interface IndentationHarmonizationResult {
+  readonly originalSnippet: string;
+  readonly harmonizedSnippet: string;
+  readonly detectedStyle: IndentationStyle;
+  readonly linesAdjusted: number;
+}
+
+export interface SyntaxBoundarySnapResult {
+  readonly originalStart: number;
+  readonly originalEnd: number;
+  readonly snappedStart: number;
+  readonly snappedEnd: number;
+  readonly snappedSubstring: string;
+  readonly adjustmentMade: boolean;
+}
+
+export interface MultiFileTransactionHunk {
+  readonly filePath: string;
+  readonly hunks?: readonly FuzzyReplacementHunk[];
+  readonly searchReplaceBlocks?: string;
+  readonly unifiedPatch?: string;
+}
+
+export interface MultiFileTransactionResult {
+  readonly success: boolean;
+  readonly committedFiles: Record<string, string>;
+  readonly totalFilesTargeted: number;
+  readonly totalFilesModified: number;
+  readonly rollbackTriggered: boolean;
+  readonly fileErrors: Record<string, string>;
+  readonly error: string | null;
+}
+
 export interface FuzzyMatcherOptions {
   readonly similarityThreshold?: number; // default 0.5
   readonly customUnicodeMap?: Record<string, string>;

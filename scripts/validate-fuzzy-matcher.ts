@@ -24,14 +24,14 @@ async function runValidationSuite() {
   console.log("================================================================================\n");
 
   let passedSuites = 0;
-  const totalSuites = 11;
+  const totalSuites = 15;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lumi-fuzzy-val-"));
 
   try {
     // ---------------------------------------------------------------------------
     // Suite 1: Exact Match, Edit Idempotency & Line-Ending Preservation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/11] Exact Match, Edit Idempotency & Line-Ending Preservation...");
+    console.log("[Suite 1/15] Exact Match, Edit Idempotency & Line-Ending Preservation...");
     const matcher = new DeterministicFuzzyMatcher();
 
     const baseContent = "function calculateTotal(items: number[]): number {\n  return items.reduce((a, b) => a + b, 0);\n}";
@@ -68,7 +68,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 2: Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/11] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
+    console.log("[Suite 2/15] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
     const whitespaceContent = "class UserService {\n    findUser(id: string) {\n        return db.users.get(id);\n    }\n}";
 
     // Line trimmed with trailing space difference
@@ -93,7 +93,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 3: Indentation-Flexible & Selective Control Character Unescaping (\t, \r)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/11] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
+    console.log("[Suite 3/15] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
     const tabFileContent = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
 
     // Model provides literal \t in new_string where file has real tabs
@@ -110,7 +110,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 4: Escape Drift & Backslash Doubling Guards
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/11] Escape Drift & Backslash Doubling Guards...");
+    console.log("[Suite 4/15] Escape Drift & Backslash Doubling Guards...");
     const quoteFileContent = "const msg = 'hello world';";
 
     // Model introduces spurious \' escaping in tool args that does not exist in file
@@ -136,7 +136,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 5: Comment Tolerance, Token Normalization & Ellipsis Wildcard
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/11] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
+    console.log("[Suite 5/15] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
     const commentedCode = "function start() {\n    // Setup database connection\n    initDb();\n    /* Start listener */\n    listen();\n}";
     const searchNoComments = "function start() {\n    initDb();\n    listen();\n}";
     const replacementCode = "function start() {\n    initDbV2();\n    listenV2();\n}";
@@ -177,7 +177,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/11] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
+    console.log("[Suite 6/15] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
     const mismatchContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
     const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
@@ -204,7 +204,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 7: Atomic Multi-Hunk Patch Engine & O(1) Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 7/11] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
+    console.log("[Suite 7/15] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
     const multiFile = "const A = 1;\nconst B = 2;\nconst C = 3;\nconst D = 4;\nconst E = 5;";
 
     const hunks = [
@@ -258,7 +258,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 8: Model Tool Suite Execution & Monolith 382-Component Synthesis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/11] Model Tool Suite Execution & Monolith 382-Component Synthesis...");
+    console.log("[Suite 8/15] Model Tool Suite Execution & Monolith 382-Component Synthesis...");
     const toolSuite = new FuzzyMatcherToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
@@ -268,6 +268,9 @@ async function runValidationSuite() {
     const applyPatchTool = tools.find((t) => t.name === "fuzzy_apply_patch")!;
     const applyBlocksTool = tools.find((t) => t.name === "fuzzy_apply_search_replace_blocks")!;
     const lineHintTool = tools.find((t) => t.name === "fuzzy_find_and_replace_at_line")!;
+    const resolveConflictTool = tools.find((t) => t.name === "fuzzy_resolve_conflict_markers")!;
+    const harmonizeIndentTool = tools.find((t) => t.name === "fuzzy_harmonize_indentation")!;
+    const multiFileTxTool = tools.find((t) => t.name === "fuzzy_apply_multi_file_transaction")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
     const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
@@ -281,6 +284,9 @@ async function runValidationSuite() {
       !applyPatchTool ||
       !applyBlocksTool ||
       !lineHintTool ||
+      !resolveConflictTool ||
+      !harmonizeIndentTool ||
+      !multiFileTxTool ||
       !dryRunTool ||
       !idempotencyTool ||
       !diagnoseTool ||
@@ -322,7 +328,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 9: SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 9/11] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
+    console.log("[Suite 9/15] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
     const blockFile = `
 function computeStats(values: number[]) {
   const min = Math.min(...values);
@@ -373,7 +379,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 10: Line-Hint Centered Disambiguation Matching
     // ---------------------------------------------------------------------------
-    console.log("[Suite 10/11] Line-Hint Centered Disambiguation Matching...");
+    console.log("[Suite 10/15] Line-Hint Centered Disambiguation Matching...");
     const duplicateLinesFile = [
       "// Block 1",
       "function foo() {",
@@ -428,7 +434,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 11: Multi-File Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 11/11] Multi-File Unified Patch Application...");
+    console.log("[Suite 11/15] Multi-File Unified Patch Application...");
     const multiFilePatch = `
 --- a/src/math.ts
 +++ b/src/math.ts
@@ -461,6 +467,165 @@ function computeStats(values: number[]) {
       throw new Error(`Multi-file unified patch failed: ${JSON.stringify(multiPatchRes)}`);
     }
     console.log("  ✓ Multi-file unified diff patch parsing & application verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 12: Git Conflict Marker Parsing & Deterministic Resolution
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 12/15] Git Conflict Marker Parsing & Deterministic Resolution...");
+    const conflictContent = `
+function calculateTax(amount: number): number {
+<<<<<<< HEAD
+  const rate = 0.0825;
+  return amount * rate;
+=======
+  const rate = 0.085;
+  return Math.round(amount * rate * 100) / 100;
+>>>>>>> feature/precise-tax
+}
+`;
+
+    const parsedConflicts = matcher.parseConflictMarkers(conflictContent);
+    if (parsedConflicts.length !== 1 || parsedConflicts[0].oursHeader !== "HEAD") {
+      throw new Error(`Conflict marker parsing failed: ${JSON.stringify(parsedConflicts)}`);
+    }
+
+    // Resolve with take_ours
+    const resolvedOurs = matcher.resolveConflictMarkers(conflictContent, "take_ours");
+    if (!resolvedOurs.success || !resolvedOurs.modifiedContent.includes("const rate = 0.0825;")) {
+      throw new Error(`Conflict resolution 'take_ours' failed: ${JSON.stringify(resolvedOurs)}`);
+    }
+
+    // Resolve with take_theirs
+    const resolvedTheirs = matcher.resolveConflictMarkers(conflictContent, "take_theirs");
+    if (!resolvedTheirs.success || !resolvedTheirs.modifiedContent.includes("const rate = 0.085;")) {
+      throw new Error(`Conflict resolution 'take_theirs' failed: ${JSON.stringify(resolvedTheirs)}`);
+    }
+
+    // Test tool integration for conflict markers
+    const conflictToolRes = (await resolveConflictTool.execute(
+      {
+        content: conflictContent,
+        strategy: "take_theirs",
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string; conflictsResolved: number };
+    if (!conflictToolRes.success || conflictToolRes.conflictsResolved !== 1) {
+      throw new Error("fuzzy_resolve_conflict_markers tool execution failed");
+    }
+    console.log("  ✓ Git conflict marker parser & deterministic resolution engine verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 13: Indentation Style Detection & Proportional Harmonizer
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 13/15] Indentation Style Detection & Proportional Harmonizer...");
+    const fourSpaceTarget = `
+class OrderProcessor {
+    processOrder(orderId: string) {
+        if (orderId) {
+            return this.executeOrder(orderId);
+        }
+    }
+}
+`;
+
+    const twoSpaceSnippet = `
+if (orderId) {
+  logOrder(orderId);
+  return this.executeOrder(orderId);
+}
+`;
+
+    const targetStyle = matcher.detectIndentationStyle(fourSpaceTarget);
+    if (targetStyle.type !== "spaces" || targetStyle.size !== 4) {
+      throw new Error(`Indentation style detection failed: ${JSON.stringify(targetStyle)}`);
+    }
+
+    const harmonized = matcher.harmonizeIndentation(fourSpaceTarget, twoSpaceSnippet);
+    if (!harmonized.harmonizedSnippet.includes("    logOrder(orderId);")) {
+      throw new Error(`Indentation harmonization failed: ${JSON.stringify(harmonized)}`);
+    }
+
+    // Test tool integration for indentation harmonization
+    const indentToolRes = (await harmonizeIndentTool.execute(
+      {
+        targetContent: fourSpaceTarget,
+        snippet: twoSpaceSnippet,
+      },
+      tempDir
+    )) as { success: boolean; harmonizedSnippet: string; detectedStyle: { size: number } };
+    if (!indentToolRes.success || indentToolRes.detectedStyle.size !== 4) {
+      throw new Error("fuzzy_harmonize_indentation tool execution failed");
+    }
+    console.log("  ✓ Indentation style detector & proportional harmonizer verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 14: Syntax-Aware Structural Block Boundary Snapping
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 14/15] Syntax-Aware Structural Block Boundary Snapping...");
+    const codeSnippet = "const userIdentifier = 'admin_user';";
+    // Slicing mid-word at start (index 8 is inside 'userIdentifier') and end (index 15)
+    const snapRes = matcher.snapToSyntaxBoundaries(codeSnippet, 8, 15);
+    if (snapRes.snappedSubstring !== "userIdentifier") {
+      throw new Error(`Syntax boundary snapping failed: ${JSON.stringify(snapRes)}`);
+    }
+    console.log("  ✓ Syntax-aware structural block boundary snapping verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 15: Atomic Multi-File Workspace Transactions & Rollback
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 15/15] Atomic Multi-File Workspace Transactions & Rollback...");
+    const initialFiles: Record<string, string> = {
+      "fileA.ts": "export const A = 1;\nexport const B = 2;",
+      "fileB.ts": "export const C = 3;\nexport const D = 4;",
+      "fileC.ts": "export const E = 5;\nexport const F = 6;",
+    };
+
+    // 1. Successful 3-file transaction
+    const txHunks = [
+      { filePath: "fileA.ts", hunks: [{ oldString: "export const B = 2;", newString: "export const B = 20;" }] },
+      { filePath: "fileB.ts", hunks: [{ oldString: "export const D = 4;", newString: "export const D = 40;" }] },
+      { filePath: "fileC.ts", hunks: [{ oldString: "export const F = 6;", newString: "export const F = 60;" }] },
+    ];
+
+    const txSuccessRes = matcher.applyMultiFileTransaction(initialFiles, txHunks);
+    if (
+      !txSuccessRes.success ||
+      txSuccessRes.totalFilesModified !== 3 ||
+      !txSuccessRes.committedFiles["fileA.ts"].includes("export const B = 20;") ||
+      !txSuccessRes.committedFiles["fileB.ts"].includes("export const D = 40;") ||
+      !txSuccessRes.committedFiles["fileC.ts"].includes("export const F = 60;")
+    ) {
+      throw new Error(`Multi-file transaction failed: ${JSON.stringify(txSuccessRes)}`);
+    }
+
+    // 2. Transaction rollback when file 3 has an unmatchable hunk
+    const failingTxHunks = [
+      { filePath: "fileA.ts", hunks: [{ oldString: "export const B = 2;", newString: "export const B = 200;" }] },
+      { filePath: "fileB.ts", hunks: [{ oldString: "export const D = 4;", newString: "export const D = 400;" }] },
+      { filePath: "fileC.ts", hunks: [{ oldString: "NON_EXISTENT_CONTENT_FAIL", newString: "export const F = 600;" }] },
+    ];
+
+    const txRollbackRes = matcher.applyMultiFileTransaction(initialFiles, failingTxHunks);
+    if (txRollbackRes.success || !txRollbackRes.rollbackTriggered || Object.keys(txRollbackRes.committedFiles).length !== 0) {
+      throw new Error(`Multi-file transaction rollback failed: ${JSON.stringify(txRollbackRes)}`);
+    }
+
+    // Test tool integration for multi-file transaction
+    const txToolRes = (await multiFileTxTool.execute(
+      {
+        fileContents: initialFiles,
+        transactions: txHunks,
+      },
+      tempDir
+    )) as { success: boolean; totalFilesModified: number };
+    if (!txToolRes.success || txToolRes.totalFilesModified !== 3) {
+      throw new Error("fuzzy_apply_multi_file_transaction tool execution failed");
+    }
+    console.log("  ✓ Atomic multi-file workspace transactions & transactional rollbacks verified");
     passedSuites++;
 
     console.log("\n================================================================================");
