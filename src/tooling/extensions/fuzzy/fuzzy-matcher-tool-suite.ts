@@ -1190,6 +1190,261 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_record_conflict_resolution",
+        description: "Records a verified merge conflict resolution in the in-memory Git Rerere cache for automatic replay across recurring merges.",
+        parameters: {
+          baseSnippet: {
+            type: "string",
+            description: "The base ancestor conflict snippet",
+            required: false,
+          },
+          oursSnippet: {
+            type: "string",
+            description: "Our branch conflict snippet",
+            required: true,
+          },
+          theirsSnippet: {
+            type: "string",
+            description: "Their branch conflict snippet",
+            required: true,
+          },
+          resolvedSnippet: {
+            type: "string",
+            description: "The resolved output snippet to remember",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.oursSnippet !== "string" || typeof args.theirsSnippet !== "string" || typeof args.resolvedSnippet !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('oursSnippet', 'theirsSnippet', 'resolvedSnippet').",
+            };
+          }
+          const preimage = {
+            baseSnippet: typeof args.baseSnippet === "string" ? args.baseSnippet : "",
+            oursSnippet: args.oursSnippet,
+            theirsSnippet: args.theirsSnippet,
+          };
+          const entry = this.supervisor.recordConflictResolution(preimage, args.resolvedSnippet);
+          return {
+            success: true,
+            fingerprint: entry.conflictFingerprint,
+            recordedAt: entry.recordedAt,
+            entry,
+          };
+        },
+      },
+      {
+        name: "fuzzy_replay_conflict_resolution",
+        description: "Scans content with git conflict markers and automatically replays matching recorded resolutions from the Rerere cache.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content containing git conflict markers",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.replayConflictResolution(args.content);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            replayedConflictsCount: result.replayedConflictsCount,
+            unresolvedConflictsCount: result.unresolvedConflictsCount,
+            appliedResolutions: result.appliedResolutions,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_refactor_function_signature",
+        description: "Refactors a function signature (parameter reordering, options-object conversions) and synchronizes callsites across the file.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content containing the function declaration and callsites",
+            required: true,
+          },
+          functionName: {
+            type: "string",
+            description: "The name of the function to refactor",
+            required: true,
+          },
+          newParams: {
+            type: "string",
+            description: "JSON array or list of new parameter definitions [{ name, type, defaultValue, isRest }]",
+            required: true,
+          },
+          convertToOptionsObject: {
+            type: "boolean",
+            description: "Whether to convert positional arguments into a single options object destructuring",
+            required: false,
+          },
+          optionsInterfaceName: {
+            type: "string",
+            description: "Optional interface name for the options parameter (e.g. 'ProcessOptions')",
+            required: false,
+          },
+          paramMapping: {
+            type: "string",
+            description: "Optional JSON object mapping from new param name to old param name or old 0-indexed position",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let parsedParams: any[];
+          if (typeof args.newParams === "string") {
+            try {
+              parsedParams = JSON.parse(args.newParams);
+            } catch {
+              parsedParams = [];
+            }
+          } else if (Array.isArray(args.newParams)) {
+            parsedParams = args.newParams;
+          } else {
+            return {
+              success: false,
+              error: "Missing required parameter 'newParams' (array or JSON string).",
+            };
+          }
+
+          let parsedMapping: Record<string, string | number> | undefined;
+          if (typeof args.paramMapping === "string") {
+            try {
+              parsedMapping = JSON.parse(args.paramMapping);
+            } catch {
+              parsedMapping = undefined;
+            }
+          } else if (typeof args.paramMapping === "object" && args.paramMapping !== null) {
+            parsedMapping = args.paramMapping as Record<string, string | number>;
+          }
+
+          if (typeof args.content !== "string" || typeof args.functionName !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'functionName').",
+            };
+          }
+          const result = this.supervisor.refactorFunctionSignature(args.content, {
+            functionName: args.functionName,
+            newParams: parsedParams,
+            convertToOptionsObject: typeof args.convertToOptionsObject === "boolean" ? args.convertToOptionsObject : false,
+            optionsInterfaceName: typeof args.optionsInterfaceName === "string" ? args.optionsInterfaceName : undefined,
+            paramMapping: parsedMapping,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            declarationUpdated: result.declarationUpdated,
+            callsitesUpdatedCount: result.callsitesUpdatedCount,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_apply_parallel_multicursor_edits",
+        description: "Executes atomic simultaneous replacements across multiple non-overlapping cursor loci in a file.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The original file content",
+            required: true,
+          },
+          edits: {
+            type: "string",
+            description: "JSON array or list of cursor edits [{ searchSnippet, replacementSnippet, expectedLineHint }]",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let parsedEdits: any[];
+          if (typeof args.edits === "string") {
+            try {
+              parsedEdits = JSON.parse(args.edits);
+            } catch {
+              parsedEdits = [];
+            }
+          } else if (Array.isArray(args.edits)) {
+            parsedEdits = args.edits;
+          } else {
+            return {
+              success: false,
+              error: "Missing required parameter 'edits' (array or JSON string).",
+            };
+          }
+
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.applyParallelMultiCursorEdits(args.content, parsedEdits);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            totalCursorsApplied: result.totalCursorsApplied,
+            appliedSpans: result.appliedSpans,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_generate_histogram_diff",
+        description: "Generates a Git-style --histogram unified diff isolating low-frequency anchor lines for optimal diff quality on repetitive code.",
+        parameters: {
+          oldText: {
+            type: "string",
+            description: "Original text before changes",
+            required: true,
+          },
+          newText: {
+            type: "string",
+            description: "Modified text after changes",
+            required: true,
+          },
+          filename: {
+            type: "string",
+            description: "Filename label for diff header (default: 'file')",
+            required: false,
+          },
+          contextLines: {
+            type: "number",
+            description: "Number of surrounding context lines (default: 3)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.oldText !== "string" || typeof args.newText !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('oldText', 'newText').",
+            };
+          }
+          const result = this.supervisor.generateHistogramDiff(
+            args.oldText,
+            args.newText,
+            typeof args.filename === "string" ? args.filename : "file",
+            { contextLines: typeof args.contextLines === "number" ? args.contextLines : 3 }
+          );
+          return {
+            success: true,
+            diffText: result.diffText,
+            hunksCount: result.hunks.length,
+            lowFrequencyAnchorsUsed: result.lowFrequencyAnchorsUsed,
+            totalLinesChanged: result.totalLinesChanged,
+            hasChanges: result.hasChanges,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

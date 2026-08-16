@@ -16,12 +16,16 @@ import type {
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  HistogramDiffOptions,
+  HistogramDiffResult,
   IndentationHarmonizationResult,
   IndentationStyle,
   InversePatchResult,
   LspApplyResult,
   LspTextEdit,
   LspWorkspaceEdit,
+  MultiCursorEditSpan,
+  MultiCursorParallelResult,
   MultiFileInversePatchResult,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
@@ -32,9 +36,14 @@ import type {
   PatchDriftResult,
   PatienceDiffOptions,
   PatienceDiffResult,
+  RecordedConflictEntry,
+  RecordedConflictPreimage,
+  RerereReplayResult,
   ScopeBoundedMatchOptions,
   ScopeBoundedMatchResult,
   SemanticConflictExplanation,
+  SignatureRefactorOptions,
+  SignatureRefactorResult,
   SymbolRenameOptions,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
@@ -501,6 +510,68 @@ export class FuzzyMatcherSupervisor {
       totalReplacements: this.substrate.getTotalReplacements(),
       strategyUsageCounts: this.substrate.getStrategyUsageCounts(),
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Git Rerere (Reuse Recorded Resolution) Conflict Cache
+  // ---------------------------------------------------------------------------
+
+  recordConflictResolution(
+    preimage: RecordedConflictPreimage,
+    resolvedSnippet: string
+  ): RecordedConflictEntry {
+    return this.matcher.recordConflictResolution(preimage, resolvedSnippet);
+  }
+
+  replayConflictResolution(content: string): RerereReplayResult {
+    return this.matcher.replayConflictResolution(content);
+  }
+
+  getRerereCacheEntries(): readonly RecordedConflictEntry[] {
+    return this.matcher.getRerereCacheEntries();
+  }
+
+  clearRerereCache(): void {
+    this.matcher.clearRerereCache();
+  }
+
+  // ---------------------------------------------------------------------------
+  // AST-Tolerant Function Signature Refactoring
+  // ---------------------------------------------------------------------------
+
+  refactorFunctionSignature(
+    content: string,
+    options: SignatureRefactorOptions
+  ): SignatureRefactorResult {
+    return this.matcher.refactorFunctionSignature(content, options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-Cursor Parallel Simultaneous Fuzzy Spans
+  // ---------------------------------------------------------------------------
+
+  applyParallelMultiCursorEdits(
+    content: string,
+    edits: readonly MultiCursorEditSpan[]
+  ): MultiCursorParallelResult {
+    return this.matcher.applyParallelMultiCursorEdits(content, edits);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hierarchical Line-Diff Histogram Engine
+  // ---------------------------------------------------------------------------
+
+  generateHistogramDiff(
+    oldText: string,
+    newText: string,
+    filename: string = "file",
+    options: HistogramDiffOptions = {}
+  ): HistogramDiffResult {
+    return this.matcher.generateHistogramDiff(oldText, newText, filename, options);
+  }
+
+  applyHistogramPatch(content: string, patchText: string): UnifiedPatchResult {
+    return this.matcher.applyHistogramPatch(content, patchText);
   }
 
   clearHistory(): void {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T08:14:49.727Z",
+  "generatedAt": "2026-08-16T08:23:16.318Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,7 +19,7 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.77,
+    "durationMs": 2.47,
     "componentCount": 382,
     "requiredComponentCount": 382,
     "composedRequiredComponentCount": 382,
@@ -32,7 +32,7 @@
         "category": "composition",
         "name": "Current evolution capabilities are composed",
         "passed": true,
-        "durationMs": 0.06,
+        "durationMs": 0.03,
         "detail": "382 required capabilities across 382 components"
       },
       {
@@ -40,7 +40,7 @@
         "category": "architecture",
         "name": "Core abstract contracts remain connected",
         "passed": true,
-        "durationMs": 0.14,
+        "durationMs": 0.12,
         "detail": "agent, session, hands, ears, and tool-registry contracts verified"
       },
       {
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 0.97,
-        "detail": "frame 1 completed in 0.61 ms"
+        "durationMs": 0.86,
+        "detail": "frame 1 completed in 0.56 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.31,
+        "durationMs": 0.29,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.09,
+        "durationMs": 0.08,
         "detail": "head/tail output retention verified"
       },
       {
@@ -96,7 +96,7 @@
         "category": "health",
         "name": "Subsystem health aggregation remains optimal",
         "passed": true,
-        "durationMs": 0.07,
+        "durationMs": 0.06,
         "detail": "3/3 registered subsystems healthy"
       }
     ]
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 72.77,
-    "totalDurationMs": 363.86,
-    "throughputTps": 13.74,
-    "throughputPerMinute": 824,
+    "meanLatencyMs": 71.16,
+    "totalDurationMs": 355.8,
+    "throughputTps": 14.05,
+    "throughputPerMinute": 843,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -123,14 +123,14 @@
         "testName": "VFS File Perception & Reading",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.12,
+        "durationMs": 0.14,
         "assertions": []
       },
       {
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 363.51,
+        "durationMs": 355.44,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -185,7 +185,7 @@
         "testName": "Snapshot State Rewind Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.09,
+        "durationMs": 0.08,
         "assertions": []
       }
     ]
@@ -206,21 +206,21 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.14 ms",
+        "measuredValue": "0.13 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "7245.3 frames/sec",
+        "measuredValue": "7939.15 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.019 ms p95",
+        "measuredValue": "0.029 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },

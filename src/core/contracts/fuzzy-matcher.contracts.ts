@@ -538,4 +538,108 @@ export interface PatchDriftResult {
   readonly error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Git Rerere (Reuse Recorded Resolution) Conflict Cache Contracts
+// ---------------------------------------------------------------------------
+
+export interface RecordedConflictPreimage {
+  readonly baseSnippet: string;
+  readonly oursSnippet: string;
+  readonly theirsSnippet: string;
+  readonly contextHint?: string;
+}
+
+export interface RecordedConflictEntry {
+  readonly conflictFingerprint: string;
+  readonly preimage: RecordedConflictPreimage;
+  readonly resolvedSnippet: string;
+  readonly recordedAt: number;
+  readonly hitsCount: number;
+}
+
+export interface RerereReplayResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly replayedConflictsCount: number;
+  readonly unresolvedConflictsCount: number;
+  readonly appliedResolutions: readonly {
+    readonly conflictIndex: number;
+    readonly fingerprint: string;
+    readonly resolvedSnippet: string;
+  }[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// AST-Tolerant Function Signature Refactoring Contracts
+// ---------------------------------------------------------------------------
+
+export interface FunctionSignatureParam {
+  readonly name: string;
+  readonly type?: string;
+  readonly defaultValue?: string;
+  readonly isRest?: boolean;
+}
+
+export interface SignatureRefactorOptions {
+  readonly functionName: string;
+  readonly newParams: readonly FunctionSignatureParam[];
+  readonly paramMapping?: Record<string, string | number>;
+  readonly convertToOptionsObject?: boolean;
+  readonly optionsInterfaceName?: string;
+}
+
+export interface SignatureRefactorResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly declarationUpdated: boolean;
+  readonly callsitesUpdatedCount: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Cursor Parallel Simultaneous Fuzzy Spans Contracts
+// ---------------------------------------------------------------------------
+
+export interface MultiCursorEditSpan {
+  readonly searchSnippet: string;
+  readonly replacementSnippet: string;
+  readonly expectedLineHint?: number;
+}
+
+export interface MultiCursorParallelResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly totalCursorsApplied: number;
+  readonly appliedSpans: readonly FuzzyMatchSpan[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Histogram Line-Diff Algorithm Contracts
+// ---------------------------------------------------------------------------
+
+export interface HistogramDiffOptions {
+  readonly contextLines?: number;
+  readonly maxChainLength?: number;
+  readonly preserveLineEndings?: boolean;
+}
+
+export interface HistogramDiffHunk {
+  readonly oldStart: number;
+  readonly oldCount: number;
+  readonly newStart: number;
+  readonly newCount: number;
+  readonly lines: readonly string[];
+}
+
+export interface HistogramDiffResult {
+  readonly diffText: string;
+  readonly hunks: readonly HistogramDiffHunk[];
+  readonly lowFrequencyAnchorsUsed: number;
+  readonly totalLinesChanged: number;
+  readonly hasChanges: boolean;
+}
+
+
 

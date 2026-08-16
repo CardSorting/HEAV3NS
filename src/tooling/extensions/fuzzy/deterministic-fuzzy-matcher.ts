@@ -25,6 +25,9 @@ import type {
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  HistogramDiffHunk,
+  HistogramDiffOptions,
+  HistogramDiffResult,
   IndentationHarmonizationResult,
   IndentationStyle,
   InversePatchHunk,
@@ -38,6 +41,8 @@ import type {
   LspWorkspaceEdit,
   MergeResolutionCandidate,
   MismatchDiagnosis,
+  MultiCursorEditSpan,
+  MultiCursorParallelResult,
   MultiFileInversePatchResult,
   MultiFilePatchResult,
   MultiFileTransactionHunk,
@@ -51,10 +56,15 @@ import type {
   PatienceDiffHunk,
   PatienceDiffOptions,
   PatienceDiffResult,
+  RecordedConflictEntry,
+  RecordedConflictPreimage,
+  RerereReplayResult,
   ScopeBoundedMatchOptions,
   ScopeBoundedMatchResult,
   SearchReplaceBlock,
   SemanticConflictExplanation,
+  SignatureRefactorOptions,
+  SignatureRefactorResult,
   SymbolRenameFileResult,
   SymbolRenameOccurrence,
   SymbolRenameOptions,
@@ -134,6 +144,7 @@ export class DeterministicFuzzyMatcher {
   private preserveIndentation: boolean;
   private normalizeLineEndings: boolean;
   private preserveUnicodeForUnchanged: boolean;
+  private rerereCache: Map<string, RecordedConflictEntry>;
 
   constructor(options: FuzzyMatcherOptions = {}) {
     this.unicodeMap = { ...DEFAULT_UNICODE_MAP, ...(options.customUnicodeMap || {}) };
@@ -142,6 +153,7 @@ export class DeterministicFuzzyMatcher {
     this.preserveIndentation = options.preserveIndentation ?? true;
     this.normalizeLineEndings = options.normalizeLineEndings ?? true;
     this.preserveUnicodeForUnchanged = options.preserveUnicodeForUnchanged ?? true;
+    this.rerereCache = new Map<string, RecordedConflictEntry>();
   }
 
   // ---------------------------------------------------------------------------
@@ -3935,6 +3947,594 @@ export class DeterministicFuzzyMatcher {
       hunkResults,
       error: allApplied ? null : "One or more hunks failed drift-compensated application.",
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Git Rerere (Reuse Recorded Resolution) Conflict Cache
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Computes a deterministic canonical fingerprint for a conflict pre-image.
+   */
+  computeConflictFingerprint(preimage: RecordedConflictPreimage): string {
+    const raw = [
+      preimage.baseSnippet.trim().replace(/\r\n/g, "\n"),
+      preimage.oursSnippet.trim().replace(/\r\n/g, "\n"),
+      preimage.theirsSnippet.trim().replace(/\r\n/g, "\n"),
+    ].join(":::PREIMAGE_SEP:::");
+
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < raw.length; i++) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return `rerere_${(hash >>> 0).toString(16).padStart(8, "0")}`;
+  }
+
+  /**
+   * Records a manual or verified merge conflict resolution into the in-memory Rerere cache.
+   */
+  recordConflictResolution(
+    preimage: RecordedConflictPreimage,
+    resolvedSnippet: string
+  ): RecordedConflictEntry {
+    const fingerprint = this.computeConflictFingerprint(preimage);
+    const existing = this.rerereCache.get(fingerprint);
+
+    const entry: RecordedConflictEntry = {
+      conflictFingerprint: fingerprint,
+      preimage,
+      resolvedSnippet,
+      recordedAt: Date.now(),
+      hitsCount: existing ? existing.hitsCount : 0,
+    };
+
+    this.rerereCache.set(fingerprint, entry);
+    return entry;
+  }
+
+  replayConflictResolution(content: string): RerereReplayResult {
+    const chunks = this.parseConflictMarkers(content);
+    if (chunks.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        replayedConflictsCount: 0,
+        unresolvedConflictsCount: 0,
+        appliedResolutions: [],
+        error: null,
+      };
+    }
+
+    const lines = content.split("\n");
+    const sortedChunks = [...chunks].sort((a, b) => b.startLine - a.startLine);
+    let replayed = 0;
+    let unresolved = 0;
+    const appliedResolutions: { conflictIndex: number; fingerprint: string; resolvedSnippet: string }[] = [];
+
+    for (let i = 0; i < sortedChunks.length; i++) {
+      const chunk = sortedChunks[i];
+      const preimage: RecordedConflictPreimage = {
+        baseSnippet: chunk.baseContent ?? "",
+        oursSnippet: chunk.oursContent,
+        theirsSnippet: chunk.theirsContent,
+      };
+      const fp = this.computeConflictFingerprint(preimage);
+      const recorded = this.rerereCache.get(fp);
+
+      if (recorded) {
+        replayed++;
+        this.rerereCache.set(fp, {
+          conflictFingerprint: recorded.conflictFingerprint,
+          preimage: recorded.preimage,
+          resolvedSnippet: recorded.resolvedSnippet,
+          recordedAt: recorded.recordedAt,
+          hitsCount: recorded.hitsCount + 1,
+        });
+        appliedResolutions.push({
+          conflictIndex: i + 1,
+          fingerprint: fp,
+          resolvedSnippet: recorded.resolvedSnippet,
+        });
+        const replacementLines = recorded.resolvedSnippet.length > 0 ? recorded.resolvedSnippet.split("\n") : [];
+        const deleteCount = chunk.endLine - chunk.startLine + 1;
+        lines.splice(chunk.startLine - 1, deleteCount, ...replacementLines);
+      } else {
+        unresolved++;
+      }
+    }
+
+    let modifiedContent = lines.join("\n");
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    return {
+      success: unresolved === 0,
+      modifiedContent,
+      replayedConflictsCount: replayed,
+      unresolvedConflictsCount: unresolved,
+      appliedResolutions,
+      error: unresolved > 0 ? `${unresolved} conflicts have no recorded resolution in Rerere cache.` : null,
+    };
+  }
+
+  getRerereCacheEntries(): readonly RecordedConflictEntry[] {
+    return Array.from(this.rerereCache.values());
+  }
+
+  clearRerereCache(): void {
+    this.rerereCache.clear();
+  }
+
+  // ---------------------------------------------------------------------------
+  // AST-Tolerant Function Signature & Call-Site Refactorer
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Refactors function signatures (parameter reordering, options-object conversions)
+   * and updates call-sites across the file content.
+   */
+  refactorFunctionSignature(
+    content: string,
+    options: SignatureRefactorOptions
+  ): SignatureRefactorResult {
+    const fnName = options.functionName.trim();
+    if (!fnName) {
+      return {
+        success: false,
+        modifiedContent: content,
+        declarationUpdated: false,
+        callsitesUpdatedCount: 0,
+        error: "Function name cannot be empty.",
+      };
+    }
+
+    // Locate function declaration: function foo(...) or const foo = (...)
+    const declRegex = new RegExp(
+      `(function\\s+${fnName}|(?:const|let|var)\\s+${fnName}\\s*=\\s*(?:async\\s*)?)(?:<[^>]*>)?\\s*\\(([^)]*)\\)`,
+      "g"
+    );
+
+    const declMatch = declRegex.exec(content);
+    if (!declMatch) {
+      return {
+        success: false,
+        modifiedContent: content,
+        declarationUpdated: false,
+        callsitesUpdatedCount: 0,
+        error: `Could not locate declaration for function '${fnName}'.`,
+      };
+    }
+
+    const declFullMatch = declMatch[0];
+    const declPrefix = declMatch[1];
+    const oldParamsRaw = declMatch[2];
+    const oldParams = oldParamsRaw
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => {
+        const parts = p.split(":");
+        return { name: parts[0].trim(), type: parts[1]?.trim() };
+      });
+
+    // Build new declaration parameter string
+    let newParamString = "";
+    if (options.convertToOptionsObject) {
+      const fieldList = options.newParams.map((p) => p.name).join(", ");
+      const typeAnnotation = options.optionsInterfaceName ? `: ${options.optionsInterfaceName}` : "";
+      newParamString = `{ ${fieldList} }${typeAnnotation}`;
+    } else {
+      newParamString = options.newParams
+        .map((p) => {
+          let str = p.isRest ? `...${p.name}` : p.name;
+          if (p.type) str += `: ${p.type}`;
+          if (p.defaultValue) str += ` = ${p.defaultValue}`;
+          return str;
+        })
+        .join(", ");
+    }
+
+    const newDeclHeader = `${declPrefix}(${newParamString})`;
+    const declStart = declMatch.index;
+    const declEnd = declStart + newDeclHeader.length;
+
+    let updatedContent =
+      content.slice(0, declMatch.index) +
+      newDeclHeader +
+      content.slice(declMatch.index + declFullMatch.length);
+
+    // Now update callsites: foo(arg1, arg2)
+    // Find all callsites excluding the declaration
+    const callsiteRegex = new RegExp(`\\b${fnName}\\s*\\(([^)]*)\\)`, "g");
+    const callsiteMatches: { index: number; fullMatch: string; argsRaw: string }[] = [];
+
+    let callMatch: RegExpExecArray | null = null;
+    while ((callMatch = callsiteRegex.exec(updatedContent)) !== null) {
+      const matchIdx = callMatch.index;
+      // Skip if within the declaration range
+      if (matchIdx >= declStart && matchIdx < declEnd) continue;
+      // Also skip if immediately preceded by declaration keywords
+      const prefixBefore = updatedContent.slice(Math.max(0, matchIdx - 30), matchIdx);
+      if (/(?:function\s+|async\s+|class\s+|export\s+(?:default\s+)?(?:async\s+)?function\s+|const\s+|let\s+|var\s+)$/.test(prefixBefore)) {
+        continue;
+      }
+
+      callsiteMatches.push({
+        index: matchIdx,
+        fullMatch: callMatch[0],
+        argsRaw: callMatch[1],
+      });
+    }
+
+    // Sort callsites descending to replace safely
+    callsiteMatches.sort((a, b) => b.index - a.index);
+    let callsitesUpdated = 0;
+
+    for (const call of callsiteMatches) {
+      const rawArgs = call.argsRaw.split(",").map((a) => a.trim()).filter(Boolean);
+      let newCallArgs = "";
+
+      if (options.convertToOptionsObject) {
+        // Map positional args to object properties
+        const objProps = options.newParams.map((p, idx) => {
+          const mapping = options.paramMapping?.[p.name];
+          let argVal = "";
+          if (typeof mapping === "number" && rawArgs[mapping] !== undefined) {
+            argVal = rawArgs[mapping];
+          } else if (typeof mapping === "string") {
+            const oldIdx = oldParams.findIndex((op) => op.name === mapping);
+            argVal = oldIdx !== -1 && rawArgs[oldIdx] !== undefined ? rawArgs[oldIdx] : p.defaultValue ?? "undefined";
+          } else if (rawArgs[idx] !== undefined) {
+            argVal = rawArgs[idx];
+          } else {
+            argVal = p.defaultValue ?? "undefined";
+          }
+          return `${p.name}: ${argVal}`;
+        });
+        newCallArgs = `{ ${objProps.join(", ")} }`;
+      } else {
+        // Re-order positional args
+        const reorderedArgs = options.newParams.map((p, idx) => {
+          const mapping = options.paramMapping?.[p.name];
+          if (typeof mapping === "number" && rawArgs[mapping] !== undefined) {
+            return rawArgs[mapping];
+          }
+          if (typeof mapping === "string") {
+            const oldIdx = oldParams.findIndex((op) => op.name === mapping);
+            if (oldIdx !== -1 && rawArgs[oldIdx] !== undefined) return rawArgs[oldIdx];
+          }
+          if (rawArgs[idx] !== undefined) return rawArgs[idx];
+          return p.defaultValue ?? "undefined";
+        });
+        newCallArgs = reorderedArgs.join(", ");
+      }
+
+      const newCallsite = `${fnName}(${newCallArgs})`;
+      updatedContent =
+        updatedContent.slice(0, call.index) +
+        newCallsite +
+        updatedContent.slice(call.index + call.fullMatch.length);
+      callsitesUpdated++;
+    }
+
+    return {
+      success: true,
+      modifiedContent: updatedContent,
+      declarationUpdated: true,
+      callsitesUpdatedCount: callsitesUpdated,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-Cursor Parallel Simultaneous Fuzzy Spans
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes atomic simultaneous replacements across multiple non-contiguous cursor loci,
+   * validating non-overlapping invariant before modifying content.
+   */
+  applyParallelMultiCursorEdits(
+    content: string,
+    edits: readonly MultiCursorEditSpan[]
+  ): MultiCursorParallelResult {
+    if (edits.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        totalCursorsApplied: 0,
+        appliedSpans: [],
+        error: null,
+      };
+    }
+
+    const resolvedSpans: { span: FuzzyMatchSpan; replacement: string; search: string }[] = [];
+
+    for (let i = 0; i < edits.length; i++) {
+      const edit = edits[i];
+      const matches = this.findMatchSpans(content, edit.searchSnippet);
+
+      if (matches.length === 0) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalCursorsApplied: 0,
+          appliedSpans: [],
+          error: `Cursor edit ${i + 1} ('${edit.searchSnippet.slice(0, 30)}...') could not be matched.`,
+        };
+      }
+
+      let selectedMatch = matches[0];
+      if (typeof edit.expectedLineHint === "number" && matches.length > 1) {
+        const lineOffsets: number[] = [0];
+        for (let idx = 0; idx < content.length; idx++) {
+          if (content[idx] === "\n") lineOffsets.push(idx + 1);
+        }
+        let bestDiff = Infinity;
+        for (const m of matches) {
+          const lineNum = lineOffsets.findIndex((offset) => offset > m[0]);
+          const actualLine = lineNum === -1 ? lineOffsets.length : lineNum;
+          const diff = Math.abs(actualLine - edit.expectedLineHint);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            selectedMatch = m;
+          }
+        }
+      }
+
+      resolvedSpans.push({
+        span: selectedMatch,
+        replacement: edit.replacementSnippet,
+        search: edit.searchSnippet,
+      });
+    }
+
+    // Sort ascending to verify non-overlapping invariant
+    resolvedSpans.sort((a, b) => a.span[0] - b.span[0]);
+
+    for (let i = 0; i < resolvedSpans.length - 1; i++) {
+      const current = resolvedSpans[i];
+      const next = resolvedSpans[i + 1];
+      if (current.span[1] > next.span[0]) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalCursorsApplied: 0,
+          appliedSpans: [],
+          error: `Multi-cursor collision detected: span [${current.span[0]}, ${current.span[1]}] overlaps with span [${next.span[0]}, ${next.span[1]}].`,
+        };
+      }
+    }
+
+    // Apply edits in descending order of start offset
+    let modified = content;
+    resolvedSpans.sort((a, b) => b.span[0] - a.span[0]);
+
+    for (const item of resolvedSpans) {
+      modified = modified.slice(0, item.span[0]) + item.replacement + modified.slice(item.span[1]);
+    }
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      totalCursorsApplied: edits.length,
+      appliedSpans: resolvedSpans.map((r) => r.span),
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hierarchical Line-Diff Histogram Algorithm
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Git-style --histogram diff algorithm: Isolates low-frequency anchor lines across files
+   * to eliminate pathological Myers diff behavior on repetitive code blocks.
+   */
+  generateHistogramDiff(
+    oldText: string,
+    newText: string,
+    filename: string = "file",
+    options: HistogramDiffOptions = {}
+  ): HistogramDiffResult {
+    const contextLines = options.contextLines ?? 3;
+    const oldLines = oldText.split("\n");
+    const newLines = newText.split("\n");
+
+    if (oldText === newText) {
+      return {
+        diffText: "",
+        hunks: [],
+        lowFrequencyAnchorsUsed: 0,
+        totalLinesChanged: 0,
+        hasChanges: false,
+      };
+    }
+
+    // Compute line occurrence frequencies
+    const oldFreq = new Map<string, number>();
+    const newFreq = new Map<string, number>();
+
+    for (const l of oldLines) oldFreq.set(l, (oldFreq.get(l) ?? 0) + 1);
+    for (const l of newLines) newFreq.set(l, (newFreq.get(l) ?? 0) + 1);
+
+    // Identify low-frequency matching lines (lowest combined frequency)
+    let lowFreqCount = 0;
+    const anchors: { oldIdx: number; newIdx: number; line: string }[] = [];
+
+    // First pass: unique lines (1 in old and 1 in new)
+    for (let i = 0; i < oldLines.length; i++) {
+      const line = oldLines[i];
+      if (oldFreq.get(line) === 1 && newFreq.get(line) === 1) {
+        const j = newLines.indexOf(line);
+        if (j !== -1) {
+          anchors.push({ oldIdx: i, newIdx: j, line });
+          lowFreqCount++;
+        }
+      }
+    }
+
+    // Sort anchors by old index and enforce monotonic new index
+    anchors.sort((a, b) => a.oldIdx - b.oldIdx);
+    const monotonicAnchors: { oldIdx: number; newIdx: number; line: string }[] = [];
+    let lastNewIdx = -1;
+    for (const a of anchors) {
+      if (a.newIdx > lastNewIdx) {
+        monotonicAnchors.push(a);
+        lastNewIdx = a.newIdx;
+      }
+    }
+
+    // Build diff ops using patience sub-slicing
+    const diffOps: { type: "keep" | "del" | "add"; line: string }[] = [];
+
+    const diffSlice = (oStart: number, oEnd: number, nStart: number, nEnd: number) => {
+      const oSlice = oldLines.slice(oStart, oEnd);
+      const nSlice = newLines.slice(nStart, nEnd);
+
+      // Common prefix
+      let pre = 0;
+      while (pre < oSlice.length && pre < nSlice.length && oSlice[pre] === nSlice[pre]) {
+        diffOps.push({ type: "keep", line: oSlice[pre] });
+        pre++;
+      }
+
+      // Common suffix
+      let suf = 0;
+      while (
+        suf < oSlice.length - pre &&
+        suf < nSlice.length - pre &&
+        oSlice[oSlice.length - 1 - suf] === nSlice[nSlice.length - 1 - suf]
+      ) {
+        suf++;
+      }
+
+      // Middle deletions
+      for (let i = pre; i < oSlice.length - suf; i++) {
+        diffOps.push({ type: "del", line: oSlice[i] });
+      }
+      // Middle additions
+      for (let j = pre; j < nSlice.length - suf; j++) {
+        diffOps.push({ type: "add", line: nSlice[j] });
+      }
+      // Trailing common suffix
+      for (let i = oSlice.length - suf; i < oSlice.length; i++) {
+        diffOps.push({ type: "keep", line: oSlice[i] });
+      }
+    };
+
+    let curOld = 0;
+    let curNew = 0;
+
+    for (const anchor of monotonicAnchors) {
+      diffSlice(curOld, anchor.oldIdx, curNew, anchor.newIdx);
+      diffOps.push({ type: "keep", line: anchor.line });
+      curOld = anchor.oldIdx + 1;
+      curNew = anchor.newIdx + 1;
+    }
+    diffSlice(curOld, oldLines.length, curNew, newLines.length);
+
+    // Group into unified hunks
+    const hunks: HistogramDiffHunk[] = [];
+    let i = 0;
+    let oldLineNum = 1;
+    let newLineNum = 1;
+
+    while (i < diffOps.length) {
+      if (diffOps[i].type === "keep") {
+        oldLineNum++;
+        newLineNum++;
+        i++;
+        continue;
+      }
+
+      // Found changed region
+      const hunkStartOld = Math.max(1, oldLineNum - contextLines);
+      const hunkStartNew = Math.max(1, newLineNum - contextLines);
+      const contextPrefixCount = oldLineNum - hunkStartOld;
+
+      const hunkLines: string[] = [];
+      // Add context lines before change
+      for (let c = i - contextPrefixCount; c < i; c++) {
+        if (c >= 0) hunkLines.push(` ${diffOps[c].line}`);
+      }
+
+      let oldCount = contextPrefixCount;
+      let newCount = contextPrefixCount;
+
+      while (i < diffOps.length) {
+        if (diffOps[i].type === "del") {
+          hunkLines.push(`-${diffOps[i].line}`);
+          oldCount++;
+          oldLineNum++;
+          i++;
+        } else if (diffOps[i].type === "add") {
+          hunkLines.push(`+${diffOps[i].line}`);
+          newCount++;
+          newLineNum++;
+          i++;
+        } else {
+          // Lookahead for more changes within contextLines * 2
+          let keepCount = 0;
+          while (i + keepCount < diffOps.length && diffOps[i + keepCount].type === "keep") {
+            keepCount++;
+          }
+          if (keepCount <= contextLines * 2 && i + keepCount < diffOps.length) {
+            for (let k = 0; k < keepCount; k++) {
+              hunkLines.push(` ${diffOps[i + k].line}`);
+              oldCount++;
+              newCount++;
+              oldLineNum++;
+              newLineNum++;
+            }
+            i += keepCount;
+          } else {
+            // Trailing context lines
+            const trailingCount = Math.min(keepCount, contextLines);
+            for (let k = 0; k < trailingCount; k++) {
+              hunkLines.push(` ${diffOps[i + k].line}`);
+              oldCount++;
+              newCount++;
+              oldLineNum++;
+              newLineNum++;
+            }
+            i += trailingCount;
+            break;
+          }
+        }
+      }
+
+      hunks.push({
+        oldStart: hunkStartOld,
+        oldCount,
+        newStart: hunkStartNew,
+        newCount,
+        lines: hunkLines,
+      });
+    }
+
+    const header = `--- a/${filename}\n+++ b/${filename}\n`;
+    const hunkTexts = hunks.map((h) => `@@ -${h.oldStart},${h.oldCount} +${h.newStart},${h.newCount} @@\n${h.lines.join("\n")}`);
+    const fullDiff = hunks.length > 0 ? header + hunkTexts.join("\n") : "";
+
+    const linesChanged = hunks.reduce((sum, h) => sum + h.lines.filter((l) => l.startsWith("+") || l.startsWith("-")).length, 0);
+
+    return {
+      diffText: fullDiff,
+      hunks,
+      lowFrequencyAnchorsUsed: lowFreqCount,
+      totalLinesChanged: linesChanged,
+      hasChanges: hunks.length > 0,
+    };
+  }
+
+  /**
+   * Applies a histogram unified patch directly to content.
+   */
+  applyHistogramPatch(content: string, patchText: string): UnifiedPatchResult {
+    return this.applyUnifiedPatch(content, patchText);
   }
 }
 
