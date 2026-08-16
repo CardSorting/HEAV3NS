@@ -76,12 +76,14 @@ The following 74 foundation and edge capabilities have been systematically absor
 | **#71** | Deterministic Self-Repository Mutation Guard, Shell Worktree Context Tracker & Module-Skew Firewall | [ADR-114](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-114-deterministic-self-repository-mutation-guard.md) |
 | **#72** | Deterministic Tool Parameter Schema Sanitizer, Non-Conforming Key Bidirectional Rewriter & LLM GBNF Grammar Firewall | [ADR-115](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-115-deterministic-tool-schema-sanitizer.md) |
 | **#73** | Native Nous Portal Provider, Attribution Tagging & Tool-Pool Entitlement Subsystem | [ADR-116](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-116-native-nous-portal-provider.md) |
+| **#74** | Persistent Session Goals, Quality Gates & Deterministic Goal Loop Subsystem | [ADR-117](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-117-persistent-session-goals-and-ralph-loop.md) |
+| **#75** | World-Class Kanban Architecture, Task DAG, Typed Blockers & Multi-Agent Issue Orchestration | [ADR-118](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-118-world-class-kanban-architecture.md) |
 
 ---
 
-## 🔒 544 Frozen Component Manifest (Alphabetical Lock)
+## 🔒 549 Frozen Component Manifest (Alphabetical Lock)
 
-The following 539 components form the authoritative Grand Monolith:
+The following 549 components form the authoritative Grand Monolith:
 
 ```
 agentEngine, agentRegistry, agentSlashRouter, agentStateLedger, agentSwarmDispatcher,

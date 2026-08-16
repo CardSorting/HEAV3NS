@@ -2,16 +2,26 @@
  * kanban-board-supervisor.ts
  *
  * Master Kanban Board Supervisor coordinating task lifecycles, DAG dependency resolution,
- * worker task claiming, and WIP governor (Phase 81 / ADR-033).
+ * typed blockers, unblock loop breaker, comments, links, and WIP limits (ADR-118).
  */
 
 import type {
+  KanbanBlockKind,
+  KanbanBoard,
   KanbanColumn,
+  KanbanColumnDefinition,
   KanbanPriority,
   KanbanQueryFilter,
+  KanbanReasoningEffort,
+  KanbanRelationType,
   KanbanTask,
+  KanbanTaskComment,
+  KanbanTaskEvent,
+  KanbanTaskLink,
   KanbanTaskMutation,
+  KanbanWorkspaceKind,
 } from "../../../core/contracts/kanban.contracts.js";
+import { BLOCK_RECURRENCE_LIMIT } from "../../../core/contracts/kanban.contracts.js";
 import { DeterministicKanbanEngine } from "../../../tooling/extensions/kanban/deterministic-kanban-engine.js";
 import { BroccoliKanbanSubstrate } from "../../../sessions/extensions/kanban/broccoli-kanban-substrate.js";
 
@@ -22,8 +32,21 @@ export interface CreateTaskParams {
   priority?: KanbanPriority;
   column?: KanbanColumn;
   assignee?: string;
+  owner?: string;
   tags?: readonly string[];
   blockedBy?: readonly string[];
+  blockKind?: KanbanBlockKind;
+  blockReason?: string;
+  estimatePoints?: number;
+  dueDateMs?: number;
+  slaDeadlineMs?: number;
+  goalMode?: boolean;
+  goalMaxTurns?: number;
+  workspaceKind?: KanbanWorkspaceKind;
+  branchName?: string;
+  prUrl?: string;
+  commitSha?: string;
+  reasoningEffort?: KanbanReasoningEffort;
   metadata?: Record<string, unknown>;
   frameIndex?: number;
 }
@@ -35,7 +58,9 @@ export interface BoardStatusMetrics {
   columnCounts: Record<KanbanColumn, number>;
   readyTasksCount: number;
   blockedTasksCount: number;
+  inProgressCount: number;
   activeAssignees: readonly string[];
+  wipViolations: readonly string[];
 }
 
 export class KanbanBoardSupervisor {
@@ -50,7 +75,33 @@ export class KanbanBoardSupervisor {
   }
 
   /**
-   * Creates a new work item task on the board with cycle validation.
+   * Creates or registers a new board.
+   */
+  createBoard(
+    boardId: string,
+    title: string,
+    columns?: readonly (KanbanColumn | KanbanColumnDefinition)[],
+    defaultColumn?: KanbanColumn
+  ): KanbanBoard {
+    return this.substrate.createBoard(boardId, title, columns, defaultColumn);
+  }
+
+  /**
+   * Lists all boards.
+   */
+  listBoards(): readonly KanbanBoard[] {
+    return this.substrate.listBoards();
+  }
+
+  /**
+   * Retrieves a board.
+   */
+  getBoard(boardId: string = "default"): KanbanBoard | undefined {
+    return this.substrate.getBoard(boardId);
+  }
+
+  /**
+   * Creates a new work item task on the board with cycle validation and priority weighting.
    */
   createTask(params: CreateTaskParams): { success: boolean; task?: KanbanTask; error?: string } {
     const boardId = params.boardId ?? "default";
@@ -68,27 +119,61 @@ export class KanbanBoardSupervisor {
     // Verify no dependency cycles
     if (blockedBy.length > 0) {
       if (this.engine.hasDependencyCycle(taskId, blockedBy, board.tasks)) {
-        return { success: false, error: `Cannot create task: dependency cycle detected in blockedBy [${blockedBy.join(", ")}]` };
+        return {
+          success: false,
+          error: `Cannot create task: dependency cycle detected in blockedBy [${blockedBy.join(", ")}]`,
+        };
       }
     }
+
+    const priority = params.priority ?? "medium";
+    const initialColumn = params.column ?? (board.defaultColumn || "backlog");
 
     const newTask: KanbanTask = {
       id: taskId,
       title: params.title,
       description: params.description ?? "",
-      column: params.column ?? "backlog",
-      priority: params.priority ?? "medium",
+      column: initialColumn,
+      priority,
+      priorityWeight: BroccoliKanbanSubstrate.getPriorityWeight(priority),
       assignee: params.assignee,
+      owner: params.owner,
       tags: params.tags ?? [],
       blockedBy,
+      blockKind: params.blockKind,
+      blockReason: params.blockReason,
+      blockRecurrences: 0,
+      estimatePoints: params.estimatePoints,
+      dueDateMs: params.dueDateMs,
+      slaDeadlineMs: params.slaDeadlineMs,
+      goalMode: params.goalMode,
+      goalMaxTurns: params.goalMaxTurns,
+      workspaceKind: params.workspaceKind,
+      branchName: params.branchName,
+      prUrl: params.prUrl,
+      commitSha: params.commitSha,
+      reasoningEffort: params.reasoningEffort,
       createdFrame: params.frameIndex ?? 0,
       updatedFrame: params.frameIndex ?? 0,
+      createdAtMs: Date.now(),
+      updatedAtMs: Date.now(),
       metadata: params.metadata,
     };
 
     const added = this.substrate.addTask(boardId, newTask);
     if (!added) {
       return { success: false, error: `Failed to add task '${taskId}' to board '${boardId}'` };
+    }
+
+    // Auto-create links for blockedBy relations
+    for (const blockerId of blockedBy) {
+      this.substrate.addLink({
+        id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        sourceTaskId: taskId,
+        targetTaskId: blockerId,
+        relationType: "blocked_by",
+        createdAtMs: Date.now(),
+      });
     }
 
     return { success: true, task: newTask };
@@ -103,155 +188,319 @@ export class KanbanBoardSupervisor {
     mutation: KanbanTaskMutation,
     frameIndex: number = 0
   ): { success: boolean; task?: KanbanTask; error?: string } {
-    const current = this.substrate.getTask(boardId, taskId);
-    if (!current) {
+    const board = this.substrate.getBoard(boardId);
+    if (!board) {
+      return { success: false, error: `Board '${boardId}' not found` };
+    }
+
+    const currentTask = board.tasks.find((t) => t.id === taskId);
+    if (!currentTask) {
       return { success: false, error: `Task '${taskId}' not found on board '${boardId}'` };
     }
 
-    // Validate column transition if changing columns
-    if (mutation.column && mutation.column !== current.column) {
-      if (!this.engine.isValidTransition(current.column, mutation.column)) {
+    // Validate column transition
+    if (mutation.column && mutation.column !== currentTask.column) {
+      if (!this.engine.isValidTransition(currentTask.column, mutation.column)) {
         return {
           success: false,
-          error: `Invalid transition from '${current.column}' to '${mutation.column}'`,
+          error: `Invalid transition from column '${currentTask.column}' to '${mutation.column}'`,
         };
       }
     }
 
-    // Validate dependency cycles if changing blockers
+    // Check for dependency cycles if blockedBy is modified
     if (mutation.blockedBy) {
-      const board = this.substrate.getBoard(boardId)!;
       if (this.engine.hasDependencyCycle(taskId, mutation.blockedBy, board.tasks)) {
         return {
           success: false,
-          error: `Cannot update task: dependency cycle detected with blockedBy [${mutation.blockedBy.join(", ")}]`,
+          error: `Cannot update task: dependency cycle detected in blockedBy [${mutation.blockedBy.join(", ")}]`,
         };
       }
     }
 
     const updated = this.substrate.updateTask(boardId, taskId, mutation, frameIndex);
     if (!updated) {
-      return { success: false, error: `Failed to update task '${taskId}'` };
+      return { success: false, error: `Failed to update task '${taskId}' in substrate` };
     }
 
     return { success: true, task: updated };
   }
 
   /**
-   * Moves a task to a different column.
+   * Blocks a task with a typed block kind and reason.
    */
-  moveTaskColumn(
+  blockTask(
     boardId: string = "default",
     taskId: string,
-    toColumn: KanbanColumn,
-    frameIndex: number = 0
+    kind: KanbanBlockKind,
+    reason: string = "Blocked"
   ): { success: boolean; task?: KanbanTask; error?: string } {
-    return this.updateTask(boardId, taskId, { column: toColumn }, frameIndex);
+    const board = this.substrate.getBoard(boardId);
+    if (!board) return { success: false, error: `Board '${boardId}' not found` };
+
+    const task = board.tasks.find((t) => t.id === taskId);
+    if (!task) return { success: false, error: `Task '${taskId}' not found` };
+
+    let nextColumn: KanbanColumn = "blocked";
+    let recurrences = (task.blockRecurrences || 0) + 1;
+
+    // Unblock-loop breaker: if repeatedly blocked for truly blocked reason, escalate to triage
+    if (recurrences >= BLOCK_RECURRENCE_LIMIT && (kind === "needs_input" || kind === "capability")) {
+      nextColumn = "triage";
+    }
+
+    const updated = this.substrate.updateTask(boardId, taskId, {
+      column: nextColumn,
+      blockKind: kind,
+      blockReason: reason,
+      blockRecurrences: recurrences,
+    });
+
+    this.substrate.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId,
+      eventType: "blocked",
+      actor: "system",
+      details: { blockKind: kind, reason, recurrences, targetColumn: nextColumn },
+      timestampMs: Date.now(),
+    });
+
+    return { success: true, task: updated };
   }
 
   /**
-   * Claims an unblocked task for an agent worker.
+   * Unblocks a task, resetting its block state.
+   */
+  unblockTask(
+    boardId: string = "default",
+    taskId: string,
+    reason: string = "Resolved"
+  ): { success: boolean; task?: KanbanTask; error?: string } {
+    const board = this.substrate.getBoard(boardId);
+    if (!board) return { success: false, error: `Board '${boardId}' not found` };
+
+    const task = board.tasks.find((t) => t.id === taskId);
+    if (!task) return { success: false, error: `Task '${taskId}' not found` };
+
+    const unblocked = this.engine.isTaskUnblocked(task, board.tasks);
+    const targetColumn: KanbanColumn = unblocked ? "ready" : "todo";
+
+    const updated = this.substrate.updateTask(boardId, taskId, {
+      column: targetColumn,
+      blockKind: undefined,
+      blockReason: undefined,
+    });
+
+    this.substrate.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId,
+      eventType: "unblocked",
+      actor: "system",
+      details: { reason, targetColumn },
+      timestampMs: Date.now(),
+    });
+
+    return { success: true, task: updated };
+  }
+
+  /**
+   * Links two tasks with a typed relation.
+   */
+  linkTasks(
+    sourceTaskId: string,
+    targetTaskId: string,
+    relationType: KanbanRelationType
+  ): { success: boolean; link?: KanbanTaskLink; error?: string } {
+    const link: KanbanTaskLink = {
+      id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      sourceTaskId,
+      targetTaskId,
+      relationType,
+      createdAtMs: Date.now(),
+    };
+
+    const added = this.substrate.addLink(link);
+    return { success: added, link };
+  }
+
+  /**
+   * Unlinks a task relation.
+   */
+  unlinkTasks(linkId: string): boolean {
+    return this.substrate.removeLink(linkId);
+  }
+
+  /**
+   * Adds a comment to a task.
+   */
+  addComment(
+    taskId: string,
+    author: string,
+    content: string
+  ): { success: boolean; comment?: KanbanTaskComment } {
+    const comment: KanbanTaskComment = {
+      id: `comment-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId,
+      author,
+      content,
+      createdAtMs: Date.now(),
+      updatedAtMs: Date.now(),
+    };
+
+    this.substrate.addComment(comment);
+    return { success: true, comment };
+  }
+
+  /**
+   * Retrieves full task details including comments, links, and audit trail events.
+   */
+  getTaskDetails(
+    taskId: string,
+    boardId?: string
+  ): {
+    task: KanbanTask;
+    boardId: string;
+    comments: readonly KanbanTaskComment[];
+    events: readonly KanbanTaskEvent[];
+    links: readonly KanbanTaskLink[];
+  } | undefined {
+    let targetBoardId = boardId;
+    let foundTask: KanbanTask | undefined;
+
+    if (targetBoardId) {
+      foundTask = this.substrate.getTask(targetBoardId, taskId);
+    } else {
+      const cross = this.substrate.findTaskAcrossBoards(taskId);
+      if (cross) {
+        targetBoardId = cross.boardId;
+        foundTask = cross.task;
+      }
+    }
+
+    if (!foundTask || !targetBoardId) return undefined;
+
+    return {
+      task: foundTask,
+      boardId: targetBoardId,
+      comments: this.substrate.getTaskComments(taskId),
+      events: this.substrate.getTaskEvents(taskId),
+      links: this.substrate.getTaskLinks(taskId),
+    };
+  }
+
+  /**
+   * Lists and filters tasks on a board.
+   */
+  listTasks(boardId: string = "default", filter: KanbanQueryFilter = {}): readonly KanbanTask[] {
+    const board = this.substrate.getBoard(boardId);
+    if (!board) return [];
+
+    return board.tasks
+      .filter((task) => this.engine.matchesFilter(task, filter, board.tasks))
+      .sort((a, b) => b.priorityWeight - a.priorityWeight || a.createdAtMs - b.createdAtMs);
+  }
+
+  /**
+   * Atomically claims an unblocked task for an assignee and moves to 'in_progress'.
    */
   claimTask(
     boardId: string = "default",
     taskId: string,
-    workerId: string,
+    assignee: string,
     frameIndex: number = 0
   ): { success: boolean; task?: KanbanTask; error?: string } {
-    const current = this.substrate.getTask(boardId, taskId);
-    if (!current) {
-      return { success: false, error: `Task '${taskId}' not found on board '${boardId}'` };
-    }
-
-    const board = this.substrate.getBoard(boardId)!;
-    if (!this.engine.isTaskUnblocked(current, board.tasks)) {
-      return {
-        success: false,
-        error: `Cannot claim task '${taskId}': task is blocked by unfinished dependencies [${current.blockedBy.join(", ")}]`,
-      };
-    }
-
-    if (current.assignee && current.assignee !== workerId) {
-      return {
-        success: false,
-        error: `Task '${taskId}' is already assigned to '${current.assignee}'`,
-      };
-    }
-
-    // Automatically transition to in_progress if in backlog or todo
-    let newColumn = current.column;
-    if (current.column === "backlog" || current.column === "todo") {
-      newColumn = "in_progress";
-    }
-
-    return this.updateTask(
-      boardId,
-      taskId,
-      {
-        assignee: workerId,
-        column: newColumn,
-      },
-      frameIndex
-    );
-  }
-
-  /**
-   * Returns all unblocked tasks that are ready to be worked on.
-   */
-  getReadyTasks(boardId: string = "default"): readonly KanbanTask[] {
     const board = this.substrate.getBoard(boardId);
-    if (!board) return [];
-
-    const activeTasks = board.tasks.filter((t) => t.column === "backlog" || t.column === "todo");
-    return activeTasks.filter((t) => this.engine.isTaskUnblocked(t, board.tasks));
-  }
-
-  /**
-   * Queries tasks by criteria.
-   */
-  listTasks(boardId: string = "default", filter: KanbanQueryFilter = {}): readonly KanbanTask[] {
-    const tasks = this.substrate.queryTasks(boardId, filter);
-    if (filter.isBlocked !== undefined) {
-      const board = this.substrate.getBoard(boardId);
-      const all = board ? board.tasks : [];
-      return tasks.filter((t) => {
-        const unblocked = this.engine.isTaskUnblocked(t, all);
-        return filter.isBlocked ? !unblocked : unblocked;
-      });
+    if (!board) {
+      return { success: false, error: `Board '${boardId}' not found` };
     }
-    return tasks;
+
+    const task = board.tasks.find((t) => t.id === taskId);
+    if (!task) {
+      return { success: false, error: `Task '${taskId}' not found` };
+    }
+
+    if (!this.engine.isTaskUnblocked(task, board.tasks)) {
+      const blockers = this.engine.getEffectiveBlockers(task, board.tasks);
+      return {
+        success: false,
+        error: `Cannot claim task '${taskId}': blocked by incomplete tasks [${blockers.map((b) => b.id).join(", ")}]`,
+      };
+    }
+
+    return this.updateTask(boardId, taskId, { column: "in_progress", assignee }, frameIndex);
   }
 
   /**
-   * Returns aggregate board status metrics.
+   * Completes a task and promotes dependent tasks.
    */
-  getBoardStatus(boardId: string = "default"): BoardStatusMetrics | undefined {
+  completeTask(
+    boardId: string = "default",
+    taskId: string,
+    frameIndex: number = 0
+  ): { success: boolean; task?: KanbanTask; error?: string } {
+    const res = this.updateTask(boardId, taskId, { column: "done" }, frameIndex);
+    if (!res.success) return res;
+
+    // Trigger auto-progression on board
+    this.recomputeReady(boardId);
+    return res;
+  }
+
+  /**
+   * Recomputes ready state across all tasks on a board.
+   */
+  recomputeReady(boardId: string = "default"): { promotedTaskIds: string[]; count: number } {
+    const board = this.substrate.getBoard(boardId);
+    if (!board) return { promotedTaskIds: [], count: 0 };
+
+    const { promotedTaskIds, updatedTasks } = this.engine.recomputeReady(board.tasks);
+    for (const updated of updatedTasks) {
+      if (promotedTaskIds.includes(updated.id)) {
+        this.substrate.updateTask(boardId, updated.id, { column: "ready" });
+      }
+    }
+
+    return { promotedTaskIds, count: promotedTaskIds.length };
+  }
+
+  /**
+   * Gathers comprehensive board status metrics and WIP utilization.
+   */
+  getBoardMetrics(boardId: string = "default"): BoardStatusMetrics | undefined {
     const board = this.substrate.getBoard(boardId);
     if (!board) return undefined;
 
     const columnCounts: Record<KanbanColumn, number> = {
+      triage: 0,
       backlog: 0,
       todo: 0,
+      ready: 0,
       in_progress: 0,
+      blocked: 0,
       review: 0,
       done: 0,
+      canceled: 0,
       archived: 0,
     };
 
     const assignees = new Set<string>();
-    let readyCount = 0;
-    let blockedCount = 0;
+    const wipViolations: string[] = [];
 
-    for (let i = 0; i < board.tasks.length; i++) {
-      const t = board.tasks[i];
-      columnCounts[t.column] = (columnCounts[t.column] ?? 0) + 1;
-      if (t.assignee) assignees.add(t.assignee);
+    for (const task of board.tasks) {
+      if (task.column in columnCounts) {
+        columnCounts[task.column] += 1;
+      }
+      if (task.assignee) {
+        assignees.add(task.assignee);
+      }
+    }
 
-      if (t.column !== "done" && t.column !== "archived") {
-        if (this.engine.isTaskUnblocked(t, board.tasks)) {
-          readyCount++;
-        } else {
-          blockedCount++;
+    // Check WIP limit configurations if present
+    for (const col of board.columns) {
+      if (typeof col === "object" && col.wipLimit && col.wipLimit > 0) {
+        const count = columnCounts[col.id] || 0;
+        if (count > col.wipLimit) {
+          wipViolations.push(`Column '${col.title}' exceeds WIP limit (${count}/${col.wipLimit})`);
         }
       }
     }
@@ -261,16 +510,11 @@ export class KanbanBoardSupervisor {
       title: board.title,
       totalTasks: board.tasks.length,
       columnCounts,
-      readyTasksCount: readyCount,
-      blockedTasksCount: blockedCount,
+      readyTasksCount: columnCounts.ready,
+      blockedTasksCount: columnCounts.blocked,
+      inProgressCount: columnCounts.in_progress,
       activeAssignees: Array.from(assignees),
+      wipViolations,
     };
-  }
-
-  /**
-   * Deletes a task from the board.
-   */
-  deleteTask(boardId: string = "default", taskId: string): boolean {
-    return this.substrate.deleteTask(boardId, taskId);
   }
 }

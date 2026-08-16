@@ -164,6 +164,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-115](ADR-115-deterministic-tool-schema-sanitizer.md)**: Deterministic tool parameter schema sanitizer, non-conforming key bidirectional rewriter, and LLM GBNF grammar firewall subsystem.
 - **[ADR-116](ADR-116-native-nous-portal-provider.md)**: Native Nous Portal provider, attribution tagging, and tool-pool entitlement subsystem.
 - **[ADR-117](ADR-117-persistent-session-goals-and-ralph-loop.md)**: Persistent session goals, quality gates, and deterministic goal loop subsystem.
+- **[ADR-118](ADR-118-world-class-kanban-architecture.md)**: World-class Kanban architecture, task DAG, typed blockers, and multi-agent issue orchestration.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

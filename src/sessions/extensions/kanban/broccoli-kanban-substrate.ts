@@ -1,18 +1,24 @@
 /**
  * broccoli-kanban-substrate.ts
  *
- * In-memory Broccolidb substrate for boards, tasks, historical task transitions,
- * and multi-agent assignee routing (Phase 81 / ADR-033).
+ * In-memory Broccolidb substrate for multi-board workflows, rich task entities,
+ * task link DAGs, comments, audit trails, and multi-agent issue coordination (ADR-118).
  */
 
 import type {
   KanbanBoard,
   KanbanColumn,
+  KanbanColumnDefinition,
+  KanbanPriority,
   KanbanQueryFilter,
   KanbanTask,
+  KanbanTaskComment,
+  KanbanTaskEvent,
+  KanbanTaskLink,
   KanbanTaskMutation,
   KanbanWorkspaceSnapshot,
 } from "../../../core/contracts/kanban.contracts.js";
+import { DEFAULT_KANBAN_COLUMNS } from "../../../core/contracts/kanban.contracts.js";
 
 export interface KanbanTransitionRecord {
   readonly boardId: string;
@@ -25,20 +31,52 @@ export interface KanbanTransitionRecord {
 
 export class BroccoliKanbanSubstrate {
   private boards: Map<string, KanbanBoard>;
+  private links: Map<string, KanbanTaskLink>;
+  private comments: Map<string, KanbanTaskComment[]>;
+  private events: Map<string, KanbanTaskEvent[]>;
   private transitionHistory: KanbanTransitionRecord[];
   private static readonly MAX_HISTORY = 1000;
 
   constructor() {
     this.boards = new Map<string, KanbanBoard>();
+    this.links = new Map<string, KanbanTaskLink>();
+    this.comments = new Map<string, KanbanTaskComment[]>();
+    this.events = new Map<string, KanbanTaskEvent[]>();
     this.transitionHistory = [];
-    // Initialize default board
+
+    // Initialize default master board
     this.createBoard("default", "Master Agentic Workflow Board");
+  }
+
+  /**
+   * Helper to derive numeric priority weight.
+   */
+  static getPriorityWeight(priority: KanbanPriority): number {
+    switch (priority) {
+      case "critical":
+      case "urgent":
+        return 4;
+      case "high":
+        return 3;
+      case "medium":
+        return 2;
+      case "low":
+        return 1;
+      case "none":
+      default:
+        return 0;
+    }
   }
 
   /**
    * Creates a new board in the substrate.
    */
-  createBoard(boardId: string, title: string): KanbanBoard {
+  createBoard(
+    boardId: string,
+    title: string,
+    columns?: readonly (KanbanColumn | KanbanColumnDefinition)[],
+    defaultColumn?: KanbanColumn
+  ): KanbanBoard {
     const existing = this.boards.get(boardId);
     if (existing) return existing;
 
@@ -46,7 +84,8 @@ export class BroccoliKanbanSubstrate {
       boardId,
       title,
       tasks: [],
-      columns: ["backlog", "todo", "in_progress", "review", "done", "archived"],
+      columns: columns && columns.length > 0 ? columns : [...DEFAULT_KANBAN_COLUMNS],
+      defaultColumn: defaultColumn || "backlog",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -86,6 +125,16 @@ export class BroccoliKanbanSubstrate {
       tasks: updatedTasks,
       updatedAt: Date.now(),
     });
+
+    this.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId: task.id,
+      eventType: "created",
+      actor: task.owner || task.assignee || "system",
+      details: { title: task.title, column: task.column, priority: task.priority },
+      timestampMs: Date.now(),
+    });
+
     return true;
   }
 
@@ -99,7 +148,20 @@ export class BroccoliKanbanSubstrate {
   }
 
   /**
-   * Updates an existing task with mutations.
+   * Searches for a task across all boards.
+   */
+  findTaskAcrossBoards(taskId: string): { boardId: string; task: KanbanTask } | undefined {
+    for (const [boardId, board] of this.boards.entries()) {
+      const task = board.tasks.find((t) => t.id === taskId);
+      if (task) {
+        return { boardId, task };
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Updates an existing task on a board.
    */
   updateTask(
     boardId: string = "default",
@@ -110,38 +172,86 @@ export class BroccoliKanbanSubstrate {
     const board = this.boards.get(boardId);
     if (!board) return undefined;
 
-    const idx = board.tasks.findIndex((t) => t.id === taskId);
-    if (idx === -1) return undefined;
+    const taskIndex = board.tasks.findIndex((t) => t.id === taskId);
+    if (taskIndex === -1) return undefined;
 
-    const current = board.tasks[idx];
-    const updated: KanbanTask = {
-      id: current.id,
-      title: mutation.title ?? current.title,
-      description: mutation.description ?? current.description,
-      column: mutation.column ?? current.column,
-      priority: mutation.priority ?? current.priority,
-      assignee: mutation.assignee !== undefined ? mutation.assignee : current.assignee,
-      tags: mutation.tags ?? current.tags,
-      blockedBy: mutation.blockedBy ?? current.blockedBy,
-      createdFrame: current.createdFrame,
-      updatedFrame: frameIndex,
-      metadata: mutation.metadata ? { ...current.metadata, ...mutation.metadata } : current.metadata,
-    };
+    const currentTask = board.tasks[taskIndex];
+    const oldColumn = currentTask.column;
+    const newColumn = mutation.column ?? currentTask.column;
+    const oldPriority = currentTask.priority;
+    const newPriority = mutation.priority ?? currentTask.priority;
 
-    if (mutation.column && mutation.column !== current.column) {
-      this.recordTransition(boardId, taskId, current.column, mutation.column, frameIndex);
+    // Track column transition if moving
+    if (oldColumn !== newColumn) {
+      this.recordTransition({
+        boardId,
+        taskId,
+        fromColumn: oldColumn,
+        toColumn: newColumn,
+        frameIndex,
+        timestamp: Date.now(),
+      });
+
+      this.recordEvent({
+        id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        taskId,
+        eventType: "column_transition",
+        actor: mutation.assignee || currentTask.assignee || "system",
+        details: { from: oldColumn, to: newColumn },
+        timestampMs: Date.now(),
+      });
     }
 
-    const newTasks = [...board.tasks];
-    newTasks[idx] = updated;
+    if (oldPriority !== newPriority) {
+      this.recordEvent({
+        id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        taskId,
+        eventType: "priority_changed",
+        actor: "system",
+        details: { from: oldPriority, to: newPriority },
+        timestampMs: Date.now(),
+      });
+    }
+
+    const updatedTask: KanbanTask = {
+      ...currentTask,
+      title: mutation.title ?? currentTask.title,
+      description: mutation.description ?? currentTask.description,
+      column: newColumn,
+      priority: newPriority,
+      priorityWeight: BroccoliKanbanSubstrate.getPriorityWeight(newPriority),
+      assignee: mutation.assignee !== undefined ? mutation.assignee : currentTask.assignee,
+      owner: mutation.owner !== undefined ? mutation.owner : currentTask.owner,
+      tags: mutation.tags ?? currentTask.tags,
+      blockedBy: mutation.blockedBy ?? currentTask.blockedBy,
+      blockKind: mutation.blockKind !== undefined ? mutation.blockKind : currentTask.blockKind,
+      blockReason: mutation.blockReason !== undefined ? mutation.blockReason : currentTask.blockReason,
+      blockRecurrences: mutation.blockRecurrences !== undefined ? mutation.blockRecurrences : currentTask.blockRecurrences,
+      estimatePoints: mutation.estimatePoints !== undefined ? mutation.estimatePoints : currentTask.estimatePoints,
+      dueDateMs: mutation.dueDateMs !== undefined ? mutation.dueDateMs : currentTask.dueDateMs,
+      slaDeadlineMs: mutation.slaDeadlineMs !== undefined ? mutation.slaDeadlineMs : currentTask.slaDeadlineMs,
+      goalMode: mutation.goalMode !== undefined ? mutation.goalMode : currentTask.goalMode,
+      goalMaxTurns: mutation.goalMaxTurns !== undefined ? mutation.goalMaxTurns : currentTask.goalMaxTurns,
+      workspaceKind: mutation.workspaceKind !== undefined ? mutation.workspaceKind : currentTask.workspaceKind,
+      branchName: mutation.branchName !== undefined ? mutation.branchName : currentTask.branchName,
+      prUrl: mutation.prUrl !== undefined ? mutation.prUrl : currentTask.prUrl,
+      commitSha: mutation.commitSha !== undefined ? mutation.commitSha : currentTask.commitSha,
+      reasoningEffort: mutation.reasoningEffort !== undefined ? mutation.reasoningEffort : currentTask.reasoningEffort,
+      updatedFrame: frameIndex,
+      updatedAtMs: Date.now(),
+      metadata: mutation.metadata ?? currentTask.metadata,
+    };
+
+    const updatedTasks = [...board.tasks];
+    updatedTasks[taskIndex] = updatedTask;
 
     this.boards.set(boardId, {
       ...board,
-      tasks: newTasks,
+      tasks: updatedTasks,
       updatedAt: Date.now(),
     });
 
-    return updated;
+    return updatedTask;
   }
 
   /**
@@ -151,19 +261,119 @@ export class BroccoliKanbanSubstrate {
     const board = this.boards.get(boardId);
     if (!board) return false;
 
-    const filtered = board.tasks.filter((t) => t.id !== taskId);
-    if (filtered.length === board.tasks.length) return false;
+    const initialLength = board.tasks.length;
+    const filteredTasks = board.tasks.filter((t) => t.id !== taskId);
+    if (filteredTasks.length === initialLength) return false;
 
     this.boards.set(boardId, {
       ...board,
-      tasks: filtered,
+      tasks: filteredTasks,
       updatedAt: Date.now(),
+    });
+
+    // Remove task links
+    for (const [linkId, link] of this.links.entries()) {
+      if (link.sourceTaskId === taskId || link.targetTaskId === taskId) {
+        this.links.delete(linkId);
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Adds a task link (dependency/relation).
+   */
+  addLink(link: KanbanTaskLink): boolean {
+    this.links.set(link.id, link);
+    this.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId: link.sourceTaskId,
+      eventType: "link_added",
+      actor: "system",
+      details: { targetTaskId: link.targetTaskId, relationType: link.relationType },
+      timestampMs: Date.now(),
     });
     return true;
   }
 
   /**
-   * Queries tasks on a board according to filter criteria.
+   * Removes a task link by ID.
+   */
+  removeLink(linkId: string): boolean {
+    const link = this.links.get(linkId);
+    if (!link) return false;
+    this.links.delete(linkId);
+    this.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId: link.sourceTaskId,
+      eventType: "link_removed",
+      actor: "system",
+      details: { targetTaskId: link.targetTaskId, relationType: link.relationType },
+      timestampMs: Date.now(),
+    });
+    return true;
+  }
+
+  /**
+   * Retrieves all links associated with a task.
+   */
+  getTaskLinks(taskId: string): readonly KanbanTaskLink[] {
+    return Array.from(this.links.values()).filter(
+      (link) => link.sourceTaskId === taskId || link.targetTaskId === taskId
+    );
+  }
+
+  /**
+   * Adds a comment to a task.
+   */
+  addComment(comment: KanbanTaskComment): void {
+    const existing = this.comments.get(comment.taskId) || [];
+    this.comments.set(comment.taskId, [...existing, comment]);
+    this.recordEvent({
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      taskId: comment.taskId,
+      eventType: "comment_added",
+      actor: comment.author,
+      details: { commentId: comment.id, preview: comment.content.slice(0, 100) },
+      timestampMs: Date.now(),
+    });
+  }
+
+  /**
+   * Retrieves all comments for a task.
+   */
+  getTaskComments(taskId: string): readonly KanbanTaskComment[] {
+    return this.comments.get(taskId) || [];
+  }
+
+  /**
+   * Records an audit event for a task.
+   */
+  recordEvent(event: KanbanTaskEvent): void {
+    const existing = this.events.get(event.taskId) || [];
+    this.events.set(event.taskId, [...existing, event]);
+  }
+
+  /**
+   * Retrieves all audit events for a task.
+   */
+  getTaskEvents(taskId: string): readonly KanbanTaskEvent[] {
+    return this.events.get(taskId) || [];
+  }
+
+  /**
+   * Records a task column transition.
+   */
+  private recordTransition(record: KanbanTransitionRecord): void {
+    this.transitionHistory.push(record);
+    if (this.transitionHistory.length > BroccoliKanbanSubstrate.MAX_HISTORY) {
+      this.transitionHistory.shift();
+    }
+  }
+
+  /**
+   * Queries tasks on a board by filter.
    */
   queryTasks(boardId: string = "default", filter: KanbanQueryFilter = {}): readonly KanbanTask[] {
     const board = this.boards.get(boardId);
@@ -179,83 +389,107 @@ export class BroccoliKanbanSubstrate {
   }
 
   /**
-   * Records a column transition in the audit log.
+   * Gets transition history, optionally filtered by boardId.
    */
-  recordTransition(
-    boardId: string,
-    taskId: string,
-    fromColumn: KanbanColumn,
-    toColumn: KanbanColumn,
-    frameIndex: number
-  ): void {
-    const record: KanbanTransitionRecord = {
-      boardId,
-      taskId,
-      fromColumn,
-      toColumn,
-      frameIndex,
-      timestamp: Date.now(),
-    };
-
-    this.transitionHistory.push(record);
-    if (this.transitionHistory.length > BroccoliKanbanSubstrate.MAX_HISTORY) {
-      this.transitionHistory.shift();
-    }
+  getTransitions(boardId?: string): readonly KanbanTransitionRecord[] {
+    if (!boardId) return [...this.transitionHistory];
+    return this.transitionHistory.filter((t) => t.boardId === boardId);
   }
 
   /**
-   * Retrieves the transition audit records.
+   * Gets the recent transition history.
    */
-  getTransitions(boardId?: string, limit: number = 50): readonly KanbanTransitionRecord[] {
-    let list = this.transitionHistory;
-    if (boardId) {
-      list = list.filter((r) => r.boardId === boardId);
-    }
-    return list.slice(-limit);
+  getTransitionHistory(): readonly KanbanTransitionRecord[] {
+    return [...this.transitionHistory];
   }
 
   /**
-   * Exports full state snapshot.
+   * Creates an immutable snapshot of all boards, links, comments, and events.
    */
-  exportSnapshot(): KanbanWorkspaceSnapshot {
-    const boards = Array.from(this.boards.values());
+  createWorkspaceSnapshot(): KanbanWorkspaceSnapshot {
+    const boardsCopy = Array.from(this.boards.values()).map((b) => ({
+      ...b,
+      tasks: b.tasks.map((t) => ({ ...t, tags: [...t.tags], blockedBy: [...t.blockedBy] })),
+      columns: [...b.columns],
+    }));
+
+    const linksCopy = Array.from(this.links.values()).map((l) => ({ ...l }));
+    const commentsCopy = Array.from(this.comments.values()).flat().map((c) => ({ ...c }));
+    const eventsCopy = Array.from(this.events.values()).flat().map((e) => ({ ...e }));
+
     let totalTasks = 0;
     let totalActiveTasks = 0;
 
-    for (let i = 0; i < boards.length; i++) {
-      const b = boards[i];
-      totalTasks += b.tasks.length;
-      totalActiveTasks += b.tasks.filter((t) => t.column !== "done" && t.column !== "archived").length;
+    for (const board of boardsCopy) {
+      totalTasks += board.tasks.length;
+      totalActiveTasks += board.tasks.filter((t) => t.column !== "done" && t.column !== "archived" && t.column !== "canceled").length;
     }
 
     return {
-      boards: JSON.parse(JSON.stringify(boards)),
+      boards: boardsCopy,
+      links: linksCopy,
+      comments: commentsCopy,
+      events: eventsCopy,
       totalTasks,
       totalActiveTasks,
       timestamp: Date.now(),
     };
   }
 
-  /**
-   * Restores state from a snapshot.
-   */
-  importSnapshot(snapshot: KanbanWorkspaceSnapshot): void {
-    this.boards.clear();
-    for (let i = 0; i < snapshot.boards.length; i++) {
-      const b = snapshot.boards[i];
-      this.boards.set(b.boardId, {
-        ...b,
-        tasks: [...b.tasks],
-        columns: [...b.columns],
-      });
-    }
+  exportSnapshot(): KanbanWorkspaceSnapshot {
+    return this.createWorkspaceSnapshot();
   }
 
   /**
-   * Resets substrate to initial state.
+   * Restores substrate state from a snapshot.
+   */
+  restoreWorkspaceSnapshot(snapshot: KanbanWorkspaceSnapshot): void {
+    this.boards.clear();
+    this.links.clear();
+    this.comments.clear();
+    this.events.clear();
+
+    for (const board of snapshot.boards) {
+      this.boards.set(board.boardId, {
+        ...board,
+        tasks: board.tasks.map((t) => ({ ...t, tags: [...t.tags], blockedBy: [...t.blockedBy] })),
+        columns: [...board.columns],
+      });
+    }
+
+    if (snapshot.links) {
+      for (const link of snapshot.links) {
+        this.links.set(link.id, { ...link });
+      }
+    }
+
+    if (snapshot.comments) {
+      for (const comment of snapshot.comments) {
+        const existing = this.comments.get(comment.taskId) || [];
+        this.comments.set(comment.taskId, [...existing, { ...comment }]);
+      }
+    }
+
+    if (snapshot.events) {
+      for (const event of snapshot.events) {
+        const existing = this.events.get(event.taskId) || [];
+        this.events.set(event.taskId, [...existing, { ...event }]);
+      }
+    }
+  }
+
+  importSnapshot(snapshot: KanbanWorkspaceSnapshot): void {
+    this.restoreWorkspaceSnapshot(snapshot);
+  }
+
+  /**
+   * Clears all state (primarily for test teardown).
    */
   clear(): void {
     this.boards.clear();
+    this.links.clear();
+    this.comments.clear();
+    this.events.clear();
     this.transitionHistory = [];
     this.createBoard("default", "Master Agentic Workflow Board");
   }
