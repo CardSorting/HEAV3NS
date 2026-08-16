@@ -954,6 +954,242 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_find_and_replace_in_scope",
+        description: "Restricts fuzzy search and replace strictly to a specified enclosing function, class, interface, or block declaration.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The complete file content",
+            required: true,
+          },
+          oldSnippet: {
+            type: "string",
+            description: "The target code snippet to replace inside the scope",
+            required: true,
+          },
+          newSnippet: {
+            type: "string",
+            description: "The replacement code snippet",
+            required: true,
+          },
+          enclosingScope: {
+            type: "string",
+            description: "The declaration of the enclosing scope (e.g. 'class OrderProcessor', 'function calculateTotal')",
+            required: true,
+          },
+          caseSensitive: {
+            type: "boolean",
+            description: "Whether scope declaration matching should be case sensitive (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (
+            typeof args.content !== "string" ||
+            typeof args.oldSnippet !== "string" ||
+            typeof args.newSnippet !== "string" ||
+            typeof args.enclosingScope !== "string"
+          ) {
+            return {
+              success: false,
+              error: "Missing required string parameters ('content', 'oldSnippet', 'newSnippet', 'enclosingScope').",
+            };
+          }
+          const result = this.supervisor.findAndReplaceInScope(args.content, args.oldSnippet, args.newSnippet, {
+            enclosingScope: args.enclosingScope,
+            caseSensitive: typeof args.caseSensitive === "boolean" ? args.caseSensitive : true,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            matchedScopeSpan: result.matchedScopeSpan,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_ngram_similarity_search",
+        description: "Searches for similar candidate code blocks across large files using N-gram vector cosine similarity.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The complete file content to search",
+            required: true,
+          },
+          searchSnippet: {
+            type: "string",
+            description: "The code snippet to find candidates for",
+            required: true,
+          },
+          n: {
+            type: "number",
+            description: "The N-gram length (default: 3 for tri-grams)",
+            required: false,
+          },
+          minScoreThreshold: {
+            type: "number",
+            description: "Minimum cosine similarity score (0.0 to 1.0, default: 0.2)",
+            required: false,
+          },
+          maxResults: {
+            type: "number",
+            description: "Maximum number of candidate windows to return (default: 5)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.searchSnippet !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('content', 'searchSnippet').",
+            };
+          }
+          const result = this.supervisor.searchByNGramCosineSimilarity(args.content, args.searchSnippet, {
+            n: typeof args.n === "number" ? args.n : 3,
+            minScoreThreshold: typeof args.minScoreThreshold === "number" ? args.minScoreThreshold : 0.2,
+            maxResults: typeof args.maxResults === "number" ? args.maxResults : 5,
+          });
+          return {
+            success: true,
+            candidates: result.candidates,
+            topCandidate: result.topCandidate,
+            totalEvaluatedWindows: result.totalEvaluatedWindows,
+          };
+        },
+      },
+      {
+        name: "fuzzy_rename_symbol_workspace",
+        description: "Executes whole-word fuzzy identifier renaming across multiple files with comment/string filters and dry-run validation.",
+        parameters: {
+          files: {
+            type: "string",
+            description: "JSON-encoded object or map of filePath -> fileContent for all participating files",
+            required: true,
+          },
+          oldSymbol: {
+            type: "string",
+            description: "The identifier to rename",
+            required: true,
+          },
+          newSymbol: {
+            type: "string",
+            description: "The new identifier name",
+            required: true,
+          },
+          renameInComments: {
+            type: "boolean",
+            description: "Whether to rename occurrences in comments (default: true)",
+            required: false,
+          },
+          renameInStrings: {
+            type: "boolean",
+            description: "Whether to rename occurrences in string literals (default: false)",
+            required: false,
+          },
+          wholeWordOnly: {
+            type: "boolean",
+            description: "Whether to match whole word boundaries only (default: true)",
+            required: false,
+          },
+          dryRun: {
+            type: "boolean",
+            description: "If true, simulates renaming without updating committedFiles (default: false)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let filesMap: Record<string, string>;
+          if (typeof args.files === "string") {
+            try {
+              filesMap = JSON.parse(args.files);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for files parameter: ${msg}` };
+            }
+          } else if (typeof args.files === "object" && args.files !== null) {
+            filesMap = args.files as Record<string, string>;
+          } else {
+            return {
+              success: false,
+              error: "Missing required parameter 'files' (string or object).",
+            };
+          }
+
+          if (typeof args.oldSymbol !== "string" || typeof args.newSymbol !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('oldSymbol', 'newSymbol').",
+            };
+          }
+          const result = this.supervisor.renameSymbolWorkspace(
+            filesMap,
+            args.oldSymbol,
+            args.newSymbol,
+            {
+              renameInComments: typeof args.renameInComments === "boolean" ? args.renameInComments : true,
+              renameInStrings: typeof args.renameInStrings === "boolean" ? args.renameInStrings : false,
+              wholeWordOnly: typeof args.wholeWordOnly === "boolean" ? args.wholeWordOnly : true,
+              dryRun: typeof args.dryRun === "boolean" ? args.dryRun : false,
+            }
+          );
+          return {
+            success: result.success,
+            totalOccurrencesRenamed: result.totalOccurrencesRenamed,
+            totalFilesModified: result.totalFilesModified,
+            fileResults: result.fileResults,
+            committedFiles: result.committedFiles,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_apply_patch_with_drift",
+        description: "Applies unified diff patches with dynamic line offset drift search (+-K lines) and fuzzy similarity compensation.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The file content to apply the patch to",
+            required: true,
+          },
+          patchText: {
+            type: "string",
+            description: "The unified diff patch text",
+            required: true,
+          },
+          maxDriftLines: {
+            type: "number",
+            description: "Maximum line offset drift search window (default: 50)",
+            required: false,
+          },
+          similarityThreshold: {
+            type: "number",
+            description: "Minimum context matching similarity (default: 0.6)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.patchText !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('content', 'patchText').",
+            };
+          }
+          const result = this.supervisor.applyUnifiedPatchWithDrift(args.content, args.patchText, {
+            maxDriftLines: typeof args.maxDriftLines === "number" ? args.maxDriftLines : 50,
+            similarityThreshold: typeof args.similarityThreshold === "number" ? args.similarityThreshold : 0.6,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            totalHunks: result.totalHunks,
+            appliedHunks: result.appliedHunks,
+            maxObservedDrift: result.maxObservedDrift,
+            hunkResults: result.hunkResults,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

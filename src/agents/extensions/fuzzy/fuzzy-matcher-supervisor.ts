@@ -26,9 +26,16 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  NGramSimilarityOptions,
+  NGramSimilarityResult,
+  PatchDriftOptions,
+  PatchDriftResult,
   PatienceDiffOptions,
   PatienceDiffResult,
+  ScopeBoundedMatchOptions,
+  ScopeBoundedMatchResult,
   SemanticConflictExplanation,
+  SymbolRenameOptions,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
   ThreeWayMergeOptions,
@@ -36,6 +43,7 @@ import type {
   TokenStreamMatchOptions,
   TokenStreamMatchResult,
   UnifiedPatchResult,
+  WorkspaceSymbolRenameResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
 import { BroccoliFuzzySubstrate } from "../../../sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
@@ -340,6 +348,52 @@ export class FuzzyMatcherSupervisor {
     modifiedFiles: Record<string, string>
   ): MultiFileInversePatchResult {
     return this.matcher.generateMultiFileInversePatch(originalFiles, modifiedFiles);
+  }
+
+  /**
+   * Restricts fuzzy search and replacement strictly to an enclosing function, class, or block.
+   */
+  findAndReplaceInScope(
+    content: string,
+    oldSnippet: string,
+    newSnippet: string,
+    options: ScopeBoundedMatchOptions
+  ): ScopeBoundedMatchResult {
+    return this.matcher.findAndReplaceInScope(content, oldSnippet, newSnippet, options);
+  }
+
+  /**
+   * Fast vector similarity scoring across candidate code windows for large files using N-grams.
+   */
+  searchByNGramCosineSimilarity(
+    content: string,
+    searchSnippet: string,
+    options?: NGramSimilarityOptions
+  ): NGramSimilarityResult {
+    return this.matcher.searchByNGramCosineSimilarity(content, searchSnippet, options);
+  }
+
+  /**
+   * Coordinated whole-word identifier renaming across workspaces with comment/string filters.
+   */
+  renameSymbolWorkspace(
+    files: Record<string, string>,
+    oldSymbol: string,
+    newSymbol: string,
+    options?: SymbolRenameOptions
+  ): WorkspaceSymbolRenameResult {
+    return this.matcher.renameSymbolWorkspace(files, oldSymbol, newSymbol, options);
+  }
+
+  /**
+   * Applies unified diff hunks with dynamic offset drift search and fuzzy similarity tolerance.
+   */
+  applyUnifiedPatchWithDrift(
+    content: string,
+    patchText: string,
+    options?: PatchDriftOptions
+  ): PatchDriftResult {
+    return this.matcher.applyUnifiedPatchWithDrift(content, patchText, options);
   }
 
   /**

@@ -42,11 +42,22 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  NGramMatchCandidate,
+  NGramSimilarityOptions,
+  NGramSimilarityResult,
+  PatchDriftHunkResult,
+  PatchDriftOptions,
+  PatchDriftResult,
   PatienceDiffHunk,
   PatienceDiffOptions,
   PatienceDiffResult,
+  ScopeBoundedMatchOptions,
+  ScopeBoundedMatchResult,
   SearchReplaceBlock,
   SemanticConflictExplanation,
+  SymbolRenameFileResult,
+  SymbolRenameOccurrence,
+  SymbolRenameOptions,
   SyntaxBalanceIssue,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
@@ -59,6 +70,7 @@ import type {
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
+  WorkspaceSymbolRenameResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 
 export const DEFAULT_UNICODE_MAP: Record<string, string> = {
@@ -3517,6 +3529,411 @@ export class DeterministicFuzzyMatcher {
       fileInverseDiffs,
       totalFiles: Object.keys(fileInverseDiffs).length,
       error: null,
+    };
+  }
+
+  /**
+   * Scope-Bounded Fuzzy Splicer: Restricts fuzzy search and replace to a specific enclosing
+   * function, class, interface, or block declaration.
+   */
+  findAndReplaceInScope(
+    content: string,
+    oldSnippet: string,
+    newSnippet: string,
+    options: ScopeBoundedMatchOptions
+  ): ScopeBoundedMatchResult {
+    const scopeQuery = options.enclosingScope.trim();
+    if (!scopeQuery) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchedScopeSpan: null,
+        innerMatchResult: null,
+        error: "Enclosing scope query cannot be empty.",
+      };
+    }
+
+    // Locate scope declaration start
+    const searchIdx = options.caseSensitive ?? true
+      ? content.indexOf(scopeQuery)
+      : content.toLowerCase().indexOf(scopeQuery.toLowerCase());
+
+    if (searchIdx === -1) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchedScopeSpan: null,
+        innerMatchResult: null,
+        error: `Could not locate enclosing scope '${scopeQuery}' in target content.`,
+      };
+    }
+
+    // Find opening brace after declaration
+    let braceOpenIdx = content.indexOf("{", searchIdx);
+    let scopeStart = searchIdx;
+    let scopeEnd = content.length;
+
+    if (braceOpenIdx !== -1 && braceOpenIdx - searchIdx < 300) {
+      // Find matching balanced closing brace
+      let depth = 1;
+      let pos = braceOpenIdx + 1;
+      let inString: string | null = null;
+
+      while (pos < content.length && depth > 0) {
+        const ch = content[pos];
+        if (inString) {
+          if (ch === "\\" && pos + 1 < content.length) {
+            pos += 2;
+            continue;
+          }
+          if (ch === inString) {
+            inString = null;
+          }
+        } else if (ch === '"' || ch === "'" || ch === "`") {
+          inString = ch;
+        } else if (ch === "{") {
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            scopeEnd = pos + 1;
+            break;
+          }
+        }
+        pos++;
+      }
+    }
+
+    const scopeSlice = content.slice(scopeStart, scopeEnd);
+    const innerRes = this.findAndReplace(scopeSlice, oldSnippet, newSnippet);
+
+    if (!innerRes.success) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchedScopeSpan: [scopeStart, scopeEnd],
+        innerMatchResult: innerRes,
+        error: `Scope found, but inner snippet replacement failed: ${innerRes.error ?? "No match"}`,
+      };
+    }
+
+    const modified = content.slice(0, scopeStart) + innerRes.modifiedContent + content.slice(scopeEnd);
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      matchedScopeSpan: [scopeStart, scopeEnd],
+      innerMatchResult: innerRes,
+      error: null,
+    };
+  }
+
+  /**
+   * N-Gram Token Cosine Similarity Matrix Search:
+   * Fast vector similarity scoring across candidate code windows for large files.
+   */
+  searchByNGramCosineSimilarity(
+    content: string,
+    searchSnippet: string,
+    options: NGramSimilarityOptions = {}
+  ): NGramSimilarityResult {
+    const n = options.n ?? 3;
+    const minScore = options.minScoreThreshold ?? 0.2;
+    const maxResults = options.maxResults ?? 5;
+    const contentLines = content.split("\n");
+    const snippetLines = searchSnippet.split("\n");
+    const windowSize = Math.max(1, snippetLines.length);
+
+    const makeNGrams = (text: string): Map<string, number> => {
+      const counts = new Map<string, number>();
+      const norm = text.toLowerCase().replace(/\s+/g, " ");
+      if (norm.length < n) {
+        counts.set(norm, 1);
+        return counts;
+      }
+      for (let i = 0; i <= norm.length - n; i++) {
+        const gram = norm.slice(i, i + n);
+        counts.set(gram, (counts.get(gram) ?? 0) + 1);
+      }
+      return counts;
+    };
+
+    const targetVector = makeNGrams(searchSnippet);
+    let targetMag = 0;
+    for (const val of targetVector.values()) {
+      targetMag += val * val;
+    }
+    targetMag = Math.sqrt(targetMag);
+
+    const candidates: NGramMatchCandidate[] = [];
+    let evaluatedWindows = 0;
+
+    for (let i = 0; i <= contentLines.length - windowSize; i++) {
+      evaluatedWindows++;
+      const candidateText = contentLines.slice(i, i + windowSize).join("\n");
+      const candVector = makeNGrams(candidateText);
+
+      let dotProduct = 0;
+      let candMag = 0;
+      for (const [gram, cVal] of candVector.entries()) {
+        candMag += cVal * cVal;
+        const tVal = targetVector.get(gram);
+        if (tVal !== undefined) {
+          dotProduct += cVal * tVal;
+        }
+      }
+      candMag = Math.sqrt(candMag);
+
+      const cosineSim = targetMag > 0 && candMag > 0 ? dotProduct / (targetMag * candMag) : 0;
+
+      if (cosineSim >= minScore) {
+        candidates.push({
+          startLine: i + 1,
+          endLine: i + windowSize,
+          lineSpan: [i + 1, i + windowSize],
+          similarityScore: Math.round(cosineSim * 10000) / 10000,
+          candidateText,
+        });
+      }
+    }
+
+    candidates.sort((a, b) => b.similarityScore - a.similarityScore);
+    const topCandidates = candidates.slice(0, maxResults);
+
+    return {
+      searchSnippet,
+      candidates: topCandidates,
+      topCandidate: topCandidates.length > 0 ? topCandidates[0] : null,
+      totalEvaluatedWindows: evaluatedWindows,
+    };
+  }
+
+  /**
+   * Multi-File Fuzzy Symbol Refactoring:
+   * Coordinated whole-word identifier renaming across workspaces with comment/string filters.
+   */
+  renameSymbolWorkspace(
+    files: Record<string, string>,
+    oldSymbol: string,
+    newSymbol: string,
+    options: SymbolRenameOptions = {}
+  ): WorkspaceSymbolRenameResult {
+    if (!oldSymbol || !newSymbol) {
+      return {
+        success: false,
+        oldSymbol,
+        newSymbol,
+        totalOccurrencesRenamed: 0,
+        totalFilesModified: 0,
+        fileResults: {},
+        committedFiles: files,
+        error: "Old and new symbol names must be non-empty.",
+      };
+    }
+
+    const fileResults: Record<string, SymbolRenameFileResult> = {};
+    const committedFiles: Record<string, string> = { ...files };
+    let totalOccurrences = 0;
+    let modifiedFilesCount = 0;
+
+    const regex = options.wholeWordOnly ?? true
+      ? new RegExp(`\\b${oldSymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "g")
+      : new RegExp(oldSymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+
+    for (const [filePath, content] of Object.entries(files)) {
+      const tokens = this.tokenizeCode(content);
+      const occurrences: SymbolRenameOccurrence[] = [];
+      const lines = content.split("\n");
+
+      // Scan token-by-token for accurate classification
+      let modifiedText = content;
+      const renameInComments = options.renameInComments ?? true;
+      const renameInStrings = options.renameInStrings ?? false;
+
+      // Find occurrences matching filter
+      let match: RegExpExecArray | null = null;
+      regex.lastIndex = 0;
+
+      while ((match = regex.exec(content)) !== null) {
+        const offset = match.index;
+        // Determine line & col
+        const prefix = content.slice(0, offset);
+        const lineNum = prefix.split("\n").length;
+        const lineStart = prefix.lastIndexOf("\n") + 1;
+        const colNum = offset - lineStart;
+
+        // Check token context
+        const tok = tokens.find((t) => offset >= t.start && offset < t.end);
+        const isComment = tok?.type === "COMMENT";
+        const isString = tok?.type === "STRING";
+
+        if ((isComment && !renameInComments) || (isString && !renameInStrings)) {
+          continue;
+        }
+
+        occurrences.push({
+          line: lineNum,
+          character: colNum,
+          span: [offset, offset + oldSymbol.length],
+          context: lines[lineNum - 1] ?? "",
+          inCommentOrString: isComment || isString,
+        });
+      }
+
+      if (occurrences.length > 0) {
+        // Replace from end to start to maintain char offsets
+        const sortedOccurrences = [...occurrences].sort((a, b) => b.span[0] - a.span[0]);
+        for (const occ of sortedOccurrences) {
+          modifiedText =
+            modifiedText.slice(0, occ.span[0]) +
+            newSymbol +
+            modifiedText.slice(occ.span[1]);
+        }
+
+        totalOccurrences += occurrences.length;
+        modifiedFilesCount++;
+
+        fileResults[filePath] = {
+          filePath,
+          occurrencesCount: occurrences.length,
+          occurrences,
+          originalContent: content,
+          modifiedContent: modifiedText,
+        };
+
+        if (!(options.dryRun ?? false)) {
+          committedFiles[filePath] = modifiedText;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      oldSymbol,
+      newSymbol,
+      totalOccurrencesRenamed: totalOccurrences,
+      totalFilesModified: modifiedFilesCount,
+      fileResults,
+      committedFiles,
+      error: null,
+    };
+  }
+
+  /**
+   * Adaptive Patch Drift Compensation:
+   * Applies unified diff hunks with dynamic offset drift search and fuzzy similarity tolerance.
+   */
+  applyUnifiedPatchWithDrift(
+    content: string,
+    patchText: string,
+    options: PatchDriftOptions = {}
+  ): PatchDriftResult {
+    const maxDrift = options.maxDriftLines ?? 50;
+    const similarityThreshold = options.similarityThreshold ?? 0.6;
+    const parsedHunks = this.parseUnifiedPatch(patchText);
+
+    if (parsedHunks.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        totalHunks: 0,
+        appliedHunks: 0,
+        maxObservedDrift: 0,
+        hunkResults: [],
+        error: null,
+      };
+    }
+
+    const contentLines = content.split("\n");
+    const hunkResults: PatchDriftHunkResult[] = [];
+    let currentLines = [...contentLines];
+    let maxDriftObserved = 0;
+
+    for (let hIdx = 0; hIdx < parsedHunks.length; hIdx++) {
+      const hunk = parsedHunks[hIdx];
+      const targetOldStart = hunk.oldStart - 1; // 0-indexed
+
+      // Extract hunk search lines (context + deletions)
+      const expectedLines: string[] = [];
+      const replacementHunkLines: string[] = [];
+
+      for (const line of hunk.lines) {
+        if (line.startsWith(" ") || line.startsWith("-")) {
+          expectedLines.push(line.slice(1));
+        }
+        if (line.startsWith(" ") || line.startsWith("+")) {
+          replacementHunkLines.push(line.slice(1));
+        }
+      }
+
+      // Search with drift: d = 0, +1, -1, +2, -2, ... up to maxDrift
+      let bestPos = -1;
+      let bestSim = 0;
+      let bestDrift = 0;
+
+      for (let drift = 0; drift <= maxDrift; drift++) {
+        const offsets = drift === 0 ? [0] : [drift, -drift];
+        for (const off of offsets) {
+          const testStart = targetOldStart + off;
+          if (testStart < 0 || testStart + expectedLines.length > currentLines.length) continue;
+
+          // Compute similarity across expectedLines vs candidate window
+          let matchedLines = 0;
+          for (let i = 0; i < expectedLines.length; i++) {
+            if (currentLines[testStart + i].trim() === expectedLines[i].trim()) {
+              matchedLines++;
+            }
+          }
+          const sim = expectedLines.length > 0 ? matchedLines / expectedLines.length : 1.0;
+
+          if (sim > bestSim) {
+            bestSim = sim;
+            bestPos = testStart;
+            bestDrift = off;
+          }
+          if (sim === 1.0) break;
+        }
+        if (bestSim === 1.0) break;
+      }
+
+      if (bestPos !== -1 && bestSim >= similarityThreshold) {
+        // Apply replacement at bestPos
+        currentLines.splice(bestPos, expectedLines.length, ...replacementHunkLines);
+        maxDriftObserved = Math.max(maxDriftObserved, Math.abs(bestDrift));
+
+        hunkResults.push({
+          hunkIndex: hIdx,
+          originalOldStart: hunk.oldStart,
+          actualAppliedStart: bestPos + 1,
+          driftOffset: bestDrift,
+          similarityScore: Math.round(bestSim * 1000) / 1000,
+          appliedSuccessfully: true,
+          error: null,
+        });
+      } else {
+        hunkResults.push({
+          hunkIndex: hIdx,
+          originalOldStart: hunk.oldStart,
+          actualAppliedStart: -1,
+          driftOffset: 0,
+          similarityScore: Math.round(bestSim * 1000) / 1000,
+          appliedSuccessfully: false,
+          error: `Could not anchor hunk ${hIdx + 1} within max drift of ${maxDrift} lines (best similarity: ${bestSim.toFixed(2)}).`,
+        });
+      }
+    }
+
+    const allApplied = hunkResults.every((r) => r.appliedSuccessfully);
+    const finalContent = allApplied ? currentLines.join("\n") : content;
+
+    return {
+      success: allApplied,
+      modifiedContent: finalContent,
+      totalHunks: parsedHunks.length,
+      appliedHunks: hunkResults.filter((r) => r.appliedSuccessfully).length,
+      maxObservedDrift: maxDriftObserved,
+      hunkResults,
+      error: allApplied ? null : "One or more hunks failed drift-compensated application.",
     };
   }
 }

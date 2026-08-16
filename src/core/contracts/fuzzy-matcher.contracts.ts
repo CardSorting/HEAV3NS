@@ -426,3 +426,116 @@ export interface MultiFileInversePatchResult {
   readonly error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Scope-Bounded Matching Contracts
+// ---------------------------------------------------------------------------
+
+export interface ScopeBoundedMatchOptions {
+  readonly enclosingScope: string;
+  readonly scopeType?: "function" | "class" | "interface" | "block" | "any";
+  readonly caseSensitive?: boolean;
+}
+
+export interface ScopeBoundedMatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly matchedScopeSpan: FuzzyMatchSpan | null;
+  readonly innerMatchResult: FuzzyMatchResult | null;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// N-Gram Token Cosine Similarity Contracts
+// ---------------------------------------------------------------------------
+
+export interface NGramSimilarityOptions {
+  readonly n?: number;
+  readonly useWordTokens?: boolean;
+  readonly minScoreThreshold?: number;
+  readonly maxResults?: number;
+}
+
+export interface NGramMatchCandidate {
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly lineSpan: FuzzyMatchSpan;
+  readonly similarityScore: number;
+  readonly candidateText: string;
+}
+
+export interface NGramSimilarityResult {
+  readonly searchSnippet: string;
+  readonly candidates: readonly NGramMatchCandidate[];
+  readonly topCandidate: NGramMatchCandidate | null;
+  readonly totalEvaluatedWindows: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-File Fuzzy Symbol Refactoring Contracts
+// ---------------------------------------------------------------------------
+
+export interface SymbolRenameOptions {
+  readonly renameInComments?: boolean;
+  readonly renameInStrings?: boolean;
+  readonly wholeWordOnly?: boolean;
+  readonly dryRun?: boolean;
+}
+
+export interface SymbolRenameOccurrence {
+  readonly line: number;
+  readonly character: number;
+  readonly span: FuzzyMatchSpan;
+  readonly context: string;
+  readonly inCommentOrString: boolean;
+}
+
+export interface SymbolRenameFileResult {
+  readonly filePath: string;
+  readonly occurrencesCount: number;
+  readonly occurrences: readonly SymbolRenameOccurrence[];
+  readonly originalContent: string;
+  readonly modifiedContent: string;
+}
+
+export interface WorkspaceSymbolRenameResult {
+  readonly success: boolean;
+  readonly oldSymbol: string;
+  readonly newSymbol: string;
+  readonly totalOccurrencesRenamed: number;
+  readonly totalFilesModified: number;
+  readonly fileResults: Record<string, SymbolRenameFileResult>;
+  readonly committedFiles: Record<string, string>;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Adaptive Patch Drift Compensation Contracts
+// ---------------------------------------------------------------------------
+
+export interface PatchDriftOptions {
+  readonly maxDriftLines?: number;
+  readonly similarityThreshold?: number;
+  readonly preserveLineEndings?: boolean;
+}
+
+export interface PatchDriftHunkResult {
+  readonly hunkIndex: number;
+  readonly originalOldStart: number;
+  readonly actualAppliedStart: number;
+  readonly driftOffset: number;
+  readonly similarityScore: number;
+  readonly appliedSuccessfully: boolean;
+  readonly error: string | null;
+}
+
+export interface PatchDriftResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly totalHunks: number;
+  readonly appliedHunks: number;
+  readonly maxObservedDrift: number;
+  readonly hunkResults: readonly PatchDriftHunkResult[];
+  readonly error: string | null;
+}
+
+

@@ -24,14 +24,14 @@ async function runValidationSuite() {
   console.log("================================================================================\n");
 
   let passedSuites = 0;
-  const totalSuites = 23;
+  const totalSuites = 27;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lumi-fuzzy-val-"));
 
   try {
     // ---------------------------------------------------------------------------
     // Suite 1: Exact Match, Edit Idempotency & Line-Ending Preservation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/23] Exact Match, Edit Idempotency & Line-Ending Preservation...");
+    console.log("[Suite 1/27] Exact Match, Edit Idempotency & Line-Ending Preservation...");
     const matcher = new DeterministicFuzzyMatcher();
 
     const baseContent = "function calculateTotal(items: number[]): number {\n  return items.reduce((a, b) => a + b, 0);\n}";
@@ -68,7 +68,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 2: Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/23] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
+    console.log("[Suite 2/27] Line-Trimmed, Whitespace-Normalized & Relative Indentation Adaptation...");
     const whitespaceContent = "class UserService {\n    findUser(id: string) {\n        return db.users.get(id);\n    }\n}";
 
     // Line trimmed with trailing space difference
@@ -93,7 +93,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 3: Indentation-Flexible & Selective Control Character Unescaping (\t, \r)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/23] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
+    console.log("[Suite 3/27] Indentation-Flexible & Selective Control Character Unescaping (\\t, \\r)...");
     const tabFileContent = "function process() {\n\tconst a = 1;\n\treturn a;\n}";
 
     // Model provides literal \t in new_string where file has real tabs
@@ -110,7 +110,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 4: Escape Drift & Backslash Doubling Guards
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/23] Escape Drift & Backslash Doubling Guards...");
+    console.log("[Suite 4/27] Escape Drift & Backslash Doubling Guards...");
     const quoteFileContent = "const msg = 'hello world';";
 
     // Model introduces spurious \' escaping in tool args that does not exist in file
@@ -136,7 +136,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 5: Comment Tolerance, Token Normalization & Ellipsis Wildcard
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/23] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
+    console.log("[Suite 5/27] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
     const commentedCode = "function start() {\n    // Setup database connection\n    initDb();\n    /* Start listener */\n    listen();\n}";
     const searchNoComments = "function start() {\n    initDb();\n    listen();\n}";
     const replacementCode = "function start() {\n    initDbV2();\n    listenV2();\n}";
@@ -177,7 +177,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/23] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
+    console.log("[Suite 6/27] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
     const mismatchContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
     const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
@@ -204,7 +204,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 7: Atomic Multi-Hunk Patch Engine & O(1) Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 7/23] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
+    console.log("[Suite 7/27] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
     const multiFile = "const A = 1;\nconst B = 2;\nconst C = 3;\nconst D = 4;\nconst E = 5;";
 
     const hunks = [
@@ -258,7 +258,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 8: Model Tool Suite Execution & Monolith 382-Component Synthesis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/23] Model Tool Suite Execution (22 Tools) & Monolith 382-Component Synthesis...");
+    console.log("[Suite 8/27] Model Tool Suite Execution (26 Tools) & Monolith 382-Component Synthesis...");
     const toolSuite = new FuzzyMatcherToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
@@ -279,6 +279,10 @@ async function runValidationSuite() {
     const tokenStreamTool = tools.find((t) => t.name === "fuzzy_token_stream_replace")!;
     const explainConflictTool = tools.find((t) => t.name === "fuzzy_explain_merge_conflict")!;
     const inversePatchTool = tools.find((t) => t.name === "fuzzy_generate_inverse_patch")!;
+    const scopeBoundedTool = tools.find((t) => t.name === "fuzzy_find_and_replace_in_scope")!;
+    const ngramSearchTool = tools.find((t) => t.name === "fuzzy_ngram_similarity_search")!;
+    const renameSymbolTool = tools.find((t) => t.name === "fuzzy_rename_symbol_workspace")!;
+    const patchDriftTool = tools.find((t) => t.name === "fuzzy_apply_patch_with_drift")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
     const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
@@ -303,13 +307,17 @@ async function runValidationSuite() {
       !tokenStreamTool ||
       !explainConflictTool ||
       !inversePatchTool ||
+      !scopeBoundedTool ||
+      !ngramSearchTool ||
+      !renameSymbolTool ||
+      !patchDriftTool ||
       !dryRunTool ||
       !idempotencyTool ||
       !diagnoseTool ||
       !configTool ||
       !inspectTool
     ) {
-      throw new Error("Missing required Fuzzy Matcher model tools (expected 22 tools)");
+      throw new Error("Missing required Fuzzy Matcher model tools (expected 26 tools)");
     }
 
     // Test Apply Patch Tool
@@ -344,7 +352,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 9: SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 9/23] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
+    console.log("[Suite 9/27] SEARCH/REPLACE Block Parser & Applicator (Aider/LLM Conventions)...");
     const blockFile = `
 function computeStats(values: number[]) {
   const min = Math.min(...values);
@@ -395,7 +403,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 10: Line-Hint Centered Disambiguation Matching
     // ---------------------------------------------------------------------------
-    console.log("[Suite 10/23] Line-Hint Centered Disambiguation Matching...");
+    console.log("[Suite 10/27] Line-Hint Centered Disambiguation Matching...");
     const duplicateLinesFile = [
       "// Block 1",
       "function foo() {",
@@ -450,7 +458,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 11: Multi-File Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 11/23] Multi-File Unified Patch Application...");
+    console.log("[Suite 11/27] Multi-File Unified Patch Application...");
     const multiFilePatch = `
 --- a/src/math.ts
 +++ b/src/math.ts
@@ -488,7 +496,7 @@ function computeStats(values: number[]) {
     // ---------------------------------------------------------------------------
     // Suite 12: Git Conflict Marker Parsing & Deterministic Resolution
     // ---------------------------------------------------------------------------
-    console.log("[Suite 12/23] Git Conflict Marker Parsing & Deterministic Resolution...");
+    console.log("[Suite 12/27] Git Conflict Marker Parsing & Deterministic Resolution...");
     const conflictContent = `
 function calculateTax(amount: number): number {
 <<<<<<< HEAD
@@ -535,7 +543,7 @@ function calculateTax(amount: number): number {
     // ---------------------------------------------------------------------------
     // Suite 13: Indentation Style Detection & Proportional Harmonizer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 13/23] Indentation Style Detection & Proportional Harmonizer...");
+    console.log("[Suite 13/27] Indentation Style Detection & Proportional Harmonizer...");
     const fourSpaceTarget = `
 class OrderProcessor {
     processOrder(orderId: string) {
@@ -580,7 +588,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 14: Syntax-Aware Structural Block Boundary Snapping
     // ---------------------------------------------------------------------------
-    console.log("[Suite 14/23] Syntax-Aware Structural Block Boundary Snapping...");
+    console.log("[Suite 14/27] Syntax-Aware Structural Block Boundary Snapping...");
     const codeSnippet = "const userIdentifier = 'admin_user';";
     // Slicing mid-word at start (index 8 is inside 'userIdentifier') and end (index 15)
     const snapRes = matcher.snapToSyntaxBoundaries(codeSnippet, 8, 15);
@@ -593,7 +601,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 15: Atomic Multi-File Workspace Transactions & Rollback
     // ---------------------------------------------------------------------------
-    console.log("[Suite 15/23] Atomic Multi-File Workspace Transactions & Rollback...");
+    console.log("[Suite 15/27] Atomic Multi-File Workspace Transactions & Rollback...");
     const initialFiles: Record<string, string> = {
       "fileA.ts": "export const A = 1;\nexport const B = 2;",
       "fileB.ts": "export const C = 3;\nexport const D = 4;",
@@ -647,7 +655,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 16: Fuzzy 3-Way Merge & Semantic Reconciliation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 16/23] Fuzzy 3-Way Merge & Semantic Reconciliation...");
+    console.log("[Suite 16/27] Fuzzy 3-Way Merge & Semantic Reconciliation...");
     const baseContent3Way = "function compute(a: number, b: number): number {\n  return a + b;\n}";
     const oursContent3Way = "// Fast compute implementation\nfunction compute(a: number, b: number): number {\n  return a + b;\n}";
     const theirsContent3Way = "function compute(a: number, b: number): number {\n  return (a + b) | 0;\n}";
@@ -701,7 +709,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 17: LSP Standard TextEdit & WorkspaceEdit Applicator & Converter
     // ---------------------------------------------------------------------------
-    console.log("[Suite 17/23] LSP Standard TextEdit & WorkspaceEdit Applicator & Converter...");
+    console.log("[Suite 17/27] LSP Standard TextEdit & WorkspaceEdit Applicator & Converter...");
     const lspFileContent = "const alpha = 10;\nconst beta = 20;\nconst gamma = 30;";
     // Replace beta (line 1, char 6 to char 15) with 'beta = 200'
     const lspEdits = [
@@ -755,7 +763,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 18: Structural Syntax & Balanced Bracket / Tag Auto-Healer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 18/23] Structural Syntax & Balanced Bracket / Tag Auto-Healer...");
+    console.log("[Suite 18/27] Structural Syntax & Balanced Bracket / Tag Auto-Healer...");
     const brokenCode1 = "function calculate() {\n  const total = items.reduce((a, b) => a + b, 0);\n";
     const repairRes1 = matcher.validateAndRepairCodeBlock(brokenCode1);
     if (repairRes1.isValid || !repairRes1.repairedCode.endsWith("}")) {
@@ -790,7 +798,7 @@ if (orderId) {
     // ---------------------------------------------------------------------------
     // Suite 19: Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer
     // ---------------------------------------------------------------------------
-    console.log("[Suite 19/23] Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer...");
+    console.log("[Suite 19/27] Multi-Candidate Semantic Jaccard & Levenshtein Match Scorer...");
     const ambiguousContent = `
 // Config Section 1
 const serverPort = 3000;
@@ -824,7 +832,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 20: Patience Diff Generation & Semantic Unique Line Alignment
     // ---------------------------------------------------------------------------
-    console.log("[Suite 20/23] Patience Diff Generation & Semantic Unique Line Alignment...");
+    console.log("[Suite 20/27] Patience Diff Generation & Semantic Unique Line Alignment...");
     const patienceOld = [
       "function add(a: number, b: number): number {",
       "  return a + b;",
@@ -880,7 +888,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 21: Lexical Token Stream Alignment & Formatting-Tolerant Replacement
     // ---------------------------------------------------------------------------
-    console.log("[Suite 21/23] Lexical Token Stream Alignment & Formatting-Tolerant Replacement...");
+    console.log("[Suite 21/27] Lexical Token Stream Alignment & Formatting-Tolerant Replacement...");
     const multiLineDestructure = [
       "const {",
       "  userId,",
@@ -915,7 +923,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 22: Semantic Merge Conflict Explainer & Auto-Resolution Analysis
     // ---------------------------------------------------------------------------
-    console.log("[Suite 22/23] Semantic Merge Conflict Explainer & Auto-Resolution Analysis...");
+    console.log("[Suite 22/27] Semantic Merge Conflict Explainer & Auto-Resolution Analysis...");
     const baseAncestor = "const host = 'localhost';\nconst port = 3000;\nconst ssl = false;";
     const oursBranch = "const host = '127.0.0.1';\nconst port = 3000;\nconst ssl = false;";
     const theirsBranch = "const host = '0.0.0.0';\nconst port = 3000;\nconst ssl = false;";
@@ -948,7 +956,7 @@ const serverHost = '0.0.0.0';
     // ---------------------------------------------------------------------------
     // Suite 23: Deterministic Inverse Patch Generation & Single/Multi-File Reversals
     // ---------------------------------------------------------------------------
-    console.log("[Suite 23/23] Deterministic Inverse Patch Generation & Single/Multi-File Reversals...");
+    console.log("[Suite 23/27] Deterministic Inverse Patch Generation & Single/Multi-File Reversals...");
     const originalFileA = "export const API_VERSION = '1.0.0';\nexport const ENABLE_LOGS = false;";
     const modifiedFileA = "export const API_VERSION = '2.0.0';\nexport const ENABLE_LOGS = true;";
 
@@ -990,6 +998,192 @@ const serverHost = '0.0.0.0';
       throw new Error("fuzzy_generate_inverse_patch tool execution failed");
     }
     console.log("  ✓ Reversible inverse patch generator and multi-file rollback verification verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 24: Scope-Bounded Fuzzy Matching & Enclosing Block Splicing
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 24/27] Scope-Bounded Fuzzy Matching & Enclosing Block Splicing...");
+    const multiClassContent = [
+      "class OrderService {",
+      "  process() {",
+      "    return true;",
+      "  }",
+      "}",
+      "",
+      "class UserService {",
+      "  process() {",
+      "    return true;",
+      "  }",
+      "}",
+    ].join("\n");
+
+    const scopeRes = matcher.findAndReplaceInScope(
+      multiClassContent,
+      "return true;",
+      "return this.orders.length > 0;",
+      { enclosingScope: "class OrderService" }
+    );
+    if (
+      !scopeRes.success ||
+      !scopeRes.modifiedContent.includes("this.orders.length > 0") ||
+      !scopeRes.modifiedContent.includes("class UserService {\n  process() {\n    return true;\n  }\n}")
+    ) {
+      throw new Error(`Scope-bounded matching failed: ${JSON.stringify(scopeRes)}`);
+    }
+
+    // Test tool integration for scope-bounded replacement
+    const scopeToolRes = (await scopeBoundedTool.execute(
+      {
+        content: multiClassContent,
+        oldSnippet: "return true;",
+        newSnippet: "return this.orders.length > 0;",
+        enclosingScope: "class OrderService",
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string };
+    if (!scopeToolRes.success || !scopeToolRes.modifiedContent.includes("this.orders.length > 0")) {
+      throw new Error("fuzzy_find_and_replace_in_scope tool execution failed");
+    }
+    console.log("  ✓ Scope-bounded fuzzy search, balanced scope extraction, and isolated splicing verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 25: N-Gram Token Cosine Similarity Matrix Search
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 25/27] N-Gram Token Cosine Similarity Matrix Search...");
+    const largeDoc = [
+      "// Section 1: Authentication",
+      "function auth() {",
+      "  const token = getToken();",
+      "  return token;",
+      "}",
+      "",
+      "// Section 2: Database Configuration",
+      "function initDatabase() {",
+      "  const poolSize = 25;",
+      "  const maxIdleTime = 10000;",
+      "  return openPool(poolSize);",
+      "}",
+    ].join("\n");
+
+    const ngramRes = matcher.searchByNGramCosineSimilarity(
+      largeDoc,
+      "const poolSize = 25;\nconst maxIdleTime = 10000;",
+      { n: 3, minScoreThreshold: 0.5, maxResults: 3 }
+    );
+    if (
+      !ngramRes.topCandidate ||
+      ngramRes.topCandidate.similarityScore < 0.8 ||
+      ngramRes.topCandidate.startLine !== 9
+    ) {
+      throw new Error(`N-Gram cosine similarity search failed: ${JSON.stringify(ngramRes)}`);
+    }
+
+    // Test tool integration for N-gram search
+    const ngramToolRes = (await ngramSearchTool.execute(
+      {
+        content: largeDoc,
+        searchSnippet: "const poolSize = 25;\nconst maxIdleTime = 10000;",
+      },
+      tempDir
+    )) as { success: boolean; topCandidate: { similarityScore: number } };
+    if (!ngramToolRes.success || !ngramToolRes.topCandidate || ngramToolRes.topCandidate.similarityScore < 0.8) {
+      throw new Error("fuzzy_ngram_similarity_search tool execution failed");
+    }
+    console.log("  ✓ N-Gram token cosine similarity vector matrix search verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 26: Multi-File Fuzzy Symbol Refactoring & Word-Boundary Renaming
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 26/27] Multi-File Fuzzy Symbol Refactoring & Word-Boundary Renaming...");
+    const workspaceCodeFiles = {
+      "src/models.ts": "export interface Order {\n  orderId: string;\n  orderIdLegacy?: string;\n}",
+      "src/handlers.ts": "export function handle(orderId: string) {\n  // Handling orderId\n  console.log('ID:', orderId);\n  return orderId;\n}",
+    };
+
+    const renameRes = matcher.renameSymbolWorkspace(
+      workspaceCodeFiles,
+      "orderId",
+      "transactionId",
+      { renameInComments: true, renameInStrings: false, wholeWordOnly: true }
+    );
+    if (
+      !renameRes.success ||
+      renameRes.totalOccurrencesRenamed < 4 ||
+      renameRes.totalFilesModified !== 2 ||
+      !renameRes.committedFiles["src/models.ts"].includes("orderIdLegacy") || // Preserves whole-word boundaries
+      !renameRes.committedFiles["src/handlers.ts"].includes("handle(transactionId: string)")
+    ) {
+      throw new Error(`Symbol refactoring failed: ${JSON.stringify(renameRes)}`);
+    }
+
+    // Test tool integration for workspace symbol rename
+    const renameToolRes = (await renameSymbolTool.execute(
+      {
+        files: workspaceCodeFiles,
+        oldSymbol: "orderId",
+        newSymbol: "transactionId",
+      },
+      tempDir
+    )) as { success: boolean; totalOccurrencesRenamed: number };
+    if (!renameToolRes.success || renameToolRes.totalOccurrencesRenamed < 4) {
+      throw new Error("fuzzy_rename_symbol_workspace tool execution failed");
+    }
+    console.log("  ✓ Multi-file fuzzy symbol refactoring and word-boundary renaming verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 27: Adaptive Patch Drift Compensation & Offset Fuzzing
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 27/27] Adaptive Patch Drift Compensation & Offset Fuzzing...");
+    const driftedFile = [
+      "// Extra preamble line 1",
+      "// Extra preamble line 2",
+      "// Extra preamble line 3",
+      "// Extra preamble line 4",
+      "// Extra preamble line 5",
+      "function executeService() {",
+      "  const envMode = 'staging';",
+      "  bootServer();",
+      "}",
+    ].join("\n");
+
+    // Patch anchored at line 1 (as if no preamble lines existed)
+    const driftedPatch = [
+      "--- a/service.ts",
+      "+++ b/service.ts",
+      "@@ -1,4 +1,4 @@",
+      " function executeService() {",
+      "-  const envMode = 'staging';",
+      "+  const envMode = 'production';",
+      "   bootServer();",
+      " }",
+    ].join("\n");
+
+    const driftRes = matcher.applyUnifiedPatchWithDrift(driftedFile, driftedPatch, { maxDriftLines: 15 });
+    if (
+      !driftRes.success ||
+      driftRes.appliedHunks !== 1 ||
+      driftRes.maxObservedDrift === 0 ||
+      !driftRes.modifiedContent.includes("const envMode = 'production';")
+    ) {
+      throw new Error(`Patch drift compensation failed: ${JSON.stringify(driftRes)}`);
+    }
+
+    // Test tool integration for patch drift compensator
+    const driftToolRes = (await patchDriftTool.execute(
+      {
+        content: driftedFile,
+        patchText: driftedPatch,
+      },
+      tempDir
+    )) as { success: boolean; modifiedContent: string; maxObservedDrift: number };
+    if (!driftToolRes.success || !driftToolRes.modifiedContent.includes("const envMode = 'production';") || driftToolRes.maxObservedDrift === 0) {
+      throw new Error("fuzzy_apply_patch_with_drift tool execution failed");
+    }
+    console.log("  ✓ Adaptive patch drift compensation and dynamic line offset fuzzing verified");
     passedSuites++;
 
     console.log("\n================================================================================");
