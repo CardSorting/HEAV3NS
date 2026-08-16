@@ -455,6 +455,12 @@ import { BroccoliSkillsSyncSubstrate } from "../sessions/extensions/skills_sync/
 import { SkillsSyncSnapshotManager } from "../sessions/extensions/skills_sync/skills-sync-snapshot-manager.js";
 import { SkillsSyncToolSuite } from "../tooling/extensions/skills_sync/skills-sync-tool-suite.js";
 
+import { DeterministicPreflightScanner } from "../agents/extensions/preflight_scanner/deterministic-preflight-scanner.js";
+import { PreflightScannerSupervisor } from "../agents/extensions/preflight_scanner/preflight-scanner-supervisor.js";
+import { BroccoliPreflightSubstrate } from "../sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
+import { PreflightSnapshotManager } from "../sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
+import { PreflightToolSuite } from "../tooling/extensions/preflight_scanner/preflight-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -871,6 +877,11 @@ export class MonolithFactory {
     broccoliSkillsSyncSubstrate: BroccoliSkillsSyncSubstrate;
     skillsSyncSnapshotManager: SkillsSyncSnapshotManager;
     skillsSyncToolSuite: SkillsSyncToolSuite;
+    deterministicPreflightScanner: DeterministicPreflightScanner;
+    preflightScannerSupervisor: PreflightScannerSupervisor;
+    broccoliPreflightSubstrate: BroccoliPreflightSubstrate;
+    preflightSnapshotManager: PreflightSnapshotManager;
+    preflightToolSuite: PreflightToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1536,6 +1547,15 @@ export class MonolithFactory {
     );
     const skillsSyncToolSuite = new SkillsSyncToolSuite(skillsSyncSupervisor);
 
+    const deterministicPreflightScanner = new DeterministicPreflightScanner();
+    const broccoliPreflightSubstrate = new BroccoliPreflightSubstrate();
+    const preflightSnapshotManager = new PreflightSnapshotManager(broccoliPreflightSubstrate);
+    const preflightScannerSupervisor = new PreflightScannerSupervisor(
+      broccoliPreflightSubstrate,
+      deterministicPreflightScanner
+    );
+    const preflightToolSuite = new PreflightToolSuite(preflightScannerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1598,7 +1618,8 @@ export class MonolithFactory {
       titleInsightsToolSuite,
       heredocTerminalToolSuite,
       stealthBrowserToolSuite,
-      skillsSyncToolSuite
+      skillsSyncToolSuite,
+      preflightToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2028,6 +2049,11 @@ export class MonolithFactory {
       broccoliSkillsSyncSubstrate,
       skillsSyncSnapshotManager,
       skillsSyncToolSuite,
+      deterministicPreflightScanner,
+      preflightScannerSupervisor,
+      broccoliPreflightSubstrate,
+      preflightSnapshotManager,
+      preflightToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

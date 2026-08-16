@@ -59,6 +59,7 @@ import type { TitleInsightsToolSuite } from "../title_insights/title-insights-to
 import type { HeredocTerminalToolSuite } from "../heredoc_terminal/heredoc-terminal-tool-suite.js";
 import type { StealthBrowserToolSuite } from "../stealth_browser/stealth-browser-tool-suite.js";
 import type { SkillsSyncToolSuite } from "../skills_sync/skills-sync-tool-suite.js";
+import type { PreflightToolSuite } from "../preflight_scanner/preflight-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -109,6 +110,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly heredocTerminalToolSuite?: HeredocTerminalToolSuite;
   readonly stealthBrowserToolSuite?: StealthBrowserToolSuite;
   readonly skillsSyncToolSuite?: SkillsSyncToolSuite;
+  readonly preflightToolSuite?: PreflightToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -167,7 +169,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     titleInsightsToolSuite?: TitleInsightsToolSuite,
     heredocTerminalToolSuite?: HeredocTerminalToolSuite,
     stealthBrowserToolSuite?: StealthBrowserToolSuite,
-    skillsSyncToolSuite?: SkillsSyncToolSuite
+    skillsSyncToolSuite?: SkillsSyncToolSuite,
+    preflightToolSuite?: PreflightToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -218,6 +221,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.heredocTerminalToolSuite = heredocTerminalToolSuite;
     this.stealthBrowserToolSuite = stealthBrowserToolSuite;
     this.skillsSyncToolSuite = skillsSyncToolSuite;
+    this.preflightToolSuite = preflightToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -645,6 +649,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.skillsSyncToolSuite) {
       for (const tool of this.skillsSyncToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.preflightToolSuite) {
+      for (const tool of this.preflightToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

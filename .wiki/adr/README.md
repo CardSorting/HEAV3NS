@@ -96,6 +96,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-086](ADR-086-deterministic-shell-heredoc-sanitization-and-terminal-diagnostics.md) | Conservative Shell Heredoc Sanitizer, Subshell Trap Interceptor & Actionable Failure Diagnostics | Accepted | 2026-08-16 | Terminal & Shell Safety (Target #43 / Phase 110) |
 | [ADR-087](ADR-087-camoufox-stealth-browser-and-accessibility-ref-navigation.md) | Camoufox Anti-Fingerprinting Stealth Browser Engine, Accessibility Ref Navigation, Loopback Rewriter & Session Persistence Subsystem | Accepted | 2026-08-16 | Web & Browser Automation (Target #44 / Phase 111) |
 | [ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md) | Distributed Content-Addressed Skill Sync Protocol, CAS Ref Head, 3-Way Merge Resolution & Cryptographic Provenance Ledger | Accepted | 2026-08-16 | Skill Synchronization & Provenance (Target #45 / Phase 112) |
+| [ADR-089](ADR-089-pre-exec-security-scanner-and-supply-chain-provenance.md) | Pre-Exec Security Scanner, Supply-Chain Provenance Verification & Pre-Flight Threat Gate | Accepted | 2026-08-16 | Security & Threat Protection (Target #46 / Phase 113) |
 
 ## Domain Grouping
 
@@ -114,6 +115,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-086](ADR-086-deterministic-shell-heredoc-sanitization-and-terminal-diagnostics.md)**: Conservative shell heredoc sanitizer, delimiter parser, subshell trap interceptor, multi-line script heredoc generator, and actionable terminal failure diagnostics.
 - **[ADR-087](ADR-087-camoufox-stealth-browser-and-accessibility-ref-navigation.md)**: Camoufox anti-fingerprinting stealth browser engine, accessibility tree ref navigation, Docker loopback rewriter, and session persistence vault.
 - **[ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md)**: Distributed content-addressed skill sync protocol, CAS ref head optimistic concurrency, 3-way merge resolution, and cryptographic provenance ledger.
+- **[ADR-089](ADR-089-pre-exec-security-scanner-and-supply-chain-provenance.md)**: Pre-exec security scanner, content-level threat detection, Cosign workflow supply-chain provenance verification, and fail-open circuit breaker.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

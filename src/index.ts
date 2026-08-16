@@ -416,6 +416,12 @@ import { BroccoliSkillsSyncSubstrate } from "./sessions/extensions/skills_sync/b
 import { SkillsSyncSnapshotManager } from "./sessions/extensions/skills_sync/skills-sync-snapshot-manager.js";
 import { SkillsSyncToolSuite } from "./tooling/extensions/skills_sync/skills-sync-tool-suite.js";
 
+import { DeterministicPreflightScanner } from "./agents/extensions/preflight_scanner/deterministic-preflight-scanner.js";
+import { PreflightScannerSupervisor } from "./agents/extensions/preflight_scanner/preflight-scanner-supervisor.js";
+import { BroccoliPreflightSubstrate } from "./sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
+import { PreflightSnapshotManager } from "./sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
+import { PreflightToolSuite } from "./tooling/extensions/preflight_scanner/preflight-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1731,6 +1737,22 @@ export type {
   SkillSyncWorkspaceSnapshot,
 } from "./core/contracts/skills-sync.contracts.js";
 
+export { DeterministicPreflightScanner } from "./agents/extensions/preflight_scanner/deterministic-preflight-scanner.js";
+export { PreflightScannerSupervisor } from "./agents/extensions/preflight_scanner/preflight-scanner-supervisor.js";
+export { BroccoliPreflightSubstrate } from "./sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
+export { PreflightSnapshotManager } from "./sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
+export { PreflightToolSuite } from "./tooling/extensions/preflight_scanner/preflight-tool-suite.js";
+export type {
+  PreflightVerdict,
+  PreflightThreatCategory,
+  PreflightThreatSeverity,
+  PreflightThreatFinding,
+  PreflightScanResult,
+  SupplyChainVerificationResult,
+  PreflightSecurityPolicy,
+  PreflightWorkspaceSnapshot,
+} from "./core/contracts/preflight-scanner.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2088,6 +2110,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSkillsSyncSubstrate: BroccoliSkillsSyncSubstrate;
   readonly skillsSyncSnapshotManager: SkillsSyncSnapshotManager;
   readonly skillsSyncToolSuite: SkillsSyncToolSuite;
+  readonly deterministicPreflightScanner: DeterministicPreflightScanner;
+  readonly preflightScannerSupervisor: PreflightScannerSupervisor;
+  readonly broccoliPreflightSubstrate: BroccoliPreflightSubstrate;
+  readonly preflightSnapshotManager: PreflightSnapshotManager;
+  readonly preflightToolSuite: PreflightToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2436,6 +2463,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSkillsSyncSubstrate = components.broccoliSkillsSyncSubstrate;
     this.skillsSyncSnapshotManager = components.skillsSyncSnapshotManager;
     this.skillsSyncToolSuite = components.skillsSyncToolSuite;
+    this.deterministicPreflightScanner = components.deterministicPreflightScanner;
+    this.preflightScannerSupervisor = components.preflightScannerSupervisor;
+    this.broccoliPreflightSubstrate = components.broccoliPreflightSubstrate;
+    this.preflightSnapshotManager = components.preflightSnapshotManager;
+    this.preflightToolSuite = components.preflightToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
