@@ -560,6 +560,12 @@ import { BroccoliTerminalCleanerSubstrate } from "./sessions/extensions/terminal
 import { TerminalCleanerSnapshotManager } from "./sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
 import { TerminalCleanerToolSuite } from "./tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
 
+import { DeterministicStreamingScrubberEngine } from "./agents/extensions/streaming_scrubber/deterministic-streaming-scrubber-engine.js";
+import { StreamingScrubberSupervisor } from "./agents/extensions/streaming_scrubber/streaming-scrubber-supervisor.js";
+import { BroccoliStreamingScrubberSubstrate } from "./sessions/extensions/streaming_scrubber/broccoli-streaming-scrubber-substrate.js";
+import { StreamingScrubberSnapshotManager } from "./sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
+import { StreamingScrubberToolSuite } from "./tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2290,6 +2296,23 @@ export {
   TERMINAL_OPAQUE_DOCUMENT_EXTENSIONS,
 } from "./core/contracts/terminal-cleaner.contracts.js";
 
+export { DeterministicStreamingScrubberEngine } from "./agents/extensions/streaming_scrubber/deterministic-streaming-scrubber-engine.js";
+export { StreamingScrubberSupervisor } from "./agents/extensions/streaming_scrubber/streaming-scrubber-supervisor.js";
+export { BroccoliStreamingScrubberSubstrate } from "./sessions/extensions/streaming_scrubber/broccoli-streaming-scrubber-substrate.js";
+export { StreamingScrubberSnapshotManager } from "./sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
+export { StreamingScrubberToolSuite } from "./tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
+export type {
+  ReasoningTagName,
+  StreamingScrubberState,
+  StreamingThinkScrubberConfig,
+  StreamingThinkScrubberMetrics,
+  StreamingThinkScrubberWorkspaceSnapshot,
+} from "./core/contracts/streaming-think-scrubber.contracts.js";
+export {
+  DEFAULT_REASONING_TAG_NAMES,
+  DEFAULT_STREAMING_THINK_SCRUBBER_CONFIG,
+} from "./core/contracts/streaming-think-scrubber.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2767,6 +2790,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliTerminalCleanerSubstrate: BroccoliTerminalCleanerSubstrate;
   readonly terminalCleanerSnapshotManager: TerminalCleanerSnapshotManager;
   readonly terminalCleanerToolSuite: TerminalCleanerToolSuite;
+  readonly deterministicStreamingScrubberEngine: DeterministicStreamingScrubberEngine;
+  readonly streamingScrubberSupervisor: StreamingScrubberSupervisor;
+  readonly broccoliStreamingScrubberSubstrate: BroccoliStreamingScrubberSubstrate;
+  readonly streamingScrubberSnapshotManager: StreamingScrubberSnapshotManager;
+  readonly streamingScrubberToolSuite: StreamingScrubberToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3235,6 +3263,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliTerminalCleanerSubstrate = components.broccoliTerminalCleanerSubstrate;
     this.terminalCleanerSnapshotManager = components.terminalCleanerSnapshotManager;
     this.terminalCleanerToolSuite = components.terminalCleanerToolSuite;
+    this.deterministicStreamingScrubberEngine = components.deterministicStreamingScrubberEngine;
+    this.streamingScrubberSupervisor = components.streamingScrubberSupervisor;
+    this.broccoliStreamingScrubberSubstrate = components.broccoliStreamingScrubberSubstrate;
+    this.streamingScrubberSnapshotManager = components.streamingScrubberSnapshotManager;
+    this.streamingScrubberToolSuite = components.streamingScrubberToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

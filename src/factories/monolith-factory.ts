@@ -599,6 +599,12 @@ import { BroccoliTerminalCleanerSubstrate } from "../sessions/extensions/termina
 import { TerminalCleanerSnapshotManager } from "../sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
 import { TerminalCleanerToolSuite } from "../tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
 
+import { DeterministicStreamingScrubberEngine } from "../agents/extensions/streaming_scrubber/deterministic-streaming-scrubber-engine.js";
+import { StreamingScrubberSupervisor } from "../agents/extensions/streaming_scrubber/streaming-scrubber-supervisor.js";
+import { BroccoliStreamingScrubberSubstrate } from "../sessions/extensions/streaming_scrubber/broccoli-streaming-scrubber-substrate.js";
+import { StreamingScrubberSnapshotManager } from "../sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
+import { StreamingScrubberToolSuite } from "../tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1135,6 +1141,11 @@ export class MonolithFactory {
     broccoliTerminalCleanerSubstrate: BroccoliTerminalCleanerSubstrate;
     terminalCleanerSnapshotManager: TerminalCleanerSnapshotManager;
     terminalCleanerToolSuite: TerminalCleanerToolSuite;
+    deterministicStreamingScrubberEngine: DeterministicStreamingScrubberEngine;
+    streamingScrubberSupervisor: StreamingScrubberSupervisor;
+    broccoliStreamingScrubberSubstrate: BroccoliStreamingScrubberSubstrate;
+    streamingScrubberSnapshotManager: StreamingScrubberSnapshotManager;
+    streamingScrubberToolSuite: StreamingScrubberToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2017,6 +2028,15 @@ export class MonolithFactory {
     );
     const terminalCleanerToolSuite = new TerminalCleanerToolSuite(terminalCleanerSupervisor);
 
+    const deterministicStreamingScrubberEngine = new DeterministicStreamingScrubberEngine();
+    const broccoliStreamingScrubberSubstrate = new BroccoliStreamingScrubberSubstrate();
+    const streamingScrubberSnapshotManager = new StreamingScrubberSnapshotManager(broccoliStreamingScrubberSubstrate);
+    const streamingScrubberSupervisor = new StreamingScrubberSupervisor(
+      broccoliStreamingScrubberSubstrate,
+      deterministicStreamingScrubberEngine
+    );
+    const streamingScrubberToolSuite = new StreamingScrubberToolSuite(streamingScrubberSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2103,7 +2123,8 @@ export class MonolithFactory {
       threadContextToolSuite,
       envProbeToolSuite,
       skillLinterToolSuite,
-      terminalCleanerToolSuite
+      terminalCleanerToolSuite,
+      streamingScrubberToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2653,6 +2674,11 @@ export class MonolithFactory {
       broccoliTerminalCleanerSubstrate,
       terminalCleanerSnapshotManager,
       terminalCleanerToolSuite,
+      deterministicStreamingScrubberEngine,
+      streamingScrubberSupervisor,
+      broccoliStreamingScrubberSubstrate,
+      streamingScrubberSnapshotManager,
+      streamingScrubberToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

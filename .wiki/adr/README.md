@@ -155,6 +155,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-110](ADR-110-toolchain-environment-diagnostic-prober.md)**: Toolchain environment diagnostic prober, prompt hint generator, and non-blocking substrate subsystem.
 - **[ADR-111](ADR-111-deterministic-skill-tree-linter.md)**: Deterministic skill tree linter, frontmatter conventions verifier, and anti-scaffolding guard subsystem.
 - **[ADR-112](ADR-112-terminal-ansi-sanitizer-and-binary-guard.md)**: Deterministic terminal ANSI sanitizer, display control byte filter, and binary asset guard subsystem.
+- **[ADR-113](ADR-113-streaming-reasoning-tag-scrubber.md)**: Streaming reasoning tag scrubber, boundary gated holdback buffer, and live delta filter subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

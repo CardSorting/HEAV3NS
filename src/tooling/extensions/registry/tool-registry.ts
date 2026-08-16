@@ -83,6 +83,7 @@ import type { ThreadContextToolSuite } from "../thread_context/thread-context-to
 import type { EnvProbeToolSuite } from "../env_probe/env-probe-tool-suite.js";
 import type { SkillLinterToolSuite } from "../skill_linter/skill-linter-tool-suite.js";
 import type { TerminalCleanerToolSuite } from "../terminal_cleaner/terminal-cleaner-tool-suite.js";
+import type { StreamingScrubberToolSuite } from "../streaming_scrubber/streaming-scrubber-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -157,6 +158,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly envProbeToolSuite?: EnvProbeToolSuite;
   readonly skillLinterToolSuite?: SkillLinterToolSuite;
   readonly terminalCleanerToolSuite?: TerminalCleanerToolSuite;
+  readonly streamingScrubberToolSuite?: StreamingScrubberToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -239,7 +241,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     threadContextToolSuite?: ThreadContextToolSuite,
     envProbeToolSuite?: EnvProbeToolSuite,
     skillLinterToolSuite?: SkillLinterToolSuite,
-    terminalCleanerToolSuite?: TerminalCleanerToolSuite
+    terminalCleanerToolSuite?: TerminalCleanerToolSuite,
+    streamingScrubberToolSuite?: StreamingScrubberToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -314,6 +317,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.envProbeToolSuite = envProbeToolSuite;
     this.skillLinterToolSuite = skillLinterToolSuite;
     this.terminalCleanerToolSuite = terminalCleanerToolSuite;
+    this.streamingScrubberToolSuite = streamingScrubberToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -861,6 +865,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.terminalCleanerToolSuite) {
       for (const tool of this.terminalCleanerToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.streamingScrubberToolSuite) {
+      for (const tool of this.streamingScrubberToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }
