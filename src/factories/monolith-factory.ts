@@ -569,6 +569,12 @@ import { BroccoliTurnRetrySubstrate } from "../sessions/extensions/turn_retry/br
 import { TurnRetrySnapshotManager } from "../sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
 import { TurnRetryToolSuite } from "../tooling/extensions/turn_retry/turn-retry-tool-suite.js";
 
+import { DeterministicBillingUsageEngine } from "../agents/extensions/billing_usage/deterministic-billing-usage-engine.js";
+import { BillingUsageSupervisor } from "../agents/extensions/billing_usage/billing-usage-supervisor.js";
+import { BroccoliBillingUsageSubstrate } from "../sessions/extensions/billing_usage/broccoli-billing-usage-substrate.js";
+import { BillingUsageSnapshotManager } from "../sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
+import { BillingUsageToolSuite } from "../tooling/extensions/billing_usage/billing-usage-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1080,6 +1086,11 @@ export class MonolithFactory {
     broccoliTurnRetrySubstrate: BroccoliTurnRetrySubstrate;
     turnRetrySnapshotManager: TurnRetrySnapshotManager;
     turnRetryToolSuite: TurnRetryToolSuite;
+    deterministicBillingUsageEngine: DeterministicBillingUsageEngine;
+    billingUsageSupervisor: BillingUsageSupervisor;
+    broccoliBillingUsageSubstrate: BroccoliBillingUsageSubstrate;
+    billingUsageSnapshotManager: BillingUsageSnapshotManager;
+    billingUsageToolSuite: BillingUsageToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1917,6 +1928,15 @@ export class MonolithFactory {
     );
     const turnRetryToolSuite = new TurnRetryToolSuite(turnRetrySupervisor);
 
+    const deterministicBillingUsageEngine = new DeterministicBillingUsageEngine();
+    const broccoliBillingUsageSubstrate = new BroccoliBillingUsageSubstrate();
+    const billingUsageSnapshotManager = new BillingUsageSnapshotManager(broccoliBillingUsageSubstrate);
+    const billingUsageSupervisor = new BillingUsageSupervisor(
+      broccoliBillingUsageSubstrate,
+      deterministicBillingUsageEngine
+    );
+    const billingUsageToolSuite = new BillingUsageToolSuite(billingUsageSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1998,7 +2018,8 @@ export class MonolithFactory {
       osvScannerToolSuite,
       subdirHintsToolSuite,
       streamDiagToolSuite,
-      turnRetryToolSuite
+      turnRetryToolSuite,
+      billingUsageToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2523,6 +2544,11 @@ export class MonolithFactory {
       broccoliTurnRetrySubstrate,
       turnRetrySnapshotManager,
       turnRetryToolSuite,
+      deterministicBillingUsageEngine,
+      billingUsageSupervisor,
+      broccoliBillingUsageSubstrate,
+      billingUsageSnapshotManager,
+      billingUsageToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

@@ -530,6 +530,12 @@ import { BroccoliTurnRetrySubstrate } from "./sessions/extensions/turn_retry/bro
 import { TurnRetrySnapshotManager } from "./sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
 import { TurnRetryToolSuite } from "./tooling/extensions/turn_retry/turn-retry-tool-suite.js";
 
+import { DeterministicBillingUsageEngine } from "./agents/extensions/billing_usage/deterministic-billing-usage-engine.js";
+import { BillingUsageSupervisor } from "./agents/extensions/billing_usage/billing-usage-supervisor.js";
+import { BroccoliBillingUsageSubstrate } from "./sessions/extensions/billing_usage/broccoli-billing-usage-substrate.js";
+import { BillingUsageSnapshotManager } from "./sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
+import { BillingUsageToolSuite } from "./tooling/extensions/billing_usage/billing-usage-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2165,6 +2171,27 @@ export {
   DEFAULT_TURN_RETRY_CONFIG,
 } from "./core/contracts/turn-retry.contracts.js";
 
+export { DeterministicBillingUsageEngine } from "./agents/extensions/billing_usage/deterministic-billing-usage-engine.js";
+export { BillingUsageSupervisor } from "./agents/extensions/billing_usage/billing-usage-supervisor.js";
+export { BroccoliBillingUsageSubstrate } from "./sessions/extensions/billing_usage/broccoli-billing-usage-substrate.js";
+export { BillingUsageSnapshotManager } from "./sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
+export { BillingUsageToolSuite } from "./tooling/extensions/billing_usage/billing-usage-tool-suite.js";
+export type {
+  AccountStatus,
+  UsageBarDescriptor,
+  UsageModelDescriptor,
+  BillingAccountInfo,
+  BillingUsageConfig,
+  BillingTransaction,
+  BillingUsageMetrics,
+  BillingUsageWorkspaceSnapshot,
+} from "./core/contracts/billing-usage.contracts.js";
+export {
+  DEFAULT_LOW_BALANCE_THRESHOLD_USD,
+  DEFAULT_BILLING_USAGE_CONFIG,
+  DEFAULT_BILLING_ACCOUNT_INFO,
+} from "./core/contracts/billing-usage.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2617,6 +2644,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliTurnRetrySubstrate: BroccoliTurnRetrySubstrate;
   readonly turnRetrySnapshotManager: TurnRetrySnapshotManager;
   readonly turnRetryToolSuite: TurnRetryToolSuite;
+  readonly deterministicBillingUsageEngine: DeterministicBillingUsageEngine;
+  readonly billingUsageSupervisor: BillingUsageSupervisor;
+  readonly broccoliBillingUsageSubstrate: BroccoliBillingUsageSubstrate;
+  readonly billingUsageSnapshotManager: BillingUsageSnapshotManager;
+  readonly billingUsageToolSuite: BillingUsageToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3060,6 +3092,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliTurnRetrySubstrate = components.broccoliTurnRetrySubstrate;
     this.turnRetrySnapshotManager = components.turnRetrySnapshotManager;
     this.turnRetryToolSuite = components.turnRetryToolSuite;
+    this.deterministicBillingUsageEngine = components.deterministicBillingUsageEngine;
+    this.billingUsageSupervisor = components.billingUsageSupervisor;
+    this.broccoliBillingUsageSubstrate = components.broccoliBillingUsageSubstrate;
+    this.billingUsageSnapshotManager = components.billingUsageSnapshotManager;
+    this.billingUsageToolSuite = components.billingUsageToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

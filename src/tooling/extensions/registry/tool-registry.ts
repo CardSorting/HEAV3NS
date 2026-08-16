@@ -78,6 +78,7 @@ import type { OsvScannerToolSuite } from "../osv/osv-scanner-tool-suite.js";
 import type { SubdirHintsToolSuite } from "../subdir_hints/subdir-hints-tool-suite.js";
 import type { StreamDiagToolSuite } from "../stream_diag/stream-diag-tool-suite.js";
 import type { TurnRetryToolSuite } from "../turn_retry/turn-retry-tool-suite.js";
+import type { BillingUsageToolSuite } from "../billing_usage/billing-usage-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -147,6 +148,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly subdirHintsToolSuite?: SubdirHintsToolSuite;
   readonly streamDiagToolSuite?: StreamDiagToolSuite;
   readonly turnRetryToolSuite?: TurnRetryToolSuite;
+  readonly billingUsageToolSuite?: BillingUsageToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -224,7 +226,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     osvScannerToolSuite?: OsvScannerToolSuite,
     subdirHintsToolSuite?: SubdirHintsToolSuite,
     streamDiagToolSuite?: StreamDiagToolSuite,
-    turnRetryToolSuite?: TurnRetryToolSuite
+    turnRetryToolSuite?: TurnRetryToolSuite,
+    billingUsageToolSuite?: BillingUsageToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -294,6 +297,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.subdirHintsToolSuite = subdirHintsToolSuite;
     this.streamDiagToolSuite = streamDiagToolSuite;
     this.turnRetryToolSuite = turnRetryToolSuite;
+    this.billingUsageToolSuite = billingUsageToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -816,6 +820,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.turnRetryToolSuite) {
       for (const tool of this.turnRetryToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.billingUsageToolSuite) {
+      for (const tool of this.billingUsageToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }
