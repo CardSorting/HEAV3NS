@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T07:38:44.264Z",
+  "generatedAt": "2026-08-16T07:42:08.770Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,7 +19,7 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.68,
+    "durationMs": 2.77,
     "componentCount": 382,
     "requiredComponentCount": 382,
     "composedRequiredComponentCount": 382,
@@ -32,7 +32,7 @@
         "category": "composition",
         "name": "Current evolution capabilities are composed",
         "passed": true,
-        "durationMs": 0.03,
+        "durationMs": 0.04,
         "detail": "382 required capabilities across 382 components"
       },
       {
@@ -40,7 +40,7 @@
         "category": "architecture",
         "name": "Core abstract contracts remain connected",
         "passed": true,
-        "durationMs": 0.13,
+        "durationMs": 0.14,
         "detail": "agent, session, hands, ears, and tool-registry contracts verified"
       },
       {
@@ -48,8 +48,8 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 1,
-        "detail": "frame 1 completed in 0.62 ms"
+        "durationMs": 0.98,
+        "detail": "frame 1 completed in 0.63 ms"
       },
       {
         "id": "state.rewind",
@@ -64,7 +64,7 @@
         "category": "governance",
         "name": "Completion gate fails closed without evaluated evidence",
         "passed": true,
-        "durationMs": 0.49,
+        "durationMs": 0.5,
         "detail": "5 fail-closed states rejected; 2/2 evaluated required criteria accepted"
       },
       {
@@ -72,7 +72,7 @@
         "category": "safety",
         "name": "Modern command safety and diagnostics are active",
         "passed": true,
-        "durationMs": 0.25,
+        "durationMs": 0.27,
         "detail": "interactive editor blocking and port-collision guidance verified"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.08,
+        "durationMs": 0.1,
         "detail": "head/tail output retention verified"
       },
       {
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 72.72,
-    "totalDurationMs": 363.62,
-    "throughputTps": 13.75,
-    "throughputPerMinute": 825,
+    "meanLatencyMs": 69.74,
+    "totalDurationMs": 348.69,
+    "throughputTps": 14.34,
+    "throughputPerMinute": 860,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -130,7 +130,7 @@
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 363.24,
+        "durationMs": 348.34,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -178,14 +178,14 @@
         "testName": "Slash Command Router Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.1,
+        "durationMs": 0.08,
         "assertions": []
       },
       {
         "testName": "Snapshot State Rewind Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.1,
+        "durationMs": 0.08,
         "assertions": []
       }
     ]
@@ -206,14 +206,14 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.13 ms",
+        "measuredValue": "0.12 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "7666.48 frames/sec",
+        "measuredValue": "8603.7 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },

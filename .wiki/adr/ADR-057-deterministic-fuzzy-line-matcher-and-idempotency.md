@@ -1,4 +1,4 @@
-# ADR-057: Deterministic 11-Strategy Fuzzy Line Matcher, Atomic Multi-Hunk Patch Engine, Unicode Typography Coordinate Mapper & Preservation Engine, Block-Anchor Resolver, Escape-Drift Guard & Edit Idempotency Substrate ($\mathcal{K}_{\text{fuzzy}}$ / Phase 103)
+# ADR-057: Deterministic 12-Strategy Fuzzy Line Matcher, Atomic Multi-Hunk Patch Engine, Ellipsis-Wildcard Block Resolver, Unified Diff Parser & Applicator, Unicode Typography Coordinate Mapper & Preservation Engine, Block-Anchor Resolver, Escape-Drift Guard & Edit Idempotency Substrate ($\mathcal{K}_{\text{fuzzy}}$ / Phase 103)
 
 ## Status
 Accepted / Implemented / Deeply Hardened (Phase 103 / Target #41)
@@ -11,14 +11,16 @@ In ancestral agent frameworks (`tools/fuzzy_match.py` — ~50,000 LOC), automate
 4. **JSON Backslash Doubling**: JSON double-escaping makes paths arrive as `\\\\` instead of `\\`; applying replacements verbatim doubles every backslash on disk.
 5. **Comment Alterations & Rephrasing**: Models frequently rephrase or omit code comments (`//`, `/* ... */`, `#`) between `old_string` and the actual source file.
 6. **Token/Punctuation Spacing**: Models frequently vary spacing around code delimiters and operators (`foo( a , b )` vs `foo(a, b)`).
-7. **Non-Contiguous Multi-Hunk Mutations**: Multi-chunk edits across large files require atomic pre-flight validation, collision detection for overlapping spans, and reverse-order offset-stable execution to prevent subsequent hunk index corruption.
-8. **Multi-Match Ambiguities & No-Match Guesswork**: Ambiguous matches need exact line-indexed locations (`L<line>: <snippet>`), and no-match errors require visual whitespace diagnostics (`→` vs `·`) and word-level token highlights.
+7. **Ellipsis Wildcard Placeholders**: LLMs frequently write partial snippets separated by `// ... existing code ...`, `/* ... */`, or `...` placeholders.
+8. **Unified Diff Patch Consumption**: Models and version control systems often provide standard unified diff patches (`--- a/`, `+++ b/`, `@@ -oldStart,oldCount +newStart,newCount @@`) that require robust fuzzy line application.
+9. **Non-Contiguous Multi-Hunk Mutations**: Multi-chunk edits across large files require atomic pre-flight validation, collision detection for overlapping spans, and reverse-order offset-stable execution to prevent subsequent hunk index corruption.
+10. **Line Ending Variations**: Files with CRLF (`\r\n`) vs LF (`\n`) must preserve the file's native line endings upon modification.
 
 ## Decision
-We implemented a zero-GC, typed, in-memory 11-strategy fuzzy line matcher, atomic multi-hunk patch engine, Unicode coordinate mapper, and edit idempotency substrate for **LUMI-JOY**:
+We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomic multi-hunk patch engine, ellipsis-wildcard block resolver, unified diff patch parser & applicator, Unicode coordinate mapper, and edit idempotency substrate for **LUMI-JOY**:
 
 1. **`DeterministicFuzzyMatcher` ([deterministic-fuzzy-matcher.ts](../../src/tooling/extensions/fuzzy/deterministic-fuzzy-matcher.ts))**:
-   - **Cascading 11-strategy engine**:
+   - **Cascading 12-strategy engine**:
      1. `exact`: Direct substring comparison
      2. `line_trimmed`: Line-by-line leading/trailing whitespace stripping
      3. `whitespace_normalized`: Collapsed whitespace runs (`[ \t]+` $\rightarrow$ `" "`)
@@ -27,13 +29,16 @@ We implemented a zero-GC, typed, in-memory 11-strategy fuzzy line matcher, atomi
      6. `trimmed_boundary`: First/last line boundary trimming
      7. `comment_tolerant`: Syntax-aware comment stripping (`//`, `/* */`, `#`) for structural code matching
      8. `token_normalized`: Syntax-delimiter and operator whitespace normalization (`([{}],:;=+-*/><?)`)
-     9. `unicode_normalized`: Unicode typography normalization matrix with exact coordinate mapping
-     10. `block_anchor`: First + last line anchored with Levenshtein similarity for interior lines
-     11. `context_aware`: Sliding window similarity with configurable threshold ($\ge 0.5$)
+     9. `ellipsis_wildcard`: Wildcard ellipsis block matching (`// ... existing code ...`, `...`) bridging distant anchor lines
+     10. `unicode_normalized`: Unicode typography normalization matrix with exact coordinate mapping
+     11. `block_anchor`: First + last line anchored with Levenshtein similarity for interior lines
+     12. `context_aware`: Sliding window similarity with configurable threshold ($\ge 0.5$)
+   - **Unified Diff Parser & Applicator (`parseUnifiedPatch` & `applyUnifiedPatch`)**: Parses standard unified diffs and applies them directly to file contents with line offset fuzz tolerance.
+   - **Line-Ending Auto-Preservation (`detectLineEnding` & `applyLineEnding`)**: Automatically detects whether a file uses `\r\n` or `\n` and outputs the result in the native line ending format.
    - **Unicode Coordinate Mapping (`buildOrigToNormMap` & `mapPositionsNormToOrig`)**: Maps normalized character positions back to exact original character indices, preventing drift when single Unicode glyphs expand to multi-character ASCII sequences.
    - **Unicode Preservation in Replacement (`preserveUnicodeInReplacement`)**: Opcode/LCS-level diff between `norm_old` and `new_string` copies original `fileRegion[orig_start:orig_end]` for unchanged spans, preserving existing file smart quotes and em-dashes.
    - **Atomic Multi-Hunk Batch Engine (`findAndReplaceMulti`)**:
-     - Pre-flight validates all hunks simultaneously across the 11 strategies.
+     - Pre-flight validates all hunks simultaneously across the 12 strategies.
      - Detects and rejects overlapping spans (`OVERLAPPING_HUNKS_ERROR`).
      - Applies mutations in descending start-offset order to prevent subsequent hunk index corruption.
      - All-or-nothing transactional guarantee: fails with zero disk/memory mutation if any hunk fails.
@@ -51,16 +56,18 @@ We implemented a zero-GC, typed, in-memory 11-strategy fuzzy line matcher, atomi
    - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`FuzzyMatcherSupervisor` ([fuzzy-matcher-supervisor.ts](../../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.ts))**:
-   - Master supervisor coordinating 11-strategy search & replace, multi-hunk batches, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
+   - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
 
 5. **`FuzzyMatcherToolSuite` ([fuzzy-matcher-tool-suite.ts](../../src/tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.ts))**:
-   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
+   - Exposes `fuzzy_find_and_replace`, `fuzzy_multi_replace`, `fuzzy_generate_patch`, `fuzzy_apply_patch`, `fuzzy_dry_run_replace`, `fuzzy_check_idempotency`, `fuzzy_diagnose_mismatch`, `fuzzy_configure_strategies`, and `fuzzy_inspect_strategies`.
 
 6. **Grand Monolith Graduation (382 Components in OPTIMAL Cohesion)**:
    - Verified across `MonolithFactory` and `GrandMonolithSynthesizer`.
 
 ## Consequences
-- Single and multi-hunk code edits never fail due to minor whitespace, indentation, comment discrepancies, token spacing, Unicode typography, or literal escape anomalies.
+- Single and multi-hunk code edits never fail due to minor whitespace, indentation, comment discrepancies, token spacing, ellipsis wildcards, Unicode typography, or literal escape anomalies.
+- Unified diff patches can be parsed and applied directly with line-offset fuzz tolerance.
+- Native file line endings (CRLF vs LF) are automatically preserved.
 - Character-level coordinate maps guarantee byte-accurate file replacements even with expanding/collapsing Unicode glyphs.
 - Overlapping hunks are blocked before mutation, eliminating partial patch corruptions.
 - Idempotent edit re-submissions resolve immediately with 0 unnecessary file re-reads.

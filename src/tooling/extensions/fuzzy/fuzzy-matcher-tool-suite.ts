@@ -203,6 +203,46 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_apply_patch",
+        description: "Applies a standard unified diff patch (containing @@ -start,count +start,count @@ headers) directly to file content.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The original file content to be patched",
+            required: true,
+          },
+          patch: {
+            type: "string",
+            description: "The unified diff patch string to apply",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string" || typeof args.patch !== "string") {
+            return { success: false, error: "Missing required string parameters ('content', 'patch')." };
+          }
+
+          const result = this.supervisor.applyUnifiedPatch(args.content, args.patch);
+          if (!result.success) {
+            return {
+              success: false,
+              error: result.error,
+              hunksParsed: result.hunksParsed,
+              hunksApplied: result.hunksApplied,
+            };
+          }
+
+          return {
+            success: true,
+            modifiedContent: result.modifiedContent,
+            hunksParsed: result.hunksParsed,
+            hunksApplied: result.hunksApplied,
+            diffPreview: result.diffPreview,
+            message: `Successfully applied ${result.hunksApplied}/${result.hunksParsed} unified diff hunk(s).`,
+          };
+        },
+      },
+      {
         name: "fuzzy_dry_run_replace",
         description: "Simulates a search-and-replace edit, returning the unified diff preview, match count, strategy used, and surrounding context without mutating content.",
         parameters: {

@@ -12,6 +12,7 @@ import type {
   FuzzyMultiMatchResult,
   FuzzyReplacementHunk,
   FuzzyStrategyName,
+  UnifiedPatchResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
 import { BroccoliFuzzySubstrate } from "../../../sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
@@ -111,6 +112,13 @@ export class FuzzyMatcherSupervisor {
    */
   generateUnifiedDiff(oldText: string, newText: string, filename: string = "file"): string {
     return this.matcher.generateUnifiedDiff(oldText, newText, filename);
+  }
+
+  /**
+   * Applies a standard unified diff patch directly to content.
+   */
+  applyUnifiedPatch(content: string, patch: string): UnifiedPatchResult {
+    return this.matcher.applyUnifiedPatch(content, patch);
   }
 
   /**

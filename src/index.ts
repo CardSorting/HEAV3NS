@@ -1478,6 +1478,8 @@ export type {
   FuzzyMatchResult,
   FuzzyReplacementHunk,
   FuzzyMultiMatchResult,
+  UnifiedPatchHunk,
+  UnifiedPatchResult,
   FuzzyMatcherOptions,
   FuzzyExecutionRecord,
   FuzzyWorkspaceSnapshot,

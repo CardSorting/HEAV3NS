@@ -1,7 +1,8 @@
 /**
  * deterministic-fuzzy-matcher.ts
  *
- * Zero-GC, deterministic 11-strategy fuzzy line matcher, atomic multi-hunk patch engine,
+ * Zero-GC, deterministic 12-strategy fuzzy line matcher, atomic multi-hunk patch engine,
+ * ellipsis-wildcard block resolver, unified diff patch parser & applicator,
  * Unicode typography coordinate mapper & preservation engine, block-anchor resolver,
  * token-normalized code matcher, indentation preservation engine, escape-drift detector,
  * whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
@@ -18,6 +19,8 @@ import type {
   FuzzyReplacementHunk,
   FuzzyStrategyName,
   MismatchDiagnosis,
+  UnifiedPatchHunk,
+  UnifiedPatchResult,
   WordDiffHighlight,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 
@@ -66,6 +69,7 @@ export const ALL_STRATEGIES: readonly FuzzyStrategyName[] = [
   "trimmed_boundary",
   "comment_tolerant",
   "token_normalized",
+  "ellipsis_wildcard",
   "unicode_normalized",
   "block_anchor",
   "context_aware",
@@ -210,6 +214,21 @@ export class DeterministicFuzzyMatcher {
     }
 
     return results;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Line Ending Preservation (CRLF vs LF)
+  // ---------------------------------------------------------------------------
+
+  private detectLineEnding(text: string): "\r\n" | "\n" {
+    return text.includes("\r\n") ? "\r\n" : "\n";
+  }
+
+  private applyLineEnding(text: string, eol: "\r\n" | "\n"): string {
+    if (eol === "\r\n") {
+      return text.replace(/\r?\n/g, "\r\n");
+    }
+    return text.replace(/\r\n/g, "\n");
   }
 
   // ---------------------------------------------------------------------------
@@ -381,12 +400,10 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
-    // Dynamic Programming LCS for character-level diff between normOld and newString
     const m = normOld.length;
     const n = newString.length;
     if (m === 0) return newString;
 
-    // LCS table
     const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
     for (let i = 1; i <= m; i++) {
       for (let j = 1; j <= n; j++) {
@@ -398,7 +415,6 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
-    // Backtrack to create segment operations
     let i = m;
     let j = n;
     interface DiffSegment {
@@ -442,7 +458,6 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
-    // Merge adjacent equal segments
     const merged: DiffSegment[] = [];
     for (let k = 0; k < segments.length; k++) {
       const seg = segments[k];
@@ -460,7 +475,6 @@ export class DeterministicFuzzyMatcher {
       }
     }
 
-    // Assemble output preserving original Unicode on 'equal' spans
     const resultParts: string[] = [];
     for (let k = 0; k < merged.length; k++) {
       const seg = merged[k];
@@ -776,7 +790,136 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // 11 Matching Strategies
+  // Unified Diff Patch Parser & Applicator
+  // ---------------------------------------------------------------------------
+
+  parseUnifiedPatch(patch: string): UnifiedPatchHunk[] {
+    const lines = patch.split("\n");
+    const hunks: UnifiedPatchHunk[] = [];
+    let currentHunk: {
+      oldStart: number;
+      oldCount: number;
+      newStart: number;
+      newCount: number;
+      lines: string[];
+    } | null = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const hunkHeaderMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+
+      if (hunkHeaderMatch) {
+        if (currentHunk) {
+          hunks.push(currentHunk);
+        }
+        currentHunk = {
+          oldStart: parseInt(hunkHeaderMatch[1], 10),
+          oldCount: hunkHeaderMatch[2] !== undefined ? parseInt(hunkHeaderMatch[2], 10) : 1,
+          newStart: parseInt(hunkHeaderMatch[3], 10),
+          newCount: hunkHeaderMatch[4] !== undefined ? parseInt(hunkHeaderMatch[4], 10) : 1,
+          lines: [],
+        };
+      } else if (currentHunk && (line.startsWith("+") || line.startsWith("-") || line.startsWith(" ") || line === "")) {
+        currentHunk.lines.push(line);
+      }
+    }
+
+    if (currentHunk) {
+      hunks.push(currentHunk);
+    }
+
+    return hunks;
+  }
+
+  applyUnifiedPatch(content: string, patch: string): UnifiedPatchResult {
+    const hunks = this.parseUnifiedPatch(patch);
+    if (hunks.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        hunksParsed: 0,
+        hunksApplied: 0,
+        error: "No valid unified diff hunks found in patch.",
+      };
+    }
+
+    const lines = content.split("\n");
+    let lineDelta = 0;
+    let appliedCount = 0;
+
+    for (let h = 0; h < hunks.length; h++) {
+      const hunk = hunks[h];
+      const targetStart = Math.max(0, hunk.oldStart - 1 + lineDelta);
+
+      // Collect expected old lines and replacement new lines
+      const expectedOld: string[] = [];
+      const replacementNew: string[] = [];
+
+      for (let l = 0; l < hunk.lines.length; l++) {
+        const hLine = hunk.lines[l];
+        if (hLine.startsWith("-")) {
+          expectedOld.push(hLine.slice(1));
+        } else if (hLine.startsWith("+")) {
+          replacementNew.push(hLine.slice(1));
+        } else if (hLine.startsWith(" ")) {
+          expectedOld.push(hLine.slice(1));
+          replacementNew.push(hLine.slice(1));
+        } else if (hLine === "") {
+          expectedOld.push("");
+          replacementNew.push("");
+        }
+      }
+
+      // Check if lines match around targetStart with small search window
+      let matchIdx = -1;
+      const searchRadius = 5;
+      const minIdx = Math.max(0, targetStart - searchRadius);
+      const maxIdx = Math.min(lines.length - expectedOld.length, targetStart + searchRadius);
+
+      for (let testIdx = minIdx; testIdx <= maxIdx; testIdx++) {
+        let isMatch = true;
+        for (let k = 0; k < expectedOld.length; k++) {
+          if (lines[testIdx + k] !== expectedOld[k]) {
+            isMatch = false;
+            break;
+          }
+        }
+        if (isMatch) {
+          matchIdx = testIdx;
+          break;
+        }
+      }
+
+      if (matchIdx === -1) {
+        return {
+          success: false,
+          modifiedContent: content,
+          hunksParsed: hunks.length,
+          hunksApplied: appliedCount,
+          error: `Hunk #${h + 1} failed to apply at line ${hunk.oldStart}.`,
+        };
+      }
+
+      lines.splice(matchIdx, expectedOld.length, ...replacementNew);
+      lineDelta += replacementNew.length - expectedOld.length;
+      appliedCount++;
+    }
+
+    const modified = lines.join("\n");
+    const diff = this.generateUnifiedDiff(content, modified);
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      hunksParsed: hunks.length,
+      hunksApplied: appliedCount,
+      diffPreview: diff,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 12 Matching Strategies
   // ---------------------------------------------------------------------------
 
   private strategyExact(content: string, target: string): FuzzyMatchSpan[] {
@@ -999,6 +1142,84 @@ export class DeterministicFuzzyMatcher {
     return matches;
   }
 
+  private strategyEllipsisWildcard(content: string, target: string): FuzzyMatchSpan[] {
+    const isEllipsisMarker = (line: string) => {
+      const t = line.trim();
+      return (
+        t === "..." ||
+        t === "// ..." ||
+        t === "/* ... */" ||
+        t === "# ..." ||
+        t === "// ... existing code ..." ||
+        t === "/* ... existing code ... */" ||
+        t === "# ... existing code ..." ||
+        t.includes("... existing code ...")
+      );
+    };
+
+    const targetLines = target.split("\n");
+    const ellipsisIndices: number[] = [];
+    for (let i = 0; i < targetLines.length; i++) {
+      if (isEllipsisMarker(targetLines[i])) {
+        ellipsisIndices.push(i);
+      }
+    }
+
+    if (ellipsisIndices.length === 0) return [];
+
+    const prefixLines = targetLines.slice(0, ellipsisIndices[0]).map((l) => l.trim()).filter((l) => l.length > 0);
+    const suffixLines = targetLines
+      .slice(ellipsisIndices[ellipsisIndices.length - 1] + 1)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    if (prefixLines.length === 0 || suffixLines.length === 0) return [];
+
+    const contentLines = content.split("\n");
+    const lineOffsets: number[] = [0];
+    for (let i = 0; i < content.length; i++) {
+      if (content[i] === "\n") lineOffsets.push(i + 1);
+    }
+
+    const matches: FuzzyMatchSpan[] = [];
+
+    for (let i = 0; i <= contentLines.length - prefixLines.length - suffixLines.length; i++) {
+      // Check prefix
+      let prefixMatch = true;
+      for (let p = 0; p < prefixLines.length; p++) {
+        if (contentLines[i + p].trim() !== prefixLines[p]) {
+          prefixMatch = false;
+          break;
+        }
+      }
+      if (!prefixMatch) continue;
+
+      // Find closest suffix after prefix
+      const searchStart = i + prefixLines.length;
+      for (let s = searchStart; s <= contentLines.length - suffixLines.length; s++) {
+        let suffixMatch = true;
+        for (let p = 0; p < suffixLines.length; p++) {
+          if (contentLines[s + p].trim() !== suffixLines[p]) {
+            suffixMatch = false;
+            break;
+          }
+        }
+        if (suffixMatch) {
+          const start = lineOffsets[i];
+          const endLineIdx = s + suffixLines.length - 1;
+          const end =
+            endLineIdx < contentLines.length - 1
+              ? lineOffsets[endLineIdx + 1] - 1
+              : content.length;
+          matches.push([start, end]);
+          break;
+        }
+      }
+    }
+
+    return matches;
+  }
+
   private strategyUnicodeNormalized(content: string, target: string): FuzzyMatchSpan[] {
     const normTarget = this.normalizeUnicode(target);
     const normContent = this.normalizeUnicode(content);
@@ -1132,6 +1353,8 @@ export class DeterministicFuzzyMatcher {
       };
     }
 
+    const nativeEol = this.detectLineEnding(content);
+
     // Check idempotency (where newString is present and oldString is gone)
     if (this.isAlreadyApplied(content, oldString, newString)) {
       return {
@@ -1155,12 +1378,13 @@ export class DeterministicFuzzyMatcher {
       { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
       { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
       { name: "token_normalized", fn: this.strategyTokenNormalized.bind(this) },
+      { name: "ellipsis_wildcard", fn: this.strategyEllipsisWildcard.bind(this) },
       { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
       { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
       { name: "context_aware", fn: this.strategyContextAware.bind(this) },
     ];
 
-    const similarityStrategies = new Set<FuzzyStrategyName>(["block_anchor", "context_aware"]);
+    const similarityStrategies = new Set<FuzzyStrategyName>(["block_anchor", "context_aware", "ellipsis_wildcard"]);
 
     for (let i = 0; i < strategies.length; i++) {
       const { name, fn } = strategies[i];
@@ -1184,7 +1408,7 @@ export class DeterministicFuzzyMatcher {
         }
 
         if (replaceAll && similarityStrategies.has(name)) {
-          // Similarity strategies are unsafe for mass replace_all
+          // Similarity & wildcard strategies are unsafe for mass replace_all
           continue;
         }
 
@@ -1215,7 +1439,7 @@ export class DeterministicFuzzyMatcher {
           let finalReplacement = this.maybeUnescapeNewString(newString, matchedRegion);
 
           // Re-indent if non-exact strategy
-          if (name !== "exact") {
+          if (name !== "exact" && name !== "ellipsis_wildcard") {
             finalReplacement = this.reindentReplacement(matchedRegion, oldString, finalReplacement);
           }
 
@@ -1225,6 +1449,10 @@ export class DeterministicFuzzyMatcher {
           }
 
           modified = modified.slice(0, start) + finalReplacement + modified.slice(end);
+        }
+
+        if (this.normalizeLineEndings) {
+          modified = this.applyLineEnding(modified, nativeEol);
         }
 
         const simScore =
@@ -1298,6 +1526,8 @@ export class DeterministicFuzzyMatcher {
       };
     }
 
+    const nativeEol = this.detectLineEnding(content);
+
     // Step 1: Pre-flight validate and resolve match spans for all hunks
     interface ResolvedHunk {
       readonly index: number;
@@ -1347,7 +1577,6 @@ export class DeterministicFuzzyMatcher {
 
       fullyIdempotent = false;
 
-      // Find match
       const singleRes = this.findAndReplace(content, hunk.oldString, hunk.newString, hunk.replaceAll ?? false, { dryRun: true });
       if (!singleRes.success || !singleRes.strategyUsed) {
         return {
@@ -1363,7 +1592,6 @@ export class DeterministicFuzzyMatcher {
         };
       }
 
-      // Find first span location in content
       const strategies: Array<{ name: FuzzyStrategyName; fn: (c: string, t: string) => FuzzyMatchSpan[] }> = [
         { name: "exact", fn: this.strategyExact.bind(this) },
         { name: "line_trimmed", fn: this.strategyLineTrimmed.bind(this) },
@@ -1373,6 +1601,7 @@ export class DeterministicFuzzyMatcher {
         { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
         { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
         { name: "token_normalized", fn: this.strategyTokenNormalized.bind(this) },
+        { name: "ellipsis_wildcard", fn: this.strategyEllipsisWildcard.bind(this) },
         { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
         { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
         { name: "context_aware", fn: this.strategyContextAware.bind(this) },
@@ -1446,7 +1675,7 @@ export class DeterministicFuzzyMatcher {
       const matchedRegion = content.slice(start, end);
 
       let finalReplacement = this.maybeUnescapeNewString(item.replacement, matchedRegion);
-      if (item.strategy !== "exact") {
+      if (item.strategy !== "exact" && item.strategy !== "ellipsis_wildcard") {
         finalReplacement = this.reindentReplacement(matchedRegion, hunks[item.index].oldString, finalReplacement);
       }
       if (item.strategy === "unicode_normalized") {
@@ -1454,6 +1683,10 @@ export class DeterministicFuzzyMatcher {
       }
 
       modified = modified.slice(0, start) + finalReplacement + modified.slice(end);
+    }
+
+    if (this.normalizeLineEndings) {
+      modified = this.applyLineEnding(modified, nativeEol);
     }
 
     const diff = this.generateUnifiedDiff(content, modified);

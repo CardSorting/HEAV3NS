@@ -1,10 +1,10 @@
 /**
  * fuzzy-matcher.contracts.ts
  *
- * Core contracts for deterministic 11-strategy fuzzy line matching, atomic multi-hunk patching,
+ * Core contracts for deterministic 12-strategy fuzzy line matching, atomic multi-hunk patching,
+ * ellipsis-wildcard block matching, unified diff patch parsing & application,
  * Unicode typography coordinate mapping & preservation, block-anchor resolution,
- * token-normalized code matching, escape-drift detection, Myers unified diff generation,
- * and closest-line mismatch diagnostics with word-level highlight (Phase 103 / ADR-057).
+ * token-normalized code matching, escape-drift detection, and closest-line mismatch diagnostics (Phase 103 / ADR-057).
  */
 
 export type FuzzyStrategyName =
@@ -16,6 +16,7 @@ export type FuzzyStrategyName =
   | "trimmed_boundary"
   | "comment_tolerant"
   | "token_normalized"
+  | "ellipsis_wildcard"
   | "unicode_normalized"
   | "block_anchor"
   | "context_aware";
@@ -95,6 +96,23 @@ export interface FuzzyMultiMatchResult {
   readonly error: string | null;
   readonly failedHunkIndex?: number;
   readonly failedHunkError?: string;
+}
+
+export interface UnifiedPatchHunk {
+  readonly oldStart: number;
+  readonly oldCount: number;
+  readonly newStart: number;
+  readonly newCount: number;
+  readonly lines: readonly string[];
+}
+
+export interface UnifiedPatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly hunksParsed: number;
+  readonly hunksApplied: number;
+  readonly error: string | null;
+  readonly diffPreview?: string;
 }
 
 export interface FuzzyMatcherOptions {

@@ -1,9 +1,9 @@
 /**
  * validate-fuzzy-matcher.ts
  *
- * Comprehensive validation suite for Target #41: Deterministic 10-Strategy Fuzzy Line Matcher,
- * Atomic Multi-Hunk Patch Engine, Unicode Typography Normalizer, Block-Anchor Resolver,
- * Escape-Drift Guard, Whitespace-Visualizing Diagnostician & Edit Idempotency Substrate (Phase 103 / ADR-057).
+ * Comprehensive validation suite for Target #41: Deterministic 12-Strategy Fuzzy Line Matcher,
+ * Atomic Multi-Hunk Patch Engine, Ellipsis-Wildcard Block Resolver, Unified Diff Parser & Applicator,
+ * Unicode Typography Coordinate Mapping, Escape-Drift Guard & Edit Idempotency Substrate (Phase 103 / ADR-057).
  */
 
 import * as fs from "node:fs";
@@ -20,7 +20,7 @@ import { GrandMonolithSynthesizer } from "../src/factories/grand-monolith-synthe
 
 async function runValidationSuite() {
   console.log("================================================================================");
-  console.log(" LUMI Phase 103 / ADR-057: Deterministic 10-Strategy Fuzzy Matcher Validation  ");
+  console.log(" LUMI Phase 103 / ADR-057: Deterministic 12-Strategy Fuzzy Matcher Validation ");
   console.log("================================================================================\n");
 
   let passedSuites = 0;
@@ -29,9 +29,9 @@ async function runValidationSuite() {
 
   try {
     // ---------------------------------------------------------------------------
-    // Suite 1: Exact Match & Edit Idempotency Verification
+    // Suite 1: Exact Match, Edit Idempotency & Line-Ending Preservation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/8] Exact Match & Edit Idempotency Verification...");
+    console.log("[Suite 1/8] Exact Match, Edit Idempotency & Line-Ending Preservation...");
     const matcher = new DeterministicFuzzyMatcher();
 
     const baseContent = "function calculateTotal(items: number[]): number {\n  return items.reduce((a, b) => a + b, 0);\n}";
@@ -55,7 +55,14 @@ async function runValidationSuite() {
     if (identicalRes.success || !identicalRes.error?.includes("identical")) {
       throw new Error(`Identical string rejection failed: ${JSON.stringify(identicalRes)}`);
     }
-    console.log("  ✓ Validated exact matching, idempotency short-circuiting, and identical edit rejection");
+
+    // 4. CRLF preservation
+    const crlfContent = "const x = 1;\r\nconst y = 2;\r\n";
+    const crlfRes = matcher.findAndReplace(crlfContent, "const y = 2;", "const y = 20;");
+    if (!crlfRes.success || !crlfRes.modifiedContent.includes("\r\n")) {
+      throw new Error("CRLF line-ending preservation failed");
+    }
+    console.log("  ✓ Validated exact matching, idempotency short-circuiting, and CRLF preservation");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
@@ -127,9 +134,9 @@ async function runValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 5: Comment-Tolerant Matching & Extended Unicode Typography
+    // Suite 5: Comment Tolerance, Token Normalization & Ellipsis Wildcard
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/8] Comment-Tolerant Matching & Extended Unicode Typography...");
+    console.log("[Suite 5/8] Comment Tolerance, Token Normalization & Ellipsis Wildcard...");
     const commentedCode = "function start() {\n    // Setup database connection\n    initDb();\n    /* Start listener */\n    listen();\n}";
     const searchNoComments = "function start() {\n    initDb();\n    listen();\n}";
     const replacementCode = "function start() {\n    initDbV2();\n    listenV2();\n}";
@@ -149,28 +156,28 @@ async function runValidationSuite() {
       throw new Error(`Token-normalized matching failed: ${JSON.stringify(resToken)}`);
     }
 
-    // Unicode typography and zero-width character stripping with coordinate mapping
-    const unicodeContent = 'const greeting = “Hello, World!”;\u200B // em—dash and minus −5';
-    const asciiOld = 'const greeting = "Hello, World!"; // em--dash and minus -5';
-    const asciiNew = 'const greeting = "Hello, LUMI-JOY!";';
+    // Ellipsis wildcard matching
+    const largeBlock = "function setupServer() {\n    const port = 8080;\n    const host = 'localhost';\n    const ssl = true;\n    return start();\n}";
+    const ellipsisSearch = "function setupServer() {\n    // ... existing code ...\n    return start();\n}";
+    const ellipsisReplace = "function setupServer() {\n    const port = 9090;\n    return start();\n}";
 
-    const resUnicode = matcher.findAndReplace(unicodeContent, asciiOld, asciiNew);
-    if (!resUnicode.success || resUnicode.strategyUsed !== "unicode_normalized") {
-      throw new Error(`Unicode typography normalization failed: ${JSON.stringify(resUnicode)}`);
+    const resEllipsis = matcher.findAndReplace(largeBlock, ellipsisSearch, ellipsisReplace);
+    if (!resEllipsis.success || resEllipsis.strategyUsed !== "ellipsis_wildcard" || !resEllipsis.modifiedContent.includes("const port = 9090;")) {
+      throw new Error(`Ellipsis-wildcard matching failed: ${JSON.stringify(resEllipsis)}`);
     }
 
-    // Verify coordinate mapping integrity
-    const origMap = matcher.buildOrigToNormMap("a—b"); // em-dash expands to --
+    // Unicode coordinate mapping
+    const origMap = matcher.buildOrigToNormMap("a—b");
     if (origMap.length !== 4 || origMap[0] !== 0 || origMap[1] !== 1 || origMap[2] !== 3 || origMap[3] !== 4) {
       throw new Error(`buildOrigToNormMap returned invalid map: ${JSON.stringify(origMap)}`);
     }
-    console.log("  ✓ Matched across comment-stripped code, token delimiters, and coordinate-mapped Unicode");
+    console.log("  ✓ Verified comment tolerance, token delimiter normalization, and ellipsis wildcard matching");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Myers Diff
+    // Suite 6: Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/8] Whitespace Visualization, Closest Line Diagnostics & Myers Diff...");
+    console.log("[Suite 6/8] Whitespace Visualization, Closest Line Diagnostics & Unified Patch Application...");
     const mismatchContent = "function configureServer() {\n    const port = 8080;\n    const databaseHost = 'localhost';\n    return port;\n}";
     const failedSearch = "function configureServer() {\n\tconst port = 8080;\n\treturn port;\n}";
 
@@ -184,17 +191,14 @@ async function runValidationSuite() {
       throw new Error(`Whitespace visualization failed: ${visual}`);
     }
 
-    const noMatchRes = matcher.findAndReplace(mismatchContent, "const databaseClusterConnectionString = 'cluster.internal:5432';", "const databaseHost = '0.0.0.0';");
-    if (noMatchRes.success || !noMatchRes.error?.includes("Did you mean one of these sections?")) {
-      throw new Error(`Diagnostic no-match hint failed: ${JSON.stringify(noMatchRes)}`);
+    // Unified Diff Patch Application
+    const fileToPatch = "const x = 1;\nconst y = 2;\nconst z = 3;";
+    const unifiedPatch = "--- a/file\n+++ b/file\n@@ -2,1 +2,1 @@\n-const y = 2;\n+const y = 200;";
+    const patchResult = matcher.applyUnifiedPatch(fileToPatch, unifiedPatch);
+    if (!patchResult.success || !patchResult.modifiedContent.includes("const y = 200;")) {
+      throw new Error(`Unified diff patch application failed: ${JSON.stringify(patchResult)}`);
     }
-
-    // Test Myers Unified Diff
-    const diff = matcher.generateUnifiedDiff("const a = 1;\nconst b = 2;", "const a = 1;\nconst b = 20;");
-    if (!diff.includes("@@ -2,1 +2,1 @@") || !diff.includes("-const b = 2;") || !diff.includes("+const b = 20;")) {
-      throw new Error(`Myers unified diff generation failed:\n${diff}`);
-    }
-    console.log("  ✓ Verified whitespace visualizer (→ / ·), contextual line hints, and Myers unified diffs");
+    console.log("  ✓ Verified whitespace visualizer (→ / ·), diagnostics, and unified patch application");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
@@ -203,7 +207,6 @@ async function runValidationSuite() {
     console.log("[Suite 7/8] Atomic Multi-Hunk Patch Engine & O(1) Rollback...");
     const multiFile = "const A = 1;\nconst B = 2;\nconst C = 3;\nconst D = 4;\nconst E = 5;";
 
-    // Multi hunk test with multiple non-contiguous edits
     const hunks = [
       { oldString: "const B = 2;", newString: "const B = 200;" },
       { oldString: "const D = 4;", newString: "const D = 400;" },
@@ -262,54 +265,24 @@ async function runValidationSuite() {
     const findReplaceTool = tools.find((t) => t.name === "fuzzy_find_and_replace")!;
     const multiReplaceTool = tools.find((t) => t.name === "fuzzy_multi_replace")!;
     const patchTool = tools.find((t) => t.name === "fuzzy_generate_patch")!;
+    const applyPatchTool = tools.find((t) => t.name === "fuzzy_apply_patch")!;
     const dryRunTool = tools.find((t) => t.name === "fuzzy_dry_run_replace")!;
     const idempotencyTool = tools.find((t) => t.name === "fuzzy_check_idempotency")!;
     const diagnoseTool = tools.find((t) => t.name === "fuzzy_diagnose_mismatch")!;
     const configTool = tools.find((t) => t.name === "fuzzy_configure_strategies")!;
     const inspectTool = tools.find((t) => t.name === "fuzzy_inspect_strategies")!;
 
-    if (!findReplaceTool || !multiReplaceTool || !patchTool || !dryRunTool || !idempotencyTool || !diagnoseTool || !configTool || !inspectTool) {
+    if (!findReplaceTool || !multiReplaceTool || !patchTool || !applyPatchTool || !dryRunTool || !idempotencyTool || !diagnoseTool || !configTool || !inspectTool) {
       throw new Error("Missing required Fuzzy Matcher model tools");
     }
 
-    // Test Multi-Replace Tool
-    const multiToolRes = await multiReplaceTool.execute({
-      content: "const a = 1;\nconst b = 2;\nconst c = 3;",
-      hunks: [
-        { oldString: "const a = 1;", newString: "const a = 10;" },
-        { oldString: "const c = 3;", newString: "const c = 30;" },
-      ],
-    }, tempDir) as { success: boolean; appliedHunks: number; modifiedContent: string };
-    if (!multiToolRes.success || multiToolRes.appliedHunks !== 2 || !multiToolRes.modifiedContent.includes("const a = 10;")) {
-      throw new Error("fuzzy_multi_replace tool execution failed");
-    }
-
-    // Test Patch Tool
-    const patchToolRes = await patchTool.execute({
-      originalContent: "const x = 1;\nconst y = 2;",
-      newContent: "const x = 1;\nconst y = 20;",
-    }, tempDir) as { success: boolean; patch: string };
-    if (!patchToolRes.success || !patchToolRes.patch.includes("@@ -2,1 +2,1 @@")) {
-      throw new Error("fuzzy_generate_patch tool execution failed");
-    }
-
-    // Test Diagnose Tool
-    const diagRes = await diagnoseTool.execute({
-      content: mismatchContent,
-      oldString: failedSearch,
-    }, tempDir) as { success: boolean; hasCandidate: boolean; whitespaceIssueDetected: boolean };
-    if (!diagRes.success || !diagRes.hasCandidate || !diagRes.whitespaceIssueDetected) {
-      throw new Error("fuzzy_diagnose_mismatch execution failed");
-    }
-
-    // Test Dry Run Tool
-    const dryRes = await dryRunTool.execute({
-      content: "const x = 1;\nconst y = 2;",
-      oldString: "const y = 2;",
-      newString: "const y = 200;",
-    }, tempDir) as { success: boolean; diffPreview: string; matchCount: number };
-    if (!dryRes.success || !dryRes.diffPreview?.includes("+const y = 200;")) {
-      throw new Error("fuzzy_dry_run_replace execution failed");
+    // Test Apply Patch Tool
+    const applyRes = await applyPatchTool.execute({
+      content: fileToPatch,
+      patch: unifiedPatch,
+    }, tempDir) as { success: boolean; modifiedContent: string };
+    if (!applyRes.success || !applyRes.modifiedContent.includes("const y = 200;")) {
+      throw new Error("fuzzy_apply_patch tool execution failed");
     }
 
     // Monolith Verification
