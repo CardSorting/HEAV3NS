@@ -112,6 +112,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-102](ADR-102-file-safety-mutation-guards-and-path-firewall.md) | File Safety Mutation Guards, Sensitive Path Firewall & Safe Root Governance Subsystem | Accepted | 2026-08-16 | Security & Path Governance (Target #59 / Phase 126) |
 | [ADR-103](ADR-103-context-window-token-composition-and-metering.md) | Context Window Token Composition Breakdown & Category Metering Subsystem | Accepted | 2026-08-16 | Context & Token Telemetry (Target #60 / Phase 127) |
 | [ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md) | Open Source Vulnerability (OSV) Malware Scanner, Package Ecosystem Parser & Pre-Flight Execution Firewall Subsystem | Accepted | 2026-08-16 | Security & Supply Chain Defense (Target #61 / Phase 128) |
+| [ADR-105](ADR-105-progressive-subdirectory-context-discovery.md) | Progressive Subdirectory Context Discovery, Dynamic Instruction Hints & Prefix-Cache-Safe Tool Attachment Subsystem | Accepted | 2026-08-16 | Context & Dynamic Instructions (Target #62 / Phase 129) |
 
 ## Domain Grouping
 
@@ -146,6 +147,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-102](ADR-102-file-safety-mutation-guards-and-path-firewall.md)**: File safety mutation guards, sensitive path firewall, and safe root governance subsystem.
 - **[ADR-103](ADR-103-context-window-token-composition-and-metering.md)**: Context window token composition breakdown and category metering subsystem.
 - **[ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md)**: OSV malware scanner, package ecosystem parser, and pre-flight execution firewall subsystem.
+- **[ADR-105](ADR-105-progressive-subdirectory-context-discovery.md)**: Progressive subdirectory context discovery, dynamic instruction hints, and prefix-cache-safe tool attachment subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

@@ -75,6 +75,7 @@ import type { DeadlineToolSuite } from "../deadline/deadline-tool-suite.js";
 import type { FileSafetyToolSuite } from "../file_safety/file-safety-tool-suite.js";
 import type { ContextBreakdownToolSuite } from "../context_breakdown/context-breakdown-tool-suite.js";
 import type { OsvScannerToolSuite } from "../osv/osv-scanner-tool-suite.js";
+import type { SubdirHintsToolSuite } from "../subdir_hints/subdir-hints-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -141,6 +142,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly fileSafetyToolSuite?: FileSafetyToolSuite;
   readonly contextBreakdownToolSuite?: ContextBreakdownToolSuite;
   readonly osvScannerToolSuite?: OsvScannerToolSuite;
+  readonly subdirHintsToolSuite?: SubdirHintsToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -215,7 +217,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     deadlineToolSuite?: DeadlineToolSuite,
     fileSafetyToolSuite?: FileSafetyToolSuite,
     contextBreakdownToolSuite?: ContextBreakdownToolSuite,
-    osvScannerToolSuite?: OsvScannerToolSuite
+    osvScannerToolSuite?: OsvScannerToolSuite,
+    subdirHintsToolSuite?: SubdirHintsToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -282,6 +285,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.fileSafetyToolSuite = fileSafetyToolSuite;
     this.contextBreakdownToolSuite = contextBreakdownToolSuite;
     this.osvScannerToolSuite = osvScannerToolSuite;
+    this.subdirHintsToolSuite = subdirHintsToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -789,6 +793,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.osvScannerToolSuite) {
       for (const tool of this.osvScannerToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.subdirHintsToolSuite) {
+      for (const tool of this.subdirHintsToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

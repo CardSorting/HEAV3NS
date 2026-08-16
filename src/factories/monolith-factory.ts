@@ -551,6 +551,12 @@ import { BroccoliOsvSubstrate } from "../sessions/extensions/osv/broccoli-osv-su
 import { OsvScannerSnapshotManager } from "../sessions/extensions/osv/osv-snapshot-manager.js";
 import { OsvScannerToolSuite } from "../tooling/extensions/osv/osv-scanner-tool-suite.js";
 
+import { DeterministicSubdirHintEngine } from "../agents/extensions/subdir_hints/deterministic-subdir-hint-engine.js";
+import { SubdirHintsSupervisor } from "../agents/extensions/subdir_hints/subdir-hints-supervisor.js";
+import { BroccoliSubdirHintsSubstrate } from "../sessions/extensions/subdir_hints/broccoli-subdir-hints-substrate.js";
+import { SubdirHintsSnapshotManager } from "../sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
+import { SubdirHintsToolSuite } from "../tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1047,6 +1053,11 @@ export class MonolithFactory {
     broccoliOsvSubstrate: BroccoliOsvSubstrate;
     osvScannerSnapshotManager: OsvScannerSnapshotManager;
     osvScannerToolSuite: OsvScannerToolSuite;
+    deterministicSubdirHintEngine: DeterministicSubdirHintEngine;
+    subdirHintsSupervisor: SubdirHintsSupervisor;
+    broccoliSubdirHintsSubstrate: BroccoliSubdirHintsSubstrate;
+    subdirHintsSnapshotManager: SubdirHintsSnapshotManager;
+    subdirHintsToolSuite: SubdirHintsToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1856,6 +1867,16 @@ export class MonolithFactory {
     );
     const osvScannerToolSuite = new OsvScannerToolSuite(osvScannerSupervisor);
 
+    const deterministicSubdirHintEngine = new DeterministicSubdirHintEngine();
+    const broccoliSubdirHintsSubstrate = new BroccoliSubdirHintsSubstrate();
+    broccoliSubdirHintsSubstrate.setConfig({ workingDir: cwd });
+    const subdirHintsSnapshotManager = new SubdirHintsSnapshotManager(broccoliSubdirHintsSubstrate);
+    const subdirHintsSupervisor = new SubdirHintsSupervisor(
+      broccoliSubdirHintsSubstrate,
+      deterministicSubdirHintEngine
+    );
+    const subdirHintsToolSuite = new SubdirHintsToolSuite(subdirHintsSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1934,7 +1955,8 @@ export class MonolithFactory {
       deadlineToolSuite,
       fileSafetyToolSuite,
       contextBreakdownToolSuite,
-      osvScannerToolSuite
+      osvScannerToolSuite,
+      subdirHintsToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2444,6 +2466,11 @@ export class MonolithFactory {
       broccoliOsvSubstrate,
       osvScannerSnapshotManager,
       osvScannerToolSuite,
+      deterministicSubdirHintEngine,
+      subdirHintsSupervisor,
+      broccoliSubdirHintsSubstrate,
+      subdirHintsSnapshotManager,
+      subdirHintsToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

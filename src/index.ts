@@ -512,6 +512,12 @@ import { BroccoliOsvSubstrate } from "./sessions/extensions/osv/broccoli-osv-sub
 import { OsvScannerSnapshotManager } from "./sessions/extensions/osv/osv-snapshot-manager.js";
 import { OsvScannerToolSuite } from "./tooling/extensions/osv/osv-scanner-tool-suite.js";
 
+import { DeterministicSubdirHintEngine } from "./agents/extensions/subdir_hints/deterministic-subdir-hint-engine.js";
+import { SubdirHintsSupervisor } from "./agents/extensions/subdir_hints/subdir-hints-supervisor.js";
+import { BroccoliSubdirHintsSubstrate } from "./sessions/extensions/subdir_hints/broccoli-subdir-hints-substrate.js";
+import { SubdirHintsSnapshotManager } from "./sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
+import { SubdirHintsToolSuite } from "./tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2095,6 +2101,20 @@ export type {
 } from "./core/contracts/osv-scanner.contracts.js";
 export { DEFAULT_OSV_SCANNER_CONFIG } from "./core/contracts/osv-scanner.contracts.js";
 
+export { DeterministicSubdirHintEngine } from "./agents/extensions/subdir_hints/deterministic-subdir-hint-engine.js";
+export { SubdirHintsSupervisor } from "./agents/extensions/subdir_hints/subdir-hints-supervisor.js";
+export { BroccoliSubdirHintsSubstrate } from "./sessions/extensions/subdir_hints/broccoli-subdir-hints-substrate.js";
+export { SubdirHintsSnapshotManager } from "./sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
+export { SubdirHintsToolSuite } from "./tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
+export type {
+  DiscoveredSubdirHint,
+  SubdirHintDiscoveryResult,
+  SubdirectoryHintsConfig,
+  SubdirectoryHintsMetrics,
+  SubdirectoryHintsWorkspaceSnapshot,
+} from "./core/contracts/subdirectory-hints.contracts.js";
+export { DEFAULT_SUBDIRECTORY_HINTS_CONFIG } from "./core/contracts/subdirectory-hints.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2532,6 +2552,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliOsvSubstrate: BroccoliOsvSubstrate;
   readonly osvScannerSnapshotManager: OsvScannerSnapshotManager;
   readonly osvScannerToolSuite: OsvScannerToolSuite;
+  readonly deterministicSubdirHintEngine: DeterministicSubdirHintEngine;
+  readonly subdirHintsSupervisor: SubdirHintsSupervisor;
+  readonly broccoliSubdirHintsSubstrate: BroccoliSubdirHintsSubstrate;
+  readonly subdirHintsSnapshotManager: SubdirHintsSnapshotManager;
+  readonly subdirHintsToolSuite: SubdirHintsToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2960,6 +2985,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliOsvSubstrate = components.broccoliOsvSubstrate;
     this.osvScannerSnapshotManager = components.osvScannerSnapshotManager;
     this.osvScannerToolSuite = components.osvScannerToolSuite;
+    this.deterministicSubdirHintEngine = components.deterministicSubdirHintEngine;
+    this.subdirHintsSupervisor = components.subdirHintsSupervisor;
+    this.broccoliSubdirHintsSubstrate = components.broccoliSubdirHintsSubstrate;
+    this.subdirHintsSnapshotManager = components.subdirHintsSnapshotManager;
+    this.subdirHintsToolSuite = components.subdirHintsToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
