@@ -1921,6 +1921,284 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_execute_codemod_pipeline",
+        description: "Executes an ordered pipeline of typed codemod transformation rules transactionally with timing, per-step results, and rollback on critical errors.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content to transform",
+            required: true,
+          },
+          rules: {
+            type: "string",
+            description: "JSON array of typed CodemodRule objects to execute sequentially",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          let rulesArr: any = args.rules;
+          if (typeof rulesArr === "string") {
+            try {
+              rulesArr = JSON.parse(rulesArr);
+            } catch {
+              return {
+                success: false,
+                error: "Invalid JSON for 'rules' parameter.",
+              };
+            }
+          }
+          if (!Array.isArray(rulesArr)) {
+            return {
+              success: false,
+              error: "Parameter 'rules' must be an array of CodemodRule objects.",
+            };
+          }
+          const result = this.supervisor.executeCodemodPipeline(args.content, rulesArr);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            totalRules: result.totalRules,
+            successfulRules: result.successfulRules,
+            failedRules: result.failedRules,
+            stepResults: result.stepResults,
+            totalExecutionTimeMs: result.totalExecutionTimeMs,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_patch_structured_config",
+        description: "Safely patches nested keys and values inside JSON, JSONC, and YAML configuration files while preserving formatting and comments.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The configuration file content (JSON, JSONC, or YAML)",
+            required: true,
+          },
+          keyPath: {
+            type: "string",
+            description: "Dot-delimited key path or JSON array of path keys (e.g. 'compilerOptions.paths' or '[\"scripts\", \"build\"]')",
+            required: true,
+          },
+          newValue: {
+            type: "string",
+            description: "The replacement or inserted value (literal or JSON serialized)",
+            required: true,
+          },
+          createMissingPath: {
+            type: "boolean",
+            description: "Whether to create the path if missing (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          let pathArr: string[] = [];
+          if (Array.isArray(args.keyPath)) {
+            pathArr = args.keyPath as string[];
+          } else if (typeof args.keyPath === "string") {
+            try {
+              const parsed = JSON.parse(args.keyPath);
+              if (Array.isArray(parsed)) pathArr = parsed;
+              else pathArr = args.keyPath.split(".").map((k) => k.trim());
+            } catch {
+              pathArr = args.keyPath.split(".").map((k) => k.trim());
+            }
+          }
+          let newVal: unknown = args.newValue;
+          if (typeof args.newValue === "string") {
+            try {
+              newVal = JSON.parse(args.newValue);
+            } catch {
+              newVal = args.newValue;
+            }
+          }
+          const result = this.supervisor.patchStructuredConfigBlock(
+            args.content,
+            pathArr,
+            newVal,
+            {
+              createMissingPath:
+                typeof args.createMissingPath === "boolean" ? args.createMissingPath : true,
+            }
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            format: result.format,
+            keyPath: result.keyPath,
+            oldValue: result.oldValue,
+            newValue: result.newValue,
+            wasCreated: result.wasCreated,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_inline_or_extract_function",
+        description: "Refactors code by extracting code blocks into helper functions or inlining functions into call sites with parameter/argument substitution.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content",
+            required: true,
+          },
+          mode: {
+            type: "string",
+            description: "Refactoring mode ('extract' or 'inline')",
+            required: true,
+          },
+          functionName: {
+            type: "string",
+            description: "Function identifier name to extract or inline",
+            required: true,
+          },
+          targetSpan: {
+            type: "string",
+            description: "Code span to extract (required in 'extract' mode)",
+            required: false,
+          },
+          parameterNames: {
+            type: "string",
+            description: "Parameter names for extracted function (comma-separated or JSON array)",
+            required: false,
+          },
+          returnType: {
+            type: "string",
+            description: "Return type annotation for extracted function",
+            required: false,
+          },
+          isAsync: {
+            type: "boolean",
+            description: "Whether extracted function is async (default: false)",
+            required: false,
+          },
+          placementAnchor: {
+            type: "string",
+            description: "Anchor code span after which extracted helper declaration should be placed",
+            required: false,
+          },
+          removeDeclaration: {
+            type: "boolean",
+            description: "Whether to remove inlined function declaration (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (
+            typeof args.content !== "string" ||
+            typeof args.mode !== "string" ||
+            typeof args.functionName !== "string"
+          ) {
+            return {
+              success: false,
+              error: "Missing required parameters ('content', 'mode', 'functionName').",
+            };
+          }
+          let paramsArr: string[] | undefined = undefined;
+          if (Array.isArray(args.parameterNames)) {
+            paramsArr = args.parameterNames as string[];
+          } else if (typeof args.parameterNames === "string") {
+            try {
+              const parsed = JSON.parse(args.parameterNames);
+              if (Array.isArray(parsed)) paramsArr = parsed;
+              else paramsArr = args.parameterNames.split(",").map((p) => p.trim());
+            } catch {
+              paramsArr = args.parameterNames.split(",").map((p) => p.trim());
+            }
+          }
+          const options: any =
+            args.mode === "extract"
+              ? {
+                  mode: "extract",
+                  functionName: args.functionName,
+                  targetSpan: typeof args.targetSpan === "string" ? args.targetSpan : "",
+                  parameterNames: paramsArr,
+                  returnType: typeof args.returnType === "string" ? args.returnType : undefined,
+                  isAsync: typeof args.isAsync === "boolean" ? args.isAsync : false,
+                  placementAnchor:
+                    typeof args.placementAnchor === "string" ? args.placementAnchor : undefined,
+                }
+              : {
+                  mode: "inline",
+                  functionName: args.functionName,
+                  removeDeclaration:
+                    typeof args.removeDeclaration === "boolean" ? args.removeDeclaration : true,
+                };
+          const result = this.supervisor.inlineOrExtractFunctionBlock(args.content, options);
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            mode: result.mode,
+            targetFunction: result.targetFunction,
+            callSitesUpdatedCount: result.callSitesUpdatedCount,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_analyze_patch_impact",
+        description: "Constructs an in-memory symbolic export/import dependency graph across workspace files and identifies downstream consumers and breaking changes for proposed patches.",
+        parameters: {
+          workspaceFiles: {
+            type: "string",
+            description: "JSON dictionary mapping workspace file paths to file contents",
+            required: true,
+          },
+          proposedPatches: {
+            type: "string",
+            description: "JSON array of proposed WorkspaceFilePatch objects",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let wsFiles: any = args.workspaceFiles;
+          if (typeof wsFiles === "string") {
+            try {
+              wsFiles = JSON.parse(wsFiles);
+            } catch {
+              return { success: false, error: "Invalid JSON for 'workspaceFiles'." };
+            }
+          }
+          let patchesArr: any = args.proposedPatches;
+          if (typeof patchesArr === "string") {
+            try {
+              patchesArr = JSON.parse(patchesArr);
+            } catch {
+              return { success: false, error: "Invalid JSON for 'proposedPatches'." };
+            }
+          }
+          if (!wsFiles || typeof wsFiles !== "object" || !Array.isArray(patchesArr)) {
+            return {
+              success: false,
+              error: "Missing or invalid parameters ('workspaceFiles', 'proposedPatches').",
+            };
+          }
+          const result = this.supervisor.analyzeWorkspacePatchImpact(wsFiles, patchesArr);
+          return {
+            success: result.success,
+            totalFilesScanned: result.totalFilesScanned,
+            modifiedFilesCount: result.modifiedFilesCount,
+            directlyImpactedFiles: result.directlyImpactedFiles,
+            downstreamConsumerFiles: result.downstreamConsumerFiles,
+            brokenSymbols: result.brokenSymbols,
+            isSafeToApply: result.isSafeToApply,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

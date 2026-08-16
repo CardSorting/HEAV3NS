@@ -13,6 +13,9 @@ import type {
   CandidateMatchScore,
   CandidateRankingResult,
   ClosestLineCandidate,
+  CodemodPipelineResult,
+  CodemodRule,
+  CodemodStepResult,
   ConflictBlockAnalysis,
   ConflictMarkerChunk,
   ConflictResolutionResult,
@@ -21,6 +24,10 @@ import type {
   DocSyncOptions,
   DocSyncResult,
   EscapeDriftDetection,
+  FunctionExtractOptions,
+  FunctionInlineOptions,
+  FunctionRefactorOptions,
+  FunctionRefactorResult,
   FuzzyMatcherOptions,
   FuzzyMatchResult,
   FuzzyMatchSpan,
@@ -30,6 +37,7 @@ import type {
   HistogramDiffHunk,
   HistogramDiffOptions,
   HistogramDiffResult,
+  ImpactedSymbol,
   ImportOptimizationOptions,
   ImportOptimizationResult,
   ImportSpecifierItem,
@@ -93,6 +101,9 @@ import type {
   StructuralPatternMatchItem,
   StructuralPatternMatchResult,
   StructuralPatternOptions,
+  StructuredConfigFormat,
+  StructuredConfigPatchOptions,
+  StructuredConfigPatchResult,
   SymbolRenameFileResult,
   SymbolRenameOccurrence,
   SymbolRenameOptions,
@@ -108,6 +119,8 @@ import type {
   UnifiedPatchHunk,
   UnifiedPatchResult,
   WordDiffHighlight,
+  WorkspaceFilePatch,
+  WorkspacePatchImpactResult,
   WorkspaceSymbolRenameResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 
@@ -5981,6 +5994,517 @@ export class DeterministicFuzzyMatcher {
       prunedStatementsCount,
       prunedSpecifiers,
       error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-Stage Codemod Rule Pipeline (Pass 12)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes an ordered pipeline of typed codemod transformation rules transactionally.
+   */
+  executeCodemodPipeline(
+    content: string,
+    rules: readonly CodemodRule[]
+  ): CodemodPipelineResult {
+    const startTime = performance.now();
+    let currentContent = content;
+    const stepResults: CodemodStepResult[] = [];
+    let successfulRules = 0;
+    let failedRules = 0;
+
+    for (const rule of rules) {
+      const stepStart = performance.now();
+      let ruleSuccess = false;
+      let changed = false;
+      let ruleError: string | null = null;
+      const initialStepContent = currentContent;
+
+      try {
+        switch (rule.type) {
+          case "fuzzy_replace": {
+            const oldStr = rule.params.oldString as string;
+            const newStr = rule.params.newString as string;
+            const replaceAll = (rule.params.replaceAll as boolean) ?? false;
+            const res = this.findAndReplace(currentContent, oldStr, newStr, replaceAll);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          case "structural_pattern": {
+            const pat = rule.params.pattern as string;
+            const rep = rule.params.replacementTemplate as string;
+            const res = this.structuralPatternMatchAndReplace(currentContent, pat, rep, rule.params.options as any);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          case "doc_sync": {
+            const id = rule.params.identifierName as string;
+            const res = this.synchronizeDocCommentsAndTypes(currentContent, id, rule.params.options as any);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          case "prune_imports": {
+            const res = this.pruneUnusedImportsAndSymbols(currentContent, rule.params.options as any);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          case "harmonize_imports": {
+            const res = this.optimizeAndHarmonizeImports(currentContent, rule.params.options as any);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          case "relocate_block": {
+            const src = rule.params.sourceBlock as string;
+            const anchor = rule.params.targetAnchor as string;
+            const res = this.relocateCodeBlock(currentContent, src, anchor, rule.params.options as any);
+            if (res.success) {
+              ruleSuccess = true;
+              changed = res.modifiedContent !== initialStepContent;
+              currentContent = res.modifiedContent;
+            } else {
+              ruleError = res.error;
+            }
+            break;
+          }
+          default: {
+            ruleError = `Unknown codemod rule type: ${(rule as any).type}`;
+          }
+        }
+      } catch (err: any) {
+        ruleError = err?.message || String(err);
+      }
+
+      const stepTime = performance.now() - stepStart;
+      stepResults.push({
+        ruleId: rule.id,
+        ruleDescription: rule.description,
+        type: rule.type,
+        success: ruleSuccess,
+        changed,
+        executionTimeMs: Number(stepTime.toFixed(4)),
+        error: ruleError,
+      });
+
+      if (ruleSuccess) {
+        successfulRules++;
+      } else {
+        failedRules++;
+        if (rule.stopOnFailure !== false) {
+          const totalTime = performance.now() - startTime;
+          return {
+            success: false,
+            modifiedContent: content,
+            totalRules: rules.length,
+            successfulRules,
+            failedRules,
+            stepResults,
+            totalExecutionTimeMs: Number(totalTime.toFixed(4)),
+            error: `Codemod pipeline stopped at rule '${rule.id}': ${ruleError}`,
+          };
+        }
+      }
+    }
+
+    const totalTime = performance.now() - startTime;
+    return {
+      success: failedRules === 0,
+      modifiedContent: currentContent,
+      totalRules: rules.length,
+      successfulRules,
+      failedRules,
+      stepResults,
+      totalExecutionTimeMs: Number(totalTime.toFixed(4)),
+      error: failedRules > 0 ? `${failedRules} codemod rules failed.` : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Structured Config Block Patching (Pass 12)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Safely patches nested keys and values inside JSON, JSONC, and YAML files.
+   */
+  patchStructuredConfigBlock(
+    content: string,
+    keyPath: readonly string[],
+    newValue: unknown,
+    options?: StructuredConfigPatchOptions
+  ): StructuredConfigPatchResult {
+    if (!content || keyPath.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        format: "json",
+        keyPath,
+        oldValue: undefined,
+        newValue,
+        wasCreated: false,
+        error: "Missing required parameters (content, keyPath).",
+      };
+    }
+
+    const isJson = content.trim().startsWith("{") || content.trim().startsWith("[");
+    const format: StructuredConfigFormat = isJson ? (content.includes("//") || content.includes("/*") ? "jsonc" : "json") : "yaml";
+
+    try {
+      if (format === "json" || format === "jsonc") {
+        const lastKey = keyPath[keyPath.length - 1];
+        const formattedNewValue = typeof newValue === "string" ? JSON.stringify(newValue) : JSON.stringify(newValue, null, options?.indentSize ?? 2);
+
+        const keyEscaped = lastKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const keyRegex = new RegExp(`(["'])${keyEscaped}\\1\\s*:\\s*([^,\\n}]+(?:\\{[^}]*\\}|\\[[^\\]]*\\])?)`, "g");
+        const match = keyRegex.exec(content);
+
+        if (match) {
+          const fullMatch = match[0];
+          const quote = match[1];
+          const oldValRaw = match[2].trim();
+          let oldValueParsed: unknown = oldValRaw;
+          try {
+            oldValueParsed = JSON.parse(oldValRaw);
+          } catch {
+            // keep raw
+          }
+
+          const replacement = `${quote}${lastKey}${quote}: ${formattedNewValue}`;
+          const modifiedContent = content.slice(0, match.index) + replacement + content.slice(match.index + fullMatch.length);
+
+          return {
+            success: true,
+            modifiedContent,
+            format,
+            keyPath,
+            oldValue: oldValueParsed,
+            newValue,
+            wasCreated: false,
+            error: null,
+          };
+        }
+
+        if (options?.createMissingPath !== false) {
+          const lastClosingBrace = content.lastIndexOf("}");
+          if (lastClosingBrace !== -1) {
+            const indent = "  ".repeat(keyPath.length);
+            const prefix = content.slice(0, lastClosingBrace).trimEnd();
+            const trailingComma = prefix.endsWith("{") || prefix.endsWith(",") ? "" : ",";
+            const insertion = `${trailingComma}\n${indent}"${lastKey}": ${formattedNewValue}\n`;
+            const modifiedContent = prefix + insertion + content.slice(lastClosingBrace);
+
+            return {
+              success: true,
+              modifiedContent,
+              format,
+              keyPath,
+              oldValue: undefined,
+              newValue,
+              wasCreated: true,
+              error: null,
+            };
+          }
+        }
+      } else {
+        const lastKey = keyPath[keyPath.length - 1];
+        const keyEscaped = lastKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const yamlKeyRegex = new RegExp(`^(\\s*)${keyEscaped}\\s*:\\s*(.*)$`, "m");
+        const yamlMatch = yamlKeyRegex.exec(content);
+
+        if (yamlMatch) {
+          const indent = yamlMatch[1];
+          const oldValRaw = yamlMatch[2];
+          const replacement = `${indent}${lastKey}: ${newValue}`;
+          const modifiedContent = content.slice(0, yamlMatch.index) + replacement + content.slice(yamlMatch.index + yamlMatch[0].length);
+
+          return {
+            success: true,
+            modifiedContent,
+            format,
+            keyPath,
+            oldValue: oldValRaw,
+            newValue,
+            wasCreated: false,
+            error: null,
+          };
+        } else if (options?.createMissingPath !== false) {
+          const indent = "  ".repeat(keyPath.length - 1);
+          const modifiedContent = content.trimEnd() + `\n${indent}${lastKey}: ${newValue}\n`;
+          return {
+            success: true,
+            modifiedContent,
+            format,
+            keyPath,
+            oldValue: undefined,
+            newValue,
+            wasCreated: true,
+            error: null,
+          };
+        }
+      }
+
+      return {
+        success: false,
+        modifiedContent: content,
+        format,
+        keyPath,
+        oldValue: undefined,
+        newValue,
+        wasCreated: false,
+        error: `Could not locate key path '${keyPath.join(".")}' in config content.`,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        modifiedContent: content,
+        format,
+        keyPath,
+        oldValue: undefined,
+        newValue,
+        wasCreated: false,
+        error: `Config patch failed: ${err?.message || String(err)}`,
+      };
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Semantic Function Inliner / Extractor (Pass 12)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Refactors code by extracting code blocks into helper functions or inlining functions into call sites.
+   */
+  inlineOrExtractFunctionBlock(
+    content: string,
+    options: FunctionRefactorOptions
+  ): FunctionRefactorResult {
+    if (options.mode === "extract") {
+      const match = this.findFirstMatchSpan(content, options.targetSpan);
+      if (!match) {
+        return {
+          success: false,
+          modifiedContent: content,
+          mode: "extract",
+          targetFunction: options.functionName,
+          callSitesUpdatedCount: 0,
+          error: "Target code span to extract could not be found.",
+        };
+      }
+
+      const [spanStart, spanEnd] = match.span;
+      const extractedBlock = content.slice(spanStart, spanEnd).trim();
+      const params = options.parameterNames || [];
+      const retType = options.returnType ? `: ${options.returnType}` : "";
+
+      const helperDeclaration = `\nfunction ${options.functionName}(${params.join(", ")})${retType} {\n  ${extractedBlock.split("\n").join("\n  ")}\n}\n`;
+      const callInvocation = `${options.isAsync ? "await " : ""}${options.functionName}(${params.join(", ")})`;
+
+      let modifiedContent = content.slice(0, spanStart) + callInvocation + content.slice(spanEnd);
+
+      if (options.placementAnchor) {
+        const anchorMatch = this.findFirstMatchSpan(modifiedContent, options.placementAnchor);
+        if (anchorMatch) {
+          const insertIdx = anchorMatch.span[1];
+          modifiedContent = modifiedContent.slice(0, insertIdx) + helperDeclaration + modifiedContent.slice(insertIdx);
+        } else {
+          modifiedContent += helperDeclaration;
+        }
+      } else {
+        modifiedContent += helperDeclaration;
+      }
+
+      return {
+        success: true,
+        modifiedContent,
+        mode: "extract",
+        targetFunction: options.functionName,
+        callSitesUpdatedCount: 1,
+        error: null,
+      };
+    } else {
+      const fnName = options.functionName;
+      const fnRegex = new RegExp(`(?:export\\s+)?(?:async\\s+)?function\\s+${fnName}\\s*\\(([^)]*)\\)[^{]*\\{([\\s\\S]*?)\\}`, "m");
+      const fnMatch = fnRegex.exec(content);
+
+      if (!fnMatch) {
+        return {
+          success: false,
+          modifiedContent: content,
+          mode: "inline",
+          targetFunction: fnName,
+          callSitesUpdatedCount: 0,
+          error: `Function declaration '${fnName}' not found.`,
+        };
+      }
+
+      const rawParams = fnMatch[1].split(",").map((p) => p.trim().split(":")[0].trim()).filter(Boolean);
+      const rawBody = fnMatch[2].trim();
+      let returnExpr = rawBody;
+      const returnMatch = /^return\s+([^;]+);?$/.exec(rawBody);
+      if (returnMatch) {
+        returnExpr = returnMatch[1].trim();
+      }
+
+      let workingContent = content;
+      if (options.removeDeclaration !== false) {
+        workingContent = content.slice(0, fnMatch.index) + content.slice(fnMatch.index + fnMatch[0].length).trimStart();
+      }
+
+      const callRegex = new RegExp(`\\b${fnName}\\s*\\(([^)]*)\\)`, "g");
+      let updatedCount = 0;
+      const modifiedContent = workingContent.replace(callRegex, (_full, argsRaw) => {
+        updatedCount++;
+        const args = argsRaw.split(",").map((a: string) => a.trim()).filter(Boolean);
+        let inlined = returnExpr;
+        for (let i = 0; i < rawParams.length; i++) {
+          const paramName = rawParams[i];
+          const argVal = args[i] || "undefined";
+          inlined = inlined.replace(new RegExp(`\\b${paramName}\\b`, "g"), argVal);
+        }
+        return `(${inlined})`;
+      });
+
+      return {
+        success: updatedCount > 0,
+        modifiedContent,
+        mode: "inline",
+        targetFunction: fnName,
+        callSitesUpdatedCount: updatedCount,
+        error: updatedCount === 0 ? "No call sites found to inline." : null,
+      };
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Workspace Patch Impact Analyzer (Pass 12)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Constructs an in-memory symbolic export/import dependency graph across workspace files
+   * and identifies downstream consumers and breaking changes for proposed patches.
+   */
+  analyzeWorkspacePatchImpact(
+    workspaceFiles: Record<string, string>,
+    proposedPatches: readonly WorkspaceFilePatch[]
+  ): WorkspacePatchImpactResult {
+    const totalFilesScanned = Object.keys(workspaceFiles).length;
+    const directlyImpactedFiles: string[] = [];
+    const downstreamSet = new Set<string>();
+    const brokenSymbols: ImpactedSymbol[] = [];
+
+    const importGraph = new Map<string, Array<{ symbol: string; source: string }>>();
+    for (const [filePath, fileContent] of Object.entries(workspaceFiles)) {
+      const impAnalyses = this.parseImportStatements(fileContent);
+      const importsList: Array<{ symbol: string; source: string }> = [];
+      for (const imp of impAnalyses) {
+        if (imp.defaultImport) {
+          importsList.push({ symbol: imp.defaultImport, source: imp.moduleSpecifier });
+        }
+        if (imp.namespaceImport) {
+          importsList.push({ symbol: imp.namespaceImport, source: imp.moduleSpecifier });
+        }
+        for (const named of imp.namedImports) {
+          importsList.push({ symbol: named.importedName, source: imp.moduleSpecifier });
+        }
+      }
+      importGraph.set(filePath, importsList);
+    }
+
+    for (const patch of proposedPatches) {
+      directlyImpactedFiles.push(patch.filePath);
+      const oldTree = this.parseSemanticTree(patch.oldContent);
+      const newTree = this.parseSemanticTree(patch.newContent);
+
+      const oldExportedNames = new Set<string>();
+      for (const node of oldTree) {
+        if (node.rawCode.startsWith("export ") || node.rawCode.includes("export ")) {
+          oldExportedNames.add(node.identifier);
+        }
+      }
+
+      const newExportedNames = new Set<string>();
+      for (const node of newTree) {
+        if (node.rawCode.startsWith("export ") || node.rawCode.includes("export ")) {
+          newExportedNames.add(node.identifier);
+        }
+      }
+
+      for (const oldExp of oldExportedNames) {
+        if (!newExportedNames.has(oldExp)) {
+          const affected: string[] = [];
+          for (const [consumerFile, imports] of importGraph.entries()) {
+            if (consumerFile === patch.filePath) continue;
+            for (const imp of imports) {
+              if (imp.symbol === oldExp) {
+                affected.push(consumerFile);
+                downstreamSet.add(consumerFile);
+              }
+            }
+          }
+
+          brokenSymbols.push({
+            symbol: oldExp,
+            definingFile: patch.filePath,
+            affectedConsumers: affected,
+            breakingKind: "removed",
+          });
+        }
+      }
+
+      for (const [consumerFile, imports] of importGraph.entries()) {
+        if (consumerFile === patch.filePath) continue;
+        for (const imp of imports) {
+          if (
+            imp.source.includes(patch.filePath.replace(/\.[^/.]+$/, "")) ||
+            patch.filePath.includes(imp.source.replace(/^\.\//, ""))
+          ) {
+            downstreamSet.add(consumerFile);
+          }
+        }
+      }
+    }
+
+    const downstreamConsumerFiles = Array.from(downstreamSet);
+    const isSafeToApply = brokenSymbols.length === 0;
+
+    return {
+      success: true,
+      totalFilesScanned,
+      modifiedFilesCount: proposedPatches.length,
+      directlyImpactedFiles,
+      downstreamConsumerFiles,
+      brokenSymbols,
+      isSafeToApply,
+      error: !isSafeToApply ? `${brokenSymbols.length} exported symbol breakages detected in workspace.` : null,
     };
   }
 }

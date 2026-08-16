@@ -8,11 +8,15 @@
 import { performance } from "node:perf_hooks";
 import type {
   CandidateRankingResult,
+  CodemodPipelineResult,
+  CodemodRule,
   ConflictMarkerChunk,
   ConflictResolutionResult,
   ConflictResolutionStrategy,
   DocSyncOptions,
   DocSyncResult,
+  FunctionRefactorOptions,
+  FunctionRefactorResult,
   FuzzyExecutionRecord,
   FuzzyMatchResult,
   FuzzyMultiMatchResult,
@@ -63,6 +67,8 @@ import type {
   SignatureRefactorResult,
   StructuralPatternMatchResult,
   StructuralPatternOptions,
+  StructuredConfigPatchOptions,
+  StructuredConfigPatchResult,
   SymbolRenameOptions,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
@@ -71,6 +77,8 @@ import type {
   TokenStreamMatchOptions,
   TokenStreamMatchResult,
   UnifiedPatchResult,
+  WorkspaceFilePatch,
+  WorkspacePatchImpactResult,
   WorkspaceSymbolRenameResult,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -694,6 +702,40 @@ export class FuzzyMatcherSupervisor {
     options?: PruneUnusedOptions
   ): PruneUnusedResult {
     return this.matcher.pruneUnusedImportsAndSymbols(content, options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pass 12: Codemod Pipeline, Structured Config Patch, Inliner/Extractor, Impact
+  // ---------------------------------------------------------------------------
+
+  executeCodemodPipeline(
+    content: string,
+    rules: readonly CodemodRule[]
+  ): CodemodPipelineResult {
+    return this.matcher.executeCodemodPipeline(content, rules);
+  }
+
+  patchStructuredConfigBlock(
+    content: string,
+    keyPath: readonly string[],
+    newValue: unknown,
+    options?: StructuredConfigPatchOptions
+  ): StructuredConfigPatchResult {
+    return this.matcher.patchStructuredConfigBlock(content, keyPath, newValue, options);
+  }
+
+  inlineOrExtractFunctionBlock(
+    content: string,
+    options: FunctionRefactorOptions
+  ): FunctionRefactorResult {
+    return this.matcher.inlineOrExtractFunctionBlock(content, options);
+  }
+
+  analyzeWorkspacePatchImpact(
+    workspaceFiles: Record<string, string>,
+    proposedPatches: readonly WorkspaceFilePatch[]
+  ): WorkspacePatchImpactResult {
+    return this.matcher.analyzeWorkspacePatchImpact(workspaceFiles, proposedPatches);
   }
 
   clearHistory(): void {

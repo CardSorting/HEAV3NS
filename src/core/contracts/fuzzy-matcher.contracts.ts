@@ -891,5 +891,129 @@ export interface PruneUnusedResult {
   readonly error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Multi-Stage Codemod Rule Pipeline Contracts (Pass 12)
+// ---------------------------------------------------------------------------
+
+export type CodemodRuleType =
+  | "fuzzy_replace"
+  | "structural_pattern"
+  | "doc_sync"
+  | "prune_imports"
+  | "harmonize_imports"
+  | "relocate_block";
+
+export interface CodemodRule {
+  readonly id: string;
+  readonly description: string;
+  readonly type: CodemodRuleType;
+  readonly params: Record<string, unknown>;
+  readonly stopOnFailure?: boolean;
+}
+
+export interface CodemodStepResult {
+  readonly ruleId: string;
+  readonly ruleDescription: string;
+  readonly type: CodemodRuleType;
+  readonly success: boolean;
+  readonly changed: boolean;
+  readonly executionTimeMs: number;
+  readonly error: string | null;
+}
+
+export interface CodemodPipelineResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly totalRules: number;
+  readonly successfulRules: number;
+  readonly failedRules: number;
+  readonly stepResults: readonly CodemodStepResult[];
+  readonly totalExecutionTimeMs: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Structured Config Block Patching Contracts (Pass 12)
+// ---------------------------------------------------------------------------
+
+export type StructuredConfigFormat = "json" | "jsonc" | "yaml" | "toml";
+
+export interface StructuredConfigPatchOptions {
+  readonly createMissingPath?: boolean;
+  readonly preserveComments?: boolean;
+  readonly indentSize?: number;
+}
+
+export interface StructuredConfigPatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly format: StructuredConfigFormat;
+  readonly keyPath: readonly string[];
+  readonly oldValue: unknown;
+  readonly newValue: unknown;
+  readonly wasCreated: boolean;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Function Inliner & Extractor Contracts (Pass 12)
+// ---------------------------------------------------------------------------
+
+export interface FunctionExtractOptions {
+  readonly mode: "extract";
+  readonly functionName: string;
+  readonly targetSpan: string;
+  readonly parameterNames?: readonly string[];
+  readonly returnType?: string;
+  readonly isAsync?: boolean;
+  readonly placementAnchor?: string;
+}
+
+export interface FunctionInlineOptions {
+  readonly mode: "inline";
+  readonly functionName: string;
+  readonly removeDeclaration?: boolean;
+}
+
+export type FunctionRefactorOptions = FunctionExtractOptions | FunctionInlineOptions;
+
+export interface FunctionRefactorResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly mode: "extract" | "inline";
+  readonly targetFunction: string;
+  readonly callSitesUpdatedCount: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Workspace Patch Impact Analyzer Contracts (Pass 12)
+// ---------------------------------------------------------------------------
+
+export interface WorkspaceFilePatch {
+  readonly filePath: string;
+  readonly oldContent: string;
+  readonly newContent: string;
+}
+
+export interface ImpactedSymbol {
+  readonly symbol: string;
+  readonly definingFile: string;
+  readonly affectedConsumers: readonly string[];
+  readonly breakingKind: "removed" | "signature_changed" | "type_changed";
+}
+
+export interface WorkspacePatchImpactResult {
+  readonly success: boolean;
+  readonly totalFilesScanned: number;
+  readonly modifiedFilesCount: number;
+  readonly directlyImpactedFiles: readonly string[];
+  readonly downstreamConsumerFiles: readonly string[];
+  readonly brokenSymbols: readonly ImpactedSymbol[];
+  readonly isSafeToApply: boolean;
+  readonly error: string | null;
+}
+
+
 
 
