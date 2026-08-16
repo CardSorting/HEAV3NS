@@ -470,6 +470,12 @@ import { BroccoliWakeWordSubstrate } from "./sessions/extensions/wake_word/brocc
 import { WakeWordSnapshotManager } from "./sessions/extensions/wake_word/wake-word-snapshot-manager.js";
 import { WakeWordToolSuite } from "./tooling/extensions/wake_word/wake-word-tool-suite.js";
 
+import { DeterministicMediaResolver } from "./agents/extensions/media_source/deterministic-media-resolver.js";
+import { MediaSourceSupervisor } from "./agents/extensions/media_source/media-source-supervisor.js";
+import { BroccoliMediaSourceSubstrate } from "./sessions/extensions/media_source/broccoli-media-source-substrate.js";
+import { MediaSourceSnapshotManager } from "./sessions/extensions/media_source/media-source-snapshot-manager.js";
+import { MediaSourceToolSuite } from "./tooling/extensions/media_source/media-source-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1943,6 +1949,21 @@ export type {
 } from "./core/contracts/wake-word.contracts.js";
 export { DEFAULT_WAKE_WORD_CONFIG } from "./core/contracts/wake-word.contracts.js";
 
+export { DeterministicMediaResolver } from "./agents/extensions/media_source/deterministic-media-resolver.js";
+export { MediaSourceSupervisor } from "./agents/extensions/media_source/media-source-supervisor.js";
+export { BroccoliMediaSourceSubstrate } from "./sessions/extensions/media_source/broccoli-media-source-substrate.js";
+export { MediaSourceSnapshotManager } from "./sessions/extensions/media_source/media-source-snapshot-manager.js";
+export { MediaSourceToolSuite } from "./tooling/extensions/media_source/media-source-tool-suite.js";
+export type {
+  MediaSourceOrigin,
+  MediaKind,
+  ResolvedMedia,
+  MediaSourceConfig,
+  MediaSourceMetrics,
+  MediaSourceWorkspaceSnapshot,
+} from "./core/contracts/media-source.contracts.js";
+export { DEFAULT_MEDIA_SOURCE_CONFIG } from "./core/contracts/media-source.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2345,6 +2366,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliWakeWordSubstrate: BroccoliWakeWordSubstrate;
   readonly wakeWordSnapshotManager: WakeWordSnapshotManager;
   readonly wakeWordToolSuite: WakeWordToolSuite;
+  readonly deterministicMediaResolver: DeterministicMediaResolver;
+  readonly mediaSourceSupervisor: MediaSourceSupervisor;
+  readonly broccoliMediaSourceSubstrate: BroccoliMediaSourceSubstrate;
+  readonly mediaSourceSnapshotManager: MediaSourceSnapshotManager;
+  readonly mediaSourceToolSuite: MediaSourceToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2738,6 +2764,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliWakeWordSubstrate = components.broccoliWakeWordSubstrate;
     this.wakeWordSnapshotManager = components.wakeWordSnapshotManager;
     this.wakeWordToolSuite = components.wakeWordToolSuite;
+    this.deterministicMediaResolver = components.deterministicMediaResolver;
+    this.mediaSourceSupervisor = components.mediaSourceSupervisor;
+    this.broccoliMediaSourceSubstrate = components.broccoliMediaSourceSubstrate;
+    this.mediaSourceSnapshotManager = components.mediaSourceSnapshotManager;
+    this.mediaSourceToolSuite = components.mediaSourceToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

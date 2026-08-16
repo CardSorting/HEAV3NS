@@ -105,6 +105,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-095](ADR-095-v4a-patch-parser-and-working-diff-synthesizer.md) | V4A Multi-File Patch Parser, Atomic Multi-Hunk Applicator & Working Tree Diff Synthesizer Subsystem | Accepted | 2026-08-16 | Code Editing & Multi-File Diffs (Target #52 / Phase 119) |
 | [ADR-096](ADR-096-website-access-policy-and-domain-blocklist-engine.md) | Website Access Policy Engine, Domain Wildcard Matching & URL Access Governance Subsystem | Accepted | 2026-08-16 | Web & Network Policy (Target #53 / Phase 120) |
 | [ADR-097](ADR-097-acoustic-wake-word-and-ring-buffer-engine.md) | Streaming Acoustic Wake-Word Detection, Ring-Buffer Audio Engine & Hands-Free Trigger Subsystem | Accepted | 2026-08-16 | Voice & Audio Intelligence (Target #54 / Phase 121) |
+| [ADR-098](ADR-098-unified-media-source-resolver-and-mime-perception.md) | Unified Media Source Resolver, Magic-Byte MIME Perception & Multimodal Ingestion Engine | Accepted | 2026-08-16 | Multimodal & Vision Intelligence (Target #55 / Phase 122) |
 
 ## Domain Grouping
 
@@ -132,6 +133,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-095](ADR-095-v4a-patch-parser-and-working-diff-synthesizer.md)**: V4A multi-file compound patch parser, atomic multi-hunk applicator with fuzzy context matching, and working tree git diff synthesizer.
 - **[ADR-096](ADR-096-website-access-policy-and-domain-blocklist-engine.md)**: Website access policy engine, domain wildcard matching, shared blocklist parser, and URL access governance.
 - **[ADR-097](ADR-097-acoustic-wake-word-and-ring-buffer-engine.md)**: Streaming acoustic wake-word detection, ring-buffer audio engine, and hands-free trigger subsystem.
+- **[ADR-098](ADR-098-unified-media-source-resolver-and-mime-perception.md)**: Unified media source resolver, magic-byte MIME perception, and multimodal ingestion engine.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

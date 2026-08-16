@@ -509,6 +509,12 @@ import { BroccoliWakeWordSubstrate } from "../sessions/extensions/wake_word/broc
 import { WakeWordSnapshotManager } from "../sessions/extensions/wake_word/wake-word-snapshot-manager.js";
 import { WakeWordToolSuite } from "../tooling/extensions/wake_word/wake-word-tool-suite.js";
 
+import { DeterministicMediaResolver } from "../agents/extensions/media_source/deterministic-media-resolver.js";
+import { MediaSourceSupervisor } from "../agents/extensions/media_source/media-source-supervisor.js";
+import { BroccoliMediaSourceSubstrate } from "../sessions/extensions/media_source/broccoli-media-source-substrate.js";
+import { MediaSourceSnapshotManager } from "../sessions/extensions/media_source/media-source-snapshot-manager.js";
+import { MediaSourceToolSuite } from "../tooling/extensions/media_source/media-source-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -970,6 +976,11 @@ export class MonolithFactory {
     broccoliWakeWordSubstrate: BroccoliWakeWordSubstrate;
     wakeWordSnapshotManager: WakeWordSnapshotManager;
     wakeWordToolSuite: WakeWordToolSuite;
+    deterministicMediaResolver: DeterministicMediaResolver;
+    mediaSourceSupervisor: MediaSourceSupervisor;
+    broccoliMediaSourceSubstrate: BroccoliMediaSourceSubstrate;
+    mediaSourceSnapshotManager: MediaSourceSnapshotManager;
+    mediaSourceToolSuite: MediaSourceToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1716,6 +1727,15 @@ export class MonolithFactory {
     );
     const wakeWordToolSuite = new WakeWordToolSuite(wakeWordSupervisor);
 
+    const deterministicMediaResolver = new DeterministicMediaResolver();
+    const broccoliMediaSourceSubstrate = new BroccoliMediaSourceSubstrate();
+    const mediaSourceSnapshotManager = new MediaSourceSnapshotManager(broccoliMediaSourceSubstrate);
+    const mediaSourceSupervisor = new MediaSourceSupervisor(
+      broccoliMediaSourceSubstrate,
+      deterministicMediaResolver
+    );
+    const mediaSourceToolSuite = new MediaSourceToolSuite(mediaSourceSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1787,7 +1807,8 @@ export class MonolithFactory {
       urlSafetyToolSuite,
       v4aPatchToolSuite,
       websitePolicyToolSuite,
-      wakeWordToolSuite
+      wakeWordToolSuite,
+      mediaSourceToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2262,6 +2283,11 @@ export class MonolithFactory {
       broccoliWakeWordSubstrate,
       wakeWordSnapshotManager,
       wakeWordToolSuite,
+      deterministicMediaResolver,
+      mediaSourceSupervisor,
+      broccoliMediaSourceSubstrate,
+      mediaSourceSnapshotManager,
+      mediaSourceToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
