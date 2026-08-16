@@ -2422,13 +2422,20 @@ export { BroccoliGoalSubstrate } from "./sessions/extensions/goals/broccoli-goal
 export { GoalSnapshotManager } from "./sessions/extensions/goals/goal-snapshot-manager.js";
 export { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
 export type {
+  GoalCategory,
   GoalContract,
   GoalEvaluationResult,
   GoalGate,
+  GoalGatePolicy,
+  GoalMilestone,
+  GoalQueryFilter,
+  GoalRetroSummary,
   GoalState,
   GoalStateSnapshot,
   GoalStatus,
+  GoalTemplate,
   GoalVerdict,
+  MilestoneStatus,
 } from "./core/contracts/goal.contracts.js";
 export {
   DEFAULT_GATE_MAX_RETRIES,

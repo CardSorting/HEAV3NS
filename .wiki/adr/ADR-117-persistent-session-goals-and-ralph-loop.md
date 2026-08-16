@@ -1,56 +1,70 @@
-# ADR-117: Persistent Session Goals, Quality Gates & Deterministic Goal Loop
+# ADR-117: World-Class Persistent Session Goals, Quality Gate Policies, Milestone DAGs & Retrospective Audits
 
 ## Context & Problem Statement
-Autonomous coding and complex system evolution require multi-turn goal execution where an agent works persistently toward an overarching objective without losing context, violating boundaries, or prematurely halting on transient steps.
+Autonomous AI agents executing long-horizon tasks frequently drift from user objectives, declare tasks prematurely finished without running test suites, or lack structured visibility into intermediate progress checkpoints.
 
-In `hermes-agent-main`, this capability is provided via `hermes_cli/goals.py` and `hermes_cli/loops.py` (the Ralph-style Goal Loop). In LUMI-JOY, the goal loop must be transformed to match the **Deterministic Game Engine Architecture** (`tick()`, `GameStateSnapshot`, zero-GC in-memory substrates, microsecond state rewind, and prefix-cache-stable continuation frames).
-
-## Proposed Architecture & Solution
+## World-Class Architecture & Design Patterns
 
 ```mermaid
 graph TD
-  User([User / Autonomous Agent Loop]) --> GS[GoalSupervisor]
+  Client([User / Agent / Slash Command /goal]) --> GTS[GoalToolSuite]
+  GTS --> GS[GoalSupervisor]
   GS --> DGE[DeterministicGoalEngine]
   DGE --> BGS[BroccoliGoalSubstrate]
-  DGE --> GSM[GoalSnapshotManager]
-  GS --> GTS[GoalToolSuite]
-  GTS --> TR[ValidatingToolRegistry]
+  BGS --> GSM[GoalSnapshotManager]
 
-  subgraph Goal Engine Pipeline
-    DGE --> CP[Contract Parser: outcome, verify, constraints, boundaries, stopWhen]
-    DGE --> QG[Quality Gate Runner with Workspace Fingerprint]
-    DGE --> JDG[3-State Epistemic Judge: DONE, WAIT, CONTINUE]
-    DGE --> SYN[Prefix-Cache Stable Continuation Frame Synthesizer]
+  subgraph Templates Catalog
+    DGE --> TmplBug[🐛 Bugfix]
+    DGE --> TmplFeat[🚀 Feature]
+    DGE --> TmplRefac[♻️ Refactor]
+    DGE --> TmplAudit[🛡️ Audit]
+    DGE --> TmplRel[📦 Release]
+    DGE --> TmplLearn[📚 Learning]
+  end
+
+  subgraph Milestone DAG
+    BGS --> M1[Milestone 1: 100% ✓]
+    BGS --> M2[Milestone 2: In Progress]
+    BGS --> M3[Milestone 3: Pending]
+  end
+
+  subgraph Multi-Stage Quality Gates
+    DGE --> GateBlock[Blocking Gate: npm test]
+    DGE --> GateAdv[Advisory Gate: linter]
+  end
+
+  subgraph Post-Goal Retrospective
+    DGE --> RetroSummary[Retrospective Audit & Adherence Score]
   end
 ```
 
-### 1. Structured 5-Field Completion Contract
-Users or prompt planners can define goals with explicit structured constraints parsed from natural language:
-- **Outcome**: The single end state that must be true when complete.
-- **Verification**: The specific checkable test, command, or artifact proving the outcome.
-- **Constraints**: Invariants that must not change or regress.
-- **Boundaries**: Files, directories, or tools within scope.
-- **Stop When**: Explicit stop conditions requiring human escalation.
+### 1. Curated Goal Templates Catalog
+- Built-in goal templates: `bugfix` 🐛, `feature` 🚀, `refactor` ♻️, `audit` 🛡️, `release` 📦, `learning` 📚.
+- Pre-configures 5-field contracts, milestones, and quality gates with 1 command (`/goal template <name>`).
 
-### 2. Fingerprinted Deterministic Quality Gates
-Shell commands that must pass before the goal can be declared done:
-- Workspace change fingerprinting (`workspaceFingerprint`) skips re-running identical failing test suites on unchanged workspaces ($< 1\text{ ms}$).
-- On gate failure, the bounded tail of the output is fed directly into the next turn's continuation prompt as concrete debugging evidence.
+### 2. Milestone DAG & Dynamic Progress Tracking
+- Track multi-step progress: `[██████░░░░] 60%`.
+- Automatic milestone progression detection from model responses.
 
-### 3. Epistemic 3-State Judge
-- **`DONE`**: Goal is satisfied with verified proof or hits an explicit stop condition.
-- **`WAIT`**: Parks loop execution on a running background PID, session watcher, or cooldown timer without burning frame turns.
-- **`CONTINUE`**: Work is in progress; generates a byte-stable continuation prompt maintaining prefix cache stability (`ADR-002`/`ADR-083`).
+### 3. Multi-Stage Quality Gates (Blocking vs Advisory)
+- **Blocking Gates**: Strict fail-closed verification commands (e.g. `npm test`, `npm run check`).
+- **Advisory Gates**: Informational verification commands that warn without interrupting the loop.
 
-### 4. Zero-GC Memory Substrate & Instant Rollback
-Session goals, subgoals, and execution metrics reside in `BroccoliGoalSubstrate` with frame-perfect snapshotting (`GoalSnapshotManager`) $< 0.05\text{ ms}$.
+### 4. Post-Goal Retrospectives & Completion Archive
+- Retrospective summary capturing duration, turn efficiency, gate pass rate, and contract adherence score ($0\text{--}100$).
+- Archived in contiguous in-memory substrate for historical review.
+
+### 5. Natural Query DSL & Multi-Session Goal Search
+- Search goals across sessions: `is:active`, `is:done`, `category:bugfix`, `sort:progress`, `sort:recent`.
+
+### 6. 8 Ergonomic Model Tools
+- `goal_set`, `goal_status`, `goal_template`, `goal_milestone`, `goal_gate`, `goal_control`, `goal_retro`, `goal_list`.
 
 ---
 
 ## Verification & Empirical Acceptance Criteria
-1. **Contract Parsing**: Natural language with `verify:`, `constraints:`, `boundaries:`, `stop when:` parsed into structured `GoalContract`.
-2. **Quality Gates**: Pre-judge gate execution, retry limits, and output bounding verified.
-3. **Wait Barriers**: Park on background PID / session without advancing turn count.
-4. **Continuation Frames**: Byte-stable continuation prompts generated without mutating system prompts.
-5. **Microsecond State Rewind**: Substrate rollback verified in $< 0.05\text{ ms}$.
-6. **Grand Monolith Composition**: 549 components verified with `OPTIMAL` cohesion status.
+1. **Contract Invariants**: 5-field contract parsed cleanly with alias normalizations.
+2. **Template Instantiation**: All 6 templates instantiate valid states with milestones and gates.
+3. **Milestone Progression**: Percentage dynamically updates upon completion.
+4. **State Rewind SLA**: Substrate rollback verified in $< 0.05\text{ ms}$.
+5. **Monolith Composition**: Exact 554 components verified in `OPTIMAL` cohesion.

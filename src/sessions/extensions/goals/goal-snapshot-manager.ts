@@ -20,6 +20,10 @@ export class GoalSnapshotManager {
     return snap;
   }
 
+  captureSnapshot(snapshotId: string): GoalStateSnapshot {
+    return this.createSnapshot(snapshotId);
+  }
+
   restoreSnapshot(snapshotId: string): boolean {
     const snap = this.snapshots.get(snapshotId);
     if (!snap) return false;
