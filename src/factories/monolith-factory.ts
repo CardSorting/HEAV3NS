@@ -539,6 +539,12 @@ import { BroccoliFileSafetySubstrate } from "../sessions/extensions/file_safety/
 import { FileSafetySnapshotManager } from "../sessions/extensions/file_safety/file-safety-snapshot-manager.js";
 import { FileSafetyToolSuite } from "../tooling/extensions/file_safety/file-safety-tool-suite.js";
 
+import { DeterministicContextBreakdownEngine } from "../agents/extensions/context_breakdown/deterministic-context-breakdown-engine.js";
+import { ContextBreakdownSupervisor } from "../agents/extensions/context_breakdown/context-breakdown-supervisor.js";
+import { BroccoliContextBreakdownSubstrate } from "../sessions/extensions/context_breakdown/broccoli-context-breakdown-substrate.js";
+import { ContextBreakdownSnapshotManager } from "../sessions/extensions/context_breakdown/context-breakdown-snapshot-manager.js";
+import { ContextBreakdownToolSuite } from "../tooling/extensions/context_breakdown/context-breakdown-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1025,6 +1031,11 @@ export class MonolithFactory {
     broccoliFileSafetySubstrate: BroccoliFileSafetySubstrate;
     fileSafetySnapshotManager: FileSafetySnapshotManager;
     fileSafetyToolSuite: FileSafetyToolSuite;
+    deterministicContextBreakdownEngine: DeterministicContextBreakdownEngine;
+    contextBreakdownSupervisor: ContextBreakdownSupervisor;
+    broccoliContextBreakdownSubstrate: BroccoliContextBreakdownSubstrate;
+    contextBreakdownSnapshotManager: ContextBreakdownSnapshotManager;
+    contextBreakdownToolSuite: ContextBreakdownToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1816,6 +1827,15 @@ export class MonolithFactory {
     );
     const fileSafetyToolSuite = new FileSafetyToolSuite(fileSafetySupervisor);
 
+    const deterministicContextBreakdownEngine = new DeterministicContextBreakdownEngine();
+    const broccoliContextBreakdownSubstrate = new BroccoliContextBreakdownSubstrate();
+    const contextBreakdownSnapshotManager = new ContextBreakdownSnapshotManager(broccoliContextBreakdownSubstrate);
+    const contextBreakdownSupervisor = new ContextBreakdownSupervisor(
+      broccoliContextBreakdownSubstrate,
+      deterministicContextBreakdownEngine
+    );
+    const contextBreakdownToolSuite = new ContextBreakdownToolSuite(contextBreakdownSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1892,7 +1912,8 @@ export class MonolithFactory {
       worktreeToolSuite,
       transcriptionToolSuite,
       deadlineToolSuite,
-      fileSafetyToolSuite
+      fileSafetyToolSuite,
+      contextBreakdownToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2392,6 +2413,11 @@ export class MonolithFactory {
       broccoliFileSafetySubstrate,
       fileSafetySnapshotManager,
       fileSafetyToolSuite,
+      deterministicContextBreakdownEngine,
+      contextBreakdownSupervisor,
+      broccoliContextBreakdownSubstrate,
+      contextBreakdownSnapshotManager,
+      contextBreakdownToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

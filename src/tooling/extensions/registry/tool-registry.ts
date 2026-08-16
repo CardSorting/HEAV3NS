@@ -73,6 +73,7 @@ import type { WorktreeToolSuite } from "../worktree/worktree-tool-suite.js";
 import type { TranscriptionToolSuite } from "../transcription/transcription-tool-suite.js";
 import type { DeadlineToolSuite } from "../deadline/deadline-tool-suite.js";
 import type { FileSafetyToolSuite } from "../file_safety/file-safety-tool-suite.js";
+import type { ContextBreakdownToolSuite } from "../context_breakdown/context-breakdown-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -137,6 +138,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly transcriptionToolSuite?: TranscriptionToolSuite;
   readonly deadlineToolSuite?: DeadlineToolSuite;
   readonly fileSafetyToolSuite?: FileSafetyToolSuite;
+  readonly contextBreakdownToolSuite?: ContextBreakdownToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -209,7 +211,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     worktreeToolSuite?: WorktreeToolSuite,
     transcriptionToolSuite?: TranscriptionToolSuite,
     deadlineToolSuite?: DeadlineToolSuite,
-    fileSafetyToolSuite?: FileSafetyToolSuite
+    fileSafetyToolSuite?: FileSafetyToolSuite,
+    contextBreakdownToolSuite?: ContextBreakdownToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -274,6 +277,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.transcriptionToolSuite = transcriptionToolSuite;
     this.deadlineToolSuite = deadlineToolSuite;
     this.fileSafetyToolSuite = fileSafetyToolSuite;
+    this.contextBreakdownToolSuite = contextBreakdownToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -771,6 +775,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.fileSafetyToolSuite) {
       for (const tool of this.fileSafetyToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.contextBreakdownToolSuite) {
+      for (const tool of this.contextBreakdownToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

@@ -500,6 +500,12 @@ import { BroccoliFileSafetySubstrate } from "./sessions/extensions/file_safety/b
 import { FileSafetySnapshotManager } from "./sessions/extensions/file_safety/file-safety-snapshot-manager.js";
 import { FileSafetyToolSuite } from "./tooling/extensions/file_safety/file-safety-tool-suite.js";
 
+import { DeterministicContextBreakdownEngine } from "./agents/extensions/context_breakdown/deterministic-context-breakdown-engine.js";
+import { ContextBreakdownSupervisor } from "./agents/extensions/context_breakdown/context-breakdown-supervisor.js";
+import { BroccoliContextBreakdownSubstrate } from "./sessions/extensions/context_breakdown/broccoli-context-breakdown-substrate.js";
+import { ContextBreakdownSnapshotManager } from "./sessions/extensions/context_breakdown/context-breakdown-snapshot-manager.js";
+import { ContextBreakdownToolSuite } from "./tooling/extensions/context_breakdown/context-breakdown-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2051,6 +2057,21 @@ export type {
 } from "./core/contracts/file-safety.contracts.js";
 export { DEFAULT_FILE_SAFETY_CONFIG } from "./core/contracts/file-safety.contracts.js";
 
+export { DeterministicContextBreakdownEngine } from "./agents/extensions/context_breakdown/deterministic-context-breakdown-engine.js";
+export { ContextBreakdownSupervisor } from "./agents/extensions/context_breakdown/context-breakdown-supervisor.js";
+export { BroccoliContextBreakdownSubstrate } from "./sessions/extensions/context_breakdown/broccoli-context-breakdown-substrate.js";
+export { ContextBreakdownSnapshotManager } from "./sessions/extensions/context_breakdown/context-breakdown-snapshot-manager.js";
+export { ContextBreakdownToolSuite } from "./tooling/extensions/context_breakdown/context-breakdown-tool-suite.js";
+export type {
+  ContextCategoryId,
+  ContextCategorySlice,
+  ContextBreakdownReport,
+  ContextBreakdownConfig,
+  ContextBreakdownMetrics,
+  ContextBreakdownWorkspaceSnapshot,
+} from "./core/contracts/context-breakdown.contracts.js";
+export { DEFAULT_CONTEXT_BREAKDOWN_CONFIG } from "./core/contracts/context-breakdown.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2478,6 +2499,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliFileSafetySubstrate: BroccoliFileSafetySubstrate;
   readonly fileSafetySnapshotManager: FileSafetySnapshotManager;
   readonly fileSafetyToolSuite: FileSafetyToolSuite;
+  readonly deterministicContextBreakdownEngine: DeterministicContextBreakdownEngine;
+  readonly contextBreakdownSupervisor: ContextBreakdownSupervisor;
+  readonly broccoliContextBreakdownSubstrate: BroccoliContextBreakdownSubstrate;
+  readonly contextBreakdownSnapshotManager: ContextBreakdownSnapshotManager;
+  readonly contextBreakdownToolSuite: ContextBreakdownToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2896,6 +2922,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliFileSafetySubstrate = components.broccoliFileSafetySubstrate;
     this.fileSafetySnapshotManager = components.fileSafetySnapshotManager;
     this.fileSafetyToolSuite = components.fileSafetyToolSuite;
+    this.deterministicContextBreakdownEngine = components.deterministicContextBreakdownEngine;
+    this.contextBreakdownSupervisor = components.contextBreakdownSupervisor;
+    this.broccoliContextBreakdownSubstrate = components.broccoliContextBreakdownSubstrate;
+    this.contextBreakdownSnapshotManager = components.contextBreakdownSnapshotManager;
+    this.contextBreakdownToolSuite = components.contextBreakdownToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
