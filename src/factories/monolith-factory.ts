@@ -436,6 +436,13 @@ import { BroccoliTitleInsightsSubstrate } from "../sessions/extensions/title_ins
 import { TitleInsightsSnapshotManager } from "../sessions/extensions/title_insights/title-insights-snapshot-manager.js";
 import { TitleInsightsToolSuite } from "../tooling/extensions/title_insights/title-insights-tool-suite.js";
 
+import { DeterministicHeredocSanitizer } from "../agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.js";
+import { TerminalDiagnosticsEngine } from "../agents/extensions/heredoc_terminal/terminal-diagnostics-engine.js";
+import { HeredocTerminalSupervisor } from "../agents/extensions/heredoc_terminal/heredoc-terminal-supervisor.js";
+import { BroccoliHeredocTerminalSubstrate } from "../sessions/extensions/heredoc_terminal/broccoli-heredoc-terminal-substrate.js";
+import { HeredocTerminalSnapshotManager } from "../sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
+import { HeredocTerminalToolSuite } from "../tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -836,6 +843,12 @@ export class MonolithFactory {
     broccoliTitleInsightsSubstrate: BroccoliTitleInsightsSubstrate;
     titleInsightsSnapshotManager: TitleInsightsSnapshotManager;
     titleInsightsToolSuite: TitleInsightsToolSuite;
+    deterministicHeredocSanitizer: DeterministicHeredocSanitizer;
+    terminalDiagnosticsEngine: TerminalDiagnosticsEngine;
+    heredocTerminalSupervisor: HeredocTerminalSupervisor;
+    broccoliHeredocTerminalSubstrate: BroccoliHeredocTerminalSubstrate;
+    heredocTerminalSnapshotManager: HeredocTerminalSnapshotManager;
+    heredocTerminalToolSuite: HeredocTerminalToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1472,6 +1485,17 @@ export class MonolithFactory {
     );
     const titleInsightsToolSuite = new TitleInsightsToolSuite(titleInsightsSupervisor);
 
+    const deterministicHeredocSanitizer = new DeterministicHeredocSanitizer();
+    const terminalDiagnosticsEngine = new TerminalDiagnosticsEngine();
+    const broccoliHeredocTerminalSubstrate = new BroccoliHeredocTerminalSubstrate();
+    const heredocTerminalSnapshotManager = new HeredocTerminalSnapshotManager(broccoliHeredocTerminalSubstrate);
+    const heredocTerminalSupervisor = new HeredocTerminalSupervisor(
+      broccoliHeredocTerminalSubstrate,
+      deterministicHeredocSanitizer,
+      terminalDiagnosticsEngine
+    );
+    const heredocTerminalToolSuite = new HeredocTerminalToolSuite(heredocTerminalSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1531,7 +1555,8 @@ export class MonolithFactory {
       auxiliaryRouterToolSuite,
       reasoningToolSuite,
       fuzzyMatcherToolSuite,
-      titleInsightsToolSuite
+      titleInsightsToolSuite,
+      heredocTerminalToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -1945,6 +1970,12 @@ export class MonolithFactory {
       broccoliTitleInsightsSubstrate,
       titleInsightsSnapshotManager,
       titleInsightsToolSuite,
+      deterministicHeredocSanitizer,
+      terminalDiagnosticsEngine,
+      heredocTerminalSupervisor,
+      broccoliHeredocTerminalSubstrate,
+      heredocTerminalSnapshotManager,
+      heredocTerminalToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

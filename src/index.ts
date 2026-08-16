@@ -397,6 +397,13 @@ import { BroccoliTitleInsightsSubstrate } from "./sessions/extensions/title_insi
 import { TitleInsightsSnapshotManager } from "./sessions/extensions/title_insights/title-insights-snapshot-manager.js";
 import { TitleInsightsToolSuite } from "./tooling/extensions/title_insights/title-insights-tool-suite.js";
 
+import { DeterministicHeredocSanitizer } from "./agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.js";
+import { TerminalDiagnosticsEngine } from "./agents/extensions/heredoc_terminal/terminal-diagnostics-engine.js";
+import { HeredocTerminalSupervisor } from "./agents/extensions/heredoc_terminal/heredoc-terminal-supervisor.js";
+import { BroccoliHeredocTerminalSubstrate } from "./sessions/extensions/heredoc_terminal/broccoli-heredoc-terminal-substrate.js";
+import { HeredocTerminalSnapshotManager } from "./sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
+import { HeredocTerminalToolSuite } from "./tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1632,6 +1639,32 @@ export type {
   TitleInsightsWorkspaceSnapshot,
 } from "./core/contracts/title-insights.contracts.js";
 
+export { DeterministicHeredocSanitizer } from "./agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.js";
+export { TerminalDiagnosticsEngine } from "./agents/extensions/heredoc_terminal/terminal-diagnostics-engine.js";
+export { HeredocTerminalSupervisor } from "./agents/extensions/heredoc_terminal/heredoc-terminal-supervisor.js";
+export { BroccoliHeredocTerminalSubstrate } from "./sessions/extensions/heredoc_terminal/broccoli-heredoc-terminal-substrate.js";
+export { HeredocTerminalSnapshotManager } from "./sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
+export { HeredocTerminalToolSuite } from "./tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
+export {
+  INERT_HEREDOC_CONSUMER_PATTERN,
+  DANGEROUS_SHELL_PATTERNS,
+} from "./core/contracts/heredoc-terminal.contracts.js";
+export type {
+  HeredocInterpreterType,
+  CommandRiskLevel,
+  TerminalDiagnosticCategory,
+  HeredocOperatorSpec,
+  HeredocBodySpan,
+  HeredocSanitizationResult,
+  CommandSafetyClassification,
+  ScriptHeredocOptions,
+  ScriptHeredocResult,
+  TerminalDiagnosticHint,
+  TerminalExecutionDiagnostics,
+  HeredocSanitizationLogRecord,
+  HeredocTerminalWorkspaceSnapshot,
+} from "./core/contracts/heredoc-terminal.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -1973,6 +2006,12 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliTitleInsightsSubstrate: BroccoliTitleInsightsSubstrate;
   readonly titleInsightsSnapshotManager: TitleInsightsSnapshotManager;
   readonly titleInsightsToolSuite: TitleInsightsToolSuite;
+  readonly deterministicHeredocSanitizer: DeterministicHeredocSanitizer;
+  readonly terminalDiagnosticsEngine: TerminalDiagnosticsEngine;
+  readonly heredocTerminalSupervisor: HeredocTerminalSupervisor;
+  readonly broccoliHeredocTerminalSubstrate: BroccoliHeredocTerminalSubstrate;
+  readonly heredocTerminalSnapshotManager: HeredocTerminalSnapshotManager;
+  readonly heredocTerminalToolSuite: HeredocTerminalToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2305,6 +2344,12 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliTitleInsightsSubstrate = components.broccoliTitleInsightsSubstrate;
     this.titleInsightsSnapshotManager = components.titleInsightsSnapshotManager;
     this.titleInsightsToolSuite = components.titleInsightsToolSuite;
+    this.deterministicHeredocSanitizer = components.deterministicHeredocSanitizer;
+    this.terminalDiagnosticsEngine = components.terminalDiagnosticsEngine;
+    this.heredocTerminalSupervisor = components.heredocTerminalSupervisor;
+    this.broccoliHeredocTerminalSubstrate = components.broccoliHeredocTerminalSubstrate;
+    this.heredocTerminalSnapshotManager = components.heredocTerminalSnapshotManager;
+    this.heredocTerminalToolSuite = components.heredocTerminalToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

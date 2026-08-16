@@ -56,6 +56,7 @@ import type { AuxiliaryRouterToolSuite } from "../router/auxiliary-router-tool-s
 import type { ReasoningToolSuite } from "../reasoning/reasoning-tool-suite.js";
 import type { FuzzyMatcherToolSuite } from "../fuzzy/fuzzy-matcher-tool-suite.js";
 import type { TitleInsightsToolSuite } from "../title_insights/title-insights-tool-suite.js";
+import type { HeredocTerminalToolSuite } from "../heredoc_terminal/heredoc-terminal-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -103,6 +104,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly reasoningToolSuite?: ReasoningToolSuite;
   readonly fuzzyMatcherToolSuite?: FuzzyMatcherToolSuite;
   readonly titleInsightsToolSuite?: TitleInsightsToolSuite;
+  readonly heredocTerminalToolSuite?: HeredocTerminalToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -158,7 +160,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     auxiliaryRouterToolSuite?: AuxiliaryRouterToolSuite,
     reasoningToolSuite?: ReasoningToolSuite,
     fuzzyMatcherToolSuite?: FuzzyMatcherToolSuite,
-    titleInsightsToolSuite?: TitleInsightsToolSuite
+    titleInsightsToolSuite?: TitleInsightsToolSuite,
+    heredocTerminalToolSuite?: HeredocTerminalToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -206,6 +209,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.reasoningToolSuite = reasoningToolSuite;
     this.fuzzyMatcherToolSuite = fuzzyMatcherToolSuite;
     this.titleInsightsToolSuite = titleInsightsToolSuite;
+    this.heredocTerminalToolSuite = heredocTerminalToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -618,6 +622,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.titleInsightsToolSuite) {
       for (const tool of this.titleInsightsToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.heredocTerminalToolSuite) {
+      for (const tool of this.heredocTerminalToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }
