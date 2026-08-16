@@ -473,6 +473,12 @@ import { BroccoliSpeechNormalizerSubstrate } from "../sessions/extensions/speech
 import { SpeechNormalizerSnapshotManager } from "../sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.js";
 import { SpeechNormalizerToolSuite } from "../tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.js";
 
+import { DeterministicDocExtractor } from "../agents/extensions/doc_extractor/deterministic-doc-extractor.js";
+import { DocExtractorSupervisor } from "../agents/extensions/doc_extractor/doc-extractor-supervisor.js";
+import { BroccoliDocExtractorSubstrate } from "../sessions/extensions/doc_extractor/broccoli-doc-extractor-substrate.js";
+import { DocExtractorSnapshotManager } from "../sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.js";
+import { DocExtractorToolSuite } from "../tooling/extensions/doc_extractor/doc-extractor-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -904,6 +910,11 @@ export class MonolithFactory {
     broccoliSpeechNormalizerSubstrate: BroccoliSpeechNormalizerSubstrate;
     speechNormalizerSnapshotManager: SpeechNormalizerSnapshotManager;
     speechNormalizerToolSuite: SpeechNormalizerToolSuite;
+    deterministicDocExtractor: DeterministicDocExtractor;
+    docExtractorSupervisor: DocExtractorSupervisor;
+    broccoliDocExtractorSubstrate: BroccoliDocExtractorSubstrate;
+    docExtractorSnapshotManager: DocExtractorSnapshotManager;
+    docExtractorToolSuite: DocExtractorToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1596,6 +1607,15 @@ export class MonolithFactory {
     );
     const speechNormalizerToolSuite = new SpeechNormalizerToolSuite(speechNormalizerSupervisor);
 
+    const deterministicDocExtractor = new DeterministicDocExtractor();
+    const broccoliDocExtractorSubstrate = new BroccoliDocExtractorSubstrate();
+    const docExtractorSnapshotManager = new DocExtractorSnapshotManager(broccoliDocExtractorSubstrate);
+    const docExtractorSupervisor = new DocExtractorSupervisor(
+      broccoliDocExtractorSubstrate,
+      deterministicDocExtractor
+    );
+    const docExtractorToolSuite = new DocExtractorToolSuite(docExtractorSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1661,7 +1681,8 @@ export class MonolithFactory {
       skillsSyncToolSuite,
       preflightToolSuite,
       audioContainerToolSuite,
-      speechNormalizerToolSuite
+      speechNormalizerToolSuite,
+      docExtractorToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2106,6 +2127,11 @@ export class MonolithFactory {
       broccoliSpeechNormalizerSubstrate,
       speechNormalizerSnapshotManager,
       speechNormalizerToolSuite,
+      deterministicDocExtractor,
+      docExtractorSupervisor,
+      broccoliDocExtractorSubstrate,
+      docExtractorSnapshotManager,
+      docExtractorToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

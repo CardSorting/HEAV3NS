@@ -434,6 +434,12 @@ import { BroccoliSpeechNormalizerSubstrate } from "./sessions/extensions/speech_
 import { SpeechNormalizerSnapshotManager } from "./sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.js";
 import { SpeechNormalizerToolSuite } from "./tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.js";
 
+import { DeterministicDocExtractor } from "./agents/extensions/doc_extractor/deterministic-doc-extractor.js";
+import { DocExtractorSupervisor } from "./agents/extensions/doc_extractor/doc-extractor-supervisor.js";
+import { BroccoliDocExtractorSubstrate } from "./sessions/extensions/doc_extractor/broccoli-doc-extractor-substrate.js";
+import { DocExtractorSnapshotManager } from "./sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.js";
+import { DocExtractorToolSuite } from "./tooling/extensions/doc_extractor/doc-extractor-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1797,6 +1803,27 @@ export type {
   SpeechWorkspaceSnapshot,
 } from "./core/contracts/speech-normalizer.contracts.js";
 
+export { DeterministicDocExtractor } from "./agents/extensions/doc_extractor/deterministic-doc-extractor.js";
+export { DocExtractorSupervisor } from "./agents/extensions/doc_extractor/doc-extractor-supervisor.js";
+export { BroccoliDocExtractorSubstrate } from "./sessions/extensions/doc_extractor/broccoli-doc-extractor-substrate.js";
+export { DocExtractorSnapshotManager } from "./sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.js";
+export { DocExtractorToolSuite } from "./tooling/extensions/doc_extractor/doc-extractor-tool-suite.js";
+export type {
+  DocumentFormat,
+  BinaryCategory,
+  DocumentExtractionOptions,
+  DocumentExtractionResult,
+  OpaqueWriteCheckResult,
+  CachedExtractedDoc,
+  DocExtractorMetrics,
+  DocExtractorWorkspaceSnapshot,
+} from "./core/contracts/doc-extractor.contracts.js";
+export {
+  BINARY_EXTENSIONS,
+  OPAQUE_DOCUMENT_EXTENSIONS,
+  EXTRACTABLE_EXTENSIONS,
+} from "./core/contracts/doc-extractor.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2169,6 +2196,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSpeechNormalizerSubstrate: BroccoliSpeechNormalizerSubstrate;
   readonly speechNormalizerSnapshotManager: SpeechNormalizerSnapshotManager;
   readonly speechNormalizerToolSuite: SpeechNormalizerToolSuite;
+  readonly deterministicDocExtractor: DeterministicDocExtractor;
+  readonly docExtractorSupervisor: DocExtractorSupervisor;
+  readonly broccoliDocExtractorSubstrate: BroccoliDocExtractorSubstrate;
+  readonly docExtractorSnapshotManager: DocExtractorSnapshotManager;
+  readonly docExtractorToolSuite: DocExtractorToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2532,6 +2564,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSpeechNormalizerSubstrate = components.broccoliSpeechNormalizerSubstrate;
     this.speechNormalizerSnapshotManager = components.speechNormalizerSnapshotManager;
     this.speechNormalizerToolSuite = components.speechNormalizerToolSuite;
+    this.deterministicDocExtractor = components.deterministicDocExtractor;
+    this.docExtractorSupervisor = components.docExtractorSupervisor;
+    this.broccoliDocExtractorSubstrate = components.broccoliDocExtractorSubstrate;
+    this.docExtractorSnapshotManager = components.docExtractorSnapshotManager;
+    this.docExtractorToolSuite = components.docExtractorToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
