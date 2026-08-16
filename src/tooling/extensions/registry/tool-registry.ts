@@ -58,6 +58,7 @@ import type { FuzzyMatcherToolSuite } from "../fuzzy/fuzzy-matcher-tool-suite.js
 import type { TitleInsightsToolSuite } from "../title_insights/title-insights-tool-suite.js";
 import type { HeredocTerminalToolSuite } from "../heredoc_terminal/heredoc-terminal-tool-suite.js";
 import type { StealthBrowserToolSuite } from "../stealth_browser/stealth-browser-tool-suite.js";
+import type { SkillsSyncToolSuite } from "../skills_sync/skills-sync-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -107,6 +108,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly titleInsightsToolSuite?: TitleInsightsToolSuite;
   readonly heredocTerminalToolSuite?: HeredocTerminalToolSuite;
   readonly stealthBrowserToolSuite?: StealthBrowserToolSuite;
+  readonly skillsSyncToolSuite?: SkillsSyncToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -164,7 +166,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     fuzzyMatcherToolSuite?: FuzzyMatcherToolSuite,
     titleInsightsToolSuite?: TitleInsightsToolSuite,
     heredocTerminalToolSuite?: HeredocTerminalToolSuite,
-    stealthBrowserToolSuite?: StealthBrowserToolSuite
+    stealthBrowserToolSuite?: StealthBrowserToolSuite,
+    skillsSyncToolSuite?: SkillsSyncToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -214,6 +217,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.titleInsightsToolSuite = titleInsightsToolSuite;
     this.heredocTerminalToolSuite = heredocTerminalToolSuite;
     this.stealthBrowserToolSuite = stealthBrowserToolSuite;
+    this.skillsSyncToolSuite = skillsSyncToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -636,6 +640,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.stealthBrowserToolSuite) {
       for (const tool of this.stealthBrowserToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.skillsSyncToolSuite) {
+      for (const tool of this.skillsSyncToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

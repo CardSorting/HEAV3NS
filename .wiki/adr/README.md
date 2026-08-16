@@ -95,6 +95,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-085](ADR-085-deterministic-session-titling-provenance-and-conversation-insights.md) | Two-Stage Epistemic Session Title Generation, Strict Provenance Hierarchy (`user > llm > derived`) & Conversation Insights Subsystem | Accepted | 2026-08-16 | Session Intelligence & Analytics (Target #42 / Phase 109) |
 | [ADR-086](ADR-086-deterministic-shell-heredoc-sanitization-and-terminal-diagnostics.md) | Conservative Shell Heredoc Sanitizer, Subshell Trap Interceptor & Actionable Failure Diagnostics | Accepted | 2026-08-16 | Terminal & Shell Safety (Target #43 / Phase 110) |
 | [ADR-087](ADR-087-camoufox-stealth-browser-and-accessibility-ref-navigation.md) | Camoufox Anti-Fingerprinting Stealth Browser Engine, Accessibility Ref Navigation, Loopback Rewriter & Session Persistence Subsystem | Accepted | 2026-08-16 | Web & Browser Automation (Target #44 / Phase 111) |
+| [ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md) | Distributed Content-Addressed Skill Sync Protocol, CAS Ref Head, 3-Way Merge Resolution & Cryptographic Provenance Ledger | Accepted | 2026-08-16 | Skill Synchronization & Provenance (Target #45 / Phase 112) |
 
 ## Domain Grouping
 
@@ -112,6 +113,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-085](ADR-085-deterministic-session-titling-provenance-and-conversation-insights.md)**: Two-stage epistemic session title generation, strict provenance hierarchy (`user > llm > derived`), control-wrapper stripping, and multi-dimensional conversation insights analytics.
 - **[ADR-086](ADR-086-deterministic-shell-heredoc-sanitization-and-terminal-diagnostics.md)**: Conservative shell heredoc sanitizer, delimiter parser, subshell trap interceptor, multi-line script heredoc generator, and actionable terminal failure diagnostics.
 - **[ADR-087](ADR-087-camoufox-stealth-browser-and-accessibility-ref-navigation.md)**: Camoufox anti-fingerprinting stealth browser engine, accessibility tree ref navigation, Docker loopback rewriter, and session persistence vault.
+- **[ADR-088](ADR-088-distributed-content-addressed-skill-sync-and-3way-merge.md)**: Distributed content-addressed skill sync protocol, CAS ref head optimistic concurrency, 3-way merge resolution, and cryptographic provenance ledger.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

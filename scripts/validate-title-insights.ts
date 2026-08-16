@@ -322,8 +322,11 @@ async function runSuite() {
   supervisor.setTitle("session-0", "Mutated State Prior To Rollback", "user");
   assert.strictEqual(supervisor.getTitle("session-0")?.title, "Mutated State Prior To Rollback");
 
-  // Measure O(1) Rollback latency
-  snapshotManager.restoreSnapshot("checkpoint-baseline"); // JIT warmup
+  // Measure O(1) Rollback latency with standard JIT warmup
+  for (let i = 0; i < 5; i++) {
+    snapshotManager.restoreSnapshot("checkpoint-baseline");
+  }
+  supervisor.setTitle("session-0", "Mutated State Prior To Rollback", "user");
   const tRollbackStart = performance.now();
   const restored = snapshotManager.restoreSnapshot("checkpoint-baseline");
   const rollbackDurationMs = performance.now() - tRollbackStart;

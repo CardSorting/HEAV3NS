@@ -449,6 +449,12 @@ import { BroccoliStealthBrowserSubstrate } from "../sessions/extensions/stealth_
 import { StealthBrowserSnapshotManager } from "../sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.js";
 import { StealthBrowserToolSuite } from "../tooling/extensions/stealth_browser/stealth-browser-tool-suite.js";
 
+import { DeterministicSkillsSyncClient } from "../agents/extensions/skills_sync/deterministic-skills-sync-client.js";
+import { SkillsSyncSupervisor } from "../agents/extensions/skills_sync/skills-sync-supervisor.js";
+import { BroccoliSkillsSyncSubstrate } from "../sessions/extensions/skills_sync/broccoli-skills-sync-substrate.js";
+import { SkillsSyncSnapshotManager } from "../sessions/extensions/skills_sync/skills-sync-snapshot-manager.js";
+import { SkillsSyncToolSuite } from "../tooling/extensions/skills_sync/skills-sync-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -860,6 +866,11 @@ export class MonolithFactory {
     broccoliStealthBrowserSubstrate: BroccoliStealthBrowserSubstrate;
     stealthBrowserSnapshotManager: StealthBrowserSnapshotManager;
     stealthBrowserToolSuite: StealthBrowserToolSuite;
+    deterministicSkillsSyncClient: DeterministicSkillsSyncClient;
+    skillsSyncSupervisor: SkillsSyncSupervisor;
+    broccoliSkillsSyncSubstrate: BroccoliSkillsSyncSubstrate;
+    skillsSyncSnapshotManager: SkillsSyncSnapshotManager;
+    skillsSyncToolSuite: SkillsSyncToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1516,6 +1527,15 @@ export class MonolithFactory {
     );
     const stealthBrowserToolSuite = new StealthBrowserToolSuite(stealthBrowserSupervisor);
 
+    const deterministicSkillsSyncClient = new DeterministicSkillsSyncClient();
+    const broccoliSkillsSyncSubstrate = new BroccoliSkillsSyncSubstrate();
+    const skillsSyncSnapshotManager = new SkillsSyncSnapshotManager(broccoliSkillsSyncSubstrate);
+    const skillsSyncSupervisor = new SkillsSyncSupervisor(
+      broccoliSkillsSyncSubstrate,
+      deterministicSkillsSyncClient
+    );
+    const skillsSyncToolSuite = new SkillsSyncToolSuite(skillsSyncSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1577,7 +1597,8 @@ export class MonolithFactory {
       fuzzyMatcherToolSuite,
       titleInsightsToolSuite,
       heredocTerminalToolSuite,
-      stealthBrowserToolSuite
+      stealthBrowserToolSuite,
+      skillsSyncToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2002,6 +2023,11 @@ export class MonolithFactory {
       broccoliStealthBrowserSubstrate,
       stealthBrowserSnapshotManager,
       stealthBrowserToolSuite,
+      deterministicSkillsSyncClient,
+      skillsSyncSupervisor,
+      broccoliSkillsSyncSubstrate,
+      skillsSyncSnapshotManager,
+      skillsSyncToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

@@ -410,6 +410,12 @@ import { BroccoliStealthBrowserSubstrate } from "./sessions/extensions/stealth_b
 import { StealthBrowserSnapshotManager } from "./sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.js";
 import { StealthBrowserToolSuite } from "./tooling/extensions/stealth_browser/stealth-browser-tool-suite.js";
 
+import { DeterministicSkillsSyncClient } from "./agents/extensions/skills_sync/deterministic-skills-sync-client.js";
+import { SkillsSyncSupervisor } from "./agents/extensions/skills_sync/skills-sync-supervisor.js";
+import { BroccoliSkillsSyncSubstrate } from "./sessions/extensions/skills_sync/broccoli-skills-sync-substrate.js";
+import { SkillsSyncSnapshotManager } from "./sessions/extensions/skills_sync/skills-sync-snapshot-manager.js";
+import { SkillsSyncToolSuite } from "./tooling/extensions/skills_sync/skills-sync-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1697,6 +1703,34 @@ export type {
   StealthBrowserWorkspaceSnapshot,
 } from "./core/contracts/stealth-browser.contracts.js";
 
+export { DeterministicSkillsSyncClient } from "./agents/extensions/skills_sync/deterministic-skills-sync-client.js";
+export { SkillsSyncSupervisor } from "./agents/extensions/skills_sync/skills-sync-supervisor.js";
+export { BroccoliSkillsSyncSubstrate } from "./sessions/extensions/skills_sync/broccoli-skills-sync-substrate.js";
+export { SkillsSyncSnapshotManager } from "./sessions/extensions/skills_sync/skills-sync-snapshot-manager.js";
+export { SkillsSyncToolSuite } from "./tooling/extensions/skills_sync/skills-sync-tool-suite.js";
+export {
+  SYNC_WIRE_VERSION,
+  DEFAULT_MAX_SYNC_OBJECT_BYTES,
+} from "./core/contracts/skills-sync.contracts.js";
+export type {
+  SyncObjectKind,
+  TreeEntryMode,
+  SkillProvenanceState,
+  ConflictResolutionChoice,
+  SkillSyncObject,
+  SkillSyncTreeEntry,
+  SkillSyncTree,
+  SkillSyncCommit,
+  SkillSyncManifestEntry,
+  SkillSyncManifest,
+  SkillThreeWayMergeConflict,
+  SkillThreeWayMergeResult,
+  SkillSyncPushResult,
+  SkillSyncPullResult,
+  SkillSyncProvenanceReport,
+  SkillSyncWorkspaceSnapshot,
+} from "./core/contracts/skills-sync.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2049,6 +2083,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliStealthBrowserSubstrate: BroccoliStealthBrowserSubstrate;
   readonly stealthBrowserSnapshotManager: StealthBrowserSnapshotManager;
   readonly stealthBrowserToolSuite: StealthBrowserToolSuite;
+  readonly deterministicSkillsSyncClient: DeterministicSkillsSyncClient;
+  readonly skillsSyncSupervisor: SkillsSyncSupervisor;
+  readonly broccoliSkillsSyncSubstrate: BroccoliSkillsSyncSubstrate;
+  readonly skillsSyncSnapshotManager: SkillsSyncSnapshotManager;
+  readonly skillsSyncToolSuite: SkillsSyncToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2392,6 +2431,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliStealthBrowserSubstrate = components.broccoliStealthBrowserSubstrate;
     this.stealthBrowserSnapshotManager = components.stealthBrowserSnapshotManager;
     this.stealthBrowserToolSuite = components.stealthBrowserToolSuite;
+    this.deterministicSkillsSyncClient = components.deterministicSkillsSyncClient;
+    this.skillsSyncSupervisor = components.skillsSyncSupervisor;
+    this.broccoliSkillsSyncSubstrate = components.broccoliSkillsSyncSubstrate;
+    this.skillsSyncSnapshotManager = components.skillsSyncSnapshotManager;
+    this.skillsSyncToolSuite = components.skillsSyncToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
