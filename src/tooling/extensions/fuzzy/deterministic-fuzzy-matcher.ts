@@ -28,6 +28,10 @@ import type {
   HistogramDiffHunk,
   HistogramDiffOptions,
   HistogramDiffResult,
+  ImportOptimizationOptions,
+  ImportOptimizationResult,
+  ImportSpecifierItem,
+  ImportStatementAnalysis,
   IndentationHarmonizationResult,
   IndentationStyle,
   InversePatchHunk,
@@ -47,6 +51,9 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  MultiSourceHunkInput,
+  MultiSourcePatchSynthesisResult,
+  MultiSourceSynthesizedPatch,
   NGramMatchCandidate,
   NGramSimilarityOptions,
   NGramSimilarityResult,
@@ -63,8 +70,19 @@ import type {
   ScopeBoundedMatchResult,
   SearchReplaceBlock,
   SemanticConflictExplanation,
+  SemanticTreeApplyResult,
+  SemanticTreeDiffOptions,
+  SemanticTreeDiffResult,
+  SemanticTreeNode,
+  SemanticTreeNodeType,
+  SemanticTreeOp,
+  SemanticTreeOpType,
   SignatureRefactorOptions,
   SignatureRefactorResult,
+  StructuralHoleBinding,
+  StructuralPatternMatchItem,
+  StructuralPatternMatchResult,
+  StructuralPatternOptions,
   SymbolRenameFileResult,
   SymbolRenameOccurrence,
   SymbolRenameOptions,
@@ -4535,6 +4553,794 @@ export class DeterministicFuzzyMatcher {
    */
   applyHistogramPatch(content: string, patchText: string): UnifiedPatchResult {
     return this.applyUnifiedPatch(content, patchText);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Structural Pattern & Hole Wildcard Matcher / Splicer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Matches code structures using named syntactic holes (e.g. :[name], :[body], ...)
+   * and expands them into replacement templates while preserving balanced syntax.
+   */
+  structuralPatternMatchAndReplace(
+    content: string,
+    pattern: string,
+    replacementTemplate: string,
+    options?: StructuralPatternOptions
+  ): StructuralPatternMatchResult {
+    if (!pattern.trim()) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchCount: 0,
+        matches: [],
+        error: "Pattern cannot be empty.",
+      };
+    }
+
+    const holeRegex = /:\[([a-zA-Z0-9_]+)\]|:\b([a-zA-Z0-9_]+)\b/g;
+    const holes: string[] = [];
+    let match: RegExpExecArray | null = null;
+    while ((match = holeRegex.exec(pattern)) !== null) {
+      holes.push(match[1] || match[2]);
+    }
+
+    // Convert pattern to regex
+    let patternRegexStr = "";
+    let lastIdx = 0;
+    holeRegex.lastIndex = 0;
+
+    while ((match = holeRegex.exec(pattern)) !== null) {
+      const literalPart = pattern.slice(lastIdx, match.index);
+      if (literalPart) {
+        const escaped = literalPart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        patternRegexStr += options?.matchWhitespaceFlexible !== false
+          ? escaped.replace(/\s+/g, "\\s+")
+          : escaped;
+      }
+      // Non-greedy capture for the hole
+      patternRegexStr += "([\\s\\S]*?)";
+      lastIdx = match.index + match[0].length;
+    }
+
+    const trailingLiteral = pattern.slice(lastIdx);
+    if (trailingLiteral) {
+      const escaped = trailingLiteral.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      patternRegexStr += options?.matchWhitespaceFlexible !== false
+        ? escaped.replace(/\s+/g, "\\s+")
+        : escaped;
+    }
+
+    let compiledPattern: RegExp;
+    try {
+      compiledPattern = new RegExp(patternRegexStr, "g");
+    } catch (e: any) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchCount: 0,
+        matches: [],
+        error: `Failed to compile pattern regex: ${e.message}`,
+      };
+    }
+
+    const matches: StructuralPatternMatchItem[] = [];
+    let execMatch: RegExpExecArray | null = null;
+    const maxMatches = options?.maxMatches ?? Infinity;
+
+    while ((execMatch = compiledPattern.exec(content)) !== null && matches.length < maxMatches) {
+      const startIndex = execMatch.index;
+      const endIndex = startIndex + execMatch[0].length;
+      const bindings: Record<string, string> = {};
+
+      for (let i = 0; i < holes.length; i++) {
+        const holeName = holes[i];
+        bindings[holeName] = execMatch[i + 1] ?? "";
+      }
+
+      // Expand replacement template
+      let expanded = replacementTemplate;
+      for (const [k, v] of Object.entries(bindings)) {
+        expanded = expanded.replace(new RegExp(`:\\[${k}\\]|:${k}\\b`, "g"), v);
+      }
+
+      matches.push({
+        matchSpan: [startIndex, endIndex],
+        bindings,
+        expandedReplacement: expanded,
+      });
+    }
+
+    if (matches.length === 0) {
+      return {
+        success: false,
+        modifiedContent: content,
+        matchCount: 0,
+        matches: [],
+        error: "No structural pattern matches found.",
+      };
+    }
+
+    // Apply replacements in descending order
+    let modified = content;
+    const sortedMatches = [...matches].sort((a, b) => b.matchSpan[0] - a.matchSpan[0]);
+
+    for (const item of sortedMatches) {
+      modified =
+        modified.slice(0, item.matchSpan[0]) +
+        item.expandedReplacement +
+        modified.slice(item.matchSpan[1]);
+    }
+
+    if (this.normalizeLineEndings) {
+      modified = this.applyLineEnding(modified, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      matchCount: matches.length,
+      matches,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hierarchical Tree-Diff & Semantic AST Node Swapper (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Parses top-level AST declarations into a structured semantic node tree.
+   */
+  parseSemanticTree(content: string): readonly SemanticTreeNode[] {
+    const nodes: SemanticTreeNode[] = [];
+    const lines = content.split("\n");
+
+    let currentOffset = 0;
+    let nodeIndex = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      const lineStartOffset = currentOffset;
+
+      if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+        currentOffset += line.length + 1;
+        continue;
+      }
+
+      // 1. Imports
+      if (trimmed.startsWith("import ")) {
+        let fullImport = line;
+        let endLine = i;
+        while (!fullImport.includes(";") && !fullImport.includes("from") && endLine < lines.length - 1) {
+          endLine++;
+          fullImport += "\n" + lines[endLine];
+        }
+        const moduleMatch = fullImport.match(/from\s+['"]([^'"]+)['"]/);
+        const identifier = moduleMatch ? moduleMatch[1] : `import_${nodeIndex++}`;
+        const totalLen = fullImport.length;
+
+        nodes.push({
+          id: `node_import_${nodeIndex}`,
+          type: "import",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + totalLen,
+          rawCode: fullImport,
+        });
+
+        i = endLine;
+        currentOffset += totalLen + 1;
+        continue;
+      }
+
+      // 2. Interfaces
+      const ifaceMatch = trimmed.match(/^(?:export\s+)?interface\s+([a-zA-Z0-9_$]+)/);
+      if (ifaceMatch) {
+        const identifier = ifaceMatch[1];
+        const block = this.extractBalancedCodeBlock(content, lineStartOffset);
+        nodes.push({
+          id: `node_interface_${identifier}`,
+          type: "interface",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + block.length,
+          rawCode: block,
+        });
+        const consumedLines = block.split("\n").length;
+        i += Math.max(0, consumedLines - 1);
+        currentOffset += block.length + 1;
+        continue;
+      }
+
+      // 3. Types
+      const typeMatch = trimmed.match(/^(?:export\s+)?type\s+([a-zA-Z0-9_$]+)/);
+      if (typeMatch) {
+        const identifier = typeMatch[1];
+        let fullType = line;
+        let endLine = i;
+        while (!fullType.includes(";") && endLine < lines.length - 1) {
+          endLine++;
+          fullType += "\n" + lines[endLine];
+        }
+        nodes.push({
+          id: `node_type_${identifier}`,
+          type: "type",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + fullType.length,
+          rawCode: fullType,
+        });
+        i = endLine;
+        currentOffset += fullType.length + 1;
+        continue;
+      }
+
+      // 4. Functions
+      const fnMatch = trimmed.match(/^(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_$]+)/);
+      if (fnMatch) {
+        const identifier = fnMatch[1];
+        const block = this.extractBalancedCodeBlock(content, lineStartOffset);
+        nodes.push({
+          id: `node_fn_${identifier}`,
+          type: "function",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + block.length,
+          rawCode: block,
+        });
+        const consumedLines = block.split("\n").length;
+        i += Math.max(0, consumedLines - 1);
+        currentOffset += block.length + 1;
+        continue;
+      }
+
+      // 5. Classes
+      const classMatch = trimmed.match(/^(?:export\s+)?(?:abstract\s+)?class\s+([a-zA-Z0-9_$]+)/);
+      if (classMatch) {
+        const identifier = classMatch[1];
+        const block = this.extractBalancedCodeBlock(content, lineStartOffset);
+        nodes.push({
+          id: `node_class_${identifier}`,
+          type: "class",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + block.length,
+          rawCode: block,
+        });
+        const consumedLines = block.split("\n").length;
+        i += Math.max(0, consumedLines - 1);
+        currentOffset += block.length + 1;
+        continue;
+      }
+
+      // 6. Exported const / variables
+      const constMatch = trimmed.match(/^(?:export\s+)?(?:const|let|var)\s+([a-zA-Z0-9_$]+)/);
+      if (constMatch) {
+        const identifier = constMatch[1];
+        let fullConst = line;
+        let endLine = i;
+        if (fullConst.includes("{") && !fullConst.includes("}")) {
+          const block = this.extractBalancedCodeBlock(content, lineStartOffset);
+          fullConst = block;
+          const consumedLines = block.split("\n").length;
+          endLine = i + Math.max(0, consumedLines - 1);
+        } else {
+          while (!fullConst.includes(";") && endLine < lines.length - 1) {
+            endLine++;
+            fullConst += "\n" + lines[endLine];
+          }
+        }
+        nodes.push({
+          id: `node_const_${identifier}`,
+          type: "export_const",
+          identifier,
+          startOffset: lineStartOffset,
+          endOffset: lineStartOffset + fullConst.length,
+          rawCode: fullConst,
+        });
+        i = endLine;
+        currentOffset += fullConst.length + 1;
+        continue;
+      }
+
+      currentOffset += line.length + 1;
+    }
+
+    return nodes;
+  }
+
+  private extractBalancedCodeBlock(content: string, startOffset: number): string {
+    let braceDepth = 0;
+    let started = false;
+    let inString: string | null = null;
+    let endOffset = content.length;
+
+    for (let i = startOffset; i < content.length; i++) {
+      const char = content[i];
+      const prev = i > 0 ? content[i - 1] : "";
+
+      if (inString) {
+        if (char === inString && prev !== "\\") {
+          inString = null;
+        }
+        continue;
+      }
+
+      if ((char === '"' || char === "'" || char === "`") && prev !== "\\") {
+        inString = char;
+        continue;
+      }
+
+      if (char === "{") {
+        braceDepth++;
+        started = true;
+      } else if (char === "}") {
+        braceDepth--;
+        if (started && braceDepth === 0) {
+          endOffset = i + 1;
+          break;
+        }
+      } else if (char === ";" && !started) {
+        endOffset = i + 1;
+        break;
+      }
+    }
+
+    return content.slice(startOffset, endOffset);
+  }
+
+  /**
+   * Generates a semantic tree diff comparing top-level declarations between two code contents.
+   */
+  generateSemanticTreeDiff(
+    oldContent: string,
+    newContent: string,
+    options?: SemanticTreeDiffOptions
+  ): SemanticTreeDiffResult {
+    const oldNodes = this.parseSemanticTree(oldContent);
+    const newNodes = this.parseSemanticTree(newContent);
+
+    const oldMap = new Map<string, SemanticTreeNode>();
+    for (const node of oldNodes) {
+      oldMap.set(`${node.type}:${node.identifier}`, node);
+    }
+
+    const newMap = new Map<string, SemanticTreeNode>();
+    for (const node of newNodes) {
+      newMap.set(`${node.type}:${node.identifier}`, node);
+    }
+
+    const ops: SemanticTreeOp[] = [];
+
+    // Deleted nodes
+    for (const [key, oldNode] of oldMap.entries()) {
+      if (!newMap.has(key)) {
+        ops.push({
+          opType: "delete",
+          nodeId: oldNode.id,
+          nodeType: oldNode.type,
+          identifier: oldNode.identifier,
+        });
+      }
+    }
+
+    // Inserted or Updated nodes
+    for (let idx = 0; idx < newNodes.length; idx++) {
+      const newNode = newNodes[idx];
+      const key = `${newNode.type}:${newNode.identifier}`;
+      const oldNode = oldMap.get(key);
+
+      if (!oldNode) {
+        ops.push({
+          opType: "insert",
+          nodeId: newNode.id,
+          nodeType: newNode.type,
+          identifier: newNode.identifier,
+          newCode: newNode.rawCode,
+          targetIndex: idx,
+        });
+      } else {
+        const oldCode = options?.ignoreFormatting
+          ? oldNode.rawCode.replace(/\s+/g, " ").trim()
+          : oldNode.rawCode.trim();
+        const newCode = options?.ignoreFormatting
+          ? newNode.rawCode.replace(/\s+/g, " ").trim()
+          : newNode.rawCode.trim();
+
+        if (oldCode !== newCode) {
+          ops.push({
+            opType: "update",
+            nodeId: oldNode.id,
+            nodeType: oldNode.type,
+            identifier: oldNode.identifier,
+            newCode: newNode.rawCode,
+          });
+        }
+      }
+    }
+
+    const summary = `${ops.length} structural operations (${ops.filter((o) => o.opType === "insert").length} inserts, ${ops.filter((o) => o.opType === "update").length} updates, ${ops.filter((o) => o.opType === "delete").length} deletes).`;
+
+    return {
+      operations: ops,
+      totalChanges: ops.length,
+      summary,
+    };
+  }
+
+  /**
+   * Applies semantic tree diff operations directly to content.
+   */
+  applySemanticTreeDiff(content: string, diff: SemanticTreeDiffResult): SemanticTreeApplyResult {
+    let modified = content;
+    let appliedCount = 0;
+
+    // Apply updates and deletes in descending offset order
+    const nodes = this.parseSemanticTree(modified);
+    const nodeMap = new Map<string, SemanticTreeNode>();
+    for (const n of nodes) {
+      nodeMap.set(`${n.type}:${n.identifier}`, n);
+    }
+
+    // 1. Deletes & Updates
+    const targetedOps: { op: SemanticTreeOp; start: number; end: number }[] = [];
+    for (const op of diff.operations) {
+      if (op.opType === "delete" || op.opType === "update") {
+        const node = nodeMap.get(`${op.nodeType}:${op.identifier}`);
+        if (node) {
+          targetedOps.push({ op, start: node.startOffset, end: node.endOffset });
+        }
+      }
+    }
+
+    targetedOps.sort((a, b) => b.start - a.start);
+
+    for (const item of targetedOps) {
+      if (item.op.opType === "delete") {
+        // Strip trailing newline if any
+        let end = item.end;
+        if (modified[end] === "\n") end++;
+        modified = modified.slice(0, item.start) + modified.slice(end);
+        appliedCount++;
+      } else if (item.op.opType === "update" && item.op.newCode) {
+        modified = modified.slice(0, item.start) + item.op.newCode + modified.slice(item.end);
+        appliedCount++;
+      }
+    }
+
+    // 2. Inserts
+    const insertOps = diff.operations.filter((o) => o.opType === "insert" && o.newCode);
+    for (const ins of insertOps) {
+      if (ins.newCode) {
+        modified = modified.trimEnd() + "\n\n" + ins.newCode + "\n";
+        appliedCount++;
+      }
+    }
+
+    if (this.normalizeLineEndings) {
+      modified = this.applyLineEnding(modified, this.detectLineEnding(content));
+    }
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      appliedOpsCount: appliedCount,
+      error: null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Swarm Multi-Source Patch Synthesizer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Synthesizes and coordinates patches from multiple autonomous swarm subagents,
+   * detecting inter-hunk collisions and generating topologically ordered patches.
+   */
+  synthesizeMultiSourcePatch(
+    inputs: readonly MultiSourceHunkInput[],
+    baseFiles: Record<string, string>
+  ): MultiSourcePatchSynthesisResult {
+    if (inputs.length === 0) {
+      return {
+        success: true,
+        synthesizedPatches: [],
+        conflictingHunks: [],
+        totalSourcesProcessed: 0,
+        error: null,
+      };
+    }
+
+    const fileMap = new Map<string, MultiSourceHunkInput[]>();
+    for (const input of inputs) {
+      const list = fileMap.get(input.fileRelativePath) ?? [];
+      list.push(input);
+      fileMap.set(input.fileRelativePath, list);
+    }
+
+    const synthesizedPatches: MultiSourceSynthesizedPatch[] = [];
+    const conflictingHunks: { fileRelativePath: string; agentA: string; agentB: string; reason: string }[] = [];
+
+    for (const [fileRel, hunks] of fileMap.entries()) {
+      const baseContent = baseFiles[fileRel] ?? "";
+      let currentContent = baseContent;
+      const contributingAgents = Array.from(new Set(hunks.map((h) => h.sourceAgentId)));
+
+      // Sort hunks by priority descending, then by original line offset
+      const sortedHunks = [...hunks].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+      let appliedForFile = 0;
+
+      for (let i = 0; i < sortedHunks.length; i++) {
+        const hunkA = sortedHunks[i];
+
+        // Check conflicts against remaining hunks
+        for (let j = i + 1; j < sortedHunks.length; j++) {
+          const hunkB = sortedHunks[j];
+          if (
+            hunkA.sourceAgentId !== hunkB.sourceAgentId &&
+            hunkA.oldText === hunkB.oldText &&
+            hunkA.newText !== hunkB.newText
+          ) {
+            conflictingHunks.push({
+              fileRelativePath: fileRel,
+              agentA: hunkA.sourceAgentId,
+              agentB: hunkB.sourceAgentId,
+              reason: `Conflicting replacement for identical search span: '${hunkA.oldText.slice(0, 25)}...'`,
+            });
+          }
+        }
+
+        const repRes = this.findAndReplace(currentContent, hunkA.oldText, hunkA.newText);
+        if (repRes.success) {
+          currentContent = repRes.modifiedContent;
+          appliedForFile++;
+        }
+      }
+
+      const diff = this.generateUnifiedDiff(baseContent, currentContent, fileRel);
+      synthesizedPatches.push({
+        fileRelativePath: fileRel,
+        synthesizedDiff: diff,
+        hunksAppliedCount: appliedForFile,
+        contributingAgents,
+      });
+    }
+
+    return {
+      success: conflictingHunks.length === 0,
+      synthesizedPatches,
+      conflictingHunks,
+      totalSourcesProcessed: inputs.length,
+      error: conflictingHunks.length > 0 ? `${conflictingHunks.length} inter-agent hunk conflicts detected.` : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Fuzzy Import Specifier & Barrel-Bypass Optimizer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Parses import statements in file preamble into structured analysis representations.
+   */
+  parseImportStatements(content: string): readonly ImportStatementAnalysis[] {
+    const imports: ImportStatementAnalysis[] = [];
+    const lines = content.split("\n");
+
+    const importRegex = /^import\s+(?:type\s+)?(?:([a-zA-Z0-9_$]+)\s*,?\s*)?(?:\*\s+as\s+([a-zA-Z0-9_$]+)\s*,?\s*)?(?:\{\s*([^}]*)\s*\}\s*,?\s*)?from\s+['"]([^'"]+)['"];?/;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line.startsWith("import ")) continue;
+
+      let fullStatement = line;
+      let endLine = i;
+      while (!fullStatement.includes("from") && !fullStatement.includes(";") && endLine < lines.length - 1) {
+        endLine++;
+        fullStatement += " " + lines[endLine].trim();
+      }
+
+      const match = importRegex.exec(fullStatement);
+      if (!match) continue;
+
+      const isTypeOnly = /^import\s+type\b/.test(fullStatement);
+      const defaultImport = match[1];
+      const namespaceImport = match[2];
+      const namedRaw = match[3];
+      const moduleSpecifier = match[4];
+
+      const namedImports: ImportSpecifierItem[] = [];
+      if (namedRaw) {
+        const parts = namedRaw.split(",").map((p) => p.trim()).filter(Boolean);
+        for (const part of parts) {
+          const itemTypeOnly = part.startsWith("type ");
+          const clean = part.replace(/^type\s+/, "");
+          const asParts = clean.split(/\s+as\s+/);
+          namedImports.push({
+            importedName: asParts[0].trim(),
+            localName: asParts[1]?.trim() ?? asParts[0].trim(),
+            isTypeOnly: isTypeOnly || itemTypeOnly,
+          });
+        }
+      }
+
+      let category: "builtin" | "external" | "internal_direct" | "internal_barrel" = "external";
+      if (moduleSpecifier.startsWith("node:") || moduleSpecifier === "fs" || moduleSpecifier === "path" || moduleSpecifier === "events") {
+        category = "builtin";
+      } else if (moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../")) {
+        if (moduleSpecifier.endsWith("/index") || !moduleSpecifier.includes("/") || moduleSpecifier.split("/").length === 2) {
+          category = "internal_barrel";
+        } else {
+          category = "internal_direct";
+        }
+      }
+
+      imports.push({
+        fullStatement,
+        moduleSpecifier,
+        defaultImport,
+        namespaceImport,
+        namedImports,
+        isTypeOnlyStatement: isTypeOnly,
+        startLine: i + 1,
+        endLine: endLine + 1,
+        category,
+      });
+
+      i = endLine;
+    }
+
+    return imports;
+  }
+
+  /**
+   * Optimizes, de-duplicates, harmonizes, and reorders imports, with optional barrel bypass mapping.
+   */
+  optimizeAndHarmonizeImports(
+    content: string,
+    options?: ImportOptimizationOptions
+  ): ImportOptimizationResult {
+    const rawImports = this.parseImportStatements(content);
+    if (rawImports.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        originalImportsCount: 0,
+        optimizedImportsCount: 0,
+        mergedStatementsCount: 0,
+        resolvedBarrelImportsCount: 0,
+        error: null,
+      };
+    }
+
+    const barrelMapping = options?.barrelMapping ?? {};
+    let resolvedBarrels = 0;
+
+    // Merge imports by resolved module specifier
+    const moduleMap = new Map<
+      string,
+      {
+        specifier: string;
+        category: "builtin" | "external" | "internal_direct" | "internal_barrel";
+        defaultImport?: string;
+        namespaceImport?: string;
+        namedImports: Map<string, ImportSpecifierItem>;
+        isTypeOnly: boolean;
+      }
+    >();
+
+    for (const imp of rawImports) {
+      let spec = imp.moduleSpecifier;
+      if (options?.resolveBarrelToDirect && barrelMapping[spec]) {
+        spec = barrelMapping[spec];
+        resolvedBarrels++;
+      }
+
+      let entry = moduleMap.get(spec);
+      if (!entry) {
+        entry = {
+          specifier: spec,
+          category: imp.category,
+          defaultImport: imp.defaultImport,
+          namespaceImport: imp.namespaceImport,
+          namedImports: new Map(),
+          isTypeOnly: imp.isTypeOnlyStatement,
+        };
+        moduleMap.set(spec, entry);
+      }
+
+      if (imp.defaultImport && !entry.defaultImport) {
+        entry.defaultImport = imp.defaultImport;
+      }
+      if (imp.namespaceImport && !entry.namespaceImport) {
+        entry.namespaceImport = imp.namespaceImport;
+      }
+      if (!imp.isTypeOnlyStatement) {
+        entry.isTypeOnly = false;
+      }
+
+      for (const named of imp.namedImports) {
+        entry.namedImports.set(named.localName, named);
+      }
+    }
+
+    // Build optimized import lines
+    const categories: ("builtin" | "external" | "internal_direct" | "internal_barrel")[] =
+      options?.groupByCategory !== false
+        ? ["builtin", "external", "internal_direct", "internal_barrel"]
+        : ["builtin"];
+
+    const builtGroups: string[][] = [];
+
+    for (const cat of categories) {
+      const items = Array.from(moduleMap.values()).filter(
+        (m) => options?.groupByCategory === false || m.category === cat
+      );
+      if (items.length === 0) continue;
+
+      if (options?.sortAlphabetically !== false) {
+        items.sort((a, b) => a.specifier.localeCompare(b.specifier));
+      }
+
+      const groupLines: string[] = [];
+      for (const item of items) {
+        const parts: string[] = [];
+        if (item.defaultImport) parts.push(item.defaultImport);
+        if (item.namespaceImport) parts.push(`* as ${item.namespaceImport}`);
+
+        if (item.namedImports.size > 0) {
+          const namedList = Array.from(item.namedImports.values());
+          if (options?.sortAlphabetically !== false) {
+            namedList.sort((a, b) => a.importedName.localeCompare(b.importedName));
+          }
+          const namedStrs = namedList.map((n) =>
+            n.importedName === n.localName ? n.importedName : `${n.importedName} as ${n.localName}`
+          );
+          parts.push(`{ ${namedStrs.join(", ")} }`);
+        }
+
+        const typePrefix = item.isTypeOnly ? "type " : "";
+        if (parts.length > 0) {
+          groupLines.push(`import ${typePrefix}${parts.join(", ")} from "${item.specifier}";`);
+        } else {
+          groupLines.push(`import "${item.specifier}";`);
+        }
+      }
+
+      builtGroups.push(groupLines);
+      if (options?.groupByCategory === false) break;
+    }
+
+    const optimizedImportBlock = builtGroups.map((g) => g.join("\n")).join("\n\n");
+
+    // Replace original import block in content
+    const lastImportEndLine = Math.max(...rawImports.map((i) => i.endLine));
+    const lines = content.split("\n");
+    const postImportLines = lines.slice(lastImportEndLine);
+
+    // Trim leading blank lines in post-import section
+    while (postImportLines.length > 0 && postImportLines[0].trim() === "") {
+      postImportLines.shift();
+    }
+
+    let modifiedContent = optimizedImportBlock + "\n\n" + postImportLines.join("\n");
+    if (this.normalizeLineEndings) {
+      modifiedContent = this.applyLineEnding(modifiedContent, this.detectLineEnding(content));
+    }
+
+    const mergedCount = rawImports.length - moduleMap.size;
+
+    return {
+      success: true,
+      modifiedContent,
+      originalImportsCount: rawImports.length,
+      optimizedImportsCount: moduleMap.size,
+      mergedStatementsCount: Math.max(0, mergedCount),
+      resolvedBarrelImportsCount: resolvedBarrels,
+      error: null,
+    };
   }
 }
 

@@ -1445,6 +1445,254 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_structural_pattern_replace",
+        description: "Matches code structures using named syntactic holes (e.g. :[name], :[body], ...) and expands them into replacement templates while preserving balanced syntax.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content to pattern match within",
+            required: true,
+          },
+          pattern: {
+            type: "string",
+            description: "Structural code pattern containing named holes like :[name] or :name",
+            required: true,
+          },
+          replacementTemplate: {
+            type: "string",
+            description: "Replacement template containing hole placeholders to expand",
+            required: true,
+          },
+          matchWhitespaceFlexible: {
+            type: "boolean",
+            description: "Whether to allow flexible whitespace between literal tokens (default: true)",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (
+            typeof args.content !== "string" ||
+            typeof args.pattern !== "string" ||
+            typeof args.replacementTemplate !== "string"
+          ) {
+            return {
+              success: false,
+              error: "Missing required string parameters ('content', 'pattern', 'replacementTemplate').",
+            };
+          }
+          const result = this.supervisor.structuralPatternMatchAndReplace(
+            args.content,
+            args.pattern,
+            args.replacementTemplate,
+            {
+              matchWhitespaceFlexible:
+                typeof args.matchWhitespaceFlexible === "boolean" ? args.matchWhitespaceFlexible : true,
+            }
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            matchCount: result.matchCount,
+            matches: result.matches,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_generate_semantic_tree_diff",
+        description: "Parses top-level AST declarations (imports, interfaces, types, functions, classes) and generates structural tree diff operations (insert, delete, update, move).",
+        parameters: {
+          oldContent: {
+            type: "string",
+            description: "The baseline source code content",
+            required: true,
+          },
+          newContent: {
+            type: "string",
+            description: "The modified source code content",
+            required: true,
+          },
+          ignoreFormatting: {
+            type: "boolean",
+            description: "Whether to ignore purely whitespace/formatting differences in node comparison",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.oldContent !== "string" || typeof args.newContent !== "string") {
+            return {
+              success: false,
+              error: "Missing required string parameters ('oldContent', 'newContent').",
+            };
+          }
+          const result = this.supervisor.generateSemanticTreeDiff(args.oldContent, args.newContent, {
+            ignoreFormatting: typeof args.ignoreFormatting === "boolean" ? args.ignoreFormatting : false,
+          });
+          return {
+            success: true,
+            operations: result.operations,
+            totalChanges: result.totalChanges,
+            summary: result.summary,
+          };
+        },
+      },
+      {
+        name: "fuzzy_apply_semantic_tree_diff",
+        description: "Applies structural AST tree diff operations directly to source code content.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The target source code content to apply tree diff operations to",
+            required: true,
+          },
+          diff: {
+            type: "string",
+            description: "The semantic tree diff result object containing operations (or JSON string)",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let diffObj: any = args.diff;
+          if (typeof diffObj === "string") {
+            try {
+              diffObj = JSON.parse(diffObj);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for diff parameter: ${msg}` };
+            }
+          }
+          if (typeof args.content !== "string" || !diffObj || typeof diffObj !== "object") {
+            return {
+              success: false,
+              error: "Missing required parameters ('content' string, 'diff' object).",
+            };
+          }
+          const result = this.supervisor.applySemanticTreeDiff(
+            args.content,
+            diffObj
+          );
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            appliedOpsCount: result.appliedOpsCount,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_synthesize_multi_source_patch",
+        description: "Synthesizes and orders patches from multiple autonomous swarm subagents, detecting inter-agent hunk collisions.",
+        parameters: {
+          inputs: {
+            type: "string",
+            description: "Array of hunk inputs (or JSON string) from different agent sources ({ sourceAgentId, fileRelativePath, oldText, newText })",
+            required: true,
+          },
+          baseFiles: {
+            type: "string",
+            description: "Dictionary of base file contents (or JSON string) keyed by relative file path",
+            required: true,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          let inputsArr: any = args.inputs;
+          if (typeof inputsArr === "string") {
+            try {
+              inputsArr = JSON.parse(inputsArr);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for inputs parameter: ${msg}` };
+            }
+          }
+          let baseFilesObj: any = args.baseFiles;
+          if (typeof baseFilesObj === "string") {
+            try {
+              baseFilesObj = JSON.parse(baseFilesObj);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for baseFiles parameter: ${msg}` };
+            }
+          }
+          if (!Array.isArray(inputsArr) || !baseFilesObj || typeof baseFilesObj !== "object") {
+            return {
+              success: false,
+              error: "Missing required parameters ('inputs' array, 'baseFiles' record).",
+            };
+          }
+          const result = this.supervisor.synthesizeMultiSourcePatch(
+            inputsArr as any,
+            baseFilesObj as Record<string, string>
+          );
+          return {
+            success: result.success,
+            synthesizedPatches: result.synthesizedPatches,
+            conflictingHunks: result.conflictingHunks,
+            totalSourcesProcessed: result.totalSourcesProcessed,
+            error: result.error,
+          };
+        },
+      },
+      {
+        name: "fuzzy_optimize_and_harmonize_imports",
+        description: "Optimizes, de-duplicates, harmonizes, groups, and sorts import statements, with optional direct barrel-bypass resolution.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The source code content whose imports should be optimized",
+            required: true,
+          },
+          sortAlphabetically: {
+            type: "boolean",
+            description: "Whether to sort specifiers and imports alphabetically (default: true)",
+            required: false,
+          },
+          groupByCategory: {
+            type: "boolean",
+            description: "Whether to group by builtin, external, and internal categories (default: true)",
+            required: false,
+          },
+          resolveBarrelToDirect: {
+            type: "boolean",
+            description: "Whether to rewrite barrel imports to direct file paths (default: false)",
+            required: false,
+          },
+          barrelMapping: {
+            type: "string",
+            description: "Optional dictionary (or JSON string) mapping barrel module specifiers to direct module paths",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return {
+              success: false,
+              error: "Missing required parameter 'content' (string).",
+            };
+          }
+          const result = this.supervisor.optimizeAndHarmonizeImports(args.content, {
+            sortAlphabetically:
+              typeof args.sortAlphabetically === "boolean" ? args.sortAlphabetically : true,
+            groupByCategory:
+              typeof args.groupByCategory === "boolean" ? args.groupByCategory : true,
+            resolveBarrelToDirect:
+              typeof args.resolveBarrelToDirect === "boolean" ? args.resolveBarrelToDirect : false,
+            barrelMapping:
+              args.barrelMapping && typeof args.barrelMapping === "object"
+                ? (args.barrelMapping as Record<string, string>)
+                : undefined,
+          });
+          return {
+            success: result.success,
+            modifiedContent: result.modifiedContent,
+            originalImportsCount: result.originalImportsCount,
+            optimizedImportsCount: result.optimizedImportsCount,
+            mergedStatementsCount: result.mergedStatementsCount,
+            resolvedBarrelImportsCount: result.resolvedBarrelImportsCount,
+            error: result.error,
+          };
+        },
+      },
+      {
         name: "fuzzy_inspect_strategies",
         description: "Inspects fuzzy matching execution metrics, strategy usage analytics, and active Unicode normalization maps.",
         parameters: {},

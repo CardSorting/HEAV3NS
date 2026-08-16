@@ -18,6 +18,9 @@ import type {
   FuzzyStrategyName,
   HistogramDiffOptions,
   HistogramDiffResult,
+  ImportOptimizationOptions,
+  ImportOptimizationResult,
+  ImportStatementAnalysis,
   IndentationHarmonizationResult,
   IndentationStyle,
   InversePatchResult,
@@ -30,6 +33,8 @@ import type {
   MultiFilePatchResult,
   MultiFileTransactionHunk,
   MultiFileTransactionResult,
+  MultiSourceHunkInput,
+  MultiSourcePatchSynthesisResult,
   NGramSimilarityOptions,
   NGramSimilarityResult,
   PatchDriftOptions,
@@ -42,8 +47,14 @@ import type {
   ScopeBoundedMatchOptions,
   ScopeBoundedMatchResult,
   SemanticConflictExplanation,
+  SemanticTreeApplyResult,
+  SemanticTreeDiffOptions,
+  SemanticTreeDiffResult,
+  SemanticTreeNode,
   SignatureRefactorOptions,
   SignatureRefactorResult,
+  StructuralPatternMatchResult,
+  StructuralPatternOptions,
   SymbolRenameOptions,
   SyntaxBoundarySnapResult,
   SyntaxRepairResult,
@@ -572,6 +583,73 @@ export class FuzzyMatcherSupervisor {
 
   applyHistogramPatch(content: string, patchText: string): UnifiedPatchResult {
     return this.matcher.applyHistogramPatch(content, patchText);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Structural Pattern & Hole Wildcard Matcher / Splicer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  structuralPatternMatchAndReplace(
+    content: string,
+    pattern: string,
+    replacementTemplate: string,
+    options?: StructuralPatternOptions
+  ): StructuralPatternMatchResult {
+    return this.matcher.structuralPatternMatchAndReplace(
+      content,
+      pattern,
+      replacementTemplate,
+      options
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hierarchical Tree-Diff & Semantic AST Node Swapper (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  parseSemanticTree(content: string): readonly SemanticTreeNode[] {
+    return this.matcher.parseSemanticTree(content);
+  }
+
+  generateSemanticTreeDiff(
+    oldContent: string,
+    newContent: string,
+    options?: SemanticTreeDiffOptions
+  ): SemanticTreeDiffResult {
+    return this.matcher.generateSemanticTreeDiff(oldContent, newContent, options);
+  }
+
+  applySemanticTreeDiff(
+    content: string,
+    diff: SemanticTreeDiffResult
+  ): SemanticTreeApplyResult {
+    return this.matcher.applySemanticTreeDiff(content, diff);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Swarm Multi-Source Patch Synthesizer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  synthesizeMultiSourcePatch(
+    inputs: readonly MultiSourceHunkInput[],
+    baseFiles: Record<string, string>
+  ): MultiSourcePatchSynthesisResult {
+    return this.matcher.synthesizeMultiSourcePatch(inputs, baseFiles);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Fuzzy Import Specifier & Barrel-Bypass Optimizer (Pass 10)
+  // ---------------------------------------------------------------------------
+
+  parseImportStatements(content: string): readonly ImportStatementAnalysis[] {
+    return this.matcher.parseImportStatements(content);
+  }
+
+  optimizeAndHarmonizeImports(
+    content: string,
+    options?: ImportOptimizationOptions
+  ): ImportOptimizationResult {
+    return this.matcher.optimizeAndHarmonizeImports(content, options);
   }
 
   clearHistory(): void {

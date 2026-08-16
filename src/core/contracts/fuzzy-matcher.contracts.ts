@@ -641,5 +641,164 @@ export interface HistogramDiffResult {
   readonly hasChanges: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Structural Pattern & Hole Wildcard Contracts (Pass 10)
+// ---------------------------------------------------------------------------
+
+export interface StructuralPatternOptions {
+  readonly matchWhitespaceFlexible?: boolean;
+  readonly holePrefix?: string;
+  readonly maxMatches?: number;
+}
+
+export interface StructuralHoleBinding {
+  readonly holeName: string;
+  readonly capturedValue: string;
+  readonly startIndex: number;
+  readonly endIndex: number;
+}
+
+export interface StructuralPatternMatchItem {
+  readonly matchSpan: FuzzyMatchSpan;
+  readonly bindings: Record<string, string>;
+  readonly expandedReplacement: string;
+}
+
+export interface StructuralPatternMatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly matchCount: number;
+  readonly matches: readonly StructuralPatternMatchItem[];
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Semantic AST Tree Diff Contracts (Pass 10)
+// ---------------------------------------------------------------------------
+
+export type SemanticTreeNodeType =
+  | "import"
+  | "interface"
+  | "type"
+  | "function"
+  | "class"
+  | "method"
+  | "export_const"
+  | "statement"
+  | "block";
+
+export interface SemanticTreeNode {
+  readonly id: string;
+  readonly type: SemanticTreeNodeType;
+  readonly identifier: string;
+  readonly startOffset: number;
+  readonly endOffset: number;
+  readonly rawCode: string;
+  readonly signature?: string;
+  readonly children?: readonly SemanticTreeNode[];
+}
+
+export type SemanticTreeOpType = "insert" | "delete" | "update" | "move";
+
+export interface SemanticTreeOp {
+  readonly opType: SemanticTreeOpType;
+  readonly nodeId: string;
+  readonly nodeType: SemanticTreeNodeType;
+  readonly identifier: string;
+  readonly newCode?: string;
+  readonly targetParentId?: string;
+  readonly targetIndex?: number;
+}
+
+export interface SemanticTreeDiffOptions {
+  readonly ignoreComments?: boolean;
+  readonly ignoreFormatting?: boolean;
+}
+
+export interface SemanticTreeDiffResult {
+  readonly operations: readonly SemanticTreeOp[];
+  readonly totalChanges: number;
+  readonly summary: string;
+}
+
+export interface SemanticTreeApplyResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly appliedOpsCount: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Swarm Multi-Source Patch Synthesizer Contracts (Pass 10)
+// ---------------------------------------------------------------------------
+
+export interface MultiSourceHunkInput {
+  readonly sourceAgentId: string;
+  readonly fileRelativePath: string;
+  readonly oldText: string;
+  readonly newText: string;
+  readonly priority?: number;
+}
+
+export interface MultiSourceSynthesizedPatch {
+  readonly fileRelativePath: string;
+  readonly synthesizedDiff: string;
+  readonly hunksAppliedCount: number;
+  readonly contributingAgents: readonly string[];
+}
+
+export interface MultiSourcePatchSynthesisResult {
+  readonly success: boolean;
+  readonly synthesizedPatches: readonly MultiSourceSynthesizedPatch[];
+  readonly conflictingHunks: readonly {
+    readonly fileRelativePath: string;
+    readonly agentA: string;
+    readonly agentB: string;
+    readonly reason: string;
+  }[];
+  readonly totalSourcesProcessed: number;
+  readonly error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Fuzzy Import Specifier & Barrel-Bypass Optimizer Contracts (Pass 10)
+// ---------------------------------------------------------------------------
+
+export interface ImportSpecifierItem {
+  readonly importedName: string;
+  readonly localName: string;
+  readonly isTypeOnly: boolean;
+}
+
+export interface ImportStatementAnalysis {
+  readonly fullStatement: string;
+  readonly moduleSpecifier: string;
+  readonly defaultImport?: string;
+  readonly namespaceImport?: string;
+  readonly namedImports: readonly ImportSpecifierItem[];
+  readonly isTypeOnlyStatement: boolean;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly category: "builtin" | "external" | "internal_direct" | "internal_barrel";
+}
+
+export interface ImportOptimizationOptions {
+  readonly removeUnused?: boolean;
+  readonly sortAlphabetically?: boolean;
+  readonly groupByCategory?: boolean;
+  readonly resolveBarrelToDirect?: boolean;
+  readonly barrelMapping?: Record<string, string>;
+}
+
+export interface ImportOptimizationResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly originalImportsCount: number;
+  readonly optimizedImportsCount: number;
+  readonly mergedStatementsCount: number;
+  readonly resolvedBarrelImportsCount: number;
+  readonly error: string | null;
+}
+
 
 
