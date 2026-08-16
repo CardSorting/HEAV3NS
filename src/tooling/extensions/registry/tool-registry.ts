@@ -72,6 +72,7 @@ import type { MediaSourceToolSuite } from "../media_source/media-source-tool-sui
 import type { WorktreeToolSuite } from "../worktree/worktree-tool-suite.js";
 import type { TranscriptionToolSuite } from "../transcription/transcription-tool-suite.js";
 import type { DeadlineToolSuite } from "../deadline/deadline-tool-suite.js";
+import type { FileSafetyToolSuite } from "../file_safety/file-safety-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -135,6 +136,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly worktreeToolSuite?: WorktreeToolSuite;
   readonly transcriptionToolSuite?: TranscriptionToolSuite;
   readonly deadlineToolSuite?: DeadlineToolSuite;
+  readonly fileSafetyToolSuite?: FileSafetyToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -206,7 +208,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     mediaSourceToolSuite?: MediaSourceToolSuite,
     worktreeToolSuite?: WorktreeToolSuite,
     transcriptionToolSuite?: TranscriptionToolSuite,
-    deadlineToolSuite?: DeadlineToolSuite
+    deadlineToolSuite?: DeadlineToolSuite,
+    fileSafetyToolSuite?: FileSafetyToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -270,6 +273,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.worktreeToolSuite = worktreeToolSuite;
     this.transcriptionToolSuite = transcriptionToolSuite;
     this.deadlineToolSuite = deadlineToolSuite;
+    this.fileSafetyToolSuite = fileSafetyToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -762,6 +766,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.deadlineToolSuite) {
       for (const tool of this.deadlineToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.fileSafetyToolSuite) {
+      for (const tool of this.fileSafetyToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

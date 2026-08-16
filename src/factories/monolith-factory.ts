@@ -533,6 +533,12 @@ import { BroccoliDeadlineSubstrate } from "../sessions/extensions/deadline/brocc
 import { DeadlineSnapshotManager } from "../sessions/extensions/deadline/deadline-snapshot-manager.js";
 import { DeadlineToolSuite } from "../tooling/extensions/deadline/deadline-tool-suite.js";
 
+import { DeterministicFileSafetyGuard } from "../agents/extensions/file_safety/deterministic-file-safety-guard.js";
+import { FileSafetySupervisor } from "../agents/extensions/file_safety/file-safety-supervisor.js";
+import { BroccoliFileSafetySubstrate } from "../sessions/extensions/file_safety/broccoli-file-safety-substrate.js";
+import { FileSafetySnapshotManager } from "../sessions/extensions/file_safety/file-safety-snapshot-manager.js";
+import { FileSafetyToolSuite } from "../tooling/extensions/file_safety/file-safety-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1014,6 +1020,11 @@ export class MonolithFactory {
     broccoliDeadlineSubstrate: BroccoliDeadlineSubstrate;
     deadlineSnapshotManager: DeadlineSnapshotManager;
     deadlineToolSuite: DeadlineToolSuite;
+    deterministicFileSafetyGuard: DeterministicFileSafetyGuard;
+    fileSafetySupervisor: FileSafetySupervisor;
+    broccoliFileSafetySubstrate: BroccoliFileSafetySubstrate;
+    fileSafetySnapshotManager: FileSafetySnapshotManager;
+    fileSafetyToolSuite: FileSafetyToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1796,6 +1807,15 @@ export class MonolithFactory {
     );
     const deadlineToolSuite = new DeadlineToolSuite(deadlineSupervisor);
 
+    const deterministicFileSafetyGuard = new DeterministicFileSafetyGuard();
+    const broccoliFileSafetySubstrate = new BroccoliFileSafetySubstrate();
+    const fileSafetySnapshotManager = new FileSafetySnapshotManager(broccoliFileSafetySubstrate);
+    const fileSafetySupervisor = new FileSafetySupervisor(
+      broccoliFileSafetySubstrate,
+      deterministicFileSafetyGuard
+    );
+    const fileSafetyToolSuite = new FileSafetyToolSuite(fileSafetySupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1871,7 +1891,8 @@ export class MonolithFactory {
       mediaSourceToolSuite,
       worktreeToolSuite,
       transcriptionToolSuite,
-      deadlineToolSuite
+      deadlineToolSuite,
+      fileSafetyToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2366,6 +2387,11 @@ export class MonolithFactory {
       broccoliDeadlineSubstrate,
       deadlineSnapshotManager,
       deadlineToolSuite,
+      deterministicFileSafetyGuard,
+      fileSafetySupervisor,
+      broccoliFileSafetySubstrate,
+      fileSafetySnapshotManager,
+      fileSafetyToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

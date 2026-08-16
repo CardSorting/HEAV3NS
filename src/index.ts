@@ -494,6 +494,12 @@ import { BroccoliDeadlineSubstrate } from "./sessions/extensions/deadline/brocco
 import { DeadlineSnapshotManager } from "./sessions/extensions/deadline/deadline-snapshot-manager.js";
 import { DeadlineToolSuite } from "./tooling/extensions/deadline/deadline-tool-suite.js";
 
+import { DeterministicFileSafetyGuard } from "./agents/extensions/file_safety/deterministic-file-safety-guard.js";
+import { FileSafetySupervisor } from "./agents/extensions/file_safety/file-safety-supervisor.js";
+import { BroccoliFileSafetySubstrate } from "./sessions/extensions/file_safety/broccoli-file-safety-substrate.js";
+import { FileSafetySnapshotManager } from "./sessions/extensions/file_safety/file-safety-snapshot-manager.js";
+import { FileSafetyToolSuite } from "./tooling/extensions/file_safety/file-safety-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2031,6 +2037,20 @@ export {
   MAX_SAFE_TIMEOUT_MS,
 } from "./core/contracts/deadline.contracts.js";
 
+export { DeterministicFileSafetyGuard } from "./agents/extensions/file_safety/deterministic-file-safety-guard.js";
+export { FileSafetySupervisor } from "./agents/extensions/file_safety/file-safety-supervisor.js";
+export { BroccoliFileSafetySubstrate } from "./sessions/extensions/file_safety/broccoli-file-safety-substrate.js";
+export { FileSafetySnapshotManager } from "./sessions/extensions/file_safety/file-safety-snapshot-manager.js";
+export { FileSafetyToolSuite } from "./tooling/extensions/file_safety/file-safety-tool-suite.js";
+export type {
+  FileSafetyVerdict,
+  FileSafetyEvaluation,
+  FileSafetyPolicyConfig,
+  FileSafetyMetrics,
+  FileSafetyWorkspaceSnapshot,
+} from "./core/contracts/file-safety.contracts.js";
+export { DEFAULT_FILE_SAFETY_CONFIG } from "./core/contracts/file-safety.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2453,6 +2473,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliDeadlineSubstrate: BroccoliDeadlineSubstrate;
   readonly deadlineSnapshotManager: DeadlineSnapshotManager;
   readonly deadlineToolSuite: DeadlineToolSuite;
+  readonly deterministicFileSafetyGuard: DeterministicFileSafetyGuard;
+  readonly fileSafetySupervisor: FileSafetySupervisor;
+  readonly broccoliFileSafetySubstrate: BroccoliFileSafetySubstrate;
+  readonly fileSafetySnapshotManager: FileSafetySnapshotManager;
+  readonly fileSafetyToolSuite: FileSafetyToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2866,6 +2891,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliDeadlineSubstrate = components.broccoliDeadlineSubstrate;
     this.deadlineSnapshotManager = components.deadlineSnapshotManager;
     this.deadlineToolSuite = components.deadlineToolSuite;
+    this.deterministicFileSafetyGuard = components.deterministicFileSafetyGuard;
+    this.fileSafetySupervisor = components.fileSafetySupervisor;
+    this.broccoliFileSafetySubstrate = components.broccoliFileSafetySubstrate;
+    this.fileSafetySnapshotManager = components.fileSafetySnapshotManager;
+    this.fileSafetyToolSuite = components.fileSafetyToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
