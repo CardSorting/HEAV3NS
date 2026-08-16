@@ -67,6 +67,7 @@ import type { SpillVaultToolSuite } from "../spill_vault/spill-vault-tool-suite.
 import type { UrlSafetyToolSuite } from "../url_safety/url-safety-tool-suite.js";
 import type { V4aPatchToolSuite } from "../v4a_patch/v4a-patch-tool-suite.js";
 import type { WebsitePolicyToolSuite } from "../website_policy/website-policy-tool-suite.js";
+import type { WakeWordToolSuite } from "../wake_word/wake-word-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -125,6 +126,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly urlSafetyToolSuite?: UrlSafetyToolSuite;
   readonly v4aPatchToolSuite?: V4aPatchToolSuite;
   readonly websitePolicyToolSuite?: WebsitePolicyToolSuite;
+  readonly wakeWordToolSuite?: WakeWordToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -191,7 +193,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     spillVaultToolSuite?: SpillVaultToolSuite,
     urlSafetyToolSuite?: UrlSafetyToolSuite,
     v4aPatchToolSuite?: V4aPatchToolSuite,
-    websitePolicyToolSuite?: WebsitePolicyToolSuite
+    websitePolicyToolSuite?: WebsitePolicyToolSuite,
+    wakeWordToolSuite?: WakeWordToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -250,6 +253,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.urlSafetyToolSuite = urlSafetyToolSuite;
     this.v4aPatchToolSuite = v4aPatchToolSuite;
     this.websitePolicyToolSuite = websitePolicyToolSuite;
+    this.wakeWordToolSuite = wakeWordToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -717,6 +721,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.websitePolicyToolSuite) {
       for (const tool of this.websitePolicyToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.wakeWordToolSuite) {
+      for (const tool of this.wakeWordToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

@@ -503,6 +503,12 @@ import { BroccoliWebsitePolicySubstrate } from "../sessions/extensions/website_p
 import { WebsitePolicySnapshotManager } from "../sessions/extensions/website_policy/website-policy-snapshot-manager.js";
 import { WebsitePolicyToolSuite } from "../tooling/extensions/website_policy/website-policy-tool-suite.js";
 
+import { DeterministicWakeWord } from "../agents/extensions/wake_word/deterministic-wake-word.js";
+import { WakeWordSupervisor } from "../agents/extensions/wake_word/wake-word-supervisor.js";
+import { BroccoliWakeWordSubstrate } from "../sessions/extensions/wake_word/broccoli-wake-word-substrate.js";
+import { WakeWordSnapshotManager } from "../sessions/extensions/wake_word/wake-word-snapshot-manager.js";
+import { WakeWordToolSuite } from "../tooling/extensions/wake_word/wake-word-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -959,6 +965,11 @@ export class MonolithFactory {
     broccoliWebsitePolicySubstrate: BroccoliWebsitePolicySubstrate;
     websitePolicySnapshotManager: WebsitePolicySnapshotManager;
     websitePolicyToolSuite: WebsitePolicyToolSuite;
+    deterministicWakeWord: DeterministicWakeWord;
+    wakeWordSupervisor: WakeWordSupervisor;
+    broccoliWakeWordSubstrate: BroccoliWakeWordSubstrate;
+    wakeWordSnapshotManager: WakeWordSnapshotManager;
+    wakeWordToolSuite: WakeWordToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1696,6 +1707,15 @@ export class MonolithFactory {
     );
     const websitePolicyToolSuite = new WebsitePolicyToolSuite(websitePolicySupervisor);
 
+    const deterministicWakeWord = new DeterministicWakeWord();
+    const broccoliWakeWordSubstrate = new BroccoliWakeWordSubstrate();
+    const wakeWordSnapshotManager = new WakeWordSnapshotManager(broccoliWakeWordSubstrate);
+    const wakeWordSupervisor = new WakeWordSupervisor(
+      broccoliWakeWordSubstrate,
+      deterministicWakeWord
+    );
+    const wakeWordToolSuite = new WakeWordToolSuite(wakeWordSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1766,7 +1786,8 @@ export class MonolithFactory {
       spillVaultToolSuite,
       urlSafetyToolSuite,
       v4aPatchToolSuite,
-      websitePolicyToolSuite
+      websitePolicyToolSuite,
+      wakeWordToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2236,6 +2257,11 @@ export class MonolithFactory {
       broccoliWebsitePolicySubstrate,
       websitePolicySnapshotManager,
       websitePolicyToolSuite,
+      deterministicWakeWord,
+      wakeWordSupervisor,
+      broccoliWakeWordSubstrate,
+      wakeWordSnapshotManager,
+      wakeWordToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

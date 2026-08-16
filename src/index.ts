@@ -464,6 +464,12 @@ import { BroccoliWebsitePolicySubstrate } from "./sessions/extensions/website_po
 import { WebsitePolicySnapshotManager } from "./sessions/extensions/website_policy/website-policy-snapshot-manager.js";
 import { WebsitePolicyToolSuite } from "./tooling/extensions/website_policy/website-policy-tool-suite.js";
 
+import { DeterministicWakeWord } from "./agents/extensions/wake_word/deterministic-wake-word.js";
+import { WakeWordSupervisor } from "./agents/extensions/wake_word/wake-word-supervisor.js";
+import { BroccoliWakeWordSubstrate } from "./sessions/extensions/wake_word/broccoli-wake-word-substrate.js";
+import { WakeWordSnapshotManager } from "./sessions/extensions/wake_word/wake-word-snapshot-manager.js";
+import { WakeWordToolSuite } from "./tooling/extensions/wake_word/wake-word-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1922,6 +1928,21 @@ export type {
 } from "./core/contracts/website-policy.contracts.js";
 export { DEFAULT_WEBSITE_POLICY_CONFIG } from "./core/contracts/website-policy.contracts.js";
 
+export { DeterministicWakeWord } from "./agents/extensions/wake_word/deterministic-wake-word.js";
+export { WakeWordSupervisor } from "./agents/extensions/wake_word/wake-word-supervisor.js";
+export { BroccoliWakeWordSubstrate } from "./sessions/extensions/wake_word/broccoli-wake-word-substrate.js";
+export { WakeWordSnapshotManager } from "./sessions/extensions/wake_word/wake-word-snapshot-manager.js";
+export { WakeWordToolSuite } from "./tooling/extensions/wake_word/wake-word-tool-suite.js";
+export type {
+  WakeWordEngineProvider,
+  WakeWordState,
+  WakeWordConfig,
+  WakeWordFrameResult,
+  WakeWordMetrics,
+  WakeWordWorkspaceSnapshot,
+} from "./core/contracts/wake-word.contracts.js";
+export { DEFAULT_WAKE_WORD_CONFIG } from "./core/contracts/wake-word.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2319,6 +2340,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliWebsitePolicySubstrate: BroccoliWebsitePolicySubstrate;
   readonly websitePolicySnapshotManager: WebsitePolicySnapshotManager;
   readonly websitePolicyToolSuite: WebsitePolicyToolSuite;
+  readonly deterministicWakeWord: DeterministicWakeWord;
+  readonly wakeWordSupervisor: WakeWordSupervisor;
+  readonly broccoliWakeWordSubstrate: BroccoliWakeWordSubstrate;
+  readonly wakeWordSnapshotManager: WakeWordSnapshotManager;
+  readonly wakeWordToolSuite: WakeWordToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2707,6 +2733,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliWebsitePolicySubstrate = components.broccoliWebsitePolicySubstrate;
     this.websitePolicySnapshotManager = components.websitePolicySnapshotManager;
     this.websitePolicyToolSuite = components.websitePolicyToolSuite;
+    this.deterministicWakeWord = components.deterministicWakeWord;
+    this.wakeWordSupervisor = components.wakeWordSupervisor;
+    this.broccoliWakeWordSubstrate = components.broccoliWakeWordSubstrate;
+    this.wakeWordSnapshotManager = components.wakeWordSnapshotManager;
+    this.wakeWordToolSuite = components.wakeWordToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

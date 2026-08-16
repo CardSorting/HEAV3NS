@@ -104,6 +104,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-094](ADR-094-ssrf-defense-firewall-and-url-normalizer.md) | SSRF Defense Firewall, Cloud Metadata & Private IP Blocker, and URL Normalizer Subsystem | Accepted | 2026-08-16 | Network & SSRF Security (Target #51 / Phase 118) |
 | [ADR-095](ADR-095-v4a-patch-parser-and-working-diff-synthesizer.md) | V4A Multi-File Patch Parser, Atomic Multi-Hunk Applicator & Working Tree Diff Synthesizer Subsystem | Accepted | 2026-08-16 | Code Editing & Multi-File Diffs (Target #52 / Phase 119) |
 | [ADR-096](ADR-096-website-access-policy-and-domain-blocklist-engine.md) | Website Access Policy Engine, Domain Wildcard Matching & URL Access Governance Subsystem | Accepted | 2026-08-16 | Web & Network Policy (Target #53 / Phase 120) |
+| [ADR-097](ADR-097-acoustic-wake-word-and-ring-buffer-engine.md) | Streaming Acoustic Wake-Word Detection, Ring-Buffer Audio Engine & Hands-Free Trigger Subsystem | Accepted | 2026-08-16 | Voice & Audio Intelligence (Target #54 / Phase 121) |
 
 ## Domain Grouping
 
@@ -130,6 +131,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-094](ADR-094-ssrf-defense-firewall-and-url-normalizer.md)**: SSRF defense firewall, cloud metadata endpoint blocker, alternative IP decoder (integer, hex, octal, IPv4-mapped IPv6), private IP subnet filter, and URL normalizer.
 - **[ADR-095](ADR-095-v4a-patch-parser-and-working-diff-synthesizer.md)**: V4A multi-file compound patch parser, atomic multi-hunk applicator with fuzzy context matching, and working tree git diff synthesizer.
 - **[ADR-096](ADR-096-website-access-policy-and-domain-blocklist-engine.md)**: Website access policy engine, domain wildcard matching, shared blocklist parser, and URL access governance.
+- **[ADR-097](ADR-097-acoustic-wake-word-and-ring-buffer-engine.md)**: Streaming acoustic wake-word detection, ring-buffer audio engine, and hands-free trigger subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.
