@@ -476,6 +476,12 @@ import { BroccoliMediaSourceSubstrate } from "./sessions/extensions/media_source
 import { MediaSourceSnapshotManager } from "./sessions/extensions/media_source/media-source-snapshot-manager.js";
 import { MediaSourceToolSuite } from "./tooling/extensions/media_source/media-source-tool-suite.js";
 
+import { DeterministicGitWorktree } from "./agents/extensions/worktree/deterministic-git-worktree.js";
+import { WorktreeSupervisor } from "./agents/extensions/worktree/worktree-supervisor.js";
+import { BroccoliWorktreeSubstrate } from "./sessions/extensions/worktree/broccoli-worktree-substrate.js";
+import { WorktreeSnapshotManager } from "./sessions/extensions/worktree/worktree-snapshot-manager.js";
+import { WorktreeToolSuite } from "./tooling/extensions/worktree/worktree-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1964,6 +1970,20 @@ export type {
 } from "./core/contracts/media-source.contracts.js";
 export { DEFAULT_MEDIA_SOURCE_CONFIG } from "./core/contracts/media-source.contracts.js";
 
+export { DeterministicGitWorktree } from "./agents/extensions/worktree/deterministic-git-worktree.js";
+export { WorktreeSupervisor } from "./agents/extensions/worktree/worktree-supervisor.js";
+export { BroccoliWorktreeSubstrate } from "./sessions/extensions/worktree/broccoli-worktree-substrate.js";
+export { WorktreeSnapshotManager } from "./sessions/extensions/worktree/worktree-snapshot-manager.js";
+export { WorktreeToolSuite } from "./tooling/extensions/worktree/worktree-tool-suite.js";
+export type {
+  WorktreeStatus,
+  WorktreeDescriptor,
+  WorktreeConfig,
+  WorktreeMetrics,
+  WorktreeWorkspaceSnapshot,
+} from "./core/contracts/worktree.contracts.js";
+export { DEFAULT_WORKTREE_CONFIG } from "./core/contracts/worktree.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2371,6 +2391,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliMediaSourceSubstrate: BroccoliMediaSourceSubstrate;
   readonly mediaSourceSnapshotManager: MediaSourceSnapshotManager;
   readonly mediaSourceToolSuite: MediaSourceToolSuite;
+  readonly deterministicGitWorktree: DeterministicGitWorktree;
+  readonly worktreeSupervisor: WorktreeSupervisor;
+  readonly broccoliWorktreeSubstrate: BroccoliWorktreeSubstrate;
+  readonly worktreeSnapshotManager: WorktreeSnapshotManager;
+  readonly worktreeToolSuite: WorktreeToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2769,6 +2794,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliMediaSourceSubstrate = components.broccoliMediaSourceSubstrate;
     this.mediaSourceSnapshotManager = components.mediaSourceSnapshotManager;
     this.mediaSourceToolSuite = components.mediaSourceToolSuite;
+    this.deterministicGitWorktree = components.deterministicGitWorktree;
+    this.worktreeSupervisor = components.worktreeSupervisor;
+    this.broccoliWorktreeSubstrate = components.broccoliWorktreeSubstrate;
+    this.worktreeSnapshotManager = components.worktreeSnapshotManager;
+    this.worktreeToolSuite = components.worktreeToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

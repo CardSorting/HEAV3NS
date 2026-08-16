@@ -69,6 +69,7 @@ import type { V4aPatchToolSuite } from "../v4a_patch/v4a-patch-tool-suite.js";
 import type { WebsitePolicyToolSuite } from "../website_policy/website-policy-tool-suite.js";
 import type { WakeWordToolSuite } from "../wake_word/wake-word-tool-suite.js";
 import type { MediaSourceToolSuite } from "../media_source/media-source-tool-suite.js";
+import type { WorktreeToolSuite } from "../worktree/worktree-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -129,6 +130,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly websitePolicyToolSuite?: WebsitePolicyToolSuite;
   readonly wakeWordToolSuite?: WakeWordToolSuite;
   readonly mediaSourceToolSuite?: MediaSourceToolSuite;
+  readonly worktreeToolSuite?: WorktreeToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -197,7 +199,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     v4aPatchToolSuite?: V4aPatchToolSuite,
     websitePolicyToolSuite?: WebsitePolicyToolSuite,
     wakeWordToolSuite?: WakeWordToolSuite,
-    mediaSourceToolSuite?: MediaSourceToolSuite
+    mediaSourceToolSuite?: MediaSourceToolSuite,
+    worktreeToolSuite?: WorktreeToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -258,6 +261,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.websitePolicyToolSuite = websitePolicyToolSuite;
     this.wakeWordToolSuite = wakeWordToolSuite;
     this.mediaSourceToolSuite = mediaSourceToolSuite;
+    this.worktreeToolSuite = worktreeToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -735,6 +739,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.mediaSourceToolSuite) {
       for (const tool of this.mediaSourceToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.worktreeToolSuite) {
+      for (const tool of this.worktreeToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

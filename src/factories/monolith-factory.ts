@@ -515,6 +515,12 @@ import { BroccoliMediaSourceSubstrate } from "../sessions/extensions/media_sourc
 import { MediaSourceSnapshotManager } from "../sessions/extensions/media_source/media-source-snapshot-manager.js";
 import { MediaSourceToolSuite } from "../tooling/extensions/media_source/media-source-tool-suite.js";
 
+import { DeterministicGitWorktree } from "../agents/extensions/worktree/deterministic-git-worktree.js";
+import { WorktreeSupervisor } from "../agents/extensions/worktree/worktree-supervisor.js";
+import { BroccoliWorktreeSubstrate } from "../sessions/extensions/worktree/broccoli-worktree-substrate.js";
+import { WorktreeSnapshotManager } from "../sessions/extensions/worktree/worktree-snapshot-manager.js";
+import { WorktreeToolSuite } from "../tooling/extensions/worktree/worktree-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -981,6 +987,11 @@ export class MonolithFactory {
     broccoliMediaSourceSubstrate: BroccoliMediaSourceSubstrate;
     mediaSourceSnapshotManager: MediaSourceSnapshotManager;
     mediaSourceToolSuite: MediaSourceToolSuite;
+    deterministicGitWorktree: DeterministicGitWorktree;
+    worktreeSupervisor: WorktreeSupervisor;
+    broccoliWorktreeSubstrate: BroccoliWorktreeSubstrate;
+    worktreeSnapshotManager: WorktreeSnapshotManager;
+    worktreeToolSuite: WorktreeToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1736,6 +1747,15 @@ export class MonolithFactory {
     );
     const mediaSourceToolSuite = new MediaSourceToolSuite(mediaSourceSupervisor);
 
+    const deterministicGitWorktree = new DeterministicGitWorktree();
+    const broccoliWorktreeSubstrate = new BroccoliWorktreeSubstrate();
+    const worktreeSnapshotManager = new WorktreeSnapshotManager(broccoliWorktreeSubstrate);
+    const worktreeSupervisor = new WorktreeSupervisor(
+      broccoliWorktreeSubstrate,
+      deterministicGitWorktree
+    );
+    const worktreeToolSuite = new WorktreeToolSuite(worktreeSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1808,7 +1828,8 @@ export class MonolithFactory {
       v4aPatchToolSuite,
       websitePolicyToolSuite,
       wakeWordToolSuite,
-      mediaSourceToolSuite
+      mediaSourceToolSuite,
+      worktreeToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2288,6 +2309,11 @@ export class MonolithFactory {
       broccoliMediaSourceSubstrate,
       mediaSourceSnapshotManager,
       mediaSourceToolSuite,
+      deterministicGitWorktree,
+      worktreeSupervisor,
+      broccoliWorktreeSubstrate,
+      worktreeSnapshotManager,
+      worktreeToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
