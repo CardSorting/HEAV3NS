@@ -1475,6 +1475,8 @@ export type {
   MismatchDiagnosis,
   EscapeDriftDetection,
   FuzzyMatchResult,
+  FuzzyReplacementHunk,
+  FuzzyMultiMatchResult,
   FuzzyMatcherOptions,
   FuzzyExecutionRecord,
   FuzzyWorkspaceSnapshot,

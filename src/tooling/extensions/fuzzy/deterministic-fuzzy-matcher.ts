@@ -1,9 +1,9 @@
 /**
  * deterministic-fuzzy-matcher.ts
  *
- * Zero-GC, deterministic 9-strategy fuzzy line matcher, Unicode typography normalizer,
- * block-anchor resolver, indentation preservation engine, escape-drift detector,
- * whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
+ * Zero-GC, deterministic 10-strategy fuzzy line matcher, atomic multi-hunk patch engine,
+ * Unicode typography normalizer, block-anchor resolver, indentation preservation engine,
+ * escape-drift detector, whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
  */
 
 import type {
@@ -13,6 +13,8 @@ import type {
   FuzzyMatcherOptions,
   FuzzyMatchResult,
   FuzzyMatchSpan,
+  FuzzyMultiMatchResult,
+  FuzzyReplacementHunk,
   FuzzyStrategyName,
   MismatchDiagnosis,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
@@ -60,6 +62,7 @@ export const ALL_STRATEGIES: readonly FuzzyStrategyName[] = [
   "indentation_flexible",
   "escape_normalized",
   "trimmed_boundary",
+  "comment_tolerant",
   "unicode_normalized",
   "block_anchor",
   "context_aware",
@@ -319,7 +322,6 @@ export class DeterministicFuzzyMatcher {
     const normFile = this.normalizeUnicode(fileRegion);
     if (normOld !== normFile) return newString;
 
-    // Direct match if strings are equal in normalized space
     return newString;
   }
 
@@ -538,36 +540,66 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // Unified Diff Preview Generator
+  // Myers Unified Diff Generator
   // ---------------------------------------------------------------------------
 
-  generateDiffPreview(oldText: string, newText: string): string {
+  generateUnifiedDiff(oldText: string, newText: string, filename: string = "file"): string {
     const oldLines = oldText.split("\n");
     const newLines = newText.split("\n");
-    const diff: string[] = ["--- a/content", "+++ b/content"];
+    const diff: string[] = [`--- a/${filename}`, `+++ b/${filename}`];
 
     let i = 0;
     let j = 0;
+    let hunkOldStart = 1;
+    let hunkNewStart = 1;
+    let hunkOldCount = 0;
+    let hunkNewCount = 0;
+    let hunkLines: string[] = [];
+
+    const flushHunk = () => {
+      if (hunkLines.length > 0) {
+        diff.push(`@@ -${hunkOldStart},${hunkOldCount} +${hunkNewStart},${hunkNewCount} @@`);
+        diff.push(...hunkLines);
+        hunkLines = [];
+        hunkOldCount = 0;
+        hunkNewCount = 0;
+      }
+    };
+
     while (i < oldLines.length || j < newLines.length) {
       if (i < oldLines.length && j < newLines.length && oldLines[i] === newLines[j]) {
+        if (hunkLines.length > 0) {
+          flushHunk();
+        }
         i++;
         j++;
       } else {
+        if (hunkLines.length === 0) {
+          hunkOldStart = i + 1;
+          hunkNewStart = j + 1;
+        }
         if (i < oldLines.length) {
-          diff.push(`-${oldLines[i]}`);
+          hunkLines.push(`-${oldLines[i]}`);
+          hunkOldCount++;
           i++;
         }
         if (j < newLines.length) {
-          diff.push(`+${newLines[j]}`);
+          hunkLines.push(`+${newLines[j]}`);
+          hunkNewCount++;
           j++;
         }
       }
     }
+
+    if (hunkLines.length > 0) {
+      flushHunk();
+    }
+
     return diff.join("\n");
   }
 
   // ---------------------------------------------------------------------------
-  // 9 Matching Strategies
+  // 10 Matching Strategies
   // ---------------------------------------------------------------------------
 
   private strategyExact(content: string, target: string): FuzzyMatchSpan[] {
@@ -699,6 +731,56 @@ export class DeterministicFuzzyMatcher {
     return this.strategyLineTrimmed(content, boundaryTarget);
   }
 
+  private strategyCommentTolerant(content: string, target: string): FuzzyMatchSpan[] {
+    const stripLineComment = (s: string) =>
+      s
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*/g, "")
+        .replace(/#.*/g, "")
+        .trim();
+
+    const targetLines = target.split("\n").map(stripLineComment).filter((l) => l.length > 0);
+    if (targetLines.length === 0) return [];
+
+    const contentLines = content.split("\n");
+    const contentLinesStripped = contentLines.map(stripLineComment);
+
+    const lineOffsets: number[] = [0];
+    for (let i = 0; i < content.length; i++) {
+      if (content[i] === "\n") lineOffsets.push(i + 1);
+    }
+
+    const matches: FuzzyMatchSpan[] = [];
+    for (let i = 0; i < contentLines.length; i++) {
+      let tIdx = 0;
+      let cIdx = i;
+      while (cIdx < contentLines.length && tIdx < targetLines.length) {
+        if (!contentLinesStripped[cIdx]) {
+          cIdx++;
+          continue;
+        }
+        if (contentLinesStripped[cIdx] === targetLines[tIdx]) {
+          cIdx++;
+          tIdx++;
+        } else {
+          break;
+        }
+      }
+
+      if (tIdx === targetLines.length) {
+        const start = lineOffsets[i];
+        const endLineIdx = cIdx - 1;
+        const end =
+          endLineIdx < contentLines.length - 1
+            ? lineOffsets[endLineIdx + 1] - 1
+            : content.length;
+        matches.push([start, end]);
+        i = endLineIdx;
+      }
+    }
+    return matches;
+  }
+
   private strategyUnicodeNormalized(content: string, target: string): FuzzyMatchSpan[] {
     const normTarget = this.normalizeUnicode(target);
     const normContent = this.normalizeUnicode(content);
@@ -782,7 +864,7 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // Master Find and Replace Cascading Entry Point
+  // Master Single Find and Replace Cascading Entry Point
   // ---------------------------------------------------------------------------
 
   findAndReplace(
@@ -846,6 +928,7 @@ export class DeterministicFuzzyMatcher {
       { name: "indentation_flexible", fn: this.strategyIndentationFlexible.bind(this) },
       { name: "escape_normalized", fn: this.strategyEscapeNormalized.bind(this) },
       { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
+      { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
       { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
       { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
       { name: "context_aware", fn: this.strategyContextAware.bind(this) },
@@ -923,7 +1006,7 @@ export class DeterministicFuzzyMatcher {
             ? 1.0
             : this.calculateSimilarity(content.slice(matches[0][0], matches[0][1]), oldString);
 
-        const diff = this.generateDiffPreview(content, modified);
+        const diff = this.generateUnifiedDiff(content, modified);
         const windows = this.extractContextWindows(content, matches);
 
         if (options.dryRun) {
@@ -965,6 +1048,208 @@ export class DeterministicFuzzyMatcher {
       isIdempotent: false,
       diagnosticHint: hint,
       error: `Could not find a match for old_string across all active fuzzy matching strategies.${hint}`,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Atomic Multi-Hunk / Multi-Edit Batch Replacement Engine
+  // ---------------------------------------------------------------------------
+
+  findAndReplaceMulti(
+    content: string,
+    hunks: readonly FuzzyReplacementHunk[],
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMultiMatchResult {
+    if (hunks.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        totalHunks: 0,
+        appliedHunks: 0,
+        isFullyIdempotent: true,
+        strategiesUsed: [],
+        error: null,
+      };
+    }
+
+    // Step 1: Pre-flight validate and resolve match spans for all hunks
+    interface ResolvedHunk {
+      readonly index: number;
+      readonly span: FuzzyMatchSpan;
+      readonly strategy: FuzzyStrategyName;
+      readonly replacement: string;
+      readonly isIdempotent: boolean;
+    }
+
+    const resolved: ResolvedHunk[] = [];
+    const strategiesUsed: FuzzyStrategyName[] = [];
+    let fullyIdempotent = true;
+
+    for (let i = 0; i < hunks.length; i++) {
+      const hunk = hunks[i];
+      if (!hunk.oldString) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalHunks: hunks.length,
+          appliedHunks: 0,
+          isFullyIdempotent: false,
+          strategiesUsed: [],
+          failedHunkIndex: i,
+          failedHunkError: `Hunk #${i + 1}: oldString cannot be empty.`,
+          error: `Multi-hunk batch failed at hunk #${i + 1}: oldString cannot be empty.`,
+        };
+      }
+
+      if (hunk.oldString === hunk.newString) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalHunks: hunks.length,
+          appliedHunks: 0,
+          isFullyIdempotent: false,
+          strategiesUsed: [],
+          failedHunkIndex: i,
+          failedHunkError: `Hunk #${i + 1}: ${IDENTICAL_STRINGS_ERROR}`,
+          error: `Multi-hunk batch failed at hunk #${i + 1}: ${IDENTICAL_STRINGS_ERROR}`,
+        };
+      }
+
+      if (this.isAlreadyApplied(content, hunk.oldString, hunk.newString)) {
+        continue;
+      }
+
+      fullyIdempotent = false;
+
+      // Find match
+      const singleRes = this.findAndReplace(content, hunk.oldString, hunk.newString, hunk.replaceAll ?? false, { dryRun: true });
+      if (!singleRes.success || !singleRes.strategyUsed) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalHunks: hunks.length,
+          appliedHunks: 0,
+          isFullyIdempotent: false,
+          strategiesUsed: [],
+          failedHunkIndex: i,
+          failedHunkError: `Hunk #${i + 1}: ${singleRes.error}`,
+          error: `Multi-hunk batch failed at hunk #${i + 1}: ${singleRes.error}`,
+        };
+      }
+
+      // Find first span location in content
+      const strategies: Array<{ name: FuzzyStrategyName; fn: (c: string, t: string) => FuzzyMatchSpan[] }> = [
+        { name: "exact", fn: this.strategyExact.bind(this) },
+        { name: "line_trimmed", fn: this.strategyLineTrimmed.bind(this) },
+        { name: "whitespace_normalized", fn: this.strategyWhitespaceNormalized.bind(this) },
+        { name: "indentation_flexible", fn: this.strategyIndentationFlexible.bind(this) },
+        { name: "escape_normalized", fn: this.strategyEscapeNormalized.bind(this) },
+        { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
+        { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
+        { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
+        { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
+        { name: "context_aware", fn: this.strategyContextAware.bind(this) },
+      ];
+
+      const stratFn = strategies.find((s) => s.name === singleRes.strategyUsed)?.fn;
+      const spans = stratFn ? stratFn(content, hunk.oldString) : [];
+      if (spans.length === 0) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalHunks: hunks.length,
+          appliedHunks: 0,
+          isFullyIdempotent: false,
+          strategiesUsed: [],
+          failedHunkIndex: i,
+          failedHunkError: `Hunk #${i + 1}: Span resolution failed.`,
+          error: `Multi-hunk batch failed at hunk #${i + 1}: Span resolution failed.`,
+        };
+      }
+
+      strategiesUsed.push(singleRes.strategyUsed);
+      resolved.push({
+        index: i,
+        span: spans[0],
+        strategy: singleRes.strategyUsed,
+        replacement: hunk.newString,
+        isIdempotent: false,
+      });
+    }
+
+    if (fullyIdempotent || resolved.length === 0) {
+      return {
+        success: true,
+        modifiedContent: content,
+        totalHunks: hunks.length,
+        appliedHunks: 0,
+        isFullyIdempotent: true,
+        strategiesUsed,
+        error: null,
+      };
+    }
+
+    // Step 2: Detect overlapping spans
+    const sortedByStart = [...resolved].sort((a, b) => a.span[0] - b.span[0]);
+    for (let i = 0; i < sortedByStart.length - 1; i++) {
+      const cur = sortedByStart[i];
+      const next = sortedByStart[i + 1];
+      if (cur.span[1] > next.span[0]) {
+        return {
+          success: false,
+          modifiedContent: content,
+          totalHunks: hunks.length,
+          appliedHunks: 0,
+          isFullyIdempotent: false,
+          strategiesUsed: [],
+          failedHunkIndex: next.index,
+          failedHunkError: `Overlapping hunks detected: Hunk #${cur.index + 1} [${cur.span[0]}..${cur.span[1]}] overlaps with Hunk #${next.index + 1} [${next.span[0]}..${next.span[1]}].`,
+          error: `Overlapping hunks detected between Hunk #${cur.index + 1} and Hunk #${next.index + 1}.`,
+        };
+      }
+    }
+
+    // Step 3: Apply replacements descending by start offset
+    let modified = content;
+    const sortedDescending = [...resolved].sort((a, b) => b.span[0] - a.span[0]);
+
+    for (let r = 0; r < sortedDescending.length; r++) {
+      const item = sortedDescending[r];
+      const [start, end] = item.span;
+      const matchedRegion = content.slice(start, end);
+
+      let finalReplacement = this.maybeUnescapeNewString(item.replacement, matchedRegion);
+      if (item.strategy !== "exact") {
+        finalReplacement = this.reindentReplacement(matchedRegion, hunks[item.index].oldString, finalReplacement);
+      }
+
+      modified = modified.slice(0, start) + finalReplacement + modified.slice(end);
+    }
+
+    const diff = this.generateUnifiedDiff(content, modified);
+
+    if (options.dryRun) {
+      return {
+        success: true,
+        modifiedContent: content,
+        totalHunks: hunks.length,
+        appliedHunks: resolved.length,
+        isFullyIdempotent: false,
+        strategiesUsed,
+        diffPreview: diff,
+        error: null,
+      };
+    }
+
+    return {
+      success: true,
+      modifiedContent: modified,
+      totalHunks: hunks.length,
+      appliedHunks: resolved.length,
+      isFullyIdempotent: false,
+      strategiesUsed,
+      diffPreview: diff,
+      error: null,
     };
   }
 }

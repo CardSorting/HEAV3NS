@@ -99,6 +99,110 @@ export class FuzzyMatcherToolSuite {
         },
       },
       {
+        name: "fuzzy_multi_replace",
+        description: "Atomically applies multiple non-contiguous search-and-replace hunks across a file with pre-flight overlap collision detection and offset-stable rollback.",
+        parameters: {
+          content: {
+            type: "string",
+            description: "The full file content to patch",
+            required: true,
+          },
+          hunks: {
+            type: "string",
+            description: "JSON-encoded array of hunks or hunk list: [{ oldString: string, newString: string, replaceAll?: boolean }]",
+            required: true,
+          },
+          dryRun: {
+            type: "boolean",
+            description: "If true, simulate the multi-hunk patch and return diff without modifying content",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.content !== "string") {
+            return { success: false, error: "Missing required parameter 'content' (string)." };
+          }
+
+          let hunksArray: Array<{ oldString: string; newString: string; replaceAll?: boolean }>;
+          if (typeof args.hunks === "string") {
+            try {
+              hunksArray = JSON.parse(args.hunks);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return { success: false, error: `Invalid JSON for hunks parameter: ${msg}` };
+            }
+          } else if (Array.isArray(args.hunks)) {
+            hunksArray = args.hunks as Array<{ oldString: string; newString: string; replaceAll?: boolean }>;
+          } else {
+            return { success: false, error: "Missing required parameter 'hunks' (JSON string or array)." };
+          }
+
+          const dryRun = Boolean(args.dryRun);
+          const result = this.supervisor.findAndReplaceMulti(args.content, hunksArray, { dryRun });
+
+          if (!result.success) {
+            return {
+              success: false,
+              error: result.error,
+              failedHunkIndex: result.failedHunkIndex,
+              failedHunkError: result.failedHunkError,
+              totalHunks: result.totalHunks,
+              appliedHunks: 0,
+            };
+          }
+
+          return {
+            success: true,
+            modifiedContent: result.modifiedContent,
+            totalHunks: result.totalHunks,
+            appliedHunks: result.appliedHunks,
+            isFullyIdempotent: result.isFullyIdempotent,
+            strategiesUsed: result.strategiesUsed,
+            diffPreview: result.diffPreview,
+            message: result.isFullyIdempotent
+              ? "All hunks were already applied (idempotent no-op)."
+              : dryRun
+                ? `[DRY-RUN] Verified ${result.appliedHunks}/${result.totalHunks} hunk(s) across strategies: ${result.strategiesUsed.join(", ")}.`
+                : `Successfully applied ${result.appliedHunks}/${result.totalHunks} hunk(s) atomically.`,
+          };
+        },
+      },
+      {
+        name: "fuzzy_generate_patch",
+        description: "Generates a standard unified diff patch (with @@ hunk headers) between two text strings.",
+        parameters: {
+          originalContent: {
+            type: "string",
+            description: "The original file content",
+            required: true,
+          },
+          newContent: {
+            type: "string",
+            description: "The modified file content",
+            required: true,
+          },
+          filename: {
+            type: "string",
+            description: "Optional filename for patch headers (default: 'file')",
+            required: false,
+          },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          if (typeof args.originalContent !== "string" || typeof args.newContent !== "string") {
+            return { success: false, error: "Missing required string parameters ('originalContent', 'newContent')." };
+          }
+
+          const filename = typeof args.filename === "string" ? args.filename : "file";
+          const patch = this.supervisor.generateUnifiedDiff(args.originalContent, args.newContent, filename);
+
+          return {
+            success: true,
+            patch,
+            linesTotal: patch.split("\n").length,
+          };
+        },
+      },
+      {
         name: "fuzzy_dry_run_replace",
         description: "Simulates a search-and-replace edit, returning the unified diff preview, match count, strategy used, and surrounding context without mutating content.",
         parameters: {

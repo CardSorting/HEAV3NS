@@ -1,9 +1,9 @@
 /**
  * fuzzy-matcher.contracts.ts
  *
- * Core contracts for deterministic 9-strategy fuzzy line matching, Unicode typography
- * normalization, block-anchor resolution, indentation preservation, escape drift detection,
- * closest-line mismatch diagnostics, and edit idempotency (Phase 103 / ADR-057).
+ * Core contracts for deterministic 10-strategy fuzzy line matching, atomic multi-hunk patching,
+ * Unicode typography normalization, block-anchor resolution, indentation preservation, escape-drift detection,
+ * Myers unified diff generation, and closest-line mismatch diagnostics (Phase 103 / ADR-057).
  */
 
 export type FuzzyStrategyName =
@@ -13,6 +13,7 @@ export type FuzzyStrategyName =
   | "indentation_flexible"
   | "escape_normalized"
   | "trimmed_boundary"
+  | "comment_tolerant"
   | "unicode_normalized"
   | "block_anchor"
   | "context_aware";
@@ -35,6 +36,10 @@ export interface ClosestLineCandidate {
   readonly whitespaceDifference?: {
     readonly fileHasVisual: string;
     readonly youSentVisual: string;
+  };
+  readonly wordHighlights?: {
+    readonly fileWords: readonly string[];
+    readonly searchWords: readonly string[];
   };
 }
 
@@ -66,6 +71,25 @@ export interface FuzzyMatchResult {
   readonly contextWindows?: readonly ContextWindow[];
   readonly diagnosticHint?: string;
   readonly escapeDrift?: EscapeDriftDetection;
+}
+
+export interface FuzzyReplacementHunk {
+  readonly oldString: string;
+  readonly newString: string;
+  readonly replaceAll?: boolean;
+}
+
+export interface FuzzyMultiMatchResult {
+  readonly success: boolean;
+  readonly modifiedContent: string;
+  readonly totalHunks: number;
+  readonly appliedHunks: number;
+  readonly isFullyIdempotent: boolean;
+  readonly strategiesUsed: readonly FuzzyStrategyName[];
+  readonly diffPreview?: string;
+  readonly error: string | null;
+  readonly failedHunkIndex?: number;
+  readonly failedHunkError?: string;
 }
 
 export interface FuzzyMatcherOptions {

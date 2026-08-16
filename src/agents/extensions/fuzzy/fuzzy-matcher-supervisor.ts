@@ -9,6 +9,8 @@ import { performance } from "node:perf_hooks";
 import type {
   FuzzyExecutionRecord,
   FuzzyMatchResult,
+  FuzzyMultiMatchResult,
+  FuzzyReplacementHunk,
   FuzzyStrategyName,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 import { DeterministicFuzzyMatcher } from "../../../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
@@ -70,6 +72,45 @@ export class FuzzyMatcherSupervisor {
     replaceAll: boolean = false
   ): FuzzyMatchResult {
     return this.findAndReplace(content, oldString, newString, replaceAll, { dryRun: true });
+  }
+
+  /**
+   * Executes an atomic multi-hunk search and replace operation across the 10-strategy cascade.
+   */
+  findAndReplaceMulti(
+    content: string,
+    hunks: readonly FuzzyReplacementHunk[],
+    options: { dryRun?: boolean } = {}
+  ): FuzzyMultiMatchResult {
+    const start = performance.now();
+    const result = this.matcher.findAndReplaceMulti(content, hunks, options);
+    const duration = performance.now() - start;
+
+    if (result.success && result.appliedHunks > 0 && !options.dryRun) {
+      for (let i = 0; i < result.strategiesUsed.length; i++) {
+        this.executionCounter++;
+        const record: FuzzyExecutionRecord = {
+          id: `fuzzy-exec-multi-${this.executionCounter}`,
+          timestamp: Date.now(),
+          strategyUsed: result.strategiesUsed[i],
+          matchCount: 1,
+          oldStringLength: hunks[i]?.oldString.length || 0,
+          newStringLength: hunks[i]?.newString.length || 0,
+          durationMs: duration / result.appliedHunks,
+          similarityScore: 1.0,
+        };
+        this.substrate.recordExecution(record);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Generates a standard unified diff between original content and new content.
+   */
+  generateUnifiedDiff(oldText: string, newText: string, filename: string = "file"): string {
+    return this.matcher.generateUnifiedDiff(oldText, newText, filename);
   }
 
   /**
