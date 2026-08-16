@@ -617,6 +617,12 @@ import { BroccoliSchemaSanitizerSubstrate } from "../sessions/extensions/schema_
 import { SchemaSanitizerSnapshotManager } from "../sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
 import { SchemaSanitizerToolSuite } from "../tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
 
+import { DeterministicNousPortalEngine } from "../agents/extensions/nous_portal/deterministic-nous-portal-engine.js";
+import { NousPortalSupervisor } from "../agents/extensions/nous_portal/nous-portal-supervisor.js";
+import { BroccoliNousPortalSubstrate } from "../sessions/extensions/nous_portal/broccoli-nous-portal-substrate.js";
+import { NousPortalSnapshotManager } from "../sessions/extensions/nous_portal/nous-portal-snapshot-manager.js";
+import { NousPortalToolSuite } from "../tooling/extensions/nous_portal/nous-portal-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1168,6 +1174,11 @@ export class MonolithFactory {
     broccoliSchemaSanitizerSubstrate: BroccoliSchemaSanitizerSubstrate;
     schemaSanitizerSnapshotManager: SchemaSanitizerSnapshotManager;
     schemaSanitizerToolSuite: SchemaSanitizerToolSuite;
+    deterministicNousPortalEngine: DeterministicNousPortalEngine;
+    nousPortalSupervisor: NousPortalSupervisor;
+    broccoliNousPortalSubstrate: BroccoliNousPortalSubstrate;
+    nousPortalSnapshotManager: NousPortalSnapshotManager;
+    nousPortalToolSuite: NousPortalToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2077,6 +2088,15 @@ export class MonolithFactory {
     );
     const schemaSanitizerToolSuite = new SchemaSanitizerToolSuite(schemaSanitizerSupervisor);
 
+    const deterministicNousPortalEngine = new DeterministicNousPortalEngine(new BroccoliNousPortalSubstrate());
+    const broccoliNousPortalSubstrate = new BroccoliNousPortalSubstrate();
+    const nousPortalSnapshotManager = new NousPortalSnapshotManager(broccoliNousPortalSubstrate);
+    const nousPortalSupervisor = new NousPortalSupervisor(
+      broccoliNousPortalSubstrate,
+      deterministicNousPortalEngine
+    );
+    const nousPortalToolSuite = new NousPortalToolSuite(nousPortalSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2166,7 +2186,8 @@ export class MonolithFactory {
       terminalCleanerToolSuite,
       streamingScrubberToolSuite,
       selfRepoGuardToolSuite,
-      schemaSanitizerToolSuite
+      schemaSanitizerToolSuite,
+      nousPortalToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2731,6 +2752,11 @@ export class MonolithFactory {
       broccoliSchemaSanitizerSubstrate,
       schemaSanitizerSnapshotManager,
       schemaSanitizerToolSuite,
+      deterministicNousPortalEngine,
+      nousPortalSupervisor,
+      broccoliNousPortalSubstrate,
+      nousPortalSnapshotManager,
+      nousPortalToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

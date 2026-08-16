@@ -86,6 +86,7 @@ import type { TerminalCleanerToolSuite } from "../terminal_cleaner/terminal-clea
 import type { StreamingScrubberToolSuite } from "../streaming_scrubber/streaming-scrubber-tool-suite.js";
 import type { SelfRepoGuardToolSuite } from "../self_repo_guard/self-repo-guard-tool-suite.js";
 import type { SchemaSanitizerToolSuite } from "../schema_sanitizer/schema-sanitizer-tool-suite.js";
+import type { NousPortalToolSuite } from "../nous_portal/nous-portal-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -163,6 +164,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly streamingScrubberToolSuite?: StreamingScrubberToolSuite;
   readonly selfRepoGuardToolSuite?: SelfRepoGuardToolSuite;
   readonly schemaSanitizerToolSuite?: SchemaSanitizerToolSuite;
+  readonly nousPortalToolSuite?: NousPortalToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -248,7 +250,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     terminalCleanerToolSuite?: TerminalCleanerToolSuite,
     streamingScrubberToolSuite?: StreamingScrubberToolSuite,
     selfRepoGuardToolSuite?: SelfRepoGuardToolSuite,
-    schemaSanitizerToolSuite?: SchemaSanitizerToolSuite
+    schemaSanitizerToolSuite?: SchemaSanitizerToolSuite,
+    nousPortalToolSuite?: NousPortalToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -326,6 +329,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.streamingScrubberToolSuite = streamingScrubberToolSuite;
     this.selfRepoGuardToolSuite = selfRepoGuardToolSuite;
     this.schemaSanitizerToolSuite = schemaSanitizerToolSuite;
+    this.nousPortalToolSuite = nousPortalToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -888,6 +892,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.schemaSanitizerToolSuite) {
       for (const tool of this.schemaSanitizerToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.nousPortalToolSuite) {
+      for (const tool of this.nousPortalToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

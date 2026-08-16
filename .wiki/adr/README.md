@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > **Architectural Cutoff & Workspace Freeze (August 16, 2026)**
-> The LUMI-JOY architecture is **FROZEN & SOLIDIFIED** at **539 Grand Monolith Components** across 115 ADRs (ADR-001 through ADR-115). All further additions are subject to strict anti-duplication, contract immutability, and forensic integrity gates. See the authoritative [Architectural Cutoff & Workspace Freeze Specification](../architecture/OSMOSIS-FREEZE-AND-CUTOFF.md).
+> The LUMI-JOY architecture is **FROZEN & SOLIDIFIED** at **544 Grand Monolith Components** across 116 ADRs (ADR-001 through ADR-116). All further additions are subject to strict anti-duplication, contract immutability, and forensic integrity gates. See the authoritative [Architectural Cutoff & Workspace Freeze Specification](../architecture/OSMOSIS-FREEZE-AND-CUTOFF.md).
 
 This index lists all Architecture Decision Records (ADRs) for the LUMI-NEW workspace.
 
@@ -162,6 +162,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-113](ADR-113-streaming-reasoning-tag-scrubber.md)**: Streaming reasoning tag scrubber, boundary gated holdback buffer, and live delta filter subsystem.
 - **[ADR-114](ADR-114-deterministic-self-repository-mutation-guard.md)**: Deterministic self-repository mutation guard, shell worktree context tracker, and module-skew firewall subsystem.
 - **[ADR-115](ADR-115-deterministic-tool-schema-sanitizer.md)**: Deterministic tool parameter schema sanitizer, non-conforming key bidirectional rewriter, and LLM GBNF grammar firewall subsystem.
+- **[ADR-116](ADR-116-native-nous-portal-provider.md)**: Native Nous Portal provider, attribution tagging, and tool-pool entitlement subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

@@ -578,6 +578,12 @@ import { BroccoliSchemaSanitizerSubstrate } from "./sessions/extensions/schema_s
 import { SchemaSanitizerSnapshotManager } from "./sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
 import { SchemaSanitizerToolSuite } from "./tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
 
+import { DeterministicNousPortalEngine } from "./agents/extensions/nous_portal/deterministic-nous-portal-engine.js";
+import { NousPortalSupervisor } from "./agents/extensions/nous_portal/nous-portal-supervisor.js";
+import { BroccoliNousPortalSubstrate } from "./sessions/extensions/nous_portal/broccoli-nous-portal-substrate.js";
+import { NousPortalSnapshotManager } from "./sessions/extensions/nous_portal/nous-portal-snapshot-manager.js";
+import { NousPortalToolSuite } from "./tooling/extensions/nous_portal/nous-portal-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2366,6 +2372,35 @@ export {
   TOP_LEVEL_FORBIDDEN_COMBINATORS,
 } from "./core/contracts/schema-sanitizer.contracts.js";
 
+export { DeterministicNousPortalEngine } from "./agents/extensions/nous_portal/deterministic-nous-portal-engine.js";
+export { NousPortalSupervisor } from "./agents/extensions/nous_portal/nous-portal-supervisor.js";
+export { BroccoliNousPortalSubstrate } from "./sessions/extensions/nous_portal/broccoli-nous-portal-substrate.js";
+export { NousPortalSnapshotManager } from "./sessions/extensions/nous_portal/nous-portal-snapshot-manager.js";
+export { NousPortalToolSuite } from "./tooling/extensions/nous_portal/nous-portal-tool-suite.js";
+export type {
+  NousAccountInfoSource,
+  NousPaidServiceAccessInfo,
+  NousPortalAccountInfo,
+  NousPortalCompletionResponse,
+  NousPortalDeviceCodeSession,
+  NousPortalModelSpec,
+  NousPortalRequestPayload,
+  NousPortalStateSnapshot,
+  NousPortalSubscriptionInfo,
+  NousPortalTokenResponse,
+  NousToolAccessInfo,
+  NousToolCoverageCategory,
+} from "./core/contracts/nous-portal.contracts.js";
+export {
+  DEFAULT_NOUS_CLIENT_ID,
+  DEFAULT_NOUS_INFERENCE_URL,
+  DEFAULT_NOUS_PORTAL_URL,
+  DEFAULT_NOUS_SCOPE,
+  NOUS_BILLING_MANAGE_SCOPE,
+  NOUS_INFERENCE_INVOKE_SCOPE,
+  NOUS_TOOL_COVERAGE_CATEGORIES,
+} from "./core/contracts/nous-portal.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2858,6 +2893,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliSchemaSanitizerSubstrate: BroccoliSchemaSanitizerSubstrate;
   readonly schemaSanitizerSnapshotManager: SchemaSanitizerSnapshotManager;
   readonly schemaSanitizerToolSuite: SchemaSanitizerToolSuite;
+  readonly deterministicNousPortalEngine: DeterministicNousPortalEngine;
+  readonly nousPortalSupervisor: NousPortalSupervisor;
+  readonly broccoliNousPortalSubstrate: BroccoliNousPortalSubstrate;
+  readonly nousPortalSnapshotManager: NousPortalSnapshotManager;
+  readonly nousPortalToolSuite: NousPortalToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3341,6 +3381,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliSchemaSanitizerSubstrate = components.broccoliSchemaSanitizerSubstrate;
     this.schemaSanitizerSnapshotManager = components.schemaSanitizerSnapshotManager;
     this.schemaSanitizerToolSuite = components.schemaSanitizerToolSuite;
+    this.deterministicNousPortalEngine = components.deterministicNousPortalEngine;
+    this.nousPortalSupervisor = components.nousPortalSupervisor;
+    this.broccoliNousPortalSubstrate = components.broccoliNousPortalSubstrate;
+    this.nousPortalSnapshotManager = components.nousPortalSnapshotManager;
+    this.nousPortalToolSuite = components.nousPortalToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

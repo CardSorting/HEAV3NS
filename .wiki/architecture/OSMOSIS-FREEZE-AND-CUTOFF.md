@@ -3,7 +3,7 @@
 ## 📅 Authoritative Cutoff Date & Status
 - **Authoritative Cutoff Timestamp**: **August 16, 2026**
 - **Osmosis Evolution Status**: **FROZEN & SOLIDIFIED**
-- **Grand Monolith Component Count**: **539 Components (100% Locked)**
+- **Grand Monolith Component Count**: **544 Components (100% Locked)**
 - **Baseline Version**: **Pass 192 + Runtime Hardening**
 - **Ancestral Teacher Reference**: Hermes Agent (`hermes-agent-main` / Nous Research, snapshot as of August 16, 2026)
 
@@ -17,8 +17,8 @@ To maintain pristine cohesion, prevent feature regressions, and eliminate duplic
 
 ### 1. Zero Duplicate Capability Policy
 Before proposing, designing, or implementing any new component, tool, substrate, or supervisor:
-- Consult the **539 Frozen Component Manifest** below.
-- If a capability (e.g. tool execution guarding, AST sanitization, stream diagnostics, cost tracking, background review, reasoning scrubbing, self-repository guard, schema sanitization) is already present, **you must extend or interface with the existing component rather than creating a duplicate**.
+- Consult the **544 Frozen Component Manifest** below.
+- If a capability (e.g. tool execution guarding, AST sanitization, stream diagnostics, cost tracking, background review, reasoning scrubbing, self-repository guard, schema sanitization, native nous portal) is already present, **you must extend or interface with the existing component rather than creating a duplicate**.
 - Any new component that duplicates an existing capability without a formal superseding ADR will be rejected automatically by repository guardrails.
 
 ### 2. Zero Overwrite & Contract Immutability Policy
@@ -44,9 +44,9 @@ Every automated test run (`npm test`) executes `scripts/validate-forensic-integr
 
 ---
 
-## 🏛️ Absorbed Osmosis Target Ledger (Targets #1 – #72)
+## 🏛️ Absorbed Osmosis Target Ledger (Targets #1 – #73)
 
-The following 72 foundation and edge capabilities have been systematically absorbed from `hermes-agent-main` into LUMI-JOY:
+The following 73 foundation and edge capabilities have been systematically absorbed from `hermes-agent-main` into LUMI-JOY:
 
 | Target # | Subsystem / Feature | Architectural Decision Record |
 |---|---|---|
@@ -79,10 +79,11 @@ The following 72 foundation and edge capabilities have been systematically absor
 | **#70** | Streaming Reasoning Tag Scrubber, Boundary Gated Holdback Buffer & Live Delta Filter | [ADR-113](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-113-streaming-reasoning-tag-scrubber.md) |
 | **#71** | Deterministic Self-Repository Mutation Guard, Shell Worktree Context Tracker & Module-Skew Firewall | [ADR-114](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-114-deterministic-self-repository-mutation-guard.md) |
 | **#72** | Deterministic Tool Parameter Schema Sanitizer, Non-Conforming Key Bidirectional Rewriter & LLM GBNF Grammar Firewall | [ADR-115](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-115-deterministic-tool-schema-sanitizer.md) |
+| **#73** | Native Nous Portal Provider, Attribution Tagging & Tool-Pool Entitlement Subsystem | [ADR-116](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-116-native-nous-portal-provider.md) |
 
 ---
 
-## 🔒 539 Frozen Component Manifest (Alphabetical Lock)
+## 🔒 544 Frozen Component Manifest (Alphabetical Lock)
 
 The following 539 components form the authoritative Grand Monolith:
 
@@ -117,7 +118,7 @@ broccoliIntegrityProtocol, broccoliIntentTracer, broccoliInterAgentMailbox, broc
 broccoliJoyZoningEngine, broccoliJoyZoningGuard, broccoliKanbanSubstrate, broccoliLearningSubstrate,
 broccoliLspBridge, broccoliLspSubstrate, broccoliMcpSubstrate, broccoliMediaSourceSubstrate,
 broccoliMemorySubstrate, broccoliModeController, broccoliModuleDecomposer, broccoliMutationPlanner,
-broccoliOsvScannerSubstrate, broccoliOutputBuffer, broccoliPatchSubstrate, broccoliPlanEnforcer,
+broccoliNousPortalSubstrate, broccoliOsvScannerSubstrate, broccoliOutputBuffer, broccoliPatchSubstrate, broccoliPlanEnforcer,
 broccoliPreflightSubstrate, broccoliProcessSubstrate, broccoliQueryLoop, broccoliReactiveObserver,
 broccoliReasoningSubstrate, broccoliRedactionSubstrate, broccoliRepairMutationExecutor,
 broccoliRetentionCleanup, broccoliReviewSubstrate, broccoliRollbackCoordinator,
@@ -154,7 +155,7 @@ deterministicAuxiliaryRouter, deterministicBillingUsageEngine, deterministicCont
 deterministicCostGovernor, deterministicDeadlineEngine, deterministicDocExtractorEngine,
 deterministicEnvProbeEngine, deterministicErrorClassifier, deterministicFileSafetyEngine,
 deterministicFuzzyMatcher, deterministicHeredocEngine, deterministicMediaSourceEngine,
-deterministicOsvScanner, deterministicPatchEngine, deterministicPreflightScanner,
+deterministicNousPortalEngine, deterministicOsvScanner, deterministicPatchEngine, deterministicPreflightScanner,
 deterministicPromptCacher, deterministicReasoningScrubber, deterministicReviewEvaluator,
 deterministicSchemaSanitizerEngine, deterministicSecretRedactor, deterministicSelfRepoGuardEngine,
 deterministicSessionArchiver, deterministicSessionSearchEngine, deterministicSkillCurator,
@@ -186,8 +187,8 @@ mcpOAuthManager, mcpSnapshotManager, mcpStdioWatchdog, mcpSupervisorEngine, medi
 mediaSourceSupervisor, mediaSourceToolSuite, memoryCuratorSnapshotManager, memoryCuratorToolSuite,
 memoryManager, memorySnapshotManager, mentionResolver, modelCatalog, modelMetadata,
 modelResolver, moduleDecomposer, monolithCronScheduler, mutationPlanner, mutationSubstrate,
-nativeCompactor, neuralSpeechEngine, oAuthCallbackServer, osvScannerSnapshotManager,
-osvScannerSupervisor, osvScannerToolSuite, outputBuffer, parallelSwarmExecutor,
+nativeCompactor, neuralSpeechEngine, nousPortalSnapshotManager, nousPortalSupervisor, nousPortalToolSuite,
+oAuthCallbackServer, osvScannerSnapshotManager, osvScannerSupervisor, osvScannerToolSuite, outputBuffer, parallelSwarmExecutor,
 patchEngineSnapshotManager, patchEngineSupervisor, patchToolSuite, persistentSessionStore,
 pipelineValidator, planEnforcer, preflightSnapshotManager, preflightToolSuite,
 processRegistry, processSnapshotManager, processSupervisorEngine, processToolSuite,

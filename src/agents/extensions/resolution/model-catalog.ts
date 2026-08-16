@@ -2,7 +2,7 @@ import { DynamicModelCache } from "./dynamic-model-cache.js";
 
 export interface ModelSpecs {
   modelName: string;
-  provider: "openrouter" | "openai-codex" | "ollama" | "anthropic" | "google" | "openai" | "deepseek" | "custom";
+  provider: "openrouter" | "openai-codex" | "ollama" | "anthropic" | "google" | "openai" | "deepseek" | "nous" | "custom";
   contextWindowTokens: number;
   maxOutputTokens: number;
   inputPricePer1M: number;
@@ -38,6 +38,43 @@ export class ModelCatalog {
   }
 
   private registerDefaults(): void {
+    // Native Nous Portal Models
+    this.registerModel({
+      modelName: "nous/hermes-3-llama-3.1-405b",
+      provider: "nous",
+      contextWindowTokens: 131_072,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 3.5,
+      outputPricePer1M: 7.0,
+      supportsVision: false,
+      supportsReasoning: true,
+      description: "Nous Research Flagship 405B Frontier Open-Weights Model",
+    });
+
+    this.registerModel({
+      modelName: "nous/hermes-3-llama-3.1-70b",
+      provider: "nous",
+      contextWindowTokens: 131_072,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.7,
+      outputPricePer1M: 1.4,
+      supportsVision: false,
+      supportsReasoning: true,
+      description: "Nous Research High-Efficiency 70B Model",
+    });
+
+    this.registerModel({
+      modelName: "nous/deephermes-3-llama-3-8b-preview",
+      provider: "nous",
+      contextWindowTokens: 65_536,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.2,
+      outputPricePer1M: 0.5,
+      supportsVision: false,
+      supportsReasoning: true,
+      description: "Nous Research Deep Reasoning Model",
+    });
+
     // OpenAI Codex OAuth Models (ChatGPT Subscription)
     this.registerModel({
       modelName: "gpt-5.6-terra",

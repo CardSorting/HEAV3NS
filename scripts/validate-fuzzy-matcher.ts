@@ -391,8 +391,8 @@ async function runValidationSuite() {
       throw new Error(`Composition status is ${verification.cohesionStatus}, expected OPTIMAL`);
     }
 
-    if (verification.componentCount !== 539 || verification.requiredComponentCount !== 539) {
-      throw new Error(`Expected exactly 539 components, got ${verification.componentCount}`);
+    if (verification.componentCount !== 544 || verification.requiredComponentCount !== 544) {
+      throw new Error(`Expected exactly 544 components, got ${verification.componentCount}`);
     }
     console.log(`  ✓ Grand Monolith successfully verified with ${verification.componentCount}/${verification.requiredComponentCount} components in OPTIMAL cohesion`);
     passedSuites++;
