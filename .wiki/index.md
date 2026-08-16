@@ -27,6 +27,10 @@ The live JSON remains authoritative if this summary and a regenerated run ever d
 
 ## Core Wiki Navigation
 
+### 0. Architectural Cutoff & Workspace Freeze (Authoritative)
+- 🔒 [Architectural Cutoff & Workspace Freeze Specification](architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
+  - Authoritative cutoff date (**August 16, 2026**), **539 locked components manifest**, anti-duplication policy, contract immutability rules, and forensic integrity gates.
+
 ### 1. Auto-Rolling Roadmap & Changelog
 - 🚀 [Auto-Rolling Evolution Roadmap](roadmap/AUTOROLLING-ROADMAP.md)
   - Canonical historical ledger (Passes 1–192), current runtime-hardening milestones, completion semantics, and self-documenting agent protocols.

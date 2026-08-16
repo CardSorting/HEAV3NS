@@ -9,6 +9,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Ancestral Teacher](https://img.shields.io/badge/Ancestral%20Teacher-Hermes--Agent%20(Nous%20Research)-FFD700?style=for-the-badge&logo=github)](https://github.com/NousResearch/hermes-agent)
+[![Freeze Cutoff](https://img.shields.io/badge/Workspace%20Freeze-August%2016%2C%202026-critical?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
+[![Grand Monolith](https://img.shields.io/badge/Grand%20Monolith-539%20Components-success?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
 [![Academic Paper](https://img.shields.io/badge/Academic%20Paper-AKD--DSO-9C27B0?style=for-the-badge)](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
 [![Whitepaper](https://img.shields.io/badge/Whitepaper-Osmosis%20Paradigm-00C853?style=for-the-badge)](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md)
 [![Auto-Rolling Roadmap](https://img.shields.io/badge/Roadmap-Auto--Rolling-E91E63?style=for-the-badge)](.wiki/roadmap/AUTOROLLING-ROADMAP.md)
@@ -19,13 +21,13 @@
 
 | **Core Navigation** | **Documentation & Wiki** | **Subsystem Source Code** |
 |---|---|---|
-| 📌 [Executive Brief](#-why-lumi-joy-the-architectural-imperative) | 📖 [Author's Preface](PREFACE.md) | ⚡ [Composition Root](src/index.ts) |
-| ⚡ [Comparison Matrix](#-comparison-matrix--empirical-benchmarks) | 🎮 [Game Engine Paradigm](#-inspired-by-game-engines-deterministic-agent-architecture) | 🏭 [Engine Factory](src/factories/monolith-factory.ts) |
-| 🏛️ [Ancestral Heritage](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis) | ⚡ [Runtime Universal Pass](.wiki/agent/runtime-universal-pass.md) | ⚙️ [Core Abstracts](src/core/abstracts/) |
-| 🏗️ [Architecture Tree](#%EF%B8%8F-subsystem-architecture--file-tree) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) | 🧠 [Agents Tier](src/agents/) |
-| 🧪 [Osmosis Methodology](#-the-osmosis-learning-methodology) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) | 💾 [Sessions Tier](src/sessions/) |
-| 🚀 [Quick Start Guide](#-quick-start--installation) | 📦 [1-to-1 Package Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md) | 🖥️ [TUI Components](src/tui/components/) |
-| 📡 [Live Activity Streaming](#-live-agent-activity-streaming) | 📋 [API Reference Guide](.wiki/agent/api-reference.md) | 📜 [Core Contracts](src/core/contracts/) |
+| 📌 [Executive Brief](#-why-lumi-joy-the-architectural-imperative) | 🔒 [Workspace Freeze Spec](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md) | ⚡ [Composition Root](src/index.ts) |
+| ⚡ [Comparison Matrix](#-comparison-matrix--empirical-benchmarks) | 📖 [Author's Preface](PREFACE.md) | 🏭 [Engine Factory](src/factories/monolith-factory.ts) |
+| 🏛️ [Ancestral Heritage](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis) | 🎮 [Game Engine Paradigm](#-inspired-by-game-engines-deterministic-agent-architecture) | ⚙️ [Core Abstracts](src/core/abstracts/) |
+| 🏗️ [Architecture Tree](#%EF%B8%8F-subsystem-architecture--file-tree) | ⚡ [Runtime Universal Pass](.wiki/agent/runtime-universal-pass.md) | 🧠 [Agents Tier](src/agents/) |
+| 🧪 [Osmosis Methodology](#-the-osmosis-learning-methodology) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) | 💾 [Sessions Tier](src/sessions/) |
+| 🚀 [Quick Start Guide](#-quick-start--installation) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) | 🖥️ [TUI Components](src/tui/components/) |
+| 📡 [Live Activity Streaming](#-live-agent-activity-streaming) | 📦 [1-to-1 Package Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md) | 📜 [Core Contracts](src/core/contracts/) |
 | 🤝 [Contributing Guide](CONTRIBUTING.md) | 🛡️ [Security Guardrails](.wiki/policy/CONTRIBUTOR-SECURITY-GUARDRAILS.md) | 🔧 [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) |
 
 ---

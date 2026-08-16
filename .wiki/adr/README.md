@@ -1,5 +1,9 @@
 # Architecture Decision Records (ADRs)
 
+> [!IMPORTANT]
+> **Architectural Cutoff & Workspace Freeze (August 16, 2026)**
+> The LUMI-JOY architecture is **FROZEN & SOLIDIFIED** at **539 Grand Monolith Components** across 115 ADRs (ADR-001 through ADR-115). All further additions are subject to strict anti-duplication, contract immutability, and forensic integrity gates. See the authoritative [Architectural Cutoff & Workspace Freeze Specification](../architecture/OSMOSIS-FREEZE-AND-CUTOFF.md).
+
 This index lists all Architecture Decision Records (ADRs) for the LUMI-NEW workspace.
 
 ADRs preserve decision-time context and acceptance evidence; their embedded commands and fixed measurements are historical unless a document explicitly labels a current refinement. For current verification, use `npm run check`, `npm test`, `npm run build`, and the feature-specific commands in the [Contributing Guide](../../CONTRIBUTING.md). [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) is the current measurement authority, with [`docs/BENCHMARK_REPORT.md`](../../docs/BENCHMARK_REPORT.md) and [`docs/GRAND_ARCHITECTURAL_AUDIT.md`](../../docs/GRAND_ARCHITECTURAL_AUDIT.md) as synchronized generated views.
