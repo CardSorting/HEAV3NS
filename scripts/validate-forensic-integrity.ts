@@ -34,8 +34,8 @@ async function runForensicAudit(): Promise<void> {
 
   assert.strictEqual(
     CURRENT_REQUIRED_COMPONENTS.length,
-    544,
-    `Expected exactly 544 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
+    549,
+    `Expected exactly 549 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
   );
 
   const seen = new Set<string>();
@@ -56,7 +56,7 @@ async function runForensicAudit(): Promise<void> {
       `Component at index ${i} ('${CURRENT_REQUIRED_COMPONENTS[i]}') is out of alphabetical order (expected '${sortedList[i]}')`
     );
   }
-  console.log(`  [✓] All 544 components strictly unique & alphabetically sorted.`);
+  console.log(`  [✓] All 549 components strictly unique & alphabetically sorted.`);
 
   // ---------------------------------------------------------------------------
   // Check 2: Monolith Factory & LumiMonolith 100% Binding Coverage
@@ -81,22 +81,19 @@ async function runForensicAudit(): Promise<void> {
   assert.strictEqual(
     missingInEngine.length,
     0,
-    `Missing bindings on MonolithFactory.createEngine(): ${missingInEngine.join(", ")}`
+    `Components missing in MonolithFactory.createEngine(): ${missingInEngine.join(", ")}`
   );
   assert.strictEqual(
     missingInMonolithComponents.length,
     0,
-    `Missing bindings on monolith.components: ${missingInMonolithComponents.join(", ")}`
+    `Components missing in LumiMonolith.components: ${missingInMonolithComponents.join(", ")}`
   );
 
-  const verification = GrandMonolithSynthesizer.verifyComposition(monolith.components);
-  assert.strictEqual(verification.cohesionStatus, "OPTIMAL");
-  assert.strictEqual(verification.componentCount, 544);
-  assert.strictEqual(verification.missingComponents.length, 0);
-  assert.strictEqual(verification.unexpectedComponents.length, 0);
-  assert.strictEqual(verification.duplicateManifestComponents.length, 0);
-
-  console.log(`  [✓] 100% binding coverage verified across LumiMonolith.components and MonolithFactory (OPTIMAL cohesion).`);
+  const synth = GrandMonolithSynthesizer.verifyComposition(monolith.components);
+  assert.strictEqual(synth.cohesionStatus, "OPTIMAL", `Synthesizer status must be OPTIMAL, got ${synth.cohesionStatus}`);
+  console.log(
+    `  [✓] 100% binding coverage verified across LumiMonolith.components and MonolithFactory (${synth.cohesionStatus} cohesion).`
+  );
 
   // ---------------------------------------------------------------------------
   // Check 3: Zero Barrel Imports (ADR-012)
@@ -149,7 +146,7 @@ async function runForensicAudit(): Promise<void> {
   // ---------------------------------------------------------------------------
   // Check 5: ADR Indexing & Documentation Provenance
   // ---------------------------------------------------------------------------
-  console.log("\n[Check 5/6] Auditing Architectural Decision Records (ADR-001 -> ADR-116)...");
+  console.log("\n[Check 5/6] Auditing Architectural Decision Records (ADR-001 -> ADR-117)...");
 
   const adrDir = path.resolve(process.cwd(), ".wiki/adr");
   const readmePath = path.join(adrDir, "README.md");
@@ -158,7 +155,7 @@ async function runForensicAudit(): Promise<void> {
   const readmeContent = fs.readFileSync(readmePath, "utf-8");
   const adrFiles = fs.readdirSync(adrDir).filter((f) => f.startsWith("ADR-") && f.endsWith(".md"));
 
-  assert.ok(adrFiles.length >= 116, `Expected at least 116 ADR files, found ${adrFiles.length}`);
+  assert.ok(adrFiles.length >= 117, `Expected at least 117 ADR files, found ${adrFiles.length}`);
 
   const unindexedADRs: string[] = [];
   for (const adrFile of adrFiles) {

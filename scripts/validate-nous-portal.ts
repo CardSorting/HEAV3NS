@@ -228,20 +228,20 @@ async function runValidation() {
   const throughput = Math.round((benchIterations / benchDuration) * 1000);
   console.log(`  Measured: ${benchIterations} attribution tags in ${benchDuration.toFixed(3)} ms (${throughput.toLocaleString()} tags/sec)`);
 
-  const monolith = new LumiMonolith();
-  assert.ok(monolith.components.deterministicNousPortalEngine);
-  assert.ok(monolith.components.nousPortalSupervisor);
-  assert.ok(monolith.components.broccoliNousPortalSubstrate);
-  assert.ok(monolith.components.nousPortalSnapshotManager);
-  assert.ok(monolith.components.nousPortalToolSuite);
+  const synthMonolith = new LumiMonolith();
+  assert.ok(synthMonolith.components.deterministicNousPortalEngine);
+  assert.ok(synthMonolith.components.nousPortalSupervisor);
+  assert.ok(synthMonolith.components.broccoliNousPortalSubstrate);
+  assert.ok(synthMonolith.components.nousPortalSnapshotManager);
+  assert.ok(synthMonolith.components.nousPortalToolSuite);
 
-  const verification = GrandMonolithSynthesizer.verifyComposition(monolith.components);
+  const verification = GrandMonolithSynthesizer.verifyComposition(synthMonolith.components);
   assert.strictEqual(verification.cohesionStatus, "OPTIMAL");
-  assert.strictEqual(verification.componentCount, 544);
+  assert.strictEqual(verification.componentCount, 549);
   assert.strictEqual(verification.missingComponents.length, 0);
   assert.strictEqual(verification.unexpectedComponents.length, 0);
   assert.strictEqual(verification.duplicateManifestComponents.length, 0);
-  console.log(`  [✓] Grand Monolith successfully verified with ${verification.componentCount}/544 components in OPTIMAL cohesion.`);
+  console.log(`  [✓] Grand Monolith successfully verified with ${verification.componentCount}/549 components in OPTIMAL cohesion.`);
 
   console.log("\n================================================================");
   console.log("   ALL 8 NOUS PORTAL VALIDATION SUITES PASSED CLEANLY!         ");

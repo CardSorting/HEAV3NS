@@ -87,6 +87,7 @@ import type { StreamingScrubberToolSuite } from "../streaming_scrubber/streaming
 import type { SelfRepoGuardToolSuite } from "../self_repo_guard/self-repo-guard-tool-suite.js";
 import type { SchemaSanitizerToolSuite } from "../schema_sanitizer/schema-sanitizer-tool-suite.js";
 import type { NousPortalToolSuite } from "../nous_portal/nous-portal-tool-suite.js";
+import type { GoalToolSuite } from "../goals/goal-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -165,6 +166,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly selfRepoGuardToolSuite?: SelfRepoGuardToolSuite;
   readonly schemaSanitizerToolSuite?: SchemaSanitizerToolSuite;
   readonly nousPortalToolSuite?: NousPortalToolSuite;
+  readonly goalToolSuite?: GoalToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -251,7 +253,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     streamingScrubberToolSuite?: StreamingScrubberToolSuite,
     selfRepoGuardToolSuite?: SelfRepoGuardToolSuite,
     schemaSanitizerToolSuite?: SchemaSanitizerToolSuite,
-    nousPortalToolSuite?: NousPortalToolSuite
+    nousPortalToolSuite?: NousPortalToolSuite,
+    goalToolSuite?: GoalToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -330,6 +333,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.selfRepoGuardToolSuite = selfRepoGuardToolSuite;
     this.schemaSanitizerToolSuite = schemaSanitizerToolSuite;
     this.nousPortalToolSuite = nousPortalToolSuite;
+    this.goalToolSuite = goalToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -897,6 +901,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.nousPortalToolSuite) {
       for (const tool of this.nousPortalToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.goalToolSuite) {
+      for (const tool of this.goalToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

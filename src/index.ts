@@ -584,6 +584,12 @@ import { BroccoliNousPortalSubstrate } from "./sessions/extensions/nous_portal/b
 import { NousPortalSnapshotManager } from "./sessions/extensions/nous_portal/nous-portal-snapshot-manager.js";
 import { NousPortalToolSuite } from "./tooling/extensions/nous_portal/nous-portal-tool-suite.js";
 
+import { DeterministicGoalEngine } from "./agents/extensions/goals/deterministic-goal-engine.js";
+import { GoalSupervisor } from "./agents/extensions/goals/goal-supervisor.js";
+import { BroccoliGoalSubstrate } from "./sessions/extensions/goals/broccoli-goal-substrate.js";
+import { GoalSnapshotManager } from "./sessions/extensions/goals/goal-snapshot-manager.js";
+import { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2383,7 +2389,10 @@ export type {
   NousPortalAccountInfo,
   NousPortalCompletionResponse,
   NousPortalDeviceCodeSession,
+  NousPortalDynamicModelItem,
   NousPortalModelSpec,
+  NousPortalModelsFetchOptions,
+  NousPortalModelsFetchResult,
   NousPortalRequestPayload,
   NousPortalStateSnapshot,
   NousPortalSubscriptionInfo,
@@ -2400,6 +2409,28 @@ export {
   NOUS_INFERENCE_INVOKE_SCOPE,
   NOUS_TOOL_COVERAGE_CATEGORIES,
 } from "./core/contracts/nous-portal.contracts.js";
+
+export { DeterministicGoalEngine } from "./agents/extensions/goals/deterministic-goal-engine.js";
+export { GoalSupervisor } from "./agents/extensions/goals/goal-supervisor.js";
+export { BroccoliGoalSubstrate } from "./sessions/extensions/goals/broccoli-goal-substrate.js";
+export { GoalSnapshotManager } from "./sessions/extensions/goals/goal-snapshot-manager.js";
+export { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
+export type {
+  GoalContract,
+  GoalEvaluationResult,
+  GoalGate,
+  GoalState,
+  GoalStateSnapshot,
+  GoalStatus,
+  GoalVerdict,
+} from "./core/contracts/goal.contracts.js";
+export {
+  DEFAULT_GATE_MAX_RETRIES,
+  DEFAULT_GATE_TIMEOUT_SECONDS,
+  DEFAULT_GOAL_JUDGE_TIMEOUT_MS,
+  DEFAULT_GOAL_MAX_TURNS,
+  GATE_OUTPUT_TAIL_CHARS,
+} from "./core/contracts/goal.contracts.js";
 
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
@@ -2898,6 +2929,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliNousPortalSubstrate: BroccoliNousPortalSubstrate;
   readonly nousPortalSnapshotManager: NousPortalSnapshotManager;
   readonly nousPortalToolSuite: NousPortalToolSuite;
+  readonly deterministicGoalEngine: DeterministicGoalEngine;
+  readonly goalSupervisor: GoalSupervisor;
+  readonly broccoliGoalSubstrate: BroccoliGoalSubstrate;
+  readonly goalSnapshotManager: GoalSnapshotManager;
+  readonly goalToolSuite: GoalToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3386,6 +3422,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliNousPortalSubstrate = components.broccoliNousPortalSubstrate;
     this.nousPortalSnapshotManager = components.nousPortalSnapshotManager;
     this.nousPortalToolSuite = components.nousPortalToolSuite;
+    this.deterministicGoalEngine = components.deterministicGoalEngine;
+    this.goalSupervisor = components.goalSupervisor;
+    this.broccoliGoalSubstrate = components.broccoliGoalSubstrate;
+    this.goalSnapshotManager = components.goalSnapshotManager;
+    this.goalToolSuite = components.goalToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

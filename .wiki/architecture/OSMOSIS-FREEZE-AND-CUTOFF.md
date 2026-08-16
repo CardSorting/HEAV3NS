@@ -3,7 +3,7 @@
 ## 📅 Authoritative Cutoff Date & Status
 - **Authoritative Cutoff Timestamp**: **August 16, 2026**
 - **Osmosis Evolution Status**: **FROZEN & SOLIDIFIED**
-- **Grand Monolith Component Count**: **544 Components (100% Locked)**
+- **Grand Monolith Component Count**: **549 Components (100% Locked)**
 - **Baseline Version**: **Pass 192 + Runtime Hardening**
 - **Ancestral Teacher Reference**: Hermes Agent (`hermes-agent-main` / Nous Research, snapshot as of August 16, 2026)
 
@@ -17,8 +17,8 @@ To maintain pristine cohesion, prevent feature regressions, and eliminate duplic
 
 ### 1. Zero Duplicate Capability Policy
 Before proposing, designing, or implementing any new component, tool, substrate, or supervisor:
-- Consult the **544 Frozen Component Manifest** below.
-- If a capability (e.g. tool execution guarding, AST sanitization, stream diagnostics, cost tracking, background review, reasoning scrubbing, self-repository guard, schema sanitization, native nous portal) is already present, **you must extend or interface with the existing component rather than creating a duplicate**.
+- Consult the **549 Frozen Component Manifest** below.
+- If a capability (e.g. tool execution guarding, AST sanitization, stream diagnostics, cost tracking, background review, reasoning scrubbing, self-repository guard, schema sanitization, native nous portal, persistent session goals) is already present, **you must extend or interface with the existing component rather than creating a duplicate**.
 - Any new component that duplicates an existing capability without a formal superseding ADR will be rejected automatically by repository guardrails.
 
 ### 2. Zero Overwrite & Contract Immutability Policy
@@ -44,16 +44,12 @@ Every automated test run (`npm test`) executes `scripts/validate-forensic-integr
 
 ---
 
-## 🏛️ Absorbed Osmosis Target Ledger (Targets #1 – #73)
+## 🏛️ Absorbed Osmosis Target Ledger (Targets #1 – #74)
 
-The following 73 foundation and edge capabilities have been systematically absorbed from `hermes-agent-main` into LUMI-JOY:
+The following 74 foundation and edge capabilities have been systematically absorbed from `hermes-agent-main` into LUMI-JOY:
 
-| Target # | Subsystem / Feature | Architectural Decision Record |
+| Target | Capability Area | Authoritative ADR |
 |---|---|---|
-| **#1 - #30** | Multi-Agent Swarm, Unified VFS, Slash Routing, Long-Term Memory, Prompt Compression, ACP Server Bridge, MCP Tool Supervisor, Process Watchdog, Security Risk Classifier, AST Patch Engine, LSP Code Intelligence, Multi-Modal Vision, Neural Speech & Audio Containers, Interactive Kanban Board | [ADR-001](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-001-3-tier-monolithic-agent-architecture.md) – [ADR-084](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-084-attempt-completion-gate-strategy.md) |
-| **#31 - #45** | Deterministic Cron Kernel, CDP Browser Supervisor, Channel Messaging Gateway, Credential Pool, BM25 History Search, Multi-Backend Sandboxes, Fault Recovery Classifiers, Workspace Checkpoints, Threat Firewalls, Cost Governance & Budget Enforcers, Tool Disclosure Gates | [ADR-085](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-085-phase-63-adaptive-credential-pool-rotation-and-vault-isolation.md) – [ADR-095](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-095-deterministic-secret-redaction-and-masking.md) |
-| **#46** | Secret Redaction & URL/Payload Masking | [ADR-095](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-095-deterministic-secret-redaction-and-masking.md) |
-| **#47** | Post-Turn Background Review & Self-Improvement Ledger | [ADR-096](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-096-post-turn-background-review-and-self-improvement-ledger.md) |
 | **#48** | Runtime Diagnostic Doctor & Subsystem Health Auto-Healer | [ADR-097](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-097-runtime-diagnostic-doctor-and-subsystem-health-healer.md) |
 | **#49** | Multi-Provider Identity Federation & Credential Rotation | [ADR-098](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-098-multi-provider-identity-federation-and-credential-rotation.md) |
 | **#50** | Deterministic Session Archival & FTS5 Search Indexing | [ADR-099](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-099-deterministic-session-archival-and-fts5-search.md) |
