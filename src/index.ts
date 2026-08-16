@@ -488,6 +488,12 @@ import { BroccoliTranscriptionSubstrate } from "./sessions/extensions/transcript
 import { TranscriptionSnapshotManager } from "./sessions/extensions/transcription/transcription-snapshot-manager.js";
 import { TranscriptionToolSuite } from "./tooling/extensions/transcription/transcription-tool-suite.js";
 
+import { DeterministicDeadlineEngine } from "./agents/extensions/deadline/deterministic-deadline-engine.js";
+import { DeadlineSupervisor } from "./agents/extensions/deadline/deadline-supervisor.js";
+import { BroccoliDeadlineSubstrate } from "./sessions/extensions/deadline/broccoli-deadline-substrate.js";
+import { DeadlineSnapshotManager } from "./sessions/extensions/deadline/deadline-snapshot-manager.js";
+import { DeadlineToolSuite } from "./tooling/extensions/deadline/deadline-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2007,6 +2013,24 @@ export type {
 } from "./core/contracts/transcription.contracts.js";
 export { DEFAULT_TRANSCRIPTION_CONFIG } from "./core/contracts/transcription.contracts.js";
 
+export { DeterministicDeadlineEngine } from "./agents/extensions/deadline/deterministic-deadline-engine.js";
+export { DeadlineSupervisor } from "./agents/extensions/deadline/deadline-supervisor.js";
+export { BroccoliDeadlineSubstrate } from "./sessions/extensions/deadline/broccoli-deadline-substrate.js";
+export { DeadlineSnapshotManager } from "./sessions/extensions/deadline/deadline-snapshot-manager.js";
+export { DeadlineToolSuite } from "./tooling/extensions/deadline/deadline-tool-suite.js";
+export type {
+  DeadlineOutcome,
+  BoundedResult,
+  EstopState,
+  DeadlineConfig,
+  DeadlineMetrics,
+  DeadlineWorkspaceSnapshot,
+} from "./core/contracts/deadline.contracts.js";
+export {
+  DEFAULT_DEADLINE_CONFIG,
+  MAX_SAFE_TIMEOUT_MS,
+} from "./core/contracts/deadline.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2424,6 +2448,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliTranscriptionSubstrate: BroccoliTranscriptionSubstrate;
   readonly transcriptionSnapshotManager: TranscriptionSnapshotManager;
   readonly transcriptionToolSuite: TranscriptionToolSuite;
+  readonly deterministicDeadlineEngine: DeterministicDeadlineEngine;
+  readonly deadlineSupervisor: DeadlineSupervisor;
+  readonly broccoliDeadlineSubstrate: BroccoliDeadlineSubstrate;
+  readonly deadlineSnapshotManager: DeadlineSnapshotManager;
+  readonly deadlineToolSuite: DeadlineToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2832,6 +2861,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliTranscriptionSubstrate = components.broccoliTranscriptionSubstrate;
     this.transcriptionSnapshotManager = components.transcriptionSnapshotManager;
     this.transcriptionToolSuite = components.transcriptionToolSuite;
+    this.deterministicDeadlineEngine = components.deterministicDeadlineEngine;
+    this.deadlineSupervisor = components.deadlineSupervisor;
+    this.broccoliDeadlineSubstrate = components.broccoliDeadlineSubstrate;
+    this.deadlineSnapshotManager = components.deadlineSnapshotManager;
+    this.deadlineToolSuite = components.deadlineToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

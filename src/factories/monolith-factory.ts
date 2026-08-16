@@ -527,6 +527,12 @@ import { BroccoliTranscriptionSubstrate } from "../sessions/extensions/transcrip
 import { TranscriptionSnapshotManager } from "../sessions/extensions/transcription/transcription-snapshot-manager.js";
 import { TranscriptionToolSuite } from "../tooling/extensions/transcription/transcription-tool-suite.js";
 
+import { DeterministicDeadlineEngine } from "../agents/extensions/deadline/deterministic-deadline-engine.js";
+import { DeadlineSupervisor } from "../agents/extensions/deadline/deadline-supervisor.js";
+import { BroccoliDeadlineSubstrate } from "../sessions/extensions/deadline/broccoli-deadline-substrate.js";
+import { DeadlineSnapshotManager } from "../sessions/extensions/deadline/deadline-snapshot-manager.js";
+import { DeadlineToolSuite } from "../tooling/extensions/deadline/deadline-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1003,6 +1009,11 @@ export class MonolithFactory {
     broccoliTranscriptionSubstrate: BroccoliTranscriptionSubstrate;
     transcriptionSnapshotManager: TranscriptionSnapshotManager;
     transcriptionToolSuite: TranscriptionToolSuite;
+    deterministicDeadlineEngine: DeterministicDeadlineEngine;
+    deadlineSupervisor: DeadlineSupervisor;
+    broccoliDeadlineSubstrate: BroccoliDeadlineSubstrate;
+    deadlineSnapshotManager: DeadlineSnapshotManager;
+    deadlineToolSuite: DeadlineToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1776,6 +1787,15 @@ export class MonolithFactory {
     );
     const transcriptionToolSuite = new TranscriptionToolSuite(transcriptionSupervisor);
 
+    const deterministicDeadlineEngine = new DeterministicDeadlineEngine();
+    const broccoliDeadlineSubstrate = new BroccoliDeadlineSubstrate();
+    const deadlineSnapshotManager = new DeadlineSnapshotManager(broccoliDeadlineSubstrate);
+    const deadlineSupervisor = new DeadlineSupervisor(
+      broccoliDeadlineSubstrate,
+      deterministicDeadlineEngine
+    );
+    const deadlineToolSuite = new DeadlineToolSuite(deadlineSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1850,7 +1870,8 @@ export class MonolithFactory {
       wakeWordToolSuite,
       mediaSourceToolSuite,
       worktreeToolSuite,
-      transcriptionToolSuite
+      transcriptionToolSuite,
+      deadlineToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2340,6 +2361,11 @@ export class MonolithFactory {
       broccoliTranscriptionSubstrate,
       transcriptionSnapshotManager,
       transcriptionToolSuite,
+      deterministicDeadlineEngine,
+      deadlineSupervisor,
+      broccoliDeadlineSubstrate,
+      deadlineSnapshotManager,
+      deadlineToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

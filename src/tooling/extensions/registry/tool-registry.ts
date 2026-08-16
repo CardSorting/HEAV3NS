@@ -71,6 +71,7 @@ import type { WakeWordToolSuite } from "../wake_word/wake-word-tool-suite.js";
 import type { MediaSourceToolSuite } from "../media_source/media-source-tool-suite.js";
 import type { WorktreeToolSuite } from "../worktree/worktree-tool-suite.js";
 import type { TranscriptionToolSuite } from "../transcription/transcription-tool-suite.js";
+import type { DeadlineToolSuite } from "../deadline/deadline-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -133,6 +134,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly mediaSourceToolSuite?: MediaSourceToolSuite;
   readonly worktreeToolSuite?: WorktreeToolSuite;
   readonly transcriptionToolSuite?: TranscriptionToolSuite;
+  readonly deadlineToolSuite?: DeadlineToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -203,7 +205,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     wakeWordToolSuite?: WakeWordToolSuite,
     mediaSourceToolSuite?: MediaSourceToolSuite,
     worktreeToolSuite?: WorktreeToolSuite,
-    transcriptionToolSuite?: TranscriptionToolSuite
+    transcriptionToolSuite?: TranscriptionToolSuite,
+    deadlineToolSuite?: DeadlineToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -266,6 +269,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.mediaSourceToolSuite = mediaSourceToolSuite;
     this.worktreeToolSuite = worktreeToolSuite;
     this.transcriptionToolSuite = transcriptionToolSuite;
+    this.deadlineToolSuite = deadlineToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -753,6 +757,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.transcriptionToolSuite) {
       for (const tool of this.transcriptionToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.deadlineToolSuite) {
+      for (const tool of this.deadlineToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

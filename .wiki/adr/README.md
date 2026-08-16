@@ -108,6 +108,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-098](ADR-098-unified-media-source-resolver-and-mime-perception.md) | Unified Media Source Resolver, Magic-Byte MIME Perception & Multimodal Ingestion Engine | Accepted | 2026-08-16 | Multimodal & Vision Intelligence (Target #55 / Phase 122) |
 | [ADR-099](ADR-099-git-worktree-isolation-and-branch-sandboxing.md) | Git Worktree Isolation, Multi-Agent Branch Sandboxing & Subagent Workspace Governance Subsystem | Accepted | 2026-08-16 | Multi-Agent & Workspace Isolation (Target #56 / Phase 123) |
 | [ADR-100](ADR-100-multi-provider-speech-transcription-and-diarization.md) | Multi-Provider Speech-to-Text Transcription, Diarization & Audio Ingestion Subsystem | Accepted | 2026-08-16 | Voice & Speech Intelligence (Target #57 / Phase 124) |
+| [ADR-101](ADR-101-unified-deadline-engine-and-emergency-stop.md) | Unified Deadline Engine, Bounded Execution & Emergency Stop Governance Subsystem | Accepted | 2026-08-16 | System Reliability & Safety (Target #58 / Phase 125) |
 
 ## Domain Grouping
 
@@ -138,6 +139,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-098](ADR-098-unified-media-source-resolver-and-mime-perception.md)**: Unified media source resolver, magic-byte MIME perception, and multimodal ingestion engine.
 - **[ADR-099](ADR-099-git-worktree-isolation-and-branch-sandboxing.md)**: Git worktree isolation, multi-agent branch sandboxing, and subagent workspace governance subsystem.
 - **[ADR-100](ADR-100-multi-provider-speech-transcription-and-diarization.md)**: Multi-provider speech-to-text transcription, diarization, and audio ingestion subsystem.
+- **[ADR-101](ADR-101-unified-deadline-engine-and-emergency-stop.md)**: Unified deadline engine, bounded execution, and emergency stop governance subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.
