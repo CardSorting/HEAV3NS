@@ -99,10 +99,14 @@ export class BroccoliDatabaseKernel implements IBroccoliDatabaseKernel {
   getTable<T extends Record<string, unknown> = Record<string, unknown>>(name: string): IDbTable<T> {
     let table = this.tables.get(name);
     if (!table) {
-      table = new BroccoliDbTable<Record<string, unknown>>(name, (op, tbl, id, payload) => {
-        this.frameIndex += 1;
-        void this.wal.appendFrame(op, tbl, id, payload);
-      });
+      table = new BroccoliDbTable<Record<string, unknown>>(
+        name,
+        (op, tbl, id, payload) => {
+          this.frameIndex += 1;
+          void this.wal.appendFrame(op, tbl, id, payload);
+        },
+        (tblName) => this.getTable(tblName) as any
+      );
       this.tables.set(name, table);
     }
     return table as unknown as IDbTable<T>;

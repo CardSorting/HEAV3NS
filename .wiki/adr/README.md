@@ -168,6 +168,8 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-118](ADR-118-world-class-kanban-architecture.md)**: World-class Kanban architecture, task DAG, typed blockers, and multi-agent issue orchestration.
 - **[ADR-119](ADR-119-persistent-multi-profile-isolation-and-routing.md)**: Persistent multi-profile isolation, environment routing, and persona cloning subsystem.
 - **[ADR-120](ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)**: Deterministic hybrid in-memory + handrolled BroccoliDB kernel, WAL streaming, CAS deduplication, and atomic checkpoints.
+- **[ADR-121](ADR-121-zenith-tier-reactive-tables-composite-indexing-and-fluent-dsl.md)**: Zenith-tier reactive in-memory tables, multi-modal indexing (sorted, composite, prefix), rich operator DSL, CDC subscriptions, and fluent query builder.
+- **[ADR-122](ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)**: Apex-tier relational joins, foreign key cascade integrity, multi-dimensional aggregation pipeline, Git-for-Data table branching, action undo/redo, TTL expiration, and human-centric visual views.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

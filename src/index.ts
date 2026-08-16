@@ -598,6 +598,12 @@ import { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-sui
 
 import { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
 import { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
+import { BroccoliNaturalQueryParser } from "./sessions/extensions/substrate/broccolidb-natural-query.js";
+import { BroccoliRelationEngine } from "./sessions/extensions/substrate/broccolidb-relations.js";
+import { BroccoliAggregateEngine } from "./sessions/extensions/substrate/broccolidb-aggregation.js";
+import { BroccoliBranchingEngine } from "./sessions/extensions/substrate/broccolidb-branching.js";
+import { BroccoliSchemaEngine } from "./sessions/extensions/substrate/broccolidb-schema-engine.js";
+import { BroccoliViewRenderer } from "./sessions/extensions/substrate/broccolidb-view-renderer.js";
 import { BroccoliCASStorageService } from "./sessions/extensions/substrate/broccolidb-cas.js";
 import { BroccoliWriteAheadLog } from "./sessions/extensions/substrate/broccolidb-wal.js";
 import { ReentrantAsyncMutex, DatabaseLockError, DeadlockTimeoutError } from "./sessions/extensions/substrate/broccolidb-mutex.js";
@@ -1004,6 +1010,12 @@ export type { AxiomViolation } from "./tooling/extensions/permissions/broccolidb
 export { BroccoliSimulationEngine } from "./tooling/extensions/permissions/broccolidb-simulation-engine.js";
 export { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
 export { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
+export { BroccoliNaturalQueryParser } from "./sessions/extensions/substrate/broccolidb-natural-query.js";
+export { BroccoliRelationEngine } from "./sessions/extensions/substrate/broccolidb-relations.js";
+export { BroccoliAggregateEngine } from "./sessions/extensions/substrate/broccolidb-aggregation.js";
+export { BroccoliBranchingEngine } from "./sessions/extensions/substrate/broccolidb-branching.js";
+export { BroccoliSchemaEngine } from "./sessions/extensions/substrate/broccolidb-schema-engine.js";
+export { BroccoliViewRenderer } from "./sessions/extensions/substrate/broccolidb-view-renderer.js";
 export { BroccoliCASStorageService } from "./sessions/extensions/substrate/broccolidb-cas.js";
 export { BroccoliWriteAheadLog } from "./sessions/extensions/substrate/broccolidb-wal.js";
 export { ReentrantAsyncMutex, DatabaseLockError, DeadlockTimeoutError } from "./sessions/extensions/substrate/broccolidb-mutex.js";

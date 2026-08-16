@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added (Apex-Tier Relational Topologies, Aggregations, Table Branching & Human-Centric Views — Phase 73 / ADR-122)
+
+- **Declarative Relational Topologies & Joins (`BroccoliRelationEngine`)**: Implemented `defineRelation` (`belongsTo`, `hasMany`, `hasOne`), index-accelerated nested join query resolution (`join()`), and referential integrity cascade policies (`CASCADE`, `SET_NULL`, `RESTRICT`) ([ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)).
+- **Multi-Dimensional Aggregation Pipeline (`BroccoliAggregateEngine`)**: Added single-pass statistical grouping (`groupBy`), metric accumulators (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`), and post-aggregation `HAVING` filters (`aggregate()`).
+- **Git-for-Data Table Branching & 3-Way Merge (`BroccoliBranchingEngine`)**: Added isolated Copy-on-Write branches (`forkBranch`, `checkoutBranch`), 3-way merge conflict detection with resolution strategies (`LAST_WRITE_WINS`, `FAIL_ON_CONFLICT`, `TAKE_BRANCH`, `TAKE_MAIN`), and action-level Undo/Redo history stacks (`undo()`, `redo()`).
+- **Time-To-Live (TTL) & Ephemeral Record Expiration**: Implemented active unref timer queues with automatic record deletion and `EXPIRE` CDC event emission.
+- **Declarative Schema Evolution & Type Coercion (`BroccoliSchemaEngine`)**: Added versioned schema definitions, on-read/batch migrations, automatic string-to-number/date type coercion, and human-friendly schema validation.
+- **Human-Centric Visual Views (`BroccoliViewRenderer`)**: Added CLI Spreadsheet grid table formatter (`renderSpreadsheet`), multi-lane Kanban board renderer (`renderKanban`), and side-by-side Table Diff engine (`renderDiff`).
+- **Expanded Apex Model Tool Suite (`DatabaseToolSuite`)**: Registered `db_aggregate`, `db_table_branch`, `db_undo_redo`, `db_render_view`, and `db_relational_join`.
+
+### Added (Zenith-Tier Reactive In-Memory Tables, Multi-Modal Indexing & Fluent Query DSL — Phase 72 / ADR-121)
+
+- **Zenith-Tier Multi-Modal Indexing (`BroccoliDbTable<T>`)**: Added multi-modal index topologies including Sorted Range Indices (`createSortedIndex`) with binary-search array indexing for numeric/date ranges, Composite Indices (`createCompositeIndex`) with compound hash multi-maps, and Prefix Indices (`createPrefixIndex`) for sub-microsecond `$startsWith` searches ([ADR-121](.wiki/adr/ADR-121-zenith-tier-reactive-tables-composite-indexing-and-fluent-dsl.md)).
+- **Rich Operator Query DSL & Fluent Builder**: Added support for `$gt`, `$gte`, `$lt`, `$lte`, `$between`, `$in`, `$nin`, `$startsWith`, `$contains`, `$regex`, and logical `$and`/`$or` combinators, paired with a fluent builder (`table.select().where().and().orderBy().limit().execute()`).
+- **Reactive Change Data Capture (CDC)**: Implemented observable event subscriptions (`subscribe()`) emitting `INSERT`, `UPDATE` (with field diffs), `DELETE`, and `CLEAR` events.
+- **Atomic In-Memory Transactions & Batch Units of Work**: Implemented `table.transaction(tx)` with automatic snapshot rollback on exception and atomic WAL frame generation, plus `bulkPut` and `bulkDelete`.
+- **Introspection, Column Statistics & Computed Virtual Columns**: Added `describe()` for schema introspection, `columnStats()` for descriptive statistics, and `addComputedColumn()` for dynamic virtual projections.
+- **Deterministic Natural Language Query Parser (`BroccoliNaturalQueryParser`)**: Added offline natural language query translation converting conversational search expressions into structured `DbQueryOptions`.
+- **Expanded Model Database Tools (`DatabaseToolSuite`)**: Added `db_explain_query`, `db_natural_query`, `db_table_schema`, and `db_table_stats` to the registered model tools.
+
 ### Added (Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel — Phase 71 / ADR-120)
 
 - **Zenith-Tier Master Database Kernel (`BroccoliDatabaseKernel`)**: Implemented deterministic hybrid database kernel orchestrating in-memory reactive tables, append-only WAL streaming, sharded CAS vault, and double-buffered atomic checkpoints ([ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)).

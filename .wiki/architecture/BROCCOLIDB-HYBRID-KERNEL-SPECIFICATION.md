@@ -96,15 +96,30 @@ Because POSIX `rename(2)` is atomic, the database file is guaranteed never to ex
 
 ## 3. Detailed Component Architecture
 
-### 3.1 Layer 1: Generic Reactive In-Memory Tables (`BroccoliDbTable<T>`)
-File: [`src/sessions/extensions/substrate/broccolidb-table.ts`](../../src/sessions/extensions/substrate/broccolidb-table.ts)
+### 3.1 Layer 1: Apex-Tier Reactive In-Memory Tables (`BroccoliDbTable<T>`)
+Files: [`src/sessions/extensions/substrate/broccolidb-table.ts`](../../src/sessions/extensions/substrate/broccolidb-table.ts), [`src/sessions/extensions/substrate/broccolidb-relations.ts`](../../src/sessions/extensions/substrate/broccolidb-relations.ts), [`src/sessions/extensions/substrate/broccolidb-aggregation.ts`](../../src/sessions/extensions/substrate/broccolidb-aggregation.ts), [`src/sessions/extensions/substrate/broccolidb-branching.ts`](../../src/sessions/extensions/substrate/broccolidb-branching.ts), [`src/sessions/extensions/substrate/broccolidb-schema-engine.ts`](../../src/sessions/extensions/substrate/broccolidb-schema-engine.ts), [`src/sessions/extensions/substrate/broccolidb-view-renderer.ts`](../../src/sessions/extensions/substrate/broccolidb-view-renderer.ts), & [`src/sessions/extensions/substrate/broccolidb-natural-query.ts`](../../src/sessions/extensions/substrate/broccolidb-natural-query.ts)
 
-The `BroccoliDbTable<T>` class provides high-velocity data management for domain entities:
+The `BroccoliDbTable<T>` class provides high-velocity data management for domain entities with multi-modal indexing, relational joins, aggregations, branching, and expressive query ergonomics:
 - **Primary Store**: `Map<string, T>` for $O(1)$ key-based lookup.
-- **Secondary Index Multi-Maps**: Registered via `createIndex(field: keyof T)`. Maintains an inverted index `Map<any, Set<string>>` for sub-microsecond predicate queries.
-- **Predicate Query Engine**: Evaluates `where` filters, multi-field sorting (`sortBy`, `sortOrder: "asc" | "desc"`), and pagination (`limit`, `offset`).
-- **Reactive Change Emission**: Fires `change` callbacks on every `put`, `delete`, and `clear` operation, seamlessly notifying the Write-Ahead Log engine.
-- **$O(1)$ State Rollback**: Supports `exportState()` and `restoreState(snapshot)` for instant time-travel state recovery.
+- **Multi-Modal Index Topologies**:
+  - *Equality Indexing (`createIndex`)*: $O(1)$ multi-map inverted index `Map<unknown, Set<string>>`.
+  - *Sorted Range Indexing (`createSortedIndex`)*: Binary-search sorted entry array `Array<{ value: number | string; ids: Set<string> }>` supporting sub-microsecond range evaluations ($O(\log N + K)$) for `$gt`, `$gte`, `$lt`, `$lte`, and `$between`.
+  - *Composite Multi-Column Indexing (`createCompositeIndex`)*: Compound hash multi-maps `Map<string, Set<string>>` (`fieldA:valA|fieldB:valB`) for instant multi-column filter resolution.
+  - *Prefix Inverted Indexing (`createPrefixIndex`)*: Prefix token maps enabling instant case-insensitive `$startsWith` string searches.
+- **Declarative Relational Topologies (`BroccoliRelationEngine`)**: `defineRelation` registering `belongsTo`, `hasMany`, and `hasOne` relations, index-accelerated nested join query resolution (`join()`), and referential integrity cascade policies (`CASCADE`, `SET_NULL`, `RESTRICT`).
+- **Multi-Dimensional Aggregation Pipeline (`BroccoliAggregateEngine`)**: Single-pass statistical grouping (`groupBy`), metric accumulators (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`), and post-aggregation `HAVING` filters (`aggregate()`).
+- **Git-for-Data Table Branching & 3-Way Merge (`BroccoliBranchingEngine`)**: Isolated Copy-on-Write branches (`forkBranch`, `checkoutBranch`), 3-way merge conflict detection with resolution strategies (`LAST_WRITE_WINS`, `FAIL_ON_CONFLICT`, `TAKE_BRANCH`, `TAKE_MAIN`), and action-level Undo/Redo history stacks (`undo()`, `redo()`).
+- **Time-To-Live (TTL) & Ephemeral Record Expiration**: Active unref timer queues with automatic record deletion and `EXPIRE` CDC event emission (`put(id, rec, { ttlMs })`).
+- **Declarative Schema Evolution & Type Coercion (`BroccoliSchemaEngine`)**: Versioned schema definitions, on-read/batch migrations, automatic string-to-number/date type coercion, and human-friendly schema validation.
+- **Human-Centric Visual Views (`BroccoliViewRenderer`)**: CLI Spreadsheet grid table formatter (`renderSpreadsheet`), multi-lane Kanban board renderer (`renderKanban`), and side-by-side Table Diff engine (`renderDiff`).
+- **Rich Operator Query DSL**: Evaluates `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$between`, `$startsWith`, `$endsWith`, `$contains`, `$regex`, `$exists`, and nested logical combinators (`$and`, `$or`, `$not`).
+- **Fluent Query Builder (`select()`)**: Type-safe chainable query DSL (`table.select().where("status").equals("active").and("score").between(100, 500).orderBy("createdAt", "desc").limit(10).execute()`).
+- **Reactive Change Data Capture (CDC)**: Observable event subscriptions (`subscribe()`) emitting granular `TableChangeEvent<T>` with operation type, `before`/`after` records, and field-level diff objects.
+- **Atomic In-Memory Transactions (`transaction(fn)`)**: ACID unit-of-work staging with automatic snapshot rollback on exception and atomic WAL frame generation on commit.
+- **Computed Virtual Columns (`addComputedColumn`)**: Dynamic virtual properties projected on retrieval and indexed automatically.
+- **Schema Introspection & Descriptive Column Statistics**: `describe()` returning schema footprint and `columnStats()` calculating types, min/max, averages, and unique cardinality.
+- **Deterministic Natural Language Query Parser (`BroccoliNaturalQueryParser`)**: Offline translation of plain-English queries into structured `DbQueryOptions`.
+- **Query Execution Planner (`explain()`)**: Introspects query plans, scan strategies (`INDEX_LOOKUP`, `INDEX_RANGE_SCAN`, `PREFIX_SCAN`, `FULL_TABLE_SCAN`), candidate scan size, and microsecond latency.
 
 ### 3.2 Layer 2: Append-Only Write-Ahead Log Stream (`BroccoliWriteAheadLog`)
 File: [`src/sessions/extensions/substrate/broccolidb-wal.ts`](../../src/sessions/extensions/substrate/broccolidb-wal.ts)
