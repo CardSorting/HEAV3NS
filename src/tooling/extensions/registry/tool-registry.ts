@@ -80,6 +80,7 @@ import type { StreamDiagToolSuite } from "../stream_diag/stream-diag-tool-suite.
 import type { TurnRetryToolSuite } from "../turn_retry/turn-retry-tool-suite.js";
 import type { BillingUsageToolSuite } from "../billing_usage/billing-usage-tool-suite.js";
 import type { ThreadContextToolSuite } from "../thread_context/thread-context-tool-suite.js";
+import type { EnvProbeToolSuite } from "../env_probe/env-probe-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -151,6 +152,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly turnRetryToolSuite?: TurnRetryToolSuite;
   readonly billingUsageToolSuite?: BillingUsageToolSuite;
   readonly threadContextToolSuite?: ThreadContextToolSuite;
+  readonly envProbeToolSuite?: EnvProbeToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -230,7 +232,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     streamDiagToolSuite?: StreamDiagToolSuite,
     turnRetryToolSuite?: TurnRetryToolSuite,
     billingUsageToolSuite?: BillingUsageToolSuite,
-    threadContextToolSuite?: ThreadContextToolSuite
+    threadContextToolSuite?: ThreadContextToolSuite,
+    envProbeToolSuite?: EnvProbeToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -302,6 +305,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.turnRetryToolSuite = turnRetryToolSuite;
     this.billingUsageToolSuite = billingUsageToolSuite;
     this.threadContextToolSuite = threadContextToolSuite;
+    this.envProbeToolSuite = envProbeToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -834,6 +838,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.threadContextToolSuite) {
       for (const tool of this.threadContextToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.envProbeToolSuite) {
+      for (const tool of this.envProbeToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

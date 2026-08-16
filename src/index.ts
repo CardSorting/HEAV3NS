@@ -542,6 +542,12 @@ import { BroccoliThreadContextSubstrate } from "./sessions/extensions/thread_con
 import { ThreadContextSnapshotManager } from "./sessions/extensions/thread_context/thread-context-snapshot-manager.js";
 import { ThreadContextToolSuite } from "./tooling/extensions/thread_context/thread-context-tool-suite.js";
 
+import { DeterministicEnvProbeEngine } from "./agents/extensions/env_probe/deterministic-env-probe-engine.js";
+import { EnvProbeSupervisor } from "./agents/extensions/env_probe/env-probe-supervisor.js";
+import { BroccoliEnvProbeSubstrate } from "./sessions/extensions/env_probe/broccoli-env-probe-substrate.js";
+import { EnvProbeSnapshotManager } from "./sessions/extensions/env_probe/env-probe-snapshot-manager.js";
+import { EnvProbeToolSuite } from "./tooling/extensions/env_probe/env-probe-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2216,6 +2222,23 @@ export {
   DEFAULT_CONTEXT_PROPAGATION_CONFIG,
 } from "./core/contracts/thread-context.contracts.js";
 
+export { DeterministicEnvProbeEngine } from "./agents/extensions/env_probe/deterministic-env-probe-engine.js";
+export { EnvProbeSupervisor } from "./agents/extensions/env_probe/env-probe-supervisor.js";
+export { BroccoliEnvProbeSubstrate } from "./sessions/extensions/env_probe/broccoli-env-probe-substrate.js";
+export { EnvProbeSnapshotManager } from "./sessions/extensions/env_probe/env-probe-snapshot-manager.js";
+export { EnvProbeToolSuite } from "./tooling/extensions/env_probe/env-probe-tool-suite.js";
+export type {
+  ToolchainRuntimeKind,
+  ToolchainAnomalyCategory,
+  ToolchainProbeDescriptor,
+  EnvProbeConfig,
+  EnvProbeMetrics,
+  EnvProbeWorkspaceSnapshot,
+} from "./core/contracts/env-probe.contracts.js";
+export {
+  DEFAULT_ENV_PROBE_CONFIG,
+} from "./core/contracts/env-probe.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2678,6 +2701,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliThreadContextSubstrate: BroccoliThreadContextSubstrate;
   readonly threadContextSnapshotManager: ThreadContextSnapshotManager;
   readonly threadContextToolSuite: ThreadContextToolSuite;
+  readonly deterministicEnvProbeEngine: DeterministicEnvProbeEngine;
+  readonly envProbeSupervisor: EnvProbeSupervisor;
+  readonly broccoliEnvProbeSubstrate: BroccoliEnvProbeSubstrate;
+  readonly envProbeSnapshotManager: EnvProbeSnapshotManager;
+  readonly envProbeToolSuite: EnvProbeToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3131,6 +3159,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliThreadContextSubstrate = components.broccoliThreadContextSubstrate;
     this.threadContextSnapshotManager = components.threadContextSnapshotManager;
     this.threadContextToolSuite = components.threadContextToolSuite;
+    this.deterministicEnvProbeEngine = components.deterministicEnvProbeEngine;
+    this.envProbeSupervisor = components.envProbeSupervisor;
+    this.broccoliEnvProbeSubstrate = components.broccoliEnvProbeSubstrate;
+    this.envProbeSnapshotManager = components.envProbeSnapshotManager;
+    this.envProbeToolSuite = components.envProbeToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

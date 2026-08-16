@@ -581,6 +581,12 @@ import { BroccoliThreadContextSubstrate } from "../sessions/extensions/thread_co
 import { ThreadContextSnapshotManager } from "../sessions/extensions/thread_context/thread-context-snapshot-manager.js";
 import { ThreadContextToolSuite } from "../tooling/extensions/thread_context/thread-context-tool-suite.js";
 
+import { DeterministicEnvProbeEngine } from "../agents/extensions/env_probe/deterministic-env-probe-engine.js";
+import { EnvProbeSupervisor } from "../agents/extensions/env_probe/env-probe-supervisor.js";
+import { BroccoliEnvProbeSubstrate } from "../sessions/extensions/env_probe/broccoli-env-probe-substrate.js";
+import { EnvProbeSnapshotManager } from "../sessions/extensions/env_probe/env-probe-snapshot-manager.js";
+import { EnvProbeToolSuite } from "../tooling/extensions/env_probe/env-probe-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1102,6 +1108,11 @@ export class MonolithFactory {
     broccoliThreadContextSubstrate: BroccoliThreadContextSubstrate;
     threadContextSnapshotManager: ThreadContextSnapshotManager;
     threadContextToolSuite: ThreadContextToolSuite;
+    deterministicEnvProbeEngine: DeterministicEnvProbeEngine;
+    envProbeSupervisor: EnvProbeSupervisor;
+    broccoliEnvProbeSubstrate: BroccoliEnvProbeSubstrate;
+    envProbeSnapshotManager: EnvProbeSnapshotManager;
+    envProbeToolSuite: EnvProbeToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1957,6 +1968,15 @@ export class MonolithFactory {
     );
     const threadContextToolSuite = new ThreadContextToolSuite(threadContextSupervisor);
 
+    const deterministicEnvProbeEngine = new DeterministicEnvProbeEngine();
+    const broccoliEnvProbeSubstrate = new BroccoliEnvProbeSubstrate();
+    const envProbeSnapshotManager = new EnvProbeSnapshotManager(broccoliEnvProbeSubstrate);
+    const envProbeSupervisor = new EnvProbeSupervisor(
+      broccoliEnvProbeSubstrate,
+      deterministicEnvProbeEngine
+    );
+    const envProbeToolSuite = new EnvProbeToolSuite(envProbeSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2040,7 +2060,8 @@ export class MonolithFactory {
       streamDiagToolSuite,
       turnRetryToolSuite,
       billingUsageToolSuite,
-      threadContextToolSuite
+      threadContextToolSuite,
+      envProbeToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2575,6 +2596,11 @@ export class MonolithFactory {
       broccoliThreadContextSubstrate,
       threadContextSnapshotManager,
       threadContextToolSuite,
+      deterministicEnvProbeEngine,
+      envProbeSupervisor,
+      broccoliEnvProbeSubstrate,
+      envProbeSnapshotManager,
+      envProbeToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,
