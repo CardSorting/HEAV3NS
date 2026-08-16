@@ -384,6 +384,12 @@ import { ReasoningSnapshotManager } from "./sessions/extensions/reasoning/reason
 import { ReasoningSupervisor } from "./agents/extensions/reasoning/reasoning-supervisor.js";
 import { ReasoningToolSuite } from "./tooling/extensions/reasoning/reasoning-tool-suite.js";
 
+import { DeterministicFuzzyMatcher } from "./tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
+import { BroccoliFuzzySubstrate } from "./sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
+import { FuzzySnapshotManager } from "./sessions/extensions/fuzzy/fuzzy-snapshot-manager.js";
+import { FuzzyMatcherSupervisor } from "./agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
+import { FuzzyMatcherToolSuite } from "./tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -1456,6 +1462,21 @@ export type {
   ReasoningWorkspaceSnapshot,
 } from "./core/contracts/reasoning.contracts.js";
 
+export { DeterministicFuzzyMatcher, DEFAULT_UNICODE_MAP, ALL_STRATEGIES, IDENTICAL_STRINGS_ERROR } from "./tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
+export { BroccoliFuzzySubstrate } from "./sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
+export { FuzzySnapshotManager } from "./sessions/extensions/fuzzy/fuzzy-snapshot-manager.js";
+export { FuzzyMatcherSupervisor } from "./agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
+export { FuzzyMatcherToolSuite } from "./tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.js";
+export type {
+  FuzzyStrategyName,
+  FuzzyMatchSpan,
+  ContextWindow,
+  FuzzyMatchResult,
+  FuzzyMatcherOptions,
+  FuzzyExecutionRecord,
+  FuzzyWorkspaceSnapshot,
+} from "./core/contracts/fuzzy-matcher.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -1786,6 +1807,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly reasoningSnapshotManager: ReasoningSnapshotManager;
   readonly reasoningSupervisor: ReasoningSupervisor;
   readonly reasoningToolSuite: ReasoningToolSuite;
+  readonly deterministicFuzzyMatcher: DeterministicFuzzyMatcher;
+  readonly broccoliFuzzySubstrate: BroccoliFuzzySubstrate;
+  readonly fuzzySnapshotManager: FuzzySnapshotManager;
+  readonly fuzzyMatcherSupervisor: FuzzyMatcherSupervisor;
+  readonly fuzzyMatcherToolSuite: FuzzyMatcherToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2107,6 +2133,11 @@ export class LumiMonolith implements IAgentEngine {
     this.reasoningSnapshotManager = components.reasoningSnapshotManager;
     this.reasoningSupervisor = components.reasoningSupervisor;
     this.reasoningToolSuite = components.reasoningToolSuite;
+    this.deterministicFuzzyMatcher = components.deterministicFuzzyMatcher;
+    this.broccoliFuzzySubstrate = components.broccoliFuzzySubstrate;
+    this.fuzzySnapshotManager = components.fuzzySnapshotManager;
+    this.fuzzyMatcherSupervisor = components.fuzzyMatcherSupervisor;
+    this.fuzzyMatcherToolSuite = components.fuzzyMatcherToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T07:05:11.963Z",
+  "generatedAt": "2026-08-16T07:24:39.847Z",
   "passed": true,
   "repositoryVersion": "0.1.0",
   "runtime": {
@@ -19,10 +19,10 @@
     "totalChecks": 9,
     "passedCount": 9,
     "failedCount": 0,
-    "durationMs": 2.59,
-    "componentCount": 377,
-    "requiredComponentCount": 377,
-    "composedRequiredComponentCount": 377,
+    "durationMs": 2.67,
+    "componentCount": 382,
+    "requiredComponentCount": 382,
+    "composedRequiredComponentCount": 382,
     "missingComponents": [],
     "unexpectedComponents": [],
     "duplicateManifestComponents": [],
@@ -33,7 +33,7 @@
         "name": "Current evolution capabilities are composed",
         "passed": true,
         "durationMs": 0.03,
-        "detail": "377 required capabilities across 377 components"
+        "detail": "382 required capabilities across 382 components"
       },
       {
         "id": "contracts.inheritance",
@@ -48,15 +48,15 @@
         "category": "execution",
         "name": "Local frame commits an explicit successful outcome",
         "passed": true,
-        "durationMs": 0.91,
-        "detail": "frame 1 completed in 0.59 ms"
+        "durationMs": 0.94,
+        "detail": "frame 1 completed in 0.62 ms"
       },
       {
         "id": "state.rewind",
         "category": "state",
         "name": "Snapshot rewind restores frame and message state",
         "passed": true,
-        "durationMs": 0.29,
+        "durationMs": 0.31,
         "detail": "restored frame 1 with 2 messages"
       },
       {
@@ -64,7 +64,7 @@
         "category": "governance",
         "name": "Completion gate fails closed without evaluated evidence",
         "passed": true,
-        "durationMs": 0.47,
+        "durationMs": 0.5,
         "detail": "5 fail-closed states rejected; 2/2 evaluated required criteria accepted"
       },
       {
@@ -80,7 +80,7 @@
         "category": "observability",
         "name": "Command output summaries remain bounded",
         "passed": true,
-        "durationMs": 0.08,
+        "durationMs": 0.09,
         "detail": "head/tail output retention verified"
       },
       {
@@ -107,10 +107,10 @@
     "passedCount": 5,
     "failedCount": 0,
     "passRate": 100,
-    "meanLatencyMs": 71.16,
-    "totalDurationMs": 355.79,
-    "throughputTps": 14.05,
-    "throughputPerMinute": 843,
+    "meanLatencyMs": 69.76,
+    "totalDurationMs": 348.81,
+    "throughputTps": 14.33,
+    "throughputPerMinute": 860,
     "results": [
       {
         "testName": "Turn Tick Latency & Fact Storage",
@@ -130,7 +130,7 @@
         "testName": "Complete Flappy Bird React + TypeScript + Vite Synthesis",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 355.45,
+        "durationMs": 348.48,
         "assertions": [
           {
             "name": "complete project manifest",
@@ -185,7 +185,7 @@
         "testName": "Snapshot State Rewind Latency",
         "passed": true,
         "outcome": "completed",
-        "durationMs": 0.08,
+        "durationMs": 0.07,
         "assertions": []
       }
     ]
@@ -206,21 +206,21 @@
       {
         "ruleName": "Performance SLA: Sub-Millisecond Turn Tick Latency",
         "passed": true,
-        "measuredValue": "0.15 ms",
+        "measuredValue": "0.12 ms",
         "threshold": "< 1 ms",
         "details": "Mean turn latency satisfies the < 1.0ms SLA requirement."
       },
       {
         "ruleName": "Performance SLA: Execution Throughput",
         "passed": true,
-        "measuredValue": "6749.16 frames/sec",
+        "measuredValue": "8617.57 frames/sec",
         "threshold": ">= 1000 frames/sec",
         "details": "Live deterministic frame throughput satisfies the repository SLA."
       },
       {
         "ruleName": "Performance SLA: State Rewind Latency",
         "passed": true,
-        "measuredValue": "0.018 ms p95",
+        "measuredValue": "0.021 ms p95",
         "threshold": "< 0.1 ms p95",
         "details": "Snapshot rewind state restoration and warmed 25-sample p95 latency verified."
       },

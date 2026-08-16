@@ -54,6 +54,7 @@ import type { SessionArchiveToolSuite } from "../archive/session-archive-tool-su
 import type { TerminalSkinToolSuite } from "../skin/terminal-skin-tool-suite.js";
 import type { AuxiliaryRouterToolSuite } from "../router/auxiliary-router-tool-suite.js";
 import type { ReasoningToolSuite } from "../reasoning/reasoning-tool-suite.js";
+import type { FuzzyMatcherToolSuite } from "../fuzzy/fuzzy-matcher-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -99,6 +100,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly terminalSkinToolSuite?: TerminalSkinToolSuite;
   readonly auxiliaryRouterToolSuite?: AuxiliaryRouterToolSuite;
   readonly reasoningToolSuite?: ReasoningToolSuite;
+  readonly fuzzyMatcherToolSuite?: FuzzyMatcherToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -152,7 +154,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     sessionArchiveToolSuite?: SessionArchiveToolSuite,
     terminalSkinToolSuite?: TerminalSkinToolSuite,
     auxiliaryRouterToolSuite?: AuxiliaryRouterToolSuite,
-    reasoningToolSuite?: ReasoningToolSuite
+    reasoningToolSuite?: ReasoningToolSuite,
+    fuzzyMatcherToolSuite?: FuzzyMatcherToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -198,6 +201,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.terminalSkinToolSuite = terminalSkinToolSuite;
     this.auxiliaryRouterToolSuite = auxiliaryRouterToolSuite;
     this.reasoningToolSuite = reasoningToolSuite;
+    this.fuzzyMatcherToolSuite = fuzzyMatcherToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -600,6 +604,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.reasoningToolSuite) {
       for (const tool of this.reasoningToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.fuzzyMatcherToolSuite) {
+      for (const tool of this.fuzzyMatcherToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

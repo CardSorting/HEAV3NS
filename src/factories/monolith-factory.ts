@@ -422,6 +422,13 @@ import { ReasoningSupervisor } from "../agents/extensions/reasoning/reasoning-su
 import { ReasoningToolSuite } from "../tooling/extensions/reasoning/reasoning-tool-suite.js";
 import type { ReasoningScrubberOptions } from "../core/contracts/reasoning.contracts.js";
 
+import { DeterministicFuzzyMatcher } from "../tooling/extensions/fuzzy/deterministic-fuzzy-matcher.js";
+import { BroccoliFuzzySubstrate } from "../sessions/extensions/fuzzy/broccoli-fuzzy-substrate.js";
+import { FuzzySnapshotManager } from "../sessions/extensions/fuzzy/fuzzy-snapshot-manager.js";
+import { FuzzyMatcherSupervisor } from "../agents/extensions/fuzzy/fuzzy-matcher-supervisor.js";
+import { FuzzyMatcherToolSuite } from "../tooling/extensions/fuzzy/fuzzy-matcher-tool-suite.js";
+import type { FuzzyMatcherOptions } from "../core/contracts/fuzzy-matcher.contracts.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -432,6 +439,7 @@ export interface MonolithFactoryOptions {
   fallbackModels?: readonly string[];
   auxiliaryOptions?: DynamicRouterOptions;
   reasoningOptions?: ReasoningScrubberOptions;
+  fuzzyOptions?: FuzzyMatcherOptions;
 }
 
 export class MonolithFactory {
@@ -810,6 +818,11 @@ export class MonolithFactory {
     reasoningSnapshotManager: ReasoningSnapshotManager;
     reasoningSupervisor: ReasoningSupervisor;
     reasoningToolSuite: ReasoningToolSuite;
+    deterministicFuzzyMatcher: DeterministicFuzzyMatcher;
+    broccoliFuzzySubstrate: BroccoliFuzzySubstrate;
+    fuzzySnapshotManager: FuzzySnapshotManager;
+    fuzzyMatcherSupervisor: FuzzyMatcherSupervisor;
+    fuzzyMatcherToolSuite: FuzzyMatcherToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1426,6 +1439,15 @@ export class MonolithFactory {
     );
     const reasoningToolSuite = new ReasoningToolSuite(reasoningSupervisor);
 
+    const deterministicFuzzyMatcher = new DeterministicFuzzyMatcher(options.fuzzyOptions);
+    const broccoliFuzzySubstrate = new BroccoliFuzzySubstrate();
+    const fuzzySnapshotManager = new FuzzySnapshotManager(broccoliFuzzySubstrate);
+    const fuzzyMatcherSupervisor = new FuzzyMatcherSupervisor(
+      deterministicFuzzyMatcher,
+      broccoliFuzzySubstrate
+    );
+    const fuzzyMatcherToolSuite = new FuzzyMatcherToolSuite(fuzzyMatcherSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1483,7 +1505,8 @@ export class MonolithFactory {
       sessionArchiveToolSuite,
       terminalSkinToolSuite,
       auxiliaryRouterToolSuite,
-      reasoningToolSuite
+      reasoningToolSuite,
+      fuzzyMatcherToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -1886,6 +1909,11 @@ export class MonolithFactory {
       reasoningSnapshotManager,
       reasoningSupervisor,
       reasoningToolSuite,
+      deterministicFuzzyMatcher,
+      broccoliFuzzySubstrate,
+      fuzzySnapshotManager,
+      fuzzyMatcherSupervisor,
+      fuzzyMatcherToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

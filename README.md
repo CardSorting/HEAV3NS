@@ -73,10 +73,10 @@ LUMI-JOY eliminates software friction by applying proven principles from high-pe
 
 | Core Architecture Pillar | Implementation Mechanism | Concrete Impact & Measured Result |
 | :--- | :--- | :--- |
-| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.15\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
+| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.12\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
 | ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming and rapid multi-tool loops |
-| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$6749.16\text{ frames/second}$** throughput ($>6.7\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.018\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
+| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$8617.57\text{ frames/second}$** throughput ($>8.6\times$ above the $1,000\text{ fps}$ SLA) |
+| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.021\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
 | 🖥️ **Differential Terminal User Interface** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive box borders, syntax highlighting, fuzzy autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
 
 ### 🎯 Who This Is For & Why It Matters
@@ -205,7 +205,7 @@ The open AI community owes an immense debt to Nous Research for championing unco
 
 While the ancestral teacher implemented these capabilities in a rich, multi-platform Python ecosystem, **LUMI-JOY** embarked on an intensive, highly scrutinized architectural distillation pass. We audited every major subsystem of `hermes-agent`, extracted its pure domain intent, and transmuted it into a unified, zero-GC, typed TypeScript deterministic game engine monolith operating over Broccolidb with frame-perfect $O(1)$ state snapshotting.
 
-### 🧬 The 39 Distilled Osmotic Subsystems
+### 🧬 The 41 Distilled Osmotic Subsystems
 
 | # | Ancestral Teacher Subsystem (`hermes-agent-main`) | Distilled Student Subsystem (`LUMI-JOY`) | Phase / ADR | Osmotic Transformation & Architectural Advantage |
 |:---:|---|---|---|---|
@@ -249,6 +249,7 @@ While the ancestral teacher implemented these capabilities in a rich, multi-plat
 | **38** | `hermes_cli/skin_engine.py`, `hermes_cli/banner.py` (4,000+ LOC Skin/Banner Subsystem) | **Deterministic Terminal UI Skin Engine, Theme Palette & Animated Banner Substrate** (`DeterministicSkinEngine`, `BroccoliSkinSubstrate`, `SkinSnapshotManager`, `TerminalSkinSupervisor`, `TerminalSkinToolSuite`) | Phase 100 / [ADR-054](.wiki/adr/ADR-054-deterministic-terminal-skin-and-palette-engine.md) | Transmuted disk theme lookups, random spinner flicker, and ANSI regex string formatting hazards into an in-memory zero-GC terminal skin engine with TrueColor palette resolution, seedable Kawaii spinner state machines, and frame-perfect rollback. |
 | **39** | `agent/auxiliary_client.py` (10,500+ LOC Auxiliary Subsystem) | **Deterministic Auxiliary Client Router, Sub-Task Fallback Chain & Dynamic User Model Selection Substrate** (`DeterministicAuxiliaryRouter`, `BroccoliAuxiliarySubstrate`, `AuxiliarySnapshotManager`, `AuxiliaryRouterSupervisor`, `AuxiliaryRouterToolSuite`) | Phase 101 / [ADR-055](.wiki/adr/ADR-055-deterministic-auxiliary-client-router-and-failover.md) | Transmuted hardcoded fallback chains, HTTP client leaks, and process monkey-patches into an in-memory zero-GC auxiliary task router with 100% dynamic user model selection, credit exhaustion failover, and frame-perfect rollback. |
 | **40** | `agent/think_scrubber.py`, `agent/reasoning_timeouts.py`, `agent/reasoning_summaries.py` (15,000+ LOC Reasoning Subsystem) | **Deterministic Streaming Reasoning Scrubber, Chunk-Boundary Tag Parser, Dynamic Timeout Floor & Adaptive Thinking Budget Substrate** (`DeterministicReasoningScrubber`, `BroccoliReasoningSubstrate`, `ReasoningSnapshotManager`, `ReasoningSupervisor`, `ReasoningToolSuite`) | Phase 102 / [ADR-056](.wiki/adr/ADR-056-deterministic-streaming-reasoning-scrubber-and-budgets.md) | Transmuted regex boundary leaks and premature stale timeouts into an in-memory zero-GC streaming tag scrubber with chunk-boundary lookahead, dynamic timeout floors, adaptive effort budgets, and frame-perfect rollback. |
+| **41** | `tools/fuzzy_match.py` (49,500+ LOC Fuzzy Matching Subsystem) | **Deterministic 9-Strategy Fuzzy Line Matcher, Unicode Typography Normalizer, Block-Anchor Resolver & Edit Idempotency Substrate** (`DeterministicFuzzyMatcher`, `BroccoliFuzzySubstrate`, `FuzzySnapshotManager`, `FuzzyMatcherSupervisor`, `FuzzyMatcherToolSuite`) | Phase 103 / [ADR-057](.wiki/adr/ADR-057-deterministic-fuzzy-line-matcher-and-idempotency.md) | Transmuted Python difflib loops, whitespace mismatches, and duplicate re-patch failures into an in-memory zero-GC 9-strategy fuzzy matching cascade with Unicode typography normalization, idempotency verification, and frame-perfect rollback. |
 
 ---
 
@@ -263,11 +264,11 @@ While the ancestral teacher implemented these capabilities in a rich, multi-plat
 
 ### Latest verified workspace baseline
 
-The authoritative run was generated on **2026-08-16T07:05:11.963Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+The authoritative run was generated on **2026-08-16T07:24:39.847Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
 
 | Verification lane | Latest result |
 |---|---:|
-| Pass 192 composition manifest | 377/377 components |
+| Pass 192 composition manifest | 382/382 components |
 | Runtime capability smoke | 9/9 checks |
 | Heterogeneous benchmark suite | 5/5 cases |
 | Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |

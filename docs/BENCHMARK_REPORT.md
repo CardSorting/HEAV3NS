@@ -1,7 +1,7 @@
 # LUMI Live Benchmark Baseline
 
 > **Live Baseline Status**: `PASSED`
-> **Generated At**: 2026-08-16T07:05:11.963Z
+> **Generated At**: 2026-08-16T07:24:39.847Z
 > **Evolution Baseline**: Pass 192 + runtime hardening
 > **Repository Version**: `0.1.0`
 > **Runtime**: v23.5.0 · darwin/arm64
@@ -15,10 +15,10 @@ This report is generated from the current worktree by `lumi --baseline`. Do not 
 |---|---:|---|
 | Benchmark cases | 5/5 | PASSED |
 | Pass rate | 100.0% | PASS |
-| Mean heterogeneous case latency | 71.16 ms | observed |
-| Total suite duration | 355.79 ms | observed |
-| Workload throughput | 14.05 cases/sec | observed |
-| Per-minute throughput | 843 cases/min | observed |
+| Mean heterogeneous case latency | 69.76 ms | observed |
+| Total suite duration | 348.81 ms | observed |
+| Workload throughput | 14.33 cases/sec | observed |
+| Per-minute throughput | 860 cases/min | observed |
 
 ## Test Cases
 
@@ -26,9 +26,9 @@ This report is generated from the current worktree by `lumi --baseline`. Do not 
 |---|---|---|---:|---:|---|
 | TC-01 | Turn Tick Latency & Fact Storage | completed | 0.06 ms | — | PASS |
 | TC-02 | VFS File Perception & Reading | completed | 0.12 ms | — | PASS |
-| TC-03 | Complete Flappy Bird React + TypeScript + Vite Synthesis | completed | 355.45 ms | 8/8 | PASS |
+| TC-03 | Complete Flappy Bird React + TypeScript + Vite Synthesis | completed | 348.48 ms | 8/8 | PASS |
 | TC-04 | Slash Command Router Latency | completed | 0.08 ms | — | PASS |
-| TC-05 | Snapshot State Rewind Latency | completed | 0.08 ms | — | PASS |
+| TC-05 | Snapshot State Rewind Latency | completed | 0.07 ms | — | PASS |
 
 ## Deep Case Evidence
 
