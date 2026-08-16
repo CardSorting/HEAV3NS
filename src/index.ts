@@ -506,6 +506,12 @@ import { BroccoliContextBreakdownSubstrate } from "./sessions/extensions/context
 import { ContextBreakdownSnapshotManager } from "./sessions/extensions/context_breakdown/context-breakdown-snapshot-manager.js";
 import { ContextBreakdownToolSuite } from "./tooling/extensions/context_breakdown/context-breakdown-tool-suite.js";
 
+import { DeterministicOsvParser } from "./agents/extensions/osv/deterministic-osv-parser.js";
+import { OsvScannerSupervisor } from "./agents/extensions/osv/osv-scanner-supervisor.js";
+import { BroccoliOsvSubstrate } from "./sessions/extensions/osv/broccoli-osv-substrate.js";
+import { OsvScannerSnapshotManager } from "./sessions/extensions/osv/osv-snapshot-manager.js";
+import { OsvScannerToolSuite } from "./tooling/extensions/osv/osv-scanner-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -2072,6 +2078,23 @@ export type {
 } from "./core/contracts/context-breakdown.contracts.js";
 export { DEFAULT_CONTEXT_BREAKDOWN_CONFIG } from "./core/contracts/context-breakdown.contracts.js";
 
+export { DeterministicOsvParser } from "./agents/extensions/osv/deterministic-osv-parser.js";
+export { OsvScannerSupervisor } from "./agents/extensions/osv/osv-scanner-supervisor.js";
+export { BroccoliOsvSubstrate } from "./sessions/extensions/osv/broccoli-osv-substrate.js";
+export { OsvScannerSnapshotManager } from "./sessions/extensions/osv/osv-snapshot-manager.js";
+export { OsvScannerToolSuite } from "./tooling/extensions/osv/osv-scanner-tool-suite.js";
+export type {
+  PackageEcosystem,
+  ParsedPackageTarget,
+  OsvAdvisory,
+  OsvScanResult,
+  OsvScannerConfig,
+  OsvScannerMetrics,
+  OsvCachedEntry,
+  OsvScannerWorkspaceSnapshot,
+} from "./core/contracts/osv-scanner.contracts.js";
+export { DEFAULT_OSV_SCANNER_CONFIG } from "./core/contracts/osv-scanner.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2504,6 +2527,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliContextBreakdownSubstrate: BroccoliContextBreakdownSubstrate;
   readonly contextBreakdownSnapshotManager: ContextBreakdownSnapshotManager;
   readonly contextBreakdownToolSuite: ContextBreakdownToolSuite;
+  readonly deterministicOsvParser: DeterministicOsvParser;
+  readonly osvScannerSupervisor: OsvScannerSupervisor;
+  readonly broccoliOsvSubstrate: BroccoliOsvSubstrate;
+  readonly osvScannerSnapshotManager: OsvScannerSnapshotManager;
+  readonly osvScannerToolSuite: OsvScannerToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -2927,6 +2955,11 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliContextBreakdownSubstrate = components.broccoliContextBreakdownSubstrate;
     this.contextBreakdownSnapshotManager = components.contextBreakdownSnapshotManager;
     this.contextBreakdownToolSuite = components.contextBreakdownToolSuite;
+    this.deterministicOsvParser = components.deterministicOsvParser;
+    this.osvScannerSupervisor = components.osvScannerSupervisor;
+    this.broccoliOsvSubstrate = components.broccoliOsvSubstrate;
+    this.osvScannerSnapshotManager = components.osvScannerSnapshotManager;
+    this.osvScannerToolSuite = components.osvScannerToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

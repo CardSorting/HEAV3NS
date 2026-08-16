@@ -545,6 +545,12 @@ import { BroccoliContextBreakdownSubstrate } from "../sessions/extensions/contex
 import { ContextBreakdownSnapshotManager } from "../sessions/extensions/context_breakdown/context-breakdown-snapshot-manager.js";
 import { ContextBreakdownToolSuite } from "../tooling/extensions/context_breakdown/context-breakdown-tool-suite.js";
 
+import { DeterministicOsvParser } from "../agents/extensions/osv/deterministic-osv-parser.js";
+import { OsvScannerSupervisor } from "../agents/extensions/osv/osv-scanner-supervisor.js";
+import { BroccoliOsvSubstrate } from "../sessions/extensions/osv/broccoli-osv-substrate.js";
+import { OsvScannerSnapshotManager } from "../sessions/extensions/osv/osv-snapshot-manager.js";
+import { OsvScannerToolSuite } from "../tooling/extensions/osv/osv-scanner-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1036,6 +1042,11 @@ export class MonolithFactory {
     broccoliContextBreakdownSubstrate: BroccoliContextBreakdownSubstrate;
     contextBreakdownSnapshotManager: ContextBreakdownSnapshotManager;
     contextBreakdownToolSuite: ContextBreakdownToolSuite;
+    deterministicOsvParser: DeterministicOsvParser;
+    osvScannerSupervisor: OsvScannerSupervisor;
+    broccoliOsvSubstrate: BroccoliOsvSubstrate;
+    osvScannerSnapshotManager: OsvScannerSnapshotManager;
+    osvScannerToolSuite: OsvScannerToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1836,6 +1847,15 @@ export class MonolithFactory {
     );
     const contextBreakdownToolSuite = new ContextBreakdownToolSuite(contextBreakdownSupervisor);
 
+    const deterministicOsvParser = new DeterministicOsvParser();
+    const broccoliOsvSubstrate = new BroccoliOsvSubstrate();
+    const osvScannerSnapshotManager = new OsvScannerSnapshotManager(broccoliOsvSubstrate);
+    const osvScannerSupervisor = new OsvScannerSupervisor(
+      broccoliOsvSubstrate,
+      deterministicOsvParser
+    );
+    const osvScannerToolSuite = new OsvScannerToolSuite(osvScannerSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -1913,7 +1933,8 @@ export class MonolithFactory {
       transcriptionToolSuite,
       deadlineToolSuite,
       fileSafetyToolSuite,
-      contextBreakdownToolSuite
+      contextBreakdownToolSuite,
+      osvScannerToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2418,6 +2439,11 @@ export class MonolithFactory {
       broccoliContextBreakdownSubstrate,
       contextBreakdownSnapshotManager,
       contextBreakdownToolSuite,
+      deterministicOsvParser,
+      osvScannerSupervisor,
+      broccoliOsvSubstrate,
+      osvScannerSnapshotManager,
+      osvScannerToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

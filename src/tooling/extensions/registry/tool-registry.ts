@@ -74,6 +74,7 @@ import type { TranscriptionToolSuite } from "../transcription/transcription-tool
 import type { DeadlineToolSuite } from "../deadline/deadline-tool-suite.js";
 import type { FileSafetyToolSuite } from "../file_safety/file-safety-tool-suite.js";
 import type { ContextBreakdownToolSuite } from "../context_breakdown/context-breakdown-tool-suite.js";
+import type { OsvScannerToolSuite } from "../osv/osv-scanner-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -139,6 +140,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly deadlineToolSuite?: DeadlineToolSuite;
   readonly fileSafetyToolSuite?: FileSafetyToolSuite;
   readonly contextBreakdownToolSuite?: ContextBreakdownToolSuite;
+  readonly osvScannerToolSuite?: OsvScannerToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -212,7 +214,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     transcriptionToolSuite?: TranscriptionToolSuite,
     deadlineToolSuite?: DeadlineToolSuite,
     fileSafetyToolSuite?: FileSafetyToolSuite,
-    contextBreakdownToolSuite?: ContextBreakdownToolSuite
+    contextBreakdownToolSuite?: ContextBreakdownToolSuite,
+    osvScannerToolSuite?: OsvScannerToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -278,6 +281,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.deadlineToolSuite = deadlineToolSuite;
     this.fileSafetyToolSuite = fileSafetyToolSuite;
     this.contextBreakdownToolSuite = contextBreakdownToolSuite;
+    this.osvScannerToolSuite = osvScannerToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -780,6 +784,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.contextBreakdownToolSuite) {
       for (const tool of this.contextBreakdownToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.osvScannerToolSuite) {
+      for (const tool of this.osvScannerToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

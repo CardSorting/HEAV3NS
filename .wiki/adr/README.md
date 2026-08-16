@@ -111,6 +111,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 | [ADR-101](ADR-101-unified-deadline-engine-and-emergency-stop.md) | Unified Deadline Engine, Bounded Execution & Emergency Stop Governance Subsystem | Accepted | 2026-08-16 | System Reliability & Safety (Target #58 / Phase 125) |
 | [ADR-102](ADR-102-file-safety-mutation-guards-and-path-firewall.md) | File Safety Mutation Guards, Sensitive Path Firewall & Safe Root Governance Subsystem | Accepted | 2026-08-16 | Security & Path Governance (Target #59 / Phase 126) |
 | [ADR-103](ADR-103-context-window-token-composition-and-metering.md) | Context Window Token Composition Breakdown & Category Metering Subsystem | Accepted | 2026-08-16 | Context & Token Telemetry (Target #60 / Phase 127) |
+| [ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md) | Open Source Vulnerability (OSV) Malware Scanner, Package Ecosystem Parser & Pre-Flight Execution Firewall Subsystem | Accepted | 2026-08-16 | Security & Supply Chain Defense (Target #61 / Phase 128) |
 
 ## Domain Grouping
 
@@ -144,6 +145,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-101](ADR-101-unified-deadline-engine-and-emergency-stop.md)**: Unified deadline engine, bounded execution, and emergency stop governance subsystem.
 - **[ADR-102](ADR-102-file-safety-mutation-guards-and-path-firewall.md)**: File safety mutation guards, sensitive path firewall, and safe root governance subsystem.
 - **[ADR-103](ADR-103-context-window-token-composition-and-metering.md)**: Context window token composition breakdown and category metering subsystem.
+- **[ADR-104](ADR-104-osv-malware-scanner-and-package-firewall.md)**: OSV malware scanner, package ecosystem parser, and pre-flight execution firewall subsystem.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.
