@@ -139,7 +139,17 @@ async function runValidationSuite() {
       throw new Error(`Comment-tolerant matching failed: ${JSON.stringify(resComment)}`);
     }
 
-    // Unicode typography and zero-width character stripping
+    // Token-normalized code matching (punctuation spacing differences)
+    const tokenCode = "const result = calculate( a , b );";
+    const searchTokenDiff = "const result = calculate(a, b);";
+    const replaceToken = "const result = calculate(a, b, true);";
+
+    const resToken = matcher.findAndReplace(tokenCode, searchTokenDiff, replaceToken);
+    if (!resToken.success || resToken.strategyUsed !== "token_normalized") {
+      throw new Error(`Token-normalized matching failed: ${JSON.stringify(resToken)}`);
+    }
+
+    // Unicode typography and zero-width character stripping with coordinate mapping
     const unicodeContent = 'const greeting = “Hello, World!”;\u200B // em—dash and minus −5';
     const asciiOld = 'const greeting = "Hello, World!"; // em--dash and minus -5';
     const asciiNew = 'const greeting = "Hello, LUMI-JOY!";';
@@ -148,7 +158,13 @@ async function runValidationSuite() {
     if (!resUnicode.success || resUnicode.strategyUsed !== "unicode_normalized") {
       throw new Error(`Unicode typography normalization failed: ${JSON.stringify(resUnicode)}`);
     }
-    console.log("  ✓ Matched across comment-stripped code and normalized typographic Unicode");
+
+    // Verify coordinate mapping integrity
+    const origMap = matcher.buildOrigToNormMap("a—b"); // em-dash expands to --
+    if (origMap.length !== 4 || origMap[0] !== 0 || origMap[1] !== 1 || origMap[2] !== 3 || origMap[3] !== 4) {
+      throw new Error(`buildOrigToNormMap returned invalid map: ${JSON.stringify(origMap)}`);
+    }
+    console.log("  ✓ Matched across comment-stripped code, token delimiters, and coordinate-mapped Unicode");
     passedSuites++;
 
     // ---------------------------------------------------------------------------

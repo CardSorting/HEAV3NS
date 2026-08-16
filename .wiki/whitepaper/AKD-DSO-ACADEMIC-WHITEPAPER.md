@@ -18,10 +18,10 @@ The original paper and its Section 3 experiment record the August 9 foundation-e
 | Exact composition manifest | 382/382 components |
 | Runtime capability smoke | 9/9 checks |
 | Heterogeneous benchmark | 5/5 cases |
-| Complete Flappy Bird React + TypeScript + Vite synthesis | 12/12 files; 8/8 assertions; $336.71\text{ ms}$ observed |
-| Monolith Fast-Path Mean Turn Tick Latency | $0.12\text{ ms}$ |
-| Deterministic Monolith Throughput | $8566.85\text{ frames/second}$ |
-| State Snapshot Restoration ($O(1)$ Rewind p95) | $0.019\text{ ms}$ |
+| Complete Flappy Bird React + TypeScript + Vite synthesis | 12/12 files; 8/8 assertions; $363.24\text{ ms}$ observed |
+| Monolith Fast-Path Mean Turn Tick Latency | $0.13\text{ ms}$ |
+| Deterministic Monolith Throughput | $7666.48\text{ frames/second}$ |
+| State Snapshot Restoration ($O(1)$ Rewind p95) | $0.02\text{ ms}$ |
 | Garbage Collection Overhead in Live Execution Loop | $0.00\text{ ms}$ (Zero-GC Slab) |
 
 The exact machine-readable evidence, runtime identity, and generation timestamp are in [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json). [`docs/BENCHMARK_REPORT.md`](../../docs/BENCHMARK_REPORT.md) contains all eight Flappy assertion results. Performance observations are host-sensitive and are not permanent guarantees.
@@ -132,7 +132,7 @@ The following acceptance-time experiment was conducted on macOS ARM64 (Apple M-S
 
 | Metric | Legacy Monorepo (`pi-main`) | AKD-DSO Engine (`LUMI-NEW`) | Underlying Mechanism / Speedup |
 |---|---|---|---|
-| **Mean Turn Tick Latency** | $14.20\text{ ms}$ | **$0.22\text{ ms}$** | Direct function dispatch replacing IPC/RPC network queues (**$64.5\times$ Speedup**). Under controlled local test conditions, the resulting Monolith achieves **$8566.85\text{ frames/second}$** ($0.12\text{ ms}$ fast-path mean turn tick latency) across **382/382 required components**, outperforming ancestral Python-based execution by over $100\times$ in throughput while guaranteeing $O(1)$ state rollback in $0.019\text{ ms p95**. |
+| **Mean Turn Tick Latency** | $14.20\text{ ms}$ | **$0.22\text{ ms}$** | Direct function dispatch replacing IPC/RPC network queues (**$64.5\times$ Speedup**). Under controlled local test conditions, the resulting Monolith achieves **$7666.48\text{ frames/second}$** ($0.13\text{ ms}$ fast-path mean turn tick latency) across **382/382 required components**, outperforming ancestral Python-based execution by over $100\times$ in throughput while guaranteeing $O(1)$ state rollback in $0.02\text{ ms p95**. |
 | **Execution Throughput** | $70.4\text{ turns/sec}$ | **$4,132.2\text{ turns/sec}$** | Synchronous in-memory game loop execution (**$58.7\times$ Throughput Boost**). |
 | **State Rewind Latency** | $285.00\text{ ms}$ (Re-parse) | **$0.04\text{ ms}$** | $O(1)$ Atomic pointer assignment across session snapshots (**$7,125\times$ Speedup**). |
 | **VFS Perception Speed** | $12.40\text{ ms}$ (Disk I/O) | **$0.03\text{ ms}$** | In-memory contiguous VFS overlay inspection (**$413.3\times$ Speedup**). |

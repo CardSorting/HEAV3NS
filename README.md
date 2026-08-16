@@ -73,10 +73,10 @@ LUMI-JOY eliminates software friction by applying proven principles from high-pe
 
 | Core Architecture Pillar | Implementation Mechanism | Concrete Impact & Measured Result |
 | :--- | :--- | :--- |
-| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.12\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
+| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.13\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
 | ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming and rapid multi-tool loops |
-| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$8566.85\text{ frames/second}$** throughput ($>8.5\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.019\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
+| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$7666.48\text{ frames/second}$** throughput ($>7.6\times$ above the $1,000\text{ fps}$ SLA) |
+| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.02\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
 | 🖥️ **Differential Terminal User Interface** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive box borders, syntax highlighting, fuzzy autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
 
 ### 🎯 Who This Is For & Why It Matters
@@ -264,7 +264,7 @@ While the ancestral teacher implemented these capabilities in a rich, multi-plat
 
 ### Latest verified workspace baseline
 
-The authoritative run was generated on **2026-08-16T07:34:55.555Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+The authoritative run was generated on **2026-08-16T07:38:44.264Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
 
 | Verification lane | Latest result |
 |---|---:|

@@ -1,9 +1,10 @@
 /**
  * fuzzy-matcher.contracts.ts
  *
- * Core contracts for deterministic 10-strategy fuzzy line matching, atomic multi-hunk patching,
- * Unicode typography normalization, block-anchor resolution, indentation preservation, escape-drift detection,
- * Myers unified diff generation, and closest-line mismatch diagnostics (Phase 103 / ADR-057).
+ * Core contracts for deterministic 11-strategy fuzzy line matching, atomic multi-hunk patching,
+ * Unicode typography coordinate mapping & preservation, block-anchor resolution,
+ * token-normalized code matching, escape-drift detection, Myers unified diff generation,
+ * and closest-line mismatch diagnostics with word-level highlight (Phase 103 / ADR-057).
  */
 
 export type FuzzyStrategyName =
@@ -14,6 +15,7 @@ export type FuzzyStrategyName =
   | "escape_normalized"
   | "trimmed_boundary"
   | "comment_tolerant"
+  | "token_normalized"
   | "unicode_normalized"
   | "block_anchor"
   | "context_aware";
@@ -28,6 +30,12 @@ export interface ContextWindow {
   readonly afterContext: readonly string[];
 }
 
+export interface WordDiffHighlight {
+  readonly fileToken: string;
+  readonly searchToken: string;
+  readonly index: number;
+}
+
 export interface ClosestLineCandidate {
   readonly lineNumber: number;
   readonly lineContent: string;
@@ -37,10 +45,7 @@ export interface ClosestLineCandidate {
     readonly fileHasVisual: string;
     readonly youSentVisual: string;
   };
-  readonly wordHighlights?: {
-    readonly fileWords: readonly string[];
-    readonly searchWords: readonly string[];
-  };
+  readonly wordHighlights?: readonly WordDiffHighlight[];
 }
 
 export interface MismatchDiagnosis {

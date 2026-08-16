@@ -9,11 +9,11 @@ The August 9 acceptance experiment demonstrated a sub-millisecond local turn pat
 ## Decision
 We implemented an automated, multi-layer repository protection gate centered around `ArchitectureGuardrailGate` ([architecture-guardrail-gate.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/policy/architecture-guardrail-gate.ts)), `scripts/validate-repo.ts` (`npm test`), and GitHub Actions CI workflow ([repo-protection-ci.yml](file:///Users/bozoegg/Desktop/LUMI-NEW/.github/workflows/repo-protection-ci.yml)).
 
-## Baseline Values (as of 2026-08-16T07:34:55.555Z)
+## Baseline Values (as of 2026-08-16T07:38:44.264Z)
 - Composition Manifest: **382/382** required components in OPTIMAL cohesion.
-- Fast-Path Mean Turn Tick Latency: **$0.12\text{ ms}$** (SLA: $< 1.0\text{ ms}$).
-- Local Frame Throughput: **$8566.85\text{ frames/second}$** (SLA: $\ge 1,000\text{ frames/second}$).
-- State Snapshot Rewind Latency: **$0.019\text{ ms p95}$** (SLA: $< 0.1\text{ ms p95}$).
+- Fast-Path Mean Turn Tick Latency: **$0.13\text{ ms}$** (SLA: $< 1.0\text{ ms}$).
+- Local Frame Throughput: **$7666.48\text{ frames/second}$** (SLA: $\ge 1,000\text{ frames/second}$).
+- State Snapshot Rewind Latency: **$0.02\text{ ms p95}$** (SLA: $< 0.1\text{ ms p95}$).
 - Zero-GC Contiguous Slab Memory: **16,777,216 bytes** (Verified intact).
 - Architectural Rules: **0 barrel files**, **3/3 immutable base classes**.
 

@@ -1,9 +1,10 @@
 /**
  * deterministic-fuzzy-matcher.ts
  *
- * Zero-GC, deterministic 10-strategy fuzzy line matcher, atomic multi-hunk patch engine,
- * Unicode typography normalizer, block-anchor resolver, indentation preservation engine,
- * escape-drift detector, whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
+ * Zero-GC, deterministic 11-strategy fuzzy line matcher, atomic multi-hunk patch engine,
+ * Unicode typography coordinate mapper & preservation engine, block-anchor resolver,
+ * token-normalized code matcher, indentation preservation engine, escape-drift detector,
+ * whitespace-visualizing mismatch diagnostician, and edit idempotency substrate (Phase 103 / ADR-057).
  */
 
 import type {
@@ -17,6 +18,7 @@ import type {
   FuzzyReplacementHunk,
   FuzzyStrategyName,
   MismatchDiagnosis,
+  WordDiffHighlight,
 } from "../../../core/contracts/fuzzy-matcher.contracts.js";
 
 export const DEFAULT_UNICODE_MAP: Record<string, string> = {
@@ -63,6 +65,7 @@ export const ALL_STRATEGIES: readonly FuzzyStrategyName[] = [
   "escape_normalized",
   "trimmed_boundary",
   "comment_tolerant",
+  "token_normalized",
   "unicode_normalized",
   "block_anchor",
   "context_aware",
@@ -149,7 +152,7 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // Unicode Typography Normalization
+  // Unicode Typography Normalization & Coordinate Mapping
   // ---------------------------------------------------------------------------
 
   normalizeUnicode(text: string): string {
@@ -160,6 +163,53 @@ export class DeterministicFuzzyMatcher {
       }
     }
     return out;
+  }
+
+  /**
+   * Builds an array mapping each original character index to its offset in the normalized string.
+   */
+  buildOrigToNormMap(original: string): number[] {
+    const result: number[] = [];
+    let normPos = 0;
+    for (let i = 0; i < original.length; i++) {
+      result.push(normPos);
+      const char = original[i];
+      const repl = this.unicodeMap[char];
+      normPos += repl !== undefined ? repl.length : 1;
+    }
+    result.push(normPos);
+    return result;
+  }
+
+  /**
+   * Maps match spans found in normalized space back to exact character index spans in original space.
+   */
+  mapPositionsNormToOrig(origToNorm: readonly number[], normMatches: readonly FuzzyMatchSpan[]): FuzzyMatchSpan[] {
+    const normToOrigStart = new Map<number, number>();
+    for (let origPos = 0; origPos < origToNorm.length - 1; origPos++) {
+      const normPos = origToNorm[origPos];
+      if (!normToOrigStart.has(normPos)) {
+        normToOrigStart.set(normPos, origPos);
+      }
+    }
+
+    const results: FuzzyMatchSpan[] = [];
+    const origLen = origToNorm.length - 1;
+
+    for (let m = 0; m < normMatches.length; m++) {
+      const [normStart, normEnd] = normMatches[m];
+      const origStart = normToOrigStart.get(normStart);
+      if (origStart === undefined) continue;
+
+      let origEnd = origStart;
+      while (origEnd < origLen && origToNorm[origEnd] < normEnd) {
+        origEnd++;
+      }
+
+      results.push([origStart, origEnd]);
+    }
+
+    return results;
   }
 
   // ---------------------------------------------------------------------------
@@ -312,17 +362,123 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // Unicode Preservation in Replacement
+  // Unicode Preservation in Replacement (Opcode / LCS Diffing)
   // ---------------------------------------------------------------------------
 
   preserveUnicodeInReplacement(fileRegion: string, oldString: string, newString: string): string {
-    if (!this.preserveUnicodeForUnchanged) return newString;
+    if (!this.preserveUnicodeForUnchanged || !fileRegion || !newString) return newString;
 
     const normOld = this.normalizeUnicode(oldString);
     const normFile = this.normalizeUnicode(fileRegion);
     if (normOld !== normFile) return newString;
 
-    return newString;
+    const fileOrigToNorm = this.buildOrigToNormMap(fileRegion);
+    const fileNormToOrig = new Map<number, number>();
+    for (let origPos = 0; origPos < fileOrigToNorm.length - 1; origPos++) {
+      const np = fileOrigToNorm[origPos];
+      if (!fileNormToOrig.has(np)) {
+        fileNormToOrig.set(np, origPos);
+      }
+    }
+
+    // Dynamic Programming LCS for character-level diff between normOld and newString
+    const m = normOld.length;
+    const n = newString.length;
+    if (m === 0) return newString;
+
+    // LCS table
+    const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (normOld[i - 1] === newString[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    // Backtrack to create segment operations
+    let i = m;
+    let j = n;
+    interface DiffSegment {
+      readonly type: "equal" | "replace" | "delete" | "insert";
+      readonly oldStart: number;
+      readonly oldEnd: number;
+      readonly newStart: number;
+      readonly newEnd: number;
+    }
+    const segments: DiffSegment[] = [];
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && normOld[i - 1] === newString[j - 1]) {
+        segments.unshift({
+          type: "equal",
+          oldStart: i - 1,
+          oldEnd: i,
+          newStart: j - 1,
+          newEnd: j,
+        });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        segments.unshift({
+          type: "insert",
+          oldStart: i,
+          oldEnd: i,
+          newStart: j - 1,
+          newEnd: j,
+        });
+        j--;
+      } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+        segments.unshift({
+          type: "delete",
+          oldStart: i - 1,
+          oldEnd: i,
+          newStart: j,
+          newEnd: j,
+        });
+        i--;
+      }
+    }
+
+    // Merge adjacent equal segments
+    const merged: DiffSegment[] = [];
+    for (let k = 0; k < segments.length; k++) {
+      const seg = segments[k];
+      const prev = merged[merged.length - 1];
+      if (prev && prev.type === seg.type) {
+        merged[merged.length - 1] = {
+          type: prev.type,
+          oldStart: prev.oldStart,
+          oldEnd: seg.oldEnd,
+          newStart: prev.newStart,
+          newEnd: seg.newEnd,
+        };
+      } else {
+        merged.push(seg);
+      }
+    }
+
+    // Assemble output preserving original Unicode on 'equal' spans
+    const resultParts: string[] = [];
+    for (let k = 0; k < merged.length; k++) {
+      const seg = merged[k];
+      if (seg.type === "equal") {
+        const origStart = fileNormToOrig.get(seg.oldStart) ?? 0;
+        let origEnd = origStart;
+        while (origEnd < fileRegion.length && fileOrigToNorm[origEnd] < seg.oldEnd) {
+          origEnd++;
+        }
+        resultParts.push(fileRegion.slice(origStart, origEnd));
+      } else if (seg.type === "insert") {
+        resultParts.push(newString.slice(seg.newStart, seg.newEnd));
+      } else if (seg.type === "replace") {
+        resultParts.push(newString.slice(seg.newStart, seg.newEnd));
+      }
+    }
+
+    return resultParts.join("");
   }
 
   // ---------------------------------------------------------------------------
@@ -399,6 +555,24 @@ export class DeterministicFuzzyMatcher {
     return prefix.join("") + line.slice(i);
   }
 
+  private computeWordHighlights(fileLine: string, searchLine: string): WordDiffHighlight[] {
+    const fileWords = fileLine.trim().split(/\s+/);
+    const searchWords = searchLine.trim().split(/\s+/);
+    const highlights: WordDiffHighlight[] = [];
+
+    const maxWords = Math.min(fileWords.length, searchWords.length);
+    for (let idx = 0; idx < maxWords; idx++) {
+      if (fileWords[idx] !== searchWords[idx]) {
+        highlights.push({
+          fileToken: fileWords[idx],
+          searchToken: searchWords[idx],
+          index: idx,
+        });
+      }
+    }
+    return highlights;
+  }
+
   diagnoseMismatch(oldString: string, content: string, contextLines: number = 2, maxResults: number = 3): MismatchDiagnosis {
     if (!oldString || !content) {
       return { hasCandidate: false, formattedHint: "", candidates: [], whitespaceIssueDetected: false };
@@ -472,12 +646,15 @@ export class DeterministicFuzzyMatcher {
         }
       }
 
+      const wordHighlights = score > 0.5 ? this.computeWordHighlights(candidateLine, anchor) : undefined;
+
       candidates.push({
         lineNumber: lineIndex + 1,
         lineContent: candidateLine,
         similarity: score,
         snippet,
         whitespaceDifference: wsDiff,
+        wordHighlights,
       });
     }
 
@@ -599,7 +776,7 @@ export class DeterministicFuzzyMatcher {
   }
 
   // ---------------------------------------------------------------------------
-  // 10 Matching Strategies
+  // 11 Matching Strategies
   // ---------------------------------------------------------------------------
 
   private strategyExact(content: string, target: string): FuzzyMatchSpan[] {
@@ -781,6 +958,47 @@ export class DeterministicFuzzyMatcher {
     return matches;
   }
 
+  private strategyTokenNormalized(content: string, target: string): FuzzyMatchSpan[] {
+    const tokenize = (s: string) =>
+      s
+        .replace(/\s*([(){}[\];,:=+\-*/><?!&|])\s*/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const targetTokenized = tokenize(target);
+    if (!targetTokenized || targetTokenized === target) return [];
+
+    const targetLines = target.split("\n").map(tokenize).filter((l) => l.length > 0);
+    if (targetLines.length === 0) return [];
+
+    const contentLines = content.split("\n");
+    const lineOffsets: number[] = [0];
+    for (let i = 0; i < content.length; i++) {
+      if (content[i] === "\n") lineOffsets.push(i + 1);
+    }
+
+    const matches: FuzzyMatchSpan[] = [];
+    for (let i = 0; i <= contentLines.length - targetLines.length; i++) {
+      let matched = true;
+      for (let j = 0; j < targetLines.length; j++) {
+        if (tokenize(contentLines[i + j]) !== targetLines[j]) {
+          matched = false;
+          break;
+        }
+      }
+      if (matched) {
+        const start = lineOffsets[i];
+        const endLineIdx = i + targetLines.length - 1;
+        const end =
+          endLineIdx < contentLines.length - 1
+            ? lineOffsets[endLineIdx + 1] - 1
+            : content.length;
+        matches.push([start, end]);
+      }
+    }
+    return matches;
+  }
+
   private strategyUnicodeNormalized(content: string, target: string): FuzzyMatchSpan[] {
     const normTarget = this.normalizeUnicode(target);
     const normContent = this.normalizeUnicode(content);
@@ -789,11 +1007,18 @@ export class DeterministicFuzzyMatcher {
       return [];
     }
 
-    const normMatches = this.strategyExact(normContent, normTarget);
+    const origToNorm = this.buildOrigToNormMap(content);
+
+    let normMatches = this.strategyExact(normContent, normTarget);
     if (normMatches.length === 0) {
-      return this.strategyLineTrimmed(normContent, normTarget);
+      normMatches = this.strategyLineTrimmed(normContent, normTarget);
     }
-    return normMatches;
+
+    if (normMatches.length === 0) {
+      return [];
+    }
+
+    return this.mapPositionsNormToOrig(origToNorm, normMatches);
   }
 
   private strategyBlockAnchor(content: string, target: string): FuzzyMatchSpan[] {
@@ -929,6 +1154,7 @@ export class DeterministicFuzzyMatcher {
       { name: "escape_normalized", fn: this.strategyEscapeNormalized.bind(this) },
       { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
       { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
+      { name: "token_normalized", fn: this.strategyTokenNormalized.bind(this) },
       { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
       { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
       { name: "context_aware", fn: this.strategyContextAware.bind(this) },
@@ -1146,6 +1372,7 @@ export class DeterministicFuzzyMatcher {
         { name: "escape_normalized", fn: this.strategyEscapeNormalized.bind(this) },
         { name: "trimmed_boundary", fn: this.strategyTrimmedBoundary.bind(this) },
         { name: "comment_tolerant", fn: this.strategyCommentTolerant.bind(this) },
+        { name: "token_normalized", fn: this.strategyTokenNormalized.bind(this) },
         { name: "unicode_normalized", fn: this.strategyUnicodeNormalized.bind(this) },
         { name: "block_anchor", fn: this.strategyBlockAnchor.bind(this) },
         { name: "context_aware", fn: this.strategyContextAware.bind(this) },
@@ -1221,6 +1448,9 @@ export class DeterministicFuzzyMatcher {
       let finalReplacement = this.maybeUnescapeNewString(item.replacement, matchedRegion);
       if (item.strategy !== "exact") {
         finalReplacement = this.reindentReplacement(matchedRegion, hunks[item.index].oldString, finalReplacement);
+      }
+      if (item.strategy === "unicode_normalized") {
+        finalReplacement = this.preserveUnicodeInReplacement(matchedRegion, hunks[item.index].oldString, finalReplacement);
       }
 
       modified = modified.slice(0, start) + finalReplacement + modified.slice(end);
