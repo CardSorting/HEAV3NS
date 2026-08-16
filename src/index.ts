@@ -2444,13 +2444,18 @@ export { BroccoliProfileSubstrate } from "./sessions/extensions/profiles/broccol
 export { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-snapshot-manager.js";
 export { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
 export type {
+  ProfileBlueprint,
+  ProfileCategory,
   ProfileCloneKind,
   ProfileCloneOptions,
   ProfileDescriptor,
+  ProfileDiffResult,
   ProfileExportBundle,
   ProfileMutation,
+  ProfileQueryFilter,
   ProfileReasoningEffort,
   ProfileStatus,
+  ProfileTelemetry,
   ProfileWorkspaceSnapshot,
 } from "./core/contracts/profile.contracts.js";
 export { PROFILE_ID_REGEX } from "./core/contracts/profile.contracts.js";

@@ -2,12 +2,13 @@
  * profile-tool-suite.ts
  *
  * Model tool surface for the Profile Subsystem (Target #76 / ADR-119).
- * Exposes 7 ergonomic tools for managing isolated profile environments,
- * persona cloning, session routing, and signed bundle export/import.
+ * Exposes 9 ergonomic tools for managing isolated profile environments,
+ * hierarchical inheritance, structural diffing, blueprint catalog, and signed bundle export/import.
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 import type {
+  ProfileCategory,
   ProfileCloneKind,
   ProfileExportBundle,
   ProfileReasoningEffort,
@@ -26,10 +27,13 @@ export class ProfileToolSuite {
     return [
       {
         name: "profile_list",
-        description: "Lists all available agent operational profiles in the workspace with active status and descriptions.",
-        parameters: {},
-        execute: async (_args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const profiles = this.supervisor.listProfiles();
+        description: "Lists or queries available operational profiles with active status, domain category, model preferences, and telemetry stats.",
+        parameters: {
+          query: { type: "string", description: "Optional Natural Query DSL filter (e.g. 'is:favorite category:engineering sort:recent')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const query = typeof args.query === "string" ? args.query : undefined;
+          const profiles = this.supervisor.listProfiles(query);
           return {
             success: true,
             totalProfiles: profiles.length,
@@ -37,21 +41,29 @@ export class ProfileToolSuite {
               id: p.id,
               name: p.name,
               status: p.status,
+              category: p.category,
+              icon: p.icon,
+              isFavorite: p.isFavorite,
+              extends: p.extends,
               description: p.description,
               modelPreference: p.modelPreference,
               reasoningEffort: p.reasoningEffort,
               tags: p.tags,
+              telemetry: p.telemetry,
             })),
           };
         },
       },
       {
         name: "profile_create",
-        description: "Creates a new isolated agent operational profile with custom persona soul, model preferences, and toolsets.",
+        description: "Creates a new isolated agent operational profile with custom persona soul, model preferences, hierarchical inheritance, and toolsets.",
         parameters: {
           id: { type: "string", required: true, description: "Unique profile slug (e.g. 'coder', 'researcher', 'sre')" },
           name: { type: "string", required: true, description: "Human-readable display name" },
           description: { type: "string", required: true, description: "Purpose and domain scope of this profile" },
+          extends: { type: "string", description: "Optional parent profile ID to inherit configurations and axioms from" },
+          category: { type: "string", description: "'general' | 'engineering' | 'research' | 'operations' | 'writing' | 'education' | 'creative'" },
+          icon: { type: "string", description: "Emoji icon representation (e.g. '💻', '🔬', '🛡️')" },
           soulPrompt: { type: "string", description: "Custom persona axioms and behavioral rules" },
           modelPreference: { type: "string", description: "Preferred LLM model ID for this profile" },
           reasoningEffort: { type: "string", description: "'none' | 'low' | 'medium' | 'high'" },
@@ -78,6 +90,9 @@ export class ProfileToolSuite {
               : undefined;
 
           const res = this.supervisor.createProfile(id, name, description, {
+            extends: typeof args.extends === "string" ? args.extends : undefined,
+            category: typeof args.category === "string" ? (args.category as ProfileCategory) : undefined,
+            icon: typeof args.icon === "string" ? args.icon : undefined,
             soulPrompt: typeof args.soulPrompt === "string" ? args.soulPrompt : undefined,
             modelPreference: typeof args.modelPreference === "string" ? args.modelPreference : undefined,
             reasoningEffort: typeof args.reasoningEffort === "string" ? (args.reasoningEffort as ProfileReasoningEffort) : undefined,
@@ -97,9 +112,9 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_switch",
-        description: "Switches the active operational profile for the current session.",
+        description: "Switches the active operational profile for the current session (supports exact ID or fuzzy name match).",
         parameters: {
-          profileId: { type: "string", required: true, description: "Target profile ID to activate" },
+          profileId: { type: "string", required: true, description: "Target profile ID or fuzzy alias to activate" },
           sessionId: { type: "string", description: "Session ID (default: 'current')" },
         },
         execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
@@ -113,13 +128,14 @@ export class ProfileToolSuite {
           return {
             success: true,
             profile: res.profile,
-            message: `Session '${sessionId}' successfully switched to profile '${res.profile?.name}' (${profileId})`,
+            isFuzzyMatch: res.isFuzzyMatch,
+            message: `Session '${sessionId}' successfully switched to profile '${res.profile?.name}' (${res.profile?.id})`,
           };
         },
       },
       {
         name: "profile_clone",
-        description: "Clones an existing profile into a new isolated profile environment with optional persona or full mode.",
+        description: "Clones an existing profile into a new isolated profile environment with optional persona, shallow, or full mode.",
         parameters: {
           sourceProfileId: { type: "string", required: true, description: "Source profile ID to clone" },
           targetProfileId: { type: "string", required: true, description: "New target profile ID" },
@@ -147,6 +163,67 @@ export class ProfileToolSuite {
             profile: res.profile,
             message: `Cloned profile '${sourceProfileId}' -> '${targetProfileId}'`,
           };
+        },
+      },
+      {
+        name: "profile_diff",
+        description: "Performs a structural diff comparison between two operational profiles.",
+        parameters: {
+          profileIdA: { type: "string", required: true, description: "First profile ID" },
+          profileIdB: { type: "string", required: true, description: "Second profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const idA = String(args.profileIdA || "").trim();
+          const idB = String(args.profileIdB || "").trim();
+          if (!idA || !idB) return { success: false, error: "profileIdA and profileIdB are required" };
+
+          const diff = this.supervisor.diffProfiles(idA, idB);
+          if (!diff) return { success: false, error: `One or both profiles ('${idA}', '${idB}') not found` };
+
+          return {
+            success: true,
+            diff,
+          };
+        },
+      },
+      {
+        name: "profile_blueprints",
+        description: "Lists built-in archetypal profile blueprints or instantiates a new profile from a blueprint.",
+        parameters: {
+          action: { type: "string", required: true, description: "'list' | 'instantiate'" },
+          blueprintId: { type: "string", description: "Blueprint ID (required for 'instantiate')" },
+          customId: { type: "string", description: "Custom slug ID for instantiated profile (required for 'instantiate')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const action = String(args.action || "").toLowerCase();
+
+          if (action === "list") {
+            const blueprints = this.supervisor.listBlueprints();
+            return {
+              success: true,
+              totalBlueprints: blueprints.length,
+              blueprints,
+            };
+          }
+
+          if (action === "instantiate") {
+            const blueprintId = String(args.blueprintId || "").trim();
+            const customId = String(args.customId || "").trim();
+            if (!blueprintId || !customId) {
+              return { success: false, error: "blueprintId and customId are required for instantiate" };
+            }
+
+            const res = this.supervisor.instantiateBlueprint(blueprintId, customId);
+            if (!res.success) return { success: false, error: res.error };
+
+            return {
+              success: true,
+              profile: res.profile,
+              message: `Created profile '${customId}' from blueprint '${blueprintId}'`,
+            };
+          }
+
+          return { success: false, error: "action must be 'list' or 'instantiate'" };
         },
       },
       {
