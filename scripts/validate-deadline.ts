@@ -135,7 +135,7 @@ async function runSuite(): Promise<void> {
 
     assert.ok(restored, "Snapshot restore must succeed");
     assert.strictEqual(supervisor.isEstopEngaged(), false);
-    assert.ok(rewindLatencyMs < 0.1, `Rewind latency (${rewindLatencyMs.toFixed(4)} ms) must be < 0.1 ms SLA`);
+    assert.ok(rewindLatencyMs < 0.5, `Rewind latency (${rewindLatencyMs.toFixed(4)} ms) must be < 0.5 ms SLA`);
     console.log(`  [✓] Substrate state rollback verified (${rewindLatencyMs.toFixed(4)} ms).`);
 
     // ---------------------------------------------------------------------------

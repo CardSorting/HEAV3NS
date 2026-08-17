@@ -656,6 +656,21 @@ import { BroccoliEmailSubstrate } from "../sessions/extensions/email/broccoli-em
 import { EmailSnapshotManager } from "../sessions/extensions/email/email-snapshot-manager.js";
 import { EmailToolSuite } from "../tooling/extensions/email/email-tool-suite.js";
 
+import { DeterministicOtlpEngine } from "../tooling/extensions/otlp/deterministic-otlp-engine.js";
+import { BroccoliOtlpSubstrate } from "../sessions/extensions/otlp/broccoli-otlp-substrate.js";
+import { OtlpSnapshotManager } from "../sessions/extensions/otlp/otlp-snapshot-manager.js";
+import { OtlpSupervisor } from "../agents/extensions/otlp/otlp-supervisor.js";
+import { OtlpToolSuite } from "../tooling/extensions/otlp/otlp-tool-suite.js";
+
+import { DeterministicAcpEngine } from "../tooling/extensions/acp/deterministic-acp-engine.js";
+import { AcpSupervisor } from "../agents/extensions/acp/acp-supervisor.js";
+
+import { DeterministicDaemonEngine } from "../tooling/extensions/daemon/deterministic-daemon-engine.js";
+import { BroccoliDaemonSubstrate } from "../sessions/extensions/daemon/broccoli-daemon-substrate.js";
+import { DaemonSnapshotManager } from "../sessions/extensions/daemon/daemon-snapshot-manager.js";
+import { DaemonSupervisor } from "../agents/extensions/daemon/daemon-supervisor.js";
+import { DaemonToolSuite } from "../tooling/extensions/daemon/daemon-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1241,6 +1256,18 @@ export class MonolithFactory {
     broccoliEmailSubstrate: BroccoliEmailSubstrate;
     emailSnapshotManager: EmailSnapshotManager;
     emailToolSuite: EmailToolSuite;
+    deterministicOtlpEngine: DeterministicOtlpEngine;
+    otlpSupervisor: OtlpSupervisor;
+    broccoliOtlpSubstrate: BroccoliOtlpSubstrate;
+    otlpSnapshotManager: OtlpSnapshotManager;
+    otlpToolSuite: OtlpToolSuite;
+    deterministicAcpEngine: DeterministicAcpEngine;
+    acpSupervisor: AcpSupervisor;
+    deterministicDaemonEngine: DeterministicDaemonEngine;
+    daemonSupervisor: DaemonSupervisor;
+    broccoliDaemonSubstrate: BroccoliDaemonSubstrate;
+    daemonSnapshotManager: DaemonSnapshotManager;
+    daemonToolSuite: DaemonToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2196,6 +2223,21 @@ export class MonolithFactory {
     const emailSupervisor = new EmailSupervisor(broccoliEmailSubstrate, deterministicEmailEngine);
     const emailToolSuite = new EmailToolSuite(emailSupervisor);
 
+    const deterministicOtlpEngine = new DeterministicOtlpEngine();
+    const broccoliOtlpSubstrate = new BroccoliOtlpSubstrate();
+    const otlpSnapshotManager = new OtlpSnapshotManager(broccoliOtlpSubstrate);
+    const otlpSupervisor = new OtlpSupervisor(broccoliOtlpSubstrate, deterministicOtlpEngine);
+    const otlpToolSuite = new OtlpToolSuite(otlpSupervisor);
+
+    const deterministicAcpEngine = new DeterministicAcpEngine();
+    const acpSupervisor = new AcpSupervisor(broccoliAcpSubstrate, deterministicAcpEngine);
+
+    const deterministicDaemonEngine = new DeterministicDaemonEngine();
+    const broccoliDaemonSubstrate = new BroccoliDaemonSubstrate();
+    const daemonSnapshotManager = new DaemonSnapshotManager(broccoliDaemonSubstrate);
+    const daemonSupervisor = new DaemonSupervisor(broccoliDaemonSubstrate, deterministicDaemonEngine);
+    const daemonToolSuite = new DaemonToolSuite(daemonSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2291,7 +2333,9 @@ export class MonolithFactory {
       profileToolSuite,
       databaseToolSuite,
       walletToolSuite,
-      emailToolSuite
+      emailToolSuite,
+      otlpToolSuite,
+      daemonToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2890,6 +2934,18 @@ export class MonolithFactory {
       broccoliEmailSubstrate,
       emailSnapshotManager,
       emailToolSuite,
+      deterministicOtlpEngine,
+      otlpSupervisor,
+      broccoliOtlpSubstrate,
+      otlpSnapshotManager,
+      otlpToolSuite,
+      deterministicAcpEngine,
+      acpSupervisor,
+      deterministicDaemonEngine,
+      daemonSupervisor,
+      broccoliDaemonSubstrate,
+      daemonSnapshotManager,
+      daemonToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

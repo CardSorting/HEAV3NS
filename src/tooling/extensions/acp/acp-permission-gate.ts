@@ -91,9 +91,17 @@ export class AcpPermissionGate implements IAcpPermissionGate {
       return false;
     }
 
-    this.substrate.resolveApproval(decision.approvalId);
+    this.substrate.resolveApproval(decision.approvalId, decision);
     this.pendingResolvers.delete(decision.approvalId);
     resolver(decision);
     return true;
+  }
+
+  resolveApproval(decision: AcpEditApprovalDecision): boolean {
+    return this.submitApprovalDecision(decision);
+  }
+
+  listPendingApprovals(): readonly AcpEditApprovalRequest[] {
+    return this.substrate.listPendingApprovals();
   }
 }

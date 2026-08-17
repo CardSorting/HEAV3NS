@@ -92,6 +92,8 @@ import type { ProfileToolSuite } from "../profiles/profile-tool-suite.js";
 import type { DatabaseToolSuite } from "../database/database-tools.js";
 import type { WalletToolSuite } from "../wallet/wallet-tool-suite.js";
 import type { EmailToolSuite } from "../email/email-tool-suite.js";
+import type { OtlpToolSuite } from "../otlp/otlp-tool-suite.js";
+import type { DaemonToolSuite } from "../daemon/daemon-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -175,6 +177,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly databaseToolSuite?: DatabaseToolSuite;
   readonly walletToolSuite?: WalletToolSuite;
   readonly emailToolSuite?: EmailToolSuite;
+  readonly otlpToolSuite?: OtlpToolSuite;
+  readonly daemonToolSuite?: DaemonToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -266,7 +270,9 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     profileToolSuite?: ProfileToolSuite,
     databaseToolSuite?: DatabaseToolSuite,
     walletToolSuite?: WalletToolSuite,
-    emailToolSuite?: EmailToolSuite
+    emailToolSuite?: EmailToolSuite,
+    otlpToolSuite?: OtlpToolSuite,
+    daemonToolSuite?: DaemonToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -350,6 +356,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.databaseToolSuite = databaseToolSuite;
     this.walletToolSuite = walletToolSuite;
     this.emailToolSuite = emailToolSuite;
+    this.otlpToolSuite = otlpToolSuite;
+    this.daemonToolSuite = daemonToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -942,6 +950,16 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.emailToolSuite) {
       for (const tool of this.emailToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.otlpToolSuite) {
+      for (const tool of this.otlpToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.daemonToolSuite) {
+      for (const tool of this.daemonToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

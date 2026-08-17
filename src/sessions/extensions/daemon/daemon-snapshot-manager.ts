@@ -1,18 +1,18 @@
 /**
- * acp-snapshot-manager.ts
+ * daemon-snapshot-manager.ts
  *
- * Frame-perfect snapshot manager for the Agent Client Protocol (ACP) Subsystem (Phase 99 / ADR-129).
+ * Frame-perfect snapshot manager for the Daemon Process Subsystem (Phase 100 / ADR-130).
  * Ensures O(1) rollback guarantees (<0.05ms p95) under the AKD-DSO Monolith architecture.
  */
 
-import type { AcpSubstrateSnapshot } from "../../../core/contracts/acp.contracts.js";
-import { BroccoliAcpSubstrate } from "./broccoli-acp-substrate.js";
+import type { DaemonSubstrateSnapshot } from "../../../core/contracts/daemon.contracts.js";
+import { BroccoliDaemonSubstrate } from "./broccoli-daemon-substrate.js";
 
-export class AcpSnapshotManager {
-  private readonly substrate: BroccoliAcpSubstrate;
-  private readonly frames = new Map<number, AcpSubstrateSnapshot>();
+export class DaemonSnapshotManager {
+  private readonly substrate: BroccoliDaemonSubstrate;
+  private readonly frames = new Map<number, DaemonSubstrateSnapshot>();
 
-  constructor(substrate: BroccoliAcpSubstrate) {
+  constructor(substrate: BroccoliDaemonSubstrate) {
     this.substrate = substrate;
   }
 
@@ -20,7 +20,7 @@ export class AcpSnapshotManager {
     this.frames.set(frameId, this.substrate.exportSnapshot());
   }
 
-  public createSnapshot(frameId?: number): AcpSubstrateSnapshot {
+  public createSnapshot(frameId?: number): DaemonSubstrateSnapshot {
     const snap = this.substrate.exportSnapshot();
     if (typeof frameId === "number") {
       this.frames.set(frameId, snap);
@@ -35,7 +35,7 @@ export class AcpSnapshotManager {
     return true;
   }
 
-  public restoreSnapshot(snapshotOrFrameId: AcpSubstrateSnapshot | number): boolean {
+  public restoreSnapshot(snapshotOrFrameId: DaemonSubstrateSnapshot | number): boolean {
     if (typeof snapshotOrFrameId === "number") {
       return this.rewindToFrame(snapshotOrFrameId);
     }

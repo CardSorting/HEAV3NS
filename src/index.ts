@@ -628,6 +628,21 @@ import { BroccoliEmailSubstrate } from "./sessions/extensions/email/broccoli-ema
 import { EmailSnapshotManager } from "./sessions/extensions/email/email-snapshot-manager.js";
 import { EmailToolSuite } from "./tooling/extensions/email/email-tool-suite.js";
 
+import { DeterministicOtlpEngine } from "./tooling/extensions/otlp/deterministic-otlp-engine.js";
+import { OtlpSupervisor } from "./agents/extensions/otlp/otlp-supervisor.js";
+import { BroccoliOtlpSubstrate } from "./sessions/extensions/otlp/broccoli-otlp-substrate.js";
+import { OtlpSnapshotManager } from "./sessions/extensions/otlp/otlp-snapshot-manager.js";
+import { OtlpToolSuite } from "./tooling/extensions/otlp/otlp-tool-suite.js";
+
+import { DeterministicAcpEngine } from "./tooling/extensions/acp/deterministic-acp-engine.js";
+import { AcpSupervisor } from "./agents/extensions/acp/acp-supervisor.js";
+
+import { DeterministicDaemonEngine } from "./tooling/extensions/daemon/deterministic-daemon-engine.js";
+import { DaemonSupervisor } from "./agents/extensions/daemon/daemon-supervisor.js";
+import { BroccoliDaemonSubstrate } from "./sessions/extensions/daemon/broccoli-daemon-substrate.js";
+import { DaemonSnapshotManager } from "./sessions/extensions/daemon/daemon-snapshot-manager.js";
+import { DaemonToolSuite } from "./tooling/extensions/daemon/daemon-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -851,21 +866,53 @@ export type {
   IFaultRecoverySupervisor,
 } from "./core/contracts/fault.contracts.js";
 export type {
-  AcpSessionMode,
+  AcpApprovalStatus,
+  AcpClientCapabilities,
+  AcpClientType,
+  AcpDiffCard,
+  AcpEditApprovalDecision,
+  AcpEditApprovalRequest,
+  AcpFileChange,
+  AcpMultiFileChangeset,
   AcpPermissionLevel,
+  AcpRpcNotification,
   AcpRpcRequest,
   AcpRpcResponse,
-  AcpRpcNotification,
+  AcpServerConfig,
+  AcpSession,
   AcpSessionInfo,
-  AcpEditApprovalRequest,
-  AcpEditApprovalDecision,
-  AcpStateSnapshot,
-  IAcpProtocolCodec,
-  IAcpPermissionGate,
-  IBroccoliAcpSubstrate,
-  IAcpSnapshotManager,
+  AcpSessionMode,
+  AcpSubstrateSnapshot,
   IAcpBridgeServer,
+  IAcpPermissionGate,
+  IAcpProtocolCodec,
+  IBroccoliAcpSubstrate,
 } from "./core/contracts/acp.contracts.js";
+export type {
+  OtlpBottleneckReport,
+  OtlpExporterConfig,
+  OtlpFlameGraphSegment,
+  OtlpHealthMatrix,
+  OtlpSpan,
+  OtlpSubstrateSnapshot,
+  OtlpTracePayload,
+  SpanEvent,
+  SpanKind,
+  SpanLink,
+  SpanStatusCode,
+  W3CTraceContext,
+} from "./core/contracts/otlp.contracts.js";
+export type {
+  DaemonHealthMatrix,
+  DaemonHealthProbe,
+  DaemonLogEntry,
+  DaemonProcess,
+  DaemonProcessDashboardCard,
+  DaemonStatus,
+  DaemonSubstrateSnapshot,
+  DaemonSupervisorConfig,
+  DaemonWatchdogPolicy,
+} from "./core/contracts/daemon.contracts.js";
 export type {
   DbDurabilityMode,
   WalOperationType,
@@ -2660,6 +2707,21 @@ export type {
   VipContactRule,
 } from "./core/contracts/email.contracts.js";
 
+export { DeterministicOtlpEngine } from "./tooling/extensions/otlp/deterministic-otlp-engine.js";
+export { OtlpSupervisor } from "./agents/extensions/otlp/otlp-supervisor.js";
+export { BroccoliOtlpSubstrate } from "./sessions/extensions/otlp/broccoli-otlp-substrate.js";
+export { OtlpSnapshotManager } from "./sessions/extensions/otlp/otlp-snapshot-manager.js";
+export { OtlpToolSuite } from "./tooling/extensions/otlp/otlp-tool-suite.js";
+
+export { DeterministicAcpEngine } from "./tooling/extensions/acp/deterministic-acp-engine.js";
+export { AcpSupervisor } from "./agents/extensions/acp/acp-supervisor.js";
+
+export { DeterministicDaemonEngine } from "./tooling/extensions/daemon/deterministic-daemon-engine.js";
+export { DaemonSupervisor } from "./agents/extensions/daemon/daemon-supervisor.js";
+export { BroccoliDaemonSubstrate } from "./sessions/extensions/daemon/broccoli-daemon-substrate.js";
+export { DaemonSnapshotManager } from "./sessions/extensions/daemon/daemon-snapshot-manager.js";
+export { DaemonToolSuite } from "./tooling/extensions/daemon/daemon-tool-suite.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -3186,6 +3248,18 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliEmailSubstrate: BroccoliEmailSubstrate;
   readonly emailSnapshotManager: EmailSnapshotManager;
   readonly emailToolSuite: EmailToolSuite;
+  readonly deterministicOtlpEngine: DeterministicOtlpEngine;
+  readonly otlpSupervisor: OtlpSupervisor;
+  readonly broccoliOtlpSubstrate: BroccoliOtlpSubstrate;
+  readonly otlpSnapshotManager: OtlpSnapshotManager;
+  readonly otlpToolSuite: OtlpToolSuite;
+  readonly deterministicAcpEngine: DeterministicAcpEngine;
+  readonly acpSupervisor: AcpSupervisor;
+  readonly deterministicDaemonEngine: DeterministicDaemonEngine;
+  readonly daemonSupervisor: DaemonSupervisor;
+  readonly broccoliDaemonSubstrate: BroccoliDaemonSubstrate;
+  readonly daemonSnapshotManager: DaemonSnapshotManager;
+  readonly daemonToolSuite: DaemonToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3703,6 +3777,18 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliEmailSubstrate = components.broccoliEmailSubstrate;
     this.emailSnapshotManager = components.emailSnapshotManager;
     this.emailToolSuite = components.emailToolSuite;
+    this.deterministicOtlpEngine = components.deterministicOtlpEngine;
+    this.otlpSupervisor = components.otlpSupervisor;
+    this.broccoliOtlpSubstrate = components.broccoliOtlpSubstrate;
+    this.otlpSnapshotManager = components.otlpSnapshotManager;
+    this.otlpToolSuite = components.otlpToolSuite;
+    this.deterministicAcpEngine = components.deterministicAcpEngine;
+    this.acpSupervisor = components.acpSupervisor;
+    this.deterministicDaemonEngine = components.deterministicDaemonEngine;
+    this.daemonSupervisor = components.daemonSupervisor;
+    this.broccoliDaemonSubstrate = components.broccoliDaemonSubstrate;
+    this.daemonSnapshotManager = components.daemonSnapshotManager;
+    this.daemonToolSuite = components.daemonToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
