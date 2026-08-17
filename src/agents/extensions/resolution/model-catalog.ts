@@ -79,7 +79,7 @@ export class ModelCatalog {
     this.registerModel({
       modelName: "gpt-5.6-terra",
       provider: "openai-codex",
-      contextWindowTokens: 256_000,
+      contextWindowTokens: 900_000,
       maxOutputTokens: 16_384,
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
@@ -90,7 +90,7 @@ export class ModelCatalog {
     this.registerModel({
       modelName: "gpt-5.6-luna",
       provider: "openai-codex",
-      contextWindowTokens: 128_000,
+      contextWindowTokens: 900_000,
       maxOutputTokens: 8_192,
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
@@ -99,9 +99,31 @@ export class ModelCatalog {
     });
 
     this.registerModel({
+      modelName: "gpt-5.6-sol",
+      provider: "openai-codex",
+      contextWindowTokens: 900_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      description: "Codex OAuth Balanced Model",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.6-codex",
+      provider: "openai-codex",
+      contextWindowTokens: 900_000,
+      maxOutputTokens: 16_384,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      description: "Codex OAuth Specialized Coding Engine",
+    });
+
+    this.registerModel({
       modelName: "gpt-4o",
       provider: "openai-codex",
-      contextWindowTokens: 128_000,
+      contextWindowTokens: 900_000,
       maxOutputTokens: 4_096,
       inputPricePer1M: 2.5,
       outputPricePer1M: 10.0,

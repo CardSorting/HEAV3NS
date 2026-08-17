@@ -165,6 +165,13 @@ import { GatewayDeliveryLedger } from "./sessions/extensions/gateway/gateway-del
 import { BroccoliGatewaySubstrate } from "./sessions/extensions/gateway/broccoli-gateway-substrate.js";
 import { GatewaySnapshotManager } from "./sessions/extensions/gateway/gateway-snapshot-manager.js";
 import { GatewayDispatcherEngine } from "./agents/extensions/gateway/gateway-dispatcher-engine.js";
+import { DeterministicGatewayEngine } from "./tooling/extensions/gateway/deterministic-gateway-engine.js";
+import { GatewaySupervisor } from "./agents/extensions/gateway/gateway-supervisor.js";
+import { BroccoliIntegrationsSubstrate } from "./sessions/extensions/integrations/broccoli-integrations-substrate.js";
+import { IntegrationsSnapshotManager } from "./sessions/extensions/integrations/integrations-snapshot-manager.js";
+import { DeterministicIntegrationsEngine } from "./tooling/extensions/integrations/deterministic-integrations-engine.js";
+import { IntegrationsSupervisor } from "./agents/extensions/integrations/integrations-supervisor.js";
+import { IntegrationsToolSuite } from "./tooling/extensions/integrations/integrations-tool-suite.js";
 
 import { HeadTailBudgetGovernor } from "./tooling/extensions/compaction/head-tail-budget-governor.js";
 import { DeterministicToolPruner } from "./tooling/extensions/compaction/deterministic-tool-pruner.js";
@@ -609,6 +616,18 @@ import { BroccoliWriteAheadLog } from "./sessions/extensions/substrate/broccolid
 import { ReentrantAsyncMutex, DatabaseLockError, DeadlockTimeoutError } from "./sessions/extensions/substrate/broccolidb-mutex.js";
 import { DatabaseToolSuite } from "./tooling/extensions/database/database-tools.js";
 
+import { DeterministicWalletEngine } from "./tooling/extensions/wallet/deterministic-wallet-engine.js";
+import { WalletSupervisor } from "./agents/extensions/wallet/wallet-supervisor.js";
+import { BroccoliWalletSubstrate } from "./sessions/extensions/wallet/broccoli-wallet-substrate.js";
+import { WalletSnapshotManager } from "./sessions/extensions/wallet/wallet-snapshot-manager.js";
+import { WalletToolSuite } from "./tooling/extensions/wallet/wallet-tool-suite.js";
+
+import { DeterministicEmailEngine } from "./tooling/extensions/email/deterministic-email-engine.js";
+import { EmailSupervisor } from "./agents/extensions/email/email-supervisor.js";
+import { BroccoliEmailSubstrate } from "./sessions/extensions/email/broccoli-email-substrate.js";
+import { EmailSnapshotManager } from "./sessions/extensions/email/email-snapshot-manager.js";
+import { EmailToolSuite } from "./tooling/extensions/email/email-tool-suite.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -707,18 +726,81 @@ export type {
   ICredentialSnapshotManager,
 } from "./core/contracts/credential.contracts.js";
 export type {
-  GatewayPlatformType,
-  GatewayDeliveryStatus,
-  GatewayMessageEnvelope,
-  GatewayOutboundPayload,
+  ChannelBindingRule,
+  ContactVipTier,
+  DeliveryReceipt,
+  GatewayActionButton,
+  GatewayActionButtonStyle,
+  GatewayAttachment,
   GatewayChannelSession,
+  GatewayDeliveryStatus,
+  GatewayHandoverMode,
+  GatewayHealthMatrix,
+  GatewayInteractiveCard,
+  GatewayBallotOption,
+  GatewayFilterPill,
+  GatewayInlineBallot,
+  GatewayInlineDataTable,
+  GatewayInlineMenuItem,
+  GatewayInlineMenuNode,
+  GatewayInlineTab,
+  GatewayInlineTabGroup,
+  GatewayInlineWizard,
+  GatewayInPlaceMutationResult,
+  GatewayMediaCard,
+  GatewayMediaType,
+  GatewayMessage,
+  GatewayMessageDirection,
+  GatewayMessageEnvelope,
+  GatewayMessageFormat,
+  GatewayOutboundPayload,
+  GatewayPlatform,
+  GatewayPlatformType,
+  GatewayReaction,
+  GatewaySessionLease,
+  GatewaySkillConfig,
+  GatewaySlaPolicy,
   GatewayStateSnapshot,
-  IGatewayPlatformAdapter,
-  IBroccoliGatewaySubstrate,
+  GatewaySubstrateSnapshot,
+  GatewayThreadTriage,
+  GatewayTypingState,
+  GatewayUserIdentity,
+  GatewayUserRole,
+  GatewayWhisperNote,
+  GatewayWizardStep,
   IGatewayDeliveryLedger,
-  IGatewaySnapshotManager,
   IGatewayDispatcher,
+  IGatewayPlatformAdapter,
+  LinkedPlatformIdentity,
+  PlatformHealthStatus,
+  SlashCommandRoute,
+  UnifiedContactProfile,
+  WebhookVerificationRequest,
+  WebhookVerificationResult,
 } from "./core/contracts/gateway.contracts.js";
+export type {
+  AlertLevel,
+  CustomerPaymentStatus,
+  IntegrationAuditLog,
+  IntegrationAuthType,
+  IntegrationCategory,
+  IntegrationConnection,
+  IntegrationProviderType,
+  IntegrationRecipe,
+  IntegrationsHealthMatrix,
+  IntegrationsSkillConfig,
+  IntegrationsSubstrateSnapshot,
+  IssuePriority,
+  IssueStatus,
+  PlatformIntegrationHealth,
+  ServiceCatalogEntry,
+  UnifiedAlert,
+  UnifiedCustomer,
+  UnifiedDocument,
+  UnifiedIssue,
+  WorkflowExecutionResult,
+  WorkflowStep,
+} from "./core/contracts/integrations.contracts.js";
 export type {
   CompressionPolicy,
   TokenWindowBudget,
@@ -1214,6 +1296,13 @@ export { GatewayDeliveryLedger } from "./sessions/extensions/gateway/gateway-del
 export { BroccoliGatewaySubstrate } from "./sessions/extensions/gateway/broccoli-gateway-substrate.js";
 export { GatewaySnapshotManager } from "./sessions/extensions/gateway/gateway-snapshot-manager.js";
 export { GatewayDispatcherEngine } from "./agents/extensions/gateway/gateway-dispatcher-engine.js";
+export { DeterministicGatewayEngine } from "./tooling/extensions/gateway/deterministic-gateway-engine.js";
+export { GatewaySupervisor } from "./agents/extensions/gateway/gateway-supervisor.js";
+export { BroccoliIntegrationsSubstrate } from "./sessions/extensions/integrations/broccoli-integrations-substrate.js";
+export { IntegrationsSnapshotManager } from "./sessions/extensions/integrations/integrations-snapshot-manager.js";
+export { DeterministicIntegrationsEngine } from "./tooling/extensions/integrations/deterministic-integrations-engine.js";
+export { IntegrationsSupervisor } from "./agents/extensions/integrations/integrations-supervisor.js";
+export { IntegrationsToolSuite } from "./tooling/extensions/integrations/integrations-tool-suite.js";
 
 export { HeadTailBudgetGovernor } from "./tooling/extensions/compaction/head-tail-budget-governor.js";
 export { DeterministicToolPruner } from "./tooling/extensions/compaction/deterministic-tool-pruner.js";
@@ -2506,6 +2595,71 @@ export type {
 } from "./core/contracts/profile.contracts.js";
 export { PROFILE_ID_REGEX } from "./core/contracts/profile.contracts.js";
 
+export { DeterministicWalletEngine } from "./tooling/extensions/wallet/deterministic-wallet-engine.js";
+export { WalletSupervisor } from "./agents/extensions/wallet/wallet-supervisor.js";
+export { BroccoliWalletSubstrate } from "./sessions/extensions/wallet/broccoli-wallet-substrate.js";
+export { WalletSnapshotManager } from "./sessions/extensions/wallet/wallet-snapshot-manager.js";
+export { WalletToolSuite } from "./tooling/extensions/wallet/wallet-tool-suite.js";
+export type {
+  AccountAbstractionSimulationResult,
+  AddressBookContact,
+  AssetDelta,
+  BridgeQuoteRequest,
+  BridgeQuoteResult,
+  ContractInspectionResult,
+  DeFiHealthReport,
+  DeFiPosition,
+  EIP712SignatureAuditRequest,
+  EIP712SignatureAuditResult,
+  GasMarketReport,
+  GasTierEstimate,
+  MultiSigTransactionStage,
+  SecurityRiskTier,
+  SupportedChain,
+  SwapQuoteRequest,
+  SwapQuoteResult,
+  SwapRouteHop,
+  TokenAllowanceRecord,
+  TokenHolding,
+  TransactionSimulationRequest,
+  TransactionSimulationResult,
+  UserOperationRequest,
+  WalletPortfolio,
+  WalletSkillConfig,
+  WalletSubstrateSnapshot,
+  YieldOptimizationReport,
+  YieldStakingPosition,
+} from "./core/contracts/wallet.contracts.js";
+
+export { DeterministicEmailEngine } from "./tooling/extensions/email/deterministic-email-engine.js";
+export { EmailSupervisor } from "./agents/extensions/email/email-supervisor.js";
+export { BroccoliEmailSubstrate } from "./sessions/extensions/email/broccoli-email-substrate.js";
+export { EmailSnapshotManager } from "./sessions/extensions/email/email-snapshot-manager.js";
+export { EmailToolSuite } from "./tooling/extensions/email/email-tool-suite.js";
+export type {
+  DataLossPreventionFinding,
+  EmailAddress,
+  EmailDisposition,
+  EmailDraft,
+  EmailMessage,
+  EmailSkillConfig,
+  EmailSubstrateSnapshot,
+  EmailThreatAlert,
+  EmailThreatAnalysis,
+  EmailTonePersona,
+  EmailTriageReport,
+  FollowUpReminder,
+  MeetingScheduleIntent,
+  OutboundDlpReport,
+  QuickReplyOption,
+  SenderAuthSecurityStatus,
+  SmartReplySuggestions,
+  ThreadActionItem,
+  ThreadCollisionLock,
+  ThreadSummaryAnalysis,
+  VipContactRule,
+} from "./core/contracts/email.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -2652,7 +2806,14 @@ export class LumiMonolith implements IAgentEngine {
   readonly gatewayDeliveryLedger: GatewayDeliveryLedger;
   readonly gatewaySnapshotManager: GatewaySnapshotManager;
   readonly gatewayDispatcherEngine: GatewayDispatcherEngine;
+  readonly deterministicGatewayEngine: DeterministicGatewayEngine;
+  readonly gatewaySupervisor: GatewaySupervisor;
   readonly gatewayToolSuite: GatewayToolSuite;
+  readonly broccoliIntegrationsSubstrate: BroccoliIntegrationsSubstrate;
+  readonly integrationsSnapshotManager: IntegrationsSnapshotManager;
+  readonly deterministicIntegrationsEngine: DeterministicIntegrationsEngine;
+  readonly integrationsSupervisor: IntegrationsSupervisor;
+  readonly integrationsToolSuite: IntegrationsToolSuite;
   readonly headTailBudgetGovernor: HeadTailBudgetGovernor;
   readonly deterministicToolPruner: DeterministicToolPruner;
   readonly broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
@@ -3015,6 +3176,16 @@ export class LumiMonolith implements IAgentEngine {
   readonly profileToolSuite: ProfileToolSuite;
   readonly databaseKernel: BroccoliDatabaseKernel;
   readonly databaseToolSuite: DatabaseToolSuite;
+  readonly deterministicWalletEngine: DeterministicWalletEngine;
+  readonly walletSupervisor: WalletSupervisor;
+  readonly broccoliWalletSubstrate: BroccoliWalletSubstrate;
+  readonly walletSnapshotManager: WalletSnapshotManager;
+  readonly walletToolSuite: WalletToolSuite;
+  readonly deterministicEmailEngine: DeterministicEmailEngine;
+  readonly emailSupervisor: EmailSupervisor;
+  readonly broccoliEmailSubstrate: BroccoliEmailSubstrate;
+  readonly emailSnapshotManager: EmailSnapshotManager;
+  readonly emailToolSuite: EmailToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -3152,7 +3323,14 @@ export class LumiMonolith implements IAgentEngine {
     this.gatewayDeliveryLedger = components.gatewayDeliveryLedger;
     this.gatewaySnapshotManager = components.gatewaySnapshotManager;
     this.gatewayDispatcherEngine = components.gatewayDispatcherEngine;
+    this.deterministicGatewayEngine = components.deterministicGatewayEngine;
+    this.gatewaySupervisor = components.gatewaySupervisor;
     this.gatewayToolSuite = components.gatewayToolSuite;
+    this.broccoliIntegrationsSubstrate = components.broccoliIntegrationsSubstrate;
+    this.integrationsSnapshotManager = components.integrationsSnapshotManager;
+    this.deterministicIntegrationsEngine = components.deterministicIntegrationsEngine;
+    this.integrationsSupervisor = components.integrationsSupervisor;
+    this.integrationsToolSuite = components.integrationsToolSuite;
     this.headTailBudgetGovernor = components.headTailBudgetGovernor;
     this.deterministicToolPruner = components.deterministicToolPruner;
     this.broccoliCompressionSubstrate = components.broccoliCompressionSubstrate;
@@ -3515,6 +3693,16 @@ export class LumiMonolith implements IAgentEngine {
     this.profileToolSuite = components.profileToolSuite;
     this.databaseKernel = components.databaseKernel;
     this.databaseToolSuite = components.databaseToolSuite;
+    this.deterministicWalletEngine = components.deterministicWalletEngine;
+    this.walletSupervisor = components.walletSupervisor;
+    this.broccoliWalletSubstrate = components.broccoliWalletSubstrate;
+    this.walletSnapshotManager = components.walletSnapshotManager;
+    this.walletToolSuite = components.walletToolSuite;
+    this.deterministicEmailEngine = components.deterministicEmailEngine;
+    this.emailSupervisor = components.emailSupervisor;
+    this.broccoliEmailSubstrate = components.broccoliEmailSubstrate;
+    this.emailSnapshotManager = components.emailSnapshotManager;
+    this.emailToolSuite = components.emailToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

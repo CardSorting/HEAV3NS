@@ -7,6 +7,7 @@ import { TokenTruncator } from "../src/agents/extensions/compaction/token-trunca
 import { AgentEngine } from "../src/agents/extensions/execution/agent-engine.js";
 import { AgentSlashRouter } from "../src/agents/extensions/resolution/agent-slash-router.js";
 import type { CodexProviderBridge } from "../src/agents/extensions/resolution/codex-provider-bridge.js";
+import { ModelCatalog } from "../src/agents/extensions/resolution/model-catalog.js";
 import { ModelResolver } from "../src/agents/extensions/resolution/model-resolver.js";
 import type { SessionMessage } from "../src/core/contracts/session.contracts.js";
 import { SessionContext } from "../src/sessions/base/session-context.js";
@@ -81,6 +82,29 @@ function validateBudgetPolicy(): void {
   assert.equal(budget.availableInputTokens, 27_000);
   assert.equal(budget.compactionTriggerTokens, 21_600);
   assert.equal(budget.targetInputTokens, 16_200);
+
+  // Validate 900K context fallback for Codex / GPT models in budget calculator
+  const gpt5Budget = calculator.calculateBudget("gpt-5.6-terra", 16_384);
+  assert.equal(gpt5Budget.maxTokens, 900_000);
+
+  const codexBudget = calculator.calculateBudget("gpt-5.6-codex", 8_192);
+  assert.equal(codexBudget.maxTokens, 900_000);
+
+  // Validate 900K context in ModelCatalog for all Codex GPT models
+  const catalog = new ModelCatalog();
+  const codexModels = [
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+    "gpt-5.6-sol",
+    "gpt-5.6-codex",
+    "gpt-4o",
+  ];
+
+  for (const modelName of codexModels) {
+    const info = catalog.getModelInfo(modelName);
+    assert.equal(info.provider, "openai-codex");
+    assert.equal(info.contextWindowTokens, 900_000);
+  }
 }
 
 function validateTurnAwareCompaction(): void {

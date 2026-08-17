@@ -13,8 +13,8 @@ Roadmap completion and runtime completion are different concepts:
 - `npm run smoke` validates the current Pass 192 composition against an exact typed component manifest and exercises critical runtime completion, rewind, safety, output, and integrity contracts. Missing, uninitialized, unexpected, or duplicate manifest entries degrade the run. It is current-worktree evidence, but it does not replace feature-specific tests or the full verification gate.
 - Runtime turn completion is governed separately by [ADR-082](../adr/ADR-082-structured-agent-activity-streaming.md): an item or retry attempt can complete while the logical turn remains active, and public success exists only when `EngineTickResult.outcome` is `completed`.
 
-- **Current Verified Baseline (2026-08-16T09:11:40.735Z)**: **382/382** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
-- **Exact Composition Manifest**: **382/382** required capabilities verified.
+- **Current Verified Baseline (2026-08-17T04:06:43.562Z)**: **566/566** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
+- **Exact Composition Manifest**: **566/566** required capabilities verified.
 - **Runtime Capability Smoke**: **9/9** checks passing.
 - **Heterogeneous Benchmark**: **5/5** cases passing, including a 12-file Flappy Bird React + TypeScript + Vite project synthesized and verified against **8/8** strict assertions.
 - **Repository Guardrails**: **6/6** passing (`Zero-GC Slab Invariant`, `Turn Tick Latency SLA`, `Throughput SLA`, `State Rewind SLA`, `Zero-Barrel Rule`, `Base Class Immutability Rule`).

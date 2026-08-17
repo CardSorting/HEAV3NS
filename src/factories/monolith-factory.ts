@@ -204,6 +204,13 @@ import { GatewayDeliveryLedger } from "../sessions/extensions/gateway/gateway-de
 import { BroccoliGatewaySubstrate } from "../sessions/extensions/gateway/broccoli-gateway-substrate.js";
 import { GatewaySnapshotManager } from "../sessions/extensions/gateway/gateway-snapshot-manager.js";
 import { GatewayDispatcherEngine } from "../agents/extensions/gateway/gateway-dispatcher-engine.js";
+import { DeterministicGatewayEngine } from "../tooling/extensions/gateway/deterministic-gateway-engine.js";
+import { GatewaySupervisor } from "../agents/extensions/gateway/gateway-supervisor.js";
+import { BroccoliIntegrationsSubstrate } from "../sessions/extensions/integrations/broccoli-integrations-substrate.js";
+import { IntegrationsSnapshotManager } from "../sessions/extensions/integrations/integrations-snapshot-manager.js";
+import { DeterministicIntegrationsEngine } from "../tooling/extensions/integrations/deterministic-integrations-engine.js";
+import { IntegrationsSupervisor } from "../agents/extensions/integrations/integrations-supervisor.js";
+import { IntegrationsToolSuite } from "../tooling/extensions/integrations/integrations-tool-suite.js";
 
 import { HeadTailBudgetGovernor } from "../tooling/extensions/compaction/head-tail-budget-governor.js";
 import { DeterministicToolPruner } from "../tooling/extensions/compaction/deterministic-tool-pruner.js";
@@ -637,6 +644,18 @@ import { BroccoliProfileSubstrate } from "../sessions/extensions/profiles/brocco
 import { ProfileSnapshotManager } from "../sessions/extensions/profiles/profile-snapshot-manager.js";
 import { ProfileToolSuite } from "../tooling/extensions/profiles/profile-tool-suite.js";
 
+import { DeterministicWalletEngine } from "../tooling/extensions/wallet/deterministic-wallet-engine.js";
+import { WalletSupervisor } from "../agents/extensions/wallet/wallet-supervisor.js";
+import { BroccoliWalletSubstrate } from "../sessions/extensions/wallet/broccoli-wallet-substrate.js";
+import { WalletSnapshotManager } from "../sessions/extensions/wallet/wallet-snapshot-manager.js";
+import { WalletToolSuite } from "../tooling/extensions/wallet/wallet-tool-suite.js";
+
+import { DeterministicEmailEngine } from "../tooling/extensions/email/deterministic-email-engine.js";
+import { EmailSupervisor } from "../agents/extensions/email/email-supervisor.js";
+import { BroccoliEmailSubstrate } from "../sessions/extensions/email/broccoli-email-substrate.js";
+import { EmailSnapshotManager } from "../sessions/extensions/email/email-snapshot-manager.js";
+import { EmailToolSuite } from "../tooling/extensions/email/email-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -844,7 +863,14 @@ export class MonolithFactory {
     gatewayDeliveryLedger: GatewayDeliveryLedger;
     gatewaySnapshotManager: GatewaySnapshotManager;
     gatewayDispatcherEngine: GatewayDispatcherEngine;
+    deterministicGatewayEngine: DeterministicGatewayEngine;
+    gatewaySupervisor: GatewaySupervisor;
     gatewayToolSuite: GatewayToolSuite;
+    broccoliIntegrationsSubstrate: BroccoliIntegrationsSubstrate;
+    integrationsSnapshotManager: IntegrationsSnapshotManager;
+    deterministicIntegrationsEngine: DeterministicIntegrationsEngine;
+    integrationsSupervisor: IntegrationsSupervisor;
+    integrationsToolSuite: IntegrationsToolSuite;
     headTailBudgetGovernor: HeadTailBudgetGovernor;
     deterministicToolPruner: DeterministicToolPruner;
     broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
@@ -1205,6 +1231,16 @@ export class MonolithFactory {
     broccoliProfileSubstrate: BroccoliProfileSubstrate;
     profileSnapshotManager: ProfileSnapshotManager;
     profileToolSuite: ProfileToolSuite;
+    deterministicWalletEngine: DeterministicWalletEngine;
+    walletSupervisor: WalletSupervisor;
+    broccoliWalletSubstrate: BroccoliWalletSubstrate;
+    walletSnapshotManager: WalletSnapshotManager;
+    walletToolSuite: WalletToolSuite;
+    deterministicEmailEngine: DeterministicEmailEngine;
+    emailSupervisor: EmailSupervisor;
+    broccoliEmailSubstrate: BroccoliEmailSubstrate;
+    emailSnapshotManager: EmailSnapshotManager;
+    emailToolSuite: EmailToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1454,16 +1490,27 @@ export class MonolithFactory {
     const broccoliGatewaySubstrate = new BroccoliGatewaySubstrate();
     const gatewayDeliveryLedger = new GatewayDeliveryLedger();
     const gatewaySnapshotManager = new GatewaySnapshotManager(broccoliGatewaySubstrate, gatewayDeliveryLedger);
+    const deterministicGatewayEngine = new DeterministicGatewayEngine();
+    const gatewaySupervisor = new GatewaySupervisor(broccoliGatewaySubstrate, deterministicGatewayEngine);
     const gatewayDispatcherEngine = new GatewayDispatcherEngine(
       broccoliGatewaySubstrate,
       gatewayDeliveryLedger,
       [telegramProtocolAdapter, discordProtocolAdapter, slackProtocolAdapter, webhookProtocolAdapter]
     );
     const gatewayToolSuite = new GatewayToolSuite(
-      gatewayDispatcherEngine,
+      gatewaySupervisor,
       broccoliGatewaySubstrate,
       gatewayDeliveryLedger
     );
+
+    const broccoliIntegrationsSubstrate = new BroccoliIntegrationsSubstrate();
+    const integrationsSnapshotManager = new IntegrationsSnapshotManager(broccoliIntegrationsSubstrate);
+    const deterministicIntegrationsEngine = new DeterministicIntegrationsEngine();
+    const integrationsSupervisor = new IntegrationsSupervisor(
+      broccoliIntegrationsSubstrate,
+      deterministicIntegrationsEngine
+    );
+    const integrationsToolSuite = new IntegrationsToolSuite(integrationsSupervisor);
 
     const headTailBudgetGovernor = new HeadTailBudgetGovernor();
     const deterministicToolPruner = new DeterministicToolPruner();
@@ -2137,6 +2184,18 @@ export class MonolithFactory {
     const profileSupervisor = new ProfileSupervisor(deterministicProfileEngine, broccoliProfileSubstrate);
     const profileToolSuite = new ProfileToolSuite(profileSupervisor);
 
+    const broccoliWalletSubstrate = new BroccoliWalletSubstrate();
+    const deterministicWalletEngine = new DeterministicWalletEngine();
+    const walletSnapshotManager = new WalletSnapshotManager(broccoliWalletSubstrate);
+    const walletSupervisor = new WalletSupervisor(broccoliWalletSubstrate, deterministicWalletEngine);
+    const walletToolSuite = new WalletToolSuite(walletSupervisor);
+
+    const broccoliEmailSubstrate = new BroccoliEmailSubstrate();
+    const deterministicEmailEngine = new DeterministicEmailEngine();
+    const emailSnapshotManager = new EmailSnapshotManager(broccoliEmailSubstrate);
+    const emailSupervisor = new EmailSupervisor(broccoliEmailSubstrate, deterministicEmailEngine);
+    const emailToolSuite = new EmailToolSuite(emailSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2230,7 +2289,9 @@ export class MonolithFactory {
       nousPortalToolSuite,
       goalToolSuite,
       profileToolSuite,
-      databaseToolSuite
+      databaseToolSuite,
+      walletToolSuite,
+      emailToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2449,7 +2510,14 @@ export class MonolithFactory {
       gatewayDeliveryLedger,
       gatewaySnapshotManager,
       gatewayDispatcherEngine,
+      deterministicGatewayEngine,
+      gatewaySupervisor,
       gatewayToolSuite,
+      broccoliIntegrationsSubstrate,
+      integrationsSnapshotManager,
+      deterministicIntegrationsEngine,
+      integrationsSupervisor,
+      integrationsToolSuite,
       headTailBudgetGovernor,
       deterministicToolPruner,
       broccoliCompressionSubstrate,
@@ -2812,6 +2880,16 @@ export class MonolithFactory {
       profileToolSuite,
       databaseKernel,
       databaseToolSuite,
+      deterministicWalletEngine,
+      walletSupervisor,
+      broccoliWalletSubstrate,
+      walletSnapshotManager,
+      walletToolSuite,
+      deterministicEmailEngine,
+      emailSupervisor,
+      broccoliEmailSubstrate,
+      emailSnapshotManager,
+      emailToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

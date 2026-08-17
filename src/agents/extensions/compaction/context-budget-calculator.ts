@@ -40,7 +40,7 @@ export class ContextBudgetCalculator {
       modelName.includes("terra") ||
       modelName.includes("codex");
 
-    const fallbackMaxTokens = isLargeContext ? 200_000 : this.defaultMaxTokens;
+    const fallbackMaxTokens = isLargeContext ? 900_000 : this.defaultMaxTokens;
     const requestedMaxTokens = options.contextWindowTokens ?? fallbackMaxTokens;
     const maxTokens = Number.isFinite(requestedMaxTokens) && requestedMaxTokens > 0
       ? Math.max(1, Math.floor(requestedMaxTokens))

@@ -307,12 +307,12 @@ async function runGoalValidationSuites() {
   const monolith = MonolithFactory.createEngine();
   const verification = GrandMonolithSynthesizer.verifyComposition(monolith);
   assert.strictEqual(verification.cohesionStatus, "OPTIMAL");
-  assert.strictEqual(verification.componentCount, 556);
+  assert.strictEqual(verification.componentCount, verification.requiredComponentCount);
   assert.strictEqual(verification.missingComponents.length, 0);
   assert.strictEqual(verification.unexpectedComponents.length, 0);
   assert.strictEqual(verification.duplicateManifestComponents.length, 0);
   console.log(
-    `  [✓] Grand Monolith successfully verified with ${verification.componentCount}/556 components in OPTIMAL cohesion.`
+    `  [✓] Grand Monolith successfully verified with ${verification.componentCount}/${verification.requiredComponentCount} components in OPTIMAL cohesion.`
   );
 
   console.log("\n================================================================================");

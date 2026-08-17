@@ -1,64 +1,76 @@
-import type {
-  GatewayStateSnapshot,
-  IGatewaySnapshotManager,
-  IBroccoliGatewaySubstrate,
-  IGatewayDeliveryLedger,
-} from "../../../core/contracts/gateway.contracts.js";
-
 /**
- * Frame-perfect binary snapshot and rollback manager for messaging gateway.
+ * gateway-snapshot-manager.ts
+ *
+ * Frame-perfect binary snapshotting and O(1) state rollback for the Native Gateway Subsystem (Phase 94 / ADR-124).
  */
-export class GatewaySnapshotManager implements IGatewaySnapshotManager {
-  private substrate: IBroccoliGatewaySubstrate;
-  private ledger: IGatewayDeliveryLedger;
 
-  constructor(substrate: IBroccoliGatewaySubstrate, ledger: IGatewayDeliveryLedger) {
+import type { GatewayStateSnapshot, GatewaySubstrateSnapshot } from "../../../core/contracts/gateway.contracts.js";
+import { BroccoliGatewaySubstrate } from "./broccoli-gateway-substrate.js";
+import { GatewayDeliveryLedger } from "./gateway-delivery-ledger.js";
+
+export class GatewaySnapshotManager {
+  private substrate: BroccoliGatewaySubstrate;
+  private ledger?: GatewayDeliveryLedger;
+  private snapshots: Map<number, GatewaySubstrateSnapshot>;
+
+  constructor(substrate: BroccoliGatewaySubstrate, ledger?: GatewayDeliveryLedger) {
     this.substrate = substrate;
     this.ledger = ledger;
+    this.snapshots = new Map<number, GatewaySubstrateSnapshot>();
   }
 
-  setSubstrate(substrate: IBroccoliGatewaySubstrate): void {
-    this.substrate = substrate;
+  captureFrame(frameIndex: number): void {
+    const snapshot = this.substrate.exportSnapshot();
+    this.snapshots.set(frameIndex, snapshot);
   }
 
-  setLedger(ledger: IGatewayDeliveryLedger): void {
-    this.ledger = ledger;
-  }
-
-  createSnapshot(tick: number): GatewayStateSnapshot {
-    const channels = this.substrate.listChannels();
-    const history = this.ledger.getHistory(500);
-    const pending = this.ledger.getPending();
-
+  createSnapshot(frameIndex: number): GatewayStateSnapshot {
+    this.captureFrame(frameIndex);
+    const snap = this.substrate.exportSnapshot();
     return {
-      channels: channels.map((c) => ({ ...c })),
-      pendingDeliveryCount: pending.length,
-      deliveryLedgerSnapshot: history.map((item) => ({ ...item, chunks: [...item.chunks] })),
-      snapshotTick: tick,
+      channels: this.substrate.listChannels(),
+      totalInbound: snap.totalInbound,
+      totalOutbound: snap.totalOutbound,
+      timestampMs: snap.timestamp,
     };
   }
 
-  restoreSnapshot(snapshot: GatewayStateSnapshot): void {
-    this.substrate.clear();
-    for (const ch of snapshot.channels) {
-      this.substrate.registerChannel({ ...ch });
+  rewindToFrame(frameIndex: number): boolean {
+    const snapshot = this.snapshots.get(frameIndex);
+    if (!snapshot) {
+      return false;
     }
 
-    this.ledger.clear();
-    for (const item of snapshot.deliveryLedgerSnapshot) {
-      const enqueued = this.ledger.enqueue(
-        {
-          id: item.id,
-          platform: item.platform,
-          channelId: item.channelId,
-          content: item.content,
-          threadId: item.threadId,
-          error: item.error,
-          deliveredTimestampMs: item.deliveredTimestampMs,
-        },
-        item.chunks
-      );
-      this.ledger.markStatus(enqueued.id, item.status, item.error);
+    this.substrate.importSnapshot(snapshot);
+
+    // Prune subsequent frame snapshots
+    const keys = Array.from(this.snapshots.keys());
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      if (key > frameIndex) {
+        this.snapshots.delete(key);
+      }
     }
+
+    return true;
+  }
+
+  restoreSnapshot(snapshot: GatewayStateSnapshot | GatewaySubstrateSnapshot): void {
+    if ("channels" in snapshot) {
+      this.substrate.clear();
+      for (const ch of snapshot.channels) {
+        this.substrate.registerChannel(ch);
+      }
+    } else {
+      this.substrate.importSnapshot(snapshot);
+    }
+  }
+
+  getSnapshot(frameIndex: number): GatewaySubstrateSnapshot | undefined {
+    return this.snapshots.get(frameIndex);
+  }
+
+  clear(): void {
+    this.snapshots.clear();
   }
 }

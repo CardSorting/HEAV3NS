@@ -90,6 +90,8 @@ import type { NousPortalToolSuite } from "../nous_portal/nous-portal-tool-suite.
 import type { GoalToolSuite } from "../goals/goal-tool-suite.js";
 import type { ProfileToolSuite } from "../profiles/profile-tool-suite.js";
 import type { DatabaseToolSuite } from "../database/database-tools.js";
+import type { WalletToolSuite } from "../wallet/wallet-tool-suite.js";
+import type { EmailToolSuite } from "../email/email-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -171,6 +173,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly goalToolSuite?: GoalToolSuite;
   readonly profileToolSuite?: ProfileToolSuite;
   readonly databaseToolSuite?: DatabaseToolSuite;
+  readonly walletToolSuite?: WalletToolSuite;
+  readonly emailToolSuite?: EmailToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -260,7 +264,9 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     nousPortalToolSuite?: NousPortalToolSuite,
     goalToolSuite?: GoalToolSuite,
     profileToolSuite?: ProfileToolSuite,
-    databaseToolSuite?: DatabaseToolSuite
+    databaseToolSuite?: DatabaseToolSuite,
+    walletToolSuite?: WalletToolSuite,
+    emailToolSuite?: EmailToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -342,6 +348,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.goalToolSuite = goalToolSuite;
     this.profileToolSuite = profileToolSuite;
     this.databaseToolSuite = databaseToolSuite;
+    this.walletToolSuite = walletToolSuite;
+    this.emailToolSuite = emailToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -924,6 +932,16 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.databaseToolSuite) {
       for (const tool of this.databaseToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.walletToolSuite) {
+      for (const tool of this.walletToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.emailToolSuite) {
+      for (const tool of this.emailToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

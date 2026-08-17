@@ -20,8 +20,8 @@ Thank you for your interest in contributing to **LUMI-JOY**! We welcome contribu
 - Specialized capabilities inherit downward (`class Child extends Parent`) in `src/*/extensions/`.
 
 ### 4. Mandatory Performance SLAs & Security Guardrails (`ADR-051`)
-- **Current Verified Baseline (2026-08-16T09:11:40.735Z)**: **382/382** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
-- The current composition manifest expects **382/382** required capabilities.
+- **Current Verified Baseline (2026-08-17T04:06:43.562Z)**: **566/566** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
+- The current composition manifest expects **566/566** required capabilities.
 - Live baseline metrics ([`docs/LIVE_BASELINE.json`](docs/LIVE_BASELINE.json)) are host-sensitive measurements, not fixed promises.
 - Fast-path mean latency must remain below **1.0 ms**, deterministic throughput must remain at or above **1,000 frames/second**, and warmed state rewind p95 must remain below **0.1 ms**.
 - The full verification suite runs on every PR via [`.github/workflows/repo-protection-ci.yml`](.github/workflows/repo-protection-ci.yml).
