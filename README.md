@@ -603,55 +603,94 @@ To prevent code regression, file overwrites, and structural drift as new evoluti
 
 ## 📜 Current Evolutionary Changelog & Subsystem Synthesis Summary
 
-The latest evolution of **LUMI-JOY** represents an apex milestone in the **Architectural Knowledge Distillation & Deterministic Substrate Optimization (AKD-DSO)** methodology, scaling the framework to **586 verified single-responsibility components** in 100% optimal cohesion:
+The current evolutionary baseline of **LUMI-JOY** marks the realization of the **Grand Monolith Architecture**, synthesizing **586 single-responsibility components** in 100% optimal cohesion under the **Architectural Knowledge Distillation & Deterministic Substrate Optimization (AKD-DSO)** methodology.
 
 ```mermaid
 graph TD
-    A[Deterministic Tool Execution Segmenter] -->|Parallel Batches| B(Deterministic Batch Parallelism Scheduler)
-    A -->|Sequential Barriers| C(Mutating Tool Isolation Barrier)
-    A -->|Repetition Hashes| D(Escalating Loop Guardrail Firewall)
-    D -->|Allow / Warn / Block / Abort| E(BroccoliExecutionGuardSubstrate)
-    E -->|O 1 Sub-millisecond Rollback| F(ExecutionGuardSnapshotManager)
-    E -->|ANSI Terminal Dashboards| G(ToolExecutionGuardDashboardModal)
-    E -->|Model Tool Layer| H(ToolExecutionGuardToolSuite)
-    E -->|Multi-Format Exporters| I(HTML / Markdown / CSV Exporters)
-    
+    subgraph "Execution Pipeline & Guardrails"
+        A[Model Tool Batch Ingestion] --> B{DeterministicToolSegmenter}
+        B -->|Idempotent Reads| C[Parallel Execution Segment]
+        B -->|Mutating Operations| D[Sequential Barrier Boundary]
+        C & D --> E{Anti-Loop Firewall}
+        E -->|Canonical Hash Check| F[Policy Escalation Engine]
+        F -->|Allow / Warn / Block / Abort| G[BroccoliExecutionGuardSubstrate]
+    end
+
+    subgraph "BroccoliDB Hybrid Kernel & Time-Travel"
+        G --> H[(In-Memory Reactive Tables)]
+        H --> I[Append-Only WAL Journal]
+        H --> J[256-Way Sharded CAS Vault]
+        G -->|Sub-millisecond Rollback| K[ExecutionGuardSnapshotManager]
+    end
+
+    subgraph "Presentation & Tool Surfaces"
+        G --> L[ToolExecutionGuardDashboardModal]
+        G --> M[ToolExecutionGuardToolSuite 30 Tools]
+        G --> N[Multi-Format Exporters HTML/MD/CSV]
+        G --> O[Reactive Notification Dispatchers]
+    end
+
     style A fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
     style B fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
-    style C fill:#881337,stroke:#fb7185,stroke-width:2px,color:#f8fafc
-    style D fill:#7c2d12,stroke:#fb923c,stroke-width:2px,color:#f8fafc
-    style E fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
-    style F fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#f8fafc
-    style G fill:#312e81,stroke:#a78bfa,stroke-width:2px,color:#f8fafc
-    style H fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
-    style I fill:#0c4a6e,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style C fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style D fill:#881337,stroke:#fb7185,stroke-width:2px,color:#f8fafc
+    style E fill:#7c2d12,stroke:#fb923c,stroke-width:2px,color:#f8fafc
+    style F fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#f8fafc
+    style G fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style H fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#f8fafc
+    style I fill:#164e63,stroke:#22d3ee,stroke-width:2px,color:#f8fafc
+    style J fill:#3f3f46,stroke:#a1a1aa,stroke-width:2px,color:#f8fafc
+    style K fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style L fill:#312e81,stroke:#a78bfa,stroke-width:2px,color:#f8fafc
+    style M fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style N fill:#0c4a6e,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style O fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
 ```
 
-### 1. 🛡️ Deterministic Tool Execution Segmenter & Loop Guardrail Engine (Phase 94 / ADR-046 / Target #85)
-- **Batch Parallelism Scheduler (`DeterministicToolSegmenter`)**: Dynamically analyzes tool invocation batches to aggregate read-only idempotent tools (`read_file`, `search_files`, `tool_search`, etc.) into high-velocity parallel batch segments while enforcing strict single-call sequential barriers around mutating operations (`write_file`, `patch`, `terminal`, etc.).
-- **Escalating Anti-Loop Guardrail Firewall**: Implemented deterministic 4-stage policy escalation (`allow` $\to$ `warn` $\to$ `block_synthetic` $\to$ `abort_turn`) using canonical SHA-256 tool parameter hashing with key sorting, completely eliminating infinite retry oscillations.
-- **Broccolidb Hybrid In-Memory Persistence & $O(1)$ Time-Travel**: Zero-GC substrate memory table persistence with sub-millisecond snapshot rewind (`ExecutionGuardSnapshotManager`, $<0.05\text{ ms}$ verified SLA) for instant state restoration on loop violations.
-- **Comprehensive 30-Tool Model Surface (`ToolExecutionGuardToolSuite`)**: Exposes fine-grained inspection, dynamic policy threshold updating, multi-criteria swimlane grouping, natural language DSL querying, and atomic bulk purges with undo/redo capabilities.
-- **Interactive TUI Dashboard Modal (`ToolExecutionGuardDashboardModal`)**: Rich terminal user interface supporting real-time navigation across overview metrics, execution plans, violation ledgers, health matrices, and raw dumps.
-- **Multi-Format Telemetry Exporters**: Integrated instant generation of HTML interactive dashboards, Markdown postmortem reports, and CSV audit logs.
+### 📊 Subsystem Evolution & Synthesis Matrix
 
-### 2. 🗄️ Relational Topologies, Multi-Modal Indexing & Hybrid In-Memory BroccoliDB Kernel (Phases 71–73 / ADR-120–122)
-- **Declarative Relational Topologies & Joins (`BroccoliRelationEngine`)**: Built-in `defineRelation` (`belongsTo`, `hasMany`, `hasOne`), nested index-accelerated join resolutions, and cascade policies (`CASCADE`, `SET_NULL`, `RESTRICT`).
+| Subsystem / Pillar | Core Extension Engine | Storage & Snapshot Substrate | Phase / ADR | Key Capabilities & Technical Advantages |
+|---|---|---|---|---|
+| **🛡️ Tool Execution Guard & Batch Scheduler** | `DeterministicToolSegmenter`, `ToolExecutionGuardSupervisor` | `BroccoliExecutionGuardSubstrate`, `ExecutionGuardSnapshotManager` | Phase 94 / [ADR-046](.wiki/adr/ADR-046-deterministic-tool-execution-segmenter.md) | Batch parallelism scheduling for read-only tools, mutating sequential barrier isolation, 4-stage escalating loop prevention, and $<0.05\text{ ms}$ SLA snapshot rewind. |
+| **🗄️ BroccoliDB Relational & Branching Kernel** | `BroccoliDatabaseKernel`, `BroccoliRelationEngine`, `BroccoliAggregateEngine` | `BroccoliWriteAheadLog`, `BroccoliCASStorageService`, `BroccoliDbTable<T>` | Phases 71–73 / [ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)–[ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md) | In-memory reactive tables with $<0.5\ \mu\text{s}$ indexing, declarative joins with cascade policies, multi-dimensional statistical aggregations, and Git-for-data table branching. |
+| **🧠 Byte-Stable Prompt Cache Boundary** | `DeterministicPromptCacher`, `PromptCacheSupervisor` | `BroccoliPromptCacheSubstrate`, `PromptCacheSnapshotManager` | Phase 93 / [ADR-045](.wiki/adr/ADR-045-deterministic-prompt-cache-boundary.md) | 4-breakpoint byte-stable prompt layout isolating system axioms, persona ethos, and active schemas to guarantee 100% prefix cache retention across turns. |
+| **🔍 Coding Verification Evidence Ledger** | `DeterministicEvidenceLedger`, `VerificationEvidenceSupervisor` | `BroccoliEvidenceSubstrate`, `EvidenceSnapshotManager` | Phase 92 / [ADR-044](.wiki/adr/ADR-044-deterministic-verification-evidence-ledger.md) | Turn-by-turn verification evidence recording, automated code path classification, and fail-closed stop-gate completion policies. |
+| **🔒 Secret Redactor & Sensitive Path Firewall** | `DeterministicSecretRedactor`, `SecretRedactionSupervisor` | `BroccoliRedactionSubstrate`, `RedactionSnapshotManager` | Phase 95 / [ADR-047](.wiki/adr/ADR-047-deterministic-secret-redaction-and-path-safety.md) | Entropy-based token scrubbing, query/body masking, suffix-preservation rules, and sensitive path access gating. |
+| **🖥️ Terminal UI Dashboard Modals & Renderers** | `BroccoliViewRenderer`, 30+ specialized TUI modal classes | `BroccoliSkinSubstrate`, `SkinSnapshotManager` | Phase 130 / [ADR-106](.wiki/adr/ADR-106-stream-diagnostics-and-forensic-header-capture.md) | Synchronized ANSI cell rendering (`\x1b[?2026h`), 30+ interactive terminal modal dashboards, and rich spreadsheet/kanban/diff views. |
+| **⚡ Attempt Completion Gate Strategy** | `RoadmapCompletionGate`, `AttemptFlightRecorder`, `CriterionScoreEvaluator` | `PersistentSessionStore`, `ArenaAllocator` | ADR-084 / [ADR-084](.wiki/adr/ADR-084-attempt-completion-gate-strategy.md) | Multi-phase gating lifecycle (`admission`, `in_flight`, `completion`, `postmortem`), direct quantitative criterion scoring, and zero-delta stagnation traps. |
+| **🏛️ Grand Monolith Synthesis** | `GrandMonolithSynthesizer`, `MonolithFactory`, `LumiMonolith` | Contiguous 16MB ArrayBuffer slab | Pass 192 / [ADR-012](.wiki/adr/ADR-012-non-destructive-osmosis-class-extension-strategy.md) | 586 verified single-responsibility components with zero circular dependencies, deep relative imports, and full dependency inversion. |
+
+---
+
+### 1. 🛡️ Deterministic Tool Execution Segmenter & Loop Guardrail Engine (Phase 94 / ADR-046 / Target #85)
+The **Tool Execution Segmenter & Loop Guardrail Engine** introduces an industrial-grade batch parallelism scheduler and anti-loop firewall into the agent execution loop:
+- **Batch Parallelism Scheduler**: Automatically segments multi-tool invocation arrays into high-velocity parallel batches for idempotent read operations (`read_file`, `search_files`, `ast_grep`, `tool_search`) while placing single-call sequential barriers around state-mutating operations (`write_file`, `patch`, `execute_command`).
+- **4-Stage Escalating Anti-Loop Firewall**: Tracks tool invocations using canonical SHA-256 parameter hashing with key sorting. When repetitive identical calls are detected, the policy escalates deterministically:
+  $$\text{allow} \xrightarrow{\text{repeat } \ge 2} \text{warn} \xrightarrow{\text{repeat } \ge 3} \text{block\_synthetic} \xrightarrow{\text{repeat } \ge 5} \text{abort\_turn}$$
+- **BroccoliDB Hybrid In-Memory Persistence & $O(1)$ Time-Travel**: Execution plans, violations, and policy configurations are persisted in-memory within Broccolidb tables with frame-level snapshotting (`ExecutionGuardSnapshotManager`), guaranteeing sub-millisecond state restoration ($<0.05\text{ ms}$ SLA) upon loop aborts.
+- **30-Tool Model Surface (`ToolExecutionGuardToolSuite`)**: Exposes programmatic inspection, dynamic threshold updates (`maxDuplicateExecutions`, `actionOnLimit`), multi-criteria swimlane grouping (`groupBy`), fluent DSL queries (`queryPlansDsl`), and bulk mutation purges with undo/redo capabilities.
+- **Interactive TUI Dashboard Modal (`ToolExecutionGuardDashboardModal`)**: Terminal UI dashboard with tabbed navigation across metrics, execution plan timelines, violation ledgers, health matrices, and raw inspection dumps.
+- **Multi-Format Telemetry Exporters**: One-click generation of interactive HTML visual dashboards, Markdown postmortem reports, and CSV audit logs.
+
+### 2. 🗄️ Apex & Zenith-Tier BroccoliDB Hybrid Kernel (Phases 71–73 / ADR-120–122)
+**BroccoliDB** provides a zero-dependency, pure TypeScript in-memory database kernel with hybrid persistence:
+- **Reactive In-Memory Tables (`BroccoliDbTable<T>`)**: Delivers $<0.5\ \mu\text{s}$ primary key and multi-modal secondary index lookups (sorted range binary-search indices, compound hash multi-maps, and prefix indices).
+- **Declarative Relational Topologies & Joins (`BroccoliRelationEngine`)**: Supports `belongsTo`, `hasMany`, and `hasOne` relations with nested index-accelerated join resolution and referential integrity cascade policies (`CASCADE`, `SET_NULL`, `RESTRICT`).
 - **Multi-Dimensional Aggregation Pipeline (`BroccoliAggregateEngine`)**: Single-pass statistical grouping (`groupBy`), metric accumulators (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`), and post-aggregation `HAVING` filters.
-- **Git-for-Data Table Branching & 3-Way Merge (`BroccoliBranchingEngine`)**: Isolated Copy-on-Write branches (`forkBranch`, `checkoutBranch`), 3-way merge conflict detection with resolution strategies (`LAST_WRITE_WINS`, `FAIL_ON_CONFLICT`, `TAKE_BRANCH`, `TAKE_MAIN`), and action-level Undo/Redo history stacks (`undo()`, `redo()`).
-- **Multi-Modal Indexing (`BroccoliDbTable<T>`)**: Sub-microsecond sorted range binary search indices, compound hash multi-maps, and prefix indices.
+- **Git-for-Data Table Branching & 3-Way Merge (`BroccoliBranchingEngine`)**: Isolated Copy-on-Write branches (`forkBranch`, `checkoutBranch`), 3-way conflict detection with resolution strategies (`LAST_WRITE_WINS`, `FAIL_ON_CONFLICT`, `TAKE_BRANCH`, `TAKE_MAIN`), and action-level Undo/Redo history stacks (`undo()`, `redo()`).
+- **Zero-Dependency 256-Way Sharded CAS & WAL**: Content-addressable storage with adaptive Brotli compression ($\ge 1024\text{B}$ with $\ge 10\%$ savings), SHA-256 verification, and append-only write-ahead logging with frame hash chaining.
 
 ### 3. 🧠 Byte-Stable Prompt Caching, Evidence Ledgers & Cognitive Governors (Phases 92–93 / ADR-044–045)
-- **Prompt Cache Boundary Calculator (`DeterministicPromptCacher`)**: 4-breakpoint byte-stable layout isolating static system axioms, personality ethos, and tool definitions to guarantee 100% provider prefix cache retention across multi-turn sessions.
-- **Verification Evidence Ledger (`DeterministicEvidenceLedger`)**: Real-time evidence tracking with stop-gate turn completion policies, automated code path classification, and epistemic session insights.
-- **Secret Redactor & Sensitive Path Firewall (`DeterministicSecretRedactor`)**: Zero-GC credential masking with suffix-preservation rules and sensitive path blocking.
+- **Prompt Cache Boundary Calculator (`DeterministicPromptCacher`)**: Enforces a strict 4-breakpoint byte-stable prompt envelope layout that isolates static system axioms, personality ethos, and tool definitions, ensuring 100% prefix prompt cache retention across multi-turn sessions and cutting LLM token input costs by up to 90%.
+- **Verification Evidence Ledger (`DeterministicEvidenceLedger`)**: Tracks turn-by-turn verification evidence, classifies code paths, and enforces fail-closed stop-gate policies to prevent incomplete agent completions.
+- **Secret Redactor & Sensitive Path Firewall (`DeterministicSecretRedactor`)**: Provides automated entropy-based secret scrubbing with query/body masking, suffix-preservation rules, and sensitive file path access blocks.
 
-### 4. 🖥️ Interactive ANSI TUI Modals & Reactive Dispatcher Layer (Phase 130 / ADR-106)
-- **30+ Specialized TUI Dashboard Modals**: Unified terminal interface components across execution guards, prompt caches, verification evidence, thread context, skill trees, memory graphs, billing metrics, diagnostic doctor, cron scheduling, and multi-agent swarm state.
-- **Reactive Notification Dispatchers**: Type-safe event-driven dispatchers (`SwarmNotificationDispatcher`, `CronNotificationDispatcher`, `SkillNotificationDispatcher`, `EmailNotificationDispatcher`) bridging async substrate events directly to the agent runtime.
+### 4. 🖥️ Interactive ANSI TUI Dashboard Modals & Reactive Dispatchers (Phase 130 / ADR-106)
+- **30+ Specialized Terminal Modal Dashboards**: Comprehensive terminal dashboards with synchronized `\x1b[?2026h` flicker-free updates, covering execution guards, prompt caches, verification evidence, thread context, skill trees, memory graphs, billing metrics, diagnostic doctor, cron scheduling, and multi-agent swarm state.
+- **Reactive Notification Dispatchers**: Type-safe event-driven dispatchers (`SwarmNotificationDispatcher`, `CronNotificationDispatcher`, `SkillNotificationDispatcher`, `EmailNotificationDispatcher`) bridging async substrate events directly into the agent runtime.
 
-### 5. 🏛️ Grand Monolith 586-Component Cohesion Synthesis
-- **586 Verified Single-Responsibility Components**: Zero circular dependencies, 100% strict TypeScript typing, deep relative imports without barrel files, and full dependency inversion verified by `GrandMonolithSynthesizer.verifyComposition()`.
+### 5. 🏛️ Grand Monolith 586-Component Cohesion & Zero-Barrel Architecture
+- **586 Single-Responsibility Components**: Verified by `GrandMonolithSynthesizer.verifyComposition()` with 100% strict TypeScript types, zero circular dependencies, deep relative imports without barrel files, and full dependency inversion across all agent, session, and tooling tiers.
 
 ---
 
