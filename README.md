@@ -302,9 +302,34 @@ graph LR
 
 ---
 
+### 🖥️ Interactive Terminal UI Preview
+
+```text
+┌─ 🌟 LUMI-JOY DETERMINISTIC ENGINE v0.1.0 ───────────────────────────────────────────┐
+│  Provider: OpenAI Codex (OAuth)  │ Model: gpt-5-codex     │ Slab: 16.00 MB [ALLOCATED]│
+│  Fast-Path Latency: 0.12 ms      │ Turn Speed: 8506 fps   │ Snapshots: 4 frames active│
+├───────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                       │
+│  👤 USER: Refactor user authentication in src/auth.ts to use PKCE device flow         │
+│                                                                                       │
+│  🤖 LUMI: [PLAN] Segmenting execution into 2 read passes and 1 sequential barrier     │
+│  ├── ⚡ [PARALLEL] read_file("src/auth.ts") & search_files("auth", "*.ts")          │
+│  ├── 🛡️ [GUARD] Tool Execution Segmenter: 0 loop violations detected (Status: OK)     │
+│  ├── ✍️ [MUTATION] applyAnchoredEdit("src/auth.ts", lineHash="a7f92b") -> PASS        │
+│  └── 🔍 [EVIDENCE] Verification Evidence: TypeScript compilation passed (0 errors)    │
+│                                                                                       │
+│  🤖 LUMI: ✅ PKCE device flow implemented successfully with POSIX 0600 token storage. │
+│                                                                                       │
+├───────────────────────────────────────────────────────────────────────────────────────┤
+│  [Prompt] > Type your instructions or /help (Press Ctrl+M for models, ? for keys)     │
+└───────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ### 📦 Step 1: Prerequisites & Installation
 
-LUMI-JOY is built as a zero-dependency, pure TypeScript monolith. Ensure you have **Node.js 20.19+** (or a compatible newer LTS release) installed:
+LUMI-JOY is built as a zero-dependency, pure TypeScript monolith without native C++ compilation bindings. Ensure you have **Node.js 20.19+** (or a compatible newer LTS release) and **Git** installed:
 
 ```bash
 # 1. Clone the repository
@@ -314,15 +339,15 @@ cd LUMI-JOY
 # 2. Install dependencies (pure TypeScript toolchain)
 npm install
 
-# 3. Compile the monolith
+# 3. Compile the monolith into dist/
 npm run build
 ```
 
 ---
 
-### 🔑 Step 2: Provider Authentication & Zero-Leak Security
+### 🔑 Step 2: Provider Authentication & Configuration Schema
 
-LUMI-JOY provides an interactive onboarding wizard to configure your preferred LLM provider:
+LUMI-JOY features a guided onboarding wizard to configure your preferred LLM providers and reasoning models:
 
 ```bash
 # Launch the interactive provider configuration wizard
@@ -331,13 +356,39 @@ npx tsx src/index.ts --setup
 # lumi --setup
 ```
 
-#### Supported Authentication Modes:
-1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in. Supports automatic localhost callback redirect listening (`http://localhost:1455/auth/callback`) or manual code/URL fallback.
-2. **Anthropic Claude**: Configure your `ANTHROPIC_API_KEY` for Claude 3.5 Sonnet and Opus models.
-3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, and reasoning models.
-4. **OpenAI-Compatible Custom Proxy**: Connect private corporate endpoints, Ollama, vLLM, or OpenRouter gateways.
+#### Supported Provider Authentication Options:
+1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in. Supports automatic localhost callback redirect listening (`http://localhost:1455/auth/callback`) or manual authorization code entry.
+2. **Anthropic Claude**: Configure your `ANTHROPIC_API_KEY` for Claude 3.5 Sonnet, Claude 3 Opus, and custom temperature settings.
+3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, and reasoning models (`o1`, `o3-mini`).
+4. **OpenAI-Compatible Custom Proxy**: Connect private corporate endpoints, Ollama, vLLM, DeepSeek, or OpenRouter gateways.
 
-> 🔒 **Security Guarantee**: All credentials and tokens are stored in `~/.lumi/config.json` with strict POSIX `0600` (user read/write only) permissions. Credentials are automatically scrubbed from streaming logs and memory dumps by `DeterministicSecretRedactor`.
+#### ⚙️ Configuration Storage Schema (`~/.lumi/config.json`)
+All settings and credentials are automatically persisted in restricted user storage with strict POSIX `0600` permissions:
+
+```json
+{
+  "provider": "codex",
+  "model": "gpt-5-codex",
+  "reasoningEffort": "high",
+  "temperature": 0.2,
+  "auth": {
+    "codex": {
+      "accessToken": "ey...",
+      "refreshToken": "ey...",
+      "accountId": "user-corp-12345",
+      "expiresAt": 1787123456789
+    },
+    "anthropic": {
+      "apiKey": "sk-ant-api03-..."
+    }
+  },
+  "guardrails": {
+    "maxDuplicateExecutions": 2,
+    "actionOnLimit": "block_synthetic",
+    "budgetFloorMicroCents": 500000
+  }
+}
+```
 
 ---
 
@@ -349,11 +400,12 @@ Experience the differential-rendering terminal interface with live activity time
 ```bash
 # Start the fullscreen interactive terminal shell
 npx tsx src/index.ts
-# or: lumi
+# or run the global binary if linked:
+# lumi
 ```
 
 #### Mode B: Direct CLI Execution (Single-Shot Turns)
-Execute autonomous pair programming tasks directly from your terminal or CI/CD pipelines:
+Execute autonomous pair programming tasks directly from your terminal, scripts, or CI/CD pipelines:
 
 ```bash
 # Run a single prompt directly from the CLI
@@ -417,7 +469,49 @@ The interactive terminal interface provides rich desktop-class keyboard controls
 
 ---
 
-### 🧪 Step 5: Verifying Workspace Health & Running Guardrails
+### ⏱️ Step 5: 60-Second Hands-On Walkthrough
+
+Try these 3 quick commands in the interactive shell to experience LUMI-JOY's unique deterministic powers:
+
+#### 1. Instant Application Synthesis & VFS Overlay
+```text
+> /flappy
+```
+*Result*: Materializes a complete 12-file temp-isolated React + TypeScript + Vite Flappy Bird application in the in-memory VFS with executable physics simulation.
+
+#### 2. Sub-Millisecond $O(1)$ State Time-Travel
+```text
+> /snapshots
+> /rewind 0
+```
+*Result*: Instantly rolls back the virtual file system, conversation transcript, and memory facts to Frame #0 in under $0.05\text{ ms}$ with zero state drift.
+
+#### 3. In-Memory BroccoliDB Relational Query
+```text
+> /db query "SELECT * FROM tool_execution_plans WHERE status = 'COMPLETED'"
+```
+*Result*: Queries in-memory reactive tables with $<0.5\ \mu\text{s}$ latency and displays a rich ANSI spreadsheet grid.
+
+---
+
+### 🌐 Step 6: Enterprise Environment Variables Reference
+
+You can override configuration settings using standard environment variables:
+
+| Environment Variable | Description | Default |
+|---|---|---|
+| `LUMI_MODEL` | Active LLM model name | `gpt-5-codex` or `claude-3-5-sonnet` |
+| `LUMI_PROVIDER` | Active provider (`codex`, `anthropic`, `openai`, `custom`) | `codex` |
+| `LUMI_REASONING_EFFORT` | Reasoning depth effort (`low`, `medium`, `high`, `max`) | `high` |
+| `LUMI_TEMPERATURE` | Model generation sampling temperature | `0.2` |
+| `OPENAI_API_KEY` | Direct OpenAI API key | `—` |
+| `ANTHROPIC_API_KEY` | Direct Anthropic Claude API key | `—` |
+| `LUMI_CONFIG_DIR` | Directory path for configuration & credentials | `~/.lumi` |
+| `LUMI_LOG_LEVEL` | Logging verbosity (`debug`, `info`, `warn`, `error`) | `info` |
+
+---
+
+### 🧪 Step 7: Verifying Workspace Health & Running Guardrails
 
 Ensure your local development environment passes all architectural guardrails and performance baselines:
 
@@ -442,7 +536,18 @@ The live measured baseline is recorded in [`docs/LIVE_BASELINE.json`](docs/LIVE_
 
 ---
 
-### 💡 Step 6: Next Steps & Architectural Guides
+### 🔧 Step 8: Onboarding Troubleshooting & Recovery Directives
+
+| Issue / Symptom | Root Cause | Immediate Recovery Action |
+|---|---|---|
+| **Port 1455 in use during OAuth** | Another local process bound to OAuth port | The CLI wizard automatically falls back to manual authorization code entry. Simply copy and paste the code from your browser. |
+| **Provider Rate Limit (429 / RPM)** | Upstream provider token exhaustion | LUMI-JOY automatically activates the tri-state circuit breaker (`healthy` $\to$ `cooldown`), applies Poisson jitter backoff, and routes requests to fallback models. |
+| **Permission Denied on File Edit** | Target path outside workspace boundary | Ensure paths reside within the workspace. Protected configuration directories can be explicitly allowlisted in `CommandPermissionController`. |
+| **Terminal ANSI Canvas Distortion** | Terminal emulator lacks synchronized update support | Press `Ctrl+L` to trigger an atomic screen repaint or run with standard streaming mode (`npx tsx src/index.ts --no-tui`). |
+
+---
+
+### 💡 Step 9: Next Steps & Architectural Guides
 
 - 🏛️ **Deep Architectural Blueprint**: Read the [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md).
 - 🧬 **The Distillation Journey**: Explore the [3-Tier Monolithic Heritage Matrix](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis).
