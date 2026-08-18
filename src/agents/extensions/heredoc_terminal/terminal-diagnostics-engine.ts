@@ -139,4 +139,18 @@ export class TerminalDiagnosticsEngine {
       rootCauseSummary: primaryHint ? primaryHint.title : `Non-zero exit code ${exitCode}`,
     };
   }
+
+  /**
+   * Formats terminal diagnostics into a concise human-readable string.
+   */
+  public formatTerminalDiagnostics(diagnostics: TerminalExecutionDiagnostics): string {
+    if (diagnostics.exitCode === 0) {
+      return "[TERMINAL-DIAGNOSTICS] Success (exit code 0)";
+    }
+    const cat = diagnostics.primaryHint ? diagnostics.primaryHint.category.toUpperCase() : "ERROR";
+    const hintStr = diagnostics.primaryHint?.suggestedCommand
+      ? ` -> Suggestion: \`${diagnostics.primaryHint.suggestedCommand}\``
+      : "";
+    return `[TERMINAL-DIAGNOSTICS:${cat}] Exit Code ${diagnostics.exitCode} (${diagnostics.rootCauseSummary})${hintStr}`;
+  }
 }

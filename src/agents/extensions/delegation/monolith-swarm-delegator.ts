@@ -2,6 +2,14 @@ import type {
   BatchDelegationResult,
   DelegationOutcome,
   ISwarmDelegator,
+  SwarmBulkMutationResult,
+  SwarmDslQueryFilter,
+  SwarmGroupBy,
+  SwarmGroupedLane,
+  SwarmHealthAuditReport,
+  SwarmMetricsReport,
+  SwarmSortBy,
+  SwarmSortDirection,
   SwarmTaskManifest,
   SwarmTaskStatus,
 } from "../../../core/contracts/delegation.contracts.js";
@@ -9,38 +17,49 @@ import { SubagentLifecycleGuard } from "./subagent-lifecycle-guard.js";
 import { SubagentBudgetGovernor } from "../../../sessions/extensions/delegation/subagent-budget-governor.js";
 import { SubagentVfsBrancher } from "../../../sessions/extensions/delegation/subagent-vfs-brancher.js";
 import { AnchoredWorktreeManager } from "../../../tooling/extensions/delegation/anchored-worktree-manager.js";
+import { BroccoliSwarmSubstrate } from "../../../sessions/extensions/delegation/broccoli-swarm-substrate.js";
+import type { SwarmDesktopNotificationDispatcher } from "../../../tooling/extensions/delegation/swarm-notification-dispatcher.js";
 
 /**
  * MonolithSwarmDelegator.
  * Absorbed under ADR-015 (AKD-DSO Osmosis Paradigm).
  *
  * Orchestrates autonomous subagent task dispatch, concurrent batch swarm execution,
- * copy-on-write VFS branching, and result aggregation with frame-level budget enforcement.
+ * copy-on-write VFS branching, and result aggregation with frame-level budget enforcement
+ * and reactive BroccoliDB persistence.
  */
 export class MonolithSwarmDelegator implements ISwarmDelegator {
   private readonly lifecycleGuard: SubagentLifecycleGuard;
   private readonly budgetGovernor: SubagentBudgetGovernor;
   private readonly vfsBrancher: SubagentVfsBrancher;
   private readonly worktreeManager: AnchoredWorktreeManager;
-
-  private readonly taskRegistry = new Map<string, SwarmTaskManifest>();
-  private readonly taskOutcomes = new Map<string, DelegationOutcome>();
+  private readonly substrate: BroccoliSwarmSubstrate;
   private currentTick = 0;
 
   constructor(
     lifecycleGuard = new SubagentLifecycleGuard(),
     budgetGovernor = new SubagentBudgetGovernor(),
     vfsBrancher = new SubagentVfsBrancher(),
-    worktreeManager = new AnchoredWorktreeManager()
+    worktreeManager = new AnchoredWorktreeManager(),
+    substrate = new BroccoliSwarmSubstrate()
   ) {
     this.lifecycleGuard = lifecycleGuard;
     this.budgetGovernor = budgetGovernor;
     this.vfsBrancher = vfsBrancher;
     this.worktreeManager = worktreeManager;
+    this.substrate = substrate;
   }
 
   setCurrentTick(tick: number): void {
     this.currentTick = tick;
+  }
+
+  public getSubstrate(): BroccoliSwarmSubstrate {
+    return this.substrate;
+  }
+
+  public getNotificationDispatcher(): SwarmDesktopNotificationDispatcher {
+    return this.substrate.getNotificationDispatcher();
   }
 
   async delegateTask(
@@ -52,6 +71,8 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
       allowedTools: this.lifecycleGuard.filterSubagentTools(manifestInput.allowedTools),
       status: "running",
       createdTick: this.currentTick,
+      createdAtMs: Date.now(),
+      updatedAtMs: Date.now(),
     };
 
     // 1. Guardrail validation
@@ -67,14 +88,39 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
         filesModified: [],
         error: spawnCheck.reason,
         auditedBy: "SubagentLifecycleGuard",
+        timestampMs: Date.now(),
       };
-      this.taskOutcomes.set(manifest.id, outcome);
+
+      this.substrate.storeTask({
+        ...manifest,
+        status: "failed",
+      });
+      this.substrate.recordOutcome(outcome);
+
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId: manifest.id,
+        parentTaskId: manifest.parentTaskId,
+        title: "Subagent Spawn Rejected",
+        message: spawnCheck.reason || "Rejected by lifecycle guardrail",
+        urgency: "critical",
+        trigger: "task_failed",
+      }).catch(() => {});
+
       return outcome;
     }
 
     // 2. Register task and allocate budget
-    this.taskRegistry.set(manifest.id, manifest);
+    this.substrate.storeTask(manifest);
     this.budgetGovernor.allocateBudget(manifest);
+
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId: manifest.id,
+      parentTaskId: manifest.parentTaskId,
+      title: "Subagent Delegated",
+      message: `Goal: ${manifest.goal.substring(0, 80)}`,
+      urgency: "normal",
+      trigger: "task_delegated",
+    }).catch(() => {});
 
     // 3. Create VFS branch overlay for isolation
     const parentSession = manifest.parentTaskId ?? "root-session";
@@ -94,8 +140,26 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
         filesModified: [],
         error: turnResult.reason,
         auditedBy: "SubagentBudgetGovernor",
+        timestampMs: Date.now(),
       };
-      this.taskOutcomes.set(manifest.id, outcome);
+
+      this.substrate.storeTask({
+        ...manifest,
+        status: "failed",
+        completedTick: this.currentTick,
+        updatedAtMs: Date.now(),
+      });
+      this.substrate.recordOutcome(outcome);
+
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId: manifest.id,
+        parentTaskId: manifest.parentTaskId,
+        title: "Subagent Budget Warning",
+        message: turnResult.reason || "Budget exhausted",
+        urgency: "critical",
+        trigger: "budget_warning",
+      }).catch(() => {});
+
       return outcome;
     }
 
@@ -116,15 +180,28 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
       durationMs: performance.now() - startTime,
       filesModified,
       auditedBy: "MonolithSwarmDelegator",
+      timestampMs: Date.now(),
     };
 
-    this.taskRegistry.set(manifest.id, {
+    const completedTask: SwarmTaskManifest = {
       ...manifest,
       status: "completed",
       completedTick: this.currentTick,
-    });
-    this.taskOutcomes.set(manifest.id, outcome);
+      updatedAtMs: Date.now(),
+    };
+
+    this.substrate.storeTask(completedTask);
+    this.substrate.recordOutcome(outcome);
     this.budgetGovernor.reclaimBudget(manifest.id);
+
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId: manifest.id,
+      parentTaskId: manifest.parentTaskId,
+      title: "Subagent Task Completed",
+      message: `Completed goal in ${(outcome.durationMs).toFixed(1)}ms`,
+      urgency: "normal",
+      trigger: "task_completed",
+    }).catch(() => {});
 
     return outcome;
   }
@@ -153,25 +230,28 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
   }
 
   getTaskStatus(taskId: string): SwarmTaskStatus | undefined {
-    return this.taskRegistry.get(taskId)?.status;
+    return this.substrate.getTask(taskId)?.status;
   }
 
   getTaskOutcome(taskId: string): DelegationOutcome | undefined {
-    return this.taskOutcomes.get(taskId);
+    const outcomes = this.substrate.getOutcomes(taskId, 1);
+    return outcomes[0];
   }
 
   abortTask(taskId: string, reason: string): boolean {
-    const task = this.taskRegistry.get(taskId);
+    const task = this.substrate.getTask(taskId);
     if (!task || task.status === "completed" || task.status === "aborted") {
       return false;
     }
 
-    this.taskRegistry.set(taskId, {
+    const abortedTask: SwarmTaskManifest = {
       ...task,
       status: "aborted",
       completedTick: this.currentTick,
-    });
+      updatedAtMs: Date.now(),
+    };
 
+    this.substrate.storeTask(abortedTask);
     this.vfsBrancher.discardBranchOverlay(taskId);
     this.budgetGovernor.reclaimBudget(taskId);
 
@@ -185,13 +265,83 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
       filesModified: [],
       error: reason,
       auditedBy: "MonolithSwarmDelegator",
+      timestampMs: Date.now(),
     };
-    this.taskOutcomes.set(taskId, outcome);
+
+    this.substrate.recordOutcome(outcome);
+
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId,
+      parentTaskId: task.parentTaskId,
+      title: "Subagent Task Aborted",
+      message: `Aborted: ${reason}`,
+      urgency: "critical",
+      trigger: "task_aborted",
+    }).catch(() => {});
 
     return true;
   }
 
   getRegisteredTaskCount(): number {
-    return this.taskRegistry.size;
+    return this.substrate.listTasks().length;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Substrate Facade Wrappers
+  // ---------------------------------------------------------------------------
+
+  public listTasks(statusFilter?: SwarmTaskStatus): readonly SwarmTaskManifest[] {
+    return this.substrate.listTasks(statusFilter);
+  }
+
+  public getTask(taskId: string): SwarmTaskManifest | undefined {
+    return this.substrate.getTask(taskId);
+  }
+
+  public auditSwarmHealth(parentTaskId?: string): SwarmHealthAuditReport {
+    return this.substrate.auditSwarmHealth(parentTaskId);
+  }
+
+  public getSwarmMetrics(): SwarmMetricsReport {
+    return this.substrate.getSwarmMetrics();
+  }
+
+  public getGroupedTasks(
+    groupBy?: SwarmGroupBy,
+    sortBy?: SwarmSortBy,
+    direction?: SwarmSortDirection
+  ): readonly SwarmGroupedLane[] {
+    return this.substrate.getGroupedTasks(groupBy, sortBy, direction);
+  }
+
+  public queryTasksDsl(query: SwarmDslQueryFilter | string): readonly SwarmTaskManifest[] {
+    return this.substrate.queryTasksDsl(query);
+  }
+
+  public bulkUpdateTasks(
+    taskIds: readonly string[],
+    updates: Partial<Pick<SwarmTaskManifest, "status" | "tags">>
+  ): SwarmBulkMutationResult {
+    return this.substrate.bulkUpdateTasks(taskIds, updates);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportInteractiveHtmlView(parentTaskId?: string): string {
+    return this.substrate.exportInteractiveHtmlView(parentTaskId);
+  }
+
+  public exportMarkdownReport(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsvReport(): string {
+    return this.substrate.exportCsvReport();
   }
 }

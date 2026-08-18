@@ -188,4 +188,14 @@ export class DeterministicToolDiscloser {
     this.toolCatalog.clear();
     this.initDefaultDeferredTools();
   }
+
+  formatToolDefinition(tool: DeferredToolDefinition): string {
+    const coreTag = tool.isCore ? "[CORE]" : "[DEFERRED]";
+    return `[TOOL:${tool.name}] ${coreTag} (${tool.namespace}) - ${tool.description} [tags: ${tool.tags.join(",")}]`;
+  }
+
+  formatDisclosureManifest(manifest: DisclosureManifest): string {
+    return `[DISCLOSURE-MANIFEST] Tier: ${manifest.activeTier.toUpperCase()} | Registered: ${manifest.totalRegistered} (Eager: ${manifest.eagerCount}, Deferred: ${manifest.deferredCount}) | Budget: ${manifest.tokenBudget} tok`;
+  }
 }
+

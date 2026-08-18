@@ -2,7 +2,7 @@
  * skill-linter.contracts.ts
  *
  * Core contracts, interfaces, and invariants for Deterministic Skill Tree Linter,
- * Frontmatter Conventions Verifier & Anti-Scaffolding Guard Subsystem (Phase 135 / ADR-111 / Target #68).
+ * Frontmatter Conventions Verifier & Anti-Scaffolding Guard Subsystem (Phase 135 / ADR-111 / Target #75).
  */
 
 export type SkillLintSeverity = "error" | "warning" | "info";
@@ -102,3 +102,148 @@ export const FORBIDDEN_SCAFFOLDING_FILES: string[] = [
   ".env.example",
   ".gitignore",
 ];
+
+// ---------------------------------------------------------------------------
+// Typed BroccoliDB Persistence Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface SkillLintReportRow {
+  skillName: string;
+  skillDir: string;
+  isValid: boolean;
+  errorCount: number;
+  warningCount: number;
+  findingsCount: number;
+  auditDurationMs: number;
+  timestamp: number;
+  [key: string]: unknown;
+}
+
+export interface SkillLintFindingRow {
+  id: string;
+  skillName: string;
+  ruleCode: SkillLintRuleCode;
+  severity: SkillLintSeverity;
+  message: string;
+  file?: string;
+  line?: number;
+  suggestedFix?: string;
+  timestamp: number;
+  [key: string]: unknown;
+}
+
+export interface SkillLintAuditRow {
+  auditId: string;
+  totalSkills: number;
+  cleanSkills: number;
+  totalErrors: number;
+  totalWarnings: number;
+  healthStatus: SkillLinterHealthStatus;
+  timestamp: number;
+  [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// Health Matrix & Telemetry Reports
+// ---------------------------------------------------------------------------
+
+export type SkillLinterHealthStatus = "optimal" | "healthy" | "degraded" | "critical";
+
+export interface SkillLinterHealthAuditReport {
+  totalSkillsAudited: number;
+  cleanSkillsCount: number;
+  totalErrorsFound: number;
+  totalWarningsFound: number;
+  complianceRatePercent: number;
+  healthStatus: SkillLinterHealthStatus;
+  recommendations: string[];
+}
+
+export interface SkillLinterMetricsReport {
+  totalSkillsAudited: number;
+  cleanSkillsCount: number;
+  totalErrorsFound: number;
+  totalWarningsFound: number;
+  avgAuditDurationMs: number;
+  errorsByRuleCode: Record<string, number>;
+  reportsByStatus: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Swimlane Grouping
+// ---------------------------------------------------------------------------
+
+export type SkillLinterGroupBy = "status" | "ruleCode" | "severity" | "directory";
+export type SkillLinterSortBy = "timestamp" | "skillName" | "errors" | "warnings";
+export type SkillLinterSortDirection = "asc" | "desc";
+
+export interface SkillLinterGroupedLane {
+  key: string;
+  title: string;
+  count: number;
+  reports: readonly SkillLintReport[];
+}
+
+// ---------------------------------------------------------------------------
+// Natural Query DSL Search
+// ---------------------------------------------------------------------------
+
+export interface SkillLinterDslQueryFilter {
+  rawQuery?: string;
+  valid?: boolean;
+  ruleCode?: SkillLintRuleCode;
+  severity?: SkillLintSeverity;
+  skillName?: string;
+  textTerms?: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo/Redo & Bulk Operations
+// ---------------------------------------------------------------------------
+
+export interface SkillLinterMutationUndoRecord {
+  mutationType: "add_report" | "bulk_purge" | "clear" | "config_change";
+  previousSnapshot: SkillLinterWorkspaceSnapshot;
+  nextSnapshot: SkillLinterWorkspaceSnapshot;
+  timestampMs: number;
+}
+
+export interface SkillLinterBulkMutationResult {
+  matchedCount: number;
+  modifiedCount: number;
+  affectedSkillNames: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Core Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliSkillLinterSubstrate {
+  recordReport(report: SkillLintReport): void;
+  getReport(skillName: string): SkillLintReport | undefined;
+  listReports(): readonly SkillLintReport[];
+  removeReport(skillName: string): boolean;
+  clear(): void;
+
+  auditHealth(): SkillLinterHealthAuditReport;
+  getMetrics(): SkillLinterMetricsReport;
+  getGroupedReports(
+    groupBy?: SkillLinterGroupBy,
+    sortBy?: SkillLinterSortBy,
+    direction?: SkillLinterSortDirection
+  ): readonly SkillLinterGroupedLane[];
+  queryReportsDsl(query: SkillLinterDslQueryFilter | string): readonly SkillLintReport[];
+
+  bulkPurgeReports(skillNames: readonly string[]): SkillLinterBulkMutationResult;
+  bulkPurgeInvalid(): SkillLinterBulkMutationResult;
+
+  undo(): boolean;
+  redo(): boolean;
+
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+
+  exportSnapshot(): SkillLinterWorkspaceSnapshot;
+  importSnapshot(snapshot: SkillLinterWorkspaceSnapshot): void;
+}

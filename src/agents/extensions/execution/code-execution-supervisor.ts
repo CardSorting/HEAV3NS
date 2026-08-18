@@ -1,92 +1,151 @@
 /**
  * code-execution-supervisor.ts
  *
- * Master Code Execution Supervisor coordinating in-memory sandboxed script execution,
- * tool bridge binding, and execution telemetry (Phase 83 / ADR-035).
+ * Master Code Execution Supervisor orchestrating sandboxed script execution,
+ * programmatic tool calling, security policy enforcement, and SLA health audits (Phase 82 / ADR-034).
  */
 
 import type {
   CodeExecutionLanguage,
-  CodeExecutionResult,
+  ExecutionBulkMutationResult,
+  ExecutionDslQueryFilter,
+  ExecutionGroupBy,
+  ExecutionGroupedLane,
+  ExecutionHealthAuditReport,
+  ExecutionMetricsReport,
   ExecutionRecord,
+  ExecutionSortBy,
+  ExecutionSortDirection,
   ExecutionWorkspaceSnapshot,
+  ProgrammaticToolCall,
   SandboxContext,
 } from "../../../core/contracts/execution.contracts.js";
-import {
-  DeterministicCodeExecutor,
-  type ToolDispatchFn,
-} from "../../../tooling/extensions/execution/deterministic-code-executor.js";
+import { DeterministicCodeExecutor } from "../../../tooling/extensions/execution/deterministic-code-executor.js";
 import { BroccoliExecutionSubstrate } from "../../../sessions/extensions/execution/broccoli-execution-substrate.js";
 
 export class CodeExecutionSupervisor {
-  private executor: DeterministicCodeExecutor;
-  private substrate: BroccoliExecutionSubstrate;
-  private toolDispatcher?: ToolDispatchFn;
-  private availableTools: string[];
+  private readonly executor: DeterministicCodeExecutor;
+  private readonly substrate: BroccoliExecutionSubstrate;
   private currentFrame: number;
+  private toolDispatcher?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+  private availableTools: readonly string[] = [];
 
-  constructor(executor: DeterministicCodeExecutor, substrate: BroccoliExecutionSubstrate) {
-    this.executor = executor;
-    this.substrate = substrate;
-    this.availableTools = [];
+  constructor(
+    executor?: DeterministicCodeExecutor,
+    substrate?: BroccoliExecutionSubstrate
+  ) {
+    this.executor = executor ?? new DeterministicCodeExecutor();
+    this.substrate = substrate ?? new BroccoliExecutionSubstrate();
     this.currentFrame = 1;
   }
 
-  /**
-   * Binds the in-process tool dispatcher for programmatic tool calling.
-   */
-  setToolDispatcher(dispatcher: ToolDispatchFn, availableTools: readonly string[]): void {
+  public setToolDispatcher(
+    dispatcher: (name: string, args: Record<string, unknown>) => Promise<unknown>,
+    tools: readonly string[] = []
+  ): void {
     this.toolDispatcher = dispatcher;
-    this.availableTools = [...availableTools];
+    this.availableTools = tools;
   }
 
-  /**
-   * Sets current frame index for telemetry records.
-   */
-  setFrameIndex(frame: number): void {
+  public setFrameIndex(frame: number): void {
     this.currentFrame = frame;
   }
 
   /**
-   * Executes a code snippet in the sandbox with direct tool invocation.
+   * Executes a code snippet in the sandbox environment.
    */
-  async executeScript(
+  public async executeCode(
     code: string,
     language: CodeExecutionLanguage = "javascript",
-    contextOverride?: Partial<SandboxContext>
-  ): Promise<CodeExecutionResult> {
-    const result = await this.executor.execute(
-      code,
-      this.toolDispatcher,
-      this.availableTools,
-      contextOverride,
-      language
-    );
-
-    const record: ExecutionRecord = {
-      id: `exec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      code,
-      language,
-      result,
-      createdFrame: this.currentFrame,
-      timestamp: Date.now(),
-    };
-
+    context: Partial<SandboxContext> = {},
+    toolHandler?: (name: string, args: Record<string, unknown>) => Promise<unknown>
+  ): Promise<ExecutionRecord> {
+    const record = await this.executor.executeCode(code, language, context, toolHandler);
     this.substrate.recordExecution(record);
-    return result;
+    return record;
   }
 
   /**
-   * Returns stats and history.
+   * Evaluates a runbook script with programmatic tool call capability.
    */
-  getStats(): ExecutionWorkspaceSnapshot {
+  public async evaluateScript(
+    script: string,
+    toolsAvailable: readonly string[] = []
+  ): Promise<ExecutionRecord> {
+    return this.executeCode(script, "javascript", {
+      maxToolCalls: toolsAvailable.length > 0 ? 50 : 0,
+      securityPolicy: "standard_ephemeral",
+    }, async (name, args) => {
+      return { status: "executed", tool: name, args };
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Queries & Diagnostics
+  // ---------------------------------------------------------------------------
+
+  public getExecution(id: string): ExecutionRecord | undefined {
+    return this.substrate.getExecution(id) ?? this.executor.getExecution(id);
+  }
+
+  public listExecutions(limit: number = 20): readonly ExecutionRecord[] {
+    return this.substrate.listExecutions(limit);
+  }
+
+  public listToolCalls(executionId?: string, limit: number = 50): readonly ProgrammaticToolCall[] {
+    return this.substrate.listToolCalls(executionId, limit);
+  }
+
+  public auditHealth(): ExecutionHealthAuditReport {
+    return this.substrate.auditExecutionHealth();
+  }
+
+  public getMetrics(): ExecutionMetricsReport {
+    return this.substrate.getExecutionMetrics();
+  }
+
+  public getGroupedExecutions(groupBy?: ExecutionGroupBy, sortBy?: ExecutionSortBy, direction?: ExecutionSortDirection): readonly ExecutionGroupedLane[] {
+    return this.substrate.getGroupedExecutions(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: ExecutionDslQueryFilter | string): readonly ExecutionRecord[] {
+    return this.substrate.queryExecutionsDsl(query);
+  }
+
+  public bulkPurge(executionIds: readonly string[]): ExecutionBulkMutationResult {
+    this.executor.bulkPurgeRecords(executionIds);
+    return this.substrate.bulkPurgeRecords(executionIds);
+  }
+
+  public getStats(): ExecutionWorkspaceSnapshot {
     return this.substrate.exportSnapshot();
   }
 
-  /**
-   * Lists historical execution records.
-   */
-  listHistory(limit: number = 20): readonly ExecutionRecord[] {
-    return this.substrate.listExecutions(limit);
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getExecutor(): DeterministicCodeExecutor {
+    return this.executor;
+  }
+
+  public getSubstrate(): BroccoliExecutionSubstrate {
+    return this.substrate;
   }
 }

@@ -45,6 +45,11 @@ export class LearningSnapshotManager {
     return frame;
   }
 
+  public createSnapshot(frameId: number | string): LearningSnapshotFrame {
+    const numericId = typeof frameId === "number" ? frameId : parseInt(frameId.replace(/[^0-9]/g, "") || "0", 10);
+    return this.captureFrame(numericId);
+  }
+
   /**
    * Rewinds the substrate to the exact state at frameId in O(1) time.
    */
@@ -54,6 +59,15 @@ export class LearningSnapshotManager {
 
     this.substrate.restoreSnapshot(frame.snapshot);
     return true;
+  }
+
+  public restoreSnapshot(frameIdOrSnapshot: number | string | KnowledgeGraphSnapshot): boolean {
+    if (typeof frameIdOrSnapshot === "object" && frameIdOrSnapshot !== null) {
+      this.substrate.restoreSnapshot(frameIdOrSnapshot);
+      return true;
+    }
+    const numericId = typeof frameIdOrSnapshot === "number" ? frameIdOrSnapshot : parseInt(frameIdOrSnapshot.replace(/[^0-9]/g, "") || "0", 10);
+    return this.rewindToFrame(numericId);
   }
 
   public getHistory(): readonly LearningSnapshotFrame[] {

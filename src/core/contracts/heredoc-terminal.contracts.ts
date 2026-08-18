@@ -3,7 +3,7 @@
  *
  * Core contracts, enums, interfaces, and regex patterns for Conservative Shell Heredoc
  * Sanitization, Subshell Trap Interception, Multi-Line Terminal Execution, and Actionable
- * Terminal Diagnostics (Phase 110 / ADR-086 / Target #43).
+ * Terminal Diagnostics (Phase 110 / ADR-086 / Target #86).
  */
 
 export type HeredocInterpreterType =
@@ -139,6 +139,22 @@ export interface HeredocSanitizationLogRecord {
   readonly riskLevel: CommandRiskLevel;
 }
 
+export interface HeredocTerminalConfig {
+  readonly maxLogHistory: number;
+  readonly maxDiagnosticsHistory: number;
+  readonly maxMaskedLength: number;
+  readonly enableStrictForkBombGuard: boolean;
+  readonly allowQuotedHeredocsOnly: boolean;
+}
+
+export const DEFAULT_HEREDOC_TERMINAL_CONFIG: HeredocTerminalConfig = {
+  maxLogHistory: 500,
+  maxDiagnosticsHistory: 200,
+  maxMaskedLength: 100000,
+  enableStrictForkBombGuard: true,
+  allowQuotedHeredocsOnly: false,
+};
+
 export interface HeredocTerminalWorkspaceSnapshot {
   readonly snapshotId: string;
   readonly timestamp: number;
@@ -148,4 +164,127 @@ export interface HeredocTerminalWorkspaceSnapshot {
   readonly totalDiagnosticsGenerated: number;
   readonly recentLogs: readonly HeredocSanitizationLogRecord[];
   readonly recentDiagnostics: readonly TerminalExecutionDiagnostics[];
+}
+
+// ---------------------------------------------------------------------------
+// Hybrid BroccoliDB Row Schemas & SLA Health Reporting
+// ---------------------------------------------------------------------------
+
+export interface HeredocSanitizationRow {
+  readonly recordId: string;
+  readonly originalCommandPreview: string;
+  readonly sanitizedCommandPreview: string;
+  readonly hasHeredocs: boolean;
+  readonly maskedBodiesCount: number;
+  readonly riskLevel: CommandRiskLevel;
+  readonly hadAmbiguity: boolean;
+  readonly latencyMs: number;
+  readonly timestamp: number;
+}
+
+export interface HeredocDiagnosticRow {
+  readonly diagId: string;
+  readonly exitCode: number;
+  readonly category: TerminalDiagnosticCategory;
+  readonly title: string;
+  readonly rootCauseSummary: string;
+  readonly isRecoverable: boolean;
+  readonly executionTimeMs: number;
+  readonly timestamp: number;
+}
+
+export interface HeredocAuditRow {
+  readonly auditId: string;
+  readonly timestamp: number;
+  readonly totalSanitizations: number;
+  readonly totalMaskedBodies: number;
+  readonly totalDangerousCommandsBlocked: number;
+  readonly totalDiagnosticsGenerated: number;
+  readonly healthStatus: HeredocTerminalHealthStatus;
+}
+
+export type HeredocTerminalHealthStatus = "optimal" | "healthy" | "degraded" | "critical";
+
+export interface HeredocTerminalHealthAuditReport {
+  readonly timestamp: number;
+  readonly healthStatus: HeredocTerminalHealthStatus;
+  readonly totalSanitizations: number;
+  readonly totalMaskedBodies: number;
+  readonly totalDangerousCommandsBlocked: number;
+  readonly totalDiagnosticsGenerated: number;
+  readonly avgSanitizationLatencyMs: number;
+  readonly cleanRatioPercent: number;
+  readonly recommendations: readonly string[];
+}
+
+export interface HeredocTerminalMetricsReport {
+  readonly totalSanitizations: number;
+  readonly totalMaskedBodies: number;
+  readonly totalDangerousCommandsBlocked: number;
+  readonly totalDiagnosticsGenerated: number;
+  readonly riskLevelBreakdown: Record<CommandRiskLevel, number>;
+  readonly diagnosticCategoryBreakdown: Record<TerminalDiagnosticCategory, number>;
+  readonly avgSanitizationLatencyMs: number;
+}
+
+export type HeredocTerminalGroupBy = "riskLevel" | "category" | "hasHeredocs";
+export type HeredocTerminalSortBy = "timestamp" | "latencyMs" | "commandLength";
+export type HeredocTerminalSortDirection = "asc" | "desc";
+
+export interface HeredocTerminalGroupedLane {
+  readonly laneKey: string;
+  readonly label: string;
+  readonly count: number;
+  readonly records: readonly HeredocSanitizationRow[];
+}
+
+export interface HeredocTerminalDslQueryFilter {
+  readonly risk?: CommandRiskLevel;
+  readonly category?: TerminalDiagnosticCategory;
+  readonly hasHeredocs?: boolean;
+  readonly query?: string;
+}
+
+export interface HeredocTerminalMutationUndoRecord {
+  readonly mutationId: string;
+  readonly timestamp: number;
+  readonly action: string;
+  readonly snapshot: HeredocTerminalWorkspaceSnapshot;
+}
+
+export interface HeredocTerminalBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly deletedIds: readonly string[];
+}
+
+export interface IBroccoliHeredocTerminalSubstrate {
+  recordSanitization(record: HeredocSanitizationLogRecord, originalCommand?: string, sanitizedCommand?: string): void;
+  recordDiagnostic(diag: TerminalExecutionDiagnostics): void;
+  getRecentLogs(): readonly HeredocSanitizationLogRecord[];
+  getRecentDiagnostics(): readonly TerminalExecutionDiagnostics[];
+  getConfig(): HeredocTerminalConfig;
+  updateConfig(patch: Partial<HeredocTerminalConfig>): void;
+  clear(): void;
+
+  exportSnapshot(): HeredocTerminalWorkspaceSnapshot;
+  importSnapshot(snapshot: HeredocTerminalWorkspaceSnapshot): void;
+
+  auditHealth(): HeredocTerminalHealthAuditReport;
+  getMetricsReport(): HeredocTerminalMetricsReport;
+  getGroupedRecords(
+    groupBy?: HeredocTerminalGroupBy,
+    sortBy?: HeredocTerminalSortBy,
+    direction?: HeredocTerminalSortDirection
+  ): readonly HeredocTerminalGroupedLane[];
+  queryRecordsDsl(query: HeredocTerminalDslQueryFilter | string): readonly HeredocSanitizationRow[];
+
+  bulkPurgeRecords(recordIds: readonly string[]): HeredocTerminalBulkMutationResult;
+
+  undo(): boolean;
+  redo(): boolean;
+
+  exportHtml(): string;
+  exportMarkdown(): string;
+  exportCsv(): string;
 }

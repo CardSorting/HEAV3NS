@@ -47,15 +47,24 @@ export class SoulSnapshotManager {
   }
 
   /**
-   * Restores the active soul substrate state to a previously captured snapshot.
+   * Restores the active soul substrate state to a previously captured snapshot or frame index.
    */
-  restoreSnapshot(snapshot: SoulSnapshot): boolean {
-    const computedChecksum = this.parser.computeSoulHash(snapshot.manifest);
-    if (computedChecksum !== snapshot.checksum) {
+  restoreSnapshot(snapshotOrFrame: SoulSnapshot | number): boolean {
+    let targetSnapshot: SoulSnapshot | undefined;
+    if (typeof snapshotOrFrame === "number") {
+      targetSnapshot = this.snapshotHistory.find((s) => s.frameIndex === snapshotOrFrame);
+    } else {
+      targetSnapshot = snapshotOrFrame;
+    }
+
+    if (!targetSnapshot) return false;
+
+    const computedChecksum = this.parser.computeSoulHash(targetSnapshot.manifest);
+    if (computedChecksum !== targetSnapshot.checksum) {
       return false; // Snapshot corrupted
     }
 
-    this.substrate.setActiveManifest(snapshot.manifest);
+    this.substrate.setActiveManifest(targetSnapshot.manifest);
     return true;
   }
 

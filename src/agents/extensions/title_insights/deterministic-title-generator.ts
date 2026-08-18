@@ -20,7 +20,7 @@ import {
 
 export class DeterministicTitleGenerator {
   /**
-   * Strip machine-authored control wrappers from user messages.
+   * Strip machine-authored control wrappers and machine prefixes from messages.
    * Handles nested wrappers recursively up to safety bounds.
    */
   public stripControlWrappers(text: string): string {
@@ -28,27 +28,27 @@ export class DeterministicTitleGenerator {
     let current = text.trim();
 
     // Multi-pass stripping to unwrap nested tags
-    for (let pass = 0; pass < CONTROL_WRAPPERS.length * 2; pass++) {
-      let stripped = current;
-      for (const [openTag, closeTag] of CONTROL_WRAPPERS) {
-        if (stripped.toLowerCase().startsWith(openTag)) {
-          const endIdx = stripped.toLowerCase().indexOf(closeTag);
-          if (endIdx === -1) {
-            stripped = stripped.slice(openTag.length).trim();
-          } else {
-            const inner = stripped.slice(openTag.length, endIdx).trim();
-            const rest = stripped.slice(endIdx + closeTag.length).trim();
-            stripped = (rest || inner).trim();
-          }
-          break;
+    for (const [openTag, closeTag] of CONTROL_WRAPPERS) {
+      while (current.toLowerCase().includes(openTag)) {
+        const start = current.toLowerCase().indexOf(openTag);
+        const end = current.toLowerCase().indexOf(closeTag, start);
+        if (end !== -1) {
+          const before = current.slice(0, start).trim();
+          const after = current.slice(end + closeTag.length).trim();
+          current = `${before} ${after}`.trim();
+        } else {
+          current = current.slice(0, start).trim();
         }
       }
-      if (stripped === current) {
-        break;
-      }
-      current = stripped;
     }
-    return current;
+
+    for (const prefix of MACHINE_PREFIXES) {
+      while (current.includes(prefix)) {
+        current = current.replace(prefix, " ").trim();
+      }
+    }
+
+    return current.replace(/\s+/g, " ").trim();
   }
 
   /**
@@ -164,7 +164,8 @@ export class DeterministicTitleGenerator {
    */
   public cleanTitle(text: string, maxChars = MAX_MODEL_TITLE_CHARS): string | null {
     if (!text) return null;
-    let title = text.replace(/\s+/g, " ").trim();
+    let title = this.stripControlWrappers(text);
+    title = title.replace(/\s+/g, " ").trim();
     title = title.replace(/^["']|["']$/g, "").trim();
 
     if (title.toLowerCase().startsWith("title:")) {

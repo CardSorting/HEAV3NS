@@ -177,8 +177,32 @@ export class ProfileSupervisor {
   /**
    * Retrieves a profile by ID or fuzzy alias.
    */
-  public getProfile(query: string): ProfileDescriptor | undefined {
-    return this.substrate.resolveProfileOrFuzzy(query).profile;
+  public getProfile(query: string, resolveInheritance: boolean = false): { success: boolean; profile?: ProfileDescriptor; error?: string } {
+    const raw = this.substrate.resolveProfileOrFuzzy(query).profile;
+    if (!raw) {
+      return { success: false, error: `Profile '${query}' not found` };
+    }
+    if (resolveInheritance) {
+      const res = this.getEffectiveProfile(raw.id);
+      return { success: true, profile: res.effective, error: res.error };
+    }
+    return { success: true, profile: raw };
+  }
+
+  public bindSession(sessionId: string, profileId: string): boolean {
+    return this.substrate.bindSession(sessionId, profileId);
+  }
+
+  public unbindSession(sessionId: string): boolean {
+    return this.substrate.unbindSession(sessionId);
+  }
+
+  public exportProfileBundle(profileId: string) {
+    return this.exportProfile(profileId);
+  }
+
+  public importProfileBundle(bundle: ProfileExportBundle) {
+    return this.importProfile(bundle);
   }
 
   /**
@@ -404,10 +428,11 @@ export class ProfileSupervisor {
     // /profile show [profile_id]
     if (subCmd === "show" || subCmd === "inspect" || subCmd === "info") {
       const targetId = parts[2] || this.substrate.getSessionProfile(sessionId).id;
-      const profile = this.getProfile(targetId);
-      if (!profile) {
+      const profileRes = this.getProfile(targetId);
+      if (!profileRes.success || !profileRes.profile) {
         return { success: false, output: `Profile '${targetId}' not found` };
       }
+      const profile = profileRes.profile;
       const { effective, inheritanceChain } = this.getEffectiveProfile(profile.id);
       const out = [
         `\x1b[1;36m=== Profile: ${profile.icon || "📋"} ${profile.name} (${profile.id}) ===\x1b[0m`,
@@ -509,5 +534,53 @@ export class ProfileSupervisor {
         `  /profile fav [id]          - Star/unstar a profile as favorite`,
       ].join("\n"),
     };
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedProfiles(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedProfiles(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryProfilesDsl(query);
+  }
+
+  public bulkPurge(profileIds: readonly string[]) {
+    return this.substrate.bulkPurgeProfiles(profileIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliProfileSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicProfileEngine {
+    return this.engine;
   }
 }

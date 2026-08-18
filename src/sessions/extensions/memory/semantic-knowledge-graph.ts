@@ -80,6 +80,19 @@ export class SemanticKnowledgeGraph {
     this.inEdges.set(edge.target, inList);
   }
 
+  public removeEdge(source: string, target: string, relation?: string): boolean {
+    const outList = this.outEdges.get(source) || [];
+    const inList = this.inEdges.get(target) || [];
+
+    const outIdx = outList.findIndex((e) => e.target === target && (!relation || e.relation === relation));
+    const inIdx = inList.findIndex((e) => e.source === source && (!relation || e.relation === relation));
+
+    if (outIdx !== -1) outList.splice(outIdx, 1);
+    if (inIdx !== -1) inList.splice(inIdx, 1);
+
+    return outIdx !== -1 || inIdx !== -1;
+  }
+
   public getNeighbors(id: string): KnowledgeNode[] {
     const outList = this.outEdges.get(id) || [];
     const inList = this.inEdges.get(id) || [];
@@ -187,10 +200,15 @@ export class SemanticKnowledgeGraph {
   public importSnapshot(snapshot: KnowledgeGraphSnapshot): void {
     this.clear();
     for (const node of snapshot.nodes) {
-      this.addNode({ ...node });
+      this.nodes.set(node.id, node);
+      this.outEdges.set(node.id, []);
+      this.inEdges.set(node.id, []);
     }
     for (const edge of snapshot.edges) {
-      this.addEdge({ ...edge });
+      const outList = this.outEdges.get(edge.source);
+      const inList = this.inEdges.get(edge.target);
+      if (outList) outList.push(edge);
+      if (inList) inList.push(edge);
     }
   }
 

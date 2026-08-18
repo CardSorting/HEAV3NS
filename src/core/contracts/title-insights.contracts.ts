@@ -209,3 +209,155 @@ export const MACHINE_PREFIXES = [
 export const MAX_DERIVED_TITLE_CHARS = 48;
 export const MAX_TITLE_INPUT_CHARS = 1000;
 export const MAX_MODEL_TITLE_CHARS = 80;
+
+// ---------------------------------------------------------------------------
+// Typed BroccoliDB Persistence Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface SessionTitleRow {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly title: string;
+  readonly provenance: SessionTitleProvenance;
+  readonly costUsd: number;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface SessionActivityEventRow {
+  readonly id: string;
+  readonly eventId: string;
+  readonly sessionId: string;
+  readonly eventType: string;
+  readonly platform: string;
+  readonly model: string;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+export interface InsightSummaryRow {
+  readonly id: string;
+  readonly generatedAt: number;
+  readonly totalSessions: number;
+  readonly totalCostUsd: number;
+  readonly totalTokens: number;
+  readonly [key: string]: unknown;
+}
+
+export interface TitleAuditRow {
+  readonly id: string;
+  readonly action: string;
+  readonly operator: string;
+  readonly details: string;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// SLA Health & Metrics Telemetry
+// ---------------------------------------------------------------------------
+
+export type TitleInsightsHealthStatus =
+  | "optimal"
+  | "healthy"
+  | "degraded"
+  | "critical_desync";
+
+export interface TitleInsightsHealthAuditReport {
+  readonly totalTitles: number;
+  readonly totalActivityEvents: number;
+  readonly derivedTitlesCount: number;
+  readonly llmTitlesCount: number;
+  readonly userTitlesCount: number;
+  readonly healthStatus: TitleInsightsHealthStatus;
+  readonly recommendations: readonly string[];
+}
+
+export interface TitleInsightsMetricsReport {
+  readonly totalTitles: number;
+  readonly userCustomTitles: number;
+  readonly llmUpgradedTitles: number;
+  readonly instantDerivedTitles: number;
+  readonly totalActivityEvents: number;
+  readonly totalCostUsd: number;
+  readonly totalTokens: number;
+  readonly averageLatencyMs: number;
+  readonly p50LatencyMs: number;
+  readonly p95LatencyMs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Grouping & Swimlanes
+// ---------------------------------------------------------------------------
+
+export type TitleInsightsGroupBy = "provenance" | "language" | "model" | "costTier";
+
+export type TitleInsightsSortBy = "title" | "recent" | "cost" | "latency";
+
+export type TitleInsightsSortDirection = "asc" | "desc";
+
+export interface TitleInsightsGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly titles: readonly SessionTitleRecord[];
+}
+
+// ---------------------------------------------------------------------------
+// Natural Query DSL Search Engine
+// ---------------------------------------------------------------------------
+
+export interface TitleInsightsDslQueryFilter {
+  readonly rawQuery: string;
+  readonly provenance?: SessionTitleProvenance;
+  readonly model?: string;
+  readonly minCostUsd?: number;
+  readonly maxCostUsd?: number;
+  readonly textTerms?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo / Redo & Bulk Mutations
+// ---------------------------------------------------------------------------
+
+export interface TitleInsightsMutationUndoRecord {
+  readonly mutationType: "set_title" | "delete_title" | "record_event" | "bulk";
+  readonly previousSnapshot: TitleInsightsWorkspaceSnapshot;
+  readonly nextSnapshot: TitleInsightsWorkspaceSnapshot;
+  readonly timestampMs: number;
+}
+
+export interface TitleInsightsBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly affectedSessionIds: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliTitleInsightsSubstrate {
+  setTitle(record: SessionTitleRecord): void;
+  getTitle(sessionId: string): SessionTitleRecord | undefined;
+  listTitles(): readonly SessionTitleRecord[];
+  deleteTitle(sessionId: string): boolean;
+  recordActivityEvent(event: SessionActivityEvent): void;
+  listActivityEvents(sessionId?: string): readonly SessionActivityEvent[];
+  generateInsightsReport(dateRangeDays?: number, sourceFilter?: string): ConversationInsightsReport;
+  getMetrics(): TitleInsightsMetricsReport;
+  auditHealth(): TitleInsightsHealthAuditReport;
+  getGroupedTitles(groupBy?: TitleInsightsGroupBy, sortBy?: TitleInsightsSortBy, direction?: TitleInsightsSortDirection): readonly TitleInsightsGroupedLane[];
+  queryTitlesDsl(query: TitleInsightsDslQueryFilter | string): readonly SessionTitleRecord[];
+  bulkPurgeTitles(sessionIds: readonly string[]): TitleInsightsBulkMutationResult;
+  undo(): boolean;
+  redo(): boolean;
+  exportSnapshot(): TitleInsightsWorkspaceSnapshot;
+  importSnapshot(snapshot: TitleInsightsWorkspaceSnapshot): void;
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+  clear(): void;
+}
+

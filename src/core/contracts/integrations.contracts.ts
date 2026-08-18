@@ -195,3 +195,186 @@ export interface IntegrationsSubstrateSnapshot {
   readonly config: IntegrationsSkillConfig;
   readonly timestamp: number;
 }
+
+// ---------------------------------------------------------------------------
+// Typed BroccoliDB Persistence Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface IntegrationConnectionRow {
+  readonly id: string;
+  readonly connectionId: string;
+  readonly provider: string;
+  readonly name: string;
+  readonly category: string;
+  readonly authType: string;
+  readonly isConnected: boolean;
+  readonly isMock: boolean;
+  readonly totalRequests: number;
+  readonly errorCount: number;
+  readonly createdAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface UnifiedIssueRow {
+  readonly id: string;
+  readonly title: string;
+  readonly status: string;
+  readonly priority: string;
+  readonly sourceService: string;
+  readonly sourceId: string;
+  readonly createdAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface IntegrationRecipeRow {
+  readonly id: string;
+  readonly recipeId: string;
+  readonly title: string;
+  readonly category: string;
+  readonly triggerEvent: string;
+  readonly isInstalled: boolean;
+  readonly executionCount: number;
+  readonly createdAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface IntegrationAuditLogRow {
+  readonly id: string;
+  readonly connectionId: string;
+  readonly provider: string;
+  readonly endpoint: string;
+  readonly method: string;
+  readonly statusCode: number;
+  readonly latencyMs: number;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// SLA Health & Metrics Telemetry
+// ---------------------------------------------------------------------------
+
+export type IntegrationsHealthStatus = "optimal" | "healthy" | "degraded" | "critical";
+
+export interface IntegrationsHealthAuditReport {
+  readonly totalConnections: number;
+  readonly activeConnections: number;
+  readonly totalRecipes: number;
+  readonly totalExecutions: number;
+  readonly overallStatus: IntegrationsHealthStatus;
+  readonly providerHealths: readonly PlatformIntegrationHealth[];
+  readonly recommendations: readonly string[];
+}
+
+export interface IntegrationsMetricsReport {
+  readonly totalConnections: number;
+  readonly totalIssues: number;
+  readonly totalCustomers: number;
+  readonly totalAlerts: number;
+  readonly totalDocuments: number;
+  readonly totalRecipes: number;
+  readonly totalExecutions: number;
+  readonly totalRequests: number;
+  readonly errorRatePercent: number;
+  readonly avgLatencyMs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Grouping & Swimlanes
+// ---------------------------------------------------------------------------
+
+export type IntegrationsGroupBy = "category" | "provider" | "status";
+
+export type IntegrationsSortBy = "name" | "createdAt" | "totalRequests";
+
+export type IntegrationsSortDirection = "asc" | "desc";
+
+export interface IntegrationsGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly connections: readonly IntegrationConnection[];
+  readonly recipes?: readonly IntegrationRecipe[];
+}
+
+// ---------------------------------------------------------------------------
+// Natural Query DSL Search Engine
+// ---------------------------------------------------------------------------
+
+export interface IntegrationsDslQueryFilter {
+  readonly rawQuery: string;
+  readonly provider?: IntegrationProviderType;
+  readonly category?: IntegrationCategory;
+  readonly isConnected?: boolean;
+  readonly textTerms?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo / Redo & Bulk Mutations
+// ---------------------------------------------------------------------------
+
+export interface IntegrationsMutationUndoRecord {
+  readonly mutationType: "upsert_connection" | "delete_connection" | "record_recipe" | "bulk_purge" | "clear";
+  readonly previousSnapshot: IntegrationsSubstrateSnapshot;
+  readonly nextSnapshot: IntegrationsSubstrateSnapshot;
+  readonly timestampMs: number;
+}
+
+export interface IntegrationsBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly affectedConnectionIds: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliIntegrationsSubstrate {
+  upsertConnection(conn: IntegrationConnection): void;
+  getConnection(connectionId: string): IntegrationConnection | undefined;
+  listConnections(): readonly IntegrationConnection[];
+  deleteConnection(connectionId: string): boolean;
+  
+  upsertIssue(issue: UnifiedIssue): void;
+  getIssue(id: string): UnifiedIssue | undefined;
+  listIssues(provider?: IntegrationProviderType): readonly UnifiedIssue[];
+
+  upsertCustomer(customer: UnifiedCustomer): void;
+  getCustomer(customerId: string): UnifiedCustomer | undefined;
+  listCustomers(provider?: IntegrationProviderType): readonly UnifiedCustomer[];
+
+  upsertAlert(alert: UnifiedAlert): void;
+  getAlert(alertId: string): UnifiedAlert | undefined;
+  listAlerts(provider?: IntegrationProviderType): readonly UnifiedAlert[];
+
+  upsertDocument(doc: UnifiedDocument): void;
+  getDocument(docId: string): UnifiedDocument | undefined;
+  listDocuments(provider?: IntegrationProviderType): readonly UnifiedDocument[];
+  
+  upsertRecipe(recipe: IntegrationRecipe): void;
+  getRecipe(recipeId: string): IntegrationRecipe | undefined;
+  listRecipes(): readonly IntegrationRecipe[];
+  
+  recordRecipeExecution(result: WorkflowExecutionResult): void;
+  listRecipeExecutions(recipeId?: string): readonly WorkflowExecutionResult[];
+  
+  recordAuditLog(log: IntegrationAuditLog): void;
+  listAuditLogs(connectionId?: string): readonly IntegrationAuditLog[];
+  
+  auditHealth(): IntegrationsHealthAuditReport;
+  getMetrics(): IntegrationsMetricsReport;
+  getGroupedConnections(groupBy?: IntegrationsGroupBy, sortBy?: IntegrationsSortBy, direction?: IntegrationsSortDirection): readonly IntegrationsGroupedLane[];
+  queryIntegrationsDsl(query: IntegrationsDslQueryFilter | string): readonly IntegrationConnection[];
+  bulkPurgeConnections(connectionIds: readonly string[]): IntegrationsBulkMutationResult;
+  
+  undo(): boolean;
+  redo(): boolean;
+  exportSnapshot(): IntegrationsSubstrateSnapshot;
+  importSnapshot(snapshot: IntegrationsSubstrateSnapshot): void;
+  
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+  clear(): void;
+}

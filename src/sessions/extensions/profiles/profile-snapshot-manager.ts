@@ -1,64 +1,78 @@
 /**
  * profile-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for the Profile Subsystem (Target #76 / ADR-119).
+ * High-performance frame snapshot manager for Persistent Multi-Profile Subsystem
+ * enabling frame-perfect state capture and O(1) state rewind (< 0.05 ms SLA) (Target #76 / ADR-119).
  */
 
-import type { ProfileWorkspaceSnapshot } from "../../../core/contracts/profile.contracts.js";
+import { performance } from "node:perf_hooks";
+import type {
+  ProfileWorkspaceSnapshot,
+} from "../../../core/contracts/profile.contracts.js";
 import { BroccoliProfileSubstrate } from "./broccoli-profile-substrate.js";
 
 export class ProfileSnapshotManager {
-  private substrate: BroccoliProfileSubstrate;
-  private snapshots: Map<number, ProfileWorkspaceSnapshot>;
+  private readonly substrate: BroccoliProfileSubstrate;
+  private readonly frameSnapshots: Map<number, ProfileWorkspaceSnapshot>;
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliProfileSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, ProfileWorkspaceSnapshot>();
+    this.frameSnapshots = new Map<number, ProfileWorkspaceSnapshot>();
+  }
+
+  createSnapshot(): ProfileWorkspaceSnapshot {
+    return this.substrate.exportSnapshot();
+  }
+
+  restoreSnapshot(snapshot: ProfileWorkspaceSnapshot): void {
+    this.substrate.importSnapshot(snapshot);
   }
 
   /**
-   * Captures the profile substrate state at a specific frame index.
+   * Captures a deep workspace snapshot pinned to an execution frame.
    */
-  captureFrame(frameIndex: number): void {
+  captureSnapshot(frameIndex: number): ProfileWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > ProfileSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
   /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Guaranteed execution time < 0.05 ms.
+   * Restores workspace state to a captured execution frame in < 0.05 ms SLA.
    */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  restoreFrameSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
-
-    return true;
+    return {
+      success: true,
+      durationMs: duration,
+    };
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
   getSnapshot(frameIndex: number): ProfileWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
   clear(): void {
-    this.snapshots.clear();
+    this.frameSnapshots.clear();
   }
 }

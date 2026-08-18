@@ -159,3 +159,158 @@ export interface ProfileWorkspaceSnapshot {
   readonly totalProfiles: number;
   readonly timestamp: number;
 }
+
+// ---------------------------------------------------------------------------
+// Typed BroccoliDB Persistence Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface ProfileRow {
+  readonly id: string;
+  readonly name: string;
+  readonly category: ProfileCategory;
+  readonly status: ProfileStatus;
+  readonly modelPreference: string;
+  readonly isFavorite: boolean;
+  readonly isProtected: boolean;
+  readonly createdAtMs: number;
+  readonly updatedAtMs: number;
+  readonly [key: string]: unknown;
+}
+
+export interface ProfileBindingRow {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly profileId: string;
+  readonly boundAtMs: number;
+  readonly [key: string]: unknown;
+}
+
+export interface ProfileTransitionRow {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly fromProfile: string;
+  readonly toProfile: string;
+  readonly timestampMs: number;
+  readonly [key: string]: unknown;
+}
+
+export interface ProfileAuditRow {
+  readonly id: string;
+  readonly action: string;
+  readonly operator: string;
+  readonly details: string;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// SLA Health & Metrics Telemetry
+// ---------------------------------------------------------------------------
+
+export type ProfileHealthStatus =
+  | "optimal"
+  | "healthy"
+  | "degraded"
+  | "critical_unbound";
+
+export interface ProfileHealthAuditReport {
+  readonly totalProfiles: number;
+  readonly activeProfilesCount: number;
+  readonly favoriteProfilesCount: number;
+  readonly boundSessionsCount: number;
+  readonly healthStatus: ProfileHealthStatus;
+  readonly recommendations: readonly string[];
+}
+
+export interface ProfileMetricsReport {
+  readonly totalProfiles: number;
+  readonly activeProfiles: number;
+  readonly suspendedProfiles: number;
+  readonly archivedProfiles: number;
+  readonly categoryDistribution: Readonly<Record<string, number>>;
+  readonly totalBoundSessions: number;
+  readonly totalInvocations: number;
+  readonly totalTokensSaved: number;
+  readonly p50Invocations: number;
+  readonly p95Invocations: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Grouping & Swimlanes
+// ---------------------------------------------------------------------------
+
+export type ProfileGroupBy = "category" | "status" | "model" | "favorite";
+
+export type ProfileSortBy = "name" | "category" | "recent" | "usage";
+
+export type ProfileSortDirection = "asc" | "desc";
+
+export interface ProfileGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly profiles: readonly ProfileDescriptor[];
+}
+
+// ---------------------------------------------------------------------------
+// Natural Query DSL Search Engine
+// ---------------------------------------------------------------------------
+
+export interface ProfileDslQueryFilter {
+  readonly rawQuery: string;
+  readonly category?: ProfileCategory;
+  readonly status?: ProfileStatus;
+  readonly model?: string;
+  readonly isFavorite?: boolean;
+  readonly isProtected?: boolean;
+  readonly textTerms?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo / Redo & Bulk Mutations
+// ---------------------------------------------------------------------------
+
+export interface ProfileMutationUndoRecord {
+  readonly mutationType: "create_profile" | "update_profile" | "delete_profile" | "clone_profile" | "bulk";
+  readonly previousSnapshot: ProfileWorkspaceSnapshot;
+  readonly nextSnapshot: ProfileWorkspaceSnapshot;
+  readonly timestampMs: number;
+}
+
+export interface ProfileBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly affectedProfileIds: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliProfileSubstrate {
+  createProfile(profile: ProfileDescriptor): boolean;
+  getProfile(profileId: string): ProfileDescriptor | undefined;
+  listProfiles(filter?: ProfileQueryFilter): readonly ProfileDescriptor[];
+  updateProfile(profileId: string, mutation: ProfileMutation): ProfileDescriptor | undefined;
+  deleteProfile(profileId: string): boolean;
+  cloneProfile(sourceProfileId: string, targetProfileId: string, options?: ProfileCloneOptions): ProfileDescriptor | undefined;
+  bindSession(sessionId: string, profileId: string): boolean;
+  unbindSession(sessionId: string): boolean;
+  getProfileForSession(sessionId: string): ProfileDescriptor;
+  getActiveDefaultProfile(): ProfileDescriptor;
+  setActiveDefaultProfile(profileId: string): boolean;
+  getMetrics(): ProfileMetricsReport;
+  auditHealth(): ProfileHealthAuditReport;
+  getGroupedProfiles(groupBy?: ProfileGroupBy, sortBy?: ProfileSortBy, direction?: ProfileSortDirection): readonly ProfileGroupedLane[];
+  queryProfilesDsl(query: ProfileDslQueryFilter | string): readonly ProfileDescriptor[];
+  bulkPurgeProfiles(profileIds: readonly string[]): ProfileBulkMutationResult;
+  undo(): boolean;
+  redo(): boolean;
+  exportSnapshot(): ProfileWorkspaceSnapshot;
+  importSnapshot(snapshot: ProfileWorkspaceSnapshot): void;
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+  clear(): void;
+}
+

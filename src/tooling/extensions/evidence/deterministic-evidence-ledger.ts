@@ -41,14 +41,14 @@ const NON_CODE_FILENAMES = new Set<string>([
 ]);
 
 export class DeterministicEvidenceLedger {
-  private records: VerificationEvidenceRecord[];
-  private modifiedFiles: Set<string>;
-  private sequence: number;
+  private records: (VerificationEvidenceRecord & { sequence: number })[];
+  private modifiedFiles: Map<string, number>;
+  private globalSequence: number;
 
   constructor() {
     this.records = [];
-    this.modifiedFiles = new Set<string>();
-    this.sequence = 0;
+    this.modifiedFiles = new Map<string, number>();
+    this.globalSequence = 0;
   }
 
   /**
@@ -78,7 +78,8 @@ export class DeterministicEvidenceLedger {
    */
   recordModifiedFile(filePath: string): void {
     if (this.isCodeFile(filePath)) {
-      this.modifiedFiles.add(filePath);
+      this.globalSequence++;
+      this.modifiedFiles.set(filePath, this.globalSequence);
     }
   }
 
@@ -88,10 +89,11 @@ export class DeterministicEvidenceLedger {
   recordEvidence(
     entry: Omit<VerificationEvidenceRecord, "id" | "timestamp">
   ): VerificationEvidenceRecord {
-    this.sequence++;
-    const record: VerificationEvidenceRecord = {
+    this.globalSequence++;
+    const record: VerificationEvidenceRecord & { sequence: number } = {
       ...entry,
-      id: `evid-${this.sequence}-${Date.now()}`,
+      id: `evid-${this.globalSequence}-${Date.now()}`,
+      sequence: this.globalSequence,
       timestamp: Date.now(),
     };
 
@@ -104,13 +106,12 @@ export class DeterministicEvidenceLedger {
    */
   evaluateStopGate(): VerificationStopGateEvaluation {
     const unverified: string[] = [];
-    const modified = Array.from(this.modifiedFiles);
 
-    for (let i = 0; i < modified.length; i++) {
-      const mod = modified[i];
+    for (const [mod, modSeq] of this.modifiedFiles.entries()) {
       const hasVerified = this.records.some(
         (r) =>
           r.passed &&
+          r.sequence > modSeq &&
           (r.scope === "workspace" ||
             r.verifiedPaths.some((p) => p === mod || mod.endsWith(p) || p.endsWith(mod)))
       );
@@ -186,7 +187,7 @@ export class DeterministicEvidenceLedger {
    * Returns all currently modified code files.
    */
   getModifiedCodeFiles(): readonly string[] {
-    return Array.from(this.modifiedFiles);
+    return Array.from(this.modifiedFiles.keys());
   }
 
   /**
@@ -195,6 +196,16 @@ export class DeterministicEvidenceLedger {
   reset(): void {
     this.records = [];
     this.modifiedFiles.clear();
-    this.sequence = 0;
+    this.globalSequence = 0;
+  }
+
+  public formatEvidence(record: VerificationEvidenceRecord): string {
+    const status = record.passed ? "PASSED" : "FAILED";
+    return `[${record.kind.toUpperCase()}:${record.scope.toUpperCase()}] ${record.command} - ${status} (${record.durationMs}ms, exit ${record.exitCode})`;
+  }
+
+  public formatEvaluation(evalResult: VerificationStopGateEvaluation): string {
+    const nudge = evalResult.shouldNudge ? "NUDGE" : "PASS";
+    return `[STOP-GATE:${nudge}] ${evalResult.reason} (${evalResult.unverifiedModifiedFiles.length} unverified files)`;
   }
 }

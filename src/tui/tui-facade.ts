@@ -20,6 +20,15 @@ export { GuidedSetupWalkthroughModal } from "./components/guided-setup-walkthrou
 export { ModelSelectModal } from "./components/model-select-modal.js";
 export { KanbanBoardModal } from "./components/kanban-board-modal.js";
 export { GoalDashboardModal } from "./components/goal-dashboard-modal.js";
+export { CronDashboardModal } from "./components/cron-dashboard-modal.js";
+export { SwarmDashboardModal } from "./components/swarm-dashboard-modal.js";
+export { SkillTreeModal } from "./components/skill-tree-modal.js";
+export { SoulDashboardModal } from "./components/soul-dashboard-modal.js";
+export { EmailInboxModal, type EmailInboxViewMode } from "./components/email-inbox-modal.js";
+export { DeadlineDashboardModal, type DeadlineDashboardViewMode } from "./components/deadline-dashboard-modal.js";
+export { MemoryCuratorModal, type MemoryCuratorViewMode } from "./components/memory-curator-modal.js";
+export { CostDashboardModal, type CostDashboardViewMode } from "./components/cost-dashboard-modal.js";
+export { CheckpointDashboardModal, type CheckpointDashboardViewMode } from "./components/checkpoint-dashboard-modal.js";
 export { Editor, type EditorOptions, type EditorTheme } from "./components/editor.js";
 export { HStack } from "./components/h-stack.js";
 export { Image, type ImageOptions, type ImageTheme } from "./components/image.js";

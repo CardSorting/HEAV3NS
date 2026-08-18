@@ -855,6 +855,136 @@ export class GoalToolSuite {
           };
         },
       },
+      {
+        name: "goal_decompose_prompt",
+        description: "Intelligently decompose a high-level goal prompt into an autonomous DAG of milestones, subtask checklists, and quality gates.",
+        parameters: {
+          prompt: { type: "string", required: true, description: "Natural language goal description" },
+          category: { type: "string", description: "Optional goal category ('bugfix' | 'feature' | 'refactor' | 'audit' | 'release' | 'learning')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const prompt = String(args.prompt || "");
+          const category = typeof args.category === "string" ? (args.category as any) : undefined;
+          const decomposition = this.supervisor.decomposeGoalPrompt(prompt, category);
+          return {
+            success: true,
+            decomposition,
+          };
+        },
+      },
+      {
+        name: "goal_revert_milestone",
+        description: "Rollback a milestone to pending or in_progress state, atomically rolling back downstream dependent milestones.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          milestoneId: { type: "string", required: true, description: "Milestone ID to revert" },
+          reason: { type: "string", description: "Explanation for the rollback" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const milestoneId = String(args.milestoneId || "");
+          const reason = typeof args.reason === "string" ? args.reason : undefined;
+
+          const rollbackResult = this.supervisor.revertMilestone(sessionId, milestoneId, reason);
+          return {
+            success: rollbackResult.success,
+            rollback: rollbackResult,
+          };
+        },
+      },
+      {
+        name: "goal_search_dsl",
+        description: "Search and filter goals using natural DSL queries (e.g. 'status:active cat:bugfix tag:p0 progress:>50 health:at_risk search term').",
+        parameters: {
+          query: { type: "string", required: true, description: "Natural query DSL filter string" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const rawQuery = String(args.query || "");
+          const goals = this.supervisor.queryGoalsDsl(rawQuery);
+          return {
+            success: true,
+            query: rawQuery,
+            count: goals.length,
+            goals,
+          };
+        },
+      },
+      {
+        name: "goal_get_burnup_forecast",
+        description: "Retrieve velocity burnup forecast, turns completion projection, and ASCII progress graph for a goal.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const forecast = this.supervisor.getBurnupForecast(sessionId);
+          return {
+            success: forecast !== null,
+            forecast,
+          };
+        },
+      },
+      {
+        name: "goal_export_burnup_chart",
+        description: "Export the ASCII or SVG burnup and velocity forecast chart for terminal or documentation embedding.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const forecast = this.supervisor.getBurnupForecast(sessionId);
+          return {
+            success: forecast !== null,
+            chart: forecast?.asciiChart || "No forecast available",
+            projectedTurn: forecast?.projectedCompletionTurn,
+            isOnBudget: forecast?.isAchievableWithinBudget,
+          };
+        },
+      },
+      {
+        name: "goal_handoff_swarm",
+        description: "Hand off a milestone from one worker agent session to another within a parent goal swarm hierarchy.",
+        parameters: {
+          parentSessionId: { type: "string", required: true, description: "Parent session ID" },
+          milestoneId: { type: "string", required: true, description: "Milestone ID to transfer" },
+          targetWorkerSessionId: { type: "string", required: true, description: "Target worker session ID" },
+          contextPayload: { type: "string", description: "Optional JSON context payload or state diff" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const parentSessionId = String(args.parentSessionId || "default");
+          const milestoneId = String(args.milestoneId || "");
+          const targetWorkerSessionId = String(args.targetWorkerSessionId || "");
+          let contextPayload: Record<string, unknown> | undefined;
+          if (typeof args.contextPayload === "string" && args.contextPayload.trim()) {
+            try {
+              contextPayload = JSON.parse(args.contextPayload);
+            } catch {
+              contextPayload = { raw: args.contextPayload };
+            }
+          }
+
+          const res = this.supervisor.handOffMilestone(parentSessionId, milestoneId, targetWorkerSessionId, contextPayload);
+          return {
+            success: res.success,
+            handoff: res,
+          };
+        },
+      },
+      {
+        name: "goal_watchdog_evaluate",
+        description: "Execute continuous quality gate watchdog evaluations with automated retry loops and remediation telemetry.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const report = await this.supervisor.watchdogEvaluateGates(sessionId);
+          return {
+            success: report.allPassed,
+            watchdog: report,
+          };
+        },
+      },
     ];
   }
 }

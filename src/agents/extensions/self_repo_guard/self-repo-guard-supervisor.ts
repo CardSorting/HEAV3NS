@@ -2,7 +2,7 @@
  * self-repo-guard-supervisor.ts
  *
  * Master supervisor managing command inspection before shell execution,
- * running source root auto-discovery, and metrics aggregation (Phase 138 / ADR-114 / Target #71).
+ * running source root auto-discovery, health matrix audits, and metrics aggregation (Phase 138 / ADR-114 / Target #78).
  */
 
 import * as fs from "node:fs";
@@ -13,8 +13,15 @@ import type { DeterministicSelfRepoGuardEngine } from "./deterministic-self-repo
 import type {
   GitOperationSafety,
   SelfRepoGuardConfig,
+  SelfRepoGuardDslQueryFilter,
+  SelfRepoGuardGroupBy,
+  SelfRepoGuardHealthAuditReport,
   SelfRepoGuardIncident,
+  SelfRepoGuardIncidentRow,
   SelfRepoGuardMetrics,
+  SelfRepoGuardMetricsReport,
+  SelfRepoGuardSortBy,
+  SelfRepoGuardSortDirection,
   SelfRepoGuardVerdict,
 } from "../../../core/contracts/self-repo-guard.contracts.js";
 
@@ -31,6 +38,14 @@ export class SelfRepoGuardSupervisor {
     this.engine = engine;
   }
 
+  public getSubstrate(): BroccoliSelfRepoGuardSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicSelfRepoGuardEngine {
+    return this.engine;
+  }
+
   public configure(config: Partial<SelfRepoGuardConfig>): void {
     this.substrate.setConfig(config);
   }
@@ -41,6 +56,14 @@ export class SelfRepoGuardSupervisor {
 
   public getMetrics(): SelfRepoGuardMetrics {
     return this.substrate.getMetrics();
+  }
+
+  public getMetricsReport(): SelfRepoGuardMetricsReport {
+    return this.substrate.getMetricsReport();
+  }
+
+  public auditHealth(): SelfRepoGuardHealthAuditReport {
+    return this.substrate.auditHealth();
   }
 
   public getIncidents(): readonly SelfRepoGuardIncident[] {
@@ -90,7 +113,7 @@ export class SelfRepoGuardSupervisor {
     const verdict = this.engine.evaluateCommand(command, effectiveCwd, runningRoot, config);
 
     if (!verdict.allowed) {
-      const incident: SelfRepoGuardIncident = {
+      const incident: SelfRepoGuardIncidentRow = {
         incidentId: `inc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: Date.now(),
         command,
@@ -99,7 +122,7 @@ export class SelfRepoGuardSupervisor {
         operation: verdict.operation || "git",
         reason: verdict.reason || "Destructive worktree mutation blocked",
       };
-      this.substrate.recordBlockedIncident(incident);
+      this.substrate.recordIncident(incident);
     } else {
       this.substrate.recordSafeOperation();
     }
@@ -112,5 +135,37 @@ export class SelfRepoGuardSupervisor {
    */
   public classifyGitOperation(subcommand: string, args: readonly string[]): GitOperationSafety {
     return this.engine.classifyGitOperation(subcommand, args);
+  }
+
+  public getGroupedIncidents(groupBy?: SelfRepoGuardGroupBy, sortBy?: SelfRepoGuardSortBy, direction?: SelfRepoGuardSortDirection) {
+    return this.substrate.getGroupedIncidents(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: SelfRepoGuardDslQueryFilter | string) {
+    return this.substrate.queryIncidentsDsl(query);
+  }
+
+  public bulkPurge(ids: readonly string[]) {
+    return this.substrate.bulkPurgeIncidents(ids);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

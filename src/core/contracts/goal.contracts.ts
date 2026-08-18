@@ -110,6 +110,97 @@ export interface GoalSwarmBalanceResult {
   readonly workerAssignments: Record<string, readonly string[]>;
 }
 
+export interface GoalDecompositionResult {
+  readonly goal: string;
+  readonly category: GoalCategory;
+  readonly suggestedMaxTurns: number;
+  readonly milestones: readonly {
+    readonly id: string;
+    readonly title: string;
+    readonly description?: string;
+    readonly dependsOn?: readonly string[];
+    readonly tags?: readonly string[];
+    readonly initialChecklist?: readonly string[];
+  }[];
+  readonly recommendedGates: readonly {
+    readonly name: string;
+    readonly command: string;
+    readonly policy: GoalGatePolicy;
+    readonly timeoutSeconds?: number;
+  }[];
+}
+
+export interface GoalMilestoneRollbackResult {
+  readonly sessionId: string;
+  readonly rolledBackMilestoneId: string;
+  readonly previousStatus: MilestoneStatus;
+  readonly newStatus: MilestoneStatus;
+  readonly affectedDownstreamMilestoneIds: readonly string[];
+  readonly success: boolean;
+  readonly reason?: string;
+}
+
+export interface GoalBurnupDataPoint {
+  readonly turn: number;
+  readonly totalScopeMilestones: number;
+  readonly completedMilestones: number;
+  readonly idealVelocityMilestones: number;
+  readonly timestampMs: number;
+}
+
+export interface GoalBurnupForecast {
+  readonly sessionId: string;
+  readonly totalMilestones: number;
+  readonly completedMilestones: number;
+  readonly turnsUsed: number;
+  readonly maxTurns: number;
+  readonly dataPoints: readonly GoalBurnupDataPoint[];
+  readonly projectedCompletionTurn: number;
+  readonly isAchievableWithinBudget: boolean;
+  readonly asciiChart: string;
+}
+
+export interface GoalDslQueryFilter {
+  readonly rawQuery: string;
+  readonly status?: GoalStatus;
+  readonly category?: GoalCategory;
+  readonly healthStatus?: GoalHealthStatus;
+  readonly tags?: readonly string[];
+  readonly minProgress?: number;
+  readonly maxProgress?: number;
+  readonly minTurns?: number;
+  readonly maxTurns?: number;
+  readonly hasFailedGates?: boolean;
+  readonly textTerms?: readonly string[];
+}
+
+export interface GoalSwarmHandoffResult {
+  readonly parentSessionId: string;
+  readonly milestoneId: string;
+  readonly sourceSessionId?: string;
+  readonly targetWorkerSessionId: string;
+  readonly success: boolean;
+  readonly timestampMs: number;
+  readonly contextPayload?: Record<string, unknown>;
+}
+
+export interface GoalWatchdogReport {
+  readonly sessionId: string;
+  readonly totalGatesEvaluated: number;
+  readonly passedGatesCount: number;
+  readonly failedGatesCount: number;
+  readonly remediatedGatesCount: number;
+  readonly allPassed: boolean;
+  readonly gateDetails: readonly {
+    readonly gateName: string;
+    readonly passed: boolean;
+    readonly exitCode?: number;
+    readonly attempts: number;
+    readonly remediated: boolean;
+    readonly outputTail: string;
+  }[];
+}
+
 export interface GoalArchiveResult {
   readonly archivedCount: number;
   readonly remainingActiveCount: number;

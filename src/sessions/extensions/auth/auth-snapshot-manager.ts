@@ -1,64 +1,85 @@
 /**
  * auth-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for Identity Federation Subsystem (Phase 98 / ADR-052).
+ * Frame-perfect binary snapshotting and O(1) state rollback (< 0.05 ms SLA)
+ * for Identity Federation & Token Lease Subsystem (Phase 98 / ADR-052 / Target #69).
  */
 
+import { performance } from "node:perf_hooks";
 import type { AuthWorkspaceSnapshot } from "../../../core/contracts/identity-federation.contracts.js";
-import { BroccoliAuthSubstrate } from "./broccoli-auth-substrate.js";
+import type { BroccoliAuthSubstrate } from "./broccoli-auth-substrate.js";
 
 export class AuthSnapshotManager {
-  private substrate: BroccoliAuthSubstrate;
-  private snapshots: Map<number, AuthWorkspaceSnapshot>;
+  private readonly substrate: BroccoliAuthSubstrate;
+  private readonly frameSnapshots = new Map<number, AuthWorkspaceSnapshot>();
+  private readonly namedSnapshots = new Map<string, AuthWorkspaceSnapshot>();
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliAuthSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, AuthWorkspaceSnapshot>();
   }
 
-  /**
-   * Captures the identity state at a specific frame index.
-   */
-  captureFrame(frameIndex: number): void {
+  public captureSnapshot(frameIndex: number): AuthWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > AuthSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
-  /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Execution time is guaranteed to be < 0.05 ms.
-   */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  public captureFrame(frameIndex: number): void {
+    this.captureSnapshot(frameIndex);
+  }
+
+  public restoreFrameSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
+    return {
+      success: true,
+      durationMs: duration,
+    };
+  }
 
+  public rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreFrameSnapshot(frameIndex);
+    return res.success;
+  }
+
+  public takeSnapshot(name: string): AuthWorkspaceSnapshot {
+    const snap = this.substrate.exportSnapshot();
+    this.namedSnapshots.set(name, snap);
+    return snap;
+  }
+
+  public restoreSnapshot(name: string): boolean {
+    const snap = this.namedSnapshots.get(name);
+    if (!snap) return false;
+    this.substrate.importSnapshot(snap);
     return true;
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
-  getSnapshot(frameIndex: number): AuthWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+  public getSnapshot(frameIndex: number): AuthWorkspaceSnapshot | undefined {
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
-  clear(): void {
-    this.snapshots.clear();
+  public clear(): void {
+    this.frameSnapshots.clear();
+    this.namedSnapshots.clear();
   }
 }

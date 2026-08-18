@@ -166,4 +166,17 @@ export class DeterministicAuthFederator {
       expiresAt,
     };
   }
+
+  public formatTokenLease(lease: TokenLeaseRecord): string {
+    const isExp = lease.expiresAt <= Date.now();
+    return `[${lease.providerId.toUpperCase()}] ${lease.leaseId} (${lease.tier.toUpperCase()}) - ${isExp ? "EXPIRED" : "ACTIVE"} (Expires: ${new Date(lease.expiresAt).toISOString()})`;
+  }
+
+  public formatDeviceAuth(auth: DeviceAuthorizationPending): string {
+    return `Device Auth: Code ${auth.userCode} -> Verify at ${auth.verificationUri} (Expires in ${auth.expiresIn}s)`;
+  }
+
+  public formatEntitlement(entitlement: SubscriptionEntitlement): string {
+    return `[${entitlement.tier.toUpperCase()}] MaxTokens: ${entitlement.maxTokensPerTurn}, MaxContext: ${entitlement.maxContextBudget}, ParallelTools: ${entitlement.parallelToolsAllowed}, Priority: ${entitlement.priorityInference}`;
+  }
 }

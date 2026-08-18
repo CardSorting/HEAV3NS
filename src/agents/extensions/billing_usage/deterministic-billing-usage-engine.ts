@@ -130,4 +130,89 @@ export class DeterministicBillingUsageEngine {
     const emptyCount = width - fillCount;
     return fillGlyph.repeat(fillCount) + emptyGlyph.repeat(emptyCount);
   }
+
+  /**
+   * Calculates a two-tier priority debit across plan allowance first, then top-up balance.
+   */
+  public calculateDebit(
+    accountInfo: BillingAccountInfo,
+    amountUsd: number
+  ): {
+    success: boolean;
+    planDebitedUsd: number;
+    topupDebitedUsd: number;
+    newPlanRemainingUsd: number;
+    newTopupRemainingUsd: number;
+    error?: string;
+  } {
+    if (amountUsd <= 0) {
+      return {
+        success: true,
+        planDebitedUsd: 0,
+        topupDebitedUsd: 0,
+        newPlanRemainingUsd: accountInfo.planRemainingUsd,
+        newTopupRemainingUsd: accountInfo.topupRemainingUsd,
+      };
+    }
+
+    const currentPlan = Math.max(0, accountInfo.planRemainingUsd);
+    const currentTopup = Math.max(0, accountInfo.topupRemainingUsd);
+    const totalSpendable = currentPlan + currentTopup;
+
+    if (amountUsd > totalSpendable) {
+      return {
+        success: false,
+        planDebitedUsd: 0,
+        topupDebitedUsd: 0,
+        newPlanRemainingUsd: currentPlan,
+        newTopupRemainingUsd: currentTopup,
+        error: `Insufficient funds: requested $${amountUsd.toFixed(4)}, but total spendable is only $${totalSpendable.toFixed(4)}`,
+      };
+    }
+
+    let planDebited = 0;
+    let topupDebited = 0;
+
+    if (currentPlan >= amountUsd) {
+      planDebited = amountUsd;
+    } else {
+      planDebited = currentPlan;
+      topupDebited = amountUsd - currentPlan;
+    }
+
+    return {
+      success: true,
+      planDebitedUsd: Number(planDebited.toFixed(4)),
+      topupDebitedUsd: Number(topupDebited.toFixed(4)),
+      newPlanRemainingUsd: Number((currentPlan - planDebited).toFixed(4)),
+      newTopupRemainingUsd: Number((currentTopup - topupDebited).toFixed(4)),
+    };
+  }
+
+  /**
+   * Calculates balance after applying a top-up credit.
+   */
+  public calculateTopup(
+    accountInfo: BillingAccountInfo,
+    creditUsd: number
+  ): { newTopupRemainingUsd: number } {
+    const currentTopup = Math.max(0, accountInfo.topupRemainingUsd);
+    return {
+      newTopupRemainingUsd: Number((currentTopup + Math.max(0, creditUsd)).toFixed(4)),
+    };
+  }
+
+  /**
+   * Calculates balance after refreshing monthly plan allowance.
+   */
+  public calculatePlanRefresh(
+    accountInfo: BillingAccountInfo,
+    newAllowanceUsd?: number
+  ): { newPlanRemainingUsd: number; newPlanAllowanceUsd: number } {
+    const allowance = newAllowanceUsd !== undefined ? Math.max(0, newAllowanceUsd) : accountInfo.planAllowanceUsd;
+    return {
+      newPlanAllowanceUsd: allowance,
+      newPlanRemainingUsd: allowance,
+    };
+  }
 }

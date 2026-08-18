@@ -216,4 +216,16 @@ export class DeterministicSkillLinterEngine {
       timestamp: Date.now(),
     };
   }
+
+  public formatLintFinding(finding: SkillLintFinding): string {
+    const sev = finding.severity.toUpperCase();
+    const loc = finding.file ? ` (${finding.file}${finding.line ? `:${finding.line}` : ""})` : "";
+    return `[${sev}:${finding.ruleCode}]${loc} ${finding.message}`;
+  }
+
+  public formatLintReport(report: SkillLintReport): string {
+    const status = report.isValid ? "VALID" : "INVALID";
+    return `[SKILL-LINT:${status}] "${report.skillName}" - ${report.errorCount} errors, ${report.warningCount} warnings (${report.auditDurationMs.toFixed(2)}ms)`;
+  }
 }
+

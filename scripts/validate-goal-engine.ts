@@ -388,16 +388,18 @@ async function runGoalValidationSuite() {
     tuiModal.handleInput("-"); // adjust progress -10%
     tuiModal.handleInput("b"); // toggle blocked
     tuiModal.handleInput("b"); // unblock
+    tuiModal.handleInput("r"); // revert milestone
     tuiModal.handleInput("2"); // filter completed
     tuiModal.handleInput("v"); // cycle view to gates
     tuiModal.handleInput("v"); // cycle view to DAG graph
     tuiModal.handleInput("v"); // cycle view to trajectory
     tuiModal.handleInput("v"); // cycle view to health
+    tuiModal.handleInput("v"); // cycle view to burnup
     tuiModal.handleInput("v"); // cycle view back to milestones
     tuiModal.handleInput("d"); // test notification
     tuiModal.handleInput("q"); // close
     assert.strictEqual(modalClosed, true);
-    console.log("  ✓ Interactive TUI GoalDashboardModal with 5 view modes verified");
+    console.log("  ✓ Interactive TUI GoalDashboardModal with 6 view modes verified");
     passedSuites++;
 
     // ---------------------------------------------------------------------------
@@ -434,12 +436,41 @@ async function runGoalValidationSuite() {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 21: 34 Specialized Model Tools, Health SLA Auditing & Risk Diagnostics
+    // Suite 21: 41 Specialized Model Tools, Swarm Hand-offs & Watchdog Remediations
     // ---------------------------------------------------------------------------
-    console.log("[Suite 21/22] 34 Specialized Model Tools, Health SLA Auditing & Risk Diagnostics...");
+    console.log("[Suite 21/22] 41 Specialized Model Tools, Swarm Hand-offs & Watchdog Remediations...");
     const toolSuite = new GoalToolSuite(supervisor);
     const tools = toolSuite.getTools();
-    assert.strictEqual(tools.length, 34);
+    assert.strictEqual(tools.length, 41);
+
+    // Test Natural Goal Decomposition
+    const decomp = supervisor.decomposeGoalPrompt("Migrate database to BroccoliDB and verify all micro-benchmark SLAs");
+    assert.ok(decomp.milestones.length >= 2);
+    assert.ok(decomp.recommendedGates.length > 0);
+
+    // Test Swarm Milestone Hand-off
+    const handoffRes = supervisor.handOffMilestone(parentSid, "m-1", "worker-target", { reason: "Load rebalance" });
+    assert.strictEqual(handoffRes.success, true);
+    assert.strictEqual(handoffRes.targetWorkerSessionId, "worker-target");
+
+    // Test Continuous Quality Gate Watchdog
+    const watchdogRes = await supervisor.watchdogEvaluateGates(sessionId);
+    assert.ok(watchdogRes);
+    assert.ok(typeof watchdogRes.allPassed === "boolean");
+
+    // Test Milestone Rollback
+    const rollback = supervisor.revertMilestone(sessionId, "m-1", "Rollback test");
+    assert.strictEqual(rollback.success, true);
+    assert.strictEqual(rollback.newStatus, "pending");
+
+    // Test Velocity Burnup Forecast
+    const burnup = supervisor.getBurnupForecast(sessionId);
+    assert.ok(burnup);
+    assert.ok(burnup.asciiChart.includes("Goal Turn Burnup"));
+
+    // Test Natural DSL Search Query
+    const searchRes = supervisor.queryGoalsDsl("status:active progress:>=0");
+    assert.ok(Array.isArray(searchRes));
 
     // Test Checklist Toggle
     const chkOk = supervisor.toggleMilestoneChecklist(sessionId, "m-1", "Step A", true);
@@ -492,8 +523,14 @@ async function runGoalValidationSuite() {
     const blkTool = tools.find((t) => t.name === "goal_set_milestone_blocked")!;
     const healthTool = tools.find((t) => t.name === "goal_audit_health")!;
     const riskTool = tools.find((t) => t.name === "goal_diagnose_risks")!;
+    const decompTool = tools.find((t) => t.name === "goal_decompose_prompt")!;
+    const revertTool = tools.find((t) => t.name === "goal_revert_milestone")!;
+    const searchTool = tools.find((t) => t.name === "goal_search_dsl")!;
+    const burnupTool = tools.find((t) => t.name === "goal_get_burnup_forecast")!;
+    const handoffTool = tools.find((t) => t.name === "goal_handoff_swarm")!;
+    const watchdogTool = tools.find((t) => t.name === "goal_watchdog_evaluate")!;
 
-    assert.ok(setTool && statusTool && exportHtmlTool && exportMdTool && exportCsvTool && dagTool && notifTool && swarmTool && chkTool && adjTool && blkTool && healthTool && riskTool);
+    assert.ok(setTool && statusTool && exportHtmlTool && exportMdTool && exportCsvTool && dagTool && notifTool && swarmTool && chkTool && adjTool && blkTool && healthTool && riskTool && decompTool && revertTool && searchTool && burnupTool && handoffTool && watchdogTool);
 
     const setToolRes = (await setTool.execute(
       { sessionId: "model-session", goal: "Implement zero-copy buffer serializer", maxTurns: 10 },

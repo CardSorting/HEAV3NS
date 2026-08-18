@@ -22,6 +22,10 @@ export class DeterministicPatchEngine {
     const operations: PatchOperation[] = [];
 
     let currentFile = "";
+    let currentType: "add" | "update" | "delete" = "update";
+    let isOldDevNull = false;
+    let isNewDevNull = false;
+    let oldFile = "";
     let currentHunks: PatchHunk[] = [];
     let currentHunkLines: PatchHunkLine[] = [];
     let oldStart = 0;
@@ -47,25 +51,49 @@ export class DeterministicPatchEngine {
     const flushFile = () => {
       flushHunk();
       if (currentFile && currentHunks.length > 0) {
+        let content: string | undefined;
+        if (currentType === "add") {
+          const addLines: string[] = [];
+          for (const h of currentHunks) {
+            for (const l of h.lines) {
+              if (l.prefix === "+") {
+                addLines.push(l.content);
+              }
+            }
+          }
+          content = addLines.join("\n") + "\n";
+        }
+
         operations.push({
-          type: "update",
+          type: currentType,
           filePath: currentFile,
           hunks: [...currentHunks],
+          content,
         });
         currentHunks = [];
         currentFile = "";
+        currentType = "update";
+        isOldDevNull = false;
+        isNewDevNull = false;
+        oldFile = "";
       }
     };
 
     for (const line of lines) {
       if (line.startsWith("--- ")) {
         flushFile();
+        const pathPart = line.slice(4).trim();
+        isOldDevNull = pathPart === "/dev/null";
+        oldFile = pathPart.replace(/^[ab]\//, "");
         continue;
       }
 
       if (line.startsWith("+++ ")) {
         const pathPart = line.slice(4).trim();
-        currentFile = pathPart.replace(/^[ab]\//, "");
+        isNewDevNull = pathPart === "/dev/null";
+        const newFile = pathPart.replace(/^[ab]\//, "");
+        currentFile = isNewDevNull ? oldFile : newFile;
+        currentType = isOldDevNull ? "add" : isNewDevNull ? "delete" : "update";
         continue;
       }
 
@@ -148,9 +176,9 @@ export class DeterministicPatchEngine {
         continue;
       }
 
-      if (trimmed.startsWith("*** Update File: ")) {
+      if (trimmed.startsWith("*** Update File: ") || trimmed.startsWith("*** File: ")) {
         flushOp();
-        const filePath = trimmed.slice(17).trim();
+        const filePath = trimmed.startsWith("*** Update File: ") ? trimmed.slice(17).trim() : trimmed.slice(10).trim();
         currentOp = { type: "update", filePath, hunks: [] };
         continue;
       }
@@ -370,5 +398,20 @@ export class DeterministicPatchEngine {
     const normSource = source.replace(/\s+/g, " ").trim();
     const normTarget = target.replace(/\s+/g, " ").trim();
     return normSource.includes(normTarget);
+  }
+
+  public formatMutationEntry(entry: { path: string; status: string; stagedContent: string | null }): string {
+    const len = entry.stagedContent ? entry.stagedContent.length : 0;
+    return `[MUTATION:${entry.status.toUpperCase()}] ${entry.path} (${len} bytes staged)`;
+  }
+
+  public formatPatchApplyResult(result: PatchApplyResult): string {
+    const status = result.success ? "SUCCESS" : "FAILED";
+    const mode = result.dryRun ? "DRY-RUN" : "APPLIED";
+    return `[PATCH:${status}:${mode}] ${result.modifiedFiles.length} files modified, ${result.errors.length} errors`;
+  }
+
+  public formatHunk(hunk: PatchHunk): string {
+    return `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@ (${hunk.lines.length} lines)`;
   }
 }

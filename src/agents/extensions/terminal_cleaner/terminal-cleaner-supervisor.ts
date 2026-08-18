@@ -2,15 +2,22 @@
  * terminal-cleaner-supervisor.ts
  *
  * Master supervisor coordinating text output sanitization, display safety,
- * opaque document protections, and operational metrics (Phase 136 / ADR-112 / Target #69).
+ * opaque document protections, health matrix audits, and operational metrics (Phase 136 / ADR-112 / Target #76).
  */
 
 import type { BroccoliTerminalCleanerSubstrate } from "../../../sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
 import type { DeterministicTerminalCleanerEngine } from "./deterministic-terminal-cleaner-engine.js";
 import type {
+  AnsiCleanMode,
   BinaryAssetClassification,
   TerminalCleanerConfig,
-  TerminalCleanerMetrics,
+  TerminalCleanerDslQueryFilter,
+  TerminalCleanerGroupBy,
+  TerminalCleanerHealthAuditReport,
+  TerminalCleanerMetricsReport,
+  TerminalCleanerSortBy,
+  TerminalCleanerSortDirection,
+  TerminalCleanResult,
 } from "../../../core/contracts/terminal-cleaner.contracts.js";
 
 export class TerminalCleanerSupervisor {
@@ -22,6 +29,14 @@ export class TerminalCleanerSupervisor {
     this.engine = engine;
   }
 
+  public getSubstrate(): BroccoliTerminalCleanerSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicTerminalCleanerEngine {
+    return this.engine;
+  }
+
   public configure(config: Partial<TerminalCleanerConfig>): void {
     this.substrate.setConfig(config);
   }
@@ -30,8 +45,12 @@ export class TerminalCleanerSupervisor {
     return this.substrate.getConfig();
   }
 
-  public getMetrics(): TerminalCleanerMetrics {
+  public getMetrics(): TerminalCleanerMetricsReport {
     return this.substrate.getMetrics();
+  }
+
+  public auditHealth(): TerminalCleanerHealthAuditReport {
+    return this.substrate.auditHealth();
   }
 
   /**
@@ -69,6 +88,24 @@ export class TerminalCleanerSupervisor {
   }
 
   /**
+   * Performs high-precision text cleaning and returns detailed telemetry.
+   */
+  public cleanWithMetrics(text: string, mode: AnsiCleanMode = "sanitize_display"): TerminalCleanResult {
+    const res = this.engine.cleanWithMetrics(text, mode);
+    this.substrate.recordEvent({
+      id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      mode,
+      originalLength: res.originalLength,
+      cleanedLength: res.cleanedLength,
+      ansiCodesCount: res.ansiCodesCount,
+      controlCharsCount: res.controlCharsCount,
+      durationMs: res.durationMs,
+      timestamp: Date.now(),
+    });
+    return res;
+  }
+
+  /**
    * Classifies a path as text, binary, opaque_document, or pdf.
    */
   public classifyPath(filePath: string): BinaryAssetClassification {
@@ -85,5 +122,37 @@ export class TerminalCleanerSupervisor {
       this.substrate.recordBlockedOpaqueWrite();
     }
     return result;
+  }
+
+  public getGroupedEvents(groupBy?: TerminalCleanerGroupBy, sortBy?: TerminalCleanerSortBy, direction?: TerminalCleanerSortDirection) {
+    return this.substrate.getGroupedEvents(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: TerminalCleanerDslQueryFilter | string) {
+    return this.substrate.queryEventsDsl(query);
+  }
+
+  public bulkPurge(ids: readonly string[]) {
+    return this.substrate.bulkPurgeEvents(ids);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

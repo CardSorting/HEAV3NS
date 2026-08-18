@@ -150,4 +150,13 @@ export class DeterministicPromptCacher {
       breakpoints,
     };
   }
+
+  formatBreakpoint(breakpoint: PromptCacheBreakpoint): string {
+    return `[CACHE-BREAKPOINT:${breakpoint.breakpointIndex}] ${breakpoint.target}:${breakpoint.breakpointType} @ byte ${breakpoint.byteOffset} (~${breakpoint.tokenEstimate} tok)`;
+  }
+
+  formatCacheEnvelope(envelope: ByteStablePromptEnvelope): string {
+    return `[PROMPT-ENVELOPE] Static: ${envelope.staticPrefixBytes}B | Total: ${envelope.totalPromptBytes}B | Breakpoints: ${envelope.breakpoints.length} (Hash: ${envelope.systemPromptHash.slice(0, 8)})`;
+  }
 }
+

@@ -337,4 +337,13 @@ export class DeterministicStreamingScrubberEngine {
     }
     return result;
   }
+
+  public formatScrubResult(result: { emittedLength: number; deltaLength: number; inBlock: boolean; durationMs: number }): string {
+    return `[STREAM-SCRUB] ${result.deltaLength} -> ${result.emittedLength} bytes (inBlock=${result.inBlock}, ${result.durationMs.toFixed(2)}ms)`;
+  }
+
+  public formatScrubberState(state: StreamingScrubberState): string {
+    return `[SCRUBBER-STATE:Turn#${state.turnIndex}] inBlock=${state.inBlock}, heldBuffer=${state.heldBuffer.length}B`;
+  }
 }
+

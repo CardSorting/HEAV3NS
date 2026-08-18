@@ -307,7 +307,7 @@ export class DeterministicHeredocSanitizer {
     bodyStart: number,
     delimiter: string,
     stripTabs: boolean
-  ): number | null {
+  ): { bodyEnd: number; closeEnd: number } | null {
     let cursor = bodyStart;
 
     while (true) {
@@ -329,7 +329,7 @@ export class DeterministicHeredocSanitizer {
 
       const candidate = stripTabs ? line.replace(/^\t+/, "") : line;
       if (candidate === delimiter) {
-        return afterNewline;
+        return { bodyEnd: cursor, closeEnd: afterNewline };
       }
 
       if (newlineIndex === -1) {
@@ -439,23 +439,23 @@ export class DeterministicHeredocSanitizer {
       const interpreter = this.detectInterpreter(rawOpener);
 
       for (const spec of specs) {
-        const bodyEnd = this.findHeredocClose(command, bodyCursor, spec.delimiter, spec.stripTabs);
-        if (bodyEnd === null) {
+        const closeInfo = this.findHeredocClose(command, bodyCursor, spec.delimiter, spec.stripTabs);
+        if (closeInfo === null) {
           allClosed = false;
           hadAmbiguity = true;
           break;
         }
 
-        const bodyContent = command.slice(bodyCursor, bodyEnd);
+        const bodyContent = command.slice(bodyCursor, closeInfo.bodyEnd);
         const newlineCount = (bodyContent.match(/\n/g) || []).length;
         const maskedBodyText = "\n".repeat(newlineCount);
 
         unitRanges.push({
           start: bodyCursor,
-          end: bodyEnd,
+          end: closeInfo.bodyEnd,
           span: {
             startOffset: bodyCursor,
-            endOffset: bodyEnd,
+            endOffset: closeInfo.bodyEnd,
             delimiter: spec.delimiter,
             stripTabs: spec.stripTabs,
             isQuoted: spec.isQuoted,
@@ -464,7 +464,7 @@ export class DeterministicHeredocSanitizer {
             maskedBodyText,
           },
         });
-        bodyCursor = bodyEnd;
+        bodyCursor = closeInfo.closeEnd;
       }
 
       if (!allClosed) {
@@ -669,5 +669,36 @@ export class DeterministicHeredocSanitizer {
       synthesizedCommandLine,
       totalLines: synthesizedCommandLine.split("\n").length,
     };
+  }
+
+  /**
+   * Formats a sanitization result into a clean one-line status summary.
+   */
+  public formatSanitizationResult(result: HeredocSanitizationResult): string {
+    const heredocInfo = result.hasHeredocs
+      ? `${result.maskedBodiesCount} heredoc(s) masked (${result.preservedLineCount} lines preserved)`
+      : "No heredocs";
+    const amb = result.hadAmbiguity ? " [AMBIGUOUS]" : "";
+    return `[HEREDOC-SANITIZATION] ${heredocInfo} in ${result.latencyMs.toFixed(3)}ms${amb}`;
+  }
+
+  /**
+   * Formats a safety classification into a concise status tag.
+   */
+  public formatSafetyClassification(classification: CommandSafetyClassification): string {
+    const verdict = classification.isSafe ? "SAFE" : "DANGEROUS";
+    const patternInfo =
+      classification.matchedDangerousPatterns.length > 0
+        ? ` [Matched: ${classification.matchedDangerousPatterns.join(", ")}]`
+        : "";
+    return `[COMMAND-SAFETY:${verdict}] Risk: ${classification.riskLevel.toUpperCase()}${patternInfo} - ${classification.reason}`;
+  }
+
+  /**
+   * Evaluates if a command opener matches known safe inert consumers.
+   */
+  public isInertHeredocConsumer(commandOpener: string): boolean {
+    const masked = this.maskSimpleQuotes(commandOpener);
+    return INERT_HEREDOC_CONSUMER_PATTERN.test(masked) && !this.containsNestedShellScope(masked);
   }
 }

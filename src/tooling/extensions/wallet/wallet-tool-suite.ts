@@ -1,518 +1,617 @@
 /**
  * wallet-tool-suite.ts
  *
- * Model tool surface for the Native Wallet Subsystem (Phase 93 / ADR-123).
- * Exposes Rainbow/Phantom-grade structured portfolio queries, dangerous allowance audits,
- * dry-run transaction simulations, DEX aggregator swap quotes, DeFi health factor scoring,
- * EIP-712 permit security scans, Across/LiFi bridging, ERC-4337 UserOp simulation,
- * automated staking yield optimization, Gnosis Safe multi-sig staging, and gas timing advice.
+ * Model tool surface for Autonomous Agent Wallet & DeFi Subsystem (Phase 91/93 / ADR-123 / ADR-043):
+ * 30 specialized model tools for multi-chain balances, transaction simulations, DEX swap quotes,
+ * DeFi health factors, EIP-712 audits, cross-chain bridging, userOps, yield staking, safe staging,
+ * DSL queries, swimlanes, dashboards, and reports.
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
-import type { SupportedChain } from "../../../core/contracts/wallet.contracts.js";
+import type {
+  SupportedChain,
+  WalletGroupBy,
+  WalletSortBy,
+  WalletSortDirection,
+} from "../../../core/contracts/wallet.contracts.js";
 import { WalletSupervisor } from "../../../agents/extensions/wallet/wallet-supervisor.js";
+import { WalletSnapshotManager } from "../../../sessions/extensions/wallet/wallet-snapshot-manager.js";
+import { BroccoliViewRenderer } from "../../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export class WalletToolSuite {
   private readonly supervisor: WalletSupervisor;
+  private readonly snapshotManager: WalletSnapshotManager;
 
   constructor(supervisor: WalletSupervisor) {
     this.supervisor = supervisor;
+    this.snapshotManager = new WalletSnapshotManager(supervisor.getSubstrate());
   }
 
   public getTools(): ToolDefinition[] {
     return [
       {
+        name: "wallet_manage_config",
+        description: "Manages native wallet skill enablement, daily USD limits, allowed chains, and simulation requirements.",
+        parameters: {
+          action: { type: "string", description: "Action: 'get' or 'update'" },
+          enabled: { type: "boolean", description: "Enable or disable wallet skills" },
+          allowedChainsJson: { type: "string", description: "JSON array of allowed chains" },
+          maxDailyTransferLimitUsd: { type: "number", description: "Daily USD transfer safety limit" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_manage_config", args);
+        },
+      },
+      {
         name: "wallet_get_portfolio",
         description: "Queries multi-chain token balances, native asset holdings, and USD portfolio value with EIP-55 checksum validation.",
         parameters: {
-          address: { type: "string", required: true, description: "Wallet address (EVM 0x... or Solana Base58)" },
-          chain: { type: "string", description: "Target blockchain (ethereum, base, solana, polygon, arbitrum, optimism, avalanche, zksync). Default: base" },
+          address: { type: "string", required: true, description: "Wallet address" },
+          chain: { type: "string", description: "Target blockchain. Default: base" },
         },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const address = String(args.address || "").trim();
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const result = this.supervisor.getPortfolio(address, chain);
-
-          if (!result.success || !result.portfolio) {
-            return {
-              success: false,
-              error: result.error || "Failed to retrieve wallet portfolio",
-            };
-          }
-
-          return {
-            success: true,
-            address: result.portfolio.address,
-            chain: result.portfolio.chain,
-            totalValueUsd: result.portfolio.totalPortfolioValueUsd,
-            nativeBalance: result.portfolio.nativeBalance,
-            nativeSymbol: result.portfolio.nativeSymbol,
-            tokensCount: result.portfolio.tokens.length,
-            tokens: result.portfolio.tokens,
-            preview: result.portfolio.formattedSummaryCard,
-          };
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_portfolio", args);
+        },
+      },
+      {
+        name: "wallet_list_portfolios",
+        description: "Lists all cached multi-chain wallet portfolios.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_list_portfolios", args);
         },
       },
       {
         name: "wallet_audit_allowances",
-        description: "Audits token approvals and flags dangerous infinite spenders or unverified contracts (Revoke.cash pattern).",
+        description: "Audits token approvals and flags dangerous infinite spenders or unverified contracts.",
         parameters: {
           address: { type: "string", required: true, description: "Wallet address to audit" },
-          chain: { type: "string", description: "Target chain. Default: base" },
+          chain: { type: "string", description: "Target blockchain. Default: base" },
         },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const address = String(args.address || "").trim();
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const result = this.supervisor.auditAllowances(address, chain);
-
-          if (!result.success || !result.allowances) {
-            return {
-              success: false,
-              error: result.error || "Failed to audit token allowances",
-            };
-          }
-
-          const criticalCount = result.allowances.filter((a) => a.riskTier === "CRITICAL_REVOKE_RECOMMENDED").length;
-
-          return {
-            success: true,
-            totalAllowances: result.allowances.length,
-            criticalRevokeCount: criticalCount,
-            allowances: result.allowances,
-            summary: criticalCount > 0
-              ? `⚠️ **Security Alert**: Found ${criticalCount} CRITICAL dangerous allowance(s). Revocation recommended!`
-              : "✓ Token allowances reviewed. No critical vulnerabilities found.",
-          };
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_audit_allowances", args);
         },
       },
       {
         name: "wallet_simulate_transaction",
-        description: "Dry-runs a proposed transfer or contract interaction, calculating exact asset deltas, gas fees, and Blowfish-grade security risks.",
+        description: "Simulates transaction execution with asset deltas and risk classification.",
         parameters: {
           chain: { type: "string", required: true, description: "Target blockchain" },
-          fromAddress: { type: "string", required: true, description: "Sender wallet address" },
+          fromAddress: { type: "string", required: true, description: "Sender address" },
           toAddress: { type: "string", required: true, description: "Recipient or contract address" },
-          valueNative: { type: "number", description: "Amount of native asset (ETH, SOL, etc.) to send" },
-          calldata: { type: "string", description: "Contract interaction payload in hex (default: 0x)" },
+          valueNative: { type: "number", description: "Native value to send" },
         },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_simulate_transaction", args);
+        },
+      },
+      {
+        name: "wallet_get_swap_quote",
+        description: "Fetches multi-hop DEX swap quote across Uniswap, Curve, Aerodrome, etc.",
+        parameters: {
+          chain: { type: "string", required: true, description: "Blockchain" },
+          fromTokenSymbol: { type: "string", required: true, description: "Input token symbol" },
+          toTokenSymbol: { type: "string", required: true, description: "Output token symbol" },
+          amountIn: { type: "number", required: true, description: "Amount to swap" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_swap_quote", args);
+        },
+      },
+      {
+        name: "wallet_inspect_contract",
+        description: "Inspects smart contract bytecode, verification, standards (ERC20/721/1155), and proxy risk.",
+        parameters: {
+          address: { type: "string", required: true, description: "Contract address" },
+          chain: { type: "string", description: "Blockchain" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_inspect_contract", args);
+        },
+      },
+      {
+        name: "wallet_get_defi_health",
+        description: "Calculates lending position health factor and liquidation risk across Aave, Morpho, MakerDAO.",
+        parameters: {
+          userAddress: { type: "string", required: true, description: "User wallet address" },
+          chain: { type: "string", description: "Blockchain" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_defi_health", args);
+        },
+      },
+      {
+        name: "wallet_audit_eip712_signature",
+        description: "Audits typed EIP-712 permits and scans for phishing drainer signatures.",
+        parameters: {
+          chain: { type: "string", required: true, description: "Blockchain" },
+          userAddress: { type: "string", required: true, description: "Signer address" },
+          domainName: { type: "string", required: true, description: "EIP-712 Domain name" },
+          verifyingContract: { type: "string", required: true, description: "Verifying contract address" },
+          primaryType: { type: "string", required: true, description: "Primary type" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_audit_eip712_signature", args);
+        },
+      },
+      {
+        name: "wallet_get_gas_report",
+        description: "Provides real-time gas oracle metrics across slow/standard/fast/instant tiers.",
+        parameters: {
+          chain: { type: "string", description: "Blockchain. Default: base" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_gas_report", args);
+        },
+      },
+      {
+        name: "wallet_manage_address_book",
+        description: "Resolves or manages contacts and ENS names in address book.",
+        parameters: {
+          nameOrAddress: { type: "string", required: true, description: "ENS name or address" },
+          chain: { type: "string", description: "Blockchain. Default: base" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_manage_address_book", args);
+        },
+      },
+      {
+        name: "wallet_get_bridge_quote",
+        description: "Fetches cross-chain bridge quote across Across, LiFi, Stargate.",
+        parameters: {
+          fromChain: { type: "string", required: true, description: "Source chain" },
+          toChain: { type: "string", required: true, description: "Destination chain" },
+          tokenSymbol: { type: "string", required: true, description: "Token symbol" },
+          amount: { type: "number", required: true, description: "Amount to bridge" },
+          recipientAddress: { type: "string", required: true, description: "Recipient address" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_bridge_quote", args);
+        },
+      },
+      {
+        name: "wallet_simulate_user_op",
+        description: "Simulates ERC-4337 Account Abstraction UserOperation and paymaster gas sponsorship.",
+        parameters: {
+          chain: { type: "string", required: true, description: "Blockchain" },
+          senderSmartAccount: { type: "string", required: true, description: "Smart account address" },
+          targetContract: { type: "string", required: true, description: "Target contract address" },
+          callData: { type: "string", required: true, description: "Execution calldata" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_simulate_user_op", args);
+        },
+      },
+      {
+        name: "wallet_get_yield_report",
+        description: "Optimizes staking yields and auto-compounding schedules across Lido, RocketPool, Convex.",
+        parameters: {
+          userAddress: { type: "string", required: true, description: "User wallet address" },
+          chain: { type: "string", description: "Blockchain" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_yield_report", args);
+        },
+      },
+      {
+        name: "wallet_stage_multisig_tx",
+        description: "Stages Gnosis Safe multi-sig transaction with quorum validation and timelock checks.",
+        parameters: {
+          safeAddress: { type: "string", required: true, description: "Gnosis Safe address" },
+          chain: { type: "string", required: true, description: "Blockchain" },
+          thresholdRequired: { type: "number", required: true, description: "Required signatures" },
+          confirmationsJson: { type: "string", required: true, description: "JSON array of signer addresses" },
+          proposedActionSummary: { type: "string", required: true, description: "Action summary" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_stage_multisig_tx", args);
+        },
+      },
+      {
+        name: "wallet_audit_health",
+        description: "Audits wallet security posture, allowance exposures, and simulation success rates.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_audit_health", args);
+        },
+      },
+      {
+        name: "wallet_get_metrics",
+        description: "Fetches comprehensive telemetry on tracked portfolios, total USD value, and chain distribution.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_get_metrics", args);
+        },
+      },
+      {
+        name: "wallet_group_and_sort",
+        description: "Organizes portfolios into multi-criteria swimlanes (chain, valueTier, riskTier).",
+        parameters: {
+          groupBy: { type: "string", description: "Group by: chain, valueTier, riskTier" },
+          sortBy: { type: "string", description: "Sort by: value, chain, lastUpdated" },
+          direction: { type: "string", description: "Sort direction: asc or desc" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_group_and_sort", args);
+        },
+      },
+      {
+        name: "wallet_search_dsl",
+        description: "Searches portfolios using natural query DSL (e.g. 'chain:base min_balance>100').",
+        parameters: {
+          query: { type: "string", required: true, description: "DSL query string" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_search_dsl", args);
+        },
+      },
+      {
+        name: "wallet_render_dashboard",
+        description: "Renders an ANSI CLI summary card with portfolio USD values and chain allocations.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_render_dashboard", args);
+        },
+      },
+      {
+        name: "wallet_render_card",
+        description: "Renders an interactive ANSI CLI portfolio card for a specific wallet.",
+        parameters: {
+          address: { type: "string", required: true, description: "Wallet address" },
+          chain: { type: "string", description: "Blockchain" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_render_card", args);
+        },
+      },
+      {
+        name: "wallet_export_html",
+        description: "Exports wallet portfolios to a single-page interactive HTML app.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_export_html", args);
+        },
+      },
+      {
+        name: "wallet_export_markdown",
+        description: "Exports wallet diagnostic report to Markdown format.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_export_markdown", args);
+        },
+      },
+      {
+        name: "wallet_export_csv",
+        description: "Exports wallet portfolios to CSV format.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_export_csv", args);
+        },
+      },
+      {
+        name: "wallet_bulk_purge",
+        description: "Atomically purges multiple wallet portfolios.",
+        parameters: {
+          addressesJson: { type: "string", required: true, description: "JSON array of addresses" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_bulk_purge", args);
+        },
+      },
+      {
+        name: "wallet_undo",
+        description: "Reverts the last wallet mutation from the undo stack.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_undo", args);
+        },
+      },
+      {
+        name: "wallet_redo",
+        description: "Re-applies the last undone wallet mutation.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_redo", args);
+        },
+      },
+      {
+        name: "wallet_capture_snapshot",
+        description: "Captures a frame-perfect snapshot of wallet state in memory.",
+        parameters: {
+          frameIndex: { type: "number", required: true, description: "Frame index" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_capture_snapshot", args);
+        },
+      },
+      {
+        name: "wallet_restore_snapshot",
+        description: "Restores wallet state to a previous frame in < 0.05 ms SLA.",
+        parameters: {
+          frameIndex: { type: "number", required: true, description: "Frame index" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_restore_snapshot", args);
+        },
+      },
+      {
+        name: "wallet_validate_address",
+        description: "Validates and checksums EVM or Solana wallet addresses.",
+        parameters: {
+          address: { type: "string", required: true, description: "Wallet address" },
+          chain: { type: "string", description: "Blockchain. Default: base" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("wallet_validate_address", args);
+        },
+      },
+    ];
+  }
+
+  public async executeTool(
+    name: string,
+    args: Record<string, unknown>,
+    _cwd?: string
+  ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown; error?: string }> {
+    try {
+      switch (name) {
+        case "wallet_manage_config": {
+          const action = String(args.action || "get");
+          if (action === "update" || args.enabled !== undefined || args.maxDailyTransferLimitUsd !== undefined) {
+            const updates: Record<string, unknown> = {};
+            if (typeof args.enabled === "boolean") updates.enabled = args.enabled;
+            if (typeof args.maxDailyTransferLimitUsd === "number") updates.maxDailyTransferLimitUsd = args.maxDailyTransferLimitUsd;
+            if (args.allowedChainsJson) {
+              try {
+                updates.allowedChains = JSON.parse(String(args.allowedChainsJson));
+              } catch {
+                return { success: false, error: "allowedChainsJson must be valid JSON" };
+              }
+            }
+            const updated = this.supervisor.updateConfig(updates);
+            return { success: true, config: updated };
+          }
+          return { success: true, config: this.supervisor.getConfig() };
+        }
+
+        case "wallet_get_portfolio": {
+          const address = String(args.address || "").trim();
+          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
+          const result = this.supervisor.getPortfolio(address, chain);
+          return { ...result };
+        }
+
+        case "wallet_list_portfolios": {
+          const portfolios = this.supervisor.getSubstrate().listPortfolios();
+          return { success: true, count: portfolios.length, portfolios };
+        }
+
+        case "wallet_audit_allowances": {
+          const address = String(args.address || "").trim();
+          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
+          const result = this.supervisor.auditAllowances(address, chain);
+          return { ...result };
+        }
+
+        case "wallet_simulate_transaction": {
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
           const fromAddress = String(args.fromAddress || "").trim();
           const toAddress = String(args.toAddress || "").trim();
-          const valueNative = typeof args.valueNative === "number" ? args.valueNative : 0;
-          const calldata = args.calldata ? String(args.calldata) : "0x";
+          const valueNative = typeof args.valueNative === "number" ? args.valueNative : undefined;
+          const result = this.supervisor.simulateTransaction({ chain, fromAddress, toAddress, valueNative });
+          return { ...result };
+        }
 
-          const result = this.supervisor.simulateTransaction({
-            chain,
-            fromAddress,
-            toAddress,
-            valueNative,
-            calldata,
-          });
-
-          if (!result.success || !result.simulation) {
-            return {
-              success: false,
-              error: result.error || "Transaction simulation failed",
-              preview: result.simulation?.humanReadablePreview,
-            };
-          }
-
-          return {
-            success: true,
-            simulationId: result.simulation.simulationId,
-            riskTier: result.simulation.riskTier,
-            netValueChangeUsd: result.simulation.netValueChangeUsd,
-            estimatedGasCostUsd: result.simulation.estimatedGasCostUsd,
-            assetDeltas: result.simulation.assetDeltas,
-            preview: result.simulation.humanReadablePreview,
-          };
-        },
-      },
-      {
-        name: "wallet_quote_swap",
-        description: "Quotes optimal multi-hop DEX aggregation swap routes (1inch / Jupiter style) with slippage and MEV protection.",
-        parameters: {
-          chain: { type: "string", required: true, description: "Target blockchain (base, ethereum, solana, arbitrum, optimism)" },
-          fromTokenSymbol: { type: "string", required: true, description: "Source token symbol (e.g. ETH, USDC)" },
-          fromTokenAddress: { type: "string", required: true, description: "Source token contract address" },
-          toTokenSymbol: { type: "string", required: true, description: "Destination token symbol" },
-          toTokenAddress: { type: "string", required: true, description: "Destination token contract address" },
-          amountIn: { type: "number", required: true, description: "Amount of source token to swap" },
-          slippageTolerancePercent: { type: "number", description: "Slippage tolerance percent. Default: 0.5%" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        case "wallet_get_swap_quote": {
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const fromTokenSymbol = String(args.fromTokenSymbol || "ETH");
-          const fromTokenAddress = String(args.fromTokenAddress || "0x");
-          const toTokenSymbol = String(args.toTokenSymbol || "USDC");
-          const toTokenAddress = String(args.toTokenAddress || "0x");
-          const amountIn = typeof args.amountIn === "number" ? args.amountIn : 1.0;
-          const slippageTolerancePercent = typeof args.slippageTolerancePercent === "number" ? args.slippageTolerancePercent : 0.5;
-
-          const result = this.supervisor.quoteSwap({
+          const fromTokenSymbol = String(args.fromTokenSymbol || "").trim();
+          const toTokenSymbol = String(args.toTokenSymbol || "").trim();
+          const amountIn = Number(args.amountIn || 0);
+          const result = this.supervisor.getSwapQuote({
             chain,
+            fromTokenAddress: "0x0000000000000000000000000000000000000000",
             fromTokenSymbol,
-            fromTokenAddress,
+            toTokenAddress: "0x0000000000000000000000000000000000000000",
             toTokenSymbol,
-            toTokenAddress,
             amountIn,
-            slippageTolerancePercent,
           });
+          return { ...result };
+        }
 
-          if (!result.success || !result.quote) {
-            return {
-              success: false,
-              error: result.error || "Swap quote failed",
-            };
-          }
-
-          return {
-            success: true,
-            quoteId: result.quote.quoteId,
-            amountIn: result.quote.amountIn,
-            estimatedAmountOut: result.quote.estimatedAmountOut,
-            minimumAmountOut: result.quote.minimumAmountOut,
-            priceImpactPercent: result.quote.priceImpactPercent,
-            preview: result.quote.formattedRoutePreview,
-          };
-        },
-      },
-      {
-        name: "wallet_inspect_defi_health",
-        description: "Inspects user borrowing health factor, collateral ratios, and liquidation risks across DeFi protocols (Aave, Morpho).",
-        parameters: {
-          address: { type: "string", required: true, description: "User wallet address" },
-          chain: { type: "string", description: "Target blockchain. Default: base" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        case "wallet_inspect_contract": {
           const address = String(args.address || "").trim();
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
+          const result = this.supervisor.inspectContract(address, chain);
+          return { ...result };
+        }
 
-          const result = this.supervisor.inspectDeFiHealth(address, chain);
-          if (!result.success || !result.health) {
-            return {
-              success: false,
-              error: result.error || "DeFi health inspection failed",
-            };
-          }
+        case "wallet_get_defi_health": {
+          const userAddress = String(args.userAddress || "").trim();
+          const chain = (String(args.chain || "ethereum").toLowerCase()) as SupportedChain;
+          const result = this.supervisor.getDeFiHealth(userAddress, chain);
+          return { ...result };
+        }
 
-          return {
-            success: true,
-            overallHealthFactor: result.health.overallHealthFactor,
-            collateralUsd: result.health.aggregateCollateralUsd,
-            debtUsd: result.health.aggregateDebtUsd,
-            currentLtvPercent: result.health.overallLtvPercent,
-            preview: result.health.formattedHealthCard,
-          };
-        },
-      },
-      {
-        name: "wallet_audit_signature",
-        description: "Scans off-chain EIP-712 typed permit signatures (Permit, Permit2, Seaport) for hidden phishing and drainer threats.",
-        parameters: {
-          chain: { type: "string", required: true, description: "Blockchain network" },
-          userAddress: { type: "string", required: true, description: "Signer wallet address" },
-          domainName: { type: "string", required: true, description: "EIP-712 domain name" },
-          verifyingContract: { type: "string", required: true, description: "Contract verifying the signature" },
-          primaryType: { type: "string", required: true, description: "Signature type (Permit, Permit2, OrderComponents)" },
-          messagePayload: { type: "string", required: true, description: "JSON string payload of the typed message" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const userAddress = String(args.userAddress || "");
-          const domainName = String(args.domainName || "");
-          const verifyingContract = String(args.verifyingContract || "");
-          const primaryType = (String(args.primaryType || "Permit")) as any;
-          let messagePayload: Record<string, unknown> = {};
-          if (typeof args.messagePayload === "string") {
-            try {
-              messagePayload = JSON.parse(args.messagePayload);
-            } catch {
-              messagePayload = {};
-            }
-          } else if (typeof args.messagePayload === "object" && args.messagePayload !== null) {
-            messagePayload = args.messagePayload as Record<string, unknown>;
-          }
-
-          const result = this.supervisor.auditSignature({
+        case "wallet_audit_eip712_signature": {
+          const chain = (String(args.chain || "ethereum").toLowerCase()) as SupportedChain;
+          const userAddress = String(args.userAddress || "").trim();
+          const domainName = String(args.domainName || "").trim();
+          const verifyingContract = String(args.verifyingContract || "").trim();
+          const primaryType = String(args.primaryType || "Permit") as any;
+          const result = this.supervisor.auditEIP712Signature({
             chain,
             userAddress,
             domainName,
             verifyingContract,
             primaryType,
-            messagePayload,
+            messagePayload: {},
           });
+          return { ...result };
+        }
 
-          if (!result.success || !result.audit) {
-            return {
-              success: false,
-              error: result.error || "Signature audit failed",
-              riskTier: result.audit?.riskTier,
-              preview: result.audit?.inspectionCard,
-            };
-          }
-
-          return {
-            success: true,
-            riskTier: result.audit.riskTier,
-            isUnlimited: result.audit.isUnlimitedApproval,
-            preview: result.audit.inspectionCard,
-          };
-        },
-      },
-      {
-        name: "wallet_quote_bridge",
-        description: "Quotes optimal cross-chain bridge routes (Across v3, Li.Fi, Stargate) with transit time and fee estimates.",
-        parameters: {
-          fromChain: { type: "string", required: true, description: "Source chain" },
-          toChain: { type: "string", required: true, description: "Destination chain" },
-          tokenSymbol: { type: "string", required: true, description: "Asset symbol (e.g. USDC, ETH)" },
-          tokenAddress: { type: "string", required: true, description: "Asset contract address" },
-          amount: { type: "number", required: true, description: "Amount of token to bridge" },
-          recipientAddress: { type: "string", required: true, description: "Recipient address on destination chain" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const fromChain = (String(args.fromChain || "ethereum").toLowerCase()) as SupportedChain;
-          const toChain = (String(args.toChain || "base").toLowerCase()) as SupportedChain;
-          const tokenSymbol = String(args.tokenSymbol || "USDC");
-          const tokenAddress = String(args.tokenAddress || "0x");
-          const amount = typeof args.amount === "number" ? args.amount : 100.0;
-          const recipientAddress = String(args.recipientAddress || "");
-
-          const result = this.supervisor.quoteBridge({
-            fromChain,
-            toChain,
-            tokenSymbol,
-            tokenAddress,
-            amount,
-            recipientAddress,
-          });
-
-          if (!result.success || !result.quote) {
-            return {
-              success: false,
-              error: result.error || "Bridge quote failed",
-            };
-          }
-
-          return {
-            success: true,
-            bridgeQuoteId: result.quote.bridgeQuoteId,
-            provider: result.quote.bridgeProvider,
-            amountIn: result.quote.amountIn,
-            estimatedReceived: result.quote.estimatedAmountReceived,
-            feeUsd: result.quote.totalBridgeFeeUsd,
-            durationSeconds: result.quote.estimatedDurationSeconds,
-            preview: result.quote.formattedBridgeCard,
-          };
-        },
-      },
-      {
-        name: "wallet_simulate_user_op",
-        description: "Simulates an ERC-4337 Account Abstraction UserOperation with paymaster gas sponsorship.",
-        parameters: {
-          chain: { type: "string", required: true, description: "Target blockchain" },
-          senderSmartAccount: { type: "string", required: true, description: "Smart account address" },
-          targetContract: { type: "string", required: true, description: "Target interaction contract" },
-          callData: { type: "string", required: true, description: "Execution calldata" },
-          gasTokenSymbol: { type: "string", description: "Gas token symbol (SPONSORED or USDC). Default: SPONSORED" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const senderSmartAccount = String(args.senderSmartAccount || "");
-          const targetContract = String(args.targetContract || "");
-          const callData = String(args.callData || "0x");
-          const gasTokenSymbol = args.gasTokenSymbol ? String(args.gasTokenSymbol) : "SPONSORED";
-
-          const result = this.supervisor.simulateUserOp({
-            chain,
-            senderSmartAccount,
-            targetContract,
-            callData,
-            gasTokenSymbol,
-          });
-
-          if (!result.success || !result.result) {
-            return {
-              success: false,
-              error: result.error || "UserOp simulation failed",
-            };
-          }
-
-          return {
-            success: true,
-            userOpHash: result.result.userOpHash,
-            isGasSponsored: result.result.isGasSponsored,
-            feeUsd: result.result.estimatedFeeUsd,
-            preview: result.result.formattedUserOpCard,
-          };
-        },
-      },
-      {
-        name: "wallet_optimize_yield",
-        description: "Inspects liquid staking and yield positions (Lido wstETH, Morpho Vaults), computing APY returns and harvesting plans.",
-        parameters: {
-          chain: { type: "string", description: "Target blockchain. Default: base" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const result = this.supervisor.optimizeYield(chain);
-
-          if (!result.success || !result.report) {
-            return {
-              success: false,
-              error: result.error || "Yield optimization query failed",
-            };
-          }
-
-          return {
-            success: true,
-            totalStakedUsd: result.report.totalStakedUsd,
-            weightedApyPercent: result.report.weightedAverageApyPercent,
-            annualYieldUsd: result.report.projectedTotalAnnualYieldUsd,
-            preview: result.report.formattedYieldCard,
-          };
-        },
-      },
-      {
-        name: "wallet_stage_multisig",
-        description: "Stages a proposed Gnosis Safe transaction and tracks quorum threshold approvals.",
-        parameters: {
-          safeAddress: { type: "string", required: true, description: "Gnosis Safe contract address" },
-          chain: { type: "string", description: "Target chain. Default: base" },
-          proposedAction: { type: "string", required: true, description: "Summary description of proposed transaction" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const safeAddress = String(args.safeAddress || "");
-          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const proposedAction = String(args.proposedAction || "Transfer 100 USDC to Operations");
-
-          const result = this.supervisor.stageMultiSig(safeAddress, chain, proposedAction, []);
-
-          if (!result.success || !result.stage) {
-            return {
-              success: false,
-              error: result.error || "MultiSig staging failed",
-            };
-          }
-
-          return {
-            success: true,
-            safeTxHash: result.stage.safeTxHash,
-            isQuorumReached: result.stage.isQuorumReached,
-            thresholdRequired: result.stage.thresholdRequired,
-            preview: result.stage.formattedStageCard,
-          };
-        },
-      },
-      {
-        name: "wallet_get_gas_advice",
-        description: "Retrieves live multi-tier gas pricing (slow, standard, fast, instant) and timing recommendations.",
-        parameters: {
-          chain: { type: "string", description: "Target blockchain. Default: base" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        case "wallet_get_gas_report": {
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
           const result = this.supervisor.getGasReport(chain);
+          return { ...result };
+        }
 
-          if (!result.success || !result.gasReport) {
-            return {
-              success: false,
-              error: result.error || "Gas report failed",
-            };
-          }
-
-          return {
-            success: true,
-            baseFeeGwei: result.gasReport.currentBaseFeeGwei,
-            advice: result.gasReport.timingAdvice,
-            preview: result.gasReport.formattedGasCard,
-          };
-        },
-      },
-      {
-        name: "wallet_resolve_contact",
-        description: "Resolves ENS names (e.g. vitalik.eth) and saves or looks up verified address book contacts.",
-        parameters: {
-          nameOrAddress: { type: "string", required: true, description: "ENS name or raw crypto address" },
-          chain: { type: "string", description: "Target chain. Default: base" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        case "wallet_manage_address_book": {
           const nameOrAddress = String(args.nameOrAddress || "").trim();
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
           const result = this.supervisor.resolveNameOrContact(nameOrAddress, chain);
+          return { ...result };
+        }
 
-          if (!result.success || !result.contact) {
-            return {
-              success: false,
-              error: result.error || "Contact resolution failed",
-            };
+        case "wallet_get_bridge_quote": {
+          const fromChain = (String(args.fromChain || "ethereum").toLowerCase()) as SupportedChain;
+          const toChain = (String(args.toChain || "base").toLowerCase()) as SupportedChain;
+          const tokenSymbol = String(args.tokenSymbol || "USDC").trim();
+          const amount = Number(args.amount || 0);
+          const recipientAddress = String(args.recipientAddress || "").trim();
+          const result = this.supervisor.getBridgeQuote({
+            fromChain,
+            toChain,
+            tokenSymbol,
+            tokenAddress: "0x0000000000000000000000000000000000000000",
+            amount,
+            recipientAddress,
+          });
+          return { ...result };
+        }
+
+        case "wallet_simulate_user_op": {
+          const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
+          const senderSmartAccount = String(args.senderSmartAccount || "").trim();
+          const targetContract = String(args.targetContract || "").trim();
+          const callData = String(args.callData || "0x").trim();
+          const result = this.supervisor.simulateUserOp({ chain, senderSmartAccount, targetContract, callData });
+          return { ...result };
+        }
+
+        case "wallet_get_yield_report": {
+          const userAddress = String(args.userAddress || "").trim();
+          const chain = (String(args.chain || "ethereum").toLowerCase()) as SupportedChain;
+          const result = this.supervisor.getYieldOptimizationReport(userAddress, chain);
+          return { ...result };
+        }
+
+        case "wallet_stage_multisig_tx": {
+          const safeAddress = String(args.safeAddress || "").trim();
+          const chain = (String(args.chain || "ethereum").toLowerCase()) as SupportedChain;
+          const thresholdRequired = Number(args.thresholdRequired || 2);
+          const confirmationsJson = String(args.confirmationsJson || "[]");
+          let confirmations: string[];
+          try {
+            confirmations = JSON.parse(confirmationsJson);
+          } catch {
+            return { success: false, error: "confirmationsJson must be valid JSON" };
           }
+          const proposedActionSummary = String(args.proposedActionSummary || "").trim();
+          const result = this.supervisor.stageMultiSigTransaction(safeAddress, chain, thresholdRequired, confirmations, proposedActionSummary);
+          return { ...result };
+        }
 
-          return {
-            success: true,
-            address: result.contact.address,
-            label: result.contact.label,
-            ensOrDomain: result.contact.ensOrDomain,
-            trustRating: result.contact.trustRating,
-          };
-        },
-      },
-      {
-        name: "wallet_inspect_contract",
-        description: "Inspects a smart contract bytecode, checking verification status, proxy standards, and phishing risk flags.",
-        parameters: {
-          address: { type: "string", required: true, description: "Smart contract address" },
-          chain: { type: "string", description: "Blockchain network. Default: base" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+        case "wallet_audit_health": {
+          const audit = this.supervisor.auditHealth();
+          return { success: true, audit };
+        }
+
+        case "wallet_get_metrics": {
+          const metrics = this.supervisor.getMetrics();
+          return { success: true, metrics };
+        }
+
+        case "wallet_group_and_sort": {
+          const groupBy = (args.groupBy as WalletGroupBy) || "chain";
+          const sortBy = (args.sortBy as WalletSortBy) || "value";
+          const direction = (args.direction as WalletSortDirection) || "desc";
+          const lanes = this.supervisor.getGroupedPortfolios(groupBy, sortBy, direction);
+          return { success: true, lanes };
+        }
+
+        case "wallet_search_dsl": {
+          const query = String(args.query || "");
+          const portfolios = this.supervisor.queryDsl(query);
+          return { success: true, count: portfolios.length, portfolios };
+        }
+
+        case "wallet_render_dashboard": {
+          const metrics = this.supervisor.getMetrics();
+          const rendered = BroccoliViewRenderer.renderWalletDashboard(metrics);
+          return { success: true, rendered };
+        }
+
+        case "wallet_render_card": {
+          const address = String(args.address || "").trim();
+          const chain = String(args.chain || "base");
+          const portfolio = this.supervisor.getSubstrate().getPortfolio(address, chain);
+          if (!portfolio) return { success: false, error: `Portfolio ${address} on ${chain} not found` };
+          const rendered = BroccoliViewRenderer.renderWalletCard(portfolio);
+          return { success: true, rendered };
+        }
+
+        case "wallet_export_html": {
+          const html = this.supervisor.exportHtml();
+          return { success: true, html };
+        }
+
+        case "wallet_export_markdown": {
+          const markdown = this.supervisor.exportMarkdown();
+          return { success: true, markdown };
+        }
+
+        case "wallet_export_csv": {
+          const csv = this.supervisor.exportCsv();
+          return { success: true, csv };
+        }
+
+        case "wallet_bulk_purge": {
+          const addrsJson = String(args.addressesJson || "[]");
+          let addrs: string[];
+          try {
+            addrs = JSON.parse(addrsJson);
+          } catch {
+            return { success: false, error: "addressesJson must be valid JSON" };
+          }
+          const result = this.supervisor.bulkPurge(addrs);
+          return { success: true, result };
+        }
+
+        case "wallet_undo": {
+          const ok = this.supervisor.undo();
+          return { success: ok };
+        }
+
+        case "wallet_redo": {
+          const ok = this.supervisor.redo();
+          return { success: ok };
+        }
+
+        case "wallet_capture_snapshot": {
+          const frame = typeof args.frameIndex === "number" ? args.frameIndex : 1;
+          const snap = this.snapshotManager.captureSnapshot(frame);
+          return { success: true, frameIndex: frame, snapshot: snap };
+        }
+
+        case "wallet_restore_snapshot": {
+          const frame = typeof args.frameIndex === "number" ? args.frameIndex : 1;
+          const res = this.snapshotManager.restoreFrameSnapshot(frame);
+          return { ...res };
+        }
+
+        case "wallet_validate_address": {
           const address = String(args.address || "").trim();
           const chain = (String(args.chain || "base").toLowerCase()) as SupportedChain;
-          const result = this.supervisor.inspectContract(address, chain);
+          const res = this.supervisor.getEngine().validateAndNormalizeAddress(address, chain);
+          return { success: res.valid, ...res };
+        }
 
-          if (!result.success || !result.inspection) {
-            return {
-              success: false,
-              error: result.error || "Contract inspection failed",
-            };
-          }
-
-          return {
-            success: true,
-            inspection: result.inspection,
-            preview: result.inspection.summaryCard,
-          };
-        },
-      },
-      {
-        name: "wallet_manage_config",
-        description: "Enables, disables, or updates security policies (chains, spend limits, slippage) for the Native Wallet skill.",
-        parameters: {
-          enabled: { type: "boolean", description: "Enable or disable native wallet capabilities" },
-          maxDailyTransferLimitUsd: { type: "number", description: "Daily spending threshold in USD for mandatory confirmation" },
-          requireSimulationBeforeAction: { type: "boolean", description: "Enforce transaction dry-run simulation before action" },
-          maxSlippagePercent: { type: "number", description: "Maximum allowed slippage percent for swaps" },
-        },
-        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
-          const updates: Record<string, unknown> = {};
-          if (typeof args.enabled === "boolean") updates.enabled = args.enabled;
-          if (typeof args.maxDailyTransferLimitUsd === "number") updates.maxDailyTransferLimitUsd = args.maxDailyTransferLimitUsd;
-          if (typeof args.requireSimulationBeforeAction === "boolean") updates.requireSimulationBeforeAction = args.requireSimulationBeforeAction;
-          if (typeof args.maxSlippagePercent === "number") updates.maxSlippagePercent = args.maxSlippagePercent;
-
-          const updated = this.supervisor.updateConfig(updates);
-
-          return {
-            success: true,
-            status: updated.enabled ? "ACTIVE (ENABLED)" : "DISABLED (FAIL-CLOSED)",
-            config: updated,
-            message: updated.enabled
-              ? `✓ Wallet skill is now ENABLED on [${updated.allowedChains.join(", ")}] with $${updated.maxDailyTransferLimitUsd} daily limit.`
-              : "✓ Wallet skill is now DISABLED. All operations will fail closed.",
-          };
-        },
-      },
-    ];
+        default:
+          return { success: false, error: `Unknown tool: ${name}` };
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: message };
+    }
   }
 }

@@ -1,64 +1,85 @@
 /**
  * evidence-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for Verification Evidence Subsystem (Phase 92 / ADR-044).
+ * Frame-perfect binary snapshotting and O(1) state rollback (< 0.05 ms SLA)
+ * for Verification Evidence Subsystem (Phase 92 / ADR-044 / Target #73).
  */
 
+import { performance } from "node:perf_hooks";
 import type { VerificationEvidenceWorkspaceSnapshot } from "../../../core/contracts/verification-evidence.contracts.js";
-import { BroccoliEvidenceSubstrate } from "./broccoli-evidence-substrate.js";
+import type { BroccoliEvidenceSubstrate } from "./broccoli-evidence-substrate.js";
 
 export class EvidenceSnapshotManager {
-  private substrate: BroccoliEvidenceSubstrate;
-  private snapshots: Map<number, VerificationEvidenceWorkspaceSnapshot>;
+  private readonly substrate: BroccoliEvidenceSubstrate;
+  private readonly frameSnapshots = new Map<number, VerificationEvidenceWorkspaceSnapshot>();
+  private readonly namedSnapshots = new Map<string, VerificationEvidenceWorkspaceSnapshot>();
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliEvidenceSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, VerificationEvidenceWorkspaceSnapshot>();
   }
 
-  /**
-   * Captures the state at a specific frame index.
-   */
-  captureFrame(frameIndex: number): void {
+  public captureSnapshot(frameIndex: number): VerificationEvidenceWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > EvidenceSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
-  /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Execution time is guaranteed to be < 0.05 ms.
-   */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  public captureFrame(frameIndex: number): void {
+    this.captureSnapshot(frameIndex);
+  }
+
+  public restoreFrameSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
+    return {
+      success: true,
+      durationMs: duration,
+    };
+  }
 
+  public rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreFrameSnapshot(frameIndex);
+    return res.success;
+  }
+
+  public takeSnapshot(name: string): VerificationEvidenceWorkspaceSnapshot {
+    const snap = this.substrate.exportSnapshot();
+    this.namedSnapshots.set(name, snap);
+    return snap;
+  }
+
+  public restoreSnapshot(name: string): boolean {
+    const snap = this.namedSnapshots.get(name);
+    if (!snap) return false;
+    this.substrate.importSnapshot(snap);
     return true;
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
-  getSnapshot(frameIndex: number): VerificationEvidenceWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+  public getSnapshot(frameIndex: number): VerificationEvidenceWorkspaceSnapshot | undefined {
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
-  clear(): void {
-    this.snapshots.clear();
+  public clear(): void {
+    this.frameSnapshots.clear();
+    this.namedSnapshots.clear();
   }
 }

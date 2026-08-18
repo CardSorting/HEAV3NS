@@ -7,6 +7,7 @@
 
 import type {
   OsvAdvisory,
+  OsvScanResult,
   PackageEcosystem,
   ParsedPackageTarget,
 } from "../../../core/contracts/osv-scanner.contracts.js";
@@ -102,6 +103,7 @@ export class DeterministicOsvParser {
     let packageToken: string | undefined;
     let takeNext = false;
 
+    const subcommands = new Set(["install", "i", "add", "get", "require", "update", "run", "exec", "build"]);
     for (const arg of args) {
       if (!arg || typeof arg !== "string") continue;
       if (takeNext) {
@@ -117,6 +119,9 @@ export class DeterministicOsvParser {
         break;
       }
       if (arg.startsWith("-")) {
+        continue;
+      }
+      if (subcommands.has(arg.toLowerCase())) {
         continue;
       }
       packageToken = arg;
@@ -178,4 +183,15 @@ export class DeterministicOsvParser {
       published: v.published,
     }));
   }
+
+  public formatScanResult(result: OsvScanResult): string {
+    const status = result.allowed ? "ALLOWED" : "BLOCKED";
+    return `[OSV:${status}] ${result.package.ecosystem}:${result.package.name} -> ${result.advisories.length} advisories (${result.scanDurationMs.toFixed(2)}ms)`;
+  }
+
+  public formatAdvisory(advisory: OsvAdvisory): string {
+    const malTag = advisory.isMalware ? " [MALWARE]" : "";
+    return `[ADVISORY:${advisory.id}]${malTag} ${advisory.summary.slice(0, 60)}`;
+  }
 }
+

@@ -1,49 +1,68 @@
 /**
  * turn-retry-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and sub-millisecond O(1) state rollback (< 0.05 ms SLA)
- * for Turn Retry State Machine Subsystem (Phase 131 / ADR-107 / Target #64).
+ * High-performance frame snapshot manager for Turn Retry State Machine
+ * enabling frame-perfect state capture and O(1) state rewind (< 0.05 ms SLA) (Phase 131 / ADR-107).
  */
 
-import type { BroccoliTurnRetrySubstrate } from "./broccoli-turn-retry-substrate.js";
+import { performance } from "node:perf_hooks";
 import type { TurnRetryWorkspaceSnapshot } from "../../../core/contracts/turn-retry.contracts.js";
+import { BroccoliTurnRetrySubstrate } from "./broccoli-turn-retry-substrate.js";
 
 export class TurnRetrySnapshotManager {
   private readonly substrate: BroccoliTurnRetrySubstrate;
-  private readonly snapshotStorage = new Map<string, TurnRetryWorkspaceSnapshot>();
+  private readonly frameSnapshots: Map<number, TurnRetryWorkspaceSnapshot>;
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliTurnRetrySubstrate) {
     this.substrate = substrate;
+    this.frameSnapshots = new Map<number, TurnRetryWorkspaceSnapshot>();
   }
 
-  public takeSnapshot(snapshotId: string): TurnRetryWorkspaceSnapshot {
-    const snapshot = this.substrate.createSnapshot(snapshotId);
-    this.snapshotStorage.set(snapshotId, snapshot);
+  /**
+   * Captures a deep workspace snapshot pinned to an execution frame.
+   */
+  captureSnapshot(frameIndex: number): TurnRetryWorkspaceSnapshot {
+    const snapshot = this.substrate.exportSnapshot();
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > TurnRetrySnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
     return snapshot;
   }
 
-  public restoreSnapshot(snapshotId: string): boolean {
-    const snapshot = this.snapshotStorage.get(snapshotId);
+  /**
+   * Restores workspace state to a captured execution frame in < 0.05 ms SLA.
+   */
+  restoreSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
-    this.substrate.restoreSnapshot(snapshot);
-    return true;
+
+    this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
+
+    return {
+      success: true,
+      durationMs: duration,
+    };
   }
 
-  public deleteSnapshot(snapshotId: string): boolean {
-    return this.snapshotStorage.delete(snapshotId);
+  getSnapshot(frameIndex: number): TurnRetryWorkspaceSnapshot | undefined {
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  public clearAllSnapshots(): void {
-    this.snapshotStorage.clear();
-  }
-
-  public hasSnapshot(snapshotId: string): boolean {
-    return this.snapshotStorage.has(snapshotId);
-  }
-
-  public getSnapshotCount(): number {
-    return this.snapshotStorage.size;
+  clear(): void {
+    this.frameSnapshots.clear();
   }
 }

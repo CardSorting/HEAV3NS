@@ -1,11 +1,13 @@
 /**
  * patch-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for the Patch & File Mutation substrate.
+ * Frame-perfect binary snapshotting and O(1) state rollback (< 0.05 ms SLA)
+ * for the Patch & File Mutation substrate (Phase 77 / ADR-029 / Target #74).
  */
 
+import { performance } from "node:perf_hooks";
 import type { FileMutationSnapshot } from "../../../core/contracts/patch-mutation.contracts.js";
-import { BroccoliPatchSubstrate } from "./broccoli-patch-substrate.js";
+import type { BroccoliPatchSubstrate } from "./broccoli-patch-substrate.js";
 
 export interface PatchSnapshotFrame {
   readonly frameId: number;
@@ -23,9 +25,11 @@ export class PatchSnapshotManager {
     this.maxFrames = Math.max(16, maxFrames);
   }
 
-  /**
-   * Captures an atomic snapshot of staged file mutations at the given frame tick.
-   */
+  public captureSnapshot(frameId: number): FileMutationSnapshot {
+    const frame = this.captureFrame(frameId);
+    return frame.snapshot;
+  }
+
   public captureFrame(frameId: number): PatchSnapshotFrame {
     const snapshot = this.substrate.captureSnapshot();
     const frame: PatchSnapshotFrame = {
@@ -42,15 +46,30 @@ export class PatchSnapshotManager {
     return frame;
   }
 
-  /**
-   * Restores staged file mutations to the exact frameId in O(1) time.
-   */
-  public rewindToFrame(frameId: number): boolean {
+  public restoreFrameSnapshot(frameId: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
     const frame = this.history.find((f) => f.frameId === frameId);
-    if (!frame) return false;
+
+    if (!frame) {
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame #${frameId} not found in ring buffer`,
+      };
+    }
 
     this.substrate.restoreSnapshot(frame.snapshot);
-    return true;
+    const duration = Number((performance.now() - startedAt).toFixed(4));
+
+    return {
+      success: true,
+      durationMs: duration,
+    };
+  }
+
+  public rewindToFrame(frameId: number): boolean {
+    const res = this.restoreFrameSnapshot(frameId);
+    return res.success;
   }
 
   public getHistory(): readonly PatchSnapshotFrame[] {

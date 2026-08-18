@@ -2,7 +2,7 @@
  * osv-scanner-supervisor.ts
  *
  * Master supervisor coordinating command pre-flight evaluation, OSV query caching,
- * malware advisory blocking, and fail-open fault tolerance (Phase 128 / ADR-104 / Target #61).
+ * malware advisory blocking, and fail-open fault tolerance (Phase 128 / ADR-104 / Target #81).
  */
 
 import { performance } from "node:perf_hooks";
@@ -10,9 +10,17 @@ import type { BroccoliOsvSubstrate } from "../../../sessions/extensions/osv/broc
 import type { DeterministicOsvParser } from "./deterministic-osv-parser.js";
 import type {
   OsvAdvisory,
+  OsvDslQueryFilter,
+  OsvGroupBy,
+  OsvGroupedLane,
+  OsvHealthAuditReport,
+  OsvMetricsReport,
   OsvScannerConfig,
   OsvScannerMetrics,
   OsvScanResult,
+  OsvScanResultRow,
+  OsvSortBy,
+  OsvSortDirection,
   ParsedPackageTarget,
 } from "../../../core/contracts/osv-scanner.contracts.js";
 
@@ -29,6 +37,14 @@ export class OsvScannerSupervisor {
     this.substrate = substrate;
     this.parser = parser;
     this.customQueryFn = customQueryFn;
+  }
+
+  public getSubstrate(): BroccoliOsvSubstrate {
+    return this.substrate;
+  }
+
+  public getParser(): DeterministicOsvParser {
+    return this.parser;
   }
 
   public setQueryFunction(fn?: (pkg: ParsedPackageTarget) => Promise<OsvAdvisory[]>): void {
@@ -57,6 +73,14 @@ export class OsvScannerSupervisor {
 
   public getMetrics(): OsvScannerMetrics {
     return this.substrate.getMetrics();
+  }
+
+  public getMetricsReport(): OsvMetricsReport {
+    return this.substrate.getMetricsReport();
+  }
+
+  public auditHealth(): OsvHealthAuditReport {
+    return this.substrate.auditHealth();
   }
 
   /**
@@ -178,5 +202,37 @@ export class OsvScannerSupervisor {
     if (!pkg) return undefined;
 
     return this.scanPackage(pkg);
+  }
+
+  public getGroupedScans(groupBy?: OsvGroupBy, sortBy?: OsvSortBy, direction?: OsvSortDirection): readonly OsvGroupedLane[] {
+    return this.substrate.getGroupedScans(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: OsvDslQueryFilter | string): readonly OsvScanResultRow[] {
+    return this.substrate.queryScansDsl(query);
+  }
+
+  public bulkPurge(ids: readonly string[]) {
+    return this.substrate.bulkPurgeScans(ids);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

@@ -189,4 +189,16 @@ export class DeterministicReviewEvaluator {
       timestamp: Date.now(),
     };
   }
+
+  public formatCandidateFact(fact: CandidateFactItem): string {
+    return `[${fact.category}] ${fact.subject} -> ${fact.predicate}: ${fact.object} (${Math.round(fact.confidence * 100)}% conf)`;
+  }
+
+  public formatCandidateSkill(skill: CandidateSkillItem): string {
+    return `[${skill.skillId}] ${skill.title} - ${skill.description}`;
+  }
+
+  public formatReviewSummary(review: TurnReviewResult): string {
+    return `Turn #${review.turnIndex} Review: ${review.candidateFacts.length} facts, ${review.candidateSkills.length} skills (${review.durationMs}ms)`;
+  }
 }

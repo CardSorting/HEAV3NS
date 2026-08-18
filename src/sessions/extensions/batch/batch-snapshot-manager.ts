@@ -1,64 +1,68 @@
 /**
  * batch-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for Batch Evaluation (Phase 84 / ADR-036).
+ * High-performance frame snapshot manager for the Batch Evaluation & Benchmark Runner Subsystem
+ * enabling frame-perfect state capture and O(1) state rewind (< 0.05 ms SLA) (Phase 84 / ADR-036).
  */
 
+import { performance } from "node:perf_hooks";
 import type { BatchWorkspaceSnapshot } from "../../../core/contracts/batch.contracts.js";
 import { BroccoliBatchSubstrate } from "./broccoli-batch-substrate.js";
 
 export class BatchSnapshotManager {
-  private substrate: BroccoliBatchSubstrate;
-  private snapshots: Map<number, BatchWorkspaceSnapshot>;
+  private readonly substrate: BroccoliBatchSubstrate;
+  private readonly frameSnapshots: Map<number, BatchWorkspaceSnapshot>;
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliBatchSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, BatchWorkspaceSnapshot>();
+    this.frameSnapshots = new Map<number, BatchWorkspaceSnapshot>();
   }
 
   /**
-   * Captures the state at a specific frame index.
+   * Captures a deep workspace snapshot pinned to a specific execution frame.
    */
-  captureFrame(frameIndex: number): void {
+  captureSnapshot(frameIndex: number): BatchWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > BatchSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
   /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Execution time is guaranteed to be < 0.05 ms.
+   * Restores workspace state to a captured execution frame in < 0.05 ms SLA.
    */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  restoreSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
-
-    return true;
+    return {
+      success: true,
+      durationMs: duration,
+    };
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
   getSnapshot(frameIndex: number): BatchWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
   clear(): void {
-    this.snapshots.clear();
+    this.frameSnapshots.clear();
   }
 }

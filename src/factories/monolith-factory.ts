@@ -217,6 +217,7 @@ import { DeterministicToolPruner } from "../tooling/extensions/compaction/determ
 import { BroccoliCompressionSubstrate } from "../sessions/extensions/compaction/broccoli-compression-substrate.js";
 import { CompressionSnapshotManager } from "../sessions/extensions/compaction/compression-snapshot-manager.js";
 import { TrajectoryCompactorEngine } from "../agents/extensions/compaction/trajectory-compactor-engine.js";
+import { ContextCompressionSupervisor } from "../agents/extensions/compaction/context-compression-supervisor.js";
 import { CompressionToolSuite } from "../tooling/extensions/compaction/compression-tool-suite.js";
 
 import { FtsQuerySanitizer } from "../tooling/extensions/search/fts-query-sanitizer.js";
@@ -891,6 +892,7 @@ export class MonolithFactory {
     broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
     compressionSnapshotManager: CompressionSnapshotManager;
     trajectoryCompactorEngine: TrajectoryCompactorEngine;
+    contextCompressionSupervisor: ContextCompressionSupervisor;
     compressionToolSuite: CompressionToolSuite;
     ftsQuerySanitizer: FtsQuerySanitizer;
     broccoliSearchSubstrate: BroccoliSearchSubstrate;
@@ -1548,7 +1550,14 @@ export class MonolithFactory {
       headTailBudgetGovernor,
       deterministicToolPruner
     );
+    const contextCompressionSupervisor = new ContextCompressionSupervisor(
+      broccoliCompressionSubstrate,
+      headTailBudgetGovernor,
+      deterministicToolPruner,
+      trajectoryCompactorEngine
+    );
     const compressionToolSuite = new CompressionToolSuite(
+      contextCompressionSupervisor,
       broccoliCompressionSubstrate,
       headTailBudgetGovernor,
       deterministicToolPruner,
@@ -1998,7 +2007,7 @@ export class MonolithFactory {
       broccoliUrlSafetySubstrate,
       deterministicUrlSafety
     );
-    const urlSafetyToolSuite = new UrlSafetyToolSuite(urlSafetySupervisor);
+    const urlSafetyToolSuite = new UrlSafetyToolSuite(urlSafetySupervisor, urlSafetySnapshotManager);
 
     const deterministicV4aPatch = new DeterministicV4aPatch();
     const broccoliV4aPatchSubstrate = new BroccoliV4aPatchSubstrate();
@@ -2567,6 +2576,7 @@ export class MonolithFactory {
       broccoliCompressionSubstrate,
       compressionSnapshotManager,
       trajectoryCompactorEngine,
+      contextCompressionSupervisor,
       compressionToolSuite,
       ftsQuerySanitizer,
       broccoliSearchSubstrate,

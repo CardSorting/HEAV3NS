@@ -2,7 +2,7 @@
  * deterministic-url-safety.ts
  *
  * SSRF Defense Firewall, Cloud Metadata & Private IP Blocker, and URL Normalizer
- * (Phase 118 / ADR-094 / Target #51).
+ * (Phase 118 / ADR-094 / Target #87).
  */
 
 import {
@@ -12,6 +12,7 @@ import {
   type IpAddressCategory,
   type UrlSafetyCheckResult,
   type UrlSafetyConfig,
+  type UrlSafetyMetrics,
   type UrlSafetyVerdict,
 } from "../../../core/contracts/url-safety.contracts.js";
 
@@ -37,7 +38,7 @@ export class DeterministicUrlSafety {
       }
 
       // Convert hostname to lowercase ASCII (IDNA / punycode handled by URL constructor)
-      let hostname = parsed.hostname.toLowerCase();
+      const hostname = parsed.hostname.toLowerCase();
 
       // Percent-encode non-ASCII path characters safely
       const pathname = parsed.pathname;
@@ -106,14 +107,11 @@ export class DeterministicUrlSafety {
     // 4. Dot-separated hex or octal parts (e.g. 0177.0.0.1 or 0x7f.0.0.1)
     const parts = clean.split(".");
     if (parts.length === 4) {
-      let isAlt = false;
       const decParts: number[] = [];
       for (const part of parts) {
         if (/^0x[0-9a-f]+$/i.test(part)) {
-          isAlt = true;
           decParts.push(parseInt(part, 16));
         } else if (/^0[0-7]+$/.test(part)) {
-          isAlt = true;
           decParts.push(parseInt(part, 8));
         } else if (/^\d+$/.test(part)) {
           decParts.push(parseInt(part, 10));
@@ -165,7 +163,7 @@ export class DeterministicUrlSafety {
       return "invalid";
     }
 
-    const [b0, b1, b2, b3] = parts;
+    const [b0, b1] = parts;
 
     // Loopback (127.0.0.0/8)
     if (b0 === 127) {
@@ -224,6 +222,7 @@ export class DeterministicUrlSafety {
     rawUrl: string,
     options: Partial<UrlSafetyConfig> = {}
   ): UrlSafetyCheckResult {
+    const startTime = performance.now();
     const config: UrlSafetyConfig = {
       ...DEFAULT_URL_SAFETY_CONFIG,
       ...options,
@@ -238,6 +237,8 @@ export class DeterministicUrlSafety {
         hostname: "",
         resolvedIps: [],
         reason: "Invalid or empty URL.",
+        category: "invalid",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -252,6 +253,22 @@ export class DeterministicUrlSafety {
         hostname: "",
         resolvedIps: [],
         reason: "Failed to parse URL syntax.",
+        category: "invalid",
+        latencyMs: performance.now() - startTime,
+      };
+    }
+
+    // Scheme validation
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return {
+        isSafe: false,
+        verdict: "invalid_url",
+        normalizedUrl,
+        hostname: parsed.hostname || "",
+        resolvedIps: [],
+        reason: `Unsupported URL protocol '${parsed.protocol}'. Only http/https are allowed.`,
+        category: "invalid",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -266,6 +283,8 @@ export class DeterministicUrlSafety {
         normalizedUrl,
         hostname,
         resolvedIps: [],
+        category: "public",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -280,6 +299,8 @@ export class DeterministicUrlSafety {
         hostname,
         resolvedIps: [],
         reason: `Target hostname '${hostname}' is a cloud metadata endpoint.`,
+        category: "cloud_metadata",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -292,6 +313,8 @@ export class DeterministicUrlSafety {
           normalizedUrl,
           hostname,
           resolvedIps: ["127.0.0.1"],
+          category: "loopback",
+          latencyMs: performance.now() - startTime,
         };
       }
       return {
@@ -301,6 +324,8 @@ export class DeterministicUrlSafety {
         hostname,
         resolvedIps: ["127.0.0.1"],
         reason: "Localhost access is blocked to prevent SSRF.",
+        category: "loopback",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -313,6 +338,8 @@ export class DeterministicUrlSafety {
         hostname,
         resolvedIps: [],
         reason: `Hostname '${hostname}' is in the custom blocklist.`,
+        category: "invalid",
+        latencyMs: performance.now() - startTime,
       };
     }
 
@@ -331,6 +358,8 @@ export class DeterministicUrlSafety {
           hostname,
           resolvedIps: [candidateIp],
           reason: `IP '${candidateIp}' is a cloud instance metadata endpoint.`,
+          category,
+          latencyMs: performance.now() - startTime,
         };
       case "loopback":
         if (config.allowLocalhost) {
@@ -340,6 +369,8 @@ export class DeterministicUrlSafety {
             normalizedUrl,
             hostname,
             resolvedIps: [candidateIp],
+            category,
+            latencyMs: performance.now() - startTime,
           };
         }
         return {
@@ -349,6 +380,8 @@ export class DeterministicUrlSafety {
           hostname,
           resolvedIps: [candidateIp],
           reason: `Loopback IP '${candidateIp}' is blocked.`,
+          category,
+          latencyMs: performance.now() - startTime,
         };
       case "private":
       case "link_local":
@@ -362,6 +395,8 @@ export class DeterministicUrlSafety {
             normalizedUrl,
             hostname,
             resolvedIps: [candidateIp],
+            category,
+            latencyMs: performance.now() - startTime,
           };
         }
         return {
@@ -371,6 +406,8 @@ export class DeterministicUrlSafety {
           hostname,
           resolvedIps: [candidateIp],
           reason: `Private/internal IP '${candidateIp}' (${category}) is blocked.`,
+          category,
+          latencyMs: performance.now() - startTime,
         };
       case "public":
         return {
@@ -379,6 +416,8 @@ export class DeterministicUrlSafety {
           normalizedUrl,
           hostname,
           resolvedIps: [candidateIp],
+          category,
+          latencyMs: performance.now() - startTime,
         };
       case "invalid":
       default:
@@ -389,7 +428,26 @@ export class DeterministicUrlSafety {
           normalizedUrl,
           hostname,
           resolvedIps: [],
+          category: "public",
+          latencyMs: performance.now() - startTime,
         };
     }
+  }
+
+  /**
+   * Formats a URL safety check result into a human-readable string.
+   */
+  public formatCheckResult(result: UrlSafetyCheckResult): string {
+    const icon = result.isSafe ? "[SAFE]" : "[BLOCKED]";
+    const ipInfo = result.resolvedIps.length > 0 ? ` (IP: ${result.resolvedIps.join(", ")})` : "";
+    const reasonInfo = result.reason ? ` - ${result.reason}` : "";
+    return `[URL-SAFETY:${result.verdict.toUpperCase()}] ${icon} ${result.normalizedUrl}${ipInfo}${reasonInfo}`;
+  }
+
+  /**
+   * Formats URL safety metrics into a summary line.
+   */
+  public formatUrlSafetyMetrics(metrics: UrlSafetyMetrics): string {
+    return `[URL-METRICS] Total: ${metrics.totalChecks} | Safe: ${metrics.allowedCount} | Metadata Blocks: ${metrics.blockedMetadataCount} | Private Blocks: ${metrics.blockedPrivateCount} | Loopback Blocks: ${metrics.blockedLoopbackCount}`;
   }
 }

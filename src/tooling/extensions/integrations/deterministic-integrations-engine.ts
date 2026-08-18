@@ -373,4 +373,18 @@ export class DeterministicIntegrationsEngine {
       retryAfterMs,
     };
   }
+
+  public formatConnection(conn: import("../../../core/contracts/integrations.contracts.js").IntegrationConnection): string {
+    const status = conn.isConnected ? "CONNECTED" : "DISCONNECTED";
+    return `[${conn.provider.toUpperCase()}] ${conn.name} (${conn.category}) - ${status} [${conn.totalRequests} reqs, ${conn.errorCount} errs]`;
+  }
+
+  public formatRecipe(recipe: IntegrationRecipe): string {
+    const status = recipe.isInstalled ? "INSTALLED" : "AVAILABLE";
+    return `[RECIPE] ${recipe.title} (${recipe.category}) - ${status} (${recipe.steps.length} steps, ${recipe.executionCount} runs)`;
+  }
+
+  public formatIssue(issue: UnifiedIssue): string {
+    return `[ISSUE:${issue.sourceService.toUpperCase()}] ${issue.title} (Status: ${issue.status}, Priority: ${issue.priority}, ID: ${issue.id})`;
+  }
 }

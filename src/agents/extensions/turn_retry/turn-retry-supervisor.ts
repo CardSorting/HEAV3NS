@@ -1,116 +1,239 @@
 /**
  * turn-retry-supervisor.ts
  *
- * Master supervisor coordinating turn retry lifecycle, one-shot recovery execution,
- * adaptive restart signal dispatching, and audit ledgers (Phase 131 / ADR-107 / Target #64).
+ * Master Turn Retry Supervisor orchestrating one-shot recovery guards,
+ * adaptive payload restart signals, error classification, and state recovery (Phase 131 / ADR-107).
  */
 
-import type { BroccoliTurnRetrySubstrate } from "../../../sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
-import type { DeterministicTurnRetryEngine } from "./deterministic-turn-retry-engine.js";
 import type {
   TurnRecoveryBranch,
   TurnRestartSignalKey,
-  TurnRetryConfig,
-  TurnRetryMetrics,
+  TurnRetryAttemptRecord,
+  TurnRetryBulkMutationResult,
+  TurnRetryDslQueryFilter,
+  TurnRetryErrorCategory,
+  TurnRetryGroupBy,
+  TurnRetryGroupedLane,
+  TurnRetryHealthAuditReport,
+  TurnRetryMetricsReport,
+  TurnRetrySortBy,
+  TurnRetrySortDirection,
   TurnRetryStateDescriptor,
+  TurnRetryWorkspaceSnapshot,
 } from "../../../core/contracts/turn-retry.contracts.js";
+import { DeterministicTurnRetryEngine } from "./deterministic-turn-retry-engine.js";
+import { BroccoliTurnRetrySubstrate } from "../../../sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
 
 export class TurnRetrySupervisor {
-  private readonly substrate: BroccoliTurnRetrySubstrate;
   private readonly engine: DeterministicTurnRetryEngine;
+  private readonly substrate: BroccoliTurnRetrySubstrate;
+  private currentFrame: number;
 
-  constructor(substrate: BroccoliTurnRetrySubstrate, engine: DeterministicTurnRetryEngine) {
-    this.substrate = substrate;
-    this.engine = engine;
+  constructor(
+    substrate?: BroccoliTurnRetrySubstrate,
+    engine?: DeterministicTurnRetryEngine
+  ) {
+    this.substrate = substrate ?? new BroccoliTurnRetrySubstrate();
+    this.engine = engine ?? new DeterministicTurnRetryEngine();
+    this.currentFrame = 1;
   }
 
-  public configure(config: Partial<TurnRetryConfig>): void {
-    this.substrate.setConfig(config);
-  }
-
-  public getConfig(): TurnRetryConfig {
-    return this.substrate.getConfig();
-  }
-
-  public getMetrics(): TurnRetryMetrics {
-    return this.substrate.getMetrics();
-  }
-
-  public getActiveState(): TurnRetryStateDescriptor | undefined {
-    return this.substrate.getActiveState();
-  }
-
-  public getArchivedStates(): TurnRetryStateDescriptor[] {
-    return this.substrate.getArchivedStates();
+  public setFrameIndex(frame: number): void {
+    this.currentFrame = frame;
   }
 
   /**
-   * Initializes a fresh TurnRetryState for an iteration of the turn loop.
+   * Initializes a new Turn Retry state descriptor.
    */
-  public createTurnState(turnIndex = 0, attemptIndex = 0): TurnRetryStateDescriptor {
-    return this.substrate.createTurnState(turnIndex, attemptIndex);
+  public createState(turnIndex: number, errorCategory?: TurnRetryErrorCategory): TurnRetryStateDescriptor {
+    const state = this.engine.createState(turnIndex, errorCategory);
+    this.substrate.recordState(state);
+    return state;
   }
 
   /**
-   * Evaluates and triggers a one-shot recovery branch.
+   * Evaluates and trips a one-shot recovery guard.
    */
-  public triggerRecovery(branch: TurnRecoveryBranch, details?: string): boolean {
-    let state = this.substrate.getActiveState();
-    if (!state) {
-      state = this.substrate.createTurnState();
+  public triggerGuard(stateId: string, branch: TurnRecoveryBranch, details?: string): boolean {
+    const ok = this.engine.triggerGuard(stateId, branch, details);
+    const updated = this.engine.getState(stateId);
+    if (updated) {
+      this.substrate.recordState(updated);
     }
+    return ok;
+  }
 
-    const config = this.substrate.getConfig();
-    if (!this.engine.canTrigger(branch, state.guards, config)) {
-      return false;
+  /**
+   * Emits an adaptive payload restart signal.
+   */
+  public setRestartSignal(stateId: string, signalKey: TurnRestartSignalKey, value = true, details?: string): void {
+    this.engine.setRestartSignal(stateId, signalKey, value, details);
+    const updated = this.engine.getState(stateId);
+    if (updated) {
+      this.substrate.recordState(updated);
     }
-
-    return this.substrate.triggerGuard(branch, details);
   }
 
   /**
-   * Sets an adaptive payload restart signal.
+   * Classifies an error, trips the recommended guard, emits restart signal, and records attempt.
    */
-  public setRestartSignal(signalKey: TurnRestartSignalKey, details?: string): boolean {
-    return this.substrate.setRestartSignal(signalKey, details);
-  }
-
-  /**
-   * High-level helper to classify an error and automatically fire the appropriate one-shot recovery branch.
-   */
-  public handleAttemptError(
-    error: unknown,
-    statusCode?: number,
-    provider?: string
+  public classifyAndRecover(
+    turnIndex: number,
+    errorMessage: string,
+    stateId?: string
   ): {
-    branchTriggered?: TurnRecoveryBranch;
-    signalSet?: TurnRestartSignalKey;
-    recovered: boolean;
-    reason: string;
+    stateId: string;
+    category: TurnRetryErrorCategory;
+    guardTriggered?: TurnRecoveryBranch;
+    signalEmitted?: TurnRestartSignalKey;
+    canRetry: boolean;
+    attempt: TurnRetryAttemptRecord;
   } {
-    const classification = this.engine.classifyErrorRecovery(error, statusCode, provider);
-    let recovered = false;
-
-    if (classification.recommendedBranch) {
-      recovered = this.triggerRecovery(classification.recommendedBranch, classification.reason);
+    let activeStateId = stateId;
+    if (!activeStateId) {
+      const newState = this.createState(turnIndex);
+      activeStateId = newState.stateId;
     }
 
-    if (classification.recommendedSignal) {
-      this.setRestartSignal(classification.recommendedSignal, classification.reason);
+    const plan = this.engine.classifyAndPlanRecovery(errorMessage, activeStateId);
+    let guardFired = false;
+
+    if (plan.recommendedGuard) {
+      guardFired = this.triggerGuard(activeStateId, plan.recommendedGuard, `Auto-recovery from: ${errorMessage}`);
+    }
+
+    if (plan.recommendedSignal) {
+      this.setRestartSignal(activeStateId, plan.recommendedSignal, true, `Auto-restart signal for: ${plan.category}`);
+    }
+
+    const attempt = this.engine.recordAttempt(
+      activeStateId,
+      plan.category,
+      errorMessage,
+      plan.recommendedGuard,
+      plan.recommendedSignal,
+      guardFired,
+      10
+    );
+    this.substrate.recordAttempt(attempt);
+
+    const updatedState = this.engine.getState(activeStateId);
+    if (updatedState) {
+      this.substrate.recordState(updatedState);
     }
 
     return {
-      branchTriggered: classification.recommendedBranch,
-      signalSet: classification.recommendedSignal,
-      recovered,
-      reason: classification.reason,
+      stateId: activeStateId,
+      category: plan.category,
+      guardTriggered: plan.recommendedGuard,
+      signalEmitted: plan.recommendedSignal,
+      canRetry: guardFired,
+      attempt,
     };
   }
 
-  /**
-   * Concludes the current turn retry attempt and archives its state.
-   */
-  public finishAttempt(): void {
-    this.substrate.archiveCurrentState();
+  public recordAttempt(
+    stateId: string,
+    errorCategory: TurnRetryErrorCategory,
+    errorMessage: string,
+    guardTriggered?: TurnRecoveryBranch,
+    signalEmitted?: TurnRestartSignalKey,
+    success = false,
+    durationMs = 0
+  ): TurnRetryAttemptRecord {
+    const attempt = this.engine.recordAttempt(
+      stateId,
+      errorCategory,
+      errorMessage,
+      guardTriggered,
+      signalEmitted,
+      success,
+      durationMs
+    );
+    this.substrate.recordAttempt(attempt);
+    const updated = this.engine.getState(stateId);
+    if (updated) {
+      this.substrate.recordState(updated);
+    }
+    return attempt;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Queries & Diagnostics
+  // ---------------------------------------------------------------------------
+
+  public getState(stateId: string): TurnRetryStateDescriptor | undefined {
+    return this.engine.getState(stateId) ?? this.substrate.getState(stateId);
+  }
+
+  public listStates(limit: number = 20): readonly TurnRetryStateDescriptor[] {
+    return this.substrate.listStates(limit);
+  }
+
+  public listAttempts(stateId?: string, limit: number = 50): readonly TurnRetryAttemptRecord[] {
+    return this.substrate.listAttempts(stateId, limit);
+  }
+
+  public updateStateStatus(stateId: string, status: TurnRetryStateDescriptor["status"]): boolean {
+    this.engine.updateStateStatus(stateId, status);
+    return this.substrate.updateStateStatus(stateId, status);
+  }
+
+  public auditHealth(): TurnRetryHealthAuditReport {
+    return this.substrate.auditTurnRetryHealth();
+  }
+
+  public getMetrics(): TurnRetryMetricsReport {
+    return this.substrate.getTurnRetryMetrics();
+  }
+
+  public getGroupedStates(groupBy?: TurnRetryGroupBy, sortBy?: TurnRetrySortBy, direction?: TurnRetrySortDirection): readonly TurnRetryGroupedLane[] {
+    return this.substrate.getGroupedStates(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: TurnRetryDslQueryFilter | string): readonly TurnRetryStateDescriptor[] {
+    return this.substrate.queryStatesDsl(query);
+  }
+
+  public bulkReset(stateIds: readonly string[]): TurnRetryBulkMutationResult {
+    this.engine.bulkResetStates(stateIds);
+    return this.substrate.bulkResetStates(stateIds);
+  }
+
+  public bulkClearGuards(stateIds: readonly string[]): TurnRetryBulkMutationResult {
+    this.engine.bulkClearGuards(stateIds);
+    return this.substrate.bulkClearGuards(stateIds);
+  }
+
+  public getStats(): TurnRetryWorkspaceSnapshot {
+    return this.substrate.exportSnapshot();
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getEngine(): DeterministicTurnRetryEngine {
+    return this.engine;
+  }
+
+  public getSubstrate(): BroccoliTurnRetrySubstrate {
+    return this.substrate;
   }
 }

@@ -119,4 +119,56 @@ export class DeterministicTerminalCleanerEngine {
 
     return { allowed: true };
   }
+
+  public cleanWithMetrics(text: string, mode: "strip_all" | "sanitize_display" | "preserve_safe" = "sanitize_display"): {
+    cleanedText: string;
+    originalLength: number;
+    cleanedLength: number;
+    ansiCodesCount: number;
+    controlCharsCount: number;
+    carriageReturnsNormalized: number;
+    reductionRatio: number;
+    durationMs: number;
+  } {
+    const startedAt = performance.now();
+    const originalLength = text.length;
+
+    let ansiCount = 0;
+    let controlCount = 0;
+    let crCount = 0;
+
+    const matchesAnsi = text.match(ANSI_ESCAPE_RE);
+    if (matchesAnsi) ansiCount = matchesAnsi.length;
+
+    const matchesControl = text.match(CONTROL_CHARS_RE);
+    if (matchesControl) controlCount = matchesControl.length;
+
+    const matchesCr = text.match(/\r/g);
+    if (matchesCr) crCount = matchesCr.length;
+
+    const res = mode === "strip_all" ? this.stripAnsi(text) : this.sanitizeDisplayText(text);
+    const durationMs = Number((performance.now() - startedAt).toFixed(4));
+    const cleanedLength = res.cleaned.length;
+    const reductionRatio = originalLength === 0 ? 1 : Number((cleanedLength / originalLength).toFixed(3));
+
+    return {
+      cleanedText: res.cleaned,
+      originalLength,
+      cleanedLength,
+      ansiCodesCount: ansiCount,
+      controlCharsCount: controlCount,
+      carriageReturnsNormalized: crCount,
+      reductionRatio,
+      durationMs,
+    };
+  }
+
+  public formatCleanResult(result: { originalLength: number; cleanedLength: number; ansiCodesCount: number; durationMs: number }): string {
+    return `[TERMINAL-CLEAN] ${result.originalLength} -> ${result.cleanedLength} bytes (-${result.ansiCodesCount} ANSI codes, ${result.durationMs.toFixed(2)}ms)`;
+  }
+
+  public formatAssetClassification(filePath: string, classification: BinaryAssetClassification): string {
+    return `[ASSET-CLASS:${classification.toUpperCase()}] ${filePath}`;
+  }
 }
+

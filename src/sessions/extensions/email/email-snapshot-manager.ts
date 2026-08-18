@@ -21,6 +21,12 @@ export class EmailSnapshotManager {
     this.snapshots.set(frameIndex, snapshot);
   }
 
+  createSnapshot(frameIndex: number): EmailSubstrateSnapshot {
+    const snapshot = this.substrate.exportSnapshot();
+    this.snapshots.set(frameIndex, snapshot);
+    return snapshot;
+  }
+
   rewindToFrame(frameIndex: number): boolean {
     const snapshot = this.snapshots.get(frameIndex);
     if (!snapshot) {
@@ -39,6 +45,10 @@ export class EmailSnapshotManager {
     }
 
     return true;
+  }
+
+  restoreSnapshot(frameIndex: number): boolean {
+    return this.rewindToFrame(frameIndex);
   }
 
   getSnapshot(frameIndex: number): EmailSubstrateSnapshot | undefined {

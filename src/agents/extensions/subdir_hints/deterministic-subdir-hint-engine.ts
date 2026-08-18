@@ -17,13 +17,13 @@ const PATH_ARG_KEYS = ["path", "file_path", "workdir", "target_path", "destinati
 const COMMAND_TOOLS = new Set(["terminal", "terminal_run", "shell_execute", "execute_command"]);
 
 export class DeterministicSubdirHintEngine {
-  private excludedSetsCache = new WeakMap<string[], Set<string>>();
+  private excludedSetsCache = new WeakMap<object, Set<string>>();
 
-  private getExcludedSet(excludedDirNames: string[]): Set<string> {
-    let set = this.excludedSetsCache.get(excludedDirNames);
+  private getExcludedSet(excludedDirNames: readonly string[]): Set<string> {
+    let set = this.excludedSetsCache.get(excludedDirNames as object);
     if (!set) {
       set = new Set(excludedDirNames);
-      this.excludedSetsCache.set(excludedDirNames, set);
+      this.excludedSetsCache.set(excludedDirNames as object, set);
     }
     return set;
   }
@@ -50,12 +50,12 @@ export class DeterministicSubdirHintEngine {
   public isExcludedDirectory(
     dirPath: string,
     workingDir: string,
-    excludedSet: Set<string> | string[]
+    excludedSet: Set<string> | readonly string[]
   ): boolean {
     if (dirPath === workingDir) return false;
 
     const rel = dirPath.startsWith(workingDir + "/") ? dirPath.slice(workingDir.length + 1) : dirPath;
-    const set = Array.isArray(excludedSet) ? this.getExcludedSet(excludedSet) : excludedSet;
+    const set = Array.isArray(excludedSet) ? this.getExcludedSet(excludedSet) : (excludedSet as Set<string>);
 
     let start = 0;
     for (let i = 0; i <= rel.length; i++) {
@@ -185,7 +185,7 @@ export class DeterministicSubdirHintEngine {
   /**
    * Formats discovered hints into markdown attachments for tool return messages.
    */
-  public formatHintAttachment(hints: DiscoveredSubdirHint[]): string {
+  public formatHintAttachment(hints: readonly DiscoveredSubdirHint[]): string {
     if (!hints || hints.length === 0) return "";
 
     const blocks = hints.map((h) => {
@@ -195,4 +195,13 @@ export class DeterministicSubdirHintEngine {
 
     return `\n\n${blocks.join("\n\n")}`;
   }
+
+  public formatDiscoveredHint(hint: DiscoveredSubdirHint): string {
+    return `[SUBDIR-HINT:${hint.filename}] in \`${hint.relativeDirectory || "."}\` (${hint.charCount} chars, digest: ${hint.contentDigest.slice(0, 8)})`;
+  }
+
+  public formatDiscoveryResult(result: { hintsFound: readonly DiscoveredSubdirHint[]; durationMs: number }): string {
+    return `[HINTS-DISCOVERY] Found ${result.hintsFound.length} hint(s) (${result.durationMs.toFixed(3)}ms)`;
+  }
 }
+

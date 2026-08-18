@@ -2,14 +2,22 @@
  * preflight-scanner-supervisor.ts
  *
  * Master supervisor coordinating pre-execution command scanning, policy enforcement,
- * fail-open circuit breakers, and binary supply-chain verification (Phase 113 / ADR-089 / Target #46).
+ * fail-open circuit breakers, and binary supply-chain verification (Phase 113 / ADR-089 / Target #79).
  */
 
 import type { BroccoliPreflightSubstrate } from "../../../sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
 import type { DeterministicPreflightScanner } from "./deterministic-preflight-scanner.js";
 import type {
+  PreflightDslQueryFilter,
+  PreflightGroupBy,
+  PreflightHealthAuditReport,
+  PreflightMetrics,
+  PreflightMetricsReport,
   PreflightScanResult,
+  PreflightScanResultRow,
   PreflightSecurityPolicy,
+  PreflightSortBy,
+  PreflightSortDirection,
   SupplyChainVerificationResult,
 } from "../../../core/contracts/preflight-scanner.contracts.js";
 
@@ -23,6 +31,14 @@ export class PreflightScannerSupervisor {
   ) {
     this.substrate = substrate;
     this.scanner = scanner;
+  }
+
+  public getSubstrate(): BroccoliPreflightSubstrate {
+    return this.substrate;
+  }
+
+  public getScanner(): DeterministicPreflightScanner {
+    return this.scanner;
   }
 
   /**
@@ -153,6 +169,18 @@ export class PreflightScannerSupervisor {
     };
   }
 
+  public getMetrics(): PreflightMetrics {
+    return this.substrate.getMetrics();
+  }
+
+  public getMetricsReport(): PreflightMetricsReport {
+    return this.substrate.getMetricsReport();
+  }
+
+  public auditHealth(): PreflightHealthAuditReport {
+    return this.substrate.auditHealth();
+  }
+
   /**
    * Reset circuit breaker.
    */
@@ -165,5 +193,37 @@ export class PreflightScannerSupervisor {
    */
   public getScanHistory(limit = 20): readonly PreflightScanResult[] {
     return this.substrate.getRecentScans(limit);
+  }
+
+  public getGroupedScans(groupBy?: PreflightGroupBy, sortBy?: PreflightSortBy, direction?: PreflightSortDirection) {
+    return this.substrate.getGroupedScans(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: PreflightDslQueryFilter | string): readonly PreflightScanResultRow[] {
+    return this.substrate.queryScansDsl(query);
+  }
+
+  public bulkPurge(ids: readonly string[]) {
+    return this.substrate.bulkPurgeScans(ids);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

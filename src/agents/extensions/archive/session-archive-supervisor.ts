@@ -90,7 +90,59 @@ export class SessionArchiveSupervisor {
   /**
    * Retrieves an exported document by archive ID.
    */
-  getArchiveDocument(archiveId: string): ExportedDocumentResult | undefined {
+  public getArchiveDocument(archiveId: string): ExportedDocumentResult | undefined {
     return this.substrate.getArchive(archiveId);
+  }
+
+  public getAllManifests(): readonly SessionArchiveManifest[] {
+    return this.substrate.listManifests();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedArchives(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedArchives(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryArchivesDsl(query);
+  }
+
+  public bulkPurge(archiveIds: readonly string[]) {
+    return this.substrate.bulkPurgeArchives(archiveIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliArchiveSubstrate {
+    return this.substrate;
+  }
+
+  public getArchiver(): DeterministicSessionArchiver {
+    return this.archiver;
   }
 }

@@ -1,3 +1,4 @@
+import * as crypto from "node:crypto";
 import type {
   CompressedTurnSummary,
   IBroccoliCompressionSubstrate,
@@ -27,6 +28,11 @@ export class TrajectoryCompactorEngine implements ITrajectoryCompactorEngine {
     this.substrate = substrate;
     this.budgetGovernor = budgetGovernor;
     this.toolPruner = toolPruner;
+  }
+
+  public generateSummaryId(startTurn: number, endTurn: number, timestamp = Date.now()): string {
+    const hash = crypto.createHash("sha256").update(`summary:${startTurn}:${endTurn}:${timestamp}`).digest("hex");
+    return `comp_${hash.slice(0, 10)}`;
   }
 
   compactTrajectory(
@@ -88,8 +94,10 @@ export class TrajectoryCompactorEngine implements ITrajectoryCompactorEngine {
     const compressedTokens = Math.ceil(summaryText.length / 4);
     const tokensSaved = Math.max(0, originalTokens - compressedTokens);
 
+    const summaryId = this.generateSummaryId(startTurn, endTurn);
+
     const summary: CompressedTurnSummary = {
-      id: `summary-${startTurn}-${endTurn}-${Date.now()}`,
+      id: summaryId,
       sourceTurnStart: startTurn,
       sourceTurnEnd: endTurn,
       originalTokens,

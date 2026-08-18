@@ -3,7 +3,7 @@
  *
  * Master supervisor coordinating progressive subdirectory context discovery,
  * dynamic instruction hints, SHA-256 deduplication, and prefix-cache preservation
- * (Phase 129 / ADR-105 / Target #62).
+ * (Phase 129 / ADR-105 / Target #84).
  */
 
 import fs from "node:fs";
@@ -14,8 +14,17 @@ import type { BroccoliSubdirHintsSubstrate } from "../../../sessions/extensions/
 import type { DeterministicSubdirHintEngine } from "./deterministic-subdir-hint-engine.js";
 import type {
   DiscoveredSubdirHint,
+  SubdirectoryHintRow,
+  SubdirectoryHintsBulkMutationResult,
   SubdirectoryHintsConfig,
+  SubdirectoryHintsDslQueryFilter,
+  SubdirectoryHintsGroupBy,
+  SubdirectoryHintsGroupedLane,
+  SubdirectoryHintsHealthAuditReport,
   SubdirectoryHintsMetrics,
+  SubdirectoryHintsMetricsReport,
+  SubdirectoryHintsSortBy,
+  SubdirectoryHintsSortDirection,
   SubdirHintDiscoveryResult,
 } from "../../../core/contracts/subdirectory-hints.contracts.js";
 
@@ -26,6 +35,14 @@ export class SubdirHintsSupervisor {
   constructor(substrate: BroccoliSubdirHintsSubstrate, engine: DeterministicSubdirHintEngine) {
     this.substrate = substrate;
     this.engine = engine;
+  }
+
+  public getSubstrate(): BroccoliSubdirHintsSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicSubdirHintEngine {
+    return this.engine;
   }
 
   public configure(config: Partial<SubdirectoryHintsConfig>): void {
@@ -40,12 +57,20 @@ export class SubdirHintsSupervisor {
     this.substrate.registerVirtualHint(path.resolve(directoryPath), filename, content);
   }
 
-  public getDiscoveredHints(): DiscoveredSubdirHint[] {
+  public getDiscoveredHints(): readonly DiscoveredSubdirHint[] {
     return this.substrate.getDiscoveredHints();
   }
 
   public getMetrics(): SubdirectoryHintsMetrics {
     return this.substrate.getMetrics();
+  }
+
+  public getMetricsReport(): SubdirectoryHintsMetricsReport {
+    return this.substrate.getMetricsReport();
+  }
+
+  public auditHealth(): SubdirectoryHintsHealthAuditReport {
+    return this.substrate.auditHealth();
   }
 
   /**
@@ -142,7 +167,43 @@ export class SubdirHintsSupervisor {
       hintsFound,
       formattedAttachment,
       inspectedPaths: candidates,
-      durationMs: performance.now() - tStart,
+      durationMs: Number((performance.now() - tStart).toFixed(4)),
     };
+  }
+
+  public getGroupedHints(
+    groupBy?: SubdirectoryHintsGroupBy,
+    sortBy?: SubdirectoryHintsSortBy,
+    direction?: SubdirectoryHintsSortDirection
+  ): readonly SubdirectoryHintsGroupedLane[] {
+    return this.substrate.getGroupedHints(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: SubdirectoryHintsDslQueryFilter | string): readonly SubdirectoryHintRow[] {
+    return this.substrate.queryHintsDsl(query);
+  }
+
+  public bulkPurge(hintKeys: readonly string[]): SubdirectoryHintsBulkMutationResult {
+    return this.substrate.bulkPurgeHints(hintKeys);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

@@ -48,7 +48,7 @@ export class GoalDashboardModal implements Component, Focusable {
   private readonly onClose: () => void;
 
   private selectedMilestoneIndex: number = 0;
-  private viewMode: "milestones" | "gates" | "dag_graph" | "trajectory" | "health" = "milestones";
+  private viewMode: "milestones" | "gates" | "dag_graph" | "trajectory" | "health" | "burnup" = "milestones";
   private filterPreset: "all" | "completed" | "blocked" | "pending" | "in_progress" = "all";
   private isShowingHelp: boolean = false;
   private isInspecting: boolean = false;
@@ -109,7 +109,7 @@ export class GoalDashboardModal implements Component, Focusable {
     const p2 = this.filterPreset === "completed" ? `\x1b[1;32m[2: ✓ Completed]\x1b[0m` : `\x1b[90m2: Completed\x1b[0m`;
     const p3 = this.filterPreset === "blocked" ? `\x1b[1;31m[3: 🛑 Blocked]\x1b[0m` : `\x1b[90m3: Blocked\x1b[0m`;
     const p4 = this.filterPreset === "pending" ? `\x1b[1;33m[4: ⏳ Pending]\x1b[0m` : `\x1b[90m4: Pending\x1b[0m`;
-    this.vstack.addChild(new Text(`\x1b[90mFilters:\x1b[0m ${p1}  ${p2}  ${p3}  ${p4}  \x1b[90m[v: Cycle View (Milestones/Gates/DAG/Trajectory/Health)]\x1b[0m`, 0, 0));
+    this.vstack.addChild(new Text(`\x1b[90mFilters:\x1b[0m ${p1}  ${p2}  ${p3}  ${p4}  \x1b[90m[v: Cycle View (Milestones/Gates/DAG/Trajectory/Health/Burnup)]\x1b[0m`, 0, 0));
 
     if (this.statusMessage) {
       this.vstack.addChild(new Text(`\x1b[1;33mℹ ${this.statusMessage}\x1b[0m`, 0, 0));
@@ -123,9 +123,10 @@ export class GoalDashboardModal implements Component, Focusable {
       helpMd += `| \`Enter\` | Inspect / Toggle | Inspect milestone details or toggle completion |\n`;
       helpMd += `| \`c\` | Toggle Subtask | Toggle checklist subtask item in milestone |\n`;
       helpMd += `| \`t\` | Toggle Tag | Add / toggle tag on selected milestone |\n`;
+      helpMd += `| \`r\` | Revert Milestone | Revert milestone to pending & rollback dependents |\n`;
       helpMd += `| \`+\` / \`-\` | Adjust Progress | Increment / Decrement milestone progress by 10% |\n`;
       helpMd += `| \`b\` | Toggle Blocked | Mark or unmark milestone as blocked |\n`;
-      helpMd += `| \`v\` | Cycle View | Switch between Milestones, Quality Gates, DAG Graph, Trajectory, and Health |\n`;
+      helpMd += `| \`v\` | Cycle View | Switch between Milestones, Gates, DAG, Trajectory, Health, and Burnup |\n`;
       helpMd += `| \`g\` | Run Gates | Evaluate all quality gates for active session |\n`;
       helpMd += `| \`p\` | Pause / Resume | Toggle paused/active status of standing goal |\n`;
       helpMd += `| \`d\` | Desktop Alert | Trigger test desktop notification |\n`;
@@ -140,6 +141,16 @@ export class GoalDashboardModal implements Component, Focusable {
     if (this.viewMode === "dag_graph") {
       const graph = this.supervisor.renderDagGraph(this.sessionId);
       this.vstack.addChild(new Text(`\n${graph}\n\n\x1b[90m[v] Next View | [?] Help | [q/Esc] Close\x1b[0m`, 0, 0));
+      return;
+    }
+
+    if (this.viewMode === "burnup") {
+      const forecast = this.supervisor.getBurnupForecast(this.sessionId);
+      if (!forecast) {
+        this.vstack.addChild(new Text(`\x1b[90m(No burnup forecast data available)\x1b[0m`, 0, 0));
+      } else {
+        this.vstack.addChild(new Text(`\n\x1b[1;36m${forecast.asciiChart}\x1b[0m\n\n\x1b[90m[v] Next View | [?] Help | [q] Close\x1b[0m`, 0, 0));
+      }
       return;
     }
 
@@ -251,7 +262,7 @@ export class GoalDashboardModal implements Component, Focusable {
       });
     }
 
-    md += `\n\x1b[90m[j/k] Select | [Enter] Inspect | [c] Subtask | [t] Tag | [+/-] Progress | [b] Block | [v] View | [g] Gates | [p] Pause | [?] Help | [q] Close\x1b[0m`;
+    md += `\n\x1b[90m[j/k] Select | [Enter] Inspect | [c] Subtask | [t] Tag | [r] Revert | [+/-] Progress | [b] Block | [v] View | [g] Gates | [p] Pause | [?] Help | [q] Close\x1b[0m`;
     this.vstack.addChild(new Markdown(md, 0, 0, GOAL_MARKDOWN_THEME));
   }
 
@@ -325,6 +336,20 @@ export class GoalDashboardModal implements Component, Focusable {
       }
     }
 
+    if (data === "r" || data === "R") {
+      const goal = this.supervisor.getGoal(this.sessionId);
+      if (goal) {
+        const visible = this.getVisibleMilestones(goal);
+        const selectedM = visible[this.selectedMilestoneIndex];
+        if (selectedM) {
+          const rollback = this.supervisor.revertMilestone(this.sessionId, selectedM.id, "TUI rollback requested");
+          this.statusMessage = rollback.success ? `Reverted milestone #${selectedM.id} (affected: ${rollback.affectedDownstreamMilestoneIds.length} downstream)` : `Rollback failed`;
+          this.invalidate();
+          return;
+        }
+      }
+    }
+
     if (data === "c" || data === "C") {
       const goal = this.supervisor.getGoal(this.sessionId);
       if (goal) {
@@ -388,6 +413,7 @@ export class GoalDashboardModal implements Component, Focusable {
       else if (this.viewMode === "gates") this.viewMode = "dag_graph";
       else if (this.viewMode === "dag_graph") this.viewMode = "trajectory";
       else if (this.viewMode === "trajectory") this.viewMode = "health";
+      else if (this.viewMode === "health") this.viewMode = "burnup";
       else this.viewMode = "milestones";
       this.statusMessage = `View: ${this.viewMode.toUpperCase()}`;
       this.invalidate();

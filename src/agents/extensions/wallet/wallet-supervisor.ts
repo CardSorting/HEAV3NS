@@ -25,8 +25,16 @@ import type {
   TransactionSimulationRequest,
   TransactionSimulationResult,
   UserOperationRequest,
+  WalletBulkMutationResult,
+  WalletDslQueryFilter,
+  WalletGroupBy,
+  WalletGroupedLane,
+  WalletHealthAuditReport,
+  WalletMetricsReport,
   WalletPortfolio,
   WalletSkillConfig,
+  WalletSortBy,
+  WalletSortDirection,
   WalletSubstrateSnapshot,
   YieldOptimizationReport,
 } from "../../../core/contracts/wallet.contracts.js";
@@ -297,7 +305,8 @@ export class WalletSupervisor {
     safeAddress: string,
     chain: SupportedChain,
     proposedAction: string,
-    signers: readonly string[] = []
+    signers: readonly string[] = [],
+    thresholdRequired?: number
   ): { success: boolean; stage?: MultiSigTransactionStage; error?: string } {
     if (!this.isSkillEnabled()) {
       return {
@@ -306,7 +315,7 @@ export class WalletSupervisor {
       };
     }
 
-    const stage = this.engine.stageMultiSig(safeAddress, chain, proposedAction, signers);
+    const stage = this.engine.stageMultiSig(safeAddress, chain, proposedAction, signers, thresholdRequired);
     this.substrate.storeMultiSigStage(stage);
 
     return {
@@ -358,7 +367,110 @@ export class WalletSupervisor {
     };
   }
 
+  getSwapQuote(request: SwapQuoteRequest): { success: boolean; swapQuote?: SwapQuoteResult; error?: string } {
+    const res = this.quoteSwap(request);
+    return {
+      success: res.success,
+      swapQuote: res.quote,
+      error: res.error,
+    };
+  }
+
+  getDeFiHealth(address: string, chain: SupportedChain = "base"): { success: boolean; healthReport?: DeFiHealthReport; error?: string } {
+    const res = this.inspectDeFiHealth(address, chain);
+    return {
+      success: res.success,
+      healthReport: res.health,
+      error: res.error,
+    };
+  }
+
+  auditEIP712Signature(request: EIP712SignatureAuditRequest): { success: boolean; auditResult?: EIP712SignatureAuditResult; error?: string } {
+    const res = this.auditSignature(request);
+    return {
+      success: res.success,
+      auditResult: res.audit,
+      error: res.error,
+    };
+  }
+
+  getBridgeQuote(request: BridgeQuoteRequest): { success: boolean; bridgeQuote?: BridgeQuoteResult; error?: string } {
+    const res = this.quoteBridge(request);
+    return {
+      success: res.success,
+      bridgeQuote: res.quote,
+      error: res.error,
+    };
+  }
+
+  getYieldOptimizationReport(_address: string, chain: SupportedChain = "base"): { success: boolean; yieldReport?: YieldOptimizationReport; error?: string } {
+    const res = this.optimizeYield(chain);
+    return {
+      success: res.success,
+      yieldReport: res.report,
+      error: res.error,
+    };
+  }
+
+  stageMultiSigTransaction(
+    safeAddress: string,
+    chain: SupportedChain,
+    thresholdRequired: number,
+    signers: readonly string[],
+    proposedAction: string
+  ): { success: boolean; stage?: MultiSigTransactionStage; error?: string } {
+    return this.stageMultiSig(safeAddress, chain, proposedAction, signers, thresholdRequired);
+  }
+
   getStats(): WalletSubstrateSnapshot {
     return this.substrate.exportSnapshot();
+  }
+
+  auditHealth(): WalletHealthAuditReport {
+    return this.substrate.auditHealth();
+  }
+
+  getMetrics(): WalletMetricsReport {
+    return this.substrate.getMetrics();
+  }
+
+  getGroupedPortfolios(groupBy?: WalletGroupBy, sortBy?: WalletSortBy, direction?: WalletSortDirection): readonly WalletGroupedLane[] {
+    return this.substrate.getGroupedPortfolios(groupBy, sortBy, direction);
+  }
+
+  queryDsl(query: WalletDslQueryFilter | string): readonly WalletPortfolio[] {
+    return this.substrate.queryPortfoliosDsl(query);
+  }
+
+  bulkPurge(addresses: readonly string[]): WalletBulkMutationResult {
+    return this.substrate.bulkPurgePortfolios(addresses);
+  }
+
+  undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  getSubstrate(): BroccoliWalletSubstrate {
+    return this.substrate;
+  }
+
+  getEngine(): DeterministicWalletEngine {
+    return this.engine;
   }
 }

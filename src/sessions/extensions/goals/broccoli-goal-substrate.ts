@@ -8,8 +8,12 @@
 import type {
   GoalArchiveResult,
   GoalBulkMutationResult,
+  GoalBurnupDataPoint,
+  GoalBurnupForecast,
   GoalCategory,
   GoalCloneOptions,
+  GoalDecompositionResult,
+  GoalDslQueryFilter,
   GoalEvaluationResult,
   GoalGate,
   GoalGateRow,
@@ -20,6 +24,7 @@ import type {
   GoalHierarchyReport,
   GoalMilestone,
   GoalMilestoneChecklistItem,
+  GoalMilestoneRollbackResult,
   GoalMilestoneRow,
   GoalMutationUndoRecord,
   GoalNotificationEvent,
@@ -37,7 +42,9 @@ import type {
   GoalStateSnapshot,
   GoalStepEvent,
   GoalSwarmBalanceResult,
+  GoalSwarmHandoffResult,
   GoalVelocityMetrics,
+  GoalWatchdogReport,
 } from "../../../core/contracts/goal.contracts.js";
 import type { IBroccoliDatabaseKernel, IDbTable } from "../../../core/contracts/broccolidb.contracts.js";
 import { GoalDesktopNotificationDispatcher } from "../../../tooling/extensions/goals/goal-notification-dispatcher.js";
@@ -680,6 +687,71 @@ export class BroccoliGoalSubstrate {
   }
 
   /**
+   * Hands off a milestone from one worker agent session to another within a parent goal swarm.
+   */
+  handOffMilestone(
+    parentSessionId: string,
+    milestoneId: string,
+    targetWorkerSessionId: string,
+    contextPayload?: Record<string, unknown>
+  ): GoalSwarmHandoffResult {
+    const parent = this.goals.get(parentSessionId);
+    if (!parent) {
+      return {
+        parentSessionId,
+        milestoneId,
+        targetWorkerSessionId,
+        success: false,
+        timestampMs: Date.now(),
+      };
+    }
+
+    const m = parent.milestones.find((item) => item.id === milestoneId || item.title.toLowerCase() === milestoneId.toLowerCase());
+    if (!m) {
+      return {
+        parentSessionId,
+        milestoneId,
+        targetWorkerSessionId,
+        success: false,
+        timestampMs: Date.now(),
+      };
+    }
+
+    const previousWorker = m.assignedSessionId;
+    m.assignedSessionId = targetWorkerSessionId;
+    this.setGoal(parent);
+
+    // Record step
+    this.recordStepEvent(parentSessionId, {
+      turnIndex: parent.turnsUsed,
+      timestampMs: Date.now(),
+      actionSummary: `Swarm hand-off: Milestone #${m.id} re-assigned to worker '${targetWorkerSessionId}'`,
+      gatesEvaluated: 0,
+      gatesPassed: 0,
+      milestonesCompleted: parent.milestones.filter((item) => item.status === "completed").map((item) => item.id),
+      verdict: "continue",
+    });
+
+    this.notificationDispatcher.dispatch({
+      sessionId: parentSessionId,
+      trigger: "custom",
+      title: `Swarm Hand-off: Milestone #${m.id}`,
+      message: `Assigned to worker session '${targetWorkerSessionId}'.`,
+      urgency: "normal",
+    });
+
+    return {
+      parentSessionId,
+      milestoneId: m.id,
+      sourceSessionId: previousWorker,
+      targetWorkerSessionId,
+      success: true,
+      timestampMs: Date.now(),
+      contextPayload,
+    };
+  }
+
+  /**
    * Archives all completed goals older than cutoffMs.
    */
   archiveCompletedGoals(cutoffMs: number = 0): GoalArchiveResult {
@@ -959,6 +1031,234 @@ export class BroccoliGoalSubstrate {
 
     this.setGoal(goal);
     return true;
+  }
+
+  /**
+   * Reverts a milestone to pending or in_progress, setting downstream dependents to blocked and recalculating progress.
+   */
+  revertMilestone(sessionId: string, milestoneId: string, reason?: string): GoalMilestoneRollbackResult {
+    const goal = this.goals.get(sessionId);
+    if (!goal) {
+      return {
+        sessionId,
+        rolledBackMilestoneId: milestoneId,
+        previousStatus: "pending",
+        newStatus: "pending",
+        affectedDownstreamMilestoneIds: [],
+        success: false,
+        reason: `Goal session '${sessionId}' not found.`,
+      };
+    }
+
+    const m = goal.milestones.find((item) => item.id === milestoneId || item.title.toLowerCase() === milestoneId.toLowerCase());
+    if (!m) {
+      return {
+        sessionId,
+        rolledBackMilestoneId: milestoneId,
+        previousStatus: "pending",
+        newStatus: "pending",
+        affectedDownstreamMilestoneIds: [],
+        success: false,
+        reason: `Milestone '${milestoneId}' not found in goal session.`,
+      };
+    }
+
+    const prevStatus = m.status;
+    m.status = "pending";
+    m.progressPercent = 0;
+    m.completedAtMs = undefined;
+    if (m.checklist) {
+      for (const item of m.checklist) {
+        (item as any).done = false;
+      }
+    }
+
+    // Find and revert downstream dependents
+    const affectedDownstream: string[] = [];
+    for (const other of goal.milestones) {
+      if (other.dependsOn && other.dependsOn.includes(m.id)) {
+        affectedDownstream.push(other.id);
+        if (other.status === "completed" || other.status === "in_progress") {
+          other.status = "blocked";
+          other.blockers = Array.from(new Set([...(other.blockers || []), `Upstream milestone #${m.id} was rolled back`]));
+        }
+      }
+    }
+
+    // Recalculate goal progress and persist
+    this.setGoal(goal);
+
+    // Record rollback event in trajectory
+    this.recordStepEvent(sessionId, {
+      turnIndex: goal.turnsUsed,
+      timestampMs: Date.now(),
+      actionSummary: `Rolled back milestone #${m.id} (${prevStatus} -> pending). Reason: ${reason || "User requested rollback"}`,
+      gatesEvaluated: 0,
+      gatesPassed: 0,
+      milestonesCompleted: goal.milestones.filter((item) => item.status === "completed").map((item) => item.id),
+      verdict: "continue",
+    });
+
+    // Notify
+    this.notificationDispatcher.dispatch({
+      sessionId,
+      trigger: "custom",
+      title: `Milestone #${m.id} Rolled Back`,
+      message: `Milestone '${m.title}' was reverted to pending. Affected: ${affectedDownstream.length} downstream milestones.`,
+      urgency: "critical",
+    });
+
+    return {
+      sessionId,
+      rolledBackMilestoneId: m.id,
+      previousStatus: prevStatus,
+      newStatus: "pending",
+      affectedDownstreamMilestoneIds: affectedDownstream,
+      success: true,
+      reason,
+    };
+  }
+
+  /**
+   * Computes velocity burnup curve, historical turn checkpoints, and projected turn completion forecast.
+   */
+  getBurnupForecast(sessionId: string): GoalBurnupForecast | null {
+    const goal = this.goals.get(sessionId);
+    if (!goal) return null;
+
+    const totalScope = goal.milestones.length;
+    const completedNow = goal.milestones.filter((m) => m.status === "completed").length;
+    const turnsUsed = goal.turnsUsed || 0;
+    const maxTurns = goal.maxTurns || 20;
+
+    const dataPoints: GoalBurnupDataPoint[] = [];
+    const trajectory = goal.trajectory || [];
+
+    if (trajectory.length > 0) {
+      trajectory.forEach((t) => {
+        const ideal = maxTurns > 0 ? Math.round((t.turnIndex / maxTurns) * totalScope * 10) / 10 : 0;
+        dataPoints.push({
+          turn: t.turnIndex,
+          totalScopeMilestones: totalScope,
+          completedMilestones: t.milestonesCompleted.length,
+          idealVelocityMilestones: ideal,
+          timestampMs: t.timestampMs,
+        });
+      });
+    } else {
+      dataPoints.push({
+        turn: turnsUsed,
+        totalScopeMilestones: totalScope,
+        completedMilestones: completedNow,
+        idealVelocityMilestones: maxTurns > 0 ? Math.round((turnsUsed / maxTurns) * totalScope * 10) / 10 : 0,
+        timestampMs: Date.now(),
+      });
+    }
+
+    const velocityPerTurn = turnsUsed > 0 ? completedNow / turnsUsed : completedNow > 0 ? completedNow : 0.5;
+    const remainingMilestones = Math.max(0, totalScope - completedNow);
+    const turnsNeeded = velocityPerTurn > 0 ? Math.ceil(remainingMilestones / velocityPerTurn) : 10;
+    const projectedCompletionTurn = turnsUsed + turnsNeeded;
+    const isAchievableWithinBudget = projectedCompletionTurn <= maxTurns;
+
+    // Render clean ASCII chart
+    const asciiLines: string[] = [
+      `┌────────────────────────────────────────────────────────────────────────┐`,
+      `│ 📈 Goal Turn Burnup & Velocity Forecast: ${goal.sessionId.padEnd(28)} │`,
+      `├────────────────────────────────────────────────────────────────────────┤`,
+      `│ Total Scope : ${String(totalScope).padEnd(4)} milestones                                          │`,
+      `│ Completed   : ${String(completedNow).padEnd(4)} milestones (${Math.round((completedNow / (totalScope || 1)) * 100)}%)                                   │`,
+      `│ Velocity    : ${(Math.round(velocityPerTurn * 100) / 100).toFixed(2).padEnd(4)} milestones/turn                                    │`,
+      `│ Projected   : Turn ${String(projectedCompletionTurn).padEnd(3)} / ${String(maxTurns).padEnd(3)} max turns [${isAchievableWithinBudget ? "✓ ON BUDGET" : "⚠️ AT RISK"}]               │`,
+      `├────────────────────────────────────────────────────────────────────────┤`,
+    ];
+
+    const chartHeight = 5;
+    for (let r = chartHeight; r >= 0; r--) {
+      const threshold = (r / chartHeight) * totalScope;
+      let rowStr = `│ ${String(Math.round(threshold)).padStart(2, " ")} ┤ `;
+      for (let t = 0; t <= Math.min(20, maxTurns); t++) {
+        const dp = dataPoints.find((d) => d.turn === t);
+        if (dp && dp.completedMilestones >= threshold && (threshold === 0 || dp.completedMilestones < threshold + (totalScope / chartHeight))) {
+          rowStr += `●`;
+        } else if (dp && dp.idealVelocityMilestones >= threshold && (threshold === 0 || dp.idealVelocityMilestones < threshold + (totalScope / chartHeight))) {
+          rowStr += `┄`;
+        } else if (t === 0 && threshold === 0) {
+          rowStr += `┼`;
+        } else {
+          rowStr += ` `;
+        }
+      }
+      rowStr = rowStr.padEnd(73, " ") + "│";
+      asciiLines.push(rowStr);
+    }
+    asciiLines.push(`│    └──────────────────── (Turns 0 to ${Math.min(20, maxTurns)})                        │`);
+    asciiLines.push(`│      ● Actual Progress   ┄ Ideal Velocity Baseline                     │`);
+    asciiLines.push(`└────────────────────────────────────────────────────────────────────────┘`);
+
+    return {
+      sessionId,
+      totalMilestones: totalScope,
+      completedMilestones: completedNow,
+      turnsUsed,
+      maxTurns,
+      dataPoints,
+      projectedCompletionTurn,
+      isAchievableWithinBudget,
+      asciiChart: asciiLines.join("\n"),
+    };
+  }
+
+  /**
+   * Evaluates natural DSL search filter queries against goals.
+   */
+  queryGoalsDsl(dslFilter: GoalDslQueryFilter): GoalState[] {
+    let result = this.listGoals();
+
+    if (dslFilter.status) {
+      result = result.filter((g) => g.status === dslFilter.status);
+    }
+
+    if (dslFilter.category) {
+      result = result.filter((g) => g.category === dslFilter.category);
+    }
+
+    if (dslFilter.healthStatus) {
+      result = result.filter((g) => g.healthStatus === dslFilter.healthStatus);
+    }
+
+    if (dslFilter.tags && dslFilter.tags.length > 0) {
+      result = result.filter((g) => g.tags && dslFilter.tags!.some((t) => g.tags!.includes(t)));
+    }
+
+    if (dslFilter.minProgress !== undefined) {
+      result = result.filter((g) => g.progressPercent >= dslFilter.minProgress!);
+    }
+
+    if (dslFilter.maxProgress !== undefined) {
+      result = result.filter((g) => g.progressPercent <= dslFilter.maxProgress!);
+    }
+
+    if (dslFilter.minTurns !== undefined) {
+      result = result.filter((g) => g.turnsUsed >= dslFilter.minTurns!);
+    }
+
+    if (dslFilter.maxTurns !== undefined) {
+      result = result.filter((g) => g.turnsUsed <= dslFilter.maxTurns!);
+    }
+
+    if (dslFilter.hasFailedGates) {
+      result = result.filter((g) => g.gates.some((gate) => gate.lastExitCode !== undefined && gate.lastExitCode !== 0));
+    }
+
+    if (dslFilter.textTerms && dslFilter.textTerms.length > 0) {
+      result = result.filter((g) => {
+        const text = `${g.sessionId} ${g.goal} ${g.milestones.map((m) => m.title).join(" ")}`.toLowerCase();
+        return dslFilter.textTerms!.every((term) => text.includes(term));
+      });
+    }
+
+    return result;
   }
 
   recordStepEvent(sessionId: string, event: GoalStepEvent): void {

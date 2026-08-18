@@ -118,4 +118,34 @@ export class DeterministicThreadContextEngine {
       });
     };
   }
+
+  /**
+   * Spawns a child context descriptor inheriting parent platform and security metadata.
+   */
+  public createChildDescriptor(
+    parent: AsyncTurnContextDescriptor,
+    childId: string,
+    metadataOverrides: Record<string, string> = {}
+  ): AsyncTurnContextDescriptor {
+    return {
+      contextId: childId,
+      parentSessionId: parent.contextId,
+      platform: parent.platform,
+      hasApprovalCallback: parent.hasApprovalCallback,
+      hasSudoCallback: parent.hasSudoCallback,
+      isInteractive: parent.isInteractive,
+      createdAt: Date.now(),
+      metadata: { ...parent.metadata, ...metadataOverrides },
+    };
+  }
+
+  /**
+   * Formats a summary string of context descriptor state.
+   */
+  public formatContextSummary(desc: AsyncTurnContextDescriptor): string {
+    const security = desc.hasApprovalCallback ? "Approval: Yes" : "Approval: None";
+    const sudo = desc.hasSudoCallback ? "Sudo: Yes" : "Sudo: None";
+    const mode = desc.isInteractive ? "Interactive" : "Autonomous";
+    return `[${desc.contextId}] Platform: ${desc.platform} | Mode: ${mode} | ${security} | ${sudo}`;
+  }
 }

@@ -70,7 +70,55 @@ export class VerificationEvidenceSupervisor {
   /**
    * Returns all modified code files.
    */
-  getModifiedFiles(): readonly string[] {
+  public getModifiedFiles(): readonly string[] {
     return this.substrate.getModifiedFiles();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedEvidence(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedEvidence(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryEvidenceDsl(query);
+  }
+
+  public bulkPurge(evidenceIds: readonly string[]) {
+    return this.substrate.bulkPurgeEvidence(evidenceIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliEvidenceSubstrate {
+    return this.substrate;
+  }
+
+  public getLedger(): DeterministicEvidenceLedger {
+    return this.ledger;
   }
 }

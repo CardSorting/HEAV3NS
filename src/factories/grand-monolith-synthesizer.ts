@@ -200,6 +200,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "commitGenerator",
   "completionGate",
   "compressionSnapshotManager",
+  "contextCompressionSupervisor",
   "compressionToolSuite",
   "computerUseSupervisor",
   "computerUseToolSuite",

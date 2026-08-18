@@ -2,15 +2,22 @@
  * schema-sanitizer-supervisor.ts
  *
  * Master supervisor managing JSON Schema sanitization before LLM API dispatch,
- * bidirectional argument restoration before tool execution, and metrics aggregation (Phase 139 / ADR-115 / Target #72).
+ * bidirectional argument restoration before tool execution, and metrics aggregation (Phase 139 / ADR-115 / Target #80).
  */
 
 import type { BroccoliSchemaSanitizerSubstrate } from "../../../sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
 import type { DeterministicSchemaSanitizerEngine } from "./deterministic-schema-sanitizer-engine.js";
 import type {
+  SchemaSanitizationEventRow,
   SchemaSanitizationResult,
   SchemaSanitizerConfig,
+  SchemaSanitizerDslQueryFilter,
+  SchemaSanitizerGroupBy,
+  SchemaSanitizerHealthAuditReport,
   SchemaSanitizerMetrics,
+  SchemaSanitizerMetricsReport,
+  SchemaSanitizerSortBy,
+  SchemaSanitizerSortDirection,
 } from "../../../core/contracts/schema-sanitizer.contracts.js";
 import { PROPERTY_KEY_REGEX } from "../../../core/contracts/schema-sanitizer.contracts.js";
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
@@ -27,6 +34,14 @@ export class SchemaSanitizerSupervisor {
     this.engine = engine;
   }
 
+  public getSubstrate(): BroccoliSchemaSanitizerSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicSchemaSanitizerEngine {
+    return this.engine;
+  }
+
   public configure(config: Partial<SchemaSanitizerConfig>): void {
     this.substrate.setConfig(config);
   }
@@ -39,10 +54,18 @@ export class SchemaSanitizerSupervisor {
     return this.substrate.getMetrics();
   }
 
+  public getMetricsReport(): SchemaSanitizerMetricsReport {
+    return this.substrate.getMetricsReport();
+  }
+
+  public auditHealth(): SchemaSanitizerHealthAuditReport {
+    return this.substrate.auditHealth();
+  }
+
   /**
    * Sanitizes a JSON tool parameters schema for cross-provider compatibility.
    */
-  public sanitizeToolSchema(rawSchema: Record<string, unknown>): SchemaSanitizationResult {
+  public sanitizeToolSchema(rawSchema: Record<string, unknown>, schemaName = "unnamed"): SchemaSanitizationResult {
     const config = this.substrate.getConfig();
     const result = this.engine.sanitizeSchema(rawSchema, config);
 
@@ -52,6 +75,16 @@ export class SchemaSanitizerSupervisor {
     const combCount = result.mutationsApplied.filter((m) => m.includes("combinator")).length;
 
     this.substrate.recordSchemaSanitized(renamedCount, nullableCount, refCount, combCount);
+
+    const eventRow: SchemaSanitizationEventRow = {
+      eventId: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      schemaName,
+      mutationsApplied: result.mutationsApplied,
+      renamedKeyCount: renamedCount,
+      warnings: result.warnings,
+      timestamp: Date.now(),
+    };
+    this.substrate.recordEvent(eventRow);
 
     return result;
   }
@@ -66,7 +99,7 @@ export class SchemaSanitizerSupervisor {
     }
 
     return tools.map((tool) => {
-      const sanitized = this.sanitizeToolSchema(tool.parameters as unknown as Record<string, unknown>);
+      const sanitized = this.sanitizeToolSchema(tool.parameters as unknown as Record<string, unknown>, tool.name);
       return {
         ...tool,
         parameters: sanitized.sanitizedSchema as unknown as ToolDefinition["parameters"],
@@ -91,5 +124,37 @@ export class SchemaSanitizerSupervisor {
    */
   public validatePropertyKey(key: string): boolean {
     return PROPERTY_KEY_REGEX.test(key);
+  }
+
+  public getGroupedEvents(groupBy?: SchemaSanitizerGroupBy, sortBy?: SchemaSanitizerSortBy, direction?: SchemaSanitizerSortDirection) {
+    return this.substrate.getGroupedEvents(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: SchemaSanitizerDslQueryFilter | string): readonly SchemaSanitizationEventRow[] {
+    return this.substrate.queryEventsDsl(query);
+  }
+
+  public bulkPurge(ids: readonly string[]) {
+    return this.substrate.bulkPurgeEvents(ids);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
   }
 }

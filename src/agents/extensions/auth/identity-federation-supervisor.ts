@@ -79,7 +79,7 @@ export class IdentityFederationSupervisor {
   /**
    * Refreshes and updates an active token lease for a provider.
    */
-  refreshTokenLease(providerId: AuthProviderId): TokenLeaseRecord | undefined {
+  public refreshTokenLease(providerId: AuthProviderId): TokenLeaseRecord | undefined {
     const lease = this.substrate.getTokenLease(providerId);
     if (!lease) {
       return undefined;
@@ -88,5 +88,57 @@ export class IdentityFederationSupervisor {
     const refreshed = this.federator.refreshTokenLease(lease);
     this.substrate.recordTokenLease(refreshed);
     return refreshed;
+  }
+
+  public getAllLeases(): readonly TokenLeaseRecord[] {
+    return this.substrate.listLeases();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedLeases(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedLeases(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryLeasesDsl(query);
+  }
+
+  public bulkPurge(leaseIds: readonly string[]) {
+    return this.substrate.bulkPurgeLeases(leaseIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliAuthSubstrate {
+    return this.substrate;
+  }
+
+  public getFederator(): DeterministicAuthFederator {
+    return this.federator;
   }
 }

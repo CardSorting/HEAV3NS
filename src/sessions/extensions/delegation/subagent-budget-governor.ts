@@ -15,12 +15,18 @@ export class SubagentBudgetGovernor implements ISubagentBudgetGovernor {
   private readonly budgets = new Map<string, { budget: SubagentBudget; startTimeMs: number }>();
 
   allocateBudget(taskManifest: SwarmTaskManifest): SubagentBudget {
+    const maxIterations = taskManifest.budget.maxIterations ?? 10;
+    const maxTokens = taskManifest.budget.maxTokens ?? 50000;
+    const maxWallClockMs = taskManifest.budget.maxWallClockMs ?? 60000;
+    const remainingIterations = taskManifest.budget.remainingIterations ?? maxIterations;
+    const remainingTokens = taskManifest.budget.remainingTokens ?? maxTokens;
+
     const budget: SubagentBudget = {
-      maxIterations: taskManifest.budget.maxIterations || 10,
-      maxTokens: taskManifest.budget.maxTokens || 50000,
-      maxWallClockMs: taskManifest.budget.maxWallClockMs || 60000,
-      remainingIterations: taskManifest.budget.maxIterations || 10,
-      remainingTokens: taskManifest.budget.maxTokens || 50000,
+      maxIterations,
+      maxTokens,
+      maxWallClockMs,
+      remainingIterations,
+      remainingTokens,
     };
 
     this.budgets.set(taskManifest.id, {

@@ -16,14 +16,24 @@ export class DeadlineSnapshotManager {
     this.substrate = substrate;
   }
 
-  public takeSnapshot(snapshotId: string): DeadlineWorkspaceSnapshot {
-    const snapshot = this.substrate.createSnapshot(snapshotId);
-    this.snapshotStorage.set(snapshotId, snapshot);
+  public takeSnapshot(snapshotId: string | number): DeadlineWorkspaceSnapshot {
+    const id = String(snapshotId);
+    const snapshot = this.substrate.createSnapshot(id);
+    this.snapshotStorage.set(id, snapshot);
     return snapshot;
   }
 
-  public restoreSnapshot(snapshotId: string): boolean {
-    const snapshot = this.snapshotStorage.get(snapshotId);
+  public createSnapshot(snapshotId: string | number): DeadlineWorkspaceSnapshot {
+    return this.takeSnapshot(snapshotId);
+  }
+
+  public restoreSnapshot(snapshotOrId: string | number | DeadlineWorkspaceSnapshot): boolean {
+    if (typeof snapshotOrId === "object" && snapshotOrId !== null) {
+      this.substrate.restoreSnapshot(snapshotOrId);
+      return true;
+    }
+    const id = String(snapshotOrId);
+    const snapshot = this.snapshotStorage.get(id);
     if (!snapshot) {
       return false;
     }

@@ -126,4 +126,48 @@ export class TitleInsightsSupervisor {
   public getUsageBreakdown(days = 30, sourceFilter?: string) {
     return this.insightsEngine.getUsageBreakdown(days, sourceFilter);
   }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedTitles(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedTitles(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryTitlesDsl(query);
+  }
+
+  public bulkPurge(sessionIds: readonly string[]) {
+    return this.substrate.bulkPurgeTitles(sessionIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliTitleInsightsSubstrate {
+    return this.substrate;
+  }
 }

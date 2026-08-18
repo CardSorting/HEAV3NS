@@ -381,3 +381,180 @@ export interface WalletSubstrateSnapshot {
   readonly config: WalletSkillConfig;
   readonly timestamp: number;
 }
+
+// ---------------------------------------------------------------------------
+// Typed BroccoliDB Persistence Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface WalletPortfolioRow {
+  readonly id: string;
+  readonly address: string;
+  readonly chain: SupportedChain;
+  readonly totalPortfolioValueUsd: number;
+  readonly nativeBalanceUsd: number;
+  readonly tokenCount: number;
+  readonly lastUpdated: number;
+  readonly [key: string]: unknown;
+}
+
+export interface TokenAllowanceRow {
+  readonly id: string;
+  readonly walletAddress: string;
+  readonly chain: SupportedChain;
+  readonly tokenSymbol: string;
+  readonly spenderAddress: string;
+  readonly riskTier: SecurityRiskTier;
+  readonly updatedAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface WalletSimulationRow {
+  readonly id: string;
+  readonly simulationId: string;
+  readonly chain: SupportedChain;
+  readonly success: boolean;
+  readonly riskTier: SecurityRiskTier;
+  readonly netValueChangeUsd: number;
+  readonly simulatedAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface WalletAuditRow {
+  readonly id: string;
+  readonly action: string;
+  readonly operator: string;
+  readonly details: string;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// SLA Health & Metrics Telemetry
+// ---------------------------------------------------------------------------
+
+export type WalletHealthStatus =
+  | "optimal"
+  | "healthy"
+  | "degraded"
+  | "critical_risk";
+
+export interface WalletHealthAuditReport {
+  readonly totalPortfolios: number;
+  readonly totalPortfolioValueUsd: number;
+  readonly totalAllowances: number;
+  readonly criticalAllowancesCount: number;
+  readonly totalSimulations: number;
+  readonly simulationSuccessRate: number;
+  readonly healthStatus: WalletHealthStatus;
+  readonly recommendations: readonly string[];
+}
+
+export interface WalletMetricsReport {
+  readonly totalTrackedWallets: number;
+  readonly totalPortfolioValueUsd: number;
+  readonly chainDistribution: Readonly<Record<string, number>>;
+  readonly totalSimulations: number;
+  readonly totalQuotes: number;
+  readonly totalBridgeQuotes: number;
+  readonly totalDeFiPositions: number;
+  readonly totalUserOps: number;
+  readonly totalYieldPositions: number;
+  readonly totalMultiSigStages: number;
+  readonly p50PortfolioValueUsd: number;
+  readonly p95PortfolioValueUsd: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Grouping & Swimlanes
+// ---------------------------------------------------------------------------
+
+export type WalletGroupBy = "chain" | "valueTier" | "riskTier";
+
+export type WalletSortBy = "value" | "chain" | "lastUpdated";
+
+export type WalletSortDirection = "asc" | "desc";
+
+export interface WalletGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly totalValueUsd: number;
+  readonly portfolios: readonly WalletPortfolio[];
+}
+
+// ---------------------------------------------------------------------------
+// Natural Query DSL Search Engine
+// ---------------------------------------------------------------------------
+
+export interface WalletDslQueryFilter {
+  readonly rawQuery: string;
+  readonly chain?: SupportedChain;
+  readonly minValueUsd?: number;
+  readonly maxValueUsd?: number;
+  readonly riskTier?: SecurityRiskTier;
+  readonly textTerms?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo / Redo & Bulk Mutations
+// ---------------------------------------------------------------------------
+
+export interface WalletMutationUndoRecord {
+  readonly mutationType: "store_portfolio" | "purge_portfolios" | "update_config" | "bulk";
+  readonly previousSnapshot: WalletSubstrateSnapshot;
+  readonly nextSnapshot: WalletSubstrateSnapshot;
+  readonly timestampMs: number;
+}
+
+export interface WalletBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly affectedAddresses: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliWalletSubstrate {
+  getConfig(): WalletSkillConfig;
+  updateConfig(updates: Partial<WalletSkillConfig>): WalletSkillConfig;
+  storePortfolio(portfolio: WalletPortfolio): void;
+  getPortfolio(address: string, chain: string): WalletPortfolio | undefined;
+  listPortfolios(): readonly WalletPortfolio[];
+  storeAllowance(record: TokenAllowanceRecord): void;
+  getAllowances(walletAddress: string): readonly TokenAllowanceRecord[];
+  storeSimulation(sim: TransactionSimulationResult): void;
+  getSimulation(id: string): TransactionSimulationResult | undefined;
+  listSimulations(limit?: number): readonly TransactionSimulationResult[];
+  storeSwapQuote(quote: SwapQuoteResult): void;
+  getSwapQuote(id: string): SwapQuoteResult | undefined;
+  storeDeFiPosition(pos: DeFiPosition): void;
+  listDeFiPositions(userAddress?: string): readonly DeFiPosition[];
+  storeContact(contact: AddressBookContact): void;
+  getContact(address: string, chain?: string): AddressBookContact | undefined;
+  listContacts(): readonly AddressBookContact[];
+  storeBridgeQuote(quote: BridgeQuoteResult): void;
+  getBridgeQuote(id: string): BridgeQuoteResult | undefined;
+  storeUserOp(userOp: AccountAbstractionSimulationResult): void;
+  getUserOp(userOpHash: string): AccountAbstractionSimulationResult | undefined;
+  storeYieldPosition(pos: YieldStakingPosition): void;
+  listYieldPositions(): readonly YieldStakingPosition[];
+  storeMultiSigStage(stage: MultiSigTransactionStage): void;
+  getMultiSigStage(safeTxHash: string): MultiSigTransactionStage | undefined;
+  listMultiSigStages(): readonly MultiSigTransactionStage[];
+  getMetrics(): WalletMetricsReport;
+  auditHealth(): WalletHealthAuditReport;
+  getGroupedPortfolios(groupBy?: WalletGroupBy, sortBy?: WalletSortBy, direction?: WalletSortDirection): readonly WalletGroupedLane[];
+  queryPortfoliosDsl(query: WalletDslQueryFilter | string): readonly WalletPortfolio[];
+  bulkPurgePortfolios(addresses: readonly string[]): WalletBulkMutationResult;
+  undo(): boolean;
+  redo(): boolean;
+  exportSnapshot(): WalletSubstrateSnapshot;
+  importSnapshot(snapshot: WalletSubstrateSnapshot): void;
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+  clear(): void;
+}
+

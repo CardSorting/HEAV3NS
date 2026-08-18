@@ -781,10 +781,10 @@ export class DeterministicWalletEngine {
     safeAddress: string,
     chain: SupportedChain,
     proposedAction: string,
-    signers: readonly string[] = []
+    signers: readonly string[] = [],
+    thresholdRequired = 2
   ): MultiSigTransactionStage {
     const safeTxHash = `0x${createHash("sha256").update(safeAddress + proposedAction + Date.now()).digest("hex")}`;
-    const thresholdRequired = 2;
     const isQuorumReached = signers.length >= thresholdRequired;
 
     const formattedStageCard =

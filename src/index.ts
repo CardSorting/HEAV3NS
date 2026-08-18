@@ -178,6 +178,7 @@ import { DeterministicToolPruner } from "./tooling/extensions/compaction/determi
 import { BroccoliCompressionSubstrate } from "./sessions/extensions/compaction/broccoli-compression-substrate.js";
 import { CompressionSnapshotManager } from "./sessions/extensions/compaction/compression-snapshot-manager.js";
 import { TrajectoryCompactorEngine } from "./agents/extensions/compaction/trajectory-compactor-engine.js";
+import { ContextCompressionSupervisor } from "./agents/extensions/compaction/context-compression-supervisor.js";
 import { CompressionToolSuite } from "./tooling/extensions/compaction/compression-tool-suite.js";
 
 import { FtsQuerySanitizer } from "./tooling/extensions/search/fts-query-sanitizer.js";
@@ -458,6 +459,7 @@ import { UrlSafetySupervisor } from "./agents/extensions/url_safety/url-safety-s
 import { BroccoliUrlSafetySubstrate } from "./sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
 import { UrlSafetySnapshotManager } from "./sessions/extensions/url_safety/url-safety-snapshot-manager.js";
 import { UrlSafetyToolSuite } from "./tooling/extensions/url_safety/url-safety-tool-suite.js";
+import { UrlSafetyDashboardModal } from "./tui/components/url-safety-dashboard-modal.js";
 
 import { DeterministicV4aPatch } from "./agents/extensions/v4a_patch/deterministic-v4a-patch.js";
 import { V4aPatchSupervisor } from "./agents/extensions/v4a_patch/v4a-patch-supervisor.js";
@@ -676,6 +678,26 @@ export type {
   IDeterministicSkillCurator,
   IEvolutionarySkillEngine,
   IAntiDegenerationGuard,
+  SkillHealthStatus,
+  SkillHealthAuditReport,
+  SkillMetricsReport,
+  SkillGroupBy,
+  SkillSortBy,
+  SkillSortDirection,
+  SkillGroupedLane,
+  SkillNotificationTrigger,
+  SkillNotificationUrgency,
+  SkillNotificationEvent,
+  SkillNotificationPreferences,
+  SkillNotificationRecord,
+  SkillMutationUndoRecord,
+  SkillDslQueryFilter,
+  SkillBulkMutationResult,
+  SkillStateSnapshot,
+  SkillNodeRow,
+  SkillMutationRow,
+  SkillUsageRow,
+  SkillNotificationRow,
 } from "./core/contracts/skills.contracts.js";
 export type {
   SoulArchetype,
@@ -686,6 +708,21 @@ export type {
   SoulMutationIntent,
   SoulMutationResult,
   SoulSnapshot,
+  SoulHealthStatus,
+  SoulHealthAuditReport,
+  SoulMetricsReport,
+  SoulGroupBy,
+  SoulSortBy,
+  SoulSortDirection,
+  SoulGroupedLane,
+  SoulMutationUndoRecord,
+  SoulDslQueryFilter,
+  SoulBulkMutationResult,
+  SoulManifestRow,
+  SoulTraitRow,
+  SoulAxiomRow,
+  SoulMutationRow,
+  IBroccoliSoulSubstrate,
 } from "./core/contracts/soul.contracts.js";
 export type {
   SwarmTaskStatus,
@@ -694,10 +731,32 @@ export type {
   SwarmTaskManifest,
   DelegationOutcome,
   BatchDelegationResult,
+  SwarmHealthStatus,
+  SwarmHealthAuditReport,
+  SwarmMetricsReport,
+  SwarmGroupBy,
+  SwarmSortBy,
+  SwarmSortDirection,
+  SwarmGroupedLane,
+  SwarmNotificationTrigger,
+  SwarmNotificationUrgency,
+  SwarmNotificationEvent,
+  SwarmNotificationPreferences,
+  SwarmNotificationRecord,
+  SwarmMutationUndoRecord,
+  SwarmDslQueryFilter,
+  SwarmBulkMutationResult,
+  SwarmStateSnapshot,
+  SwarmTaskRow,
+  SwarmOutcomeRow,
+  SwarmWorktreeRow,
+  SwarmNotificationRow,
   ISwarmDelegator,
   IWorktreeManager,
   ISubagentVfsBrancher,
   ISubagentBudgetGovernor,
+  IBroccoliSwarmSubstrate,
+  ISwarmSnapshotManager,
 } from "./core/contracts/delegation.contracts.js";
 export type {
   CronScheduleType,
@@ -708,6 +767,26 @@ export type {
   CronJobManifest,
   CronExecutionRecord,
   CronStateSnapshot,
+  CronHealthStatus,
+  CronHealthAuditReport,
+  CronMetricsReport,
+  CronGroupBy,
+  CronSortBy,
+  CronSortDirection,
+  CronGroupedLane,
+  CronNotificationTrigger,
+  CronNotificationUrgency,
+  CronNotificationEvent,
+  CronNotificationPreferences,
+  CronNotificationRecord,
+  CronMutationUndoRecord,
+  CronQueryFilter,
+  CronDslQueryFilter,
+  CronBulkMutationResult,
+  CronJobRow,
+  CronExecutionRow,
+  CronBlueprintRow,
+  CronNotificationRow,
   ICronScheduler,
   IBroccoliCronSubstrate,
   ICronSnapshotManager,
@@ -815,6 +894,21 @@ export type {
   UnifiedIssue,
   WorkflowExecutionResult,
   WorkflowStep,
+  IntegrationConnectionRow,
+  UnifiedIssueRow,
+  IntegrationRecipeRow,
+  IntegrationAuditLogRow,
+  IntegrationsHealthStatus,
+  IntegrationsHealthAuditReport,
+  IntegrationsMetricsReport,
+  IntegrationsGroupBy,
+  IntegrationsSortBy,
+  IntegrationsSortDirection,
+  IntegrationsGroupedLane,
+  IntegrationsDslQueryFilter,
+  IntegrationsMutationUndoRecord,
+  IntegrationsBulkMutationResult,
+  IBroccoliIntegrationsSubstrate,
 } from "./core/contracts/integrations.contracts.js";
 export type {
   CompressionPolicy,
@@ -827,6 +921,19 @@ export type {
   IBroccoliCompressionSubstrate,
   ICompressionSnapshotManager,
   ITrajectoryCompactorEngine,
+  CompressionSummaryRow,
+  PrunedToolOutputRow,
+  CompressionAuditRow,
+  CompressionHealthStatus,
+  CompressionHealthAuditReport,
+  CompressionMetricsReport,
+  CompressionGroupBy,
+  CompressionSortBy,
+  CompressionSortDirection,
+  CompressionGroupedLane,
+  CompressionDslQueryFilter,
+  CompressionMutationUndoRecord,
+  CompressionBulkMutationResult,
 } from "./core/contracts/compression.contracts.js";
 export type {
   IndexedMessageRecord,
@@ -1286,6 +1393,11 @@ export type { CentennialMilestone } from "./tooling/extensions/policy/centennial
 export { DeterministicSkillTreeParser } from "./tooling/extensions/skills/deterministic-skill-tree-parser.js";
 export { AnchoredSkillMutator } from "./tooling/extensions/skills/anchored-skill-mutator.js";
 export { SkillTreeToolSuite } from "./tooling/extensions/skills/skill-tree-tool-suite.js";
+export {
+  SkillDesktopNotificationDispatcher,
+  DEFAULT_SKILL_NOTIFICATION_PREFERENCES,
+} from "./tooling/extensions/skills/skill-notification-dispatcher.js";
+export { SkillTreeModal, type SkillTreeModalViewMode } from "./tui/components/skill-tree-modal.js";
 export { BroccoliSkillTreeSubstrate } from "./sessions/extensions/skills/broccoli-skill-tree-substrate.js";
 export { SkillTreeSnapshotManager } from "./sessions/extensions/skills/skill-tree-snapshot-manager.js";
 export { DeterministicSkillCurator } from "./sessions/extensions/skills/deterministic-skill-curator.js";
@@ -1296,6 +1408,7 @@ export { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degenerat
 export { DeterministicSoulParser } from "./tooling/extensions/soul/deterministic-soul-parser.js";
 export { AnchoredSoulMutator } from "./tooling/extensions/soul/anchored-soul-mutator.js";
 export { SoulToolSuite } from "./tooling/extensions/soul/soul-tool-suite.js";
+export { SoulDashboardModal, type SoulDashboardViewMode } from "./tui/components/soul-dashboard-modal.js";
 export { BroccoliSoulSubstrate } from "./sessions/extensions/soul/broccoli-soul-substrate.js";
 export { SoulSnapshotManager } from "./sessions/extensions/soul/soul-snapshot-manager.js";
 export { SoulThreatGuard } from "./agents/extensions/soul/soul-threat-guard.js";
@@ -1303,18 +1416,30 @@ export { SoulPromptComposer } from "./agents/extensions/soul/soul-prompt-compose
 
 export { AnchoredWorktreeManager } from "./tooling/extensions/delegation/anchored-worktree-manager.js";
 export { SwarmToolSuite } from "./tooling/extensions/delegation/swarm-tool-suite.js";
+export {
+  SwarmDesktopNotificationDispatcher,
+  DEFAULT_SWARM_NOTIFICATION_PREFERENCES,
+} from "./tooling/extensions/delegation/swarm-notification-dispatcher.js";
+export { BroccoliSwarmSubstrate } from "./sessions/extensions/delegation/broccoli-swarm-substrate.js";
+export { SwarmSnapshotManager } from "./sessions/extensions/delegation/swarm-snapshot-manager.js";
 export { SubagentVfsBrancher } from "./sessions/extensions/delegation/subagent-vfs-brancher.js";
 export { SubagentBudgetGovernor } from "./sessions/extensions/delegation/subagent-budget-governor.js";
 export { SubagentLifecycleGuard } from "./agents/extensions/delegation/subagent-lifecycle-guard.js";
 export { MonolithSwarmDelegator } from "./agents/extensions/delegation/monolith-swarm-delegator.js";
+export { SwarmDashboardModal } from "./tui/components/swarm-dashboard-modal.js";
 
 export { DeterministicBlueprintCatalog } from "./tooling/extensions/cron/deterministic-blueprint-catalog.js";
 export { AnchoredCronJobManager } from "./tooling/extensions/cron/anchored-cron-job-manager.js";
 export { CronToolSuite } from "./tooling/extensions/cron/cron-tool-suite.js";
+export {
+  CronDesktopNotificationDispatcher,
+  DEFAULT_CRON_NOTIFICATION_PREFERENCES,
+} from "./tooling/extensions/cron/cron-notification-dispatcher.js";
 export { BroccoliCronSubstrate } from "./sessions/extensions/cron/broccoli-cron-substrate.js";
 export { CronSnapshotManager } from "./sessions/extensions/cron/cron-snapshot-manager.js";
 export { CronLifecycleGuard } from "./agents/extensions/cron/cron-lifecycle-guard.js";
 export { MonolithCronScheduler } from "./agents/extensions/cron/monolith-cron-scheduler.js";
+export { CronDashboardModal } from "./tui/components/cron-dashboard-modal.js";
 
 export { CdpNavigationGuard } from "./agents/extensions/cdp/cdp-navigation-guard.js";
 export { CdpDialogPolicyEngine } from "./agents/extensions/cdp/cdp-dialog-policy-engine.js";
@@ -1350,13 +1475,16 @@ export { IntegrationsSnapshotManager } from "./sessions/extensions/integrations/
 export { DeterministicIntegrationsEngine } from "./tooling/extensions/integrations/deterministic-integrations-engine.js";
 export { IntegrationsSupervisor } from "./agents/extensions/integrations/integrations-supervisor.js";
 export { IntegrationsToolSuite } from "./tooling/extensions/integrations/integrations-tool-suite.js";
+export { IntegrationsDashboardModal, type IntegrationsDashboardViewMode } from "./tui/components/integrations-dashboard-modal.js";
 
 export { HeadTailBudgetGovernor } from "./tooling/extensions/compaction/head-tail-budget-governor.js";
 export { DeterministicToolPruner } from "./tooling/extensions/compaction/deterministic-tool-pruner.js";
 export { BroccoliCompressionSubstrate } from "./sessions/extensions/compaction/broccoli-compression-substrate.js";
 export { CompressionSnapshotManager } from "./sessions/extensions/compaction/compression-snapshot-manager.js";
 export { TrajectoryCompactorEngine } from "./agents/extensions/compaction/trajectory-compactor-engine.js";
+export { ContextCompressionSupervisor } from "./agents/extensions/compaction/context-compression-supervisor.js";
 export { CompressionToolSuite } from "./tooling/extensions/compaction/compression-tool-suite.js";
+export { CompressionDashboardModal, type CompressionDashboardViewMode } from "./tui/components/compression-dashboard-modal.js";
 
 export { FtsQuerySanitizer } from "./tooling/extensions/search/fts-query-sanitizer.js";
 export { BroccoliSearchSubstrate } from "./sessions/extensions/search/broccoli-search-substrate.js";
@@ -1448,6 +1576,7 @@ export { BroccoliLearningSubstrate } from "./sessions/extensions/memory/broccoli
 export { LearningSnapshotManager } from "./sessions/extensions/memory/learning-snapshot-manager.js";
 export { ContinuousLearningCurator } from "./agents/extensions/memory/continuous-learning-curator.js";
 export { LearningCuratorToolSuite } from "./tooling/extensions/memory/learning-curator-tool-suite.js";
+export { MemoryCuratorModal, type MemoryCuratorViewMode } from "./tui/components/memory-curator-modal.js";
 export type {
   KnowledgeNodeType,
   CuratorKnowledgeNode,
@@ -1457,6 +1586,21 @@ export type {
   MemoryRecallResult,
   CuratorReviewDirective,
   CuratorOptions,
+  MemoryNodeRow,
+  MemoryEdgeRow,
+  MemoryRecallRow,
+  MemoryAuditRow,
+  MemoryHealthStatus,
+  MemoryHealthAuditReport,
+  MemoryMetricsReport,
+  MemoryGroupBy,
+  MemorySortBy,
+  MemorySortDirection,
+  MemoryGroupedLane,
+  MemoryDslQueryFilter,
+  MemoryMutationUndoRecord,
+  MemoryBulkMutationResult,
+  IBroccoliLearningSubstrate,
 } from "./core/contracts/memory-curator.contracts.js";
 
 export { DeterministicPatchEngine } from "./tooling/extensions/patch/deterministic-patch-engine.js";
@@ -1464,6 +1608,7 @@ export { BroccoliPatchSubstrate } from "./sessions/extensions/patch/broccoli-pat
 export { PatchSnapshotManager } from "./sessions/extensions/patch/patch-snapshot-manager.js";
 export { AtomicMutationSupervisor } from "./agents/extensions/patch/atomic-mutation-supervisor.js";
 export { FileMutationToolSuite } from "./tooling/extensions/patch/file-mutation-tool-suite.js";
+export { PatchMutationDashboardModal, type PatchMutationDashboardViewMode } from "./tui/components/patch-mutation-dashboard-modal.js";
 export type {
   PatchOperationType,
   PatchHunkLine,
@@ -1474,6 +1619,20 @@ export type {
   FileMutationSnapshot,
   FilePaginationOptions,
   FilePaginatedReadResult,
+  FileMutationRow,
+  PatchOperationRow,
+  PatchAuditRow,
+  PatchMutationHealthStatus,
+  PatchMutationHealthAuditReport,
+  PatchMutationMetricsReport,
+  PatchMutationGroupBy,
+  PatchMutationSortBy,
+  PatchMutationSortDirection,
+  PatchMutationGroupedLane,
+  PatchMutationDslQueryFilter,
+  PatchMutationUndoRecord,
+  PatchBulkMutationResult,
+  IBroccoliPatchSubstrate,
 } from "./core/contracts/patch-mutation.contracts.js";
 
 export { DeterministicLspEngine } from "./tooling/extensions/lsp/deterministic-lsp-engine.js";
@@ -1585,13 +1744,30 @@ export { BroccoliExecutionSubstrate } from "./sessions/extensions/execution/broc
 export { ExecutionSnapshotManager } from "./sessions/extensions/execution/execution-snapshot-manager.js";
 export { CodeExecutionSupervisor } from "./agents/extensions/execution/code-execution-supervisor.js";
 export { CodeExecutionToolSuite } from "./tooling/extensions/execution/code-execution-tool-suite.js";
+export { ExecutionDashboardModal, type ExecutionDashboardViewMode } from "./tui/components/execution-dashboard-modal.js";
 export type {
   CodeExecutionLanguage,
+  ExecutionStatus,
+  SandboxSecurityPolicy,
   ProgrammaticToolCall,
   CodeExecutionResult,
   SandboxContext,
   ExecutionRecord,
   ExecutionWorkspaceSnapshot,
+  ExecutionRecordRow,
+  ToolCallRow,
+  ExecutionAuditRow,
+  ExecutionHealthStatus,
+  ExecutionHealthAuditReport,
+  ExecutionMetricsReport,
+  ExecutionGroupBy,
+  ExecutionSortBy,
+  ExecutionSortDirection,
+  ExecutionGroupedLane,
+  ExecutionDslQueryFilter,
+  ExecutionMutationUndoRecord,
+  ExecutionBulkMutationResult,
+  IBroccoliExecutionSubstrate,
 } from "./core/contracts/execution.contracts.js";
 
 export { DeterministicBatchEvaluator } from "./tooling/extensions/batch/deterministic-batch-evaluator.js";
@@ -1599,13 +1775,32 @@ export { BroccoliBatchSubstrate } from "./sessions/extensions/batch/broccoli-bat
 export { BatchSnapshotManager } from "./sessions/extensions/batch/batch-snapshot-manager.js";
 export { BatchEvaluationSupervisor } from "./agents/extensions/batch/batch-evaluation-supervisor.js";
 export { BatchEvaluationToolSuite } from "./tooling/extensions/batch/batch-evaluation-tool-suite.js";
+export { BatchDashboardModal, type BatchDashboardViewMode } from "./tui/components/batch-dashboard-modal.js";
 export type {
   BatchTaskStatus,
+  BatchPriority,
+  BatchBenchmarkType,
   BatchTaskItem,
   BatchTaskResult,
-  BatchRunMetrics,
   BatchExecutionConfig,
+  BatchRunState,
+  BatchRunMetrics,
   BatchWorkspaceSnapshot,
+  BatchTaskRow,
+  BatchResultRow,
+  BatchRunRow,
+  BatchAuditRow,
+  BatchHealthStatus,
+  BatchHealthAuditReport,
+  BatchMetricsReport,
+  BatchGroupBy,
+  BatchSortBy,
+  BatchSortDirection,
+  BatchGroupedLane,
+  BatchDslQueryFilter,
+  BatchMutationUndoRecord,
+  BatchBulkMutationResult,
+  IBroccoliBatchSubstrate,
 } from "./core/contracts/batch.contracts.js";
 
 export { DeterministicClarifyEngine } from "./tooling/extensions/clarify/deterministic-clarify-engine.js";
@@ -1613,12 +1808,33 @@ export { BroccoliClarifySubstrate } from "./sessions/extensions/clarify/broccoli
 export { ClarifySnapshotManager } from "./sessions/extensions/clarify/clarify-snapshot-manager.js";
 export { ClarifyInquirySupervisor } from "./agents/extensions/clarify/clarify-inquiry-supervisor.js";
 export { ClarifyInquiryToolSuite } from "./tooling/extensions/clarify/clarify-inquiry-tool-suite.js";
+export { ClarifyDashboardModal, type ClarifyDashboardViewMode } from "./tui/components/clarify-dashboard-modal.js";
 export type {
   ClarifyInputMode,
+  ClarifyCategory,
+  ClarifyPriority,
+  ClarifyStatus,
   ClarifyChoice,
+  ClarifyAutoPolicy,
   ClarifyInquiry,
   ClarifyResolution,
+  ClarifyDecisionNode,
+  ClarifyDecisionTree,
   ClarifyWorkspaceSnapshot,
+  ClarifyInquiryRow,
+  ClarifyResolutionRow,
+  ClarifyAuditRow,
+  ClarifyHealthStatus,
+  ClarifyHealthAuditReport,
+  ClarifyMetricsReport,
+  ClarifyGroupBy,
+  ClarifySortBy,
+  ClarifySortDirection,
+  ClarifyGroupedLane,
+  ClarifyDslQueryFilter,
+  ClarifyMutationUndoRecord,
+  ClarifyBulkMutationResult,
+  IBroccoliClarifySubstrate,
 } from "./core/contracts/clarify.contracts.js";
 
 export { DeterministicThreatScanner } from "./tooling/extensions/threat/deterministic-threat-scanner.js";
@@ -1640,12 +1856,58 @@ export { BroccoliCheckpointSubstrate } from "./sessions/extensions/checkpoint/br
 export { CheckpointSnapshotManager } from "./sessions/extensions/checkpoint/checkpoint-snapshot-manager.js";
 export { CheckpointKernelSupervisor } from "./agents/extensions/checkpoint/checkpoint-kernel-supervisor.js";
 export { CheckpointKernelToolSuite } from "./tooling/extensions/checkpoint/checkpoint-kernel-tool-suite.js";
+export { CheckpointDashboardModal, type CheckpointDashboardViewMode } from "./tui/components/checkpoint-dashboard-modal.js";
 export type {
+  CasChunk,
+  CasChunkManifest,
+  CasDeltaPatch,
+  CasDeltaCompressionStats,
   CasBlob,
+  BloomFilterManifest,
   TreeEntry,
+  CheckpointBranchRef,
+  CheckpointTagRef,
+  CheckpointSignatureManifest,
   CheckpointNode,
+  CheckpointConflictMarker,
+  CheckpointConflictManifest,
+  CheckpointOpLogType,
+  CheckpointOpLogEntry,
   CheckpointRollbackResult,
+  CheckpointMergeResult,
+  CheckpointDiffResult,
+  CheckpointStagingFile,
+  CheckpointWorkingTreeStatus,
+  CheckpointRebaseResult,
+  CheckpointSquashResult,
+  CheckpointCherryPickResult,
+  CheckpointRevertResult,
+  CheckpointBisectState,
+  CheckpointBisectResult,
+  CheckpointBlameLine,
+  CheckpointBlameReport,
+  CasPackfileManifest,
+  GitBundleManifest,
+  GitBundlePayload,
   CheckpointWorkspaceSnapshot,
+  CheckpointNodeRow,
+  CheckpointBlobRow,
+  CheckpointTreeRow,
+  CheckpointRefRow,
+  CheckpointChunkRow,
+  CheckpointOpLogRow,
+  CheckpointAuditRow,
+  CheckpointHealthStatus,
+  CheckpointHealthAuditReport,
+  CheckpointMetricsReport,
+  CheckpointGroupBy,
+  CheckpointSortBy,
+  CheckpointSortDirection,
+  CheckpointGroupedLane,
+  CheckpointDslQueryFilter,
+  CheckpointMutationUndoRecord,
+  CheckpointBulkMutationResult,
+  IBroccoliCheckpointSubstrate,
 } from "./core/contracts/checkpoint.contracts.js";
 
 export { DeterministicDisplayDriver } from "./tooling/extensions/computer-use/deterministic-display-driver.js";
@@ -1653,14 +1915,30 @@ export { BroccoliDisplaySubstrate } from "./sessions/extensions/computer-use/bro
 export { DisplaySnapshotManager } from "./sessions/extensions/computer-use/display-snapshot-manager.js";
 export { ComputerUseSupervisor } from "./agents/extensions/computer-use/computer-use-supervisor.js";
 export { ComputerUseToolSuite } from "./tooling/extensions/computer-use/computer-use-tool-suite.js";
+export { ComputerUseDashboardModal, type ComputerUseDashboardViewMode } from "./tui/components/computer-use-dashboard-modal.js";
 export type {
   ComputerActionType,
+  UiElementRole,
   UiElementBounds,
   UiElement,
   VirtualWindow,
   VirtualDisplayFrame,
   ComputerActionResult,
   ComputerWorkspaceSnapshot,
+  ComputerActionRow,
+  UiElementRow,
+  DisplayAuditRow,
+  ComputerUseHealthStatus,
+  ComputerUseHealthAuditReport,
+  ComputerUseMetricsReport,
+  ComputerUseGroupBy,
+  ComputerUseSortBy,
+  ComputerUseSortDirection,
+  ComputerUseGroupedLane,
+  ComputerUseDslQueryFilter,
+  ComputerUseMutationUndoRecord,
+  ComputerUseBulkMutationResult,
+  IBroccoliDisplaySubstrate,
 } from "./core/contracts/computer-use.contracts.js";
 
 export { DeterministicSkillsHub } from "./tooling/extensions/skills-hub/deterministic-skills-hub.js";
@@ -1680,12 +1958,28 @@ export { BroccoliCostSubstrate } from "./sessions/extensions/cost/broccoli-cost-
 export { CostSnapshotManager } from "./sessions/extensions/cost/cost-snapshot-manager.js";
 export { CostGovernanceSupervisor } from "./agents/extensions/cost/cost-governance-supervisor.js";
 export { CostGovernanceToolSuite } from "./tooling/extensions/cost/cost-governance-tool-suite.js";
+export { CostDashboardModal, type CostDashboardViewMode } from "./tui/components/cost-dashboard-modal.js";
 export type {
   ModelPricingTier,
   TokenUsageLedgerEntry,
   BudgetCapConfig,
   CostGovernanceResult,
   CostGovernanceWorkspaceSnapshot,
+  CostLedgerRow,
+  CostPricingTierRow,
+  CostBudgetRow,
+  CostAuditRow,
+  CostHealthStatus,
+  CostHealthAuditReport,
+  CostMetricsReport,
+  CostGroupBy,
+  CostSortBy,
+  CostSortDirection,
+  CostGroupedLane,
+  CostDslQueryFilter,
+  CostMutationUndoRecord,
+  CostBulkMutationResult,
+  IBroccoliCostSubstrate,
 } from "./core/contracts/cost-governance.contracts.js";
 
 export { DeterministicToolDiscloser } from "./tooling/extensions/disclosure/deterministic-tool-discloser.js";
@@ -1693,19 +1987,37 @@ export { BroccoliDisclosureSubstrate } from "./sessions/extensions/disclosure/br
 export { ToolDisclosureSnapshotManager } from "./sessions/extensions/disclosure/disclosure-snapshot-manager.js";
 export { ToolDisclosureSupervisor } from "./agents/extensions/disclosure/tool-disclosure-supervisor.js";
 export { ToolDisclosureToolSuite } from "./tooling/extensions/disclosure/tool-disclosure-tool-suite.js";
+export { ToolDisclosureDashboardModal, type ToolDisclosureDashboardViewMode } from "./tui/components/tool-disclosure-dashboard-modal.js";
 export type {
   DeferredToolDefinition,
   DisclosureTier,
   DisclosureManifest,
   ToolSearchResult,
+  ToolDisclosureConfig,
+  ToolDisclosureMetrics,
   ToolDisclosureWorkspaceSnapshot,
+  DeferredToolRow,
+  ToolDisclosureAuditRow,
+  ToolDisclosureHealthStatus,
+  ToolDisclosureHealthAuditReport,
+  ToolDisclosureMetricsReport,
+  ToolDisclosureGroupBy,
+  ToolDisclosureSortBy,
+  ToolDisclosureSortDirection,
+  ToolDisclosureGroupedLane,
+  ToolDisclosureDslQueryFilter,
+  ToolDisclosureMutationUndoRecord,
+  ToolDisclosureBulkMutationResult,
+  IBroccoliToolDisclosureSubstrate,
 } from "./core/contracts/tool-disclosure.contracts.js";
+export { DEFAULT_TOOL_DISCLOSURE_CONFIG } from "./core/contracts/tool-disclosure.contracts.js";
 
 export { DeterministicEvidenceLedger } from "./tooling/extensions/evidence/deterministic-evidence-ledger.js";
 export { BroccoliEvidenceSubstrate } from "./sessions/extensions/evidence/broccoli-evidence-substrate.js";
 export { EvidenceSnapshotManager } from "./sessions/extensions/evidence/evidence-snapshot-manager.js";
 export { VerificationEvidenceSupervisor } from "./agents/extensions/evidence/verification-evidence-supervisor.js";
 export { VerificationEvidenceToolSuite } from "./tooling/extensions/evidence/verification-evidence-tool-suite.js";
+export { VerificationEvidenceDashboardModal, type VerificationEvidenceDashboardViewMode } from "./tui/components/verification-evidence-dashboard-modal.js";
 export type {
   EvidenceKind,
   EvidenceScope,
@@ -1713,6 +2025,19 @@ export type {
   VerificationStopGateEvaluation,
   SessionInsightsReport,
   VerificationEvidenceWorkspaceSnapshot,
+  VerificationEvidenceRow,
+  EvidenceAuditRow,
+  VerificationEvidenceHealthStatus,
+  VerificationEvidenceHealthAuditReport,
+  VerificationEvidenceMetricsReport,
+  VerificationEvidenceGroupBy,
+  VerificationEvidenceSortBy,
+  VerificationEvidenceSortDirection,
+  VerificationEvidenceGroupedLane,
+  VerificationEvidenceDslQueryFilter,
+  VerificationEvidenceMutationUndoRecord,
+  VerificationEvidenceBulkMutationResult,
+  IBroccoliEvidenceSubstrate,
 } from "./core/contracts/verification-evidence.contracts.js";
 
 export { DeterministicPromptCacher } from "./tooling/extensions/prompt/deterministic-prompt-cacher.js";
@@ -1720,28 +2045,63 @@ export { BroccoliPromptCacheSubstrate } from "./sessions/extensions/prompt/brocc
 export { PromptCacheSnapshotManager } from "./sessions/extensions/prompt/prompt-cache-snapshot-manager.js";
 export { PromptCacheSupervisor } from "./agents/extensions/prompt/prompt-cache-supervisor.js";
 export { PromptCacheToolSuite } from "./tooling/extensions/prompt/prompt-cache-tool-suite.js";
+export { PromptCacheDashboardModal, type PromptCacheDashboardViewMode } from "./tui/components/prompt-cache-dashboard-modal.js";
 export type {
   CacheBreakpointType,
   PromptCacheMarker,
   PromptCacheBreakpoint,
   ByteStablePromptEnvelope,
   ReasoningSanitizationResult,
+  PromptCacheConfig,
+  PromptCacheMetrics,
   PromptCacheWorkspaceSnapshot,
+  PromptCacheBreakpointRow,
+  PromptCacheAuditRow,
+  PromptCacheHealthStatus,
+  PromptCacheHealthAuditReport,
+  PromptCacheMetricsReport,
+  PromptCacheGroupBy,
+  PromptCacheSortBy,
+  PromptCacheSortDirection,
+  PromptCacheGroupedLane,
+  PromptCacheDslQueryFilter,
+  PromptCacheMutationUndoRecord,
+  PromptCacheBulkMutationResult,
+  IBroccoliPromptCacheSubstrate,
 } from "./core/contracts/prompt-cache.contracts.js";
+export { DEFAULT_PROMPT_CACHE_CONFIG } from "./core/contracts/prompt-cache.contracts.js";
 
 export { DeterministicToolSegmenter } from "./tooling/extensions/execution_guard/deterministic-tool-segmenter.js";
-export { BroccoliExecutionGuardSubstrate } from "./sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";
-export { ExecutionGuardSnapshotManager } from "./sessions/extensions/execution_guard/execution-guard-snapshot-manager.js";
+export { BroccoliExecutionGuardSubstrate, BroccoliToolExecutionGuardSubstrate } from "./sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";
+export { ExecutionGuardSnapshotManager, ToolExecutionGuardSnapshotManager } from "./sessions/extensions/execution_guard/execution-guard-snapshot-manager.js";
 export { ToolExecutionGuardSupervisor } from "./agents/extensions/execution_guard/tool-execution-guard-supervisor.js";
 export { ToolExecutionGuardToolSuite } from "./tooling/extensions/execution_guard/tool-execution-guard-tool-suite.js";
+export { ToolExecutionGuardDashboardModal, type ToolExecutionGuardDashboardViewMode } from "./tui/components/tool-execution-guard-dashboard-modal.js";
 export type {
   ToolExecutionMode,
   ToolCallItem,
   ToolExecutionBatchSegment,
   LoopGuardrailDecision,
   ToolLoopViolationRecord,
+  ToolExecutionGuardConfig,
+  ToolExecutionGuardMetrics,
   ToolExecutionWorkspaceSnapshot,
+  ToolLoopViolationRow,
+  ToolExecutionSegmentRow,
+  ToolExecutionAuditRow,
+  ToolExecutionGuardHealthStatus,
+  ToolExecutionGuardHealthAuditReport,
+  ToolExecutionGuardMetricsReport,
+  ToolExecutionGuardGroupBy,
+  ToolExecutionGuardSortBy,
+  ToolExecutionGuardSortDirection,
+  ToolExecutionGuardGroupedLane,
+  ToolExecutionGuardDslQueryFilter,
+  ToolExecutionGuardMutationUndoRecord,
+  ToolExecutionGuardBulkMutationResult,
+  IBroccoliExecutionGuardSubstrate,
 } from "./core/contracts/tool-execution-segment.contracts.js";
+export { DEFAULT_TOOL_EXECUTION_GUARD_CONFIG } from "./core/contracts/tool-execution-segment.contracts.js";
 
 export { DeterministicSecretRedactor } from "./tooling/extensions/redaction/deterministic-secret-redactor.js";
 export { BroccoliRedactionSubstrate } from "./sessions/extensions/redaction/broccoli-redaction-substrate.js";
@@ -1761,6 +2121,7 @@ export { BroccoliReviewSubstrate } from "./sessions/extensions/review/broccoli-r
 export { ReviewSnapshotManager } from "./sessions/extensions/review/review-snapshot-manager.js";
 export { BackgroundReviewSupervisor } from "./agents/extensions/review/background-review-supervisor.js";
 export { BackgroundReviewToolSuite } from "./tooling/extensions/review/background-review-tool-suite.js";
+export { BackgroundReviewDashboardModal, type BackgroundReviewDashboardViewMode } from "./tui/components/background-review-dashboard-modal.js";
 export type {
   ReviewTriggerPolicy,
   CandidateFactItem,
@@ -1770,6 +2131,21 @@ export type {
   SessionInsightsBreakdown,
   SessionTitleSuggestion,
   ReviewWorkspaceSnapshot,
+  TurnReviewRow,
+  CandidateFactRow,
+  CandidateSkillRow,
+  ReviewAuditRow,
+  BackgroundReviewHealthStatus,
+  BackgroundReviewHealthAuditReport,
+  BackgroundReviewMetricsReport,
+  BackgroundReviewGroupBy,
+  BackgroundReviewSortBy,
+  BackgroundReviewSortDirection,
+  BackgroundReviewGroupedLane,
+  BackgroundReviewDslQueryFilter,
+  BackgroundReviewMutationUndoRecord,
+  BackgroundReviewBulkMutationResult,
+  IBroccoliReviewSubstrate,
 } from "./core/contracts/background-review.contracts.js";
 
 export { DeterministicDiagnosticDoctor } from "./tooling/extensions/doctor/deterministic-diagnostic-doctor.js";
@@ -1777,6 +2153,7 @@ export { BroccoliDoctorSubstrate } from "./sessions/extensions/doctor/broccoli-d
 export { DoctorSnapshotManager } from "./sessions/extensions/doctor/doctor-snapshot-manager.js";
 export { DiagnosticDoctorSupervisor } from "./agents/extensions/doctor/diagnostic-doctor-supervisor.js";
 export { DiagnosticDoctorToolSuite } from "./tooling/extensions/doctor/diagnostic-doctor-tool-suite.js";
+export { DiagnosticDoctorDashboardModal, type DiagnosticDoctorDashboardViewMode } from "./tui/components/diagnostic-doctor-dashboard-modal.js";
 export type {
   DiagnosticSeverity,
   DiagnosticCheckCategory,
@@ -1785,6 +2162,21 @@ export type {
   OrphanedTurnRepairItem,
   SessionSalvageReport,
   DoctorWorkspaceSnapshot,
+  DiagnosticReportRow,
+  DiagnosticCheckRow,
+  SessionSalvageRow,
+  DoctorAuditRow,
+  DiagnosticDoctorHealthStatus,
+  DiagnosticDoctorHealthAuditReport,
+  DiagnosticDoctorMetricsReport,
+  DiagnosticDoctorGroupBy,
+  DiagnosticDoctorSortBy,
+  DiagnosticDoctorSortDirection,
+  DiagnosticDoctorGroupedLane,
+  DiagnosticDoctorDslQueryFilter,
+  DiagnosticDoctorMutationUndoRecord,
+  DiagnosticDoctorBulkMutationResult,
+  IBroccoliDoctorSubstrate,
 } from "./core/contracts/diagnostic-doctor.contracts.js";
 
 export { DeterministicAuthFederator } from "./tooling/extensions/auth/deterministic-auth-federator.js";
@@ -1792,6 +2184,7 @@ export { BroccoliAuthSubstrate } from "./sessions/extensions/auth/broccoli-auth-
 export { AuthSnapshotManager } from "./sessions/extensions/auth/auth-snapshot-manager.js";
 export { IdentityFederationSupervisor } from "./agents/extensions/auth/identity-federation-supervisor.js";
 export { IdentityFederationToolSuite } from "./tooling/extensions/auth/identity-federation-tool-suite.js";
+export { IdentityFederationDashboardModal, type IdentityFederationDashboardViewMode } from "./tui/components/identity-federation-dashboard-modal.js";
 export type {
   AuthProviderId,
   AuthFlowType,
@@ -1801,6 +2194,21 @@ export type {
   TokenLeaseRecord,
   SubscriptionEntitlement,
   AuthWorkspaceSnapshot,
+  TokenLeaseRow,
+  DeviceAuthRow,
+  SubscriptionTierRow,
+  AuthAuditRow,
+  IdentityFederationHealthStatus,
+  IdentityFederationHealthAuditReport,
+  IdentityFederationMetricsReport,
+  IdentityFederationGroupBy,
+  IdentityFederationSortBy,
+  IdentityFederationSortDirection,
+  IdentityFederationGroupedLane,
+  IdentityFederationDslQueryFilter,
+  IdentityFederationMutationUndoRecord,
+  IdentityFederationBulkMutationResult,
+  IBroccoliAuthSubstrate,
 } from "./core/contracts/identity-federation.contracts.js";
 
 export { DeterministicSessionArchiver } from "./tooling/extensions/archive/deterministic-session-archiver.js";
@@ -1808,6 +2216,7 @@ export { BroccoliArchiveSubstrate } from "./sessions/extensions/archive/broccoli
 export { ArchiveSnapshotManager } from "./sessions/extensions/archive/archive-snapshot-manager.js";
 export { SessionArchiveSupervisor } from "./agents/extensions/archive/session-archive-supervisor.js";
 export { SessionArchiveToolSuite } from "./tooling/extensions/archive/session-archive-tool-suite.js";
+export { SessionArchiveDashboardModal, type SessionArchiveDashboardViewMode } from "./tui/components/session-archive-dashboard-modal.js";
 export type {
   SessionExportFormat,
   ExportedTurnItem,
@@ -1815,6 +2224,20 @@ export type {
   ExportOptions,
   ExportedDocumentResult,
   ArchiveWorkspaceSnapshot,
+  ArchiveManifestRow,
+  ExportedDocumentRow,
+  ArchiveAuditRow,
+  SessionArchiveHealthStatus,
+  SessionArchiveHealthAuditReport,
+  SessionArchiveMetricsReport,
+  SessionArchiveGroupBy,
+  SessionArchiveSortBy,
+  SessionArchiveSortDirection,
+  SessionArchiveGroupedLane,
+  SessionArchiveDslQueryFilter,
+  SessionArchiveMutationUndoRecord,
+  SessionArchiveBulkMutationResult,
+  IBroccoliArchiveSubstrate,
 } from "./core/contracts/session-archive.contracts.js";
 
 export { DeterministicSkinEngine } from "./tooling/extensions/skin/deterministic-skin-engine.js";
@@ -1996,6 +2419,7 @@ export { TitleInsightsSupervisor } from "./agents/extensions/title_insights/titl
 export { BroccoliTitleInsightsSubstrate } from "./sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
 export { TitleInsightsSnapshotManager } from "./sessions/extensions/title_insights/title-insights-snapshot-manager.js";
 export { TitleInsightsToolSuite } from "./tooling/extensions/title_insights/title-insights-tool-suite.js";
+export { TitleInsightsDashboardModal, type TitleInsightsDashboardViewMode } from "./tui/components/title-insights-dashboard-modal.js";
 export {
   CONTROL_WRAPPERS,
   MACHINE_PREFIXES,
@@ -2020,6 +2444,21 @@ export type {
   ConversationInsightsReport,
   SessionActivityEvent,
   TitleInsightsWorkspaceSnapshot,
+  SessionTitleRow,
+  SessionActivityEventRow,
+  InsightSummaryRow,
+  TitleAuditRow,
+  TitleInsightsHealthStatus,
+  TitleInsightsHealthAuditReport,
+  TitleInsightsMetricsReport,
+  TitleInsightsGroupBy,
+  TitleInsightsSortBy,
+  TitleInsightsSortDirection,
+  TitleInsightsGroupedLane,
+  TitleInsightsDslQueryFilter,
+  TitleInsightsMutationUndoRecord,
+  TitleInsightsBulkMutationResult,
+  IBroccoliTitleInsightsSubstrate,
 } from "./core/contracts/title-insights.contracts.js";
 
 export { DeterministicHeredocSanitizer } from "./agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.js";
@@ -2027,10 +2466,12 @@ export { TerminalDiagnosticsEngine } from "./agents/extensions/heredoc_terminal/
 export { HeredocTerminalSupervisor } from "./agents/extensions/heredoc_terminal/heredoc-terminal-supervisor.js";
 export { BroccoliHeredocTerminalSubstrate } from "./sessions/extensions/heredoc_terminal/broccoli-heredoc-terminal-substrate.js";
 export { HeredocTerminalSnapshotManager } from "./sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.js";
+export { HeredocTerminalDashboardModal, type HeredocTerminalDashboardViewMode } from "./tui/components/heredoc-terminal-dashboard-modal.js";
 export { HeredocTerminalToolSuite } from "./tooling/extensions/heredoc_terminal/heredoc-terminal-tool-suite.js";
 export {
   INERT_HEREDOC_CONSUMER_PATTERN,
   DANGEROUS_SHELL_PATTERNS,
+  DEFAULT_HEREDOC_TERMINAL_CONFIG,
 } from "./core/contracts/heredoc-terminal.contracts.js";
 export type {
   HeredocInterpreterType,
@@ -2046,6 +2487,21 @@ export type {
   TerminalExecutionDiagnostics,
   HeredocSanitizationLogRecord,
   HeredocTerminalWorkspaceSnapshot,
+  HeredocTerminalConfig,
+  HeredocSanitizationRow,
+  HeredocDiagnosticRow,
+  HeredocAuditRow,
+  HeredocTerminalHealthStatus,
+  HeredocTerminalHealthAuditReport,
+  HeredocTerminalMetricsReport,
+  HeredocTerminalGroupBy,
+  HeredocTerminalSortBy,
+  HeredocTerminalSortDirection,
+  HeredocTerminalGroupedLane,
+  HeredocTerminalDslQueryFilter,
+  HeredocTerminalMutationUndoRecord,
+  HeredocTerminalBulkMutationResult,
+  IBroccoliHeredocTerminalSubstrate,
 } from "./core/contracts/heredoc-terminal.contracts.js";
 
 export { DeterministicStealthBrowser } from "./agents/extensions/stealth_browser/deterministic-stealth-browser.js";
@@ -2107,6 +2563,7 @@ export { PreflightScannerSupervisor } from "./agents/extensions/preflight_scanne
 export { BroccoliPreflightSubstrate } from "./sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
 export { PreflightSnapshotManager } from "./sessions/extensions/preflight_scanner/preflight-snapshot-manager.js";
 export { PreflightToolSuite } from "./tooling/extensions/preflight_scanner/preflight-tool-suite.js";
+export { PreflightDashboardModal, type PreflightDashboardViewMode } from "./tui/components/preflight-dashboard-modal.js";
 export type {
   PreflightVerdict,
   PreflightThreatCategory,
@@ -2116,7 +2573,22 @@ export type {
   SupplyChainVerificationResult,
   PreflightSecurityPolicy,
   PreflightWorkspaceSnapshot,
+  PreflightScanResultRow,
+  PreflightAuditRow,
+  PreflightHealthStatus,
+  PreflightMetrics,
+  PreflightHealthAuditReport,
+  PreflightMetricsReport,
+  PreflightGroupBy,
+  PreflightSortBy,
+  PreflightSortDirection,
+  PreflightGroupedLane,
+  PreflightDslQueryFilter,
+  PreflightMutationUndoRecord,
+  PreflightBulkMutationResult,
+  IBroccoliPreflightSubstrate,
 } from "./core/contracts/preflight-scanner.contracts.js";
+export { DEFAULT_PREFLIGHT_SECURITY_POLICY } from "./core/contracts/preflight-scanner.contracts.js";
 
 export { DeterministicAudioSniffer } from "./agents/extensions/audio_container/deterministic-audio-sniffer.js";
 export { AudioContainerSupervisor } from "./agents/extensions/audio_container/audio-container-supervisor.js";
@@ -2198,6 +2670,8 @@ export { UrlSafetySupervisor } from "./agents/extensions/url_safety/url-safety-s
 export { BroccoliUrlSafetySubstrate } from "./sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
 export { UrlSafetySnapshotManager } from "./sessions/extensions/url_safety/url-safety-snapshot-manager.js";
 export { UrlSafetyToolSuite } from "./tooling/extensions/url_safety/url-safety-tool-suite.js";
+export { UrlSafetyDashboardModal } from "./tui/components/url-safety-dashboard-modal.js";
+export type { UrlSafetyDashboardViewMode } from "./tui/components/url-safety-dashboard-modal.js";
 export type {
   IpAddressCategory,
   UrlSafetyVerdict,
@@ -2205,6 +2679,19 @@ export type {
   UrlSafetyConfig,
   UrlSafetyMetrics,
   UrlSafetyWorkspaceSnapshot,
+  UrlSafetyCheckRow,
+  UrlSafetyAuditRow,
+  UrlSafetyHealthStatus,
+  UrlSafetyHealthAuditReport,
+  UrlSafetyMetricsReport,
+  UrlSafetyGroupBy,
+  UrlSafetySortBy,
+  UrlSafetySortDirection,
+  UrlSafetyGroupedLane,
+  UrlSafetyDslQueryFilter,
+  UrlSafetyMutationUndoRecord,
+  UrlSafetyBulkMutationResult,
+  IBroccoliUrlSafetySubstrate,
 } from "./core/contracts/url-safety.contracts.js";
 export {
   CLOUD_METADATA_IPS,
@@ -2311,13 +2798,31 @@ export { DeadlineSupervisor } from "./agents/extensions/deadline/deadline-superv
 export { BroccoliDeadlineSubstrate } from "./sessions/extensions/deadline/broccoli-deadline-substrate.js";
 export { DeadlineSnapshotManager } from "./sessions/extensions/deadline/deadline-snapshot-manager.js";
 export { DeadlineToolSuite } from "./tooling/extensions/deadline/deadline-tool-suite.js";
+export { DeadlineDashboardModal, type DeadlineDashboardViewMode } from "./tui/components/deadline-dashboard-modal.js";
 export type {
   DeadlineOutcome,
+  DeadlineLeaseStatus,
+  DeadlineLease,
   BoundedResult,
   EstopState,
   DeadlineConfig,
   DeadlineMetrics,
   DeadlineWorkspaceSnapshot,
+  DeadlineLeaseRow,
+  DeadlineTimeoutRow,
+  DeadlineEstopRow,
+  DeadlineAuditRow,
+  DeadlineHealthStatus,
+  DeadlineHealthAuditReport,
+  DeadlineMetricsReport,
+  DeadlineGroupBy,
+  DeadlineSortBy,
+  DeadlineSortDirection,
+  DeadlineGroupedLane,
+  DeadlineDslQueryFilter,
+  DeadlineMutationUndoRecord,
+  DeadlineBulkMutationResult,
+  IBroccoliDeadlineSubstrate,
 } from "./core/contracts/deadline.contracts.js";
 export {
   DEFAULT_DEADLINE_CONFIG,
@@ -2356,8 +2861,9 @@ export { DEFAULT_CONTEXT_BREAKDOWN_CONFIG } from "./core/contracts/context-break
 export { DeterministicOsvParser } from "./agents/extensions/osv/deterministic-osv-parser.js";
 export { OsvScannerSupervisor } from "./agents/extensions/osv/osv-scanner-supervisor.js";
 export { BroccoliOsvSubstrate } from "./sessions/extensions/osv/broccoli-osv-substrate.js";
-export { OsvScannerSnapshotManager } from "./sessions/extensions/osv/osv-snapshot-manager.js";
+export { OsvSnapshotManager, OsvScannerSnapshotManager } from "./sessions/extensions/osv/osv-snapshot-manager.js";
 export { OsvScannerToolSuite } from "./tooling/extensions/osv/osv-scanner-tool-suite.js";
+export { OsvDashboardModal, type OsvDashboardViewMode } from "./tui/components/osv-dashboard-modal.js";
 export type {
   PackageEcosystem,
   ParsedPackageTarget,
@@ -2367,6 +2873,19 @@ export type {
   OsvScannerMetrics,
   OsvCachedEntry,
   OsvScannerWorkspaceSnapshot,
+  OsvScanResultRow,
+  OsvAuditRow,
+  OsvHealthStatus,
+  OsvHealthAuditReport,
+  OsvMetricsReport,
+  OsvGroupBy,
+  OsvSortBy,
+  OsvSortDirection,
+  OsvGroupedLane,
+  OsvDslQueryFilter,
+  OsvMutationUndoRecord,
+  OsvBulkMutationResult,
+  IBroccoliOsvSubstrate,
 } from "./core/contracts/osv-scanner.contracts.js";
 export { DEFAULT_OSV_SCANNER_CONFIG } from "./core/contracts/osv-scanner.contracts.js";
 
@@ -2375,12 +2894,26 @@ export { SubdirHintsSupervisor } from "./agents/extensions/subdir_hints/subdir-h
 export { BroccoliSubdirHintsSubstrate } from "./sessions/extensions/subdir_hints/broccoli-subdir-hints-substrate.js";
 export { SubdirHintsSnapshotManager } from "./sessions/extensions/subdir_hints/subdir-hints-snapshot-manager.js";
 export { SubdirHintsToolSuite } from "./tooling/extensions/subdir_hints/subdir-hints-tool-suite.js";
+export { SubdirHintsDashboardModal, type SubdirHintsDashboardViewMode } from "./tui/components/subdir-hints-dashboard-modal.js";
 export type {
   DiscoveredSubdirHint,
   SubdirHintDiscoveryResult,
   SubdirectoryHintsConfig,
   SubdirectoryHintsMetrics,
   SubdirectoryHintsWorkspaceSnapshot,
+  SubdirectoryHintRow,
+  SubdirectoryHintAuditRow,
+  SubdirectoryHintsHealthStatus,
+  SubdirectoryHintsHealthAuditReport,
+  SubdirectoryHintsMetricsReport,
+  SubdirectoryHintsGroupBy,
+  SubdirectoryHintsSortBy,
+  SubdirectoryHintsSortDirection,
+  SubdirectoryHintsGroupedLane,
+  SubdirectoryHintsDslQueryFilter,
+  SubdirectoryHintsMutationUndoRecord,
+  SubdirectoryHintsBulkMutationResult,
+  IBroccoliSubdirectoryHintsSubstrate,
 } from "./core/contracts/subdirectory-hints.contracts.js";
 export { DEFAULT_SUBDIRECTORY_HINTS_CONFIG } from "./core/contracts/subdirectory-hints.contracts.js";
 
@@ -2406,15 +2939,33 @@ export { TurnRetrySupervisor } from "./agents/extensions/turn_retry/turn-retry-s
 export { BroccoliTurnRetrySubstrate } from "./sessions/extensions/turn_retry/broccoli-turn-retry-substrate.js";
 export { TurnRetrySnapshotManager } from "./sessions/extensions/turn_retry/turn-retry-snapshot-manager.js";
 export { TurnRetryToolSuite } from "./tooling/extensions/turn_retry/turn-retry-tool-suite.js";
+export { TurnRetryDashboardModal, type TurnRetryDashboardViewMode } from "./tui/components/turn-retry-dashboard-modal.js";
 export type {
+  TurnRetryErrorCategory,
   TurnRetryGuards,
   TurnRestartSignals,
   TurnRecoveryBranch,
   TurnRestartSignalKey,
+  TurnRetryHistoryEntry,
   TurnRetryStateDescriptor,
+  TurnRetryAttemptRecord,
   TurnRetryConfig,
   TurnRetryMetrics,
   TurnRetryWorkspaceSnapshot,
+  TurnRetryStateRow,
+  TurnRetryAttemptRow,
+  TurnRetryAuditRow,
+  TurnRetryHealthStatus,
+  TurnRetryHealthAuditReport,
+  TurnRetryMetricsReport,
+  TurnRetryGroupBy,
+  TurnRetrySortBy,
+  TurnRetrySortDirection,
+  TurnRetryGroupedLane,
+  TurnRetryDslQueryFilter,
+  TurnRetryMutationUndoRecord,
+  TurnRetryBulkMutationResult,
+  IBroccoliTurnRetrySubstrate,
 } from "./core/contracts/turn-retry.contracts.js";
 export {
   DEFAULT_TURN_RETRY_GUARDS,
@@ -2427,6 +2978,7 @@ export { BillingUsageSupervisor } from "./agents/extensions/billing_usage/billin
 export { BroccoliBillingUsageSubstrate } from "./sessions/extensions/billing_usage/broccoli-billing-usage-substrate.js";
 export { BillingUsageSnapshotManager } from "./sessions/extensions/billing_usage/billing-usage-snapshot-manager.js";
 export { BillingUsageToolSuite } from "./tooling/extensions/billing_usage/billing-usage-tool-suite.js";
+export { BillingUsageDashboardModal, type BillingUsageDashboardViewMode } from "./tui/components/billing-usage-dashboard-modal.js";
 export type {
   AccountStatus,
   UsageBarDescriptor,
@@ -2436,6 +2988,21 @@ export type {
   BillingTransaction,
   BillingUsageMetrics,
   BillingUsageWorkspaceSnapshot,
+  BillingAccountRow,
+  BillingTransactionRow,
+  BillingBarStateRow,
+  BillingAuditRow,
+  BillingUsageHealthStatus,
+  BillingUsageHealthAuditReport,
+  BillingUsageMetricsReport,
+  BillingUsageGroupBy,
+  BillingUsageSortBy,
+  BillingUsageSortDirection,
+  BillingUsageGroupedLane,
+  BillingUsageDslQueryFilter,
+  BillingUsageMutationUndoRecord,
+  BillingUsageBulkMutationResult,
+  IBroccoliBillingUsageSubstrate,
 } from "./core/contracts/billing-usage.contracts.js";
 export {
   DEFAULT_LOW_BALANCE_THRESHOLD_USD,
@@ -2448,6 +3015,7 @@ export { ThreadContextSupervisor } from "./agents/extensions/thread_context/thre
 export { BroccoliThreadContextSubstrate } from "./sessions/extensions/thread_context/broccoli-thread-context-substrate.js";
 export { ThreadContextSnapshotManager } from "./sessions/extensions/thread_context/thread-context-snapshot-manager.js";
 export { ThreadContextToolSuite } from "./tooling/extensions/thread_context/thread-context-tool-suite.js";
+export { ThreadContextDashboardModal, type ThreadContextDashboardViewMode } from "./tui/components/thread-context-dashboard-modal.js";
 export type {
   SecurityApprovalCallback,
   SudoPasswordCallback,
@@ -2456,6 +3024,20 @@ export type {
   ExecutionDispatchEvent,
   ContextPropagationMetrics,
   ThreadContextWorkspaceSnapshot,
+  ThreadContextRow,
+  ExecutionDispatchRow,
+  ContextAuditRow,
+  ThreadContextHealthStatus,
+  ThreadContextHealthAuditReport,
+  ThreadContextMetricsReport,
+  ThreadContextGroupBy,
+  ThreadContextSortBy,
+  ThreadContextSortDirection,
+  ThreadContextGroupedLane,
+  ThreadContextDslQueryFilter,
+  ThreadContextMutationUndoRecord,
+  ThreadContextBulkMutationResult,
+  IBroccoliThreadContextSubstrate,
 } from "./core/contracts/thread-context.contracts.js";
 export {
   DEFAULT_CONTEXT_PROPAGATION_CONFIG,
@@ -2483,6 +3065,7 @@ export { SkillLinterSupervisor } from "./agents/extensions/skill_linter/skill-li
 export { BroccoliSkillLinterSubstrate } from "./sessions/extensions/skill_linter/broccoli-skill-linter-substrate.js";
 export { SkillLinterSnapshotManager } from "./sessions/extensions/skill_linter/skill-linter-snapshot-manager.js";
 export { SkillLinterToolSuite } from "./tooling/extensions/skill_linter/skill-linter-tool-suite.js";
+export { SkillLinterDashboardModal, type SkillLinterDashboardViewMode } from "./tui/components/skill-linter-dashboard-modal.js";
 export type {
   SkillLintSeverity,
   SkillLintRuleCode,
@@ -2491,6 +3074,20 @@ export type {
   SkillLinterConfig,
   SkillLinterMetrics,
   SkillLinterWorkspaceSnapshot,
+  SkillLintReportRow,
+  SkillLintFindingRow,
+  SkillLintAuditRow,
+  SkillLinterHealthStatus,
+  SkillLinterHealthAuditReport,
+  SkillLinterMetricsReport,
+  SkillLinterGroupBy,
+  SkillLinterSortBy,
+  SkillLinterSortDirection,
+  SkillLinterGroupedLane,
+  SkillLinterDslQueryFilter,
+  SkillLinterMutationUndoRecord,
+  SkillLinterBulkMutationResult,
+  IBroccoliSkillLinterSubstrate,
 } from "./core/contracts/skill-linter.contracts.js";
 export {
   DEFAULT_SKILL_LINTER_CONFIG,
@@ -2504,12 +3101,27 @@ export { TerminalCleanerSupervisor } from "./agents/extensions/terminal_cleaner/
 export { BroccoliTerminalCleanerSubstrate } from "./sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
 export { TerminalCleanerSnapshotManager } from "./sessions/extensions/terminal_cleaner/terminal-cleaner-snapshot-manager.js";
 export { TerminalCleanerToolSuite } from "./tooling/extensions/terminal_cleaner/terminal-cleaner-tool-suite.js";
+export { TerminalCleanerDashboardModal, type TerminalCleanerDashboardViewMode } from "./tui/components/terminal-cleaner-dashboard-modal.js";
 export type {
   AnsiCleanMode,
   BinaryAssetClassification,
+  TerminalCleanResult,
   TerminalCleanerConfig,
   TerminalCleanerMetrics,
   TerminalCleanerWorkspaceSnapshot,
+  TerminalCleanEventRow,
+  TerminalCleanerAuditRow,
+  TerminalCleanerHealthStatus,
+  TerminalCleanerHealthAuditReport,
+  TerminalCleanerMetricsReport,
+  TerminalCleanerGroupBy,
+  TerminalCleanerSortBy,
+  TerminalCleanerSortDirection,
+  TerminalCleanerGroupedLane,
+  TerminalCleanerDslQueryFilter,
+  TerminalCleanerMutationUndoRecord,
+  TerminalCleanerBulkMutationResult,
+  IBroccoliTerminalCleanerSubstrate,
 } from "./core/contracts/terminal-cleaner.contracts.js";
 export {
   DEFAULT_TERMINAL_CLEANER_CONFIG,
@@ -2522,12 +3134,27 @@ export { StreamingScrubberSupervisor } from "./agents/extensions/streaming_scrub
 export { BroccoliStreamingScrubberSubstrate } from "./sessions/extensions/streaming_scrubber/broccoli-streaming-scrubber-substrate.js";
 export { StreamingScrubberSnapshotManager } from "./sessions/extensions/streaming_scrubber/streaming-scrubber-snapshot-manager.js";
 export { StreamingScrubberToolSuite } from "./tooling/extensions/streaming_scrubber/streaming-scrubber-tool-suite.js";
+export { StreamingScrubberDashboardModal, type StreamingScrubberDashboardViewMode } from "./tui/components/streaming-scrubber-dashboard-modal.js";
 export type {
   ReasoningTagName,
   StreamingScrubberState,
+  StreamingScrubResult,
   StreamingThinkScrubberConfig,
   StreamingThinkScrubberMetrics,
   StreamingThinkScrubberWorkspaceSnapshot,
+  StreamingScrubberEventRow,
+  StreamingScrubberAuditRow,
+  StreamingScrubberHealthStatus,
+  StreamingScrubberHealthAuditReport,
+  StreamingScrubberMetricsReport,
+  StreamingScrubberGroupBy,
+  StreamingScrubberSortBy,
+  StreamingScrubberSortDirection,
+  StreamingScrubberGroupedLane,
+  StreamingScrubberDslQueryFilter,
+  StreamingScrubberMutationUndoRecord,
+  StreamingScrubberBulkMutationResult,
+  IBroccoliStreamingScrubberSubstrate,
 } from "./core/contracts/streaming-think-scrubber.contracts.js";
 export {
   DEFAULT_REASONING_TAG_NAMES,
@@ -2539,6 +3166,7 @@ export { SelfRepoGuardSupervisor } from "./agents/extensions/self_repo_guard/sel
 export { BroccoliSelfRepoGuardSubstrate } from "./sessions/extensions/self_repo_guard/broccoli-self-repo-guard-substrate.js";
 export { SelfRepoGuardSnapshotManager } from "./sessions/extensions/self_repo_guard/self-repo-guard-snapshot-manager.js";
 export { SelfRepoGuardToolSuite } from "./tooling/extensions/self_repo_guard/self-repo-guard-tool-suite.js";
+export { SelfRepoGuardDashboardModal, type SelfRepoGuardDashboardViewMode } from "./tui/components/self-repo-guard-dashboard-modal.js";
 export type {
   GitOperationSafety,
   SelfRepoGuardConfig,
@@ -2546,6 +3174,19 @@ export type {
   SelfRepoGuardMetrics,
   SelfRepoGuardVerdict,
   SelfRepoGuardWorkspaceSnapshot,
+  SelfRepoGuardIncidentRow,
+  SelfRepoGuardAuditRow,
+  SelfRepoGuardHealthStatus,
+  SelfRepoGuardHealthAuditReport,
+  SelfRepoGuardMetricsReport,
+  SelfRepoGuardGroupBy,
+  SelfRepoGuardSortBy,
+  SelfRepoGuardSortDirection,
+  SelfRepoGuardGroupedLane,
+  SelfRepoGuardDslQueryFilter,
+  SelfRepoGuardMutationUndoRecord,
+  SelfRepoGuardBulkMutationResult,
+  IBroccoliSelfRepoGuardSubstrate,
 } from "./core/contracts/self-repo-guard.contracts.js";
 export {
   DEFAULT_SELF_REPO_GUARD_CONFIG,
@@ -2561,11 +3202,25 @@ export { SchemaSanitizerSupervisor } from "./agents/extensions/schema_sanitizer/
 export { BroccoliSchemaSanitizerSubstrate } from "./sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
 export { SchemaSanitizerSnapshotManager } from "./sessions/extensions/schema_sanitizer/schema-sanitizer-snapshot-manager.js";
 export { SchemaSanitizerToolSuite } from "./tooling/extensions/schema_sanitizer/schema-sanitizer-tool-suite.js";
+export { SchemaSanitizerDashboardModal, type SchemaSanitizerDashboardViewMode } from "./tui/components/schema-sanitizer-dashboard-modal.js";
 export type {
   SchemaSanitizationResult,
   SchemaSanitizerConfig,
   SchemaSanitizerMetrics,
   SchemaSanitizerWorkspaceSnapshot,
+  SchemaSanitizationEventRow,
+  SchemaSanitizerAuditRow,
+  SchemaSanitizerHealthStatus,
+  SchemaSanitizerHealthAuditReport,
+  SchemaSanitizerMetricsReport,
+  SchemaSanitizerGroupBy,
+  SchemaSanitizerSortBy,
+  SchemaSanitizerSortDirection,
+  SchemaSanitizerGroupedLane,
+  SchemaSanitizerDslQueryFilter,
+  SchemaSanitizerMutationUndoRecord,
+  SchemaSanitizerBulkMutationResult,
+  IBroccoliSchemaSanitizerSubstrate,
 } from "./core/contracts/schema-sanitizer.contracts.js";
 export {
   DEFAULT_SCHEMA_SANITIZER_CONFIG,
@@ -2652,6 +3307,13 @@ export type {
   GoalHealthStatus,
   GoalHealthAuditReport,
   GoalRiskDiagnosis,
+  GoalDecompositionResult,
+  GoalMilestoneRollbackResult,
+  GoalBurnupDataPoint,
+  GoalBurnupForecast,
+  GoalDslQueryFilter,
+  GoalSwarmHandoffResult,
+  GoalWatchdogReport,
 } from "./core/contracts/goal.contracts.js";
 export {
   DEFAULT_GATE_MAX_RETRIES,
@@ -2666,6 +3328,7 @@ export { ProfileSupervisor } from "./agents/extensions/profiles/profile-supervis
 export { BroccoliProfileSubstrate } from "./sessions/extensions/profiles/broccoli-profile-substrate.js";
 export { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-snapshot-manager.js";
 export { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
+export { ProfileDashboardModal, type ProfileDashboardViewMode } from "./tui/components/profile-dashboard-modal.js";
 export type {
   ProfileBlueprint,
   ProfileCategory,
@@ -2680,6 +3343,21 @@ export type {
   ProfileStatus,
   ProfileTelemetry,
   ProfileWorkspaceSnapshot,
+  ProfileRow,
+  ProfileBindingRow,
+  ProfileTransitionRow,
+  ProfileAuditRow,
+  ProfileHealthStatus,
+  ProfileHealthAuditReport,
+  ProfileMetricsReport,
+  ProfileGroupBy,
+  ProfileSortBy,
+  ProfileSortDirection,
+  ProfileGroupedLane,
+  ProfileDslQueryFilter,
+  ProfileMutationUndoRecord,
+  ProfileBulkMutationResult,
+  IBroccoliProfileSubstrate,
 } from "./core/contracts/profile.contracts.js";
 export { PROFILE_ID_REGEX } from "./core/contracts/profile.contracts.js";
 
@@ -2688,6 +3366,7 @@ export { WalletSupervisor } from "./agents/extensions/wallet/wallet-supervisor.j
 export { BroccoliWalletSubstrate } from "./sessions/extensions/wallet/broccoli-wallet-substrate.js";
 export { WalletSnapshotManager } from "./sessions/extensions/wallet/wallet-snapshot-manager.js";
 export { WalletToolSuite } from "./tooling/extensions/wallet/wallet-tool-suite.js";
+export { WalletDashboardModal, type WalletDashboardViewMode } from "./tui/components/wallet-dashboard-modal.js";
 export type {
   AccountAbstractionSimulationResult,
   AddressBookContact,
@@ -2717,13 +3396,33 @@ export type {
   WalletSubstrateSnapshot,
   YieldOptimizationReport,
   YieldStakingPosition,
+  WalletPortfolioRow,
+  TokenAllowanceRow,
+  WalletSimulationRow,
+  WalletAuditRow,
+  WalletHealthStatus,
+  WalletHealthAuditReport,
+  WalletMetricsReport,
+  WalletGroupBy,
+  WalletSortBy,
+  WalletSortDirection,
+  WalletGroupedLane,
+  WalletDslQueryFilter,
+  WalletMutationUndoRecord,
+  WalletBulkMutationResult,
+  IBroccoliWalletSubstrate,
 } from "./core/contracts/wallet.contracts.js";
 
 export { DeterministicEmailEngine } from "./tooling/extensions/email/deterministic-email-engine.js";
 export { EmailSupervisor } from "./agents/extensions/email/email-supervisor.js";
+export {
+  EmailDesktopNotificationDispatcher,
+  DEFAULT_EMAIL_NOTIFICATION_PREFERENCES,
+} from "./tooling/extensions/email/email-notification-dispatcher.js";
 export { BroccoliEmailSubstrate } from "./sessions/extensions/email/broccoli-email-substrate.js";
 export { EmailSnapshotManager } from "./sessions/extensions/email/email-snapshot-manager.js";
 export { EmailToolSuite } from "./tooling/extensions/email/email-tool-suite.js";
+export { EmailInboxModal, type EmailInboxViewMode } from "./tui/components/email-inbox-modal.js";
 export type {
   DataLossPreventionFinding,
   EmailAddress,
@@ -2746,6 +3445,27 @@ export type {
   ThreadCollisionLock,
   ThreadSummaryAnalysis,
   VipContactRule,
+  EmailHealthStatus,
+  EmailHealthAuditReport,
+  EmailMetricsReport,
+  EmailGroupBy,
+  EmailSortBy,
+  EmailSortDirection,
+  EmailGroupedLane,
+  EmailNotificationTrigger,
+  EmailNotificationUrgency,
+  EmailNotificationEvent,
+  EmailNotificationPreferences,
+  EmailNotificationRecord,
+  EmailMutationUndoRecord,
+  EmailDslQueryFilter,
+  EmailBulkMutationResult,
+  EmailMessageRow,
+  EmailDraftRow,
+  EmailTriageRow,
+  EmailNotificationRow,
+  EmailReminderRow,
+  IBroccoliEmailSubstrate,
 } from "./core/contracts/email.contracts.js";
 
 export { DeterministicOtlpEngine } from "./tooling/extensions/otlp/deterministic-otlp-engine.js";
@@ -2922,6 +3642,7 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliCompressionSubstrate: BroccoliCompressionSubstrate;
   readonly compressionSnapshotManager: CompressionSnapshotManager;
   readonly trajectoryCompactorEngine: TrajectoryCompactorEngine;
+  readonly contextCompressionSupervisor: ContextCompressionSupervisor;
   readonly compressionToolSuite: CompressionToolSuite;
   readonly ftsQuerySanitizer: FtsQuerySanitizer;
   readonly broccoliSearchSubstrate: BroccoliSearchSubstrate;
@@ -3451,6 +4172,7 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliCompressionSubstrate = components.broccoliCompressionSubstrate;
     this.compressionSnapshotManager = components.compressionSnapshotManager;
     this.trajectoryCompactorEngine = components.trajectoryCompactorEngine;
+    this.contextCompressionSupervisor = components.contextCompressionSupervisor;
     this.compressionToolSuite = components.compressionToolSuite;
     this.ftsQuerySanitizer = components.ftsQuerySanitizer;
     this.broccoliSearchSubstrate = components.broccoliSearchSubstrate;

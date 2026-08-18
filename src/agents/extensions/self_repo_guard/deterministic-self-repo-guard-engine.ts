@@ -367,4 +367,16 @@ export class DeterministicSelfRepoGuardEngine {
 
     return words;
   }
+
+  public formatVerdict(verdict: SelfRepoGuardVerdict): string {
+    if (verdict.allowed) {
+      return `[SELF-REPO-GUARD:ALLOWED] Operation permitted safely.`;
+    }
+    return `[SELF-REPO-GUARD:BLOCKED] ${verdict.operation || "destructive_git"} - ${verdict.reason || "Self-repository mutation rejected"}`;
+  }
+
+  public formatIncident(incident: { incidentId: string; command: string; reason: string }): string {
+    return `[INCIDENT:${incident.incidentId}] "${incident.command}" -> ${incident.reason}`;
+  }
 }
+

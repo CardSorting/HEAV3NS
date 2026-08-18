@@ -1,16 +1,33 @@
 import type {
   IEvolutionarySkillEngine,
+  SkillBulkMutationResult,
+  SkillDslQueryFilter,
   SkillEvolutionSignal,
+  SkillGroupBy,
+  SkillGroupedLane,
+  SkillHealthAuditReport,
+  SkillMetricsReport,
   SkillNodeManifest,
-  IBroccoliSkillTreeSubstrate,
+  SkillSortBy,
+  SkillSortDirection,
   SkillTier,
 } from "../../../core/contracts/skills.contracts.js";
+import { BroccoliSkillTreeSubstrate } from "../../../sessions/extensions/skills/broccoli-skill-tree-substrate.js";
+import type { SkillDesktopNotificationDispatcher } from "../../../tooling/extensions/skills/skill-notification-dispatcher.js";
 
 export class EvolutionarySkillTreeEngine implements IEvolutionarySkillEngine {
-  private readonly substrate: IBroccoliSkillTreeSubstrate;
+  private readonly substrate: BroccoliSkillTreeSubstrate;
 
-  constructor(substrate: IBroccoliSkillTreeSubstrate) {
+  constructor(substrate: BroccoliSkillTreeSubstrate) {
     this.substrate = substrate;
+  }
+
+  public getSubstrate(): BroccoliSkillTreeSubstrate {
+    return this.substrate;
+  }
+
+  public getNotificationDispatcher(): SkillDesktopNotificationDispatcher {
+    return this.substrate.getNotificationDispatcher();
   }
 
   /**
@@ -25,7 +42,6 @@ export class EvolutionarySkillTreeEngine implements IEvolutionarySkillEngine {
   }): readonly SkillEvolutionSignal[] {
     const signals: SkillEvolutionSignal[] = [];
     const promptLower = trajectory.prompt.toLowerCase();
-    const responseLower = trajectory.response.toLowerCase();
 
     // 1. User Correction Signals (Frustration / style / workflow correction)
     const correctionPhrases = [
@@ -70,7 +86,7 @@ export class EvolutionarySkillTreeEngine implements IEvolutionarySkillEngine {
       const uniqueTools = new Set(toolNames);
       if (uniqueTools.size >= 2) {
         signals.push({
-          type: "new_technique" as any,
+          type: "tool_workaround",
           context: `Multi-tool execution chain synthesized across: ${Array.from(uniqueTools).join(", ")}.`,
           confidence: 0.8,
           suggestedAction: "add_support_file",
@@ -116,9 +132,72 @@ export class EvolutionarySkillTreeEngine implements IEvolutionarySkillEngine {
       ...node,
       masteryScore: newMastery,
       tier: newTier,
+      updatedAtMs: Date.now(),
     };
 
     this.substrate.saveNode(updated);
+
+    if (newMastery >= 90 && node.masteryScore < 90) {
+      this.substrate.getNotificationDispatcher().dispatch({
+        skillId: node.id,
+        title: "Skill Mastery Sovereign",
+        message: `Skill '${node.name}' has achieved Sovereign mastery status (${newMastery}%).`,
+        urgency: "normal",
+        trigger: "mastery_promoted",
+      }).catch(() => {});
+    }
+
     return newMastery;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Substrate Facade Wrappers
+  // ---------------------------------------------------------------------------
+
+  public auditSkillHealth(skillId?: string): SkillHealthAuditReport {
+    return this.substrate.auditSkillHealth(skillId);
+  }
+
+  public getSkillMetrics(): SkillMetricsReport {
+    return this.substrate.getSkillMetrics();
+  }
+
+  public getGroupedSkills(
+    groupBy?: SkillGroupBy,
+    sortBy?: SkillSortBy,
+    direction?: SkillSortDirection
+  ): readonly SkillGroupedLane[] {
+    return this.substrate.getGroupedSkills(groupBy, sortBy, direction);
+  }
+
+  public querySkillsDsl(query: SkillDslQueryFilter | string): readonly SkillNodeManifest[] {
+    return this.substrate.querySkillsDsl(query);
+  }
+
+  public bulkUpdateSkills(
+    skillIds: readonly string[],
+    updates: Partial<Pick<SkillNodeManifest, "tier" | "lifecycleState" | "pinned" | "category">>
+  ): SkillBulkMutationResult {
+    return this.substrate.bulkUpdateSkills(skillIds, updates);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportInteractiveHtmlView(skillId?: string): string {
+    return this.substrate.exportInteractiveHtmlView(skillId);
+  }
+
+  public exportMarkdownReport(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsvReport(): string {
+    return this.substrate.exportCsvReport();
   }
 }

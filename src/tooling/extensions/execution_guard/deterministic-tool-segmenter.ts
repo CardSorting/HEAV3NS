@@ -1,7 +1,7 @@
 /**
  * deterministic-tool-segmenter.ts
  *
- * In-memory zero-GC tool batch segmentation planner & loop guardrail engine (Phase 94 / ADR-046).
+ * In-memory zero-GC tool batch segmentation planner & loop guardrail engine (Phase 94 / ADR-046 / Target #85).
  */
 
 import * as crypto from "node:crypto";
@@ -9,9 +9,13 @@ import type {
   LoopGuardrailDecision,
   ToolCallItem,
   ToolExecutionBatchSegment,
+  ToolExecutionGuardConfig,
+  ToolExecutionGuardMetrics,
+  ToolLoopViolationRecord,
 } from "../../../core/contracts/tool-execution-segment.contracts.js";
+import { DEFAULT_TOOL_EXECUTION_GUARD_CONFIG } from "../../../core/contracts/tool-execution-segment.contracts.js";
 
-const IDEMPOTENT_TOOLS = new Set<string>([
+const DEFAULT_IDEMPOTENT_TOOLS = new Set<string>([
   "read_file",
   "search_files",
   "list_directory",
@@ -35,7 +39,7 @@ const IDEMPOTENT_TOOLS = new Set<string>([
   "clarify_history",
 ]);
 
-const MUTATING_TOOLS = new Set<string>([
+const DEFAULT_MUTATING_TOOLS = new Set<string>([
   "terminal",
   "execute_code",
   "write_file",
@@ -65,29 +69,53 @@ const MUTATING_TOOLS = new Set<string>([
 
 export class DeterministicToolSegmenter {
   private callHistory: string[];
+  private readonly idempotentTools = new Set<string>(DEFAULT_IDEMPOTENT_TOOLS);
+  private readonly mutatingTools = new Set<string>(DEFAULT_MUTATING_TOOLS);
+  private config: ToolExecutionGuardConfig = { ...DEFAULT_TOOL_EXECUTION_GUARD_CONFIG };
 
-  constructor() {
+  constructor(config?: Partial<ToolExecutionGuardConfig>) {
     this.callHistory = [];
+    if (config) {
+      this.config = { ...this.config, ...config };
+    }
+  }
+
+  public setConfig(config: Partial<ToolExecutionGuardConfig>): void {
+    this.config = { ...this.config, ...config };
+  }
+
+  public getConfig(): ToolExecutionGuardConfig {
+    return { ...this.config };
+  }
+
+  public registerIdempotentTool(toolName: string): void {
+    this.idempotentTools.add(toolName);
+    this.mutatingTools.delete(toolName);
+  }
+
+  public registerMutatingTool(toolName: string): void {
+    this.mutatingTools.add(toolName);
+    this.idempotentTools.delete(toolName);
   }
 
   /**
    * Identifies if a tool is mutating vs read-only idempotent.
    */
-  isMutatingTool(toolName: string): boolean {
-    if (MUTATING_TOOLS.has(toolName)) {
+  public isMutatingTool(toolName: string): boolean {
+    if (this.mutatingTools.has(toolName)) {
       return true;
     }
-    if (IDEMPOTENT_TOOLS.has(toolName)) {
+    if (this.idempotentTools.has(toolName)) {
       return false;
     }
     // Default fail-safe: unknown tools treated as mutating
-    return true;
+    return this.config.failSafeMutatingDefault;
   }
 
   /**
    * Computes a deterministic SHA-256 hash of a tool call and its parameters.
    */
-  computeCallHash(toolName: string, parameters: Record<string, unknown>): string {
+  public computeCallHash(toolName: string, parameters: Record<string, unknown>): string {
     const keys = Object.keys(parameters).sort();
     const sortedObj: Record<string, unknown> = {};
     for (let i = 0; i < keys.length; i++) {
@@ -100,7 +128,7 @@ export class DeterministicToolSegmenter {
   /**
    * Plans safe sequential and parallel batch execution segments for an array of tool calls.
    */
-  planBatchSegments(toolCalls: readonly ToolCallItem[]): readonly ToolExecutionBatchSegment[] {
+  public planBatchSegments(toolCalls: readonly ToolCallItem[]): readonly ToolExecutionBatchSegment[] {
     if (toolCalls.length === 0) {
       return [];
     }
@@ -112,7 +140,7 @@ export class DeterministicToolSegmenter {
       if (currentParallel.length > 0) {
         segments.push({
           segmentIndex: segments.length,
-          mode: currentParallel.length > 1 ? "parallel" : "sequential",
+          mode: currentParallel.length > 1 && this.config.enableParallelBatching ? "parallel" : "sequential",
           toolCalls: [...currentParallel],
           isMutating: false,
         });
@@ -134,6 +162,9 @@ export class DeterministicToolSegmenter {
         });
       } else {
         currentParallel.push(call);
+        if (currentParallel.length >= this.config.maxParallelBatchSize) {
+          flushParallel();
+        }
       }
     }
 
@@ -144,7 +175,7 @@ export class DeterministicToolSegmenter {
   /**
    * Evaluates if a proposed tool call violates loop guardrails or exhibits repetitive oscillation.
    */
-  evaluateLoopGuardrail(
+  public evaluateLoopGuardrail(
     toolName: string,
     parameters: Record<string, unknown>
   ): LoopGuardrailDecision {
@@ -164,25 +195,25 @@ export class DeterministicToolSegmenter {
       }
     }
 
-    if (repetitionCount >= 5) {
+    if (repetitionCount >= this.config.abortThreshold) {
       return {
         action: "abort_turn",
-        reason: `Repetitive tool call limit reached (5x identical invocations of '${toolName}').`,
+        reason: `Repetitive tool call limit reached (${this.config.abortThreshold}x identical invocations of '${toolName}').`,
         repetitionCount,
         duplicateCallHash: callHash,
       };
     }
 
-    if (repetitionCount >= 3) {
+    if (repetitionCount >= this.config.maxConsecutiveIdenticalCalls) {
       return {
         action: "block_synthetic",
-        reason: `Loop guardrail blocked invocation: '${toolName}' called 3x consecutively with identical arguments without forward progress.`,
+        reason: `Loop guardrail blocked invocation: '${toolName}' called ${this.config.maxConsecutiveIdenticalCalls}x consecutively with identical arguments without forward progress.`,
         repetitionCount,
         duplicateCallHash: callHash,
       };
     }
 
-    if (repetitionCount === 2) {
+    if (repetitionCount >= this.config.warnThreshold) {
       return {
         action: "warn",
         reason: `Duplicate tool call warning: identical invocation of '${toolName}' observed.`,
@@ -199,9 +230,29 @@ export class DeterministicToolSegmenter {
   }
 
   /**
+   * Formatting helpers
+   */
+  public formatSegment(segment: ToolExecutionBatchSegment): string {
+    const names = segment.toolCalls.map((c) => c.toolName).join(", ");
+    return `[SEGMENT #${segment.segmentIndex}] Mode: ${segment.mode.toUpperCase()} (${segment.toolCalls.length} calls: ${names}) [Mutating: ${segment.isMutating}]`;
+  }
+
+  public formatLoopDecision(decision: LoopGuardrailDecision): string {
+    return `[LOOP-GUARD] Action: ${decision.action.toUpperCase()} (reps: ${decision.repetitionCount}) - ${decision.reason || "Call permitted"}`;
+  }
+
+  public formatViolationRecord(record: ToolLoopViolationRecord): string {
+    return `[VIOLATION:Frame #${record.frameIndex}] Tool: ${record.toolName} | Reps: ${record.repetitionCount} | Action: ${record.actionTaken} | Hash: ${record.argsHash.slice(0, 8)}`;
+  }
+
+  public formatGuardMetrics(metrics: ToolExecutionGuardMetrics): string {
+    return `[GUARD-METRICS] Plans: ${metrics.totalPlansPlanned} | Segments: ${metrics.totalSegmentsExecuted} | Parallel: ${metrics.parallelBatchesCreated} | Violations: ${metrics.totalViolationsDetected}`;
+  }
+
+  /**
    * Clears the active call history.
    */
-  clear(): void {
+  public clear(): void {
     this.callHistory = [];
   }
 }

@@ -199,4 +199,12 @@ export class DeterministicDiagnosticDoctor {
       timestamp: Date.now(),
     };
   }
+
+  public formatDiagnosticCheck(check: DiagnosticCheckResult): string {
+    return `[${check.category.toUpperCase()}] ${check.severity.toUpperCase()} (${check.checkId}): ${check.message}`;
+  }
+
+  public formatSalvageReport(salvage: SessionSalvageReport): string {
+    return `Session ${salvage.sessionId} Salvage: ${salvage.repairedTurnsCount}/${salvage.totalTurnsExamined} turns repaired (Success: ${salvage.success})`;
+  }
 }

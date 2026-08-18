@@ -36,6 +36,7 @@ export interface SkillNodeManifest {
   body: string;
   contentHash: string;
   supportFiles: readonly SkillSupportFile[];
+  updatedAtMs?: number;
 }
 
 export interface SkillTreeDag {
@@ -91,6 +92,188 @@ export interface SkillEvolutionSignal {
   proposedContent?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Health, Metrics & SLA Contracts
+// ---------------------------------------------------------------------------
+
+export type SkillHealthStatus = "mastered" | "developing" | "stagnant" | "degraded";
+
+export interface SkillHealthAuditReport {
+  readonly skillId?: string;
+  readonly totalSkills: number;
+  readonly activeSkills: number;
+  readonly averageMasteryScore: number;
+  readonly averageFitnessScore: number;
+  readonly healthStatus: SkillHealthStatus;
+  readonly lockedPrerequisitesCount: number;
+  readonly degradedSkillsCount: number;
+  readonly recommendations: readonly string[];
+}
+
+export interface SkillMetricsReport {
+  readonly totalSkills: number;
+  readonly activeSkills: number;
+  readonly dormantSkills: number;
+  readonly archivedSkills: number;
+  readonly pinnedSkills: number;
+  readonly averageMasteryScore: number;
+  readonly averageFitnessScore: number;
+  readonly totalMutationsCount: number;
+  readonly mutationSuccessRatePercent: number;
+  readonly p50MutationLatencyMs: number;
+  readonly p95MutationLatencyMs: number;
+  readonly tierDistribution: Record<SkillTier, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Grouping & Swimlanes Contracts
+// ---------------------------------------------------------------------------
+
+export type SkillGroupBy = "tier" | "category" | "lifecycleState" | "provenance" | "health";
+export type SkillSortBy = "mastery" | "fitness" | "usage" | "recent" | "name";
+export type SkillSortDirection = "asc" | "desc";
+
+export interface SkillGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly skills: readonly SkillNodeManifest[];
+}
+
+// ---------------------------------------------------------------------------
+// Notification Contracts
+// ---------------------------------------------------------------------------
+
+export type SkillNotificationTrigger =
+  | "skill_unlocked"
+  | "skill_mutated"
+  | "skill_degraded"
+  | "mastery_promoted"
+  | "curation_warning"
+  | "custom";
+
+export type SkillNotificationUrgency = "low" | "normal" | "critical";
+
+export interface SkillNotificationEvent {
+  readonly skillId?: string;
+  readonly title: string;
+  readonly message: string;
+  readonly urgency: SkillNotificationUrgency;
+  readonly trigger: SkillNotificationTrigger;
+  readonly metadata?: Record<string, unknown>;
+  readonly actionUrl?: string;
+}
+
+export interface SkillNotificationPreferences {
+  readonly enabled: boolean;
+  readonly soundEnabled: boolean;
+  readonly dndEnabled: boolean;
+  readonly minUrgency: SkillNotificationUrgency;
+  readonly allowedTriggers: readonly SkillNotificationTrigger[];
+}
+
+export interface SkillNotificationRecord {
+  readonly id: string;
+  readonly event: SkillNotificationEvent;
+  readonly dispatchedAtMs: number;
+  readonly delivered: boolean;
+  readonly read: boolean;
+  readonly audioPlayed: boolean;
+  readonly error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo/Redo & Query Contracts
+// ---------------------------------------------------------------------------
+
+export interface SkillMutationUndoRecord {
+  readonly mutationType: "create" | "update" | "delete" | "patch" | "bulk";
+  readonly previousNode?: SkillNodeManifest;
+  readonly nextNode?: SkillNodeManifest;
+  readonly previousNodes?: readonly SkillNodeManifest[];
+  readonly nextNodes?: readonly SkillNodeManifest[];
+  readonly timestampMs: number;
+}
+
+export interface SkillDslQueryFilter {
+  readonly rawQuery: string;
+  readonly tier?: SkillTier;
+  readonly category?: string;
+  readonly lifecycleState?: SkillLifecycleState;
+  readonly provenance?: SkillProvenance;
+  readonly minMastery?: number;
+  readonly isPinned?: boolean;
+  readonly tags?: readonly string[];
+  readonly textTerms?: readonly string[];
+}
+
+export interface SkillBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly updatedSkillIds: readonly string[];
+}
+
+export interface SkillStateSnapshot {
+  readonly nodes: readonly SkillNodeManifest[];
+  readonly mutations: readonly SkillMutationResult[];
+  readonly timestamp: number;
+  readonly snapshotTick: number;
+}
+
+// ---------------------------------------------------------------------------
+// BroccoliDB Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface SkillNodeRow {
+  readonly id: string;
+  readonly name: string;
+  readonly category: string;
+  readonly tier: SkillTier;
+  readonly masteryScore: number;
+  readonly fitnessScore: number;
+  readonly useCount: number;
+  readonly lifecycleState: SkillLifecycleState;
+  readonly provenance: SkillProvenance;
+  readonly pinned: boolean;
+  readonly tags: string;
+  readonly updatedAtMs: number;
+  readonly [key: string]: unknown;
+}
+
+export interface SkillMutationRow {
+  readonly id: string;
+  readonly mutationId: string;
+  readonly skillId: string;
+  readonly success: boolean;
+  readonly action?: string;
+  readonly durationMs?: number;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+export interface SkillUsageRow {
+  readonly id: string;
+  readonly skillId: string;
+  readonly tickIndex: number;
+  readonly timestampMs: number;
+  readonly [key: string]: unknown;
+}
+
+export interface SkillNotificationRow {
+  readonly id: string;
+  readonly skillId?: string;
+  readonly title: string;
+  readonly trigger: SkillNotificationTrigger;
+  readonly urgency: SkillNotificationUrgency;
+  readonly dispatchedAtMs: number;
+  readonly read: boolean;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// Core Interfaces
+// ---------------------------------------------------------------------------
+
 export interface ISkillTreeParser {
   parseSkillMarkdown(folderName: string, filePath: string, rawContent: string): SkillNodeManifest;
   buildSkillDag(manifests: readonly SkillNodeManifest[]): SkillTreeDag;
@@ -110,6 +293,7 @@ export interface IBroccoliSkillTreeSubstrate {
   getAllNodes(): readonly SkillNodeManifest[];
   getDag(): SkillTreeDag;
   saveNode(node: SkillNodeManifest): void;
+  deleteNode?(id: string): boolean;
   recordSkillUsage(id: string, tickIndex: number): void;
   clear(): void;
 }

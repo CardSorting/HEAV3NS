@@ -14,6 +14,7 @@ import type {
   AsyncTurnContextDescriptor,
   ContextPropagationConfig,
   ContextPropagationMetrics,
+  ThreadContextMetricsReport,
   ExecutionDispatchEvent,
   SecurityApprovalCallback,
   SudoPasswordCallback,
@@ -36,15 +37,15 @@ export class ThreadContextSupervisor {
     return this.substrate.getConfig();
   }
 
-  public getMetrics(): ContextPropagationMetrics {
+  public getMetrics(): ThreadContextMetricsReport {
     return this.substrate.getMetrics();
   }
 
-  public getAuditLogs(): ExecutionDispatchEvent[] {
-    return this.substrate.getAuditLogs();
+  public getAuditLogs(): readonly ExecutionDispatchEvent[] {
+    return this.substrate.listDispatches();
   }
 
-  public getAllContexts(): AsyncTurnContextDescriptor[] {
+  public getAllContexts(): readonly AsyncTurnContextDescriptor[] {
     return this.substrate.getAllContexts();
   }
 
@@ -156,5 +157,45 @@ export class ThreadContextSupervisor {
    */
   public async requestSudo(): Promise<string | undefined> {
     return await this.engine.evaluateSudo();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getGroupedContexts(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedContexts(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryContextsDsl(query);
+  }
+
+  public bulkPurge(contextIds: readonly string[]) {
+    return this.substrate.bulkPurgeContexts(contextIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliThreadContextSubstrate {
+    return this.substrate;
   }
 }

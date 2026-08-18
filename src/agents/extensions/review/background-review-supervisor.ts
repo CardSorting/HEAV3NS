@@ -95,7 +95,67 @@ export class BackgroundReviewSupervisor {
   /**
    * Retrieves the current session title.
    */
-  getCurrentTitle(): string | undefined {
+  public getCurrentTitle(): string | undefined {
     return this.substrate.getTitle();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedReviews(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedReviews(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryReviewsDsl(query);
+  }
+
+  public bulkPurge(reviewIds: readonly string[]) {
+    return this.substrate.bulkPurgeReviews(reviewIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getTriggerPolicy() {
+    return this.substrate.getTriggerPolicy();
+  }
+
+  public setTriggerPolicy(policy: any) {
+    this.substrate.setTriggerPolicy(policy);
+  }
+
+  public getAllFacts() {
+    return this.substrate.getAllFacts();
+  }
+
+  public getAllSkills() {
+    return this.substrate.getAllSkills();
+  }
+
+  public getSubstrate(): BroccoliReviewSubstrate {
+    return this.substrate;
   }
 }

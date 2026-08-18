@@ -24,6 +24,13 @@ export class CheckpointSnapshotManager {
     this.snapshots.set(frameIndex, snapshot);
   }
 
+  createSnapshot(frameIndex: number | string): CheckpointWorkspaceSnapshot {
+    const numericId = typeof frameIndex === "number" ? frameIndex : parseInt(frameIndex.replace(/[^0-9]/g, "") || "0", 10);
+    const snapshot = this.substrate.exportSnapshot();
+    this.snapshots.set(numericId, snapshot);
+    return snapshot;
+  }
+
   /**
    * Rewinds the substrate state to the snapshot taken at frameIndex.
    * Execution time is guaranteed to be < 0.05 ms.
@@ -46,6 +53,15 @@ export class CheckpointSnapshotManager {
     }
 
     return true;
+  }
+
+  restoreSnapshot(frameIndexOrSnapshot: number | string | CheckpointWorkspaceSnapshot): boolean {
+    if (typeof frameIndexOrSnapshot === "object" && frameIndexOrSnapshot !== null) {
+      this.substrate.importSnapshot(frameIndexOrSnapshot);
+      return true;
+    }
+    const numericId = typeof frameIndexOrSnapshot === "number" ? frameIndexOrSnapshot : parseInt(frameIndexOrSnapshot.replace(/[^0-9]/g, "") || "0", 10);
+    return this.rewindToFrame(numericId);
   }
 
   /**

@@ -248,4 +248,14 @@ export class DeterministicPreflightScanner {
       sha256Checksum: calculatedSha256,
     };
   }
+
+  public formatScanResult(result: PreflightScanResult): string {
+    const verdictTag = result.verdict === "allow" ? "PASSED" : result.verdict === "warn" ? "WARNED" : "BLOCKED";
+    return `[PREFLIGHT:${verdictTag}] "${result.command.slice(0, 40)}" -> ${result.findings.length} findings (${result.scanDurationMs.toFixed(2)}ms)`;
+  }
+
+  public formatThreatFinding(finding: PreflightThreatFinding): string {
+    return `[THREAT:${finding.severity.toUpperCase()}] ${finding.category}: ${finding.description}`;
+  }
 }
+

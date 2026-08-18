@@ -12,6 +12,7 @@ import type {
   BillingTransaction,
   BillingUsageConfig,
   BillingUsageMetrics,
+  BillingUsageMetricsReport,
   UsageModelDescriptor,
 } from "../../../core/contracts/billing-usage.contracts.js";
 
@@ -41,11 +42,7 @@ export class BillingUsageSupervisor {
   }
 
   public getUsageModel(): UsageModelDescriptor {
-    const accountInfo = this.substrate.getAccountInfo();
-    const config = this.substrate.getConfig();
-    const model = this.engine.buildUsageModel(accountInfo, config);
-    this.substrate.recordQuery(model.status);
-    return model;
+    return this.substrate.getUsageDescriptor();
   }
 
   public debitUsage(
@@ -66,11 +63,11 @@ export class BillingUsageSupervisor {
     return { transaction, model };
   }
 
-  public getTransactions(): BillingTransaction[] {
+  public getTransactions(): readonly BillingTransaction[] {
     return this.substrate.getTransactions();
   }
 
-  public getMetrics(): BillingUsageMetrics {
+  public getMetrics(): BillingUsageMetricsReport {
     return this.substrate.getMetrics();
   }
 
@@ -108,5 +105,45 @@ export class BillingUsageSupervisor {
     }
 
     return lines.join("\n");
+  }
+
+  public auditHealth(accountId?: string) {
+    return this.substrate.auditHealth(accountId);
+  }
+
+  public getGroupedTransactions(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedTransactions(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryTransactionsDsl(query);
+  }
+
+  public bulkPurge(txIds: readonly string[]) {
+    return this.substrate.bulkPurgeTransactions(txIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliBillingUsageSubstrate {
+    return this.substrate;
   }
 }

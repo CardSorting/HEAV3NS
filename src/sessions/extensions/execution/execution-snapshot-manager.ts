@@ -1,64 +1,68 @@
 /**
  * execution-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for Code Execution (Phase 83 / ADR-035).
+ * High-performance frame snapshot manager for Sandboxed Code Execution & Tool Calling
+ * enabling frame-perfect state capture and O(1) state rewind (< 0.05 ms SLA) (Phase 82 / ADR-034).
  */
 
+import { performance } from "node:perf_hooks";
 import type { ExecutionWorkspaceSnapshot } from "../../../core/contracts/execution.contracts.js";
 import { BroccoliExecutionSubstrate } from "./broccoli-execution-substrate.js";
 
 export class ExecutionSnapshotManager {
-  private substrate: BroccoliExecutionSubstrate;
-  private snapshots: Map<number, ExecutionWorkspaceSnapshot>;
+  private readonly substrate: BroccoliExecutionSubstrate;
+  private readonly frameSnapshots: Map<number, ExecutionWorkspaceSnapshot>;
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliExecutionSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, ExecutionWorkspaceSnapshot>();
+    this.frameSnapshots = new Map<number, ExecutionWorkspaceSnapshot>();
   }
 
   /**
-   * Captures the state at a specific frame index.
+   * Captures a deep workspace snapshot pinned to an execution frame.
    */
-  captureFrame(frameIndex: number): void {
+  captureSnapshot(frameIndex: number): ExecutionWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > ExecutionSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
   /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Execution time is guaranteed to be < 0.05 ms.
+   * Restores workspace state to a captured execution frame in < 0.05 ms SLA.
    */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  restoreSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
-
-    return true;
+    return {
+      success: true,
+      durationMs: duration,
+    };
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
   getSnapshot(frameIndex: number): ExecutionWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
   clear(): void {
-    this.snapshots.clear();
+    this.frameSnapshots.clear();
   }
 }

@@ -247,3 +247,204 @@ export interface EmailSubstrateSnapshot {
   readonly config: EmailSkillConfig;
   readonly timestamp: number;
 }
+
+// ---------------------------------------------------------------------------
+// SLA Health, Metrics & Inbox Status Contracts
+// ---------------------------------------------------------------------------
+
+export type EmailHealthStatus = "zero_inbox" | "healthy" | "backlogged" | "urgent_breach";
+
+export interface EmailHealthAuditReport {
+  readonly totalMessages: number;
+  readonly unreadCount: number;
+  readonly urgentCount: number;
+  readonly pendingDraftsCount: number;
+  readonly quarantinedThreatsCount: number;
+  readonly healthStatus: EmailHealthStatus;
+  readonly slaBreachedCount: number;
+  readonly recommendations: readonly string[];
+}
+
+export interface EmailMetricsReport {
+  readonly totalMessages: number;
+  readonly unreadCount: number;
+  readonly dispositionCounts: Record<EmailDisposition, number>;
+  readonly stagedDraftsCount: number;
+  readonly approvedDraftsCount: number;
+  readonly dlpViolationsBlockedCount: number;
+  readonly vipContactsCount: number;
+  readonly activeRemindersCount: number;
+  readonly avgTriageLatencyMs: number;
+  readonly p50DispatchLatencyMs: number;
+  readonly p95DispatchLatencyMs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Grouping & Swimlanes Contracts
+// ---------------------------------------------------------------------------
+
+export type EmailGroupBy = "disposition" | "account" | "priority" | "urgency" | "thread";
+export type EmailSortBy = "date" | "priority" | "urgency" | "sender";
+export type EmailSortDirection = "asc" | "desc";
+
+export interface EmailGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly messages: readonly EmailMessage[];
+}
+
+// ---------------------------------------------------------------------------
+// Cross-Platform Notification Contracts
+// ---------------------------------------------------------------------------
+
+export type EmailNotificationTrigger =
+  | "urgent_received"
+  | "draft_staged"
+  | "draft_approved"
+  | "threat_neutralized"
+  | "dlp_violation"
+  | "reminder_due"
+  | "custom";
+
+export type EmailNotificationUrgency = "low" | "normal" | "critical";
+
+export interface EmailNotificationEvent {
+  readonly trigger: EmailNotificationTrigger;
+  readonly emailId?: string;
+  readonly threadId?: string;
+  readonly draftId?: string;
+  readonly subject: string;
+  readonly snippet: string;
+  readonly urgency: EmailNotificationUrgency;
+  readonly timestampMs: number;
+}
+
+export interface EmailNotificationPreferences {
+  readonly enableDesktop: boolean;
+  readonly enableTerminalBell: boolean;
+  readonly enableTerminalOsc: boolean;
+  readonly minUrgency: EmailNotificationUrgency;
+  readonly quietHoursStartHour?: number;
+  readonly quietHoursEndHour?: number;
+  readonly perThreadCooldownMs: number;
+}
+
+export interface EmailNotificationRecord {
+  readonly id: string;
+  readonly event: EmailNotificationEvent;
+  readonly deliveredDesktop: boolean;
+  readonly deliveredTerminal: boolean;
+  readonly timestampMs: number;
+  readonly isRead: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo/Redo & Query DSL Contracts
+// ---------------------------------------------------------------------------
+
+export interface EmailMutationUndoRecord {
+  readonly mutationType: "triage" | "stage_draft" | "approve_draft" | "discard_draft" | "set_disposition" | "bulk";
+  readonly previousSnapshot: EmailSubstrateSnapshot;
+  readonly nextSnapshot: EmailSubstrateSnapshot;
+  readonly timestampMs: number;
+}
+
+export interface EmailDslQueryFilter {
+  readonly rawQuery: string;
+  readonly disposition?: EmailDisposition;
+  readonly account?: string;
+  readonly from?: string;
+  readonly unread?: boolean;
+  readonly hasThreats?: boolean;
+  readonly textTerms?: readonly string[];
+}
+
+export interface EmailBulkMutationResult {
+  readonly matchedCount: number;
+  readonly modifiedCount: number;
+  readonly updatedEmailIds: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// BroccoliDB Table Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface EmailMessageRow {
+  readonly id: string;
+  readonly threadId: string;
+  readonly account: string;
+  readonly fromEmail: string;
+  readonly fromName: string;
+  readonly subject: string;
+  readonly date: number;
+  readonly disposition: string;
+  readonly unread: boolean;
+  readonly [key: string]: unknown;
+}
+
+export interface EmailDraftRow {
+  readonly id: string;
+  readonly draftId: string;
+  readonly threadId: string;
+  readonly account: string;
+  readonly subject: string;
+  readonly status: string;
+  readonly dlpScanPassed: boolean;
+  readonly createdAt: number;
+  readonly [key: string]: unknown;
+}
+
+export interface EmailTriageRow {
+  readonly id: string;
+  readonly totalProcessed: number;
+  readonly urgentCount: number;
+  readonly timestamp: number;
+  readonly [key: string]: unknown;
+}
+
+export interface EmailNotificationRow {
+  readonly id: string;
+  readonly trigger: string;
+  readonly subject: string;
+  readonly urgency: string;
+  readonly timestampMs: number;
+  readonly isRead: boolean;
+  readonly [key: string]: unknown;
+}
+
+export interface EmailReminderRow {
+  readonly id: string;
+  readonly reminderId: string;
+  readonly threadId: string;
+  readonly recipientEmail: string;
+  readonly remindAtTimestamp: number;
+  readonly isTriggered: boolean;
+  readonly [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliEmailSubstrate {
+  initialize(initialMessages?: readonly EmailMessage[]): void;
+  getMessages(): readonly EmailMessage[];
+  getMessage(id: string): EmailMessage | undefined;
+  saveMessage(message: EmailMessage): void;
+  getDrafts(): readonly EmailDraft[];
+  getDraft(draftId: string): EmailDraft | undefined;
+  saveDraft(draft: EmailDraft): void;
+  approveDraft(draftId: string): boolean;
+  discardDraft(draftId: string): boolean;
+  auditEmailHealth(): EmailHealthAuditReport;
+  getEmailMetrics(): EmailMetricsReport;
+  getGroupedEmails(groupBy?: EmailGroupBy, sortBy?: EmailSortBy, direction?: EmailSortDirection): readonly EmailGroupedLane[];
+  queryEmailsDsl(query: EmailDslQueryFilter | string): readonly EmailMessage[];
+  bulkTriage(emailIds: readonly string[], disposition: EmailDisposition): EmailBulkMutationResult;
+  undo(): boolean;
+  redo(): boolean;
+  exportInteractiveHtmlView(): string;
+  exportMarkdownReport(): string;
+  exportCsvReport(): string;
+}

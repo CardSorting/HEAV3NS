@@ -1,11 +1,23 @@
 import type {
+  AutomationBlueprint,
+  CronBulkMutationResult,
+  CronDslQueryFilter,
   CronExecutionRecord,
+  CronGroupBy,
+  CronGroupedLane,
+  CronHealthAuditReport,
   CronJobManifest,
   CronJobStatus,
+  CronMetricsReport,
+  CronNotificationPreferences,
+  CronQueryFilter,
+  CronSortBy,
+  CronSortDirection,
   ICronScheduler,
 } from "../../../core/contracts/cron.contracts.js";
 import { CronLifecycleGuard } from "./cron-lifecycle-guard.js";
 import { BroccoliCronSubstrate } from "../../../sessions/extensions/cron/broccoli-cron-substrate.js";
+import { CronDesktopNotificationDispatcher } from "../../../tooling/extensions/cron/cron-notification-dispatcher.js";
 
 /**
  * MonolithCronScheduler.
@@ -60,9 +72,12 @@ export class MonolithCronScheduler implements ICronScheduler {
       prompt: sanitizedPrompt,
       status: "active",
       totalRuns: 0,
+      consecutiveFailures: 0,
       nextRunTick: manifestInput.nextRunTick,
       nextRunTimestampMs,
       createdTick: this.currentTick,
+      createdAtMs: now,
+      updatedAtMs: now,
     };
 
     this.substrate.storeJob(job);
@@ -93,20 +108,11 @@ export class MonolithCronScheduler implements ICronScheduler {
     const summary = `Executed cron job '${job.name}' (Prompt: "${job.prompt.slice(0, 60)}...")`;
     const durationMs = performance.now() - startTime;
 
-    const outcome = {
-      success: true,
-      timestampMs: startedAtMs,
-      durationMs,
-      summary,
-    };
-
     // Calculate next run timestamp if interval
     let nextRunTimestampMs = job.nextRunTimestampMs;
     if (job.scheduleType === "interval" && job.intervalMs) {
       nextRunTimestampMs = startedAtMs + job.intervalMs;
     }
-
-    this.substrate.getJobManager().updateJobRunOutcome(jobId, outcome, nextRunTimestampMs);
 
     const record: CronExecutionRecord = {
       id: `exec-${Date.now()}`,
@@ -123,11 +129,17 @@ export class MonolithCronScheduler implements ICronScheduler {
   }
 
   pauseJob(jobId: string): boolean {
-    return this.substrate.getJobManager().updateJobStatus(jobId, "paused");
+    const job = this.substrate.getJob(jobId);
+    if (!job) return false;
+    this.substrate.storeJob({ ...job, status: "paused", updatedAtMs: Date.now() });
+    return true;
   }
 
   resumeJob(jobId: string): boolean {
-    return this.substrate.getJobManager().updateJobStatus(jobId, "active");
+    const job = this.substrate.getJob(jobId);
+    if (!job) return false;
+    this.substrate.storeJob({ ...job, status: "active", consecutiveFailures: 0, updatedAtMs: Date.now() });
+    return true;
   }
 
   deleteJob(jobId: string): boolean {
@@ -139,11 +151,7 @@ export class MonolithCronScheduler implements ICronScheduler {
   }
 
   listJobs(statusFilter?: CronJobStatus): readonly CronJobManifest[] {
-    const all = this.substrate.listJobs();
-    if (statusFilter) {
-      return Object.freeze(all.filter((j) => j.status === statusFilter));
-    }
-    return all;
+    return this.substrate.listJobs(statusFilter);
   }
 
   async evaluateTick(currentTick: number, nowMs = Date.now()): Promise<readonly CronExecutionRecord[]> {
@@ -166,21 +174,12 @@ export class MonolithCronScheduler implements ICronScheduler {
         const summary = `Executed scheduled job '${job.name}' at tick ${currentTick}`;
         const durationMs = performance.now() - startTime;
 
-        const outcome = {
-          success: true,
-          timestampMs: startedAtMs,
-          durationMs,
-          summary,
-        };
-
         let nextRunTimestampMs = job.nextRunTimestampMs;
         if (job.scheduleType === "interval" && job.intervalMs) {
           nextRunTimestampMs = startedAtMs + job.intervalMs;
         } else if (job.scheduleType === "once") {
-          this.substrate.getJobManager().updateJobStatus(job.id, "completed");
+          this.substrate.storeJob({ ...job, status: "completed", updatedAtMs: Date.now() });
         }
-
-        this.substrate.getJobManager().updateJobRunOutcome(job.id, outcome, nextRunTimestampMs);
 
         const record: CronExecutionRecord = {
           id: `exec-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -198,5 +197,64 @@ export class MonolithCronScheduler implements ICronScheduler {
     }
 
     return Object.freeze(executedRecords);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Facade Methods for Substrate Capabilities
+  // ---------------------------------------------------------------------------
+
+  public getSubstrate(): BroccoliCronSubstrate {
+    return this.substrate;
+  }
+
+  public auditJobHealth(jobId: string): CronHealthAuditReport | null {
+    return this.substrate.auditJobHealth(jobId);
+  }
+
+  public getCronMetrics(): CronMetricsReport {
+    return this.substrate.getCronMetrics();
+  }
+
+  public getGroupedJobs(
+    groupBy: CronGroupBy = "status",
+    sortBy: CronSortBy = "nextRun",
+    direction: CronSortDirection = "asc"
+  ): readonly CronGroupedLane[] {
+    return this.substrate.getGroupedJobs(groupBy, sortBy, direction);
+  }
+
+  public queryJobsDsl(query: CronDslQueryFilter | string): readonly CronJobManifest[] {
+    return this.substrate.queryJobsDsl(query);
+  }
+
+  public bulkUpdateJobs(
+    jobIds: readonly string[],
+    updates: Partial<Pick<CronJobManifest, "status" | "category" | "intervalMs" | "tags">>
+  ): CronBulkMutationResult {
+    return this.substrate.bulkUpdateJobs(jobIds, updates);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public getNotificationDispatcher(): CronDesktopNotificationDispatcher {
+    return this.substrate.getNotificationDispatcher();
+  }
+
+  public exportInteractiveHtmlView(jobId?: string): string {
+    return this.substrate.exportInteractiveHtmlView(jobId);
+  }
+
+  public exportMarkdownReport(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsvReport(): string {
+    return this.substrate.exportCsvReport();
   }
 }

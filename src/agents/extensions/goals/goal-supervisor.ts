@@ -7,9 +7,13 @@
 import type {
   GoalArchiveResult,
   GoalBulkMutationResult,
+  GoalBurnupForecast,
+  GoalCategory,
   GoalCloneOptions,
   GoalContract,
+  GoalDecompositionResult,
   GoalDiffResult,
+  GoalDslQueryFilter,
   GoalEvaluationResult,
   GoalGate,
   GoalGatePolicy,
@@ -19,6 +23,7 @@ import type {
   GoalHealthStatus,
   GoalHierarchyReport,
   GoalMilestone,
+  GoalMilestoneRollbackResult,
   GoalQueryFilter,
   GoalRetroSummary,
   GoalRiskDiagnosis,
@@ -27,8 +32,10 @@ import type {
   GoalState,
   GoalStepEvent,
   GoalSwarmBalanceResult,
+  GoalSwarmHandoffResult,
   GoalTemplate,
   GoalVelocityMetrics,
+  GoalWatchdogReport,
 } from "../../../core/contracts/goal.contracts.js";
 import {
   DEFAULT_GATE_MAX_RETRIES,
@@ -825,5 +832,39 @@ export class GoalSupervisor {
 
   public setGoalDeadline(sessionId: string, deadlineMs: number, milestoneId?: string): boolean {
     return this.substrate.setGoalDeadline(sessionId, deadlineMs, milestoneId);
+  }
+
+  public decomposeGoalPrompt(prompt: string, category?: GoalCategory): GoalDecompositionResult {
+    return this.engine.decomposeGoalPrompt(prompt, category);
+  }
+
+  public parseGoalDslQuery(rawQuery: string): GoalDslQueryFilter {
+    return this.engine.parseGoalDslQuery(rawQuery);
+  }
+
+  public queryGoalsDsl(dslFilterOrQuery: GoalDslQueryFilter | string): GoalState[] {
+    const filter = typeof dslFilterOrQuery === "string" ? this.engine.parseGoalDslQuery(dslFilterOrQuery) : dslFilterOrQuery;
+    return this.substrate.queryGoalsDsl(filter);
+  }
+
+  public revertMilestone(sessionId: string, milestoneId: string, reason?: string): GoalMilestoneRollbackResult {
+    return this.substrate.revertMilestone(sessionId, milestoneId, reason);
+  }
+
+  public getBurnupForecast(sessionId: string): GoalBurnupForecast | null {
+    return this.substrate.getBurnupForecast(sessionId);
+  }
+
+  public handOffMilestone(
+    parentSessionId: string,
+    milestoneId: string,
+    targetWorkerSessionId: string,
+    contextPayload?: Record<string, unknown>
+  ): GoalSwarmHandoffResult {
+    return this.substrate.handOffMilestone(parentSessionId, milestoneId, targetWorkerSessionId, contextPayload);
+  }
+
+  public async watchdogEvaluateGates(sessionId: string): Promise<GoalWatchdogReport> {
+    return this.engine.watchdogEvaluateGates(sessionId);
   }
 }

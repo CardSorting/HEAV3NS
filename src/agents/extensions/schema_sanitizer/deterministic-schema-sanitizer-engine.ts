@@ -362,4 +362,14 @@ export class DeterministicSchemaSanitizerEngine {
 
     return dict;
   }
+
+  public formatSanitizeResult(result: SchemaSanitizationResult): string {
+    const renamedCount = Object.keys(result.renamedKeys).length;
+    return `[SCHEMA-SANITIZED] ${result.mutationsApplied.length} mutations, ${renamedCount} keys renamed, ${result.warnings.length} warnings`;
+  }
+
+  public formatSanitizerMetrics(metrics: { totalSchemas: number; renamedKeys: number }): string {
+    return `[SCHEMA-METRICS] Schemas: ${metrics.totalSchemas} | Renamed Keys: ${metrics.renamedKeys}`;
+  }
 }
+

@@ -1,64 +1,85 @@
 /**
  * archive-snapshot-manager.ts
  *
- * Frame-perfect binary snapshotting and O(1) state rollback for Session Archive Subsystem (Phase 99 / ADR-053).
+ * Frame-perfect binary snapshotting and O(1) state rollback (< 0.05 ms SLA)
+ * for Session Archive Subsystem (Phase 99 / ADR-053 / Target #70).
  */
 
+import { performance } from "node:perf_hooks";
 import type { ArchiveWorkspaceSnapshot } from "../../../core/contracts/session-archive.contracts.js";
-import { BroccoliArchiveSubstrate } from "./broccoli-archive-substrate.js";
+import type { BroccoliArchiveSubstrate } from "./broccoli-archive-substrate.js";
 
 export class ArchiveSnapshotManager {
-  private substrate: BroccoliArchiveSubstrate;
-  private snapshots: Map<number, ArchiveWorkspaceSnapshot>;
+  private readonly substrate: BroccoliArchiveSubstrate;
+  private readonly frameSnapshots = new Map<number, ArchiveWorkspaceSnapshot>();
+  private readonly namedSnapshots = new Map<string, ArchiveWorkspaceSnapshot>();
+  private static readonly MAX_SNAPSHOTS = 100;
 
   constructor(substrate: BroccoliArchiveSubstrate) {
     this.substrate = substrate;
-    this.snapshots = new Map<number, ArchiveWorkspaceSnapshot>();
   }
 
-  /**
-   * Captures the archive state at a specific frame index.
-   */
-  captureFrame(frameIndex: number): void {
+  public captureSnapshot(frameIndex: number): ArchiveWorkspaceSnapshot {
     const snapshot = this.substrate.exportSnapshot();
-    this.snapshots.set(frameIndex, snapshot);
+    this.frameSnapshots.set(frameIndex, snapshot);
+
+    if (this.frameSnapshots.size > ArchiveSnapshotManager.MAX_SNAPSHOTS) {
+      const oldestKey = Array.from(this.frameSnapshots.keys()).sort((a, b) => a - b)[0];
+      this.frameSnapshots.delete(oldestKey);
+    }
+
+    return snapshot;
   }
 
-  /**
-   * Rewinds the substrate state to the snapshot taken at frameIndex.
-   * Execution time is guaranteed to be < 0.05 ms.
-   */
-  rewindToFrame(frameIndex: number): boolean {
-    const snapshot = this.snapshots.get(frameIndex);
+  public captureFrame(frameIndex: number): void {
+    this.captureSnapshot(frameIndex);
+  }
+
+  public restoreFrameSnapshot(frameIndex: number): { success: boolean; durationMs: number; error?: string } {
+    const startedAt = performance.now();
+    const snapshot = this.frameSnapshots.get(frameIndex);
+
     if (!snapshot) {
-      return false;
+      return {
+        success: false,
+        durationMs: Number((performance.now() - startedAt).toFixed(4)),
+        error: `Frame snapshot #${frameIndex} not found in ring buffer`,
+      };
     }
 
     this.substrate.importSnapshot(snapshot);
+    const duration = Number((performance.now() - startedAt).toFixed(4));
 
-    // Prune subsequent frame snapshots
-    const keys = Array.from(this.snapshots.keys());
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key > frameIndex) {
-        this.snapshots.delete(key);
-      }
-    }
+    return {
+      success: true,
+      durationMs: duration,
+    };
+  }
 
+  public rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreFrameSnapshot(frameIndex);
+    return res.success;
+  }
+
+  public takeSnapshot(name: string): ArchiveWorkspaceSnapshot {
+    const snap = this.substrate.exportSnapshot();
+    this.namedSnapshots.set(name, snap);
+    return snap;
+  }
+
+  public restoreSnapshot(name: string): boolean {
+    const snap = this.namedSnapshots.get(name);
+    if (!snap) return false;
+    this.substrate.importSnapshot(snap);
     return true;
   }
 
-  /**
-   * Retrieves a snapshot at frameIndex.
-   */
-  getSnapshot(frameIndex: number): ArchiveWorkspaceSnapshot | undefined {
-    return this.snapshots.get(frameIndex);
+  public getSnapshot(frameIndex: number): ArchiveWorkspaceSnapshot | undefined {
+    return this.frameSnapshots.get(frameIndex);
   }
 
-  /**
-   * Clears all cached frame snapshots.
-   */
-  clear(): void {
-    this.snapshots.clear();
+  public clear(): void {
+    this.frameSnapshots.clear();
+    this.namedSnapshots.clear();
   }
 }

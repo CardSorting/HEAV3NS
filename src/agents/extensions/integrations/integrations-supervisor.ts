@@ -21,6 +21,8 @@ import type {
   UnifiedDocument,
   UnifiedIssue,
   WorkflowExecutionResult,
+  IssuePriority,
+  IssueStatus,
 } from "../../../core/contracts/integrations.contracts.js";
 import { BroccoliIntegrationsSubstrate } from "../../../sessions/extensions/integrations/broccoli-integrations-substrate.js";
 import { DeterministicIntegrationsEngine } from "../../../tooling/extensions/integrations/deterministic-integrations-engine.js";
@@ -362,5 +364,111 @@ export class IntegrationsSupervisor {
       totalDocuments: snap.totalDocuments,
       totalRecipes: snap.totalRecipes,
     };
+  }
+
+  public getConnection(connectionId: string): IntegrationConnection | undefined {
+    return this.substrate.getConnection(connectionId);
+  }
+
+  public getServiceCatalog(): readonly ServiceCatalogEntry[] {
+    return this.engine.getCatalog();
+  }
+
+  public queryIssues(filter?: { provider?: IntegrationProviderType; status?: IssueStatus; priority?: IssuePriority }): readonly UnifiedIssue[] {
+    let list = this.substrate.listIssues(filter?.provider);
+    if (filter?.status) list = list.filter((i) => i.status === filter.status);
+    if (filter?.priority) list = list.filter((i) => i.priority === filter.priority);
+    return list;
+  }
+
+  public createIssue(provider: IntegrationProviderType, title: string, description = "", priority: IssuePriority = "MEDIUM") {
+    return this.createUnifiedIssue({ sourceService: provider, title, description, priority });
+  }
+
+  public updateIssue(issueId: string, updates: { status?: IssueStatus; priority?: IssuePriority }) {
+    const issue = this.substrate.getIssue(issueId);
+    if (!issue) return { success: false, error: `Issue '${issueId}' not found` };
+    const updated: UnifiedIssue = {
+      ...issue,
+      status: updates.status || issue.status,
+      priority: updates.priority || issue.priority,
+      updatedAt: Date.now(),
+    };
+    this.substrate.upsertIssue(updated);
+    return { success: true, issue: updated };
+  }
+
+  public queryCustomers(service?: IntegrationProviderType, query?: string) {
+    return this.queryUnifiedCustomers(service, query);
+  }
+
+  public queryAlerts(level?: string, service?: IntegrationProviderType) {
+    let list = this.queryUnifiedAlerts(service);
+    if (level) list = list.filter((a) => a.level === level);
+    return list;
+  }
+
+  public queryDocuments(query?: string, service?: IntegrationProviderType) {
+    return this.queryUnifiedDocuments(service, query);
+  }
+
+  public installRecipe(recipeId: string) {
+    const recipe = this.substrate.getRecipe(recipeId);
+    if (!recipe) return { success: false, error: `Recipe '${recipeId}' not found` };
+    const updated: IntegrationRecipe = { ...recipe, isInstalled: true };
+    this.substrate.upsertRecipe(updated);
+    return { success: true, recipe: updated };
+  }
+
+  public listRecipeExecutions(recipeId?: string) {
+    return this.substrate.listRecipeExecutions(recipeId);
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedConnections(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedConnections(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryIntegrationsDsl(query);
+  }
+
+  public bulkPurge(connectionIds: readonly string[]) {
+    return this.substrate.bulkPurgeConnections(connectionIds);
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
+
+  public getSubstrate(): BroccoliIntegrationsSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicIntegrationsEngine {
+    return this.engine;
   }
 }

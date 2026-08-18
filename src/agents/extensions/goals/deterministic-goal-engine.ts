@@ -9,16 +9,21 @@ import { promisify } from "node:util";
 import type {
   GoalCategory,
   GoalContract,
+  GoalDecompositionResult,
   GoalDiffResult,
+  GoalDslQueryFilter,
   GoalEvaluationResult,
   GoalGate,
+  GoalHealthStatus,
   GoalMilestone,
   GoalQueryFilter,
   GoalRetroSummary,
   GoalState,
+  GoalStatus,
   GoalStepEvent,
   GoalTemplate,
   GoalVerdict,
+  GoalWatchdogReport,
 } from "../../../core/contracts/goal.contracts.js";
 import {
   DEFAULT_GATE_MAX_RETRIES,
@@ -832,5 +837,272 @@ export class DeterministicGoalEngine {
       verdict,
     };
     this.substrate.recordStepEvent(state.sessionId, event);
+  }
+
+  /**
+   * Intelligently parses natural language goal prompt and decomposes it into a DAG of milestones with dependencies and quality gates.
+   */
+  public decomposeGoalPrompt(prompt: string, categoryOverride?: GoalCategory): GoalDecompositionResult {
+    const trimmed = prompt.trim();
+    const lower = trimmed.toLowerCase();
+
+    let category: GoalCategory = categoryOverride || "feature";
+    if (!categoryOverride) {
+      if (lower.includes("fix") || lower.includes("bug") || lower.includes("error") || lower.includes("crash")) category = "bugfix";
+      else if (lower.includes("perf") || lower.includes("speed") || lower.includes("latency") || lower.includes("sla")) category = "refactor";
+      else if (lower.includes("sec") || lower.includes("cve") || lower.includes("vulnerab") || lower.includes("auth")) category = "audit";
+      else if (lower.includes("audit") || lower.includes("compliance")) category = "audit";
+      else if (lower.includes("release") || lower.includes("deploy") || lower.includes("ship")) category = "release";
+      else if (lower.includes("learn") || lower.includes("study") || lower.includes("research")) category = "learning";
+    }
+
+    const milestones: {
+      id: string;
+      title: string;
+      description?: string;
+      dependsOn?: string[];
+      tags?: string[];
+      initialChecklist?: string[];
+    }[] = [];
+
+    // Extract discrete sentence clauses or bullet items if present
+    const rawClauses = trimmed
+      .split(/(?:\r?\n|;|\band\b|\bthen\b|\bwith\b|\bincluding\b)/i)
+      .map((s) => s.trim().replace(/^[-*•\d.]+\s*/, ""))
+      .filter((s) => s.length > 5);
+
+    if (rawClauses.length >= 2) {
+      for (let i = 0; i < rawClauses.length; i++) {
+        const id = `m-${i + 1}`;
+        const title = rawClauses[i].charAt(0).toUpperCase() + rawClauses[i].slice(1);
+        const dependsOn = i > 0 ? [`m-${i}`] : [];
+        milestones.push({
+          id,
+          title,
+          description: `Autonomous milestone for: ${title}`,
+          dependsOn,
+          tags: [category, `p${Math.min(2, i)}`],
+          initialChecklist: [`Define specifications for ${title}`, `Implement changes`, `Verify test assertions`],
+        });
+      }
+    } else {
+      // Decompose standard 3-phase progression
+      milestones.push(
+        {
+          id: "m-1",
+          title: `Analyze requirements and establish baseline for ${trimmed.slice(0, 40)}`,
+          dependsOn: [],
+          tags: [category, "p0"],
+          initialChecklist: ["Inspect existing contracts and interfaces", "Verify reproductive test setup"],
+        },
+        {
+          id: "m-2",
+          title: `Execute core implementation and refactoring`,
+          dependsOn: ["m-1"],
+          tags: [category, "p0"],
+          initialChecklist: ["Implement code changes", "Maintain backward compatibility and SLAs"],
+        },
+        {
+          id: "m-3",
+          title: `Run end-to-end verification, quality gates and audit`,
+          dependsOn: ["m-2"],
+          tags: [category, "p1"],
+          initialChecklist: ["Execute test suites", "Validate zero regression in guardrails"],
+        }
+      );
+    }
+
+    const recommendedGates = [
+      { name: "Type Safety Check", command: "npm run check", policy: "blocking" as const, timeoutSeconds: 60 },
+      { name: "Repository Guardrails", command: "node --import tsx scripts/validate-repo.ts", policy: "blocking" as const, timeoutSeconds: 60 },
+    ];
+
+    return {
+      goal: trimmed,
+      category,
+      suggestedMaxTurns: Math.max(10, milestones.length * 5),
+      milestones,
+      recommendedGates,
+    };
+  }
+
+  /**
+   * Parses natural query DSL into structured filter parameters.
+   */
+  public parseGoalDslQuery(rawQuery: string): GoalDslQueryFilter {
+    const textTerms: string[] = [];
+    let status: GoalStatus | undefined;
+    let category: GoalCategory | undefined;
+    let healthStatus: GoalHealthStatus | undefined;
+    const tags: string[] = [];
+    let minProgress: number | undefined;
+    let maxProgress: number | undefined;
+    let minTurns: number | undefined;
+    let maxTurns: number | undefined;
+    let hasFailedGates: boolean | undefined;
+
+    const tokens = rawQuery.trim().split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+      if (token.startsWith("status:")) {
+        const val = token.slice(7).toLowerCase();
+        if (["active", "paused", "done", "cleared", "failed"].includes(val)) {
+          status = val as GoalStatus;
+        }
+      } else if (token.startsWith("cat:") || token.startsWith("category:")) {
+        const val = token.split(":")[1].toLowerCase();
+        if (["bugfix", "feature", "refactor", "audit", "release", "learning", "general", "custom"].includes(val)) {
+          category = val as GoalCategory;
+        }
+      } else if (token.startsWith("health:")) {
+        const val = token.slice(7).toLowerCase();
+        if (["on_track", "at_risk", "off_track", "exceeded"].includes(val)) {
+          healthStatus = val as GoalHealthStatus;
+        }
+      } else if (token.startsWith("tag:") || token.startsWith("#")) {
+        const val = token.startsWith("tag:") ? token.slice(4) : token.slice(1);
+        if (val) tags.push(val.toLowerCase());
+      } else if (token.startsWith("progress:>=") || token.startsWith("progress:>")) {
+        minProgress = parseFloat(token.split(">")[1].replace("=", ""));
+      } else if (token.startsWith("progress:<=") || token.startsWith("progress:<")) {
+        maxProgress = parseFloat(token.split("<")[1].replace("=", ""));
+      } else if (token.startsWith("turns:>=") || token.startsWith("turns:>")) {
+        minTurns = parseInt(token.split(">")[1].replace("=", ""), 10);
+      } else if (token.startsWith("turns:<=") || token.startsWith("turns:<")) {
+        maxTurns = parseInt(token.split("<")[1].replace("=", ""), 10);
+      } else if (token === "gate:failed" || token === "is:failed") {
+        hasFailedGates = true;
+      } else {
+        textTerms.push(token.toLowerCase());
+      }
+    }
+
+    return {
+      rawQuery,
+      status,
+      category,
+      healthStatus,
+      tags: tags.length > 0 ? tags : undefined,
+      minProgress,
+      maxProgress,
+      minTurns,
+      maxTurns,
+      hasFailedGates,
+      textTerms: textTerms.length > 0 ? textTerms : undefined,
+    };
+  }
+
+  /**
+   * Executes a single quality gate with timeout, retry loop, and auto-remediation command.
+   */
+  public async evaluateGateWithRetries(
+    sessionId: string,
+    gate: GoalGate,
+    cwd?: string
+  ): Promise<{ exitCode: number; outputTail: string; remediated: boolean }> {
+    this.substrate.recordGateEvaluation();
+    gate.attempts += 1;
+    const timeoutMs = (gate.timeoutSeconds || DEFAULT_GATE_TIMEOUT_SECONDS) * 1000;
+    let remediated = false;
+
+    try {
+      const { stdout, stderr } = await execAsync(gate.command, {
+        cwd: cwd || process.cwd(),
+        timeout: timeoutMs,
+      });
+      gate.lastExitCode = 0;
+      const combined = (stdout || "") + (stderr || "");
+      gate.lastOutputTail = combined.slice(-GATE_OUTPUT_TAIL_CHARS);
+      return { exitCode: 0, outputTail: gate.lastOutputTail, remediated: false };
+    } catch (err: any) {
+      gate.lastExitCode = typeof err.code === "number" ? err.code : 1;
+      const combined = (err.stdout || "") + (err.stderr || "") + (err.message || "");
+      gate.lastOutputTail = combined.slice(-GATE_OUTPUT_TAIL_CHARS);
+
+      if (gate.autoRemediateCommand && (gate.remediatedCount || 0) < 2) {
+        try {
+          this.substrate.recordRemediation();
+          gate.remediatedCount = (gate.remediatedCount || 0) + 1;
+          remediated = true;
+          await execAsync(gate.autoRemediateCommand, {
+            cwd: cwd || process.cwd(),
+            timeout: 60000,
+          });
+
+          const retryRes = await execAsync(gate.command, {
+            cwd: cwd || process.cwd(),
+            timeout: timeoutMs,
+          });
+          gate.lastExitCode = 0;
+          gate.lastOutputTail = ((retryRes.stdout || "") + (retryRes.stderr || "")).slice(-GATE_OUTPUT_TAIL_CHARS);
+          return { exitCode: 0, outputTail: gate.lastOutputTail, remediated: true };
+        } catch {
+          // Remediation failed
+        }
+      }
+
+      return { exitCode: gate.lastExitCode ?? 1, outputTail: gate.lastOutputTail, remediated };
+    }
+  }
+
+  /**
+   * Continuous Quality Gate Watchdog evaluating all gates with automated retries and remediation telemetry.
+   */
+  public async watchdogEvaluateGates(sessionId: string): Promise<GoalWatchdogReport> {
+    const goal = this.substrate.getGoal(sessionId);
+    if (!goal || !goal.gates || goal.gates.length === 0) {
+      return {
+        sessionId,
+        totalGatesEvaluated: 0,
+        passedGatesCount: 0,
+        failedGatesCount: 0,
+        remediatedGatesCount: 0,
+        allPassed: true,
+        gateDetails: [],
+      };
+    }
+
+    let passedCount = 0;
+    let failedCount = 0;
+    let remediatedCount = 0;
+    const details: {
+      gateName: string;
+      passed: boolean;
+      exitCode?: number;
+      attempts: number;
+      remediated: boolean;
+      outputTail: string;
+    }[] = [];
+
+    for (const gate of goal.gates) {
+      const execRes = await this.evaluateGateWithRetries(sessionId, gate);
+      const passed = execRes.exitCode === 0;
+      if (passed) {
+        passedCount++;
+      } else {
+        failedCount++;
+      }
+      if (gate.remediatedCount && gate.remediatedCount > 0) {
+        remediatedCount++;
+      }
+
+      details.push({
+        gateName: gate.name || gate.command,
+        passed,
+        exitCode: execRes.exitCode,
+        attempts: gate.attempts,
+        remediated: (gate.remediatedCount || 0) > 0,
+        outputTail: execRes.outputTail,
+      });
+    }
+
+    return {
+      sessionId,
+      totalGatesEvaluated: goal.gates.length,
+      passedGatesCount: passedCount,
+      failedGatesCount: failedCount,
+      remediatedGatesCount: remediatedCount,
+      allPassed: failedCount === 0,
+      gateDetails: details,
+    };
   }
 }

@@ -261,4 +261,12 @@ export class DeterministicSessionArchiver {
     const computed = this.computeChecksum(document.content);
     return computed === document.sha256Checksum;
   }
+
+  public formatManifest(manifest: import("../../../core/contracts/session-archive.contracts.js").SessionArchiveManifest): string {
+    return `[${manifest.format.toUpperCase()}] Archive: ${manifest.archiveId} (Session: ${manifest.sessionId}, ${manifest.turnCount} turns, ${manifest.totalSizeBytes} bytes, SHA: ${manifest.sha256Checksum.slice(0, 12)}...)`;
+  }
+
+  public formatExportResult(doc: ExportedDocumentResult): string {
+    return `Exported ${doc.format.toUpperCase()} (${doc.sizeBytes} bytes, SHA: ${doc.sha256Checksum.slice(0, 12)}...)`;
+  }
 }

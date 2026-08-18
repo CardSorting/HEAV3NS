@@ -3,7 +3,7 @@
  *
  * Core contracts, data types, and invariants for
  * SSRF Defense Firewall, Cloud Metadata & Private IP Blocker, and URL Normalizer
- * (Phase 118 / ADR-094 / Target #51).
+ * (Phase 118 / ADR-094 / Target #87).
  */
 
 export type IpAddressCategory =
@@ -32,6 +32,8 @@ export interface UrlSafetyCheckResult {
   hostname: string;
   resolvedIps: readonly string[];
   reason?: string;
+  category?: IpAddressCategory;
+  latencyMs?: number;
 }
 
 export interface UrlSafetyConfig {
@@ -39,6 +41,8 @@ export interface UrlSafetyConfig {
   allowLocalhost: boolean;
   customBlockedHosts: readonly string[];
   customAllowedHosts: readonly string[];
+  maxRedirects?: number;
+  enforceTls?: boolean;
 }
 
 export interface UrlSafetyMetrics {
@@ -48,10 +52,13 @@ export interface UrlSafetyMetrics {
   blockedPrivateCount: number;
   blockedLoopbackCount: number;
   blockedCustomCount: number;
+  invalidUrlCount: number;
+  lastCheckTimestamp?: number;
 }
 
 export interface UrlSafetyWorkspaceSnapshot {
   snapshotId: string;
+  frameNumber?: number;
   timestamp: number;
   blockedLedger: readonly UrlSafetyCheckResult[];
   metrics: UrlSafetyMetrics;
@@ -74,4 +81,139 @@ export const DEFAULT_URL_SAFETY_CONFIG: UrlSafetyConfig = {
   allowLocalhost: false,
   customBlockedHosts: [],
   customAllowedHosts: [],
+  maxRedirects: 5,
+  enforceTls: false,
 };
+
+// ---------------------------------------------------------------------------
+// Hybrid BroccoliDB Row Schemas
+// ---------------------------------------------------------------------------
+
+export interface UrlSafetyCheckRow {
+  checkId: string;
+  rawUrl: string;
+  normalizedUrl: string;
+  hostname: string;
+  verdict: UrlSafetyVerdict;
+  isSafe: boolean;
+  category: IpAddressCategory;
+  resolvedIps: string[];
+  reason: string;
+  timestamp: number;
+  latencyMs: number;
+}
+
+export interface UrlSafetyAuditRow {
+  auditId: string;
+  timestamp: number;
+  status: UrlSafetyHealthStatus;
+  totalChecks: number;
+  allowedCount: number;
+  blockedCount: number;
+  slaViolation: boolean;
+  details: string;
+}
+
+// ---------------------------------------------------------------------------
+// Health & Telemetry Contracts
+// ---------------------------------------------------------------------------
+
+export type UrlSafetyHealthStatus = "optimal" | "degraded" | "critical";
+
+export interface UrlSafetyHealthAuditReport {
+  status: UrlSafetyHealthStatus;
+  timestamp: number;
+  totalChecks: number;
+  allowedCount: number;
+  blockedCount: number;
+  blockedMetadataCount: number;
+  blockedPrivateCount: number;
+  blockedLoopbackCount: number;
+  blockedCustomCount: number;
+  safeRatioPercent: number;
+  avgLatencyMs: number;
+  slaViolations: string[];
+}
+
+export interface UrlSafetyMetricsReport {
+  timestamp: number;
+  metrics: UrlSafetyMetrics;
+  config: UrlSafetyConfig;
+  recentChecksCount: number;
+  activeBlockedHostsCount: number;
+  activeAllowedHostsCount: number;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Criteria Swimlane & DSL Contracts
+// ---------------------------------------------------------------------------
+
+export type UrlSafetyGroupBy = "verdict" | "category" | "hostname" | "isSafe";
+export type UrlSafetySortBy = "timestamp" | "normalizedUrl" | "hostname" | "verdict" | "latencyMs";
+export type UrlSafetySortDirection = "asc" | "desc";
+
+export interface UrlSafetyGroupedLane {
+  laneId: string;
+  title: string;
+  count: number;
+  checks: UrlSafetyCheckRow[];
+}
+
+export interface UrlSafetyDslQueryFilter {
+  verdict?: UrlSafetyVerdict;
+  category?: IpAddressCategory;
+  isSafe?: boolean;
+  hostContains?: string;
+  ipContains?: string;
+  urlContains?: string;
+  minTimestamp?: number;
+  maxTimestamp?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Mutation Undo & Bulk Mutation Contracts
+// ---------------------------------------------------------------------------
+
+export interface UrlSafetyMutationUndoRecord {
+  mutationId: string;
+  timestamp: number;
+  action: "add_check" | "bulk_purge" | "update_config" | "clear";
+  previousRows: UrlSafetyCheckRow[];
+  previousConfig?: UrlSafetyConfig;
+}
+
+export interface UrlSafetyBulkMutationResult {
+  success: boolean;
+  matchedCount: number;
+  affectedCheckIds: string[];
+  timestamp: number;
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
+export interface IBroccoliUrlSafetySubstrate {
+  recordCheck(row: Omit<UrlSafetyCheckRow, "checkId">): UrlSafetyCheckRow;
+  getCheck(checkId: string): UrlSafetyCheckRow | null;
+  getRecentChecks(limit?: number): UrlSafetyCheckRow[];
+  getAllChecks(): UrlSafetyCheckRow[];
+  clear(): void;
+  getConfig(): UrlSafetyConfig;
+  updateConfig(updates: Partial<UrlSafetyConfig>): UrlSafetyConfig;
+  getMetrics(): UrlSafetyMetrics;
+  getMetricsReport(): UrlSafetyMetricsReport;
+  auditHealth(): UrlSafetyHealthAuditReport;
+  getGroupedChecks(
+    groupBy: UrlSafetyGroupBy,
+    sortBy?: UrlSafetySortBy,
+    sortDirection?: UrlSafetySortDirection
+  ): UrlSafetyGroupedLane[];
+  queryChecksDsl(dslQuery: string | UrlSafetyDslQueryFilter): UrlSafetyCheckRow[];
+  bulkPurgeChecks(checkIds: string[]): UrlSafetyBulkMutationResult;
+  undo(): boolean;
+  redo(): boolean;
+  exportHtml(): string;
+  exportMarkdown(): string;
+  exportCsv(): string;
+}

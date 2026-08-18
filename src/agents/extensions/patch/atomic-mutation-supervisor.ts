@@ -238,4 +238,116 @@ export class AtomicMutationSupervisor {
       bytesWritten: Buffer.byteLength(content, "utf-8"),
     };
   }
+
+  /**
+   * Atomic contiguous text replacement within a file.
+   */
+  public async applyReplaceContent(
+    options: { filePath: string; targetContent: string; replacementContent: string; startLine?: number; endLine?: number; allowMultiple?: boolean },
+    cwd = process.cwd()
+  ): Promise<{ success: boolean; modified: boolean; bytesWritten?: number; error?: string }> {
+    const fullPath = path.isAbsolute(options.filePath) ? options.filePath : path.join(cwd, options.filePath);
+    if (!fs.existsSync(fullPath)) {
+      return { success: false, modified: false, error: `File not found: ${options.filePath}` };
+    }
+    const existing = fs.readFileSync(fullPath, "utf-8");
+    const res = this.patchEngine.replaceContiguous(existing, options.targetContent, options.replacementContent, options);
+    if (!res.success || res.newContent === undefined) {
+      return { success: false, modified: false, error: res.error };
+    }
+    this.substrate.stageFile(fullPath, res.newContent, existing);
+    fs.writeFileSync(fullPath, res.newContent, "utf-8");
+    return { success: true, modified: true, bytesWritten: Buffer.byteLength(res.newContent, "utf-8") };
+  }
+
+  /**
+   * Atomic multi-chunk non-contiguous replacement within a file.
+   */
+  public async applyMultiReplace(
+    options: { filePath: string; chunks: Array<{ targetContent: string; replacementContent: string; startLine?: number; endLine?: number; allowMultiple?: boolean }> },
+    cwd = process.cwd()
+  ): Promise<{ success: boolean; modified: boolean; bytesWritten?: number; error?: string }> {
+    const fullPath = path.isAbsolute(options.filePath) ? options.filePath : path.join(cwd, options.filePath);
+    if (!fs.existsSync(fullPath)) {
+      return { success: false, modified: false, error: `File not found: ${options.filePath}` };
+    }
+    let content = fs.readFileSync(fullPath, "utf-8");
+    const original = content;
+
+    for (const chunk of options.chunks) {
+      const res = this.patchEngine.replaceContiguous(content, chunk.targetContent, chunk.replacementContent, chunk);
+      if (!res.success || res.newContent === undefined) {
+        return { success: false, modified: false, error: `Chunk replacement failed: ${res.error}` };
+      }
+      content = res.newContent;
+    }
+
+    this.substrate.stageFile(fullPath, content, original);
+    fs.writeFileSync(fullPath, content, "utf-8");
+    return { success: true, modified: true, bytesWritten: Buffer.byteLength(content, "utf-8") };
+  }
+
+  public stageFile(filePath: string, stagedContent: string, previousContent?: string | null) {
+    return this.substrate.stageFile(filePath, stagedContent, previousContent);
+  }
+
+  public listStaged() {
+    return this.substrate.listStaged();
+  }
+
+  public unstageFile(filePath: string) {
+    return this.substrate.unstageFile(filePath);
+  }
+
+  public commitAll() {
+    return this.substrate.commitAll();
+  }
+
+  public revertAll() {
+    return this.substrate.revertAll();
+  }
+
+  public auditHealth() {
+    return this.substrate.auditHealth();
+  }
+
+  public getMetrics() {
+    return this.substrate.getMetrics();
+  }
+
+  public getGroupedMutations(groupBy?: any, sortBy?: any, direction?: any) {
+    return this.substrate.getGroupedMutations(groupBy, sortBy, direction);
+  }
+
+  public queryDsl(query: any) {
+    return this.substrate.queryMutationsDsl(query);
+  }
+
+  public bulkPurge(paths: readonly string[]) {
+    return this.substrate.bulkPurgeStaged(paths);
+  }
+
+  public bulkCommit() {
+    return this.substrate.bulkCommitStaged();
+  }
+
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  public exportHtml(): string {
+    return this.substrate.exportInteractiveHtmlView();
+  }
+
+  public exportMarkdown(): string {
+    return this.substrate.exportMarkdownReport();
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsvReport();
+  }
 }
