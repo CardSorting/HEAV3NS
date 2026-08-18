@@ -666,7 +666,7 @@ graph TD
 The **Tool Execution Segmenter & Loop Guardrail Engine** introduces an industrial-grade batch parallelism scheduler and anti-loop firewall into the agent execution loop:
 - **Batch Parallelism Scheduler**: Automatically segments multi-tool invocation arrays into high-velocity parallel batches for idempotent read operations (`read_file`, `search_files`, `ast_grep`, `tool_search`) while placing single-call sequential barriers around state-mutating operations (`write_file`, `patch`, `execute_command`).
 - **4-Stage Escalating Anti-Loop Firewall**: Tracks tool invocations using canonical SHA-256 parameter hashing with key sorting. When repetitive identical calls are detected, the policy escalates deterministically:
-  $$\text{allow} \xrightarrow{\text{repeat } \ge 2} \text{warn} \xrightarrow{\text{repeat } \ge 3} \text{block\_synthetic} \xrightarrow{\text{repeat } \ge 5} \text{abort\_turn}$$
+  $$\mathbf{allow} \xrightarrow{\ge 2\text{ repeats}} \mathbf{warn} \xrightarrow{\ge 3\text{ repeats}} \mathbf{block\_synthetic} \xrightarrow{\ge 5\text{ repeats}} \mathbf{abort\_turn}$$
 - **BroccoliDB Hybrid In-Memory Persistence & $O(1)$ Time-Travel**: Execution plans, violations, and policy configurations are persisted in-memory within Broccolidb tables with frame-level snapshotting (`ExecutionGuardSnapshotManager`), guaranteeing sub-millisecond state restoration ($<0.05\text{ ms}$ SLA) upon loop aborts.
 - **30-Tool Model Surface (`ToolExecutionGuardToolSuite`)**: Exposes programmatic inspection, dynamic threshold updates (`maxDuplicateExecutions`, `actionOnLimit`), multi-criteria swimlane grouping (`groupBy`), fluent DSL queries (`queryPlansDsl`), and bulk mutation purges with undo/redo capabilities.
 - **Interactive TUI Dashboard Modal (`ToolExecutionGuardDashboardModal`)**: Terminal UI dashboard with tabbed navigation across metrics, execution plan timelines, violation ledgers, health matrices, and raw inspection dumps.
@@ -711,7 +711,7 @@ High-performance video game engines (physics, rendering, ECS architectures) guar
 #### Q: How does the Tool Execution Segmenter & Loop Guardrail prevent infinite loops and race conditions?
 The **Deterministic Tool Execution Segmenter** ([ADR-046](.wiki/adr/ADR-046-deterministic-tool-execution-segmenter.md)) operates as a dual-action safety engine:
 - **Batch Parallelism Scheduler**: Analyzes incoming tool batches and groups read-only idempotent tools (`read_file`, `search_files`, `tool_search`) into concurrent execution segments while strictly isolating mutating tools (`write_file`, `patch`, `terminal`) with sequential barrier boundaries.
-- **Escalating Anti-Loop Firewall**: Computes deterministic canonical SHA-256 parameter hashes and escalates policies through 4 distinct stages: `allow` $\to$ `warn` $\to$ `block_synthetic` $\to$ `abort_turn`. Repetitive identical calls are immediately halted and recorded in Broccolidb for instant $O(1)$ rollback.
+- **Escalating Anti-Loop Firewall**: Computes deterministic canonical SHA-256 parameter hashes and escalates policies through 4 distinct stages: $\mathbf{allow} \to \mathbf{warn} \to \mathbf{block\_synthetic} \to \mathbf{abort\_turn}$. Repetitive identical calls are immediately halted and recorded in Broccolidb for instant $O(1)$ rollback.
 
 ---
 
@@ -782,9 +782,14 @@ LUMI-JOY is 100% open source under the **Apache License 2.0** and backed by a **
 #### Q: How quickly can an engineering team get started?
 In under 60 seconds:
 ```bash
+# Clone the repository
 git clone https://github.com/CardSorting/LUMI-JOY.git
 cd LUMI-JOY
+
+# Install dependencies and build
 npm install && npm run build
+
+# Launch interactive provider setup wizard
 lumi --setup
 ```
 Programmatic TypeScript SDK integration requires only 4 lines of code ([Quick Start Guide](#-quick-start--onboarding)).
