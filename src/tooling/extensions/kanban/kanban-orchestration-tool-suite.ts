@@ -3,16 +3,22 @@
  *
  * Model tool surface for the World-Class Kanban Subsystem (ADR-118).
  * Provides ergonomic model tools for task tracking, typed blocking, dependency linking,
- * comments, natural query search, and board analytics.
+ * comments, natural query search, desktop notifications, deadline audits, and HTML export.
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 import type {
   KanbanBlockKind,
   KanbanColumn,
+  KanbanGroupBy,
+  KanbanNotificationTrigger,
+  KanbanNotificationUrgency,
   KanbanPriority,
   KanbanReasoningEffort,
   KanbanRelationType,
+  KanbanSortBy,
+  KanbanSortDirection,
+  KanbanIssueTemplateKind,
   KanbanWorkspaceKind,
 } from "../../../core/contracts/kanban.contracts.js";
 import { KanbanBoardSupervisor } from "../../../agents/extensions/kanban/kanban-board-supervisor.js";
@@ -418,6 +424,421 @@ export class KanbanOrchestrationToolSuite {
             success: true,
             status: metrics,
             metrics,
+          };
+        },
+      },
+      {
+        name: "kanban_configure_notifications",
+        description: "Configures Kanban desktop notification preferences, DND, sound, and trigger thresholds.",
+        parameters: {
+          enabled: { type: "boolean", description: "Master enable toggle" },
+          desktopEnabled: { type: "boolean", description: "Native OS desktop notifications toggle" },
+          soundEnabled: { type: "boolean", description: "Sound alerts toggle" },
+          dndEnabled: { type: "boolean", description: "Do Not Disturb mode" },
+          minUrgency: { type: "string", description: "'low' | 'normal' | 'high' | 'urgent'" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const dispatcher = this.supervisor.getSubstrate().getNotificationDispatcher();
+          const updated = dispatcher.updatePreferences({
+            enabled: typeof args.enabled === "boolean" ? args.enabled : undefined,
+            desktopEnabled: typeof args.desktopEnabled === "boolean" ? args.desktopEnabled : undefined,
+            soundEnabled: typeof args.soundEnabled === "boolean" ? args.soundEnabled : undefined,
+            dndEnabled: typeof args.dndEnabled === "boolean" ? args.dndEnabled : undefined,
+            minUrgency: typeof args.minUrgency === "string" ? (args.minUrgency as KanbanNotificationUrgency) : undefined,
+          });
+
+          return {
+            success: true,
+            preferences: updated,
+            message: "Kanban notification preferences updated",
+          };
+        },
+      },
+      {
+        name: "kanban_send_notification",
+        description: "Dispatches a manual or test desktop notification through the Kanban notification subsystem.",
+        parameters: {
+          title: { type: "string", required: true, description: "Notification title" },
+          message: { type: "string", required: true, description: "Notification body" },
+          urgency: { type: "string", description: "'low' | 'normal' | 'high' | 'urgent'" },
+          trigger: { type: "string", description: "Trigger reason" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const title = String(args.title || "").trim();
+          const message = String(args.message || "").trim();
+          if (!title || !message) return { success: false, error: "title and message are required" };
+
+          const dispatcher = this.supervisor.getSubstrate().getNotificationDispatcher();
+          const res = await dispatcher.dispatch({
+            title,
+            message,
+            urgency: typeof args.urgency === "string" ? (args.urgency as KanbanNotificationUrgency) : "normal",
+            trigger: typeof args.trigger === "string" ? (args.trigger as KanbanNotificationTrigger) : "custom",
+          });
+
+          return {
+            success: res.dispatched,
+            record: res.record,
+            reason: res.reason,
+          };
+        },
+      },
+      {
+        name: "kanban_get_notifications",
+        description: "Retrieves recent Kanban notification history with unread count.",
+        parameters: {
+          unreadOnly: { type: "boolean", description: "Filter for unread notifications only" },
+          limit: { type: "number", description: "Maximum records to return (default: 50)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const dispatcher = this.supervisor.getSubstrate().getNotificationDispatcher();
+          const unreadOnly = Boolean(args.unreadOnly);
+          const limit = typeof args.limit === "number" ? args.limit : 50;
+          const records = dispatcher.getHistory({ unreadOnly, limit });
+
+          return {
+            success: true,
+            totalRecords: records.length,
+            records,
+          };
+        },
+      },
+      {
+        name: "kanban_check_deadlines",
+        description: "Scans active tasks for approaching due dates and breached SLAs, triggering warning notifications.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+          warningHours: { type: "number", description: "Warning window in hours (default: 24)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const hours = typeof args.warningHours === "number" ? args.warningHours : 24;
+          const report = this.supervisor.checkUpcomingDeadlines(boardId, hours * 3600 * 1000);
+
+          return {
+            success: true,
+            boardId,
+            report,
+            message: `Deadlines audited: ${report.overdueTasks.length} overdue, ${report.upcomingSoonTasks.length} due soon.`,
+          };
+        },
+      },
+      {
+        name: "kanban_group_and_sort_tasks",
+        description: "Retrieves structured Kanban swimlanes grouped by status, priority, assignee, category, or blocked state.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+          groupBy: { type: "string", description: "'column' | 'priority' | 'assignee' | 'category' | 'blocked'" },
+          sortBy: { type: "string", description: "'priority' | 'dueDate' | 'estimate' | 'updated' | 'created' | 'title'" },
+          sortDirection: { type: "string", description: "'asc' | 'desc'" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const groupBy = (typeof args.groupBy === "string" ? args.groupBy : "column") as KanbanGroupBy;
+          const sortBy = (typeof args.sortBy === "string" ? args.sortBy : "priority") as KanbanSortBy;
+          const sortDirection = (typeof args.sortDirection === "string" ? args.sortDirection : "desc") as KanbanSortDirection;
+
+          const swimlanes = this.supervisor.getGroupedTasks(boardId, groupBy, sortBy, sortDirection);
+
+          return {
+            success: true,
+            boardId,
+            groupBy,
+            sortBy,
+            swimlanes,
+          };
+        },
+      },
+      {
+        name: "kanban_undo",
+        description: "Undoes the last task mutation on the Kanban board.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const res = this.supervisor.undo(boardId);
+          return {
+            success: res.success,
+            restoredTask: res.restoredTask,
+            message: res.success ? `Undid last mutation on task '${res.restoredTask?.id}'` : "No mutations to undo",
+          };
+        },
+      },
+      {
+        name: "kanban_export_html",
+        description: "Exports a standalone interactive responsive HTML web board view with drag-and-drop and desktop notification support.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const html = this.supervisor.exportHtml(boardId);
+          return {
+            success: true,
+            boardId,
+            htmlLength: html.length,
+            html,
+            message: "Generated interactive HTML Kanban board",
+          };
+        },
+      },
+      {
+        name: "kanban_get_task_hierarchy",
+        description: "Retrieves a task with its complete dependency DAG hierarchy, blockers, dependents, parent, and subtasks.",
+        parameters: {
+          taskId: { type: "string", required: true, description: "Target task ID (e.g. 'task-1')" },
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const taskId = String(args.taskId || "").trim();
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          if (!taskId) return { success: false, error: "taskId is required" };
+
+          const hierarchy = this.supervisor.getTaskHierarchy(taskId, boardId);
+          if (!hierarchy) return { success: false, error: `Task '${taskId}' not found` };
+
+          return {
+            success: true,
+            hierarchy,
+          };
+        },
+      },
+      {
+        name: "kanban_get_velocity_metrics",
+        description: "Computes delivery velocity, completed story points, lead time, cycle time, WIP, and daily throughput for a board.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const metrics = this.supervisor.getVelocityMetrics(boardId);
+          if (!metrics) return { success: false, error: `Board '${boardId}' not found` };
+
+          return {
+            success: true,
+            metrics,
+          };
+        },
+      },
+      {
+        name: "kanban_bulk_update_tasks",
+        description: "Applies mutations (column, priority, assignee, tags) to multiple tasks atomically in a single batch.",
+        parameters: {
+          taskIds: { type: "string", required: true, description: "Comma-separated task IDs" },
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+          column: { type: "string", description: "Target column transition" },
+          priority: { type: "string", description: "Target priority" },
+          assignee: { type: "string", description: "Target assignee" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const rawIds = String(args.taskIds || "").trim();
+          if (!rawIds) return { success: false, error: "taskIds is required" };
+
+          const taskIds = rawIds.split(",").map((s) => s.trim()).filter(Boolean);
+          const res = this.supervisor.bulkUpdateTasks(boardId, taskIds, {
+            column: typeof args.column === "string" ? (args.column as KanbanColumn) : undefined,
+            priority: typeof args.priority === "string" ? (args.priority as KanbanPriority) : undefined,
+            assignee: typeof args.assignee === "string" ? args.assignee : undefined,
+          });
+
+          return {
+            success: res.updatedCount > 0,
+            result: res,
+            message: `Bulk updated ${res.updatedCount}/${res.totalTargeted} tasks on board '${boardId}'`,
+          };
+        },
+      },
+      {
+        name: "kanban_toggle_subtask_item",
+        description: "Toggles or adds an actionable checklist subtask item on a task card.",
+        parameters: {
+          taskId: { type: "string", required: true, description: "Target task ID" },
+          subtaskId: { type: "string", required: true, description: "Subtask item identifier or description" },
+          done: { type: "boolean", description: "Completed status (optional, defaults to toggle)" },
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const taskId = String(args.taskId || "").trim();
+          const subtaskId = String(args.subtaskId || "").trim();
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const done = typeof args.done === "boolean" ? args.done : undefined;
+          if (!taskId || !subtaskId) return { success: false, error: "taskId and subtaskId are required" };
+
+          const res = this.supervisor.toggleSubtaskChecklist(boardId, taskId, subtaskId, done);
+          return {
+            success: res.success,
+            task: res.task,
+            error: res.error,
+          };
+        },
+      },
+      {
+        name: "kanban_move_task_board",
+        description: "Moves a task from one Kanban board to another board.",
+        parameters: {
+          taskId: { type: "string", required: true, description: "Target task ID" },
+          fromBoardId: { type: "string", required: true, description: "Source board ID" },
+          toBoardId: { type: "string", required: true, description: "Destination board ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const taskId = String(args.taskId || "").trim();
+          const fromBoardId = String(args.fromBoardId || "").trim();
+          const toBoardId = String(args.toBoardId || "").trim();
+          if (!taskId || !fromBoardId || !toBoardId) {
+            return { success: false, error: "taskId, fromBoardId, and toBoardId are required" };
+          }
+
+          const res = this.supervisor.moveTaskToBoard(taskId, fromBoardId, toBoardId);
+          return {
+            success: res.success,
+            error: res.error,
+            message: res.success ? `Moved task '${taskId}' from '${fromBoardId}' to '${toBoardId}'` : res.error,
+          };
+        },
+      },
+      {
+        name: "kanban_auto_assign",
+        description: "Automatically balances and distributes unassigned ready tasks across available worker agent IDs.",
+        parameters: {
+          workerIds: { type: "string", required: true, description: "Comma-separated worker/agent IDs" },
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const rawWorkers = String(args.workerIds || "").trim();
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          if (!rawWorkers) return { success: false, error: "workerIds is required" };
+
+          const workers = rawWorkers.split(",").map((s) => s.trim()).filter(Boolean);
+          const res = this.supervisor.autoAssignWorkload(boardId, workers);
+
+          return {
+            success: true,
+            result: res,
+            message: `Auto-assigned ${res.assignedCount} tasks across ${workers.length} workers on board '${boardId}'`,
+          };
+        },
+      },
+      {
+        name: "kanban_export_markdown",
+        description: "Exports the Kanban board and its swimlanes as a clean GitHub-flavored Markdown table document.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const markdown = this.supervisor.exportMarkdown(boardId);
+          return {
+            success: true,
+            boardId,
+            markdown,
+          };
+        },
+      },
+      {
+        name: "kanban_export_csv",
+        description: "Exports all tasks on a Kanban board into CSV table format.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const csv = this.supervisor.exportCsv(boardId);
+          return {
+            success: true,
+            boardId,
+            csv,
+          };
+        },
+      },
+      {
+        name: "kanban_create_from_template",
+        description: "Creates a pre-structured task from an issue template (bug_report, feature_spec, security_fix, refactor).",
+        parameters: {
+          templateKind: { type: "string", required: true, description: "Template kind: bug_report | feature_spec | security_fix | refactor" },
+          title: { type: "string", required: true, description: "Task title" },
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+          priority: { type: "string", description: "Optional priority override" },
+          assignee: { type: "string", description: "Optional assignee" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const templateKind = String(args.templateKind || "").trim() as KanbanIssueTemplateKind;
+          const title = String(args.title || "").trim();
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          if (!templateKind || !title) return { success: false, error: "templateKind and title are required" };
+
+          const res = this.supervisor.createTaskFromTemplate(boardId, templateKind, title, {
+            priority: typeof args.priority === "string" ? (args.priority as KanbanPriority) : undefined,
+            assignee: typeof args.assignee === "string" ? args.assignee : undefined,
+          });
+
+          return {
+            success: res.success,
+            task: res.task,
+            error: res.error,
+          };
+        },
+      },
+      {
+        name: "kanban_archive_completed",
+        description: "Archives all done tasks on a board to maintain a clean active stream workspace.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+          cutoffMs: { type: "number", description: "Optional max timestamp cutoff for archived tasks" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const cutoffMs = typeof args.cutoffMs === "number" ? args.cutoffMs : undefined;
+          const res = this.supervisor.archiveCompletedTasks(boardId, cutoffMs);
+          return {
+            success: true,
+            result: res,
+            message: `Archived ${res.archivedCount} tasks on board '${boardId}'`,
+          };
+        },
+      },
+      {
+        name: "kanban_clone_board",
+        description: "Clones a board's column configuration, WIP limits, and optionally tasks for a new sprint/milestone.",
+        parameters: {
+          sourceBoardId: { type: "string", required: true, description: "Source board ID to clone" },
+          targetBoardId: { type: "string", required: true, description: "New destination board ID" },
+          newTitle: { type: "string", description: "Title for the cloned board" },
+          includeTasks: { type: "boolean", description: "Whether to clone tasks into the new board" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const sourceBoardId = String(args.sourceBoardId || "").trim();
+          const targetBoardId = String(args.targetBoardId || "").trim();
+          if (!sourceBoardId || !targetBoardId) {
+            return { success: false, error: "sourceBoardId and targetBoardId are required" };
+          }
+
+          const res = this.supervisor.cloneBoard(sourceBoardId, targetBoardId, {
+            newTitle: typeof args.newTitle === "string" ? args.newTitle : undefined,
+            includeTasks: typeof args.includeTasks === "boolean" ? args.includeTasks : false,
+          });
+
+          return {
+            success: res.success,
+            error: res.error,
+            message: res.success ? `Cloned board '${sourceBoardId}' to '${targetBoardId}'` : res.error,
+          };
+        },
+      },
+      {
+        name: "kanban_render_dag_graph",
+        description: "Renders an ASCII / Unicode DAG dependency tree and blocker graph for terminal visualization.",
+        parameters: {
+          boardId: { type: "string", description: "Board ID (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string): Promise<Record<string, unknown>> => {
+          const boardId = typeof args.boardId === "string" ? args.boardId : "default";
+          const graph = this.supervisor.renderDagGraph(boardId);
+          return {
+            success: true,
+            boardId,
+            graph,
           };
         },
       },

@@ -52,6 +52,130 @@ export class MonolithGatewayServer {
         return this.formatSuccess(req.id, audit);
       }
 
+      if (req.method === "kanban/listBoards") {
+        const boards = monolith.kanbanBoardSupervisor.listBoards();
+        return this.formatSuccess(req.id, { boards });
+      }
+
+      if (req.method === "kanban/getBoard") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const board = monolith.kanbanBoardSupervisor.getBoard(boardId);
+        return this.formatSuccess(req.id, { board });
+      }
+
+      if (req.method === "kanban/createTask") {
+        const res = monolith.kanbanBoardSupervisor.createTask(req.params as any);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "kanban/updateTask") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const taskId = String(req.params?.taskId ?? "");
+        const mutation = (req.params?.mutation ?? {}) as any;
+        const res = monolith.kanbanBoardSupervisor.updateTask(boardId, taskId, mutation);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "kanban/getGroupedTasks") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const groupBy = req.params?.groupBy as any;
+        const sortBy = req.params?.sortBy as any;
+        const sortDirection = req.params?.sortDirection as any;
+        const swimlanes = monolith.kanbanBoardSupervisor.getGroupedTasks(boardId, groupBy, sortBy, sortDirection);
+        return this.formatSuccess(req.id, { swimlanes });
+      }
+
+      if (req.method === "kanban/getTaskHierarchy") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const taskId = String(req.params?.taskId ?? "");
+        const hierarchy = monolith.kanbanBoardSupervisor.getTaskHierarchy(taskId, boardId);
+        return this.formatSuccess(req.id, { hierarchy });
+      }
+
+      if (req.method === "kanban/checkDeadlines") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const warningWindowMs = typeof req.params?.warningWindowMs === "number" ? req.params.warningWindowMs : 86400000;
+        const report = monolith.kanbanBoardSupervisor.checkUpcomingDeadlines(boardId, warningWindowMs);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "kanban/getNotifications") {
+        const history = monolith.broccoliKanbanSubstrate.getNotificationDispatcher().getHistory(req.params as any);
+        return this.formatSuccess(req.id, { notifications: history });
+      }
+
+      if (req.method === "kanban/sendNotification") {
+        const res = await monolith.broccoliKanbanSubstrate.getNotificationDispatcher().dispatch(req.params as any);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "kanban/exportHtml") {
+        const boardId = String(req.params?.boardId ?? "default");
+        const html = monolith.kanbanBoardSupervisor.exportHtml(boardId);
+        return this.formatSuccess(req.id, { html });
+      }
+
+      if (req.method === "goal/getGoal") {
+        const sessionId = String(req.params?.sessionId ?? "default");
+        const goal = monolith.goalSupervisor.getGoal(sessionId);
+        return this.formatSuccess(req.id, { goal });
+      }
+
+      if (req.method === "goal/listGoals") {
+        const query = typeof req.params?.query === "string" ? req.params.query : undefined;
+        const goals = monolith.goalSupervisor.listGoals(query);
+        return this.formatSuccess(req.id, { goals });
+      }
+
+      if (req.method === "goal/setGoal") {
+        const sessionId = String(req.params?.sessionId ?? "default");
+        const text = String(req.params?.goal ?? "");
+        const goal = monolith.goalSupervisor.setGoal(sessionId, text, req.params as any);
+        return this.formatSuccess(req.id, { goal });
+      }
+
+      if (req.method === "goal/getGroupedGoals") {
+        const groupBy = req.params?.groupBy as any;
+        const sortBy = req.params?.sortBy as any;
+        const sortDirection = req.params?.sortDirection as any;
+        const lanes = monolith.goalSupervisor.getGroupedGoals(groupBy, sortBy, sortDirection);
+        return this.formatSuccess(req.id, { lanes });
+      }
+
+      if (req.method === "goal/getHierarchy") {
+        const sessionId = String(req.params?.sessionId ?? "default");
+        const hierarchy = monolith.goalSupervisor.getGoalWithHierarchy(sessionId);
+        return this.formatSuccess(req.id, { hierarchy });
+      }
+
+      if (req.method === "goal/getVelocityMetrics") {
+        const metrics = monolith.goalSupervisor.getVelocityMetrics();
+        return this.formatSuccess(req.id, { metrics });
+      }
+
+      if (req.method === "goal/evaluateGates") {
+        const sessionId = String(req.params?.sessionId ?? "default");
+        const cwd = String(req.params?.cwd ?? monolith.sessionContext.cwd);
+        const report = await monolith.goalSupervisor.evaluateGates(sessionId, cwd);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "goal/exportHtml") {
+        const sessionId = String(req.params?.sessionId ?? "default");
+        const html = monolith.goalSupervisor.exportHtml(sessionId);
+        return this.formatSuccess(req.id, { html });
+      }
+
+      if (req.method === "goal/getNotifications") {
+        const history = monolith.broccoliGoalSubstrate.getNotificationDispatcher().getHistory(req.params as any);
+        return this.formatSuccess(req.id, { notifications: history });
+      }
+
+      if (req.method === "goal/sendNotification") {
+        const res = await monolith.broccoliGoalSubstrate.getNotificationDispatcher().dispatch(req.params as any);
+        return this.formatSuccess(req.id, res);
+      }
+
       return JSON.stringify({
         jsonrpc: "2.0",
         id: req.id,

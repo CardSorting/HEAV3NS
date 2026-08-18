@@ -18,6 +18,8 @@ export { HealthDiagnosticModal } from "./components/health-diagnostic-modal.js";
 export { ProviderSetupModal } from "./components/provider-setup-modal.js";
 export { GuidedSetupWalkthroughModal } from "./components/guided-setup-walkthrough-modal.js";
 export { ModelSelectModal } from "./components/model-select-modal.js";
+export { KanbanBoardModal } from "./components/kanban-board-modal.js";
+export { GoalDashboardModal } from "./components/goal-dashboard-modal.js";
 export { Editor, type EditorOptions, type EditorTheme } from "./components/editor.js";
 export { HStack } from "./components/h-stack.js";
 export { Image, type ImageOptions, type ImageTheme } from "./components/image.js";

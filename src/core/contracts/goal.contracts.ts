@@ -50,6 +50,14 @@ export interface GoalGate {
   remediatedCount?: number;
 }
 
+export type GoalHealthStatus = "on_track" | "at_risk" | "off_track" | "exceeded";
+
+export interface GoalMilestoneChecklistItem {
+  readonly id: string;
+  readonly text: string;
+  readonly done: boolean;
+}
+
 export interface GoalMilestone {
   id: string;
   title: string;
@@ -59,7 +67,60 @@ export interface GoalMilestone {
   dependsOn?: string[];
   blockers?: string[];
   assignedSessionId?: string;
+  checklist?: GoalMilestoneChecklistItem[];
+  tags?: string[];
+  targetDeadlineMs?: number;
   completedAtMs?: number;
+}
+
+export interface GoalHealthAuditReport {
+  readonly sessionId: string;
+  readonly goal: string;
+  readonly healthStatus: GoalHealthStatus;
+  readonly progressPercent: number;
+  readonly turnsUsed: number;
+  readonly maxTurns: number;
+  readonly turnsRemaining: number;
+  readonly turnConsumptionRate: number;
+  readonly estimatedTurnsToCompletion: number;
+  readonly isOverTurnsBudget: boolean;
+  readonly isPastDeadline: boolean;
+  readonly blockedMilestonesCount: number;
+  readonly failedGatesCount: number;
+  readonly recommendations: readonly string[];
+}
+
+export interface GoalRiskDiagnosis {
+  readonly sessionId: string;
+  readonly overallRiskLevel: "low" | "medium" | "high" | "critical";
+  readonly riskFactors: readonly {
+    readonly kind: "gate_failure" | "milestone_blocked" | "budget_exhaustion" | "deadline_passed";
+    readonly title: string;
+    readonly description: string;
+    readonly blastRadiusAffectedMilestoneIds: readonly string[];
+    readonly suggestedFixCommand?: string;
+  }[];
+  readonly immediateRemediationPlan: readonly string[];
+}
+
+export interface GoalSwarmBalanceResult {
+  readonly parentSessionId: string;
+  readonly assignedMilestonesCount: number;
+  readonly unassignedMilestonesCount: number;
+  readonly workerAssignments: Record<string, readonly string[]>;
+}
+
+export interface GoalArchiveResult {
+  readonly archivedCount: number;
+  readonly remainingActiveCount: number;
+  readonly archivedSessionIds: readonly string[];
+}
+
+export interface GoalCloneOptions {
+  readonly resetProgress?: boolean;
+  readonly resetGates?: boolean;
+  readonly newMaxTurns?: number;
+  readonly newCategory?: GoalCategory;
 }
 
 export interface GoalStepEvent {
@@ -162,6 +223,10 @@ export interface GoalState {
   waitingSince?: number;
   contract: GoalContract;
   gates: GoalGate[];
+  tags?: string[];
+  targetDeadlineMs?: number;
+  healthStatus?: GoalHealthStatus;
+  estimatedRemainingTurns?: number;
 }
 
 export interface GoalEvaluationResult {
@@ -186,6 +251,8 @@ export interface GoalQueryFilter {
   text?: string;
   minProgress?: number;
   maxProgress?: number;
+  tags?: string[];
+  healthStatus?: GoalHealthStatus;
   sortBy?: "recent" | "progress" | "turns";
   limit?: number;
 }
@@ -199,4 +266,168 @@ export interface GoalStateSnapshot {
   totalGatesEvaluated: number;
   totalRemediationsTriggered: number;
   lastUpdatedMs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Goal Desktop & In-App Notification Contracts
+// ---------------------------------------------------------------------------
+
+export type GoalNotificationTrigger =
+  | "milestone_completed"
+  | "gate_failed"
+  | "gate_passed"
+  | "goal_completed"
+  | "budget_exhausted"
+  | "goal_paused"
+  | "custom";
+
+export type GoalNotificationUrgency = "low" | "normal" | "critical";
+
+export interface GoalNotificationEvent {
+  readonly sessionId?: string;
+  readonly title: string;
+  readonly message: string;
+  readonly urgency: GoalNotificationUrgency;
+  readonly trigger: GoalNotificationTrigger;
+  readonly metadata?: Record<string, unknown>;
+  readonly actionUrl?: string;
+}
+
+export interface GoalNotificationPreferences {
+  readonly enabled: boolean;
+  readonly soundEnabled: boolean;
+  readonly dndEnabled: boolean;
+  readonly minUrgency: GoalNotificationUrgency;
+  readonly allowedTriggers: readonly GoalNotificationTrigger[];
+}
+
+export interface GoalNotificationRecord {
+  readonly id: string;
+  readonly event: GoalNotificationEvent;
+  readonly timestampMs: number;
+  readonly read: boolean;
+  readonly channelsDispatched: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Goal Grouping, Sorting & Multi-View Contracts
+// ---------------------------------------------------------------------------
+
+export type GoalGroupBy = "status" | "category" | "progress" | "turns";
+export type GoalSortBy = "createdAt" | "progress" | "turns" | "milestones" | "gates";
+export type GoalSortDirection = "asc" | "desc";
+export type GoalExportFormat = "html" | "markdown" | "csv" | "json";
+
+export interface GoalGroupedLane {
+  readonly key: string;
+  readonly title: string;
+  readonly count: number;
+  readonly goals: readonly GoalState[];
+}
+
+export interface GoalMutationUndoRecord {
+  readonly undoId: string;
+  readonly sessionId: string;
+  readonly previousState: GoalState;
+  readonly newState: GoalState;
+  readonly timestampMs: number;
+}
+
+export interface GoalVelocityMetrics {
+  readonly totalGoalsEvaluated: number;
+  readonly completedGoalsCount: number;
+  readonly averageTurnsToCompletion: number;
+  readonly overallGatePassRatePercent: number;
+  readonly totalRemediationsTriggered: number;
+  readonly averageMilestonesPerGoal: number;
+}
+
+export interface GoalHierarchyReport {
+  readonly goal: GoalState;
+  readonly parent?: GoalState;
+  readonly children: readonly GoalState[];
+  readonly aggregateProgressPercent: number;
+}
+
+export interface GoalBulkMutationResult {
+  readonly totalTargeted: number;
+  readonly updatedCount: number;
+  readonly failedCount: number;
+  readonly updatedGoals: readonly GoalState[];
+  readonly errors: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// BroccoliDB Table Row Record Contracts
+// ---------------------------------------------------------------------------
+
+export interface GoalSessionRow extends Record<string, unknown> {
+  id: string;
+  goal: string;
+  category: string;
+  status: string;
+  turnsUsed: number;
+  maxTurns: number;
+  progressPercent: number;
+  parentGoalSessionId?: string;
+  contractJson: string;
+  milestonesCount: number;
+  gatesCount: number;
+  createdAtMs: number;
+  lastTurnAtMs: number;
+}
+
+export interface GoalMilestoneRow extends Record<string, unknown> {
+  id: string;
+  sessionId: string;
+  title: string;
+  status: string;
+  progressPercent: number;
+  dependsOnJson?: string;
+  blockersJson?: string;
+  completedAtMs?: number;
+}
+
+export interface GoalGateRow extends Record<string, unknown> {
+  id: string;
+  sessionId: string;
+  name: string;
+  command: string;
+  policy: string;
+  attempts: number;
+  lastExitCode?: number;
+  lastOutputTail: string;
+}
+
+export interface GoalEventRow extends Record<string, unknown> {
+  id: string;
+  sessionId: string;
+  turnIndex: number;
+  actionSummary: string;
+  gatesPassed: number;
+  verdict: string;
+  timestampMs: number;
+}
+
+export interface GoalRetroRow extends Record<string, unknown> {
+  id: string;
+  sessionId: string;
+  goal: string;
+  status: string;
+  turnsUsed: number;
+  durationMs: number;
+  finalVerdict?: string;
+  contractAdherenceScore: number;
+  completedAtMs: number;
+}
+
+export interface GoalNotificationRow extends Record<string, unknown> {
+  id: string;
+  sessionId?: string;
+  title: string;
+  message: string;
+  urgency: string;
+  trigger: string;
+  read: boolean;
+  timestampMs: number;
 }

@@ -24,6 +24,18 @@ export class GoalSnapshotManager {
     return this.createSnapshot(snapshotId);
   }
 
+  captureFrame(frameId: number): void {
+    const snap = this.substrate.createStateSnapshot();
+    this.snapshots.set(`frame_${frameId}`, snap);
+  }
+
+  rewindToFrame(frameId: number): boolean {
+    const snap = this.snapshots.get(`frame_${frameId}`);
+    if (!snap) return false;
+    this.substrate.restoreStateSnapshot(snap);
+    return true;
+  }
+
   restoreSnapshot(snapshotId: string): boolean {
     const snap = this.snapshots.get(snapshotId);
     if (!snap) return false;

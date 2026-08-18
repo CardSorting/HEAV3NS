@@ -5,17 +5,30 @@
  */
 
 import type {
+  GoalArchiveResult,
+  GoalBulkMutationResult,
+  GoalCloneOptions,
   GoalContract,
   GoalDiffResult,
   GoalEvaluationResult,
   GoalGate,
   GoalGatePolicy,
+  GoalGroupBy,
+  GoalGroupedLane,
+  GoalHealthAuditReport,
+  GoalHealthStatus,
+  GoalHierarchyReport,
   GoalMilestone,
   GoalQueryFilter,
   GoalRetroSummary,
+  GoalRiskDiagnosis,
+  GoalSortBy,
+  GoalSortDirection,
   GoalState,
   GoalStepEvent,
+  GoalSwarmBalanceResult,
   GoalTemplate,
+  GoalVelocityMetrics,
 } from "../../../core/contracts/goal.contracts.js";
 import {
   DEFAULT_GATE_MAX_RETRIES,
@@ -23,6 +36,7 @@ import {
   DEFAULT_GOAL_MAX_TURNS,
 } from "../../../core/contracts/goal.contracts.js";
 import { BroccoliGoalSubstrate } from "../../../sessions/extensions/goals/broccoli-goal-substrate.js";
+import { BroccoliViewRenderer } from "../../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 import { DeterministicGoalEngine } from "./deterministic-goal-engine.js";
 
 export class GoalSupervisor {
@@ -200,7 +214,7 @@ export class GoalSupervisor {
 
   addGate(
     sessionId: string,
-    command: string,
+    commandOrGate: string | Partial<GoalGate>,
     options: {
       name?: string;
       policy?: GoalGatePolicy;
@@ -212,17 +226,24 @@ export class GoalSupervisor {
     const state = this.substrate.getGoal(sessionId);
     if (!state) return false;
 
+    const command = typeof commandOrGate === "string" ? commandOrGate : commandOrGate.command || "";
+    const name = typeof commandOrGate === "object" ? commandOrGate.name : options.name;
+    const policy = typeof commandOrGate === "object" ? commandOrGate.policy : options.policy;
+    const timeoutSeconds = typeof commandOrGate === "object" ? commandOrGate.timeoutSeconds : options.timeoutSeconds;
+    const maxRetries = typeof commandOrGate === "object" ? commandOrGate.maxRetries : options.maxRetries;
+    const autoRemediateCommand = typeof commandOrGate === "object" ? commandOrGate.autoRemediateCommand : options.autoRemediateCommand;
+
     const gate: GoalGate = {
       id: `gate-${state.gates.length + 1}`,
-      name: options.name || command.trim().split(" ")[0],
+      name: name || command.trim().split(" ")[0],
       command: command.trim(),
-      policy: options.policy || "blocking",
-      timeoutSeconds: options.timeoutSeconds || DEFAULT_GATE_TIMEOUT_SECONDS,
-      maxRetries: options.maxRetries || DEFAULT_GATE_MAX_RETRIES,
+      policy: policy || "blocking",
+      timeoutSeconds: timeoutSeconds || DEFAULT_GATE_TIMEOUT_SECONDS,
+      maxRetries: maxRetries || DEFAULT_GATE_MAX_RETRIES,
       attempts: 0,
       lastOutputTail: "",
       lastFailedFingerprint: "",
-      autoRemediateCommand: options.autoRemediateCommand,
+      autoRemediateCommand,
     };
 
     state.gates.push(gate);
@@ -258,6 +279,113 @@ export class GoalSupervisor {
     state.status = "cleared";
     this.substrate.setGoal(state);
     return true;
+  }
+
+  updateGoal(sessionId: string, mutation: Partial<GoalState>): boolean {
+    const state = this.substrate.getGoal(sessionId);
+    if (!state) return false;
+
+    if (mutation.status !== undefined) state.status = mutation.status;
+    if (mutation.category !== undefined) state.category = mutation.category;
+    if (mutation.maxTurns !== undefined) state.maxTurns = mutation.maxTurns;
+    if (mutation.goal !== undefined) state.goal = mutation.goal;
+    if (mutation.icon !== undefined) state.icon = mutation.icon;
+
+    this.substrate.setGoal(state);
+    return true;
+  }
+
+  updateMilestone(
+    sessionId: string,
+    milestoneId: string,
+    mutation: Partial<GoalMilestone>
+  ): boolean {
+    const state = this.substrate.getGoal(sessionId);
+    if (!state) return false;
+
+    const ms = state.milestones.find((m) => m.id === milestoneId || m.title.toLowerCase() === milestoneId.toLowerCase());
+    if (!ms) return false;
+
+    if (mutation.status !== undefined) ms.status = mutation.status;
+    if (mutation.progressPercent !== undefined) ms.progressPercent = mutation.progressPercent;
+    if (mutation.title !== undefined) ms.title = mutation.title;
+    if (mutation.dependsOn !== undefined) ms.dependsOn = [...mutation.dependsOn];
+    if (mutation.description !== undefined) ms.description = mutation.description;
+    if (ms.status === "completed" && !ms.completedAtMs) ms.completedAtMs = Date.now();
+
+    this.substrate.setGoal(state);
+    return true;
+  }
+
+  completeGoal(sessionId: string, reason?: string): boolean {
+    const state = this.substrate.getGoal(sessionId);
+    if (!state) return false;
+
+    state.status = "done";
+    state.progressPercent = 100;
+    state.lastVerdict = "done";
+    state.lastReason = reason || "Goal marked as completed.";
+    for (const m of state.milestones) {
+      m.status = "completed";
+      m.progressPercent = 100;
+      m.completedAtMs = Date.now();
+    }
+
+    this.substrate.setGoal(state);
+    this.substrate.recordCompletion();
+
+    const retro = this.engine.generateRetrospective(state);
+    this.substrate.archiveGoal(retro);
+    return true;
+  }
+
+  async evaluateGates(
+    sessionId: string,
+    cwd?: string
+  ): Promise<{
+    allPassed: boolean;
+    passed: number;
+    failed: number;
+    totalEvaluated: number;
+    remediationsAttempted: number;
+    results: Array<{ name: string; command: string; exitCode: number; policy: string }>;
+  }> {
+    const state = this.substrate.getGoal(sessionId);
+    if (!state || state.gates.length === 0) {
+      return {
+        allPassed: true,
+        passed: 0,
+        failed: 0,
+        totalEvaluated: 0,
+        remediationsAttempted: 0,
+        results: [],
+      };
+    }
+
+    const evalResult = await this.engine.evaluateAfterTurn({
+      state,
+      lastResponse: "",
+      cwd,
+    });
+
+    const results = state.gates.map((g) => ({
+      name: g.name || g.command,
+      command: g.command,
+      exitCode: g.lastExitCode ?? -1,
+      policy: g.policy || "blocking",
+    }));
+
+    const passed = results.filter((r) => r.exitCode === 0).length;
+    const failed = results.length - passed;
+
+    return {
+      allPassed: !evalResult.gateFailed && failed === 0,
+      passed,
+      failed,
+      totalEvaluated: results.length,
+      remediationsAttempted: evalResult.remediationAttempted ? 1 : 0,
+      results,
+    };
   }
 
   getTrajectory(sessionId: string): readonly GoalStepEvent[] {
@@ -571,5 +699,131 @@ export class GoalSupervisor {
         `  /goal list [query]           - List goals across sessions`,
       ].join("\n"),
     };
+  }
+
+  public getSubstrate(): BroccoliGoalSubstrate {
+    return this.substrate;
+  }
+
+  public getEngine(): DeterministicGoalEngine {
+    return this.engine;
+  }
+
+  public getGroupedGoals(
+    groupBy: GoalGroupBy = "status",
+    sortBy: GoalSortBy = "createdAt",
+    sortDir: GoalSortDirection = "desc",
+    filter: GoalQueryFilter = {}
+  ): readonly GoalGroupedLane[] {
+    return this.substrate.getGroupedGoals(groupBy, sortBy, sortDir, filter);
+  }
+
+  public getGoalWithHierarchy(sessionId: string): GoalHierarchyReport | null {
+    return this.substrate.getGoalWithHierarchy(sessionId);
+  }
+
+  public getVelocityMetrics(): GoalVelocityMetrics {
+    return this.substrate.getVelocityMetrics();
+  }
+
+  public bulkUpdateGoals(sessionIds: readonly string[], mutation: Partial<GoalState>): GoalBulkMutationResult {
+    return this.substrate.bulkUpdateGoals(sessionIds, mutation);
+  }
+
+  public undo(sessionId: string): { success: boolean; restoredGoal?: GoalState; error?: string } {
+    return this.substrate.undo(sessionId);
+  }
+
+  public redo(sessionId: string): { success: boolean; restoredGoal?: GoalState; error?: string } {
+    return this.substrate.redo(sessionId);
+  }
+
+  public exportHtml(sessionId: string = "default"): string {
+    return this.substrate.exportInteractiveHtmlView(sessionId);
+  }
+
+  public exportMarkdown(sessionId: string = "default"): string {
+    return this.substrate.exportMarkdown(sessionId);
+  }
+
+  public exportCsv(): string {
+    return this.substrate.exportCsv();
+  }
+
+  public exportJson(sessionId: string = "default"): string {
+    return this.substrate.exportJson(sessionId);
+  }
+
+  public renderDagGraph(sessionId: string = "default"): string {
+    const goal = this.getGoal(sessionId);
+    if (!goal) return `Goal '${sessionId}' not found.`;
+    return BroccoliViewRenderer.renderGoalMilestoneGraph(goal);
+  }
+
+  public renderDashboard(sessionId: string = "default"): string {
+    const goal = this.getGoal(sessionId);
+    if (!goal) return `Goal '${sessionId}' not found.`;
+    return BroccoliViewRenderer.renderGoalDashboard(goal);
+  }
+
+  public toggleMilestoneChecklist(
+    sessionId: string,
+    milestoneId: string,
+    checkId: string,
+    done?: boolean
+  ): boolean {
+    return this.substrate.toggleMilestoneChecklist(sessionId, milestoneId, checkId, done);
+  }
+
+  public autoAssignSwarm(
+    parentSessionId: string,
+    workerSessionIds: readonly string[]
+  ): GoalSwarmBalanceResult {
+    return this.substrate.autoAssignSwarm(parentSessionId, workerSessionIds);
+  }
+
+  public archiveCompletedGoals(cutoffMs: number = 0): GoalArchiveResult {
+    return this.substrate.archiveCompletedGoals(cutoffMs);
+  }
+
+  public cloneGoal(
+    sourceSessionId: string,
+    targetSessionId: string,
+    options: GoalCloneOptions = {}
+  ): GoalState | null {
+    return this.substrate.cloneGoal(sourceSessionId, targetSessionId, options);
+  }
+
+  public adjustMilestoneProgress(
+    sessionId: string,
+    milestoneId: string,
+    deltaPercent: number
+  ): boolean {
+    return this.substrate.adjustMilestoneProgress(sessionId, milestoneId, deltaPercent);
+  }
+
+  public setMilestoneBlocked(
+    sessionId: string,
+    milestoneId: string,
+    blocked: boolean,
+    reason?: string
+  ): boolean {
+    return this.substrate.setMilestoneBlocked(sessionId, milestoneId, blocked, reason);
+  }
+
+  public auditGoalHealth(sessionId: string): GoalHealthAuditReport | null {
+    return this.substrate.auditGoalHealth(sessionId);
+  }
+
+  public diagnoseGoalRisks(sessionId: string): GoalRiskDiagnosis | null {
+    return this.substrate.diagnoseGoalRisks(sessionId);
+  }
+
+  public tagGoalOrMilestone(sessionId: string, tags: string[], milestoneId?: string): boolean {
+    return this.substrate.tagGoalOrMilestone(sessionId, tags, milestoneId);
+  }
+
+  public setGoalDeadline(sessionId: string, deadlineMs: number, milestoneId?: string): boolean {
+    return this.substrate.setGoalDeadline(sessionId, deadlineMs, milestoneId);
   }
 }

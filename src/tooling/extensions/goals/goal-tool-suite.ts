@@ -4,6 +4,15 @@
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
+import type {
+  GoalCategory,
+  GoalGroupBy,
+  GoalNotificationTrigger,
+  GoalNotificationUrgency,
+  GoalSortBy,
+  GoalSortDirection,
+  GoalStatus,
+} from "../../../core/contracts/goal.contracts.js";
 import type { GoalSupervisor } from "../../../agents/extensions/goals/goal-supervisor.js";
 
 export class GoalToolSuite {
@@ -366,6 +375,483 @@ export class GoalToolSuite {
             success: true,
             totalGoals: goals.length,
             goals,
+          };
+        },
+      },
+      {
+        name: "goal_group_and_sort",
+        description: "Group and sort goals across sessions by status, category, progress tier, or turns budget utilization.",
+        parameters: {
+          groupBy: { type: "string", description: "status | category | progress | turns (default: status)" },
+          sortBy: { type: "string", description: "createdAt | progress | turns | milestones | gates (default: createdAt)" },
+          sortDirection: { type: "string", description: "asc | desc (default: desc)" },
+          status: { type: "string", description: "Optional status filter" },
+          category: { type: "string", description: "Optional category filter" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const groupBy = (typeof args.groupBy === "string" ? args.groupBy : "status") as GoalGroupBy;
+          const sortBy = (typeof args.sortBy === "string" ? args.sortBy : "createdAt") as GoalSortBy;
+          const sortDirection = (typeof args.sortDirection === "string" ? args.sortDirection : "desc") as GoalSortDirection;
+          const lanes = this.supervisor.getGroupedGoals(groupBy, sortBy, sortDirection, {
+            status: typeof args.status === "string" ? (args.status as GoalStatus) : undefined,
+            category: typeof args.category === "string" ? (args.category as GoalCategory) : undefined,
+          });
+
+          return {
+            success: true,
+            groupBy,
+            sortBy,
+            sortDirection,
+            lanes,
+          };
+        },
+      },
+      {
+        name: "goal_get_hierarchy",
+        description: "Retrieve complete parent-to-child goal DAG hierarchy and aggregate progress metrics.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const hierarchy = this.supervisor.getGoalWithHierarchy(sessionId);
+          if (!hierarchy) return { success: false, error: `Goal '${sessionId}' not found` };
+
+          return {
+            success: true,
+            hierarchy,
+          };
+        },
+      },
+      {
+        name: "goal_get_velocity_metrics",
+        description: "Calculate overall goal completion throughput, turn allocation efficiency, and quality gate pass rates.",
+        parameters: {},
+        execute: async (_args: Record<string, unknown>, _cwd: string) => {
+          const metrics = this.supervisor.getVelocityMetrics();
+          return {
+            success: true,
+            metrics,
+          };
+        },
+      },
+      {
+        name: "goal_bulk_update",
+        description: "Apply status, category, or turn budget mutations to multiple goal sessions atomically.",
+        parameters: {
+          sessionIds: { type: "string", required: true, description: "Comma-separated list of session IDs" },
+          status: { type: "string", description: "Target status (active | paused | done | cleared | failed)" },
+          category: { type: "string", description: "Target category" },
+          maxTurns: { type: "number", description: "Target max turns" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const rawIds = String(args.sessionIds || "").trim();
+          if (!rawIds) return { success: false, error: "sessionIds is required" };
+
+          const sessionIds = rawIds.split(",").map((s) => s.trim()).filter(Boolean);
+          const res = this.supervisor.bulkUpdateGoals(sessionIds, {
+            status: typeof args.status === "string" ? (args.status as GoalStatus) : undefined,
+            category: typeof args.category === "string" ? (args.category as GoalCategory) : undefined,
+            maxTurns: typeof args.maxTurns === "number" ? args.maxTurns : undefined,
+          });
+
+          return {
+            success: res.updatedCount > 0,
+            result: res,
+          };
+        },
+      },
+      {
+        name: "goal_undo",
+        description: "Undo the last mutation on a goal session.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const res = this.supervisor.undo(sessionId);
+          return {
+            success: res.success,
+            restoredGoal: res.restoredGoal,
+            error: res.error,
+          };
+        },
+      },
+      {
+        name: "goal_export_html",
+        description: "Export an interactive single-page Linear/Notion-inspired HTML dashboard for goal tracking, milestone DAGs, and quality gates.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const html = this.supervisor.exportHtml(sessionId);
+          return {
+            success: true,
+            sessionId,
+            html,
+          };
+        },
+      },
+      {
+        name: "goal_export_markdown",
+        description: "Export a goal and its milestone checkpoints as a clean GitHub-flavored markdown report.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const markdown = this.supervisor.exportMarkdown(sessionId);
+          return {
+            success: true,
+            sessionId,
+            markdown,
+          };
+        },
+      },
+      {
+        name: "goal_export_csv",
+        description: "Export all session goals and metrics into CSV spreadsheet format.",
+        parameters: {},
+        execute: async (_args: Record<string, unknown>, _cwd: string) => {
+          const csv = this.supervisor.exportCsv();
+          return {
+            success: true,
+            csv,
+          };
+        },
+      },
+      {
+        name: "goal_render_dag_graph",
+        description: "Render visual ASCII / Unicode DAG dependency tree of goal milestones in terminal.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const graph = this.supervisor.renderDagGraph(sessionId);
+          return {
+            success: true,
+            sessionId,
+            graph,
+          };
+        },
+      },
+      {
+        name: "goal_render_dashboard",
+        description: "Render a comprehensive ANSI CLI dashboard summary of goal progress, milestones, and quality gates.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const dashboard = this.supervisor.renderDashboard(sessionId);
+          return {
+            success: true,
+            sessionId,
+            dashboard,
+          };
+        },
+      },
+      {
+        name: "goal_send_notification",
+        description: "Dispatch a cross-platform desktop or terminal notification regarding a goal event.",
+        parameters: {
+          title: { type: "string", required: true, description: "Notification title" },
+          message: { type: "string", required: true, description: "Notification message body" },
+          urgency: { type: "string", description: "low | normal | critical (default: normal)" },
+          trigger: { type: "string", description: "Trigger kind (default: custom)" },
+          sessionId: { type: "string", description: "Associated session ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const title = String(args.title || "");
+          const message = String(args.message || "");
+          const urgency = (typeof args.urgency === "string" ? args.urgency : "normal") as GoalNotificationUrgency;
+          const trigger = (typeof args.trigger === "string" ? args.trigger : "custom") as GoalNotificationTrigger;
+          const sessionId = typeof args.sessionId === "string" ? args.sessionId : undefined;
+
+          const res = await this.supervisor.getSubstrate().getNotificationDispatcher().dispatch({
+            title,
+            message,
+            urgency,
+            trigger,
+            sessionId,
+          });
+
+          return {
+            success: res.dispatched,
+            channels: res.channels,
+            recordId: res.record?.id,
+            reason: res.reason,
+          };
+        },
+      },
+      {
+        name: "goal_get_notifications",
+        description: "Retrieve recent goal notification history buffer.",
+        parameters: {
+          unreadOnly: { type: "boolean", description: "Only return unread notifications" },
+          limit: { type: "number", description: "Max records to return (default: 50)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const unreadOnly = typeof args.unreadOnly === "boolean" ? args.unreadOnly : false;
+          const limit = typeof args.limit === "number" ? args.limit : 50;
+          const records = this.supervisor.getSubstrate().getNotificationDispatcher().getHistory({ unreadOnly, limit });
+
+          return {
+            success: true,
+            count: records.length,
+            notifications: records,
+          };
+        },
+      },
+      {
+        name: "goal_configure_notifications",
+        description: "Configure goal desktop notification preferences (sound, DND, minimum urgency).",
+        parameters: {
+          enabled: { type: "boolean", description: "Master enable flag" },
+          soundEnabled: { type: "boolean", description: "Enable sound effects" },
+          dndEnabled: { type: "boolean", description: "Enable Do Not Disturb mode" },
+          minUrgency: { type: "string", description: "low | normal | critical" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const prefs = this.supervisor.getSubstrate().getNotificationDispatcher().updatePreferences({
+            enabled: typeof args.enabled === "boolean" ? args.enabled : undefined,
+            soundEnabled: typeof args.soundEnabled === "boolean" ? args.soundEnabled : undefined,
+            dndEnabled: typeof args.dndEnabled === "boolean" ? args.dndEnabled : undefined,
+            minUrgency: typeof args.minUrgency === "string" ? (args.minUrgency as GoalNotificationUrgency) : undefined,
+          });
+
+          return {
+            success: true,
+            preferences: prefs,
+          };
+        },
+      },
+      {
+        name: "goal_toggle_milestone_checklist",
+        description: "Toggle completion status of a checklist subtask item within a milestone checkpoint.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          milestoneId: { type: "string", required: true, description: "Milestone ID (e.g. 'm-1')" },
+          checkId: { type: "string", required: true, description: "Checklist item ID or text" },
+          done: { type: "boolean", description: "Target done status (toggle if omitted)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const milestoneId = String(args.milestoneId || "");
+          const checkId = String(args.checkId || "");
+          const done = typeof args.done === "boolean" ? args.done : undefined;
+
+          const ok = this.supervisor.toggleMilestoneChecklist(sessionId, milestoneId, checkId, done);
+          return {
+            success: ok,
+            sessionId,
+            milestoneId,
+            checkId,
+            message: ok ? `Checklist item '${checkId}' in milestone '${milestoneId}' updated.` : `Failed to update checklist item.`,
+          };
+        },
+      },
+      {
+        name: "goal_auto_assign_swarm",
+        description: "Autonomous Swarm Workload Balancer: Distributes uncompleted milestones across worker session IDs evenly.",
+        parameters: {
+          parentSessionId: { type: "string", required: true, description: "Parent goal session ID" },
+          workerSessionIds: { type: "string", required: true, description: "Comma-separated list of worker session IDs" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const parentSessionId = String(args.parentSessionId || "").trim();
+          const rawWorkers = String(args.workerSessionIds || "").trim();
+          const workerIds = rawWorkers.split(",").map((s) => s.trim()).filter(Boolean);
+
+          const result = this.supervisor.autoAssignSwarm(parentSessionId, workerIds);
+          return {
+            success: result.assignedMilestonesCount > 0,
+            result,
+          };
+        },
+      },
+      {
+        name: "goal_archive_completed",
+        description: "Archive completed and fulfilled goals to maintain clean high-velocity active workspaces.",
+        parameters: {
+          cutoffMs: { type: "number", description: "Optional cutoff timestamp age in ms" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const cutoffMs = typeof args.cutoffMs === "number" ? args.cutoffMs : 0;
+          const result = this.supervisor.archiveCompletedGoals(cutoffMs);
+          return {
+            success: true,
+            result,
+          };
+        },
+      },
+      {
+        name: "goal_clone",
+        description: "Clone a goal session into a new session for subsequent sprint iterations or phase transitions.",
+        parameters: {
+          sourceSessionId: { type: "string", required: true, description: "Source session ID" },
+          targetSessionId: { type: "string", required: true, description: "Target new session ID" },
+          resetProgress: { type: "boolean", description: "Reset progress and checklists to pending (default: false)" },
+          resetGates: { type: "boolean", description: "Reset gate attempt counters (default: false)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const src = String(args.sourceSessionId || "");
+          const tgt = String(args.targetSessionId || "");
+          const resetProgress = typeof args.resetProgress === "boolean" ? args.resetProgress : false;
+          const resetGates = typeof args.resetGates === "boolean" ? args.resetGates : false;
+
+          const cloned = this.supervisor.cloneGoal(src, tgt, { resetProgress, resetGates });
+          return {
+            success: cloned !== null,
+            clonedGoal: cloned,
+          };
+        },
+      },
+      {
+        name: "goal_create_from_template",
+        description: "Instantiate a specialized goal directly from built-in template with preset quality gates & milestone DAGs.",
+        parameters: {
+          templateId: { type: "string", required: true, description: "Template kind: bugfix | feature | refactor | security_fix | performance_optimization | audit | release | learning" },
+          sessionId: { type: "string", description: "Target session ID (default: 'default')" },
+          targetOutcome: { type: "string", description: "Specific outcome or title for the goal" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const tmplId = String(args.templateId || "feature");
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const targetOutcome = typeof args.targetOutcome === "string" ? args.targetOutcome : undefined;
+
+          const state = this.supervisor.instantiateTemplate(tmplId, sessionId, targetOutcome);
+          return {
+            success: state !== undefined,
+            state,
+            message: state ? `Goal instantiated from '${tmplId}' template for session '${sessionId}'.` : `Template '${tmplId}' not found.`,
+          };
+        },
+      },
+      {
+        name: "goal_adjust_milestone_progress",
+        description: "Adjust milestone progress percentage by a relative delta (e.g. +10, -20).",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          milestoneId: { type: "string", required: true, description: "Milestone ID" },
+          deltaPercent: { type: "number", required: true, description: "Delta percent to add/subtract (e.g. 10 or -10)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const milestoneId = String(args.milestoneId || "");
+          const deltaPercent = typeof args.deltaPercent === "number" ? args.deltaPercent : 10;
+
+          const ok = this.supervisor.adjustMilestoneProgress(sessionId, milestoneId, deltaPercent);
+          return {
+            success: ok,
+            sessionId,
+            milestoneId,
+            deltaPercent,
+            message: ok ? `Adjusted milestone '${milestoneId}' progress by ${deltaPercent}%.` : `Failed to adjust progress.`,
+          };
+        },
+      },
+      {
+        name: "goal_set_milestone_blocked",
+        description: "Set or clear the blocked status of a milestone checkpoint with optional reason.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          milestoneId: { type: "string", required: true, description: "Milestone ID" },
+          blocked: { type: "boolean", required: true, description: "True to mark blocked, false to unblock" },
+          reason: { type: "string", description: "Optional explanation for blocking" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const milestoneId = String(args.milestoneId || "");
+          const blocked = typeof args.blocked === "boolean" ? args.blocked : true;
+          const reason = typeof args.reason === "string" ? args.reason : undefined;
+
+          const ok = this.supervisor.setMilestoneBlocked(sessionId, milestoneId, blocked, reason);
+          return {
+            success: ok,
+            sessionId,
+            milestoneId,
+            blocked,
+            message: ok ? `Milestone '${milestoneId}' ${blocked ? "marked as BLOCKED" : "unblocked"}.` : `Failed to update milestone blocked status.`,
+          };
+        },
+      },
+      {
+        name: "goal_audit_health",
+        description: "Audit SLA delivery health, pacing consumption rate against maxTurns budget, and remaining turns estimation.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const report = this.supervisor.auditGoalHealth(sessionId);
+          return {
+            success: report !== null,
+            health: report,
+          };
+        },
+      },
+      {
+        name: "goal_diagnose_risks",
+        description: "Diagnose root-cause failure risks, blast radius in DAG, and formulate immediate actionable remediation steps.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const diagnosis = this.supervisor.diagnoseGoalRisks(sessionId);
+          return {
+            success: diagnosis !== null,
+            diagnosis,
+          };
+        },
+      },
+      {
+        name: "goal_tag_milestone",
+        description: "Attach or update tag labels (e.g. ['backend', 'p0', 'security']) to a goal or specific milestone.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          tags: { type: "string", required: true, description: "Comma-separated list of tags" },
+          milestoneId: { type: "string", description: "Optional milestone ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const rawTags = String(args.tags || "");
+          const tags = rawTags.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean);
+          const milestoneId = typeof args.milestoneId === "string" ? args.milestoneId : undefined;
+
+          const ok = this.supervisor.tagGoalOrMilestone(sessionId, tags, milestoneId);
+          return {
+            success: ok,
+            sessionId,
+            milestoneId,
+            tags,
+            message: ok ? `Tagged with ${tags.map((t) => `#${t}`).join(", ")}.` : `Failed to tag goal or milestone.`,
+          };
+        },
+      },
+      {
+        name: "goal_set_deadline",
+        description: "Set a target completion deadline timestamp for a goal or specific milestone.",
+        parameters: {
+          sessionId: { type: "string", description: "Session identifier (default: 'default')" },
+          deadlineMs: { type: "number", required: true, description: "Target deadline epoch timestamp in milliseconds" },
+          milestoneId: { type: "string", description: "Optional milestone ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd: string) => {
+          const sessionId = typeof args.sessionId === "string" && args.sessionId.trim() ? args.sessionId.trim() : "default";
+          const deadlineMs = Number(args.deadlineMs || 0);
+          const milestoneId = typeof args.milestoneId === "string" ? args.milestoneId : undefined;
+
+          const ok = this.supervisor.setGoalDeadline(sessionId, deadlineMs, milestoneId);
+          return {
+            success: ok,
+            sessionId,
+            milestoneId,
+            deadlineMs,
+            targetDate: new Date(deadlineMs).toISOString(),
           };
         },
       },

@@ -61,8 +61,8 @@ export class DeterministicGoalEngine {
   private readonly substrate: BroccoliGoalSubstrate;
   private readonly templates: Map<string, GoalTemplate> = new Map();
 
-  constructor(substrate: BroccoliGoalSubstrate) {
-    this.substrate = substrate;
+  constructor(substrate?: BroccoliGoalSubstrate) {
+    this.substrate = substrate || new BroccoliGoalSubstrate();
     this.initTemplates();
   }
 
@@ -209,6 +209,55 @@ export class DeterministicGoalEngine {
         ],
         maxTurns: 15,
       },
+      {
+        id: "security_fix",
+        name: "Security Vulnerability & CVE Remediation",
+        description: "Assess blast radius, patch vulnerability, and verify zero regressions with automated audit gates.",
+        category: "bugfix",
+        icon: "🔒",
+        defaultContract: {
+          outcome: "Security vulnerability remediated and confirmed via deterministic penetration/regression test.",
+          verification: "Security test suite passes and npm audit reports zero high/critical vulnerabilities.",
+          constraints: "Zero breaking changes to authenticated user flows.",
+          boundaries: "Security and authentication layers.",
+          stopWhen: "Remediation requires breaking cryptographic protocol changes.",
+        },
+        recommendedGates: [
+          { name: "Type Check", command: "npm run check", policy: "blocking", timeoutSeconds: 60 },
+          { name: "Security Audit", command: "npm test", policy: "blocking", timeoutSeconds: 120 },
+        ],
+        defaultMilestones: [
+          { id: "m-1", title: "Analyze vulnerability CVE and assess blast radius", dependsOn: [] },
+          { id: "m-2", title: "Construct regression test asserting the vulnerability", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Apply minimal surgical security fix", dependsOn: ["m-2"] },
+          { id: "m-4", title: "Verify security audit and regression test pass", dependsOn: ["m-3"] },
+        ],
+        maxTurns: 20,
+      },
+      {
+        id: "performance_optimization",
+        name: "Sub-Millisecond Latency & Throughput Optimization",
+        description: "Profile hot paths, eliminate allocations/garbage collection, and verify microsecond SLAs.",
+        category: "refactor",
+        icon: "⚡",
+        defaultContract: {
+          outcome: "Hot path latency reduced with sub-millisecond execution SLAs maintained.",
+          verification: "Micro-benchmarks demonstrate >= 2x throughput with zero SLA violations.",
+          constraints: "Preserve 100% functional correctness and base class immutability.",
+          boundaries: "Targeted hot paths and memory slabs.",
+          stopWhen: "Further micro-optimizations degrade code readability without measurable gain.",
+        },
+        recommendedGates: [
+          { name: "Type Check", command: "npm run check", policy: "blocking", timeoutSeconds: 60 },
+          { name: "Repo Guardrails", command: "node --import tsx scripts/validate-repo.ts", policy: "blocking", timeoutSeconds: 60 },
+        ],
+        defaultMilestones: [
+          { id: "m-1", title: "Profile CPU/memory allocations and establish baseline SLA", dependsOn: [] },
+          { id: "m-2", title: "Refactor hot paths to contiguous buffers and zero-GC", dependsOn: ["m-1"] },
+          { id: "m-3", title: "Run 20,000-op micro-benchmark and verify SLAs", dependsOn: ["m-2"] },
+        ],
+        maxTurns: 20,
+      },
     ];
 
     for (const t of builtins) {
@@ -308,7 +357,14 @@ export class DeterministicGoalEngine {
       stopWhen: [],
     };
 
-    for (const rawLine of text.split("\n")) {
+    // Normalize inline aliases like ' verify:' or ' constraints:' to newlines
+    let normalized = text;
+    for (const alias of Object.keys(CONTRACT_ALIASES)) {
+      const regex = new RegExp(`\\s+(${alias}:)`, "gi");
+      normalized = normalized.replace(regex, "\n$1");
+    }
+
+    for (const rawLine of normalized.split("\n")) {
       const line = rawLine.trim();
       if (!line) continue;
 
@@ -575,6 +631,13 @@ export class DeterministicGoalEngine {
       contractAdherenceScore: Math.max(0, adherenceScore),
       trajectoryEventsCount: state.trajectory ? state.trajectory.length : 0,
     };
+  }
+
+  /**
+   * Evaluates quality gates, performs auto-remediation if configured, and evaluates turn progression.
+   */
+  public async evaluateGoalTurn(state: GoalState, lastResponse: string, cwd?: string): Promise<GoalEvaluationResult> {
+    return this.evaluateAfterTurn({ state, lastResponse, cwd });
   }
 
   /**

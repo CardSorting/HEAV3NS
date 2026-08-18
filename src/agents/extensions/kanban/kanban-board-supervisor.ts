@@ -2,23 +2,35 @@
  * kanban-board-supervisor.ts
  *
  * Master Kanban Board Supervisor coordinating task lifecycles, DAG dependency resolution,
- * typed blockers, unblock loop breaker, comments, links, and WIP limits (ADR-118).
+ * typed blockers, unblock loop breaker, comments, links, desktop notifications, and WIP limits (ADR-118).
  */
 
 import type {
   KanbanBlockKind,
   KanbanBoard,
+  KanbanBulkMutationResult,
   KanbanColumn,
   KanbanColumnDefinition,
+  KanbanDeadlinesReport,
+  KanbanGroupedSwimlane,
+  KanbanGroupBy,
   KanbanPriority,
   KanbanQueryFilter,
   KanbanReasoningEffort,
   KanbanRelationType,
+  KanbanSortBy,
+  KanbanSortDirection,
   KanbanTask,
   KanbanTaskComment,
   KanbanTaskEvent,
+  KanbanTaskHierarchy,
   KanbanTaskLink,
   KanbanTaskMutation,
+  KanbanVelocityMetrics,
+  KanbanWorkloadBalanceResult,
+  KanbanArchiveResult,
+  KanbanCloneBoardOptions,
+  KanbanIssueTemplateKind,
   KanbanWorkspaceKind,
 } from "../../../core/contracts/kanban.contracts.js";
 import { BLOCK_RECURRENCE_LIMIT } from "../../../core/contracts/kanban.contracts.js";
@@ -72,6 +84,13 @@ export class KanbanBoardSupervisor {
     this.engine = engine;
     this.substrate = substrate;
     this.taskCounter = 1;
+  }
+
+  /**
+   * Retrieves underlying substrate.
+   */
+  getSubstrate(): BroccoliKanbanSubstrate {
+    return this.substrate;
   }
 
   /**
@@ -176,6 +195,16 @@ export class KanbanBoardSupervisor {
       });
     }
 
+    // Emit desktop notification
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId,
+      boardId,
+      title: `Task Created: ${newTask.title}`,
+      message: `Added to ${initialColumn} (${priority} priority)`,
+      urgency: priority === "urgent" || priority === "critical" ? "high" : "normal",
+      trigger: "task_created",
+    }).catch(() => {});
+
     return { success: true, task: newTask };
   }
 
@@ -223,6 +252,31 @@ export class KanbanBoardSupervisor {
       return { success: false, error: `Failed to update task '${taskId}' in substrate` };
     }
 
+    // Dispatch transition notification
+    if (mutation.column && mutation.column !== currentTask.column) {
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId,
+        boardId,
+        title: `Task Moved: ${updated.title}`,
+        message: `Transitioned from ${currentTask.column} -> ${updated.column}`,
+        urgency: updated.column === "done" ? "normal" : "low",
+        trigger: "column_transition",
+        soundName: updated.column === "done" ? "Hero" : undefined,
+      }).catch(() => {});
+    }
+
+    // Dispatch assignment notification
+    if (mutation.assignee && mutation.assignee !== currentTask.assignee) {
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId,
+        boardId,
+        title: `Task Assigned: ${updated.title}`,
+        message: `Assigned to ${mutation.assignee}`,
+        urgency: "normal",
+        trigger: "assigned",
+      }).catch(() => {});
+    }
+
     return { success: true, task: updated };
   }
 
@@ -265,6 +319,17 @@ export class KanbanBoardSupervisor {
       timestampMs: Date.now(),
     });
 
+    // Urgent notification on block
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId,
+      boardId,
+      title: `🛑 Task Blocked (${kind}): ${task.title}`,
+      message: reason,
+      urgency: "urgent",
+      trigger: "blocked",
+      soundName: "Basso",
+    }).catch(() => {});
+
     return { success: true, task: updated };
   }
 
@@ -299,6 +364,16 @@ export class KanbanBoardSupervisor {
       details: { reason, targetColumn },
       timestampMs: Date.now(),
     });
+
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId,
+      boardId,
+      title: `✅ Task Unblocked: ${task.title}`,
+      message: `Moved to ${targetColumn} (${reason})`,
+      urgency: "normal",
+      trigger: "unblocked",
+      soundName: "Ping",
+    }).catch(() => {});
 
     return { success: true, task: updated };
   }
@@ -348,6 +423,15 @@ export class KanbanBoardSupervisor {
     };
 
     this.substrate.addComment(comment);
+
+    this.substrate.getNotificationDispatcher().dispatch({
+      taskId,
+      title: `New Comment on #${taskId}`,
+      message: `${author}: ${content.slice(0, 80)}`,
+      urgency: "low",
+      trigger: "comment_added",
+    }).catch(() => {});
+
     return { success: true, comment };
   }
 
@@ -398,6 +482,19 @@ export class KanbanBoardSupervisor {
     return board.tasks
       .filter((task) => this.engine.matchesFilter(task, filter, board.tasks))
       .sort((a, b) => b.priorityWeight - a.priorityWeight || a.createdAtMs - b.createdAtMs);
+  }
+
+  /**
+   * Groups and sorts tasks into structured swimlanes for visual rendering.
+   */
+  getGroupedTasks(
+    boardId: string = "default",
+    groupBy: KanbanGroupBy = "column",
+    sortBy: KanbanSortBy = "priority",
+    sortDirection: KanbanSortDirection = "desc",
+    filter: KanbanQueryFilter = {}
+  ): readonly KanbanGroupedSwimlane[] {
+    return this.substrate.getGroupedTasks(boardId, groupBy, sortBy, sortDirection, filter);
   }
 
   /**
@@ -461,6 +558,173 @@ export class KanbanBoardSupervisor {
     }
 
     return { promotedTaskIds, count: promotedTaskIds.length };
+  }
+
+  /**
+   * Audits approaching and overdue task deadlines and dispatches SLA alerts.
+   */
+  checkUpcomingDeadlines(boardId: string = "default", warningWindowMs: number = 86400000): KanbanDeadlinesReport {
+    const report = this.substrate.scanDeadlines(boardId, warningWindowMs);
+
+    for (const overdue of report.overdueTasks) {
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId: overdue.id,
+        boardId,
+        title: `🚨 OVERDUE: ${overdue.title}`,
+        message: `Task passed due date! Immediate action required.`,
+        urgency: "urgent",
+        trigger: "sla_breached",
+        soundName: "Basso",
+      }).catch(() => {});
+    }
+
+    for (const upcoming of report.upcomingSoonTasks) {
+      this.substrate.getNotificationDispatcher().dispatch({
+        taskId: upcoming.id,
+        boardId,
+        title: `⏰ Due Soon: ${upcoming.title}`,
+        message: `Deadline approaching within 24 hours.`,
+        urgency: "high",
+        trigger: "deadline_warning",
+      }).catch(() => {});
+    }
+
+    return report;
+  }
+
+  /**
+   * Undoes the last mutation on a board.
+   */
+  undo(boardId: string = "default"): { success: boolean; restoredTask?: KanbanTask } {
+    return this.substrate.undoMutation(boardId);
+  }
+
+  /**
+   * Redoes the last undone mutation on a board.
+   */
+  redo(boardId: string = "default"): { success: boolean; restoredTask?: KanbanTask } {
+    return this.substrate.redoMutation(boardId);
+  }
+
+  /**
+   * Retrieves a task along with its full relational hierarchy (blockers, dependents, subtasks, parent).
+   */
+  getTaskHierarchy(taskId: string, boardId: string = "default"): KanbanTaskHierarchy | undefined {
+    return this.substrate.getTaskWithHierarchy(boardId, taskId);
+  }
+
+  /**
+   * Computes velocity and throughput metrics for a board.
+   */
+  getVelocityMetrics(boardId: string = "default"): KanbanVelocityMetrics | undefined {
+    return this.substrate.getVelocityMetrics(boardId);
+  }
+
+  /**
+   * Performs a bulk update across multiple tasks atomically.
+   */
+  bulkUpdateTasks(
+    boardId: string = "default",
+    taskIds: readonly string[],
+    mutation: KanbanTaskMutation,
+    frameIndex: number = 0
+  ): KanbanBulkMutationResult {
+    return this.substrate.bulkUpdateTasks(boardId, taskIds, mutation, frameIndex);
+  }
+
+  /**
+   * Toggles or adds a subtask checklist item on a task.
+   */
+  toggleSubtaskChecklist(
+    boardId: string = "default",
+    taskId: string,
+    subtaskId: string,
+    done?: boolean
+  ): { success: boolean; task?: KanbanTask; error?: string } {
+    const task = this.substrate.toggleSubtaskChecklist(boardId, taskId, subtaskId, done);
+    if (!task) return { success: false, error: `Task '${taskId}' not found on board '${boardId}'` };
+    return { success: true, task };
+  }
+
+  /**
+   * Moves a task from one board to another board.
+   */
+  moveTaskToBoard(taskId: string, fromBoardId: string, toBoardId: string): { success: boolean; error?: string } {
+    const ok = this.substrate.moveTaskToBoard(taskId, fromBoardId, toBoardId);
+    if (!ok) return { success: false, error: `Could not move task '${taskId}' from '${fromBoardId}' to '${toBoardId}'` };
+    return { success: true };
+  }
+
+  /**
+   * Automatically balances and assigns ready tasks across available workers.
+   */
+  autoAssignWorkload(boardId: string = "default", workerIds: readonly string[]): KanbanWorkloadBalanceResult {
+    return this.substrate.autoAssignWorkload(boardId, workerIds);
+  }
+
+  /**
+   * Exports an interactive HTML Kanban board.
+   */
+  exportHtml(boardId: string = "default"): string {
+    return this.substrate.exportInteractiveHtmlView(boardId);
+  }
+
+  /**
+   * Exports a board to GitHub-flavored Markdown.
+   */
+  exportMarkdown(boardId: string = "default"): string {
+    return this.substrate.exportMarkdown(boardId);
+  }
+
+  /**
+   * Exports all tasks on a board to CSV format.
+   */
+  exportCsv(boardId: string = "default"): string {
+    return this.substrate.exportCsv(boardId);
+  }
+
+  /**
+   * Exports all tasks and board configuration to JSON.
+   */
+  exportJson(boardId: string = "default"): string {
+    return this.substrate.exportJson(boardId);
+  }
+
+  /**
+   * Creates a task pre-populated from an issue template (bug_report, feature_spec, security_fix, refactor).
+   */
+  createTaskFromTemplate(
+    boardId: string = "default",
+    templateKind: KanbanIssueTemplateKind,
+    title: string,
+    overrides?: Partial<KanbanTaskMutation>
+  ): { success: boolean; task?: KanbanTask; error?: string } {
+    const task = this.substrate.createTaskFromTemplate(boardId, templateKind, title, overrides);
+    if (!task) return { success: false, error: `Could not create task from template '${templateKind}'` };
+    return { success: true, task };
+  }
+
+  /**
+   * Archives completed tasks on a board.
+   */
+  archiveCompletedTasks(boardId: string = "default", cutoffMs?: number): KanbanArchiveResult {
+    return this.substrate.archiveCompletedTasks(boardId, cutoffMs);
+  }
+
+  /**
+   * Clones a board structure and optional tasks for a new sprint/milestone.
+   */
+  cloneBoard(sourceBoardId: string, targetBoardId: string, options?: KanbanCloneBoardOptions): { success: boolean; error?: string } {
+    const ok = this.substrate.cloneBoard(sourceBoardId, targetBoardId, options);
+    if (!ok) return { success: false, error: `Could not clone board '${sourceBoardId}' to '${targetBoardId}'` };
+    return { success: true };
+  }
+
+  /**
+   * Renders visual ASCII / Unicode DAG dependency graph of the board.
+   */
+  renderDagGraph(boardId: string = "default"): string {
+    return this.substrate.renderDagGraph(boardId);
   }
 
   /**

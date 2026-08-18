@@ -1537,6 +1537,7 @@ export { BroccoliKanbanSubstrate } from "./sessions/extensions/kanban/broccoli-k
 export { KanbanSnapshotManager } from "./sessions/extensions/kanban/kanban-snapshot-manager.js";
 export { KanbanBoardSupervisor } from "./agents/extensions/kanban/kanban-board-supervisor.js";
 export { KanbanOrchestrationToolSuite } from "./tooling/extensions/kanban/kanban-orchestration-tool-suite.js";
+export { KanbanDesktopNotificationDispatcher } from "./tooling/extensions/kanban/kanban-notification-dispatcher.js";
 export type {
   KanbanColumn,
   KanbanPriority,
@@ -1545,6 +1546,23 @@ export type {
   KanbanTaskMutation,
   KanbanQueryFilter,
   KanbanWorkspaceSnapshot,
+  KanbanNotificationEvent,
+  KanbanNotificationPreferences,
+  KanbanNotificationRecord,
+  KanbanNotificationUrgency,
+  KanbanNotificationTrigger,
+  KanbanGroupBy,
+  KanbanSortBy,
+  KanbanSortDirection,
+  KanbanGroupedSwimlane,
+  KanbanDeadlinesReport,
+  KanbanMutationUndoRecord,
+  KanbanTaskHierarchy,
+  KanbanVelocityMetrics,
+  KanbanBulkMutationResult,
+  KanbanExportFormat,
+  KanbanSubtaskChecklistItem,
+  KanbanWorkloadBalanceResult,
 } from "./core/contracts/kanban.contracts.js";
 
 export { DeterministicWebEngine } from "./tooling/extensions/web/deterministic-web-engine.js";
@@ -2594,6 +2612,8 @@ export { GoalSupervisor } from "./agents/extensions/goals/goal-supervisor.js";
 export { BroccoliGoalSubstrate } from "./sessions/extensions/goals/broccoli-goal-substrate.js";
 export { GoalSnapshotManager } from "./sessions/extensions/goals/goal-snapshot-manager.js";
 export { GoalToolSuite } from "./tooling/extensions/goals/goal-tool-suite.js";
+export { GoalDesktopNotificationDispatcher } from "./tooling/extensions/goals/goal-notification-dispatcher.js";
+export { GoalDashboardModal } from "./tui/components/goal-dashboard-modal.js";
 export type {
   GoalCategory,
   GoalContract,
@@ -2611,6 +2631,27 @@ export type {
   GoalTemplate,
   GoalVerdict,
   MilestoneStatus,
+  GoalNotificationEvent,
+  GoalNotificationTrigger,
+  GoalNotificationUrgency,
+  GoalNotificationPreferences,
+  GoalNotificationRecord,
+  GoalGroupBy,
+  GoalSortBy,
+  GoalSortDirection,
+  GoalExportFormat,
+  GoalGroupedLane,
+  GoalMutationUndoRecord,
+  GoalVelocityMetrics,
+  GoalHierarchyReport,
+  GoalBulkMutationResult,
+  GoalMilestoneChecklistItem,
+  GoalSwarmBalanceResult,
+  GoalArchiveResult,
+  GoalCloneOptions,
+  GoalHealthStatus,
+  GoalHealthAuditReport,
+  GoalRiskDiagnosis,
 } from "./core/contracts/goal.contracts.js";
 export {
   DEFAULT_GATE_MAX_RETRIES,

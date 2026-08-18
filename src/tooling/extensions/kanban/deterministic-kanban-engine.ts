@@ -303,7 +303,7 @@ export class DeterministicKanbanEngine {
       }
     }
 
-    // Search term filter (substring across title, description, tags)
+    // Search term filter (substring across title, description, tags, id)
     if (effectiveFilter.searchTerm) {
       const term = effectiveFilter.searchTerm.toLowerCase();
       const matchTitle = task.title.toLowerCase().includes(term);
