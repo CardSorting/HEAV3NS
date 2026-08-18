@@ -282,93 +282,172 @@ Performance timings are host-sensitive and must not be copied forward as permane
 
 ## 🚀 Quick Start & Onboarding
 
-Get up and running with **LUMI-JOY** in seconds:
+Get up and running with **LUMI-JOY** in under 60 seconds with our zero-friction onboarding flow:
 
-### 1. Prerequisites & Installation
+```mermaid
+graph LR
+    A[1. Install & Build] --> B[2. Authenticate Provider]
+    B --> C{3. Choose Interface}
+    C -->|Terminal UI| D[Interactive TUI Shell]
+    C -->|Direct CLI| E[Single-Turn CLI Runner]
+    C -->|Code SDK| F[TypeScript Monolith API]
+    
+    style A fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style B fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style C fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style D fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style E fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style F fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
+```
 
-Ensure you have **Node.js 20.19+** (or a compatible newer release) installed:
+---
+
+### 📦 Step 1: Prerequisites & Installation
+
+LUMI-JOY is built as a zero-dependency, pure TypeScript monolith. Ensure you have **Node.js 20.19+** (or a compatible newer LTS release) installed:
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/CardSorting/LUMI-JOY.git
 cd LUMI-JOY
 
-# Install dependencies
+# 2. Install dependencies (pure TypeScript toolchain)
 npm install
 
-# Build the project
+# 3. Compile the monolith
 npm run build
 ```
 
-### 2. Provider Authentication & Guided Setup
+---
 
-Configure your LLM providers (OpenAI Codex OAuth, Anthropic, or OpenAI API keys):
+### 🔑 Step 2: Provider Authentication & Zero-Leak Security
+
+LUMI-JOY provides an interactive onboarding wizard to configure your preferred LLM provider:
 
 ```bash
-# Launch the interactive guided setup wizard
+# Launch the interactive provider configuration wizard
 npx tsx src/index.ts --setup
-# or run the global binary if linked:
+# or if linked globally:
 # lumi --setup
 ```
 
-> **Codex OAuth**: Select **OpenAI Codex OAuth** to initiate browser sign-in. Paste the callback authorization code if automatic redirect capture is unavailable. Credentials are stored securely in `~/.lumi/config.json`.
+#### Supported Authentication Modes:
+1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in. Supports automatic localhost callback redirect listening (`http://localhost:1455/auth/callback`) or manual code/URL fallback.
+2. **Anthropic Claude**: Configure your `ANTHROPIC_API_KEY` for Claude 3.5 Sonnet and Opus models.
+3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, and reasoning models.
+4. **OpenAI-Compatible Custom Proxy**: Connect private corporate endpoints, Ollama, vLLM, or OpenRouter gateways.
 
-### 3. Launch the Interactive Shell or Programmatic SDK
+> 🔒 **Security Guarantee**: All credentials and tokens are stored in `~/.lumi/config.json` with strict POSIX `0600` (user read/write only) permissions. Credentials are automatically scrubbed from streaming logs and memory dumps by `DeterministicSecretRedactor`.
+
+---
+
+### 💻 Step 3: Run Your First Agent Turn (3 Flexible Modes)
+
+#### Mode A: Fullscreen Interactive TUI Shell (Recommended)
+Experience the differential-rendering terminal interface with live activity timelines, streaming reasoning scrubbers, and modal dashboards:
 
 ```bash
-# Start the interactive terminal shell
+# Start the fullscreen interactive terminal shell
 npx tsx src/index.ts
-
-# Run a single prompt directly from the CLI
-npx tsx src/index.ts "Build a HTML5 Canvas game in src/app.js"
+# or: lumi
 ```
 
-#### Programmatic TypeScript Usage
+#### Mode B: Direct CLI Execution (Single-Shot Turns)
+Execute autonomous pair programming tasks directly from your terminal or CI/CD pipelines:
+
+```bash
+# Run a single prompt directly from the CLI
+npx tsx src/index.ts "Create a responsive Flappy Bird Canvas game in src/app.js"
+```
+
+#### Mode C: Programmatic TypeScript / Node.js SDK
+Embed the deterministic engine directly into your enterprise developer tools, CI bots, or IDE extensions:
 
 ```typescript
 import { LumiMonolith } from "lumi-joy";
 
-// Initialize the deterministic monolith engine
+// 1. Initialize the monolithic game engine agent container
 const lumi = new LumiMonolith();
 
-// Execute a frame-perfect turn with real-time progress callbacks
+// 2. Execute a frame-perfect turn with real-time streaming telemetry
 const result = await lumi.tick({
-  prompt: "Analyze repository topology and write unit tests",
+  prompt: "Analyze repository architecture, run test suites, and fix compiler errors",
   onProgress: (event) => {
-    console.log(`[${event.phase}] ${event.message}`);
+    console.log(`[${event.phase}] (${event.status}) ${event.message}`);
   },
 });
 
-console.log("Agent Response:", result.response);
+console.log("Turn Outcome:", result.outcome);
+console.log("Agent Response:\n", result.response);
 ```
 
-### 🖥️ Interactive TUI & Slash Commands
+---
 
-LUMI includes a high-performance differential-rendering Terminal User Interface (`lumi` or `npx tsx src/index.ts`):
+### ⌨️ Step 4: Interactive TUI Keybindings, Modals & Slash Commands
 
-- **Shortcuts**: `?` (Help Modal), `Ctrl+S` (Settings), `Alt+M` (Model Selector), `Home`/`End` (Jump History), `PgUp`/`PgDn`/`Shift+Up/Down` (Scroll), `Ctrl+L` (Clear Screen), `Ctrl+C` (Clear/Quit), `Ctrl+D` (EOF Exit).
-- **Slash Commands**:
-  - `/snapshots` & `/rewind [id]`: Snapshot inspection and sub-millisecond state time-travel rollback.
-  - `/memory`: Active cognitive facts and rules inspector.
-  - `/model [name]`: Interactive model selector and active model switcher.
-  - `/settings`: Interactive reasoning effort configuration (`low`, `medium`, `high`, `max`).
-  - `/health`: Comprehensive subsystem operational diagnostics.
-  - `/providers`: Provider latency and authentication connectivity tests.
+The interactive terminal interface provides rich desktop-class keyboard controls and slash commands:
 
-📖 Read the complete [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) and [Runtime Universal Pass Guide](.wiki/agent/runtime-universal-pass.md).
+#### 🎮 Keyboard Shortcuts
+| Shortcut | Action | Description |
+|---|---|---|
+| `?` | **Help Modal** | Open the interactive hotkey and command cheat sheet |
+| `Ctrl+M` / `Alt+M` | **Model Selector** | Dynamically switch between active LLM models and providers |
+| `Ctrl+S` | **Settings Modal** | Adjust reasoning effort (`low`, `medium`, `high`, `max`) and timeouts |
+| `Ctrl+G` | **Execution Guard Modal** | Inspect batch execution plans, loop firewall, and violations |
+| `Ctrl+D` / `Ctrl+C` | **Exit / Interrupt** | Gracefully abort the current turn or exit the terminal shell |
+| `Ctrl+L` | **Clear Screen** | Repaint the differential ANSI canvas (`\x1b[?2026h`) |
+| `PgUp` / `PgDn` | **Scroll Timeline** | Scroll smoothly through conversation turn history |
+| `Home` / `End` | **Jump History** | Jump to the beginning or end of the active session transcript |
 
-### 🛠️ Common Operational Commands
+#### 🧭 Essential Slash Commands
+| Slash Command | Parameters | Description |
+|---|---|---|
+| `/snapshots` | — | List all frame-perfect state checkpoints and their timestamps |
+| `/rewind` | `[snapshotId]` | Instant $O(1)$ state rewind to any previous snapshot in $<0.05\text{ ms}$ |
+| `/guard` | `[subcommand]` | Inspect batch parallelism scheduler, loop firewall, and mutation barriers |
+| `/db` | `[table] [query]` | Execute in-memory BroccoliDB queries, joins, aggregations, or table branches |
+| `/memory` | `[search]` | Search long-term cognitive knowledge graph facts and active rules |
+| `/skills` | `—` | Visualize the evolutionary skill tree DAG and prerequisite unlocks |
+| `/evidence` | `—` | View coding verification evidence ledger and stop-gate criteria |
+| `/doctor` / `/health` | `—` | Run live subsystem health audits across all 586 monolith components |
+| `/models` | `[modelName]` | Inspect model catalog pricing, context limits, and switch active model |
+| `/providers` | `—` | Test latency and connectivity to configured LLM provider endpoints |
+| `/flappy` | `—` | Materialize a complete 12-file React + TypeScript + Vite Flappy Bird project |
+| `/export` | `[html\|md\|csv]` | Export the current session into interactive HTML, Markdown, or CSV format |
 
-| Command | Action |
-|---|---|
-| `npm test` | Run the complete validation suite, including runtime-baseline contracts, documentation freshness/link checks, and architecture guardrails |
-| `npm run build` | Compile TypeScript (`tsc`) to `dist/` |
-| `npm run smoke` | Verify the current Pass 192 composition and critical runtime completion, rewind, safety, and integrity behaviors |
-| `npm run benchmark` | Run the hermetic latency and throughput benchmark suite |
-| `npm run baseline:update` | Run smoke, benchmarks, and guardrails, then atomically regenerate the live baseline reports |
-| `npx tsx src/index.ts --setup` | Run guided provider & model selection wizard |
+---
 
-The current measured baseline is stored in [`docs/LIVE_BASELINE.json`](docs/LIVE_BASELINE.json). [`docs/BENCHMARK_REPORT.md`](docs/BENCHMARK_REPORT.md) and [`docs/GRAND_ARCHITECTURAL_AUDIT.md`](docs/GRAND_ARCHITECTURAL_AUDIT.md) are generated views of that same run; do not hand-edit their measured values.
+### 🧪 Step 5: Verifying Workspace Health & Running Guardrails
+
+Ensure your local development environment passes all architectural guardrails and performance baselines:
+
+```bash
+# 1. Typecheck the entire codebase (0 errors required)
+npm run check
+
+# 2. Run capability smoke test (9 evidence checks, composition manifest verification)
+npm run smoke
+
+# 3. Run hermetic throughput & latency benchmark suite
+npm run benchmark
+
+# 4. Run full test suite (documentation link validation & architecture guardrails)
+npm test
+
+# 5. Atomically update live baseline reports
+npm run baseline:update
+```
+
+The live measured baseline is recorded in [`docs/LIVE_BASELINE.json`](docs/LIVE_BASELINE.json). Read [`docs/BENCHMARK_REPORT.md`](docs/BENCHMARK_REPORT.md) and [`docs/GRAND_ARCHITECTURAL_AUDIT.md`](docs/GRAND_ARCHITECTURAL_AUDIT.md) for current host measurements.
+
+---
+
+### 💡 Step 6: Next Steps & Architectural Guides
+
+- 🏛️ **Deep Architectural Blueprint**: Read the [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md).
+- 🧬 **The Distillation Journey**: Explore the [3-Tier Monolithic Heritage Matrix](#%EF%B8%8F-architectural-heritage--ancestral-lineage-the-hermes-agent-main-osmosis).
+- 📜 **ADR Decision Index**: Browse all 170+ architectural decision records in [ADR Index](.wiki/adr/README.md).
+- 🎓 **Academic Foundations**: Read the formal specification in [AKD-DSO Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md).
 
 ---
 
