@@ -6,6 +6,7 @@ import { Text } from "./text.js";
 import { Markdown, type MarkdownTheme } from "./markdown.js";
 import { matchesKey } from "../keys.js";
 import type { ModelSpecs } from "../../agents/extensions/resolution/model-catalog.js";
+import { LocalHardwareProfiler } from "../../tooling/extensions/endpoints/local-hardware-profiler.js";
 
 const MODEL_SELECT_THEME: SelectListTheme = {
   selectedPrefix: (text) => `\x1b[1;35m▶ \x1b[0m`,
@@ -32,7 +33,7 @@ const INSPECTOR_MARKDOWN_THEME: MarkdownTheme = {
   underline: (text) => `\x1b[4m${text}\x1b[0m`,
 };
 
-type CategoryTab = "all" | "openai-codex" | "openrouter" | "ollama";
+export type CategoryTab = "all" | "openai-codex" | "openrouter" | "local" | "ollama";
 
 export class ModelSelectModal implements Component, Focusable {
   focused: boolean = false;
@@ -41,7 +42,7 @@ export class ModelSelectModal implements Component, Focusable {
   private selectList: SelectList;
   private readonly availableModels: ModelSpecs[];
   private readonly modelMap: Map<string, ModelSpecs> = new Map();
-  private readonly favoriteModels: Set<string> = new Set(["gpt-5.6-terra", "anthropic/claude-3.5-sonnet"]);
+  private readonly favoriteModels: Set<string> = new Set(["gpt-5.6-terra", "anthropic/claude-3.5-sonnet", "qwen2.5-coder:latest"]);
   private activeCategory: CategoryTab = "all";
   private currentModel: string;
   private readonly onSelectModel: (modelName: string) => void;
@@ -81,9 +82,29 @@ export class ModelSelectModal implements Component, Focusable {
     this.container.addChild(this.vstack);
   }
 
+  private isLocalSpec(m: ModelSpecs): boolean {
+    if (m.isLocal) return true;
+    const p = m.provider.toLowerCase();
+    return (
+      p === "ollama" ||
+      p === "llamacpp" ||
+      p === "lmstudio" ||
+      p === "vllm" ||
+      p === "localai" ||
+      p === "local" ||
+      p === "onprem" ||
+      p === "custom" ||
+      m.modelName.includes(":latest") ||
+      m.modelName.startsWith("llamacpp/") ||
+      m.modelName.startsWith("lmstudio/")
+    );
+  }
+
   private createSelectListForCategory(category: CategoryTab): SelectList {
     let filtered = this.availableModels;
-    if (category !== "all") {
+    if (category === "local" || category === "ollama") {
+      filtered = this.availableModels.filter((m) => this.isLocalSpec(m));
+    } else if (category !== "all") {
       filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === category);
     }
 
@@ -97,8 +118,9 @@ export class ModelSelectModal implements Component, Focusable {
     const items: SelectItem[] = filtered.map((m) => {
       const isCurrent = m.modelName === this.currentModel ? " [ACTIVE]" : "";
       const isFav = this.favoriteModels.has(m.modelName) ? " [★ FAV]" : "";
+      const isLocalTag = this.isLocalSpec(m) ? " [LOCAL]" : "";
       const ctxKb = Math.round(m.contextWindowTokens / 1000);
-      const desc = `[${m.provider.toUpperCase()}] Ctx: ${ctxKb}k | Out: ${m.maxOutputTokens}${isCurrent}${isFav}`;
+      const desc = `[${m.provider.toUpperCase()}] Ctx: ${ctxKb}k | Out: ${m.maxOutputTokens}${isCurrent}${isFav}${isLocalTag}`;
       return {
         value: m.modelName,
         label: `${this.favoriteModels.has(m.modelName) ? "★ " : ""}${m.modelName}`,
@@ -151,7 +173,8 @@ export class ModelSelectModal implements Component, Focusable {
     const tabAll = this.activeCategory === "all" ? "\x1b[1;36m[1: ALL]\x1b[0m" : "\x1b[90m[1: ALL]\x1b[0m";
     const tabCodex = this.activeCategory === "openai-codex" ? "\x1b[1;36m[2: CODEX OAUTH]\x1b[0m" : "\x1b[90m[2: CODEX OAUTH]\x1b[0m";
     const tabRouter = this.activeCategory === "openrouter" ? "\x1b[1;36m[3: OPENROUTER]\x1b[0m" : "\x1b[90m[3: OPENROUTER]\x1b[0m";
-    const tabLocal = this.activeCategory === "ollama" ? "\x1b[1;36m[4: LOCAL/PROXY]\x1b[0m" : "\x1b[90m[4: LOCAL/PROXY]\x1b[0m";
+    const isLocalActive = this.activeCategory === "local" || this.activeCategory === "ollama";
+    const tabLocal = isLocalActive ? "\x1b[1;36m[4: LOCAL / ON-PREM]\x1b[0m" : "\x1b[90m[4: LOCAL / ON-PREM]\x1b[0m";
 
     const tabsHeader = new Text(`${tabAll}  ${tabCodex}  ${tabRouter}  ${tabLocal}`, 0, 0);
     this.vstack.addChild(tabsHeader);
@@ -174,19 +197,29 @@ export class ModelSelectModal implements Component, Focusable {
     if (!spec) return `*No model details available.*`;
     const isActive = spec.modelName === currentModel ? " `[ACTIVE MODEL]`" : "";
     const isFav = this.favoriteModels.has(spec.modelName) ? " `[★ FAVORITE]`" : "";
+    const isLocal = this.isLocalSpec(spec);
+    const localBadge = isLocal ? " `[100% PRIVATE & OFFLINE]`" : "";
     const vision = spec.supportsVision ? "`[YES]`" : "`[NO]`";
     const reasoning = spec.supportsReasoning ? "`[YES]`" : "`[NO]`";
     const ctxKb = Math.round(spec.contextWindowTokens / 1000);
-    const latency = spec.estimatedLatencyMs ?? (spec.provider === "ollama" ? 5 : spec.provider === "openai-codex" ? 45 : 120);
-    const inPrice = spec.inputPricePer1M === 0 ? "Free / Included" : `$${spec.inputPricePer1M.toFixed(2)}/1M`;
-    const outPrice = spec.outputPricePer1M === 0 ? "Free / Included" : `$${spec.outputPricePer1M.toFixed(2)}/1M`;
+    const latency = spec.estimatedLatencyMs ?? (isLocal ? 5 : spec.provider === "openai-codex" ? 45 : 120);
+    const inPrice = isLocal || spec.inputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.inputPricePer1M.toFixed(2)}/1M`;
+    const outPrice = isLocal || spec.outputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.outputPricePer1M.toFixed(2)}/1M`;
+
+    let vramSection = "";
+    if (isLocal) {
+      const profiler = new LocalHardwareProfiler();
+      const vram = profiler.evaluateModel(spec.modelName);
+      vramSection = `\n- **VRAM Fit**: \`${vram.badge}\` — *${vram.explanation}*`;
+    }
 
     return (
-      `#### Live Model Detail Inspector${isActive}${isFav}\n` +
+      `#### Live Model Detail Inspector${isActive}${isFav}${localBadge}\n` +
       `- **Provider**: \`${spec.provider.toUpperCase()}\` — ${spec.description || spec.modelName}\n` +
       `- **Context Window**: \`${spec.contextWindowTokens.toLocaleString()} tokens (${ctxKb}k)\` │ **Max Output**: \`${spec.maxOutputTokens.toLocaleString()} tokens\`\n` +
       `- **Pricing Specs**: Input: \`${inPrice}\` │ Output: \`${outPrice}\` │ **Est. Latency**: \`~${latency}ms\`\n` +
-      `- **Capabilities**: Vision: ${vision} │ Reasoning Mode: ${reasoning}`
+      `- **Capabilities**: Vision: ${vision} │ Reasoning Mode: ${reasoning}` +
+      vramSection
     );
   }
 
@@ -216,14 +249,15 @@ export class ModelSelectModal implements Component, Focusable {
       return;
     }
     if (data === "4") {
-      this.activeCategory = "ollama";
+      this.activeCategory = "local";
       this.selectList = this.createSelectListForCategory(this.activeCategory);
       this.renderModal();
       return;
     }
     if (data === "\t") {
-      const cats: CategoryTab[] = ["all", "openai-codex", "openrouter", "ollama"];
-      const nextIdx = (cats.indexOf(this.activeCategory) + 1) % cats.length;
+      const cats: CategoryTab[] = ["all", "openai-codex", "openrouter", "local"];
+      const currentNorm = this.activeCategory === "ollama" ? "local" : this.activeCategory;
+      const nextIdx = (cats.indexOf(currentNorm) + 1) % cats.length;
       this.activeCategory = cats[nextIdx]!;
       this.selectList = this.createSelectListForCategory(this.activeCategory);
       this.renderModal();

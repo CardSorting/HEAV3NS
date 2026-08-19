@@ -1,8 +1,25 @@
 import { DynamicModelCache } from "./dynamic-model-cache.js";
+import { DeterministicLocalEndpointEngine } from "../../../tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
+import type { LocalProviderKind } from "../../../core/contracts/local-endpoints.contracts.js";
 
 export interface ModelSpecs {
   modelName: string;
-  provider: "openrouter" | "openai-codex" | "ollama" | "anthropic" | "google" | "openai" | "deepseek" | "nous" | "custom";
+  provider:
+    | "openrouter"
+    | "openai-codex"
+    | "ollama"
+    | "llamacpp"
+    | "lmstudio"
+    | "vllm"
+    | "localai"
+    | "local"
+    | "onprem"
+    | "anthropic"
+    | "google"
+    | "openai"
+    | "deepseek"
+    | "nous"
+    | "custom";
   contextWindowTokens: number;
   maxOutputTokens: number;
   inputPricePer1M: number;
@@ -11,6 +28,7 @@ export interface ModelSpecs {
   supportsReasoning?: boolean;
   estimatedLatencyMs?: number;
   description?: string;
+  isLocal?: boolean;
 }
 
 interface OpenRouterModelApiResponse {
@@ -24,16 +42,18 @@ interface OpenRouterModelApiResponse {
 
 /**
  * ModelCatalog & Context Pricing Registry.
- * Absorbed from packages/catalog (Pass 16 / ADR-012).
+ * Absorbed from packages/catalog (Pass 16 / ADR-012) & upgraded for Local On-Prem (Pass 105 / ADR-052).
  *
- * Maintains model spec definitions, dynamic OpenRouter API auto-population,
- * context window limits, and turn token cost calculations.
+ * Maintains model spec definitions, dynamic OpenRouter & local engine auto-discovery (Ollama, llama.cpp, LM Studio, vLLM),
+ * context window limits, and turn token cost calculations with sub-cent honesty.
  */
 export class ModelCatalog {
   private readonly catalog: Map<string, ModelSpecs> = new Map();
   private readonly dynamicCache: DynamicModelCache = new DynamicModelCache();
+  private readonly localEngine: DeterministicLocalEndpointEngine;
 
-  constructor() {
+  constructor(localEngine?: DeterministicLocalEndpointEngine) {
+    this.localEngine = localEngine ?? new DeterministicLocalEndpointEngine();
     this.registerDefaults();
   }
 
@@ -169,7 +189,7 @@ export class ModelCatalog {
       this.registerModel(m);
     }
 
-    // Local / Proxy Models
+    // 1. Ollama Local Models
     this.registerModel({
       modelName: "llama3:latest",
       provider: "ollama",
@@ -178,7 +198,36 @@ export class ModelCatalog {
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: false,
+      estimatedLatencyMs: 5,
+      isLocal: true,
       description: "Local Ollama Llama 3 Instance",
+    });
+
+    this.registerModel({
+      modelName: "llama3.2:latest",
+      provider: "ollama",
+      contextWindowTokens: 32_000,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 4,
+      isLocal: true,
+      description: "Local Ollama Llama 3.2 (Lightweight, High-Velocity)",
+    });
+
+    this.registerModel({
+      modelName: "llama3.3:latest",
+      provider: "ollama",
+      contextWindowTokens: 128_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      supportsReasoning: true,
+      estimatedLatencyMs: 12,
+      isLocal: true,
+      description: "Local Ollama Llama 3.3 70B Flagship Model",
     });
 
     this.registerModel({
@@ -189,7 +238,158 @@ export class ModelCatalog {
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: false,
+      estimatedLatencyMs: 6,
+      isLocal: true,
       description: "Local Qwen 2.5 Coder Model",
+    });
+
+    this.registerModel({
+      modelName: "deepseek-r1:latest",
+      provider: "ollama",
+      contextWindowTokens: 64_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      supportsReasoning: true,
+      estimatedLatencyMs: 8,
+      isLocal: true,
+      description: "Local Ollama DeepSeek R1 Distill Reasoning Model",
+    });
+
+    this.registerModel({
+      modelName: "mistral:latest",
+      provider: "ollama",
+      contextWindowTokens: 32_000,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 5,
+      isLocal: true,
+      description: "Local Ollama Mistral 7B Instruct Model",
+    });
+
+    // 2. llama.cpp (llama-server) Models
+    this.registerModel({
+      modelName: "llamacpp/default",
+      provider: "llamacpp",
+      contextWindowTokens: 16_384,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 4,
+      isLocal: true,
+      description: "llama.cpp Server Active Loaded GGUF Model",
+    });
+
+    this.registerModel({
+      modelName: "llamacpp/qwen2.5-coder-7b",
+      provider: "llamacpp",
+      contextWindowTokens: 32_768,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 5,
+      isLocal: true,
+      description: "llama.cpp Qwen 2.5 Coder 7B Instruct GGUF",
+    });
+
+    this.registerModel({
+      modelName: "llamacpp/mistral-7b",
+      provider: "llamacpp",
+      contextWindowTokens: 32_768,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 4,
+      isLocal: true,
+      description: "llama.cpp Mistral 7B Instruct v0.3 GGUF",
+    });
+
+    // 3. LM Studio Models
+    this.registerModel({
+      modelName: "lmstudio/loaded-model",
+      provider: "lmstudio",
+      contextWindowTokens: 32_000,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 6,
+      isLocal: true,
+      description: "LM Studio Active Running Model (Port 1234)",
+    });
+
+    this.registerModel({
+      modelName: "lmstudio/qwen2.5-coder",
+      provider: "lmstudio",
+      contextWindowTokens: 32_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 6,
+      isLocal: true,
+      description: "LM Studio Qwen 2.5 Coder Model",
+    });
+
+    this.registerModel({
+      modelName: "lmstudio/deepseek-r1",
+      provider: "lmstudio",
+      contextWindowTokens: 64_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      supportsReasoning: true,
+      estimatedLatencyMs: 8,
+      isLocal: true,
+      description: "LM Studio DeepSeek R1 Distill GGUF",
+    });
+
+    // 4. vLLM & Custom On-Premises Models
+    this.registerModel({
+      modelName: "vllm/default",
+      provider: "vllm",
+      contextWindowTokens: 64_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 3,
+      isLocal: true,
+      description: "vLLM High-Throughput Inference Engine",
+    });
+
+    this.registerModel({
+      modelName: "onprem/llama-3.3-70b",
+      provider: "onprem",
+      contextWindowTokens: 128_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      supportsReasoning: true,
+      estimatedLatencyMs: 15,
+      isLocal: true,
+      description: "Private Corporate On-Premises Llama 3.3 Cluster",
+    });
+
+    this.registerModel({
+      modelName: "local/onprem-model",
+      provider: "local",
+      contextWindowTokens: 32_000,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: false,
+      estimatedLatencyMs: 5,
+      isLocal: true,
+      description: "Custom Local On-Premises OpenAI-Compatible Model",
     });
   }
 
@@ -198,16 +398,27 @@ export class ModelCatalog {
   }
 
   getModelInfo(modelName: string): ModelSpecs {
+    const isLocal =
+      modelName.startsWith("ollama/") ||
+      modelName.startsWith("llamacpp/") ||
+      modelName.startsWith("lmstudio/") ||
+      modelName.startsWith("vllm/") ||
+      modelName.startsWith("local/") ||
+      modelName.startsWith("onprem/") ||
+      modelName.includes(":latest");
+
     return (
       this.catalog.get(modelName) ?? {
         modelName,
-        provider: "custom",
+        provider: isLocal ? "local" : "custom",
         contextWindowTokens: 128_000,
         maxOutputTokens: 4_096,
-        inputPricePer1M: 1.0,
-        outputPricePer1M: 3.0,
+        inputPricePer1M: isLocal ? 0.0 : 1.0,
+        outputPricePer1M: isLocal ? 0.0 : 3.0,
         supportsVision: false,
-        description: "Custom Proxy Model",
+        estimatedLatencyMs: isLocal ? 5 : 45,
+        isLocal,
+        description: isLocal ? "Local On-Premises Model" : "Custom Proxy Model",
       }
     );
   }
@@ -271,6 +482,50 @@ export class ModelCatalog {
     return this.getFallbackOpenRouterModels();
   }
 
+  /**
+   * Dynamically discovers live models loaded/running on local endpoints (Ollama, llama.cpp, LM Studio, vLLM).
+   * Caches in DynamicModelCache with a 5-minute TTL.
+   */
+  async fetchLocalEndpointModels(provider: LocalProviderKind, baseUrl?: string): Promise<ModelSpecs[]> {
+    const cacheKey = `local:${provider}`;
+    const cached = this.dynamicCache.getCachedModels(cacheKey);
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    try {
+      const probeResult = await this.localEngine.probeServer(provider, baseUrl, undefined, 2000);
+      if (probeResult.reachable && probeResult.detectedModels.length > 0) {
+        const specsList: ModelSpecs[] = probeResult.detectedModels.map((m) => {
+          const spec: ModelSpecs = {
+            modelName: m.modelId,
+            provider: m.provider,
+            contextWindowTokens: m.contextWindow,
+            maxOutputTokens: m.maxOutputTokens,
+            inputPricePer1M: 0.0,
+            outputPricePer1M: 0.0,
+            supportsVision: m.supportsVision,
+            supportsReasoning: m.supportsReasoning,
+            estimatedLatencyMs: probeResult.latencyMs,
+            isLocal: true,
+            description: `${probeResult.displayName} • ${m.parameterSize || "Local Model"}${m.quantization ? ` (${m.quantization})` : ""}`,
+          };
+          this.registerModel(spec);
+          return spec;
+        });
+
+        this.dynamicCache.setCachedModels(cacheKey, specsList, 300_000);
+        return specsList;
+      }
+    } catch {
+      // Ignore local probe errors
+    }
+
+    return Array.from(this.catalog.values()).filter(
+      (m) => m.provider.toLowerCase() === provider.toLowerCase()
+    );
+  }
+
   private getFallbackOpenRouterModels(): ModelSpecs[] {
     return Array.from(this.catalog.values()).filter((m) => m.provider === "openrouter");
   }
@@ -283,6 +538,15 @@ export class ModelCatalog {
     const normalized = provider.toLowerCase();
     if (normalized === "openrouter") {
       return this.fetchOpenRouterModels();
+    }
+    if (
+      normalized === "ollama" ||
+      normalized === "llamacpp" ||
+      normalized === "lmstudio" ||
+      normalized === "vllm" ||
+      normalized === "localai"
+    ) {
+      return this.fetchLocalEndpointModels(normalized as LocalProviderKind);
     }
     return Array.from(this.catalog.values()).filter(
       (m) => m.provider.toLowerCase() === normalized

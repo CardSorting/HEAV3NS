@@ -175,23 +175,38 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
         .auditStatus()
         .find((status) => status.provider === "custom-llm-proxy");
       stepMarkdownText =
-        `### Step 3/4: Custom LLM Proxy & Fallback Gateway\n\n` +
-        `Configure an optional custom HTTP proxy endpoint for enterprise proxying or local model servers (Ollama, vLLM, LiteLLM).\n\n` +
+        `### Step 3/4: Custom LLM Proxy & Local Engine Presets\n\n` +
+        `Configure an optional custom HTTP proxy endpoint or select a 1-click preset for local offline servers (Ollama, LM Studio, llama.cpp, vLLM).\n\n` +
         `Current Proxy Endpoint: \`${proxyStatus?.maskedValue ?? "none (direct provider connection)"}\`\n\n` +
-        `Select an option below to proceed:`;
+        `Select an option or 1-click local preset below:`;
 
       this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME);
       this.vstack.addChild(this.stepMarkdownComponent);
 
       const items: SelectItem[] = [
-        { value: "keep_default", label: "Use Default Gateway (Recommended)", description: "Bypass proxy and connect directly to provider APIs." },
+        { value: "connect_ollama", label: "Preset: Ollama Daemon (http://localhost:11434/v1)", description: "1-click connect to local Ollama instance." },
+        { value: "connect_lmstudio", label: "Preset: LM Studio (http://localhost:1234/v1)", description: "1-click connect to local LM Studio server." },
+        { value: "connect_llamacpp", label: "Preset: llama.cpp (http://localhost:8080/v1)", description: "1-click connect to local llama-server." },
+        { value: "keep_default", label: "Use Default Direct Gateway (Cloud APIs)", description: "Bypass proxy and connect directly to provider APIs." },
         { value: "next", label: "Proceed to Step 4: Verification & Diagnostic Test", description: "Advance to live diagnostic test." },
         { value: "back", label: "Back to Step 2", description: "Return to provider selection step." },
       ];
 
-      const selectList = new SelectList(items, 3, WIZARD_SELECT_THEME);
+      const selectList = new SelectList(items, 5, WIZARD_SELECT_THEME);
       selectList.onSelect = (item) => {
-        if (item.value === "keep_default") {
+        if (item.value === "connect_ollama") {
+          this.setupWizard.configureLocalEndpoint("ollama", "http://localhost:11434/v1");
+          this.currentStep = 4;
+          this.renderCurrentStep();
+        } else if (item.value === "connect_lmstudio") {
+          this.setupWizard.configureLocalEndpoint("lmstudio", "http://localhost:1234/v1");
+          this.currentStep = 4;
+          this.renderCurrentStep();
+        } else if (item.value === "connect_llamacpp") {
+          this.setupWizard.configureLocalEndpoint("llamacpp", "http://localhost:8080/v1");
+          this.currentStep = 4;
+          this.renderCurrentStep();
+        } else if (item.value === "keep_default") {
           this.setupWizard.useDefaultProxyGateway();
           this.currentStep = 4;
           this.renderCurrentStep();

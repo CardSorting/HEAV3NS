@@ -15,12 +15,13 @@ import {
   type OpenAiCodexCredentials,
 } from "../resolution/codex-oauth-manager.js";
 import type { CodexProviderBridge } from "../resolution/codex-provider-bridge.js";
-import type { LlmProxyGateway } from "../resolution/llm-proxy-gateway.js";
+import type { LlmProxyGateway, ProxyEndpointConfig } from "../resolution/llm-proxy-gateway.js";
+import type { LocalProviderKind } from "../../../core/contracts/local-endpoints.contracts.js";
 
 export interface ProviderAuditStatus {
   provider: string;
   configured: boolean;
-  source: "environment" | "vault" | "disk-oauth" | "proxy" | "none";
+  source: "environment" | "vault" | "disk-oauth" | "proxy" | "local" | "none";
   maskedValue?: string;
 }
 
@@ -98,9 +99,8 @@ function launchSystemBrowser(targetUrl: string): Promise<void> {
 
 /**
  * SetupWizard.
- * Interactive configuration wizard for LLM Provider API Keys & OpenAI Codex OAuth PKCE flow.
- * Manages key entry, local OAuth callback HTTP server execution, isolated disk persistence (~/.lumi/config.json),
- * and connection diagnostic testing.
+ * Interactive configuration wizard for LLM Provider API Keys, OpenAI Codex OAuth PKCE flow,
+ * and Local On-Premises Endpoints (Ollama, llama.cpp, LM Studio, vLLM).
  */
 export class SetupWizard {
   private readonly envKeyResolver: EnvironmentKeyResolver;
@@ -168,7 +168,27 @@ export class SetupWizard {
       maskedValue: codexMasked,
     });
 
-    // 3. Custom LLM Proxy Gateway
+    // 3. Local / On-Premise Endpoints (Ollama, LM Studio, llama.cpp)
+    const localEndpoints = this.proxyGateway.getAllProviderEndpoints();
+    const knownLocals: Array<{ name: string; defaultUrl: string }> = [
+      { name: "ollama", defaultUrl: "http://localhost:11434" },
+      { name: "lmstudio", defaultUrl: "http://localhost:1234" },
+      { name: "llamacpp", defaultUrl: "http://localhost:8080" },
+    ];
+
+    for (const local of knownLocals) {
+      const customConfig = localEndpoints[local.name];
+      const envUrl = process.env[`${local.name.toUpperCase()}_BASE_URL`] || process.env[`${local.name.toUpperCase()}_HOST`];
+      const isConfigured = Boolean(customConfig || envUrl);
+      statuses.push({
+        provider: local.name,
+        configured: isConfigured,
+        source: customConfig ? "proxy" : envUrl ? "environment" : "none",
+        maskedValue: customConfig?.baseUrl || envUrl || local.defaultUrl,
+      });
+    }
+
+    // 4. Custom LLM Proxy Gateway
     const proxyConfig = this.proxyGateway.getProxyConfig();
     statuses.push({
       provider: "custom-llm-proxy",
@@ -275,6 +295,9 @@ export class SetupWizard {
       this.authStorageVault.clearToken(provider);
     }
     this.proxyGateway.configureProxy(null);
+    for (const p of ["ollama", "lmstudio", "llamacpp", "vllm", "custom"]) {
+      this.proxyGateway.setProviderEndpoint(p, null);
+    }
     this.saveConfigToDisk();
   }
 
@@ -290,7 +313,7 @@ export class SetupWizard {
     console.log();
   }
 
-  displayDoctor(): void {
+  async displayDoctor(): Promise<void> {
     console.log("\n\x1b[1;36m============================================================\x1b[0m");
     console.log("\x1b[1;36m   LUMI System Health & Connectivity Doctor                 \x1b[0m");
     console.log("\x1b[1;36m============================================================\x1b[0m\n");
@@ -318,11 +341,38 @@ export class SetupWizard {
         console.log(`         - ${p.provider} (${p.source})`);
       }
     } else {
-      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo Model Providers Configured\x1b[0m`);
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo Cloud Model Providers Configured\x1b[0m`);
       console.log(`         Run \x1b[36mlumi login\x1b[0m or \x1b[36mlumi setup\x1b[0m to configure API keys or OAuth.`);
     }
 
-    // Check 3: File Vault Security
+    // Check 3: Local LLM Engine Fleet Probe
+    try {
+      const localReport = await this.proxyGateway.getLocalEngine().probeAllServers();
+      if (localReport.activeServers > 0) {
+        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mLocal LLM Engine Fleet\x1b[0m (${localReport.activeServers} server(s) online, ${localReport.totalLocalModelsDiscovered} model(s) discovered)`);
+        for (const s of localReport.serverStatuses) {
+          if (s.reachable) {
+            console.log(`         ✓ ${s.displayName} (${s.baseUrl}) • Ping: ${s.latencyMs}ms • ${s.activeModelCount} model(s) loaded`);
+          }
+        }
+      } else {
+        console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mLocal LLM Engine Fleet\x1b[0m`);
+        console.log(`         No local server online. Run \x1b[36m/local\x1b[0m or start Ollama with 'ollama run llama3.2' for 100% offline AI.`);
+      }
+    } catch {
+      // Ignore probe error in doctor
+    }
+
+    // Check 4: Host System Hardware & VRAM Capacity
+    try {
+      const hw = this.proxyGateway.getLocalEngine().getHardwareAssessment();
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mHost System Hardware & Local VRAM\x1b[0m (${hw.totalMemoryGb} GB RAM, ${hw.estimatedGpuHeadroomGb} GB GPU headroom)`);
+      console.log(`         Platform: ${hw.platform} (${hw.arch}) • Recommended Model Size: \x1b[36m${hw.recommendedMaxModelParams}\x1b[0m`);
+    } catch {
+      // Ignore hardware probe errors
+    }
+
+    // Check 5: File Vault Security
     const configPath = path.join(os.homedir(), ".lumi", "config.json");
     if (fs.existsSync(configPath) && process.platform !== "win32") {
       const mode = fs.statSync(configPath).mode & 0o777;
@@ -355,7 +405,7 @@ export class SetupWizard {
         console.log("\x1b[1;34mSetup Options:\x1b[0m");
         console.log("  [1] Configure API Keys (Anthropic, OpenAI, Gemini, DeepSeek)");
         console.log("  [2] Connect OpenAI Codex OAuth (PKCE Web Login)");
-        console.log("  [3] Configure Custom LLM Proxy Endpoint");
+        console.log("  [3] Configure Local Endpoints (Ollama, LM Studio, llama.cpp, vLLM, Custom)");
         console.log("  [4] Test Connections & Verification Diagnostic");
         console.log("  [5] Display Status Audit Table");
         console.log("  [0] Save & Exit Setup Wizard\n");
@@ -369,7 +419,7 @@ export class SetupWizard {
             await this.configureCodexOAuth(rl);
             break;
           case "3":
-            await this.configureProxyGateway(rl);
+            await this.configureLocalEndpointsInteractive(rl);
             break;
           case "4":
             await this.testConnections();
@@ -433,6 +483,19 @@ export class SetupWizard {
     }
 
     this.authStorageVault.setToken(provider, cleaned);
+    this.saveConfigToDisk();
+  }
+
+  configureLocalEndpoint(provider: string, baseUrl: string, apiKey?: string): void {
+    const cleaned = baseUrl.trim();
+    if (!cleaned) {
+      this.proxyGateway.setProviderEndpoint(provider, null);
+    } else {
+      this.proxyGateway.setProviderEndpoint(provider, {
+        baseUrl: cleaned,
+        apiKey: apiKey?.trim() || undefined,
+      });
+    }
     this.saveConfigToDisk();
   }
 
@@ -590,27 +653,57 @@ export class SetupWizard {
     }
   }
 
-  async configureProxyGateway(rl: readline.Interface): Promise<void> {
-    console.log("\n\x1b[1;36m--- Custom LLM Proxy Gateway Setup ---\x1b[0m");
-    const currentProxy = this.proxyGateway.getProxyConfig();
-    console.log(`Current Proxy Base URL: \x1b[33m${currentProxy?.baseUrl || "none"}\x1b[0m`);
+  async configureLocalEndpointsInteractive(rl: readline.Interface): Promise<void> {
+    console.log("\n\x1b[1;36m--- Local On-Premises & Custom Proxy Configuration ---\x1b[0m");
+    console.log("  [1] Preset: Ollama Daemon (http://localhost:11434/v1)");
+    console.log("  [2] Preset: LM Studio (http://localhost:1234/v1)");
+    console.log("  [3] Preset: llama.cpp (http://localhost:8080/v1)");
+    console.log("  [4] Preset: vLLM / LocalAI (http://localhost:8000/v1)");
+    console.log("  [5] Custom On-Premise Endpoint / Corporate Gateway");
+    console.log("  [6] Probe & Discover Running Local Models");
+    console.log("  [0] Back to Main Menu\n");
 
-    const newUrl = await this.askQuestion(rl, "Enter Custom LLM Proxy Base URL (e.g. http://localhost:8080/v1, or press Enter to clear): ");
-    const cleaned = newUrl.trim();
-
-    if (cleaned.length === 0) {
-      this.proxyGateway.configureProxy(null);
-      console.log("\x1b[32m[✓] Custom LLM Proxy cleared.\x1b[0m\n");
-    } else {
-      const apiKey = await this.askQuestion(rl, "Enter Proxy Bearer Token / API Key (optional): ");
-      this.proxyGateway.configureProxy({
-        baseUrl: cleaned,
-        apiKey: apiKey.trim() || undefined,
-      });
-      console.log("\x1b[32m[✓] Custom LLM Proxy configured successfully!\x1b[0m\n");
+    const choice = await this.askQuestion(rl, "Select option (0-6): ");
+    switch (choice.trim()) {
+      case "1":
+        this.configureLocalEndpoint("ollama", "http://localhost:11434/v1");
+        console.log("\x1b[32m[✓] Configured Ollama endpoint (http://localhost:11434/v1)\x1b[0m\n");
+        break;
+      case "2":
+        this.configureLocalEndpoint("lmstudio", "http://localhost:1234/v1");
+        console.log("\x1b[32m[✓] Configured LM Studio endpoint (http://localhost:1234/v1)\x1b[0m\n");
+        break;
+      case "3":
+        this.configureLocalEndpoint("llamacpp", "http://localhost:8080/v1");
+        console.log("\x1b[32m[✓] Configured llama.cpp endpoint (http://localhost:8080/v1)\x1b[0m\n");
+        break;
+      case "4":
+        this.configureLocalEndpoint("vllm", "http://localhost:8000/v1");
+        console.log("\x1b[32m[✓] Configured vLLM endpoint (http://localhost:8000/v1)\x1b[0m\n");
+        break;
+      case "5": {
+        const customUrl = await this.askQuestion(rl, "Enter Custom Base URL (e.g. http://localhost:8080/v1): ");
+        const apiKey = await this.askQuestion(rl, "Enter Bearer Token (optional): ");
+        this.configureLocalEndpoint("custom", customUrl.trim(), apiKey.trim() || undefined);
+        console.log("\x1b[32m[✓] Custom endpoint saved!\x1b[0m\n");
+        break;
+      }
+      case "6": {
+        console.log("\x1b[33mProbing local servers on ports 11434, 1234, 8080, 8000...\x1b[0m");
+        const report = await this.proxyGateway.getLocalEngine().probeAllServers();
+        console.log(`\nFound ${report.activeServers} active server(s):`);
+        for (const s of report.serverStatuses) {
+          const statusStr = s.reachable ? `\x1b[32mONLINE\x1b[0m (${s.latencyMs}ms, ${s.activeModelCount} models)` : `\x1b[90mOFFLINE\x1b[0m`;
+          console.log(`  - ${s.displayName.padEnd(22)} ${s.baseUrl.padEnd(24)} -> ${statusStr}`);
+        }
+        console.log();
+        break;
+      }
     }
+  }
 
-    this.saveConfigToDisk();
+  async configureProxyGateway(rl: readline.Interface): Promise<void> {
+    await this.configureLocalEndpointsInteractive(rl);
   }
 
   async testConnections(): Promise<void> {
@@ -622,6 +715,8 @@ export class SetupWizard {
       { name: "gpt-4o", provider: "OpenAI" },
       { name: "gemini-1.5-pro", provider: "Google Gemini" },
       { name: "deepseek-v3", provider: "DeepSeek" },
+      { name: "llama3:latest", provider: "Ollama (Local)" },
+      { name: "llamacpp/default", provider: "llama.cpp (Local)" },
     ];
 
     for (const item of testModels) {
@@ -647,11 +742,13 @@ export class SetupWizard {
       }
 
       const proxy = this.proxyGateway.getProxyConfig();
+      const localEndpoints = this.proxyGateway.getAllProviderEndpoints();
       const codexOAuth = this.codexOAuthManager.getCredentials();
 
       const data = {
         tokens,
         proxy,
+        localEndpoints,
         modelName: this.savedModelName,
         codexOAuth,
         updatedAt: Date.now(),
@@ -672,6 +769,7 @@ export class SetupWizard {
         const data = JSON.parse(raw) as {
           tokens?: Record<string, string>;
           proxy?: { baseUrl?: string; apiKey?: string };
+          localEndpoints?: Record<string, ProxyEndpointConfig>;
           modelName?: string;
           codexOAuth?: OpenAiCodexCredentials;
         };
@@ -689,6 +787,14 @@ export class SetupWizard {
             baseUrl: data.proxy.baseUrl,
             apiKey: data.proxy.apiKey,
           });
+        }
+
+        if (data.localEndpoints) {
+          for (const [p, cfg] of Object.entries(data.localEndpoints)) {
+            if (cfg && cfg.baseUrl) {
+              this.proxyGateway.setProviderEndpoint(p, cfg);
+            }
+          }
         }
 
         if (typeof data.modelName === "string" && data.modelName.trim()) {
@@ -719,6 +825,9 @@ export class SetupWizard {
           OPENAI_API_KEY: "openai",
           GEMINI_API_KEY: "google",
           DEEPSEEK_API_KEY: "deepseek",
+          OLLAMA_API_KEY: "ollama",
+          LLAMACPP_API_KEY: "llamacpp",
+          LMSTUDIO_API_KEY: "lmstudio",
         };
 
         for (const line of lines) {
@@ -743,6 +852,17 @@ export class SetupWizard {
   }
 
   async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
+    const p = providerName.toLowerCase();
+    if (p === "ollama" || p === "llamacpp" || p === "lmstudio" || p === "vllm" || p === "custom" || p === "local" || p === "onprem") {
+      const probe = await this.proxyGateway.probeLocalEndpoint(p as LocalProviderKind);
+      return {
+        passed: probe.reachable,
+        details: probe.reachable
+          ? `Server Online (${probe.latencyMs}ms, ${probe.activeModelCount} models detected)`
+          : `Server unreachable at ${probe.baseUrl}: ${probe.error || "offline"}`,
+      };
+    }
+
     const modelMap: Record<string, string> = {
       anthropic: "claude-3-5-sonnet",
       openai: "gpt-4o",
@@ -751,7 +871,7 @@ export class SetupWizard {
       "openai-codex": "gpt-5.6-terra",
     };
 
-    const modelName = modelMap[providerName] || "gpt-4o";
+    const modelName = modelMap[p] || "gpt-4o";
     const auth = await this.codexProviderBridge.resolveProviderAuth(modelName);
     const passed = auth.authType !== "none";
     const headerCount = Object.keys(auth.headers).length;

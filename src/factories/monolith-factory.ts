@@ -1414,7 +1414,7 @@ export class MonolithFactory {
     const systemHealthAggregator = new SystemHealthAggregator();
     const codexOAuthManager = new CodexOAuthManager(authStorageVault);
     codexOAuthManager.loadFromDisk();
-    const codexProviderBridge = new CodexProviderBridge(codexOAuthManager, authStorageVault, envKeyResolver);
+    const codexProviderBridge = new CodexProviderBridge(codexOAuthManager, authStorageVault, envKeyResolver, proxyGateway);
     const setupWizard = new SetupWizard({
       envKeyResolver,
       authStorageVault,

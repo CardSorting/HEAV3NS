@@ -19,6 +19,7 @@ import { HealthDiagnosticModal, type SubsystemHealthEntry } from "../../../tui/c
 import { ProviderSetupModal } from "../../../tui/components/provider-setup-modal.js";
 import { GuidedSetupWalkthroughModal } from "../../../tui/components/guided-setup-walkthrough-modal.js";
 import { ModelSelectModal } from "../../../tui/components/model-select-modal.js";
+import { LocalEndpointDashboardModal } from "../../../tui/components/local-endpoint-dashboard-modal.js";
 import type { SettingItem } from "../../../tui/components/settings-list.js";
 import type { SelectListTheme } from "../../../tui/components/select-list.js";
 import { CombinedAutocompleteProvider, type SlashCommand } from "../../../tui/autocomplete.js";
@@ -243,6 +244,19 @@ export class InteractiveModeController {
       { name: "auth", description: "[Auth] Authentication & identity management (/auth login|logout|status)" },
       { name: "model", description: "[Config] Open interactive model selector or switch model (/model <name>)" },
       { name: "models", description: "[Config] View curated model catalog and switch active LLM" },
+      { name: "local", description: "[Local] Open local LLM control panel & auto-sense servers (Ollama, LM Studio, llama.cpp)" },
+      { name: "pull", description: "[Local] Stream and download an open-weight Ollama model (/pull <model>)" },
+      { name: "unload", description: "[Local] Purge inactive local models from GPU VRAM (/unload [model])" },
+      { name: "benchmark-local", description: "[Local] Benchmark local LLM Tokens-Per-Second generation speed" },
+      { name: "speed", description: "[Local] Alias for /benchmark-local speed test" },
+      { name: "tps", description: "[Local] Alias for /benchmark-local speed test" },
+      { name: "embed", description: "[Local] Generate offline vector embeddings for text (/embed <text>)" },
+      { name: "hardware", description: "[Local] Display host system RAM, CPU, and VRAM model fit evaluation" },
+      { name: "vram", description: "[Local] Calculate VRAM compatibility and optimal model size for host" },
+      { name: "start-local", description: "[Local] Launch local LLM daemon process (/start-local [ollama|llamacpp])" },
+      { name: "ollama", description: "[Local] Quick-switch to local Ollama model (/ollama [model])" },
+      { name: "lmstudio", description: "[Local] Quick-switch to LM Studio server (/lmstudio [model])" },
+      { name: "llamacpp", description: "[Local] Quick-switch to llama.cpp server (/llamacpp [model])" },
       { name: "settings", description: "[Config] Open interactive framework settings view" },
       { name: "doctor", description: "[System] Run system health & connectivity diagnostic checks" },
       { name: "health", description: "[System] Display subsystem health diagnostic audit" },
@@ -539,10 +553,21 @@ export class InteractiveModeController {
       try {
         const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
         const codexModels = await monolith.modelCatalog.getModelsForProvider("openai-codex");
-        const localModels = await monolith.modelCatalog.getModelsForProvider("ollama");
+        const ollamaModels = await monolith.modelCatalog.getModelsForProvider("ollama");
+        const llamaCppModels = await monolith.modelCatalog.getModelsForProvider("llamacpp");
+        const lmStudioModels = await monolith.modelCatalog.getModelsForProvider("lmstudio");
+        const vllmModels = await monolith.modelCatalog.getModelsForProvider("vllm");
         const catalogModels = monolith.modelCatalog.getAllModels();
 
-        const combined = [...openRouterModels, ...codexModels, ...localModels, ...catalogModels];
+        const combined = [
+          ...openRouterModels,
+          ...codexModels,
+          ...ollamaModels,
+          ...llamaCppModels,
+          ...lmStudioModels,
+          ...vllmModels,
+          ...catalogModels,
+        ];
         const modelMap = new Map<string, ModelSpecs>();
         for (const m of combined) {
           modelMap.set(m.modelName, m);
@@ -576,6 +601,31 @@ export class InteractiveModeController {
       } finally {
         isLoadingInlineView = false;
       }
+    };
+
+    const openLocalEndpointDashboardModal = () => {
+      if (activeInlineView) return;
+      const localEngine = monolith.proxyGateway.getLocalEngine();
+      const modal = new LocalEndpointDashboardModal(localEngine, (selectedModel) => {
+        monolith.setModel(selectedModel);
+        updateHeader();
+        const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+        cardBox.addChild(
+          new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`${selectedModel}\``, 0, 0, DEFAULT_MARKDOWN_THEME)
+        );
+        historyContainer.addChild(cardBox);
+        tui.requestRender();
+      });
+      modal.open();
+
+      const wrapperComponent: Component = {
+        render: (width) => [modal.render()],
+        invalidate: () => {},
+      };
+
+      activeInlineView = wrapperComponent;
+      historyContainer.addChild(wrapperComponent);
+      tui.requestRender();
     };
 
     let stopTui: () => void = () => {};
@@ -648,6 +698,10 @@ export class InteractiveModeController {
         (matchesKey(data, "ctrl+m") && !matchesKey(data, "enter"));
       if (isModelShortcut) {
         openModelSelectModal();
+        return { consume: true };
+      }
+      if (matchesKey(data, "alt+l")) {
+        openLocalEndpointDashboardModal();
         return { consume: true };
       }
 
@@ -739,6 +793,198 @@ export class InteractiveModeController {
 
         if (input === "/models") {
           openModelSelectModal();
+          return;
+        }
+
+        if (input === "/local" || input === "/onprem" || input === "/locals") {
+          openLocalEndpointDashboardModal();
+          return;
+        }
+
+        if (input === "/hardware" || input === "/vram" || input === "/specs") {
+          const hwCard = monolith.proxyGateway.getLocalEngine().getHardwareCard();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(new Markdown(hwCard, 0, 0, DEFAULT_MARKDOWN_THEME));
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input.startsWith("/start-local") || input.startsWith("/start ")) {
+          const parts = input.split(" ");
+          const prov = (parts[1]?.trim().toLowerCase() || "ollama") as any;
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(new Markdown(`\x1b[33mAttempting to launch ${prov.toUpperCase()} daemon in background...\x1b[0m`, 0, 0, DEFAULT_MARKDOWN_THEME));
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+
+          void monolith.proxyGateway.getLocalEngine().startLocalServer(prov).then((res) => {
+            const outcomeBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+            outcomeBox.addChild(
+              new Markdown(
+                res.started
+                  ? `\x1b[1;32m[✓] ${res.message}\x1b[0m`
+                  : `\x1b[1;31m[✗] ${res.message}\x1b[0m`,
+                0,
+                0,
+                DEFAULT_MARKDOWN_THEME
+              )
+            );
+            historyContainer.addChild(outcomeBox);
+            tui.requestRender();
+          });
+          return;
+        }
+
+        if (input === "/pull" || input.startsWith("/pull ")) {
+          const parts = input.split(" ");
+          const modelTag = parts[1]?.trim() || "qwen2.5-coder:7b";
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          const statusMarkdown = new Markdown(
+            `### 📥 Pulling Local Model: \`${modelTag}\`\n\nConnecting to Ollama streaming pull endpoint...`,
+            0,
+            0,
+            DEFAULT_MARKDOWN_THEME
+          );
+          cardBox.addChild(statusMarkdown);
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+
+          void monolith.proxyGateway.getLocalEngine().pullModel(modelTag, {
+            onProgress: (p) => {
+              statusMarkdown.setText(
+                `### 📥 Pulling Local Model: \`${modelTag}\` [${p.phase.toUpperCase()}]\n\n${p.progressBarText}\n\n*Status:* \`${p.statusText}\``
+              );
+              tui.requestRender();
+            },
+          }).then(() => {
+            monolith.setModel(modelTag);
+            updateHeader();
+            const doneBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+            doneBox.addChild(
+              new Markdown(
+                `\x1b[1;32m[✓] Model ${modelTag} downloaded successfully and set as active model!\x1b[0m`,
+                0,
+                0,
+                DEFAULT_MARKDOWN_THEME
+              )
+            );
+            historyContainer.addChild(doneBox);
+            tui.requestRender();
+          }).catch((err) => {
+            const errBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+            errBox.addChild(
+              new Markdown(
+                `\x1b[1;31m[✗] Failed to pull model ${modelTag}:\x1b[0m ${err.message || String(err)}`,
+                0,
+                0,
+                DEFAULT_MARKDOWN_THEME
+              )
+            );
+            historyContainer.addChild(errBox);
+            tui.requestRender();
+          });
+          return;
+        }
+
+        if (input === "/unload" || input.startsWith("/unload ") || input === "/purge") {
+          const parts = input.split(" ");
+          const modelTag = parts[1]?.trim();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+
+          if (modelTag) {
+            void monolith.proxyGateway.getLocalEngine().unloadModel(modelTag).then((res) => {
+              cardBox.addChild(new Markdown(`\x1b[1;32m[✓] ${res.message}\x1b[0m`, 0, 0, DEFAULT_MARKDOWN_THEME));
+              historyContainer.addChild(cardBox);
+              tui.requestRender();
+            });
+          } else {
+            void monolith.proxyGateway.getLocalEngine().unloadAllModels().then((res) => {
+              cardBox.addChild(new Markdown(`\x1b[1;32m[✓] Purged ${res.length} models from GPU VRAM memory.\x1b[0m`, 0, 0, DEFAULT_MARKDOWN_THEME));
+              historyContainer.addChild(cardBox);
+              tui.requestRender();
+            });
+          }
+          return;
+        }
+
+        if (input === "/benchmark-local" || input.startsWith("/benchmark-local ") || input === "/speed" || input === "/tps") {
+          const parts = input.split(" ");
+          const currentM = monolith.modelResolver.getActiveModel();
+          const targetModel = parts[1]?.trim() || (currentM.includes("/") ? currentM.split("/")[1]! : currentM);
+
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(new Markdown(`\x1b[33m⚡ Benchmarking local inference speed on ${targetModel}...\x1b[0m`, 0, 0, DEFAULT_MARKDOWN_THEME));
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+
+          void monolith.proxyGateway.getLocalEngine().benchmarkModel(targetModel).then((res) => {
+            const resBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+            resBox.addChild(new Markdown(res.speedScorecard, 0, 0, DEFAULT_MARKDOWN_THEME));
+            historyContainer.addChild(resBox);
+            tui.requestRender();
+          });
+          return;
+        }
+
+        if (input.startsWith("/embed ")) {
+          const textToEmbed = input.slice(7).trim();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          void monolith.proxyGateway.getLocalEngine().generateEmbedding(textToEmbed).then((res) => {
+            const preview = res.embedding.slice(0, 5).map((v) => v.toFixed(4)).join(", ");
+            cardBox.addChild(
+              new Markdown(
+                `### 🔢 Local Vector Embedding\n- **Model**: \`${res.modelName}\`\n- **Dimensions**: \`${res.dimensions}\` floats\n- **Latency**: \`${res.durationMs}ms\`\n- **Vector Sample**: \`[${preview}, ...]\``,
+                0,
+                0,
+                DEFAULT_MARKDOWN_THEME
+              )
+            );
+            historyContainer.addChild(cardBox);
+            tui.requestRender();
+          });
+          return;
+        }
+
+        if (input === "/ollama" || input.startsWith("/ollama ")) {
+          const parts = input.split(" ");
+          const targetModel = parts[1]?.trim() || "llama3.2:latest";
+          monolith.setModel(targetModel);
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active Model set to Ollama:\x1b[0m \`${targetModel}\` (http://localhost:11434)`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/lmstudio" || input.startsWith("/lmstudio ")) {
+          const parts = input.split(" ");
+          const targetModel = parts[1]?.trim() || "lmstudio/loaded-model";
+          monolith.setModel(targetModel);
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active Model set to LM Studio:\x1b[0m \`${targetModel}\` (http://localhost:1234)`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/llamacpp" || input.startsWith("/llamacpp ")) {
+          const parts = input.split(" ");
+          const targetModel = parts[1]?.trim() || "llamacpp/default";
+          monolith.setModel(targetModel);
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active Model set to llama.cpp:\x1b[0m \`${targetModel}\` (http://localhost:8080)`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
           return;
         }
 

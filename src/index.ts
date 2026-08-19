@@ -40,6 +40,21 @@ import {
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge, MODERN_GPT56_MODELS, type ResolvedAuthHeaders, type ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
 import { SetupWizard } from "./agents/extensions/setup/setup-wizard.js";
+import {
+  DeterministicLocalEndpointEngine,
+  DEFAULT_LOCAL_ENDPOINT_PRESETS,
+  LOCAL_QUICKSTART_GUIDES,
+} from "./tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
+import { LocalEndpointDashboardModal } from "./tui/components/local-endpoint-dashboard-modal.js";
+import type {
+  LocalProviderKind,
+  LocalEndpointProfile,
+  DiscoveredLocalModel,
+  LocalServerHealthStatus,
+  LocalQuickstartGuide,
+  LocalEndpointAuditReport,
+  LocalEndpointMetricsReport,
+} from "./core/contracts/local-endpoints.contracts.js";
 
 import { SessionContext } from "./sessions/base/session-context.js";
 import { PersistentSessionStore, SessionStore } from "./sessions/extensions/persistence/session-store.js";
@@ -1113,6 +1128,39 @@ export type {
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 export { CodexProviderBridge, MODERN_GPT56_MODELS } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export type { ResolvedAuthHeaders, ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
+export {
+  DeterministicLocalEndpointEngine,
+  DEFAULT_LOCAL_ENDPOINT_PRESETS,
+  LOCAL_QUICKSTART_GUIDES,
+} from "./tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
+export { LocalHardwareProfiler } from "./tooling/extensions/endpoints/local-hardware-profiler.js";
+export { LocalModelPuller, type PullModelOptions } from "./tooling/extensions/endpoints/local-model-puller.js";
+export { LocalProcessSupervisor } from "./tooling/extensions/endpoints/local-process-supervisor.js";
+export { LocalContextAutoTuner } from "./tooling/extensions/endpoints/local-context-auto-tuner.js";
+export { LocalInferenceSpeedometer, type SpeedometerOptions } from "./tooling/extensions/endpoints/local-inference-speedometer.js";
+export { LocalVramReclaimer, type LoadedModelRecord } from "./tooling/extensions/endpoints/local-vram-reclaimer.js";
+export { LocalEmbeddingsEngine } from "./tooling/extensions/endpoints/local-embeddings-engine.js";
+export { LocalEndpointDashboardModal } from "./tui/components/local-endpoint-dashboard-modal.js";
+export type {
+  LocalProviderKind,
+  LocalEndpointProfile,
+  DiscoveredLocalModel,
+  LocalServerHealthStatus,
+  LocalQuickstartGuide,
+  LocalEndpointAuditReport,
+  LocalEndpointMetricsReport,
+  LocalHardwareAssessment,
+  ModelVramCompatibility,
+  VramCompatibilityTier,
+  ModelPullProgress,
+  ModelPullPhase,
+  ProcessSpawnResult,
+  LocalFailoverRoute,
+  LocalInferenceBenchmarkResult,
+  LocalContextTuningProfile,
+  LocalModelUnloadResult,
+  LocalEmbeddingResult,
+} from "./core/contracts/local-endpoints.contracts.js";
 
 export { SessionContext } from "./sessions/base/session-context.js";
 export { PersistentSessionStore, SessionStore } from "./sessions/extensions/persistence/session-store.js";
@@ -4680,6 +4728,9 @@ if (isDirectCliExecution) {
   const isWhoAmI = args.includes("--whoami") || primaryCmd === "whoami" || (primaryCmd === "auth" && (!args[1] || args[1] === "status" || args[1] === "whoami"));
   const isDoctor = args.includes("--doctor") || args.includes("--health") || primaryCmd === "doctor" || primaryCmd === "health";
   const isModels = args.includes("--models") || primaryCmd === "models";
+  const isLocal = args.includes("--local") || primaryCmd === "local" || primaryCmd === "onprem";
+  const isPull = primaryCmd === "pull";
+  const isHardware = args.includes("--hardware") || args.includes("--vram") || primaryCmd === "hardware" || primaryCmd === "vram";
 
   if (isHelp) {
     console.log(`
@@ -4694,9 +4745,17 @@ if (isDirectCliExecution) {
   lumi whoami                 Display current authenticated user, tokens, and active LLM model
   lumi auth status            Display authentication and sync diagnostics
 
-\x1b[1;34mSystem & Configuration:\x1b[0m
-  lumi doctor                 Run system health, permissions, and connectivity diagnostic audit
+\x1b[1;34mLocal On-Premises & Models:\x1b[0m
+  lumi local                  Auto-sense and probe local LLM servers (Ollama, LM Studio, llama.cpp)
+  lumi local --hardware       Display host RAM, GPU / Apple Silicon VRAM compatibility report
+  lumi local --benchmark      Run Tokens-Per-Second (TPS) speed benchmark on local models
+  lumi local --unload [model] Purge model from GPU memory to reclaim VRAM
+  lumi local --ps             List models currently loaded in GPU VRAM
+  lumi pull <model>           Stream and download an open-weight Ollama model (e.g. lumi pull llama3.2)
   lumi models                 Display curated AI model catalog and context specifications
+
+\x1b[1;34mSystem & Configuration:\x1b[0m
+  lumi doctor                 Run system health, permissions, hardware, and connectivity diagnostic audit
   lumi setup                  Launch step-by-step interactive configuration wizard
 
 \x1b[1;34mWorkload & Benchmarks:\x1b[0m
@@ -4826,7 +4885,76 @@ if (isDirectCliExecution) {
     } else if (isWhoAmI) {
       lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel());
     } else if (isDoctor) {
-      lumi.setupWizard.displayDoctor();
+      await lumi.setupWizard.displayDoctor();
+    } else if (isPull) {
+      const modelTag = args[1]?.trim() || "qwen2.5-coder:7b";
+      console.log(`\n\x1b[1;36mConnecting to pull ${modelTag} via Ollama...\x1b[0m\n`);
+      try {
+        await lumi.proxyGateway.getLocalEngine().pullModel(modelTag, {
+          onProgress: (p) => {
+            process.stdout.write(`\r${p.progressBarText}   `);
+          },
+        });
+        console.log(`\n\n\x1b[1;32m[✓] Model ${modelTag} downloaded and ready for offline inference!\x1b[0m\n`);
+      } catch (err: any) {
+        console.error(`\n\n\x1b[1;31m[✗] Failed to pull model:\x1b[0m ${err.message || String(err)}\n`);
+      }
+    } else if (isHardware) {
+      console.log();
+      console.log(lumi.proxyGateway.getLocalEngine().getHardwareCard());
+    } else if (isLocal) {
+      if (args.includes("--hardware") || args.includes("--vram")) {
+        console.log();
+        console.log(lumi.proxyGateway.getLocalEngine().getHardwareCard());
+      } else if (args.includes("--benchmark") || args.includes("--speed")) {
+        const bIdx = args.includes("--benchmark") ? args.indexOf("--benchmark") : args.indexOf("--speed");
+        const targetM = args[bIdx + 1] && !args[bIdx + 1]?.startsWith("-") ? args[bIdx + 1]! : "qwen2.5-coder:7b";
+        console.log(`\n\x1b[33m⚡ Benchmarking local inference speed on ${targetM}...\x1b[0m\n`);
+        const res = await lumi.proxyGateway.getLocalEngine().benchmarkModel(targetM);
+        console.log(res.speedScorecard);
+      } else if (args.includes("--unload") || args.includes("--purge")) {
+        const uIdx = args.includes("--unload") ? args.indexOf("--unload") : args.indexOf("--purge");
+        const targetM = args[uIdx + 1];
+        if (targetM && !targetM.startsWith("-")) {
+          const res = await lumi.proxyGateway.getLocalEngine().unloadModel(targetM);
+          console.log(`\n\x1b[32m[✓] ${res.message}\x1b[0m\n`);
+        } else {
+          const res = await lumi.proxyGateway.getLocalEngine().unloadAllModels();
+          console.log(`\n\x1b[32m[✓] Purged ${res.length} model(s) from GPU VRAM memory.\x1b[0m\n`);
+        }
+      } else if (args.includes("--ps")) {
+        const loaded = await lumi.proxyGateway.getLocalEngine().getLoadedModels();
+        console.log(`\n\x1b[1;36mModels Resident in GPU VRAM (${loaded.length}):\x1b[0m`);
+        if (loaded.length === 0) {
+          console.log(`  \x1b[90mNo models currently active in VRAM.\x1b[0m`);
+        } else {
+          for (const m of loaded) {
+            console.log(` • \x1b[33m${m.name}\x1b[0m (${m.sizeGb} GB VRAM) — Expires: ${m.expiresAt}`);
+          }
+        }
+        console.log();
+      } else if (args.includes("--start")) {
+        console.log("\n\x1b[33mAttempting to spawn Ollama daemon in background...\x1b[0m");
+        const res = await lumi.proxyGateway.getLocalEngine().startLocalServer("ollama");
+        console.log(res.started ? `\x1b[32m[✓] ${res.message}\x1b[0m\n` : `\x1b[31m[✗] ${res.message}\x1b[0m\n`);
+      } else {
+        console.log("\n\x1b[1;35m╭─── LUMI Local & On-Premises Engine Fleet Probe ───────────────╮\x1b[0m");
+        const report = await lumi.proxyGateway.getLocalEngine().probeAllServers();
+        console.log(`│  Active Servers Online: \x1b[1;36m${report.activeServers}/${report.totalServersChecked}\x1b[0m · Total Discovered Models: \x1b[1;33m${report.totalLocalModelsDiscovered}\x1b[0m`);
+        console.log(`│`);
+        for (const s of report.serverStatuses) {
+          const badge = s.reachable ? `\x1b[32m● ONLINE\x1b[0m (${s.latencyMs}ms, ${s.activeModelCount} models)` : `\x1b[90m○ OFFLINE\x1b[0m`;
+          console.log(`│  • \x1b[1;37m${s.displayName.padEnd(24)}\x1b[0m \x1b[36m${s.baseUrl.padEnd(24)}\x1b[0m ${badge}`);
+          if (s.detectedModels.length > 0) {
+            for (const m of s.detectedModels.slice(0, 3)) {
+              const vramBadge = m.vramCompatibility?.badge || "";
+              console.log(`│      └─ \x1b[90mModel:\x1b[0m \x1b[33m${m.modelId}\x1b[0m ${vramBadge}`);
+            }
+          }
+        }
+        console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
+        console.log(`\x1b[90mStart local models with \x1b[36mollama run llama3.2\x1b[90m, pull with \x1b[36mlumi pull <model>\x1b[90m, or connect in TUI with \x1b[36m/local\x1b[90m.\x1b[0m\n`);
+      }
     } else if (isModels) {
       console.log("\n\x1b[1;35m╭─── LUMI Curated Model Catalog ────────────────────────────────╮\x1b[0m");
       const models = lumi.modelCatalog.getAllModels();

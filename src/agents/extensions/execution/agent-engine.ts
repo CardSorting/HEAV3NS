@@ -301,6 +301,17 @@ export class AgentEngine extends AbstractAgentEngine {
                 throw new Error(`${activeModel} returned a successful response without assistant content`);
               }
               liveResponse = responseContent;
+              if (
+                typeof this.codexProviderBridge?.isLocalProvider === "function" &&
+                this.codexProviderBridge.isLocalProvider(providerName)
+              ) {
+                const estTokens = Math.ceil((promptText.length + liveResponse.length) / 4);
+                this.proxyGateway?.getLocalEngine().recordTurn(
+                  providerName as any,
+                  estTokens,
+                  Date.now() - requestStartedAt
+                );
+              }
               this.reportProgress(input.onProgress, {
                 activityId: liveProgressActivityId,
                 phase: "completed",
@@ -397,7 +408,17 @@ export class AgentEngine extends AbstractAgentEngine {
           liveError.toLowerCase().includes("api key");
 
         let actionHint = `[Run \x1b[33m/health\x1b[0m for runtime diagnostics or switch models with \x1b[33m/model\x1b[0m.]`;
-        if (isAuthError) {
+        const activeMod = this.modelResolver.getActiveModel();
+        const provName = typeof this.codexProviderBridge?.resolveProviderName === "function"
+          ? this.codexProviderBridge.resolveProviderName(activeMod)
+          : "openai";
+        const isLocalProv = typeof this.codexProviderBridge?.isLocalProvider === "function"
+          ? this.codexProviderBridge.isLocalProvider(provName)
+          : false;
+
+        if (isLocalProv) {
+          actionHint = `\n${this.proxyGateway?.getLocalEngine().getTroubleshootingCard(provName as any)}`;
+        } else if (isAuthError) {
           actionHint = `[Authentication issue: Run \x1b[33m/setup\x1b[0m to reconnect credentials or \x1b[33m/health\x1b[0m for diagnostics.]`;
         } else if (
           liveError.toLowerCase().includes("stalled") ||
@@ -408,7 +429,7 @@ export class AgentEngine extends AbstractAgentEngine {
           actionHint = `[Stream paused during extended execution. You can prompt again with a narrower step, or reply to continue.]`;
         }
 
-        responseText = `Live model request failed for ${this.modelResolver.getActiveModel()}: ${liveError}\n${actionHint}`;
+        responseText = `Live model request failed for ${activeMod}: ${liveError}\n${actionHint}`;
       } else {
         turnOutcome = "failed";
         responseText = `Processed turn prompt: "${promptText}".\n` +
