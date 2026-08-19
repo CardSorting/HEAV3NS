@@ -9,6 +9,7 @@ This directory contains the authoritative current-worktree runtime evidence.
 For architectural deep-dives, see:
 - [`RUNTIME_ARCHITECTURE_GUIDE.md`](RUNTIME_ARCHITECTURE_GUIDE.md) — Comprehensive technical reference for memory layout, TUI rendering, and time-travel rewind.
 - [`RUNTIME_OPTIMIZATION_RECORD.md`](RUNTIME_OPTIMIZATION_RECORD.md) — Exhaustive optimization and hardening changelog across all runtime subsystems.
+- [`STATEM_RUNBOOK_FSM_EVALUATION.md`](STATEM_RUNBOOK_FSM_EVALUATION.md) — Empirical benchmark and evaluation report for the StateM Runbook FSM Strategy (Pass 193 / ADR-131).
 
 Do not hand-edit measured values in those three files. The baseline command writes all three atomically, writes failure evidence as well as success evidence, and exits nonzero when smoke, benchmark, or guardrail verification fails.
 

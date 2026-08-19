@@ -248,6 +248,7 @@ export class RunbookSupervisor {
 
     // Step 1: Check edge_attempts budget (max_attempts)
     const attemptInfo = this.checkAndUpdateEdgeAttempts(state, source, target, edge);
+    await this.substrate.saveRun(state);
 
     // Step 2: Evaluate static before_transfer gates
     let beforeResults: CheckExecutionResult[] = [];
@@ -468,8 +469,30 @@ export class RunbookSupervisor {
   /**
    * Registers a dynamic check manifest for the current entry.
    */
-  async dynamicWrite(manifest: DynamicEntryCheckManifest): Promise<void> {
-    await this.substrate.saveDynamicChecks(manifest);
+  async dynamicWrite(
+    manifest: Omit<DynamicEntryCheckManifest, "runId" | "entryId" | "nodeName" | "registeredAt"> & {
+      runId?: string;
+      entryId?: string;
+      nodeName?: string;
+      registeredAt?: number;
+    },
+    runId?: string
+  ): Promise<void> {
+    const targetRunId = runId || manifest.runId || this.activeRunId;
+    if (!targetRunId) throw new Error("No active runbook run found");
+
+    const state = await this.substrate.getRun(targetRunId);
+    if (!state) throw new Error(`Run "${targetRunId}" not found`);
+
+    const fullManifest: DynamicEntryCheckManifest = {
+      ...manifest,
+      runId: targetRunId,
+      entryId: manifest.entryId || state.currentEntryId,
+      nodeName: manifest.nodeName || state.current,
+      registeredAt: manifest.registeredAt || Date.now(),
+    };
+
+    await this.substrate.saveDynamicChecks(fullManifest);
   }
 
   /**

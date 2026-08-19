@@ -312,4 +312,15 @@ export class RunbookCatalog {
     }
     return entry.specFactory(options);
   }
+
+  /**
+   * Alias for instantiate().
+   */
+  static getPreset(id: string, options: RunbookInstantiationOptions = {}): RunbookSpec | undefined {
+    try {
+      return this.instantiate(id, options);
+    } catch {
+      return undefined;
+    }
+  }
 }
