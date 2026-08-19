@@ -56,13 +56,17 @@ async function runValidationSuite() {
   console.log("[Suite 2/8] McpSecurityScrubber Environment & Credential Redaction...");
   const scrubber = new McpSecurityScrubber();
 
+  const dummyOpenai = ["sk", "proj", "supersecretkey12345678901234567890"].join("-");
+  const dummyAnthropic = ["sk", "ant", "api03-abcdef12345678901234567890"].join("-");
+  const dummyGithub = ["ghp", "123456789012345678901234567890123456"].join("_");
+
   const dirtyEnv = {
     PATH: "/usr/bin:/bin",
     HOME: "/Users/test",
-    OPENAI_API_KEY: ""+["sk","proj","supersecretkey12345678901234567890"].join("-")+"",
-    ANTHROPIC_API_KEY: ""+["sk","ant","api03-abcdef12345678901234567890"].join("-")+"",
+    OPENAI_API_KEY: dummyOpenai,
+    ANTHROPIC_API_KEY: dummyAnthropic,
     AWS_SECRET_ACCESS_KEY: "secretawskey",
-    GITHUB_TOKEN: ""+["ghp","123456789012345678901234567890123456"].join("_")+"",
+    GITHUB_TOKEN: dummyGithub,
     SAFE_CUSTOM_VAR: "allowed_value",
   };
 
@@ -74,7 +78,8 @@ async function runValidationSuite() {
     throw new Error("Scrubber dropped safe environment variables");
   }
 
-  const redactedText = scrubber.redactSensitiveText("Error connecting with "+["sk","proj","123456789012345678901234"].join("-")+" using token "+["ghp","123456789012345678901234567890123456"].join("_")+"");
+  const sampleErr = `Error connecting with ${["sk", "proj", "123456789012345678901234"].join("-")} using token ${["ghp", "123456789012345678901234567890123456"].join("_")}`;
+  const redactedText = scrubber.redactSensitiveText(sampleErr);
   if (redactedText.includes("sk-proj") || redactedText.includes("ghp_")) {
     throw new Error(`Redaction failed: ${redactedText}`);
   }

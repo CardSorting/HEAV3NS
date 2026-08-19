@@ -58,7 +58,8 @@ async function main(): Promise<void> {
 
   // [Test 4/8] Outbound Data Loss Prevention (DLP) Scanner
   console.log("[Test 4/8] Validating Outbound Data Loss Prevention (DLP)...");
-  const leakBody = "Here is the key: "+["sk","ant","api03-abcdef1234567890abcdef123456"].join("-")+"7890 and private key 0x1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff";
+  const dummyAntKey = ["sk", "ant", "api03-abcdef1234567890abcdef1234567890"].join("-");
+  const leakBody = `Here is the key: ${dummyAntKey} and private key 0x1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff`;
   const dlpReport = engine.scanOutboundDlp(leakBody);
   assert.equal(dlpReport.isSafeToDispatch, false, "Must detect sensitive API key and private key");
   assert.equal(dlpReport.findings.length, 2);

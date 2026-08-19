@@ -64,11 +64,14 @@ async function runValidationSuite() {
     throw new Error("Security sandbox command safety verdict error");
   }
 
+  const dummyOpenai = ["sk", "proj", "supersecretkey12345678901234567890"].join("-");
+  const dummyAnthropic = ["sk", "ant", "api03-abcdef1234567890"].join("-");
+
   const rawEnv = {
     PATH: "/usr/bin:/bin",
     HOME: "/Users/test",
-    OPENAI_API_KEY: ""+["sk","proj","supersecretkey12345678901234567890"].join("-")+"",
-    ANTHROPIC_API_KEY: ""+["sk","ant","api03-abcdef1234567890"].join("-")+"",
+    OPENAI_API_KEY: dummyOpenai,
+    ANTHROPIC_API_KEY: dummyAnthropic,
     AWS_SECRET_ACCESS_KEY: "secretkey",
     PORT: "3000",
   };
@@ -80,7 +83,8 @@ async function runValidationSuite() {
     throw new Error("Sandbox corrupted safe environment variables");
   }
 
-  const redactedErr = sandbox.redactError("Error connecting to "+["sk","proj","123456789012345678901234"].join("-")+" with "+["ghp","123456789012345678901234567890123456"].join("_")+"");
+  const sampleErr = `Error connecting to ${["sk", "proj", "123456789012345678901234"].join("-")} with ${["ghp", "123456789012345678901234567890123456"].join("_")}`;
+  const redactedErr = sandbox.redactError(sampleErr);
   if (redactedErr.includes("sk-proj") || redactedErr.includes("ghp_")) {
     throw new Error("Sandbox error redaction failed");
   }

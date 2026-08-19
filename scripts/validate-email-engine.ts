@@ -175,7 +175,8 @@ async function runEmailValidationSuite(): Promise<void> {
     // Suite 8: Outbound Data Loss Prevention (DLP) Secrets & Credential Scanning
     // ---------------------------------------------------------------------------
     console.log("[Suite 8/22] Outbound DLP Secrets & Credential Scanning...");
-    const dirtyText = "Here is the private key: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef and token "+["ghp","123456789012345678901234567890123456"].join("_")+"";
+    const sampleToken = ["ghp", "123456789012345678901234567890123456"].join("_");
+    const dirtyText = `Here is the private key: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef and token ${sampleToken}`;
     const dlpRes = supervisor.scanOutboundDlp(dirtyText);
     assert.strictEqual(dlpRes.success, true);
     assert.ok(dlpRes.report);

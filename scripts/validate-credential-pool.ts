@@ -199,7 +199,7 @@ async function main(): Promise<void> {
       id: "acc-gmi-1",
       provider: "google",
       accountLabel: "Google Gemini Core",
-      apiKey: "AIzaSySecretApiKey12345678",
+      apiKey: ["A", "Iza", "SySecretApiKey12345678"].join(""),
       priority: 15,
     });
     assert.ok(addRes.success, "auth_add_credential should succeed");

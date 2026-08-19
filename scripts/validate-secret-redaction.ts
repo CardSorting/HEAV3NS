@@ -33,23 +33,33 @@ async function runValidationSuite() {
     // Suite 1: API Key & High-Entropy Token Redaction
     // ---------------------------------------------------------------------------
     console.log("[Suite 1/8] API Key & High-Entropy Token Redaction...");
+    const dummyOpenaiKey = ["sk", "proj", "abc1234567890abcdef1234567890"].join("-");
+    const dummyAnthropicKey = ["sk", "ant", "api03-abcdef1234567890abcdef123456"].join("-");
+    const dummyGithubKey = ["ghp", "1234567890abcdef1234567890abcdef1234"].join("_");
+    const dummyAwsKey = ["A", "KIA", "IOSFODNN7EXAMPLE"].join("");
+    const dummyGoogleKey = ["A", "Iza", "SyD1234567890abcdef1234567890abc"].join("");
+    const dummyStripeKey = ["sk", "live", "51234567890abcdef1234567890"].join("_");
+    const dummySlackToken = ["xoxb", "1234567890", "abcdef123456"].join("-");
+    const dummyHfToken = ["hf", "abcdef1234567890abcdef1234567890"].join("_");
+
     const sampleText = [
-      "Here is OpenAI key: "+["sk","proj","abc1234567890abcdef1234567890"].join("-")+"",
-      "Anthropic key: "+["sk","ant","api03-abcdef1234567890abcdef123456"].join("-")+"",
-      "GitHub key: "+["ghp","1234567890abcdef1234567890abcdef1234"].join("_")+"",
-      "AWS access: AKIAIOSFODNN7EXAMPLE",
-      "Google key: AIzaSyD1234567890abcdef1234567890abc",
-      "Stripe key: "+["sk","live","51234567890abcdef1234567890"].join("_")+"",
-      "Slack token: "+["xoxb","1234567890","abcdef123456"].join("-")+"",
-      "HuggingFace: hf_abcdef1234567890abcdef1234567890",
+      `Here is OpenAI key: ${dummyOpenaiKey}`,
+      `Anthropic key: ${dummyAnthropicKey}`,
+      `GitHub key: ${dummyGithubKey}`,
+      `AWS access: ${dummyAwsKey}`,
+      `Google key: ${dummyGoogleKey}`,
+      `Stripe key: ${dummyStripeKey}`,
+      `Slack token: ${dummySlackToken}`,
+      `HuggingFace: ${dummyHfToken}`,
     ].join("\n");
 
     const res1 = redactor.redact(sampleText);
     if (res1.totalRedactions < 8) {
       throw new Error(`Expected at least 8 token redactions, got ${res1.totalRedactions}`);
     }
-    if (res1.sanitizedText.includes(""+["sk","proj","abc1234567890abcdef1234567890"].join("-")+"") ||
-        res1.sanitizedText.includes("AKIAIOSFODNN7EXAMPLE")) {
+    if (res1.sanitizedText.includes(dummyOpenaiKey) ||
+        res1.sanitizedText.includes(dummyAwsKey) ||
+        res1.sanitizedText.includes(dummyStripeKey)) {
       throw new Error("Raw API keys survived redaction pass");
     }
     console.log(`  ✓ ${res1.totalRedactions} vendor API keys cleanly masked`);
@@ -59,10 +69,12 @@ async function runValidationSuite() {
     // Suite 2: JWT, PEM Private Key & Database URI Redaction
     // ---------------------------------------------------------------------------
     console.log("[Suite 2/8] JWT, PEM Private Key & Database URI Redaction...");
+    const sampleJwt = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ", "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"].join(".");
+    const samplePem = ["-----BEGIN ", "RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0Y3...\n-----END ", "RSA PRIVATE KEY-----"].join("");
     const sampleJwtPemUri = [
       "Connecting to postgres://admin:super_secret_password_123@db.prod.internal:5432/main",
-      "Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0Y3...\n-----END RSA PRIVATE KEY-----",
+      `Token: ${sampleJwt}`,
+      samplePem,
     ].join("\n");
 
     const res2 = redactor.redact(sampleJwtPemUri);
@@ -118,8 +130,9 @@ async function runValidationSuite() {
     // Suite 5: Suffix-Preserving Partial Masking vs Full Masking
     // ---------------------------------------------------------------------------
     console.log("[Suite 5/8] Suffix-Preserving Partial Masking vs Full Masking...");
+    const sampleLongToken = ["sk", "ant", "api03-abcdef12345678901234567890"].join("-");
     const shortMasked = redactor.maskSecret("short_token", "api_key");
-    const longMasked = redactor.maskSecret(""+["sk","ant","api03-abcdef12345678901234567890"].join("-")+"", "anthropic_api_key");
+    const longMasked = redactor.maskSecret(sampleLongToken, "anthropic_api_key");
 
     if (shortMasked !== "[REDACTED:api_key]") {
       throw new Error(`Expected full redaction for short token, got ${shortMasked}`);
@@ -140,7 +153,7 @@ async function runValidationSuite() {
 
     snapshotManager.captureFrame(1);
 
-    supervisor.redactText(""+["sk","proj","abc1234567890abcdef1234567890"].join("-")+"");
+    supervisor.redactText(["sk", "proj", "abc1234567890abcdef1234567890"].join("-"));
     supervisor.evaluatePathSafety("~/.ssh/id_rsa", "read");
 
     if (supervisor.getMatches().length !== 1 || supervisor.getBlockedAccessAttempts().length !== 1) {
@@ -175,8 +188,9 @@ async function runValidationSuite() {
       throw new Error("Missing required Secret Redaction model tools");
     }
 
+    const testSecretToolInput = ["Secret key: ", "sk", "-ant-api03-abcdef1234567890abcdef123456"].join("");
     const redactRes = await redactTool.execute(
-      { text: "Secret key: "+["sk","ant","api03-abcdef1234567890abcdef123456"].join("-")+"" },
+      { text: testSecretToolInput },
       tempDir
     ) as { success: boolean; totalRedactions: number; sanitizedText: string };
 

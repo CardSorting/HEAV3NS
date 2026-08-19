@@ -29,8 +29,8 @@ async function main(): Promise<void> {
     const dirtyEnv = {
       PATH: "/usr/bin:/bin",
       NODE_ENV: "production",
-      OPENAI_API_KEY: ""+["sk","proj","1234567890abcdef1234567890"].join("-")+"",
-      ANTHROPIC_SECRET_KEY: ""+["sk","ant","9876543210fedcba"].join("-")+"",
+      OPENAI_API_KEY: ["sk", "proj", "1234567890abcdef1234567890"].join("-"),
+      ANTHROPIC_SECRET_KEY: ["sk", "ant", "9876543210fedcba"].join("-"),
       LUMI_AUTH_TOKEN: "lumi_tok_9988776655",
       DATABASE_PASSWORD: "super_secret_password",
       SAFE_CONFIG_FLAG: "true",
