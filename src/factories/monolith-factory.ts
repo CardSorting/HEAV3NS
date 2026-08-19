@@ -672,6 +672,10 @@ import { DaemonSnapshotManager } from "../sessions/extensions/daemon/daemon-snap
 import { DaemonSupervisor } from "../agents/extensions/daemon/daemon-supervisor.js";
 import { DaemonToolSuite } from "../tooling/extensions/daemon/daemon-tool-suite.js";
 
+import { BroccoliRunbookSubstrate } from "../agents/extensions/runbooks/broccoli-runbook-substrate.js";
+import { RunbookSupervisor } from "../agents/extensions/runbooks/runbook-supervisor.js";
+import { RunbookToolSuite } from "../tooling/extensions/runbooks/runbook-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -1270,6 +1274,9 @@ export class MonolithFactory {
     broccoliDaemonSubstrate: BroccoliDaemonSubstrate;
     daemonSnapshotManager: DaemonSnapshotManager;
     daemonToolSuite: DaemonToolSuite;
+    broccoliRunbookSubstrate: BroccoliRunbookSubstrate;
+    runbookSupervisor: RunbookSupervisor;
+    runbookToolSuite: RunbookToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -2247,6 +2254,10 @@ export class MonolithFactory {
     const daemonSupervisor = new DaemonSupervisor(broccoliDaemonSubstrate, deterministicDaemonEngine);
     const daemonToolSuite = new DaemonToolSuite(daemonSupervisor);
 
+    const broccoliRunbookSubstrate = new BroccoliRunbookSubstrate(databaseKernel);
+    const runbookSupervisor = new RunbookSupervisor(broccoliRunbookSubstrate, { workspaceRoot: cwd });
+    const runbookToolSuite = new RunbookToolSuite(runbookSupervisor);
+
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();
     const swarmDispatcher = new AgentSwarmDispatcher();
@@ -2344,7 +2355,8 @@ export class MonolithFactory {
       walletToolSuite,
       emailToolSuite,
       otlpToolSuite,
-      daemonToolSuite
+      daemonToolSuite,
+      runbookToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2956,6 +2968,9 @@ export class MonolithFactory {
       broccoliDaemonSubstrate,
       daemonSnapshotManager,
       daemonToolSuite,
+      broccoliRunbookSubstrate,
+      runbookSupervisor,
+      runbookToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

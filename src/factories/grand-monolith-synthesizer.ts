@@ -1,9 +1,9 @@
 import { MonolithFactory, type MonolithFactoryOptions } from "./monolith-factory.js";
 
 export const CURRENT_EVOLUTION_BASELINE = Object.freeze({
-  highestRecordedPass: 192,
-  label: "Pass 192 + runtime hardening",
-  runtimeHardeningDecision: "ADR-082",
+  highestRecordedPass: 193,
+  label: "Pass 193 + Runbook FSM & Hybrid BroccoliDB Osmosis",
+  runtimeHardeningDecision: "ADR-123",
 });
 
 /** Exact composition contract for the current evolution baseline. */
@@ -129,6 +129,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "broccoliRetentionCleanup",
   "broccoliReviewSubstrate",
   "broccoliRollbackCoordinator",
+  "broccoliRunbookSubstrate",
   "broccoliSchemaSanitizerSubstrate",
   "broccoliSearchSubstrate",
   "broccoliSelfRepoGuardSubstrate",
@@ -446,6 +447,8 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "reviewSnapshotManager",
   "ringBuffer",
   "ripgrepSearchService",
+  "runbookSupervisor",
+  "runbookToolSuite",
   "schemaSanitizerSnapshotManager",
   "schemaSanitizerSupervisor",
   "schemaSanitizerToolSuite",

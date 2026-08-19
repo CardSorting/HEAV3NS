@@ -178,6 +178,7 @@ ADRs preserve decision-time context and acceptance evidence; their embedded comm
 - **[ADR-128](ADR-128-opentelemetry-distributed-tracing-and-visual-flame-graphs.md)**: OpenTelemetry (OTLP) distributed tracing, W3C TraceContext propagation, ASCII waterfall timelines, proportional visual flame graphs, and automated bottleneck hunter.
 - **[ADR-129](ADR-129-agent-client-protocol-universal-editor-bridge-and-changesets.md)**: Agent Client Protocol (ACP) universal editor bridge, JSON-RPC 2.0 transport, multi-file staged changesets, and Cursor Composer-style visual diff review cards.
 - **[ADR-130](ADR-130-enterprise-daemon-process-supervisor-and-watchdogs.md)**: Enterprise background daemon process supervisor, 500-line ANSI-stripped log ring buffers, multi-protocol health probes (TCP/HTTP/PID/EXEC), auto-healing watchdogs, and ASCII process matrix dashboard table.
+- **[ADR-131](ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)**: Deterministic Finite State Machine (FSM) Runbooks, 10-step atomic transition lifecycle, entry-scoped dynamic verification manifests, zero-subshell file predicates, Hybrid BroccoliDB substrate, amnesia-proof context compaction synthesis, plain-English diagnostic humanizer, and interactive visual TUI dashboard.
 
 ### Feature Evolution & Osmosis Learning
 - **[ADR-002](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-002-osmosis-evolution-compaction-skills-composition.md)**: Context compaction, skill discovery, and prompt composition.

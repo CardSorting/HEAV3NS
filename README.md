@@ -10,7 +10,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Ancestral Teacher](https://img.shields.io/badge/Ancestral%20Teacher-Hermes--Agent%20(Nous%20Research)-FFD700?style=for-the-badge&logo=github)](https://github.com/NousResearch/hermes-agent)
 [![Freeze Cutoff](https://img.shields.io/badge/Workspace%20Freeze-August%2016%2C%202026-critical?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
-[![Grand Monolith](https://img.shields.io/badge/Grand%20Monolith-586%20Components-success?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
+[![Grand Monolith](https://img.shields.io/badge/Grand%20Monolith-589%20Components-success?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
 [![Agent Size](https://img.shields.io/badge/Agent%20Size-215k%20LOC%20%7C%207.77%20MB-9C27B0?style=for-the-badge)](#-total-agent-size--density)
 [![Academic Paper](https://img.shields.io/badge/Academic%20Paper-AKD--DSO-9C27B0?style=for-the-badge)](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
 [![Whitepaper](https://img.shields.io/badge/Whitepaper-Osmosis%20Paradigm-00C853?style=for-the-badge)](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md)
@@ -181,11 +181,22 @@ The open AI community owes an immense debt to Nous Research for championing unco
 
 While the ancestral teacher implemented these capabilities in a rich, multi-platform Python ecosystem, **LUMI-JOY** embarked on an intensive, highly scrutinized architectural distillation pass. We audited every major subsystem of `hermes-agent`, extracted its pure domain intent, and transmuted it into a unified, zero-GC, typed TypeScript deterministic game engine monolith operating over Broccolidb with frame-perfect $O(1)$ state snapshotting.
 
-### 🧬 The 41 Distilled Osmotic Subsystems
+### 🧬 The 41 Distilled Osmotic Subsystems & StateM FSM Integration
 
-All 41 ancestral subsystems—from evolutionary skill DAGs and self-healing cron kernels to intelligent CDP browser perception, memory knowledge graphs, and 9-strategy fuzzy matchers—have been completely transmuted into high-density, zero-GC TypeScript monolithic components.
+All ancestral subsystems—from evolutionary skill DAGs and self-healing cron kernels to intelligent CDP browser perception, memory knowledge graphs, and 9-strategy fuzzy matchers—have been completely transmuted into high-density, zero-GC TypeScript monolithic components.
 
-👉 **Explore the complete matrix**: [The 41 Distilled Osmotic Subsystems Specification](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) and [1-to-1 Package Mapping Matrix](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md).
+### 🎯 StateM & Benchmark-Winning Finite State Machine (FSM) Runbooks
+
+In addition to Hermes Agent, LUMI-JOY draws deep architectural inspiration from **StateM** (the Terminal-Bench 2.1 benchmark champion architecture). StateM demonstrated that constraining agentic workflows within formal, graph-theoretic state machines—enforced by deterministic verification gates and dynamic check manifests—fundamentally eliminates the "amnesia and hallucination trap" in long-running tasks.
+
+Under **[ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)**, LUMI-JOY assimilated this paradigm directly into its native TypeScript substrate:
+- **10-Step Symmetrical Atomic Transition Transaction Engine** (`RunbookSupervisor`)
+- **Zero-Subshell In-Memory File & JSONPath Predicates** (`FilePredicateEvaluator`)
+- **Entry-Scoped Dynamic Micro-Manifests** (`BroccoliRunbookSubstrate`)
+- **Amnesia-Proof Context Compaction & Reconstitution** (`StatefulCompactionSynthesizer`)
+- **World-Class Visual TUI Dashboard & Plain-English Diagnostic Humanizer** (`RunbookDashboardModal`, `RunbookHumanizer`, `RunbookCatalog`)
+
+👉 **Explore the complete matrix**: [The Distilled Osmotic Subsystems Specification](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) and [ADR-131 Specification](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md).
 
 ---
 
@@ -599,7 +610,7 @@ The current evolutionary baseline of **LUMI-JOY** marks the realization of the *
 | **🔒 Secret Redactor & Sensitive Path Firewall** | `DeterministicSecretRedactor`, `SecretRedactionSupervisor` | `BroccoliRedactionSubstrate`, `RedactionSnapshotManager` | Phase 95 / [ADR-047](.wiki/adr/ADR-047-deterministic-secret-redaction-and-path-safety.md) | Entropy-based token scrubbing, query/body masking, suffix-preservation rules, and sensitive path access gating. |
 | **🖥️ Terminal UI Dashboard Modals & Renderers** | `BroccoliViewRenderer`, 30+ specialized TUI modal classes | `BroccoliSkinSubstrate`, `SkinSnapshotManager` | Phase 130 / [ADR-106](.wiki/adr/ADR-106-stream-diagnostics-and-forensic-header-capture.md) | Synchronized ANSI cell rendering (`\x1b[?2026h`), 30+ interactive terminal modal dashboards, and rich spreadsheet/kanban/diff views. |
 | **⚡ Attempt Completion Gate Strategy** | `RoadmapCompletionGate`, `AttemptFlightRecorder`, `CriterionScoreEvaluator` | `PersistentSessionStore`, `ArenaAllocator` | ADR-084 / [ADR-084](.wiki/adr/ADR-084-attempt-completion-gate-strategy.md) | Multi-phase gating lifecycle (`admission`, `in_flight`, `completion`, `postmortem`), direct quantitative criterion scoring, and zero-delta stagnation traps. |
-| **🏛️ Grand Monolith Synthesis** | `GrandMonolithSynthesizer`, `MonolithFactory`, `LumiMonolith` | Contiguous 16MB ArrayBuffer slab | Pass 192 / [ADR-012](.wiki/adr/ADR-012-non-destructive-osmosis-class-extension-strategy.md) | 586 verified single-responsibility components with zero circular dependencies, deep relative imports, and full dependency inversion. |
+| **🏛️ Grand Monolith Synthesis** | `GrandMonolithSynthesizer`, `MonolithFactory`, `LumiMonolith` | Contiguous 16MB ArrayBuffer slab | Pass 193 / [ADR-012](.wiki/adr/ADR-012-non-destructive-osmosis-class-extension-strategy.md) | 589 verified single-responsibility components with zero circular dependencies, deep relative imports, and full dependency inversion. |
 
 ---
 
@@ -673,6 +684,7 @@ LUMI-JOY features native RFC 7636 PKCE OAuth 2.0 device authentication with POSI
 ## 🙏 Acknowledgments & Ancestral Attribution
 
 - ☤ **Ancestral Teacher & Inspiration**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) created and open-sourced by **Nous Research** and its incredible community of contributors (licensed under the MIT License). Special thanks to the Nous Research team for pushing the boundaries of open models, autonomous agents, and AI self-improvement.
+- 🎯 **StateM Research & Workflow FSM**: Deep credit and appreciation to the creators and contributors of **StateM** for their pioneering work on state-machine-governed agentic runbooks, verification gates, and dynamic check manifests that inspired LUMI-JOY's deterministic runbook substrate ([ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)).
 - 🧠 **Research Foundations**: Built on the open paradigms of autonomous skill evolution, dialectic agent memory (`Honcho`), and open-weights model intelligence advanced by the open AI research community.
 - 🎮 **Game Engine Pioneers**: Inspired by the deterministic architecture, memory arenas, and frame-tick discipline of classic game engines (id Software, John Carmack et al.).
 - 🌐 **Open Standards**: Fully compatible with the [`agentskills.io`](https://agentskills.io) open standard and the Agent Client Protocol (ACP) for modern IDEs.

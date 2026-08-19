@@ -94,6 +94,7 @@ import type { WalletToolSuite } from "../wallet/wallet-tool-suite.js";
 import type { EmailToolSuite } from "../email/email-tool-suite.js";
 import type { OtlpToolSuite } from "../otlp/otlp-tool-suite.js";
 import type { DaemonToolSuite } from "../daemon/daemon-tool-suite.js";
+import type { RunbookToolSuite } from "../runbooks/runbook-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -179,6 +180,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly emailToolSuite?: EmailToolSuite;
   readonly otlpToolSuite?: OtlpToolSuite;
   readonly daemonToolSuite?: DaemonToolSuite;
+  readonly runbookToolSuite?: RunbookToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -272,7 +274,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     walletToolSuite?: WalletToolSuite,
     emailToolSuite?: EmailToolSuite,
     otlpToolSuite?: OtlpToolSuite,
-    daemonToolSuite?: DaemonToolSuite
+    daemonToolSuite?: DaemonToolSuite,
+    runbookToolSuite?: RunbookToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -358,6 +361,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.emailToolSuite = emailToolSuite;
     this.otlpToolSuite = otlpToolSuite;
     this.daemonToolSuite = daemonToolSuite;
+    this.runbookToolSuite = runbookToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -960,6 +964,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.daemonToolSuite) {
       for (const tool of this.daemonToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.runbookToolSuite) {
+      for (const tool of this.runbookToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

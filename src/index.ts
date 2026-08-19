@@ -668,6 +668,13 @@ import { BroccoliDaemonSubstrate } from "./sessions/extensions/daemon/broccoli-d
 import { DaemonSnapshotManager } from "./sessions/extensions/daemon/daemon-snapshot-manager.js";
 import { DaemonToolSuite } from "./tooling/extensions/daemon/daemon-tool-suite.js";
 
+import { FilePredicateEvaluator } from "./agents/extensions/runbooks/file-predicate-evaluator.js";
+import { MiniYamlParser, MiniYamlError } from "./agents/extensions/runbooks/mini-yaml-parser.js";
+import { BroccoliRunbookSubstrate } from "./agents/extensions/runbooks/broccoli-runbook-substrate.js";
+import { RunbookSupervisor, TransitionBlockedError } from "./agents/extensions/runbooks/runbook-supervisor.js";
+import { RunbookToolSuite } from "./tooling/extensions/runbooks/runbook-tool-suite.js";
+import { StatefulCompactionSynthesizer } from "./tooling/extensions/compaction/stateful-compaction-synthesizer.js";
+
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
 export type {
@@ -3544,6 +3551,18 @@ export { BroccoliDaemonSubstrate } from "./sessions/extensions/daemon/broccoli-d
 export { DaemonSnapshotManager } from "./sessions/extensions/daemon/daemon-snapshot-manager.js";
 export { DaemonToolSuite } from "./tooling/extensions/daemon/daemon-tool-suite.js";
 
+export { FilePredicateEvaluator } from "./agents/extensions/runbooks/file-predicate-evaluator.js";
+export { MiniYamlParser, MiniYamlError } from "./agents/extensions/runbooks/mini-yaml-parser.js";
+export { BroccoliRunbookSubstrate } from "./agents/extensions/runbooks/broccoli-runbook-substrate.js";
+export { RunbookSupervisor, TransitionBlockedError } from "./agents/extensions/runbooks/runbook-supervisor.js";
+export { RunbookToolSuite } from "./tooling/extensions/runbooks/runbook-tool-suite.js";
+export { StatefulCompactionSynthesizer } from "./tooling/extensions/compaction/stateful-compaction-synthesizer.js";
+export { RunbookHumanizer } from "./agents/extensions/runbooks/runbook-humanizer.js";
+export { RunbookCatalog } from "./agents/extensions/runbooks/runbook-catalog.js";
+export { RunbookDashboardModal, type RunbookDashboardViewMode } from "./tui/components/runbook-dashboard-modal.js";
+export type * from "./core/contracts/runbook.contracts.js";
+export type * from "./core/contracts/broccolidb-runbook.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -4083,6 +4102,9 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliDaemonSubstrate: BroccoliDaemonSubstrate;
   readonly daemonSnapshotManager: DaemonSnapshotManager;
   readonly daemonToolSuite: DaemonToolSuite;
+  readonly broccoliRunbookSubstrate: BroccoliRunbookSubstrate;
+  readonly runbookSupervisor: RunbookSupervisor;
+  readonly runbookToolSuite: RunbookToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -4613,6 +4635,9 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliDaemonSubstrate = components.broccoliDaemonSubstrate;
     this.daemonSnapshotManager = components.daemonSnapshotManager;
     this.daemonToolSuite = components.daemonToolSuite;
+    this.broccoliRunbookSubstrate = components.broccoliRunbookSubstrate;
+    this.runbookSupervisor = components.runbookSupervisor;
+    this.runbookToolSuite = components.runbookToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;

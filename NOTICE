@@ -18,6 +18,9 @@ Ancestral Teacher Attribution & Acknowledgments:
 - Contains concepts, domain capabilities, and architectural inspiration distilled
   via the AKD-DSO osmosis paradigm from Hermes Agent (https://github.com/NousResearch/hermes-agent),
   developed by Nous Research and its open-source contributors (MIT License).
+- Contains experimental workflow orchestration concepts, finite state machine (FSM)
+  runbook paradigms, and verification gate inspiration distilled from StateM
+  (the Terminal-Bench 2.1 benchmark architecture and research project).
 
 Public Prior Art Disclosure Date: August 9, 2026
 License: Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)

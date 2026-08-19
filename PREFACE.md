@@ -54,6 +54,10 @@ That single question changed everything.
 
 By reframing an AI agent runtime as a deterministic game engine kernel (`tick()`), allocating a contiguous **16MB Zero-GC Contiguous ArrayBuffer Slab** like a classic C++ arena allocator, and capturing frame-perfect state snapshots (`GameStateSnapshot`), LUMI-JOY proved that software friction was an illusion. Suddenly, agent turns executed in sub-millisecond local fast-path time ($<1.0\text{ ms}$), throughput surged past $1,000\text{ frames/second}$, and state could time-travel backward in instant $O(1)$ rewinds ($<0.1\text{ ms}$ warmed p95).
 
+### Embracing Finite State Machines: The StateM Inspiration
+
+Our quest for deterministic agent reliability also led us to study the frontier of benchmark-winning agent architectures. The innovative work in **StateM** (the Terminal-Bench 2.1 champion project) revealed the immense power of formal, graph-theoretic Finite State Machines (FSMs) and verification gates. By assimilating this concept into LUMI's native BroccoliDB substrate—transforming foreign subprocess loops into zero-subshell file predicates, amnesia-proof `/compact` synthesis, and plain-English visual TUI pipelines—we unified game engine execution with mathematical workflow guarantees.
+
 ### A Gift to the Open World
 
 I chose to publish every line of this architecture, whitepaper, and prior-art specification under the permissive Apache License 2.0 backed by an explicit Defensive Patent Non-Aggression Pledge. I did this because the knowledge that raised me came from the generosity of open-source creators who shared their code freely with the world. No corporate entity should ever lock away the fundamental substrate of high-speed deterministic intelligence.

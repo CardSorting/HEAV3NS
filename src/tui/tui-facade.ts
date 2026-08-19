@@ -20,6 +20,7 @@ export { GuidedSetupWalkthroughModal } from "./components/guided-setup-walkthrou
 export { ModelSelectModal } from "./components/model-select-modal.js";
 export { KanbanBoardModal } from "./components/kanban-board-modal.js";
 export { GoalDashboardModal } from "./components/goal-dashboard-modal.js";
+export { RunbookDashboardModal, type RunbookDashboardViewMode } from "./components/runbook-dashboard-modal.js";
 export { CronDashboardModal } from "./components/cron-dashboard-modal.js";
 export { SwarmDashboardModal } from "./components/swarm-dashboard-modal.js";
 export { SkillTreeModal } from "./components/skill-tree-modal.js";
