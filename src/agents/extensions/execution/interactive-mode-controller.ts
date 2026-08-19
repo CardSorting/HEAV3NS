@@ -555,6 +555,7 @@ export class InteractiveModeController {
       isLoadingInlineView = true;
       try {
         const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
+        const nousModels = await monolith.modelCatalog.fetchNousModels();
         const codexModels = await monolith.modelCatalog.fetchCodexModels();
         const ollamaModels = await monolith.modelCatalog.getModelsForProvider("ollama");
         const llamaCppModels = await monolith.modelCatalog.getModelsForProvider("llamacpp");
@@ -564,6 +565,7 @@ export class InteractiveModeController {
 
         const combined = [
           ...openRouterModels,
+          ...nousModels,
           ...codexModels,
           ...ollamaModels,
           ...llamaCppModels,
@@ -573,7 +575,8 @@ export class InteractiveModeController {
         ];
         const modelMap = new Map<string, ModelSpecs>();
         for (const m of combined) {
-          modelMap.set(m.modelName, m);
+          const key = `${m.provider.toLowerCase()}::${m.modelName}`;
+          modelMap.set(key, m);
         }
         const availableModels = Array.from(modelMap.values());
 

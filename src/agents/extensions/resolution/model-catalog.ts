@@ -19,7 +19,14 @@ export interface ModelSpecs {
     | "google"
     | "openai"
     | "deepseek"
+    | "groq"
+    | "cerebras"
+    | "xai"
+    | "qwen"
+    | "zai"
     | "nous"
+    | "clinepass"
+    | "cloudflare"
     | "custom";
   contextWindowTokens: number;
   maxOutputTokens: number;
@@ -45,7 +52,7 @@ interface OpenRouterModelApiResponse {
  * ModelCatalog & Context Pricing Registry.
  * Absorbed from packages/catalog (Pass 16 / ADR-012) & upgraded for Local On-Prem (Pass 105 / ADR-052).
  *
- * Maintains model spec definitions, dynamic OpenRouter & local engine auto-discovery (Ollama, llama.cpp, LM Studio, vLLM),
+ * Maintains model spec definitions, dynamic OpenRouter, Nous Research & local engine auto-discovery (Ollama, llama.cpp, LM Studio, vLLM),
  * context window limits, and turn token cost calculations with sub-cent honesty.
  */
 export class ModelCatalog {
@@ -103,49 +110,244 @@ export class ModelCatalog {
 
     // OpenAI Codex OAuth Models (ChatGPT Subscription)
     this.registerModel({
-      modelName: "gpt-5.6-terra",
+      modelName: "gpt-5.6-sol",
       provider: "openai-codex",
-      contextWindowTokens: 900_000,
-      maxOutputTokens: 16_384,
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: true,
       supportsReasoning: true,
-      description: "Codex OAuth Flagship Reasoning Engine (Default)",
+      description: "GPT-5.6 Sol: Flagship coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.6-sol-pro",
+      provider: "openai-codex",
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.6 Sol Pro: High-effort reasoning flagship via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.6-terra",
+      provider: "openai-codex",
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.6 Terra: Balanced flagship coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.6-terra-pro",
+      provider: "openai-codex",
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.6 Terra Pro: High-effort balanced model via ChatGPT subscription",
     });
 
     this.registerModel({
       modelName: "gpt-5.6-luna",
       provider: "openai-codex",
-      contextWindowTokens: 900_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: true,
-      description: "Codex OAuth High-Velocity Model",
-    });
-
-    this.registerModel({
-      modelName: "gpt-5.6-sol",
-      provider: "openai-codex",
-      contextWindowTokens: 900_000,
-      maxOutputTokens: 8_192,
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: true,
       supportsReasoning: true,
-      description: "Codex OAuth Balanced Model",
+      description: "GPT-5.6 Luna: High-velocity flagship coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.6-luna-pro",
+      provider: "openai-codex",
+      contextWindowTokens: 372_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.6 Luna Pro: High-effort high-velocity model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.5",
+      provider: "openai-codex",
+      contextWindowTokens: 272_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.5 Codex: OpenAI flagship coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.4",
+      provider: "openai-codex",
+      contextWindowTokens: 272_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.4 Codex: High performance model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.3-codex",
+      provider: "openai-codex",
+      contextWindowTokens: 272_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.3 Codex: Frontier agentic coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "gpt-5.2-codex",
+      provider: "openai-codex",
+      contextWindowTokens: 400_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 0.0,
+      outputPricePer1M: 0.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "GPT-5.2 Codex: OpenAI flagship coding model via ChatGPT subscription",
+    });
+
+    this.registerModel({
+      modelName: "o3-mini",
+      provider: "openai-codex",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 100_000,
+      inputPricePer1M: 1.1,
+      outputPricePer1M: 4.4,
+      supportsVision: false,
+      supportsReasoning: true,
+      description: "OpenAI specialized reasoning model with deep math and coding strength",
+    });
+
+    this.registerModel({
+      modelName: "o1",
+      provider: "openai-codex",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 100_000,
+      inputPricePer1M: 15.0,
+      outputPricePer1M: 60.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "OpenAI full deliberation reasoning engine",
     });
 
     this.registerModel({
       modelName: "gpt-4o",
       provider: "openai-codex",
-      contextWindowTokens: 900_000,
-      maxOutputTokens: 4_096,
+      contextWindowTokens: 128_000,
+      maxOutputTokens: 16_384,
       inputPricePer1M: 2.5,
       outputPricePer1M: 10.0,
       supportsVision: true,
+      supportsReasoning: false,
       description: "Standard OpenAI GPT-4o Model",
+    });
+
+    // Anthropic Claude Frontier Models
+    this.registerModel({
+      modelName: "claude-opus-4-7",
+      provider: "anthropic",
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 5.0,
+      outputPricePer1M: 25.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic Claude 4.7 Opus: Most capable autonomous model for long-horizon agentic work (1M context)",
+    });
+
+    this.registerModel({
+      modelName: "claude-opus-4-6",
+      provider: "anthropic",
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 128_000,
+      inputPricePer1M: 5.0,
+      outputPricePer1M: 25.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic Claude 4.6 Opus with 1M context window and advanced reasoning",
+    });
+
+    this.registerModel({
+      modelName: "claude-sonnet-4-6",
+      provider: "anthropic",
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 64_000,
+      inputPricePer1M: 3.0,
+      outputPricePer1M: 15.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic Claude 4.6 Sonnet: 1M context balanced model offering strong coding and reasoning",
+    });
+
+    this.registerModel({
+      modelName: "claude-sonnet-4-5-20250929",
+      provider: "anthropic",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 64_000,
+      inputPricePer1M: 3.0,
+      outputPricePer1M: 15.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic Claude 4.5 Sonnet flagship reasoning & full-stack software engineer",
+    });
+
+    this.registerModel({
+      modelName: "claude-haiku-4-5-20251001",
+      provider: "anthropic",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 64_000,
+      inputPricePer1M: 1.0,
+      outputPricePer1M: 5.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic Claude 4.5 Haiku fast intelligence with reasoning",
+    });
+
+    this.registerModel({
+      modelName: "claude-3-7-sonnet-20250219",
+      provider: "anthropic",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 64_000,
+      inputPricePer1M: 3.0,
+      outputPricePer1M: 15.0,
+      supportsVision: true,
+      supportsReasoning: true,
+      description: "Anthropic frontier hybrid reasoning & coding engine with dynamic thinking budget",
+    });
+
+    this.registerModel({
+      modelName: "claude-3-5-sonnet-20241022",
+      provider: "anthropic",
+      contextWindowTokens: 200_000,
+      maxOutputTokens: 8_192,
+      inputPricePer1M: 3.0,
+      outputPricePer1M: 15.0,
+      supportsVision: true,
+      supportsReasoning: false,
+      description: "Top-tier agentic coding, refactoring, and multi-file editing precision",
     });
 
     // Default Fallback OpenRouter Presets from OpenRouterProviderEngine
@@ -359,17 +561,36 @@ export class ModelCatalog {
   }
 
   registerModel(specs: ModelSpecs): void {
-    this.catalog.set(specs.modelName, specs);
+    const key = `${specs.provider.toLowerCase()}::${specs.modelName}`;
+    this.catalog.set(key, specs);
   }
 
-  getModelInfo(modelName: string): ModelSpecs {
-    const existing = this.catalog.get(modelName);
-    if (existing) return existing;
+  getModelInfo(modelName: string, provider?: string): ModelSpecs {
+    if (provider) {
+      const key = `${provider.toLowerCase()}::${modelName}`;
+      const exact = this.catalog.get(key);
+      if (exact) return exact;
+    }
+
+    // Try exact compound key
+    const direct = this.catalog.get(modelName.toLowerCase());
+    if (direct) return direct;
+
+    // Try finding by modelName across registered specs
+    for (const [key, spec] of this.catalog.entries()) {
+      if (spec.modelName === modelName || key.endsWith(`::${modelName}`)) {
+        return spec;
+      }
+    }
 
     const isOpenRouter =
       modelName.startsWith("openrouter/") ||
       modelName.includes("/") ||
       this.openRouterEngine.isClaude1mModel(modelName);
+
+    const isNous =
+      modelName.startsWith("nous/") ||
+      modelName.toLowerCase().includes("hermes");
 
     const isLocal =
       modelName.startsWith("ollama/") ||
@@ -382,7 +603,7 @@ export class ModelCatalog {
 
     if (isOpenRouter && !isLocal) {
       const { normalizedId, is1m } = this.openRouterEngine.normalizeModelId(modelName);
-      const baseSpec = this.catalog.get(normalizedId);
+      const baseSpec = this.catalog.get(`openrouter::${normalizedId}`) || Array.from(this.catalog.values()).find(m => m.modelName === normalizedId);
       if (baseSpec && is1m) {
         const variantSpec: ModelSpecs = {
           ...baseSpec,
@@ -397,7 +618,7 @@ export class ModelCatalog {
 
     return {
       modelName,
-      provider: isLocal ? "local" : isOpenRouter ? "openrouter" : "custom",
+      provider: isLocal ? "local" : isNous ? "nous" : isOpenRouter ? "openrouter" : "custom",
       contextWindowTokens: 128_000,
       maxOutputTokens: 4_096,
       inputPricePer1M: isLocal ? 0.0 : 1.0,
@@ -405,7 +626,7 @@ export class ModelCatalog {
       supportsVision: false,
       estimatedLatencyMs: isLocal ? 5 : 45,
       isLocal,
-      description: isLocal ? "Local On-Premises Model" : isOpenRouter ? "Dynamic OpenRouter Model" : "Custom Proxy Model",
+      description: isLocal ? "Local On-Premises Model" : isNous ? "Nous Research Inference Model" : isOpenRouter ? "Dynamic OpenRouter Model" : "Custom Proxy Model",
     };
   }
 
@@ -432,6 +653,78 @@ export class ModelCatalog {
     } catch {
       return this.getFallbackOpenRouterModels();
     }
+  }
+
+  /**
+   * Dynamically fetches all live models from Nous Research Inference API (https://inference-api.nousresearch.com/v1/models).
+   * Parses 370 live models with per-1M token pricing, modalities, and reasoning flags.
+   */
+  async fetchNousModels(apiToken?: string, forceRefresh = false): Promise<ModelSpecs[]> {
+    const cacheKey = "nous:models";
+    const cached = !forceRefresh ? this.dynamicCache.getCachedModels(cacheKey) : null;
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    try {
+      const key = apiToken || process.env.NOUS_API_KEY || "";
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (key) {
+        headers["Authorization"] = `Bearer ${key}`;
+      }
+
+      const res = await fetch("https://inference-api.nousresearch.com/v1/models", {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(12_000),
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data?: Array<any> } | Array<any>;
+        const dataList = Array.isArray((json as any)?.data) ? (json as any).data : Array.isArray(json) ? json : [];
+        if (dataList.length > 0) {
+          const parsed: ModelSpecs[] = [];
+          for (const item of dataList) {
+            const id = item.id;
+            if (!id || typeof id !== "string") continue;
+            const name = item.name || id;
+            const contextLength = Number(item.context_length) || 131_072;
+            const pricing = item.pricing || {};
+            const promptPrice = (Number(pricing.prompt) || 0) * 1_000_000.0;
+            const completionPrice = (Number(pricing.completion) || 0) * 1_000_000.0;
+            const arch = item.architecture || {};
+            const inputModalities = Array.isArray(arch.input_modalities) ? arch.input_modalities : [];
+            const supportsVision = inputModalities.includes("image") || id.toLowerCase().includes("vision") || id.toLowerCase().includes("4o");
+            const isReasoning = item.reasoning === true || id.includes("r1") || id.includes("o1") || id.includes("o3") || id.includes("thinking") || id.includes("reason") || id.includes("405b");
+
+            const spec: ModelSpecs = {
+              modelName: id,
+              provider: "nous",
+              contextWindowTokens: contextLength,
+              maxOutputTokens: Math.min(contextLength, 32_000),
+              inputPricePer1M: promptPrice || 0.7,
+              outputPricePer1M: completionPrice || 1.4,
+              supportsVision,
+              supportsReasoning: isReasoning,
+              description: item.description || `Nous Research model ${name}`,
+            };
+            this.registerModel(spec);
+            parsed.push(spec);
+          }
+
+          if (parsed.length > 0) {
+            this.dynamicCache.setCachedModels(cacheKey, parsed, 300_000);
+            return parsed;
+          }
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    const fallback = this.getFallbackNousModels();
+    this.dynamicCache.setCachedModels(cacheKey, fallback, 300_000);
+    return fallback;
   }
 
   /**
@@ -558,7 +851,8 @@ export class ModelCatalog {
             const coreModels = this.getFallbackCodexModels();
             const mergedMap = new Map<string, ModelSpecs>();
             for (const m of [...coreModels, ...discovered]) {
-              mergedMap.set(m.modelName, m);
+              const key = `${m.provider.toLowerCase()}::${m.modelName}`;
+              mergedMap.set(key, m);
             }
             const merged = Array.from(mergedMap.values());
             this.dynamicCache.setCachedModels(cacheKey, merged, 300_000);
@@ -583,6 +877,10 @@ export class ModelCatalog {
     return Array.from(this.catalog.values()).filter((m) => m.provider === "openrouter");
   }
 
+  private getFallbackNousModels(): ModelSpecs[] {
+    return Array.from(this.catalog.values()).filter((m) => m.provider === "nous");
+  }
+
   getAllModels(): ModelSpecs[] {
     return Array.from(this.catalog.values());
   }
@@ -591,6 +889,9 @@ export class ModelCatalog {
     const normalized = provider.toLowerCase();
     if (normalized === "openrouter") {
       return this.fetchOpenRouterModels();
+    }
+    if (normalized === "nous" || normalized === "nousresearch" || normalized === "nous-research") {
+      return this.fetchNousModels();
     }
     if (normalized === "openai-codex" || normalized === "codex" || normalized === "openai") {
       return this.fetchCodexModels();

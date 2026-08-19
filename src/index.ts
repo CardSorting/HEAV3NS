@@ -5090,8 +5090,9 @@ if (isDirectCliExecution) {
     } else if (isModels) {
       const force = args.includes("--refresh") || args.includes("-r");
       if (force) {
-        console.log("\n\x1b[33mFetching latest models dynamically from Codex and OpenRouter...\x1b[0m");
+        console.log("\n\x1b[33mFetching latest models dynamically from Codex, Nous Research, and OpenRouter...\x1b[0m");
         await lumi.modelCatalog.fetchCodexModels(undefined, true);
+        await lumi.modelCatalog.fetchNousModels(undefined, true);
         await lumi.modelCatalog.fetchOpenRouterModels(undefined, true);
       }
       console.log("\n\x1b[1;35m╭─── LUMI Curated & Dynamic Model Catalog ──────────────────────╮\x1b[0m");

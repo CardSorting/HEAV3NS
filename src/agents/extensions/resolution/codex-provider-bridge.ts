@@ -85,6 +85,8 @@ export class CodexProviderBridge {
   resolveProviderName(modelName: string): string {
     const lower = modelName.toLowerCase();
     if (lower.startsWith("openrouter/") || lower.includes("openrouter")) return "openrouter";
+    if (lower.startsWith("nous/") || lower.includes("nous") || lower.includes("hermes")) return "nous";
+    if (lower.startsWith("cline-pass/") || lower.includes("clinepass")) return "clinepass";
     if (lower.startsWith("llamacpp/") || lower.startsWith("llama.cpp/") || lower.startsWith("llama-cpp/") || lower.startsWith("gguf/")) return "llamacpp";
     if (lower.startsWith("lmstudio/") || lower.startsWith("lm-studio/")) return "lmstudio";
     if (lower.startsWith("vllm/")) return "vllm";
@@ -96,6 +98,12 @@ export class CodexProviderBridge {
     if (lower.startsWith("anthropic/") || lower.includes("claude")) return "anthropic";
     if (lower.startsWith("google/") || lower.includes("gemini")) return "google";
     if (lower.startsWith("deepseek/") || lower.includes("deepseek")) return "deepseek";
+    if (lower.startsWith("groq/") || lower.includes("groq")) return "groq";
+    if (lower.startsWith("cerebras/") || lower.includes("cerebras")) return "cerebras";
+    if (lower.startsWith("xai/") || lower.includes("grok")) return "xai";
+    if (lower.startsWith("qwen/") || lower.includes("dashscope")) return "qwen";
+    if (lower.startsWith("zai/") || lower.includes("bigmodel") || lower.includes("glm")) return "zai";
+    if (lower.startsWith("cloudflare/") || lower.startsWith("@cf/")) return "cloudflare";
     if (lower.startsWith("openai/") || lower.includes("gpt")) return "openai";
     if (lower.includes("/")) return lower.split("/")[0];
     return lower;
@@ -115,8 +123,22 @@ export class CodexProviderBridge {
     switch (provider) {
       case "openrouter":
         return "https://openrouter.ai/api/v1/chat/completions";
+      case "nous":
+        return "https://inference-api.nousresearch.com/v1/chat/completions";
+      case "clinepass":
+        return "https://api.cline.bot/api/v1/chat/completions";
       case "deepseek":
-        return "https://api.deepseek.com/v1/chat/completions";
+        return "https://api.deepseek.com/chat/completions";
+      case "groq":
+        return "https://api.groq.com/openai/v1/chat/completions";
+      case "cerebras":
+        return "https://api.cerebras.ai/v1/chat/completions";
+      case "xai":
+        return "https://api.x.ai/v1/chat/completions";
+      case "qwen":
+        return "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+      case "zai":
+        return "https://open.bigmodel.cn/api/paas/v4/chat/completions";
       case "ollama":
         return "http://localhost:11434/v1/chat/completions";
       case "llamacpp":
@@ -162,6 +184,13 @@ export class CodexProviderBridge {
         anthropic: process.env.ANTHROPIC_API_KEY,
         google: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
         deepseek: process.env.DEEPSEEK_API_KEY,
+        nous: process.env.NOUS_API_KEY || process.env.HERMES_PORTAL_TOKEN,
+        clinepass: process.env.CLINEPASS_API_KEY || process.env.CLINE_API_KEY,
+        groq: process.env.GROQ_API_KEY,
+        cerebras: process.env.CEREBRAS_API_KEY,
+        xai: process.env.XAI_API_KEY,
+        qwen: process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY,
+        zai: process.env.BIGMODEL_API_KEY || process.env.ZAI_API_KEY,
         openrouter: process.env.OPENROUTER_API_KEY,
         ollama: process.env.OLLAMA_API_KEY,
         llamacpp: process.env.LLAMACPP_API_KEY,
