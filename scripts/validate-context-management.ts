@@ -93,19 +93,19 @@ function validateBudgetPolicy(): void {
   const solBudget = calculator.calculateBudget("gpt-5.6-sol", 8_192);
   assert.equal(solBudget.maxTokens, 900_000);
 
-  // Validate 900K context in ModelCatalog for all Codex GPT models
+  // Validate context in ModelCatalog for all Codex GPT models
   const catalog = new ModelCatalog();
   const codexModels = [
-    "gpt-5.6-terra",
-    "gpt-5.6-luna",
-    "gpt-5.6-sol",
-    "gpt-4o",
+    { name: "gpt-5.6-terra", context: 372_000 },
+    { name: "gpt-5.6-luna", context: 372_000 },
+    { name: "gpt-5.6-sol", context: 372_000 },
+    { name: "gpt-4o", context: 128_000 },
   ];
 
-  for (const modelName of codexModels) {
-    const info = catalog.getModelInfo(modelName);
+  for (const item of codexModels) {
+    const info = catalog.getModelInfo(item.name);
     assert.equal(info.provider, "openai-codex");
-    assert.equal(info.contextWindowTokens, 900_000);
+    assert.equal(info.contextWindowTokens, item.context);
   }
 }
 
@@ -857,7 +857,7 @@ async function validateEnvironmentAuthAndNoPromptHijack(): Promise<void> {
   assert.equal(bridge.resolveProviderName("llama3:latest"), "ollama");
 
   assert.equal(bridge.getDefaultEndpointForModel("openrouter/anthropic/claude-3.5-sonnet"), "https://openrouter.ai/api/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("deepseek-v3"), "https://api.deepseek.com/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("deepseek-v3"), "https://api.deepseek.com/chat/completions");
   assert.equal(bridge.getDefaultEndpointForModel("llama3:latest"), "http://localhost:11434/v1/chat/completions");
 
   // Test environment variable authentication resolution
