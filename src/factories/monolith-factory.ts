@@ -25,6 +25,7 @@ import { HttpDispatcherOverlay } from "../agents/extensions/resolution/http-disp
 import { AuthStorageVault } from "../agents/extensions/resolution/auth-storage-vault.js";
 import { CodexOAuthManager } from "../agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge } from "../agents/extensions/resolution/codex-provider-bridge.js";
+import { OpenRouterProviderEngine } from "../agents/extensions/resolution/openrouter-provider-engine.js";
 import { SetupWizard } from "../agents/extensions/setup/setup-wizard.js";
 
 import { SessionContext } from "../sessions/base/session-context.js";
@@ -773,6 +774,7 @@ export class MonolithFactory {
     broccoliOutputBuffer: BroccoliCommandOutputBuffer;
     modelResolver: ModelResolver;
     modelCatalog: ModelCatalog;
+    openRouterEngine: OpenRouterProviderEngine;
     envKeyResolver: EnvironmentKeyResolver;
     imageModelRegistry: ImageModelRegistry;
     proxyGateway: LlmProxyGateway;
@@ -1371,7 +1373,8 @@ export class MonolithFactory {
       config.modelName,
       options.fallbackModels
     );
-    const modelCatalog = new ModelCatalog();
+    const openRouterEngine = new OpenRouterProviderEngine();
+    const modelCatalog = new ModelCatalog(undefined, openRouterEngine);
     const envKeyResolver = new EnvironmentKeyResolver();
     const imageModelRegistry = new ImageModelRegistry();
     const proxyGateway = new LlmProxyGateway();
@@ -2466,6 +2469,7 @@ export class MonolithFactory {
       broccoliOutputBuffer,
       modelResolver,
       modelCatalog,
+      openRouterEngine,
       envKeyResolver,
       imageModelRegistry,
       proxyGateway,

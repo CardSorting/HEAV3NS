@@ -149,14 +149,16 @@ export class DeterministicErrorClassifier implements IDeterministicErrorClassifi
       directive = "fallback_model";
       retryable = true;
     }
-    // 7. Overloaded / Server Errors
+    // 7. Overloaded / Server Errors & Mid-Stream Terminations
     else if (
       status === 500 ||
       status === 502 ||
       status === 503 ||
       status === 529 ||
       lowerMsg.includes("overloaded") ||
-      lowerMsg.includes("internal server error")
+      lowerMsg.includes("internal server error") ||
+      lowerMsg.includes("openrouter mid-stream error") ||
+      lowerMsg.includes("stream terminated with error status")
     ) {
       category = "overloaded_server";
       directive = "retry_backoff";

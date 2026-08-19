@@ -895,7 +895,7 @@ async function validateEnvironmentAuthAndNoPromptHijack(): Promise<void> {
     const authOpenRouter = await bridge.resolveProviderAuth("openrouter/anthropic/claude-3.5-sonnet");
     assert.equal(authOpenRouter.authType, "api-key");
     assert.equal(authOpenRouter.headers.Authorization, "Bearer sk-or-test-key");
-    assert.equal(authOpenRouter.headers["HTTP-Referer"], "https://lumi.agent");
+    assert.equal(authOpenRouter.headers["HTTP-Referer"], "https://github.com/CardSorting/LUMI-JOY");
 
     const authOllama = await bridge.resolveProviderAuth("llama3:latest");
     assert.equal(authOllama.authType, "api-key");

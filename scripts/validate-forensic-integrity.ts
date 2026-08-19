@@ -34,8 +34,8 @@ async function runForensicAudit(): Promise<void> {
 
   assert.strictEqual(
     CURRENT_REQUIRED_COMPONENTS.length,
-    589,
-    `Expected exactly 589 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
+    590,
+    `Expected exactly 590 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
   );
 
   const seen = new Set<string>();
@@ -56,7 +56,7 @@ async function runForensicAudit(): Promise<void> {
       `Component at index ${i} ('${CURRENT_REQUIRED_COMPONENTS[i]}') is out of alphabetical order (expected '${sortedList[i]}')`
     );
   }
-  console.log(`  [✓] All 589 components strictly unique & alphabetically sorted.`);
+  console.log(`  [✓] All 590 components strictly unique & alphabetically sorted.`);
 
   // ---------------------------------------------------------------------------
   // Check 2: Monolith Factory & LumiMonolith 100% Binding Coverage

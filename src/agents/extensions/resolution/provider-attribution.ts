@@ -31,10 +31,20 @@ export class ProviderAttributionComposer {
     this.records = [];
     this.pricingTable = new Map([
       ["claude-3-7-sonnet", { inputCostPer1k: 0.003, outputCostPer1k: 0.015 }],
+      ["anthropic/claude-3.7-sonnet", { inputCostPer1k: 0.003, outputCostPer1k: 0.015 }],
+      ["anthropic/claude-3.5-sonnet", { inputCostPer1k: 0.003, outputCostPer1k: 0.015 }],
+      ["google/gemini-2.0-flash-001", { inputCostPer1k: 0.0001, outputCostPer1k: 0.0004 }],
+      ["deepseek/deepseek-r1", { inputCostPer1k: 0.00055, outputCostPer1k: 0.00219 }],
+      ["qwen/qwen-2.5-coder-32b-instruct", { inputCostPer1k: 0.00018, outputCostPer1k: 0.00036 }],
+      ["moonshotai/kimi-k2", { inputCostPer1k: 0.001, outputCostPer1k: 0.003 }],
       ["gpt-4o", { inputCostPer1k: 0.0025, outputCostPer1k: 0.01 }],
       ["gemini-1.5-pro", { inputCostPer1k: 0.00125, outputCostPer1k: 0.005 }],
       ["default", { inputCostPer1k: 0.002, outputCostPer1k: 0.008 }],
     ]);
+  }
+
+  setPricing(model: string, pricing: ModelTokenPricing): void {
+    this.pricingTable.set(model, pricing);
   }
 
   calculateCost(model: string, inputTokens: number, outputTokens: number): number {

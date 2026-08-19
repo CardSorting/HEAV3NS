@@ -175,8 +175,10 @@ export class CodexProviderBridge {
     if (apiKey) {
       const headers: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
       if (providerName === "openrouter") {
-        headers["HTTP-Referer"] = "https://lumi.agent";
+        headers["HTTP-Referer"] = "https://github.com/CardSorting/LUMI-JOY";
         headers["X-Title"] = "LUMI AGENT OS";
+        headers["X-OpenRouter-Title"] = "LUMI";
+        headers["X-OpenRouter-Categories"] = "ide-extension";
       }
       return {
         headers,

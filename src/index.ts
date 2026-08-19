@@ -39,6 +39,21 @@ import {
   type AuthSourceAudit,
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge, MODERN_GPT56_MODELS, type ResolvedAuthHeaders, type ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
+import { OpenRouterProviderEngine, OPENROUTER_STEALTH_MODELS } from "./agents/extensions/resolution/openrouter-provider-engine.js";
+import {
+  CLAUDE_SONNET_1M_SUFFIX,
+  OPENROUTER_PROVIDER_PREFERENCES,
+  type OpenRouterModelInfo,
+  type OpenRouterProviderPreferences,
+  type OpenRouterStreamChunk,
+  type OpenRouterStreamUsage,
+  type OpenRouterErrorResponse,
+  type OpenRouterParsedStreamEvent,
+  type OpenRouterGenerationDetails,
+  type OpenRouterAttributionHeaders,
+  type OpenRouterHandlerOptions,
+  type OpenRouterAuthCallbackResult,
+} from "./core/contracts/openrouter.contracts.js";
 import { SetupWizard } from "./agents/extensions/setup/setup-wizard.js";
 import {
   DeterministicLocalEndpointEngine,
@@ -1135,6 +1150,23 @@ export type {
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 export { CodexProviderBridge, MODERN_GPT56_MODELS } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export type { ResolvedAuthHeaders, ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
+export { OpenRouterProviderEngine, OPENROUTER_STEALTH_MODELS } from "./agents/extensions/resolution/openrouter-provider-engine.js";
+export {
+  CLAUDE_SONNET_1M_SUFFIX,
+  OPENROUTER_PROVIDER_PREFERENCES,
+} from "./core/contracts/openrouter.contracts.js";
+export type {
+  OpenRouterModelInfo,
+  OpenRouterProviderPreferences,
+  OpenRouterStreamChunk,
+  OpenRouterStreamUsage,
+  OpenRouterErrorResponse,
+  OpenRouterParsedStreamEvent,
+  OpenRouterGenerationDetails,
+  OpenRouterAttributionHeaders,
+  OpenRouterHandlerOptions,
+  OpenRouterAuthCallbackResult,
+} from "./core/contracts/openrouter.contracts.js";
 export {
   DeterministicLocalEndpointEngine,
   DEFAULT_LOCAL_ENDPOINT_PRESETS,
@@ -3642,6 +3674,7 @@ export class LumiMonolith implements IAgentEngine {
   readonly systemHealthAggregator: SystemHealthAggregator;
   readonly codexOAuthManager: CodexOAuthManager;
   readonly codexProviderBridge: CodexProviderBridge;
+  readonly openRouterEngine: OpenRouterProviderEngine;
   readonly setupWizard: SetupWizard;
   readonly slashRouter: AgentSlashRouter;
   readonly mentionResolver: MentionResolver;
@@ -4175,6 +4208,7 @@ export class LumiMonolith implements IAgentEngine {
     this.systemHealthAggregator = components.systemHealthAggregator;
     this.codexOAuthManager = components.codexOAuthManager;
     this.codexProviderBridge = components.codexProviderBridge;
+    this.openRouterEngine = components.openRouterEngine;
     this.setupWizard = components.setupWizard;
     this.slashRouter = components.slashRouter;
     this.mentionResolver = components.mentionResolver;

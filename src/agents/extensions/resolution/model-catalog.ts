@@ -1,6 +1,7 @@
 import { DynamicModelCache } from "./dynamic-model-cache.js";
 import { DeterministicLocalEndpointEngine } from "../../../tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
 import type { LocalProviderKind } from "../../../core/contracts/local-endpoints.contracts.js";
+import { OpenRouterProviderEngine } from "./openrouter-provider-engine.js";
 
 export interface ModelSpecs {
   modelName: string;
@@ -51,9 +52,14 @@ export class ModelCatalog {
   private readonly catalog: Map<string, ModelSpecs> = new Map();
   private readonly dynamicCache: DynamicModelCache = new DynamicModelCache();
   private readonly localEngine: DeterministicLocalEndpointEngine;
+  private readonly openRouterEngine: OpenRouterProviderEngine;
 
-  constructor(localEngine?: DeterministicLocalEndpointEngine) {
+  constructor(
+    localEngine?: DeterministicLocalEndpointEngine,
+    openRouterEngine?: OpenRouterProviderEngine
+  ) {
     this.localEngine = localEngine ?? new DeterministicLocalEndpointEngine();
+    this.openRouterEngine = openRouterEngine ?? new OpenRouterProviderEngine();
     this.registerDefaults();
   }
 
@@ -151,40 +157,8 @@ export class ModelCatalog {
       description: "Standard OpenAI GPT-4o Model",
     });
 
-    // Default Fallback OpenRouter Presets
-    const defaultOpenRouterModels: ModelSpecs[] = [
-      {
-        modelName: "anthropic/claude-3.5-sonnet",
-        provider: "openrouter",
-        contextWindowTokens: 200_000,
-        maxOutputTokens: 8_192,
-        inputPricePer1M: 3.0,
-        outputPricePer1M: 15.0,
-        supportsVision: true,
-        description: "OpenRouter Anthropic Claude 3.5 Sonnet",
-      },
-      {
-        modelName: "google/gemini-2.0-flash-001",
-        provider: "openrouter",
-        contextWindowTokens: 1_000_000,
-        maxOutputTokens: 8_192,
-        inputPricePer1M: 0.1,
-        outputPricePer1M: 0.4,
-        supportsVision: true,
-        description: "OpenRouter Google Gemini 2.0 Flash",
-      },
-      {
-        modelName: "deepseek/deepseek-r1",
-        provider: "openrouter",
-        contextWindowTokens: 64_000,
-        maxOutputTokens: 8_192,
-        inputPricePer1M: 0.55,
-        outputPricePer1M: 2.19,
-        supportsVision: false,
-        description: "OpenRouter DeepSeek R1 Reasoning Model",
-      },
-    ];
-
+    // Default Fallback OpenRouter Presets from OpenRouterProviderEngine
+    const defaultOpenRouterModels = this.openRouterEngine.getFallbackModelSpecs();
     for (const m of defaultOpenRouterModels) {
       this.registerModel(m);
     }
@@ -398,6 +372,14 @@ export class ModelCatalog {
   }
 
   getModelInfo(modelName: string): ModelSpecs {
+    const existing = this.catalog.get(modelName);
+    if (existing) return existing;
+
+    const isOpenRouter =
+      modelName.startsWith("openrouter/") ||
+      modelName.includes("/") ||
+      this.openRouterEngine.isClaude1mModel(modelName);
+
     const isLocal =
       modelName.startsWith("ollama/") ||
       modelName.startsWith("llamacpp/") ||
@@ -407,79 +389,58 @@ export class ModelCatalog {
       modelName.startsWith("onprem/") ||
       modelName.includes(":latest");
 
-    return (
-      this.catalog.get(modelName) ?? {
-        modelName,
-        provider: isLocal ? "local" : "custom",
-        contextWindowTokens: 128_000,
-        maxOutputTokens: 4_096,
-        inputPricePer1M: isLocal ? 0.0 : 1.0,
-        outputPricePer1M: isLocal ? 0.0 : 3.0,
-        supportsVision: false,
-        estimatedLatencyMs: isLocal ? 5 : 45,
-        isLocal,
-        description: isLocal ? "Local On-Premises Model" : "Custom Proxy Model",
+    if (isOpenRouter && !isLocal) {
+      const { normalizedId, is1m } = this.openRouterEngine.normalizeModelId(modelName);
+      const baseSpec = this.catalog.get(normalizedId);
+      if (baseSpec && is1m) {
+        const variantSpec: ModelSpecs = {
+          ...baseSpec,
+          modelName,
+          contextWindowTokens: 1_000_000,
+          description: `${baseSpec.description} (1M Extended Context)`,
+        };
+        this.registerModel(variantSpec);
+        return variantSpec;
       }
-    );
+    }
+
+    return {
+      modelName,
+      provider: isLocal ? "local" : isOpenRouter ? "openrouter" : "custom",
+      contextWindowTokens: 128_000,
+      maxOutputTokens: 4_096,
+      inputPricePer1M: isLocal ? 0.0 : 1.0,
+      outputPricePer1M: isLocal ? 0.0 : 3.0,
+      supportsVision: false,
+      estimatedLatencyMs: isLocal ? 5 : 45,
+      isLocal,
+      description: isLocal ? "Local On-Premises Model" : isOpenRouter ? "Dynamic OpenRouter Model" : "Custom Proxy Model",
+    };
   }
 
   /**
    * Dynamically fetches live available models from OpenRouter API (https://openrouter.ai/api/v1/models).
-   * Caches response in DynamicModelCache with a 1-hour TTL.
+   * Automatically parses rich metadata, calculates per-1M token pricing, synthesizes 1M context variants,
+   * and caches in dynamic cache.
    */
-  async fetchOpenRouterModels(apiToken?: string): Promise<ModelSpecs[]> {
-    const cached = this.dynamicCache.getCachedModels("openrouter");
+  async fetchOpenRouterModels(apiToken?: string, forceRefresh = false): Promise<ModelSpecs[]> {
+    const cached = !forceRefresh ? this.dynamicCache.getCachedModels("openrouter") : null;
     if (cached && cached.length > 0) {
       return cached;
     }
 
     try {
-      const headers: Record<string, string> = {};
-      if (apiToken) {
-        headers["Authorization"] = `Bearer ${apiToken}`;
+      const models = await this.openRouterEngine.fetchOpenRouterModels(apiToken, undefined, forceRefresh);
+      for (const m of models) {
+        this.registerModel(m);
       }
-
-      const res = await fetch("https://openrouter.ai/api/v1/models", {
-        method: "GET",
-        headers,
-      });
-
-      if (!res.ok) {
-        return this.getFallbackOpenRouterModels();
+      if (models.length > 0) {
+        this.dynamicCache.setCachedModels("openrouter", models);
       }
-
-      const body = (await res.json()) as { data?: OpenRouterModelApiResponse[] };
-      const rawModels = body?.data ?? [];
-
-      const fetchedSpecs: ModelSpecs[] = [];
-      for (const m of rawModels.slice(0, 40)) {
-        const inputPrice = m.pricing?.prompt ? Number(m.pricing.prompt) * 1_000_000 : 1.0;
-        const outputPrice = m.pricing?.completion ? Number(m.pricing.completion) * 1_000_000 : 3.0;
-
-        const specs: ModelSpecs = {
-          modelName: m.id,
-          provider: "openrouter",
-          contextWindowTokens: m.context_length ?? 128_000,
-          maxOutputTokens: m.top_provider?.max_completion_tokens ?? 4_096,
-          inputPricePer1M: Number(inputPrice.toFixed(4)),
-          outputPricePer1M: Number(outputPrice.toFixed(4)),
-          supportsVision: m.architecture?.modality?.includes("image") ?? false,
-          description: m.name ?? m.id,
-        };
-
-        this.registerModel(specs);
-        fetchedSpecs.push(specs);
-      }
-
-      if (fetchedSpecs.length > 0) {
-        this.dynamicCache.setCachedModels("openrouter", fetchedSpecs);
-        return fetchedSpecs;
-      }
+      return models;
     } catch {
-      // Fallback on network failure
+      return this.getFallbackOpenRouterModels();
     }
-
-    return this.getFallbackOpenRouterModels();
   }
 
   /**
