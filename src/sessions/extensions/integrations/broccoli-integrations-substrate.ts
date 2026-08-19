@@ -61,7 +61,7 @@ export class BroccoliIntegrationsSubstrate implements IBroccoliIntegrationsSubst
 
   constructor(initialConfig?: Partial<IntegrationsSkillConfig>, dbKernel?: IBroccoliDatabaseKernel) {
     this.config = {
-      enabled: true,
+      enabled: false,
       allowedProviders: [
         "github",
         "linear",

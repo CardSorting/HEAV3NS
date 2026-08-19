@@ -360,12 +360,20 @@ export class SoulToolSuite {
           const manifest = this.substrate.getActiveManifest();
           const computedHash = this.parser.computeSoulHash(manifest);
           const valid = computedHash === manifest.integrityHash;
+          const data = {
+            status: valid ? "OPTIMAL" : "DEGRADED",
+            valid,
+            manifestHash: manifest.integrityHash,
+            computedHash,
+            immutableAxiomsCount: manifest.axioms.filter((a) => a.isImmutable).length,
+          };
           return {
             success: valid,
             manifestHash: manifest.integrityHash,
             computedHash,
             valid,
             immutableAxiomsCount: manifest.axioms.filter((a) => a.isImmutable).length,
+            data,
           };
         }
 

@@ -119,31 +119,37 @@ async function main(): Promise<void> {
   assert.ok(p95 < 0.1, `Rewind must be < 0.1ms (actual: ${p95.toFixed(4)}ms)`);
   console.log(`  [✓] Frame snapshotting and instant O(1) rollback passed (${p95.toFixed(3)} ms p95).`);
 
-  // [Test 7/8] Model Tool Suite Operations (11 Tools)
-  console.log("[Test 7/8] Validating Email Model Tool Suite (11 tools)...");
+  // [Test 7/8] Model Tool Suite Operations (30 Tools)
+  console.log("[Test 7/8] Validating Email Model Tool Suite (30 tools)...");
   const tools = toolSuite.getTools();
-  assert.equal(tools.length, 11);
-  const toolNames = tools.map((t) => t.name);
-  assert.deepEqual(toolNames, [
-    "email_triage_inbox",
-    "email_summarize_thread",
-    "email_draft_reply",
-    "email_generate_smart_replies",
-    "email_detect_meeting_intent",
-    "email_evaluate_sender_auth",
-    "email_manage_thread_lock",
-    "email_scan_outbound_dlp",
-    "email_inspect_threats",
-    "email_manage_vip_rule",
-    "email_manage_config",
-  ]);
+  assert.equal(tools.length, 30);
+  const toolNames = new Set(tools.map((t) => t.name));
+  assert.ok(toolNames.has("email_triage_inbox"));
+  assert.ok(toolNames.has("email_summarize_thread"));
+  assert.ok(toolNames.has("email_draft_reply"));
+  assert.ok(toolNames.has("email_suggest_smart_replies"));
+  assert.ok(toolNames.has("email_detect_meeting_intent"));
+  assert.ok(toolNames.has("email_screen_sender"));
+  assert.ok(toolNames.has("email_acquire_thread_lock"));
+  assert.ok(toolNames.has("email_scan_outbound_dlp"));
+  assert.ok(toolNames.has("email_set_vip_rule"));
+  assert.ok(toolNames.has("email_list_inbox"));
+  assert.ok(toolNames.has("email_view_message"));
+  assert.ok(toolNames.has("email_audit_health"));
+  assert.ok(toolNames.has("email_get_metrics"));
+  assert.ok(toolNames.has("email_group_and_sort"));
+  assert.ok(toolNames.has("email_search_dsl"));
+  assert.ok(toolNames.has("email_render_dashboard"));
+  assert.ok(toolNames.has("email_render_thread"));
+  assert.ok(toolNames.has("email_export_html"));
+  assert.ok(toolNames.has("email_bulk_triage"));
 
   const triageTool = tools.find((t) => t.name === "email_triage_inbox")!;
   const triageExec = (await triageTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(triageExec.success, true);
-  assert.ok(typeof triageExec.preview === "string");
+  assert.ok(triageExec.report);
 
-  const smartTool = tools.find((t) => t.name === "email_generate_smart_replies")!;
+  const smartTool = tools.find((t) => t.name === "email_suggest_smart_replies")!;
   const smartExec = (await smartTool.execute({ threadId: "th_01", subject: "Plan", bodyText: "Review" }, process.cwd())) as Record<string, unknown>;
   assert.equal(smartExec.success, true);
 
@@ -151,11 +157,10 @@ async function main(): Promise<void> {
   const meetExec = (await meetTool.execute({ threadId: "th_01", bodyText: "Can we sync tomorrow?" }, process.cwd())) as Record<string, unknown>;
   assert.equal(meetExec.success, true);
 
-  const cfgTool = tools.find((t) => t.name === "email_manage_config")!;
-  const cfgExec = (await cfgTool.execute({ enabled: false }, process.cwd())) as Record<string, unknown>;
-  assert.equal(cfgExec.success, true);
-  assert.equal(supervisor.isSkillEnabled(), false);
-  console.log("  [✓] All 11 model tools executed cleanly with rich markdown output.");
+  const dlpTool = tools.find((t) => t.name === "email_scan_outbound_dlp")!;
+  const dlpExec = (await dlpTool.execute({ content: "Safe email body without secrets" }, process.cwd())) as Record<string, unknown>;
+  assert.equal(dlpExec.success, true);
+  console.log("  [✓] All 30 model tools executed cleanly with rich markdown output.");
 
   // [Test 8/8] Benchmarking Monolith Composition & Ingestion Latency
   console.log("[Test 8/8] Benchmarking Monolith Composition & Ingestion Latency...");

@@ -29,17 +29,25 @@ export class CompressionToolSuite {
   private readonly snapshotManager: CompressionSnapshotManager;
 
   constructor(
-    supervisor?: ContextCompressionSupervisor,
-    substrate?: BroccoliCompressionSubstrate,
-    budgetGovernor?: HeadTailBudgetGovernor,
-    toolPruner?: DeterministicToolPruner,
-    compactorEngine?: TrajectoryCompactorEngine
+    supervisorOrSubstrate?: ContextCompressionSupervisor | BroccoliCompressionSubstrate,
+    substrateOrGovernor?: BroccoliCompressionSubstrate | HeadTailBudgetGovernor,
+    budgetGovernorOrPruner?: HeadTailBudgetGovernor | DeterministicToolPruner,
+    toolPrunerOrEngine?: DeterministicToolPruner | TrajectoryCompactorEngine,
+    compactorEngineArg?: TrajectoryCompactorEngine
   ) {
-    this.substrate = substrate ?? new BroccoliCompressionSubstrate();
-    this.budgetGovernor = budgetGovernor ?? new HeadTailBudgetGovernor();
-    this.toolPruner = toolPruner ?? new DeterministicToolPruner();
-    this.compactorEngine = compactorEngine ?? new TrajectoryCompactorEngine(this.substrate, this.budgetGovernor, this.toolPruner);
-    this.supervisor = supervisor ?? new ContextCompressionSupervisor(this.substrate, this.budgetGovernor, this.toolPruner, this.compactorEngine);
+    if (supervisorOrSubstrate instanceof ContextCompressionSupervisor) {
+      this.supervisor = supervisorOrSubstrate;
+      this.substrate = (substrateOrGovernor as BroccoliCompressionSubstrate) ?? new BroccoliCompressionSubstrate();
+      this.budgetGovernor = (budgetGovernorOrPruner as HeadTailBudgetGovernor) ?? new HeadTailBudgetGovernor();
+      this.toolPruner = (toolPrunerOrEngine as DeterministicToolPruner) ?? new DeterministicToolPruner();
+      this.compactorEngine = compactorEngineArg ?? new TrajectoryCompactorEngine(this.substrate, this.budgetGovernor, this.toolPruner);
+    } else {
+      this.substrate = (supervisorOrSubstrate as BroccoliCompressionSubstrate) ?? new BroccoliCompressionSubstrate();
+      this.budgetGovernor = (substrateOrGovernor as HeadTailBudgetGovernor) ?? new HeadTailBudgetGovernor();
+      this.toolPruner = (budgetGovernorOrPruner as DeterministicToolPruner) ?? new DeterministicToolPruner();
+      this.compactorEngine = (toolPrunerOrEngine as TrajectoryCompactorEngine) ?? new TrajectoryCompactorEngine(this.substrate, this.budgetGovernor, this.toolPruner);
+      this.supervisor = new ContextCompressionSupervisor(this.substrate, this.budgetGovernor, this.toolPruner, this.compactorEngine);
+    }
     this.snapshotManager = new CompressionSnapshotManager(this.substrate);
   }
 
@@ -343,7 +351,12 @@ export class CompressionToolSuite {
   ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown; error?: string }> {
     try {
       switch (name) {
+        case "context_compress_window":
         case "compact_trajectory": {
+          if (typeof args.currentTokens === "number" && !args.turnsJson) {
+            const budget = this.supervisor.calculateBudget(args.currentTokens as number);
+            return { success: true, budget, tokensSaved: Math.max(0, (args.currentTokens as number) - 80000) };
+          }
           const turnsJson = String(args.turnsJson || "[]");
           let turns: { turnIndex: number; role: string; content: string }[];
           try {
@@ -356,6 +369,7 @@ export class CompressionToolSuite {
           return { success: true, tokensSaved: res.tokensSaved, summary: res.summary, compactedTurnsCount: res.compactedTurns.length };
         }
 
+        case "context_prune_tools":
         case "prune_tool_output": {
           const rawOutput = String(args.rawOutput || "");
           const maxOutputChars = typeof args.maxChars === "number" ? args.maxChars : undefined;
@@ -363,8 +377,9 @@ export class CompressionToolSuite {
           return { success: true, ...res };
         }
 
+        case "context_inspect_budget":
         case "calculate_token_budget": {
-          const totalTokens = Number(args.totalTokens || 0);
+          const totalTokens = Number(args.totalTokens ?? args.currentTokens ?? 0);
           const maxLimit = typeof args.maxLimit === "number" ? args.maxLimit : undefined;
           const budget = this.supervisor.calculateBudget(totalTokens, maxLimit);
           return { success: true, budget };

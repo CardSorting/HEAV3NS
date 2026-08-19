@@ -338,6 +338,7 @@ export class CodeExecutionToolSuite {
   ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown; error?: string }> {
     try {
       switch (name) {
+        case "execute_code":
         case "execute_code_sandbox": {
           const code = String(args.code || "").trim();
           if (!code) return { success: false, error: "code is required" };
@@ -347,7 +348,13 @@ export class CodeExecutionToolSuite {
           const securityPolicy = (args.securityPolicy as SandboxSecurityPolicy) || "standard_ephemeral";
 
           const record = await this.supervisor.executeCode(code, language, { timeoutMs, securityPolicy });
-          return { success: record.result.success, recordId: record.id, result: record.result };
+          return { success: record.result.success, recordId: record.id, result: record.result, output: record.result.output, toolCallsExecuted: record.result.toolCallsExecuted, logs: record.result.logs };
+        }
+
+        case "code_execution_status": {
+          const metrics = this.supervisor.getMetrics();
+          const audit = this.supervisor.auditHealth();
+          return { success: true, stats: { totalExecutions: metrics.totalExecutions }, metrics, audit };
         }
 
         case "evaluate_script": {

@@ -60,7 +60,7 @@ export class CodeExecutionSupervisor {
     context: Partial<SandboxContext> = {},
     toolHandler?: (name: string, args: Record<string, unknown>) => Promise<unknown>
   ): Promise<ExecutionRecord> {
-    const record = await this.executor.executeCode(code, language, context, toolHandler);
+    const record = await this.executor.executeCode(code, language, context, toolHandler || this.toolDispatcher);
     this.substrate.recordExecution(record);
     return record;
   }

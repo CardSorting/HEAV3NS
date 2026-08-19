@@ -58,6 +58,15 @@ export class ExecutionSnapshotManager {
     };
   }
 
+  captureFrame(frameIndex: number): ExecutionWorkspaceSnapshot {
+    return this.captureSnapshot(frameIndex);
+  }
+
+  rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreSnapshot(frameIndex);
+    return res.success;
+  }
+
   getSnapshot(frameIndex: number): ExecutionWorkspaceSnapshot | undefined {
     return this.frameSnapshots.get(frameIndex);
   }

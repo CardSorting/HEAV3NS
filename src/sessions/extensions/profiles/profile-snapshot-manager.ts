@@ -44,6 +44,10 @@ export class ProfileSnapshotManager {
     return snapshot;
   }
 
+  captureFrame(frameIndex: number): ProfileWorkspaceSnapshot {
+    return this.captureSnapshot(frameIndex);
+  }
+
   /**
    * Restores workspace state to a captured execution frame in < 0.05 ms SLA.
    */
@@ -66,6 +70,11 @@ export class ProfileSnapshotManager {
       success: true,
       durationMs: duration,
     };
+  }
+
+  rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreFrameSnapshot(frameIndex);
+    return res.success;
   }
 
   getSnapshot(frameIndex: number): ProfileWorkspaceSnapshot | undefined {

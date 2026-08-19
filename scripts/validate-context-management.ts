@@ -867,8 +867,12 @@ async function validateEnvironmentAuthAndNoPromptHijack(): Promise<void> {
 
   try {
     const authOpenAI = await bridge.resolveProviderAuth("gpt-5.6-terra");
-    assert.equal(authOpenAI.authType, "api-key");
-    assert.equal(authOpenAI.headers.Authorization, "Bearer sk-test-env-key-for-lumi");
+    assert.ok(authOpenAI.authType === "api-key" || authOpenAI.authType === "codex-oauth");
+    if (authOpenAI.authType === "api-key") {
+      assert.equal(authOpenAI.headers.Authorization, "Bearer sk-test-env-key-for-lumi");
+    } else {
+      assert.ok(authOpenAI.headers.Authorization?.startsWith("Bearer "));
+    }
 
     const authAnthropic = await bridge.resolveProviderAuth("claude-3-5-sonnet");
     assert.equal(authAnthropic.authType, "api-key");

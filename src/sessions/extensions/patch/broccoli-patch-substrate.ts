@@ -275,6 +275,8 @@ export class BroccoliPatchSubstrate implements IBroccoliPatchSubstrate {
 
     return {
       totalStaged: entries.length,
+      activeStaged: entries.length,
+      totalStagedCount: this.totalStagedCount,
       totalCommitted: this.totalCommittedCount,
       totalReverted: this.totalRevertedCount,
       totalLinesModified,

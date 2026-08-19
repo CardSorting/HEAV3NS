@@ -244,9 +244,9 @@ async function runGoalValidationSuites() {
   // ---------------------------------------------------------------------------
   // Suite 12: 10 Model Tools Execution, High-Frequency Benchmarks & Monolith Composition
   // ---------------------------------------------------------------------------
-  console.log("\n[Suite 12/12] 10 Model Tools Execution, Benchmarks & Monolith Composition (554 Components)...");
+  console.log("\n[Suite 12/12] Model Tools Execution, Benchmarks & Monolith Composition...");
   const tools = toolSuite.getTools();
-  assert.strictEqual(tools.length, 10, "GoalToolSuite must expose exactly 10 model tools");
+  assert.strictEqual(tools.length, 41, "GoalToolSuite must expose exactly 41 model tools");
 
   const setTool = tools.find((t) => t.name === "goal_set")!;
   const statusTool = tools.find((t) => t.name === "goal_status")!;

@@ -1,10 +1,22 @@
 {
   "name": "lumi-joy",
   "version": "0.1.0",
-  "description": "Greenfield 3-tier monolithic agent framework",
+  "description": "Greenfield 3-tier monolithic agent framework and sovereign AI runtime",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
+  },
   "bin": {
     "lumi": "dist/index.js",
     "lumi-joy": "dist/index.js"
@@ -12,10 +24,44 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
     "LICENSE",
     "NOTICE",
     "PATENT-NON-AGGRESSION-PLEDGE.md"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "Apache-2.0",
+  "author": "LUMI Engineering",
+  "keywords": [
+    "lumi",
+    "agent",
+    "ai-agent",
+    "autonomous-agents",
+    "llm",
+    "cli",
+    "tui",
+    "monolith",
+    "broccolidb",
+    "typescript",
+    "codex",
+    "anthropic",
+    "gemini",
+    "framework"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lumi-agents/lumi-joy.git"
+  },
+  "homepage": "https://github.com/lumi-agents/lumi-joy#readme",
+  "bugs": {
+    "url": "https://github.com/lumi-agents/lumi-joy/issues"
+  },
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc",

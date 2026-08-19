@@ -406,8 +406,8 @@ export class ProfileToolSuite {
         }
 
         case "profile_diff": {
-          const idA = String(args.profileA || "").trim();
-          const idB = String(args.profileB || "").trim();
+          const idA = String(args.profileIdA || args.profileA || "").trim();
+          const idB = String(args.profileIdB || args.profileB || "").trim();
           const res = this.supervisor.diffProfiles(idA, idB);
           if (!res) return { success: false, error: `One or both profiles ('${idA}', '${idB}') not found` };
           return { success: true, diff: res, ...res };

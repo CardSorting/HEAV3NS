@@ -139,32 +139,32 @@ async function main(): Promise<void> {
   assert.ok(p95 < 0.1, `Rewind must be < 0.1ms (actual: ${p95.toFixed(4)}ms)`);
   console.log(`  [✓] Frame snapshotting and instant O(1) rollback passed (${p95.toFixed(3)} ms p95).`);
 
-  // [Test 9/10] Complete 18 Model Tool Suite Operations
-  console.log("[Test 9/10] Validating Enterprise Integrations Model Tool Suite (18 tools)...");
+  // [Test 9/10] Complete Model Tool Suite Operations (30 tools)
+  console.log("[Test 9/10] Validating Enterprise Integrations Model Tool Suite (30 tools)...");
   const tools = toolSuite.getTools();
-  assert.equal(tools.length, 18, "Must expose exactly 18 specialized model tools");
+  assert.equal(tools.length, 30, "Must expose exactly 30 specialized model tools");
 
-  const catalogTool = tools.find((t) => t.name === "integrations_query_catalog")!;
+  const catalogTool = tools.find((t) => t.name === "integrations_render_dashboard")!;
   const catExec = (await catalogTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(catExec.success, true);
-  assert.ok(typeof catExec.formattedDashboard === "string");
+  assert.ok(typeof catExec.rendered === "string");
 
-  const issueTool = tools.find((t) => t.name === "integrations_query_unified_issues")!;
+  const issueTool = tools.find((t) => t.name === "integrations_query_issues")!;
   const issExec = (await issueTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(issExec.success, true);
 
-  const ghTool = tools.find((t) => t.name === "integrations_query_github")!;
-  const ghExec = (await ghTool.execute({ repo: "lumi/lumi-new" }, process.cwd())) as Record<string, unknown>;
+  const ghTool = tools.find((t) => t.name === "integrations_list_services_catalog")!;
+  const ghExec = (await ghTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(ghExec.success, true);
 
-  const stripeTool = tools.find((t) => t.name === "integrations_manage_stripe")!;
+  const stripeTool = tools.find((t) => t.name === "integrations_query_customers")!;
   const strExec = (await stripeTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(strExec.success, true);
 
-  const healthTool = tools.find((t) => t.name === "integrations_manage_config")!;
-  const cfgExec = (await healthTool.execute({ sandboxModeEnabled: true }, process.cwd())) as Record<string, unknown>;
+  const healthTool = tools.find((t) => t.name === "integrations_audit_health")!;
+  const cfgExec = (await healthTool.execute({}, process.cwd())) as Record<string, unknown>;
   assert.equal(cfgExec.success, true);
-  console.log("  [✓] All 18 model tools executed cleanly with rich structured responses.");
+  console.log("  [✓] All model tools executed cleanly with rich structured responses.");
 
   // [Test 10/10] Monolith Composition & Benchmarking
   console.log("[Test 10/10] Benchmarking Monolith Composition & Ingestion Latency...");

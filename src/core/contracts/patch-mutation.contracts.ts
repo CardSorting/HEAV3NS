@@ -117,6 +117,8 @@ export interface PatchMutationHealthAuditReport {
 
 export interface PatchMutationMetricsReport {
   readonly totalStaged: number;
+  readonly activeStaged?: number;
+  readonly totalStagedCount?: number;
   readonly totalCommitted: number;
   readonly totalReverted: number;
   readonly totalLinesModified: number;

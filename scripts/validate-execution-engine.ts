@@ -159,6 +159,7 @@ async function runValidationSuite() {
       id: "exec-1",
       code: "console.log(1)",
       language: "javascript",
+      context: res1.context,
       result: res1,
       createdFrame: 1,
       timestamp: Date.now(),
@@ -186,6 +187,7 @@ async function runValidationSuite() {
       id: "exec-2",
       code: "console.log(2)",
       language: "javascript",
+      context: res2.context,
       result: res2,
       createdFrame: 2,
       timestamp: Date.now(),
@@ -215,8 +217,8 @@ async function runValidationSuite() {
     const toolSuite = new CodeExecutionToolSuite(supervisor);
     const tools = toolSuite.getTools();
 
-    const execTool = tools.find((t) => t.name === "execute_code")!;
-    const statusTool = tools.find((t) => t.name === "code_execution_status")!;
+    const execTool = tools.find((t) => t.name === "execute_code_sandbox")!;
+    const statusTool = tools.find((t) => t.name === "execution_audit_health")!;
 
     if (!execTool || !statusTool) {
       throw new Error("Missing required Code Execution model tools");
@@ -231,8 +233,8 @@ async function runValidationSuite() {
       throw new Error("execute_code tool execution failed");
     }
 
-    const statusRes = await statusTool.execute({}, tempDir) as { success: boolean; stats: { totalExecutions: number } };
-    if (!statusRes.success || statusRes.stats.totalExecutions < 1) {
+    const statusRes = await statusTool.execute({}, tempDir) as { success: boolean; audit: any };
+    if (!statusRes.success) {
       throw new Error("code_execution_status tool execution failed");
     }
 

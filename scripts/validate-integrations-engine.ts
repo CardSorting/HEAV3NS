@@ -32,7 +32,7 @@ async function runIntegrationsValidationSuite(): Promise<void> {
   let passedSuites = 0;
 
   try {
-    const substrate = new BroccoliIntegrationsSubstrate();
+    const substrate = new BroccoliIntegrationsSubstrate({ enabled: true });
     const engine = new DeterministicIntegrationsEngine();
     const supervisor = new IntegrationsSupervisor(substrate, engine);
     const snapshotManager = new IntegrationsSnapshotManager(substrate);

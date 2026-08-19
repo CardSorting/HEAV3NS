@@ -522,4 +522,18 @@ export class CronToolSuite {
       },
     ];
   }
+
+  public async executeTool(
+    name: string,
+    args: Record<string, unknown>,
+    cwd?: string
+  ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown }> {
+    const tool = this.getTools().find((t) => t.name === name);
+    if (!tool) {
+      return { success: false, error: `Tool '${name}' not found in CronToolSuite` };
+    }
+    const res = (await tool.execute(args, cwd ?? process.cwd())) as Record<string, unknown>;
+    const data = res.job ?? res.jobs ?? res.blueprints ?? res.rendered ?? res.audit ?? res.metrics ?? res;
+    return { success: !!res.success, data, ...res };
+  }
 }

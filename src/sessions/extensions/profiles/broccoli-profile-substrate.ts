@@ -483,6 +483,22 @@ export class BroccoliProfileSubstrate implements IBroccoliProfileSubstrate {
     return this.updateProfile(profileId, { status: "active" });
   }
 
+  recordInvocation(sessionIdOrProfileId: string, tokensSaved: number = 0): void {
+    let profile = this.profiles.get(sessionIdOrProfileId);
+    if (!profile) {
+      profile = this.getProfileForSession(sessionIdOrProfileId);
+    }
+    if (profile && profile.telemetry) {
+      const updatedTelemetry = {
+        ...profile.telemetry,
+        totalInvocations: (profile.telemetry.totalInvocations || 0) + 1,
+        lastActivatedAtMs: Date.now(),
+        estimatedTokensSaved: (profile.telemetry.estimatedTokensSaved || 0) + tokensSaved,
+      };
+      this.profiles.set(profile.id, { ...profile, telemetry: updatedTelemetry });
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // SLA Health & Metrics Telemetry
   // ---------------------------------------------------------------------------
