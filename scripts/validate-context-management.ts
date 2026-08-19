@@ -87,8 +87,11 @@ function validateBudgetPolicy(): void {
   const gpt5Budget = calculator.calculateBudget("gpt-5.6-terra", 16_384);
   assert.equal(gpt5Budget.maxTokens, 900_000);
 
-  const codexBudget = calculator.calculateBudget("gpt-5.6-codex", 8_192);
-  assert.equal(codexBudget.maxTokens, 900_000);
+  const lunaBudget = calculator.calculateBudget("gpt-5.6-luna", 8_192);
+  assert.equal(lunaBudget.maxTokens, 900_000);
+
+  const solBudget = calculator.calculateBudget("gpt-5.6-sol", 8_192);
+  assert.equal(solBudget.maxTokens, 900_000);
 
   // Validate 900K context in ModelCatalog for all Codex GPT models
   const catalog = new ModelCatalog();
@@ -96,7 +99,6 @@ function validateBudgetPolicy(): void {
     "gpt-5.6-terra",
     "gpt-5.6-luna",
     "gpt-5.6-sol",
-    "gpt-5.6-codex",
     "gpt-4o",
   ];
 

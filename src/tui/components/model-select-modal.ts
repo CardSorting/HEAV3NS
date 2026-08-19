@@ -42,7 +42,13 @@ export class ModelSelectModal implements Component, Focusable {
   private selectList: SelectList;
   private readonly availableModels: ModelSpecs[];
   private readonly modelMap: Map<string, ModelSpecs> = new Map();
-  private readonly favoriteModels: Set<string> = new Set(["gpt-5.6-terra", "anthropic/claude-3.5-sonnet", "qwen2.5-coder:latest"]);
+  private readonly favoriteModels: Set<string> = new Set([
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+    "gpt-5.6-sol",
+    "anthropic/claude-3.5-sonnet",
+    "qwen2.5-coder:latest",
+  ]);
   private activeCategory: CategoryTab = "all";
   private currentModel: string;
   private readonly onSelectModel: (modelName: string) => void;
@@ -185,7 +191,7 @@ export class ModelSelectModal implements Component, Focusable {
     this.vstack.addChild(inspectorBox);
 
     const footerGuide = new Text(
-      `\x1b[90m[1-4/Tab] Filter Category  │  [f] Toggle Favorite  │  [Enter] Select  │  [Esc] Close\x1b[0m`,
+      `\x1b[90m[1-4/Tab] Filter  │  [t] Terra  [l] Luna  [s] Sol  │  [f] Toggle Fav  │  [Enter] Select  │  [Esc] Close\x1b[0m`,
       0,
       0
     );
@@ -229,6 +235,23 @@ export class ModelSelectModal implements Component, Focusable {
   }
 
   handleInput(data: string): void {
+    // Instant hotkeys for core Codex models: Terra, Luna, Sol
+    if (data === "t" || data === "T") {
+      this.onSelectModel("gpt-5.6-terra");
+      this.onClose();
+      return;
+    }
+    if (data === "l" || data === "L") {
+      this.onSelectModel("gpt-5.6-luna");
+      this.onClose();
+      return;
+    }
+    if (data === "s" || data === "S") {
+      this.onSelectModel("gpt-5.6-sol");
+      this.onClose();
+      return;
+    }
+
     // Handle category tab switches via number keys 1-4 or Tab
     if (data === "1") {
       this.activeCategory = "all";

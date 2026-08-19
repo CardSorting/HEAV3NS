@@ -12,7 +12,6 @@ export const MODERN_GPT56_MODELS = [
   "gpt-5.6-terra",
   "gpt-5.6-luna",
   "gpt-5.6-sol",
-  "gpt-5.6-codex",
 ] as const;
 
 export type ModernGpt56Model = typeof MODERN_GPT56_MODELS[number];
@@ -45,11 +44,15 @@ export class CodexProviderBridge {
     return (
       lower.includes("codex") ||
       lower.startsWith("openai-codex") ||
-      lower.includes("gpt-5.6") ||
+      lower.includes("gpt-5") ||
+      lower.includes("gpt-6") ||
       lower.includes("terra") ||
       lower.includes("luna") ||
       lower.includes("sol") ||
-      lower.includes("gpt-5")
+      lower === "o1" ||
+      lower.startsWith("o1-") ||
+      lower === "o3" ||
+      lower.startsWith("o3-")
     );
   }
 

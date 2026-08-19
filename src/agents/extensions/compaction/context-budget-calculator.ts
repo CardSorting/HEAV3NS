@@ -38,7 +38,8 @@ export class ContextBudgetCalculator {
       modelName.includes("gpt-4o") ||
       modelName.includes("gpt-5") ||
       modelName.includes("terra") ||
-      modelName.includes("codex");
+      modelName.includes("luna") ||
+      modelName.includes("sol");
 
     const fallbackMaxTokens = isLargeContext ? 900_000 : this.defaultMaxTokens;
     const requestedMaxTokens = options.contextWindowTokens ?? fallbackMaxTokens;

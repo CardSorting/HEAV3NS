@@ -110,7 +110,8 @@ export class ModelCatalog {
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: true,
-      description: "Codex OAuth Flagship Reasoning Engine",
+      supportsReasoning: true,
+      description: "Codex OAuth Flagship Reasoning Engine (Default)",
     });
 
     this.registerModel({
@@ -132,18 +133,8 @@ export class ModelCatalog {
       inputPricePer1M: 0.0,
       outputPricePer1M: 0.0,
       supportsVision: true,
+      supportsReasoning: true,
       description: "Codex OAuth Balanced Model",
-    });
-
-    this.registerModel({
-      modelName: "gpt-5.6-codex",
-      provider: "openai-codex",
-      contextWindowTokens: 900_000,
-      maxOutputTokens: 16_384,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: true,
-      description: "Codex OAuth Specialized Coding Engine",
     });
 
     this.registerModel({
@@ -487,6 +478,107 @@ export class ModelCatalog {
     );
   }
 
+  /**
+   * Dynamically fetches live available models from OpenAI Codex API / models endpoint.
+   * Auto-discovers new model variants (e.g. gpt-5.6-luna, gpt-5.6-sol, gpt-5.6-terra, gpt-5.7-*, etc.),
+   * calculates context windows and reasoning capabilities, and caches them in DynamicModelCache.
+   */
+  async fetchCodexModels(
+    authHeaders?: Record<string, string>,
+    forceRefresh = false,
+    baseUrl = "https://api.openai.com/v1"
+  ): Promise<ModelSpecs[]> {
+    const cacheKey = "codex:models";
+    const cached = !forceRefresh ? this.dynamicCache.getCachedModels(cacheKey) : null;
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    try {
+      const headers: Record<string, string> = { ...authHeaders };
+      if (!headers.Authorization && process.env.OPENAI_API_KEY) {
+        headers.Authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+      }
+
+      const res = await fetch(`${baseUrl}/models`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data?: Array<{ id: string; created?: number; owned_by?: string }> };
+        if (json.data && Array.isArray(json.data)) {
+          const discovered: ModelSpecs[] = [];
+          for (const item of json.data) {
+            const id = item.id;
+            const lower = id.toLowerCase();
+            // Filter relevant OpenAI / Codex models
+            if (
+              lower.includes("gpt-5") ||
+              lower.includes("gpt-6") ||
+              lower.includes("terra") ||
+              lower.includes("luna") ||
+              lower.includes("sol") ||
+              lower === "gpt-4o" ||
+              lower.startsWith("gpt-4o-") ||
+              lower.startsWith("o1") ||
+              lower.startsWith("o3")
+            ) {
+              const isLarge = lower.includes("gpt-5") || lower.includes("gpt-6") || lower.includes("terra") || lower.includes("luna") || lower.includes("sol") || lower === "gpt-4o";
+              const isReasoning = lower.includes("terra") || lower.includes("sol") || lower.startsWith("o1") || lower.startsWith("o3");
+              const maxOut = lower.includes("terra") || lower.startsWith("o1") ? 16_384 : 8_192;
+              
+              let desc = "OpenAI Codex AI Model";
+              if (lower.includes("terra")) desc = "Codex OAuth Flagship Reasoning Engine (Default)";
+              else if (lower.includes("luna")) desc = "Codex OAuth High-Velocity Model";
+              else if (lower.includes("sol")) desc = "Codex OAuth Balanced Model";
+              else if (lower.includes("4o")) desc = "Standard OpenAI GPT-4o Model";
+              else if (lower.startsWith("o1")) desc = "OpenAI o1 Reasoning Model";
+              else if (lower.startsWith("o3")) desc = "OpenAI o3 High-Throughput Reasoning Model";
+
+              const spec: ModelSpecs = {
+                modelName: id,
+                provider: "openai-codex",
+                contextWindowTokens: isLarge ? 900_000 : 128_000,
+                maxOutputTokens: maxOut,
+                inputPricePer1M: 0.0,
+                outputPricePer1M: 0.0,
+                supportsVision: true,
+                supportsReasoning: isReasoning,
+                description: desc,
+              };
+              this.registerModel(spec);
+              discovered.push(spec);
+            }
+          }
+
+          if (discovered.length > 0) {
+            // Ensure core curated models are present
+            const coreModels = this.getFallbackCodexModels();
+            const mergedMap = new Map<string, ModelSpecs>();
+            for (const m of [...coreModels, ...discovered]) {
+              mergedMap.set(m.modelName, m);
+            }
+            const merged = Array.from(mergedMap.values());
+            this.dynamicCache.setCachedModels(cacheKey, merged, 300_000);
+            return merged;
+          }
+        }
+      }
+    } catch {
+      // Ignore network errors and return curated defaults
+    }
+
+    const fallback = this.getFallbackCodexModels();
+    this.dynamicCache.setCachedModels(cacheKey, fallback, 300_000);
+    return fallback;
+  }
+
+  private getFallbackCodexModels(): ModelSpecs[] {
+    return Array.from(this.catalog.values()).filter((m) => m.provider === "openai-codex");
+  }
+
   private getFallbackOpenRouterModels(): ModelSpecs[] {
     return Array.from(this.catalog.values()).filter((m) => m.provider === "openrouter");
   }
@@ -499,6 +591,9 @@ export class ModelCatalog {
     const normalized = provider.toLowerCase();
     if (normalized === "openrouter") {
       return this.fetchOpenRouterModels();
+    }
+    if (normalized === "openai-codex" || normalized === "codex" || normalized === "openai") {
+      return this.fetchCodexModels();
     }
     if (
       normalized === "ollama" ||

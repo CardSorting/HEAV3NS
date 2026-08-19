@@ -1105,7 +1105,7 @@ export type {
   DslIntegrityResult,
   DslEnvelopeMetrics,
 } from "./agents/extensions/compaction/context-dsl-engine.js";
-export { ModelResolver } from "./agents/extensions/resolution/model-resolver.js";
+export { ModelResolver, KNOWN_CODEX_MODELS } from "./agents/extensions/resolution/model-resolver.js";
 export { AgentSlashRouter } from "./agents/extensions/resolution/agent-slash-router.js";
 export { MentionResolver } from "./agents/extensions/mentions/mention-resolver.js";
 export { AgentSwarmDispatcher } from "./agents/extensions/swarm/agent-swarm-dispatcher.js";
@@ -4707,11 +4707,35 @@ export class LumiMonolith implements IAgentEngine {
     return this.tick({ prompt });
   }
 
-  /** Dynamically changes the active LLM model */
-  setModel(modelName: string): void {
-    (this.config as { modelName: string }).modelName = modelName;
-    this.modelResolver.setActiveModel(modelName);
-    this.setupWizard.setSavedModel(modelName);
+  /** Dynamically changes the active LLM model with alias normalization */
+  setModel(modelName: string): string {
+    const normalized = this.modelResolver.setActiveModel(modelName);
+    (this.config as { modelName: string }).modelName = normalized;
+    this.setupWizard.setSavedModel(normalized);
+    return normalized;
+  }
+
+  /** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
+  switchToTerra(): string {
+    return this.setModel("gpt-5.6-terra");
+  }
+
+  /** Switches active model to High-Velocity Engine (gpt-5.6-luna) */
+  switchToLuna(): string {
+    return this.setModel("gpt-5.6-luna");
+  }
+
+  /** Switches active model to Balanced Engine (gpt-5.6-sol) */
+  switchToSol(): string {
+    return this.setModel("gpt-5.6-sol");
+  }
+
+  /** Cycles through modern Codex models (terra -> luna -> sol) */
+  cycleCodexModel(): string {
+    const next = this.modelResolver.cycleCodexModel();
+    (this.config as { modelName: string }).modelName = next;
+    this.setupWizard.setSavedModel(next);
+    return next;
   }
 
   /** Creates an immutable frame-perfect snapshot of active game engine state */
@@ -4791,12 +4815,25 @@ if (isDirectCliExecution) {
   const isPull = primaryCmd === "pull";
   const isHardware = args.includes("--hardware") || args.includes("--vram") || primaryCmd === "hardware" || primaryCmd === "vram";
 
+  const isTerra = primaryCmd === "terra";
+  const isLuna = primaryCmd === "luna";
+  const isSol = primaryCmd === "sol";
+  const isModelSwitch = primaryCmd === "model" && Boolean(args[1]);
+
   if (isHelp) {
     console.log(`
 \x1b[1;35m❖ LUMI Agent OS — Command Line Interface\x1b[0m
 
 \x1b[1;34mInteractive Mode:\x1b[0m
   lumi                        Start interactive terminal TUI session
+  lumi --model <name>         Start interactive session with active model (e.g. luna, terra, sol)
+
+\x1b[1;34mModel Swapping & Catalog:\x1b[0m
+  lumi terra                  Quick-switch default model to Flagship Reasoning Engine (gpt-5.6-terra)
+  lumi luna                   Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
+  lumi sol                    Quick-switch default model to Balanced Engine (gpt-5.6-sol)
+  lumi model <name>           Set active model by name or alias (e.g. lumi model luna)
+  lumi models [--refresh]     Fetch live models from Codex & OpenRouter and display catalog
 
 \x1b[1;34mAuthentication & Identity:\x1b[0m
   lumi login                  Sign in with OpenAI Codex OAuth (PKCE browser flow) or enter API keys
@@ -4811,7 +4848,6 @@ if (isDirectCliExecution) {
   lumi local --unload [model] Purge model from GPU memory to reclaim VRAM
   lumi local --ps             List models currently loaded in GPU VRAM
   lumi pull <model>           Stream and download an open-weight Ollama model (e.g. lumi pull llama3.2)
-  lumi models                 Display curated AI model catalog and context specifications
 
 \x1b[1;34mSystem & Configuration:\x1b[0m
   lumi doctor                 Run system health, permissions, hardware, and connectivity diagnostic audit
@@ -5014,8 +5050,27 @@ if (isDirectCliExecution) {
         console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
         console.log(`\x1b[90mStart local models with \x1b[36mollama run llama3.2\x1b[90m, pull with \x1b[36mlumi pull <model>\x1b[90m, or connect in TUI with \x1b[36m/local\x1b[90m.\x1b[0m\n`);
       }
+    } else if (isTerra) {
+      const active = lumi.switchToTerra();
+      console.log(`\n\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \x1b[1;36m${active}\x1b[0m (Flagship Reasoning Engine · 900k Context · 16k Max Output)\n`);
+    } else if (isLuna) {
+      const active = lumi.switchToLuna();
+      console.log(`\n\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \x1b[1;36m${active}\x1b[0m (High-Velocity Engine · 900k Context · 8k Max Output)\n`);
+    } else if (isSol) {
+      const active = lumi.switchToSol();
+      console.log(`\n\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \x1b[1;36m${active}\x1b[0m (Balanced Engine · 900k Context · 8k Max Output)\n`);
+    } else if (isModelSwitch) {
+      const targetModel = args.slice(1).join(" ").trim();
+      const active = lumi.setModel(targetModel);
+      console.log(`\n\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \x1b[1;36m${active}\x1b[0m\n`);
     } else if (isModels) {
-      console.log("\n\x1b[1;35m╭─── LUMI Curated Model Catalog ────────────────────────────────╮\x1b[0m");
+      const force = args.includes("--refresh") || args.includes("-r");
+      if (force) {
+        console.log("\n\x1b[33mFetching latest models dynamically from Codex and OpenRouter...\x1b[0m");
+        await lumi.modelCatalog.fetchCodexModels(undefined, true);
+        await lumi.modelCatalog.fetchOpenRouterModels(undefined, true);
+      }
+      console.log("\n\x1b[1;35m╭─── LUMI Curated & Dynamic Model Catalog ──────────────────────╮\x1b[0m");
       const models = lumi.modelCatalog.getAllModels();
       const active = lumi.modelResolver.getActiveModel();
       for (const m of models) {
@@ -5024,7 +5079,7 @@ if (isDirectCliExecution) {
         console.log(`│  • \x1b[1;36m${m.modelName.padEnd(24)}\x1b[0m \x1b[90m(${m.provider.padEnd(14)})\x1b[0m \x1b[33m${ctxKb}k ctx\x1b[0m${isCurrent}`);
       }
       console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
-      console.log(`\x1b[90mSwitch model in interactive mode with \x1b[36m/model <name>\x1b[90m or press \x1b[36mAlt+M\x1b[90m.\x1b[0m\n`);
+      console.log(`\x1b[90mSwitch models instantly with \x1b[36mlumi terra\x1b[90m, \x1b[36mlumi luna\x1b[90m, \x1b[36mlumi sol\x1b[90m, or in TUI with \x1b[36m/model <name>\x1b[90m.\x1b[0m\n`);
     } else if (isBaseline) {
       const passed = await updateLiveBaseline(lumi);
       if (!passed) throw new Error("Live baseline verification failed");

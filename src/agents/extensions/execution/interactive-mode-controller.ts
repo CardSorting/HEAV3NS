@@ -238,6 +238,9 @@ export class InteractiveModeController {
     // 3. Categorized Slash Commands (Mirroring familiar CLI/TUI standards)
     const slashCommands: SlashCommand[] = [
       { name: "help", description: "[Help] Display interactive keyboard shortcuts & usage guide" },
+      { name: "terra", description: "[Codex] Instant switch to Flagship Reasoning Engine (gpt-5.6-terra)" },
+      { name: "luna", description: "[Codex] Instant switch to High-Velocity Engine (gpt-5.6-luna)" },
+      { name: "sol", description: "[Codex] Instant switch to Balanced Engine (gpt-5.6-sol)" },
       { name: "login", description: "[Auth] Connect OpenAI Codex OAuth via browser PKCE or configure keys" },
       { name: "logout", description: "[Auth] Sign out of OpenAI Codex OAuth and clear stored credentials" },
       { name: "whoami", description: "[Auth] Display current authenticated user, account ID, and token status" },
@@ -552,7 +555,7 @@ export class InteractiveModeController {
       isLoadingInlineView = true;
       try {
         const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
-        const codexModels = await monolith.modelCatalog.getModelsForProvider("openai-codex");
+        const codexModels = await monolith.modelCatalog.fetchCodexModels();
         const ollamaModels = await monolith.modelCatalog.getModelsForProvider("ollama");
         const llamaCppModels = await monolith.modelCatalog.getModelsForProvider("llamacpp");
         const lmStudioModels = await monolith.modelCatalog.getModelsForProvider("lmstudio");
@@ -773,15 +776,52 @@ export class InteractiveModeController {
           return;
         }
 
+        if (input === "/terra") {
+          monolith.switchToTerra();
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`gpt-5.6-terra\` *(Flagship Reasoning Engine · 900k ctx · 16k out)*`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/luna") {
+          monolith.switchToLuna();
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`gpt-5.6-luna\` *(High-Velocity Engine · 900k ctx · 8k out)*`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/sol") {
+          monolith.switchToSol();
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`gpt-5.6-sol\` *(Balanced Engine · 900k ctx · 8k out)*`, 0, 0, DEFAULT_MARKDOWN_THEME)
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
         if (input === "/model" || input.startsWith("/model ")) {
           const parts = input.split(" ");
           if (parts.length > 1 && parts[1]!.trim().length > 0) {
-            const targetModel = parts[1]!.trim();
+            const targetModel = parts.slice(1).join(" ").trim();
             monolith.setModel(targetModel);
             updateHeader();
+            const activeModelName = monolith.config.modelName;
             const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
             cardBox.addChild(
-              new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`${targetModel}\``, 0, 0, DEFAULT_MARKDOWN_THEME)
+              new Markdown(`\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \`${activeModelName}\``, 0, 0, DEFAULT_MARKDOWN_THEME)
             );
             historyContainer.addChild(cardBox);
             tui.requestRender();
