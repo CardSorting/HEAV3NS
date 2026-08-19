@@ -68,6 +68,15 @@ export class WalletSnapshotManager {
     };
   }
 
+  captureFrame(frameIndex: number): WalletSubstrateSnapshot {
+    return this.captureSnapshot(frameIndex);
+  }
+
+  rewindToFrame(frameIndex: number): boolean {
+    const res = this.restoreFrameSnapshot(frameIndex);
+    return res.success;
+  }
+
   getSnapshot(frameIndex: number): WalletSubstrateSnapshot | undefined {
     return this.frameSnapshots.get(frameIndex);
   }

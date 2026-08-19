@@ -29,7 +29,15 @@ import { AgentLoopHarness } from "./agents/extensions/execution/agent-loop-harne
 import { ProviderAttributionComposer, type AttributionRecord, type AttributionSummary } from "./agents/extensions/resolution/provider-attribution.js";
 import { HttpDispatcherOverlay, type DispatcherConfig } from "./agents/extensions/resolution/http-dispatcher.js";
 import { AuthStorageVault, type AuthTokenRecord } from "./agents/extensions/resolution/auth-storage-vault.js";
-import { CodexOAuthManager, type OpenAiCodexCredentials, type CodexAuthUrlDetails } from "./agents/extensions/resolution/codex-oauth-manager.js";
+import {
+  CodexOAuthManager,
+  OPENAI_CODEX_OAUTH_CONFIG,
+  writeAtomicJsonFile,
+  type OpenAiCodexCredentials,
+  type CodexAuthUrlDetails,
+  type CodexAuthDiagnostics,
+  type AuthSourceAudit,
+} from "./agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge, MODERN_GPT56_MODELS, type ResolvedAuthHeaders, type ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
 import { SetupWizard } from "./agents/extensions/setup/setup-wizard.js";
 
@@ -1096,8 +1104,13 @@ export { HttpDispatcherOverlay } from "./agents/extensions/resolution/http-dispa
 export type { DispatcherConfig } from "./agents/extensions/resolution/http-dispatcher.js";
 export { AuthStorageVault } from "./agents/extensions/resolution/auth-storage-vault.js";
 export type { AuthTokenRecord } from "./agents/extensions/resolution/auth-storage-vault.js";
-export { CodexOAuthManager } from "./agents/extensions/resolution/codex-oauth-manager.js";
-export type { OpenAiCodexCredentials, CodexAuthUrlDetails } from "./agents/extensions/resolution/codex-oauth-manager.js";
+export { CodexOAuthManager, OPENAI_CODEX_OAUTH_CONFIG, writeAtomicJsonFile } from "./agents/extensions/resolution/codex-oauth-manager.js";
+export type {
+  OpenAiCodexCredentials,
+  CodexAuthUrlDetails,
+  CodexAuthDiagnostics,
+  AuthSourceAudit,
+} from "./agents/extensions/resolution/codex-oauth-manager.js";
 export { CodexProviderBridge, MODERN_GPT56_MODELS } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export type { ResolvedAuthHeaders, ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
 
@@ -4654,24 +4667,44 @@ if (cliEntrypoint) {
 
 if (isDirectCliExecution) {
   const args = process.argv.slice(2);
-  const isSmoke = args.includes("--smoke") || args.includes("-s");
-  const isSetup = args.includes("--setup") || args.includes("setup");
-  const isBenchmark = args.includes("--benchmark") || args.includes("-b");
-  const isBaseline = args.includes("--baseline");
-  const isHelp = args.includes("--help") || args.includes("-h");
+  const primaryCmd = args[0]?.toLowerCase();
+
+  const isSmoke = args.includes("--smoke") || args.includes("-s") || primaryCmd === "smoke";
+  const isSetup = args.includes("--setup") || primaryCmd === "setup";
+  const isBenchmark = args.includes("--benchmark") || args.includes("-b") || primaryCmd === "benchmark";
+  const isBaseline = args.includes("--baseline") || primaryCmd === "baseline";
+  const isHelp = args.includes("--help") || args.includes("-h") || primaryCmd === "help";
+
+  const isLogin = args.includes("--login") || primaryCmd === "login" || (primaryCmd === "auth" && args[1] === "login");
+  const isLogout = args.includes("--logout") || primaryCmd === "logout" || (primaryCmd === "auth" && args[1] === "logout");
+  const isWhoAmI = args.includes("--whoami") || primaryCmd === "whoami" || (primaryCmd === "auth" && (!args[1] || args[1] === "status" || args[1] === "whoami"));
+  const isDoctor = args.includes("--doctor") || args.includes("--health") || primaryCmd === "doctor" || primaryCmd === "health";
+  const isModels = args.includes("--models") || primaryCmd === "models";
 
   if (isHelp) {
     console.log(`
-\x1b[1;36mLUMI Agent CLI\x1b[0m
+\x1b[1;35m❖ LUMI Agent OS — Command Line Interface\x1b[0m
 
-Usage:
-  lumi                    Start interactive REPL mode
-  lumi --setup            Launch Interactive Setup Wizard (Model Providers & OAuth)
-  lumi --benchmark (-b)   Run Automated Engine Benchmark & Throughput Test Suite
-  lumi --baseline         Run smoke + benchmark + guardrails and regenerate live baseline reports
-  lumi "your prompt"      Run a single prompt turn
-  lumi --smoke (-s)       Run current capability-based runtime smoke suite
-  lumi --help (-h)        Show this help message
+\x1b[1;34mInteractive Mode:\x1b[0m
+  lumi                        Start interactive terminal TUI session
+
+\x1b[1;34mAuthentication & Identity:\x1b[0m
+  lumi login                  Sign in with OpenAI Codex OAuth (PKCE browser flow) or enter API keys
+  lumi logout                 Sign out and clear cached credentials
+  lumi whoami                 Display current authenticated user, tokens, and active LLM model
+  lumi auth status            Display authentication and sync diagnostics
+
+\x1b[1;34mSystem & Configuration:\x1b[0m
+  lumi doctor                 Run system health, permissions, and connectivity diagnostic audit
+  lumi models                 Display curated AI model catalog and context specifications
+  lumi setup                  Launch step-by-step interactive configuration wizard
+
+\x1b[1;34mWorkload & Benchmarks:\x1b[0m
+  lumi "your prompt"          Execute a single non-interactive prompt turn
+  lumi benchmark (-b)         Run automated engine throughput and latency benchmark suite
+  lumi baseline               Run smoke + benchmark + guardrails to update live baseline
+  lumi smoke (-s)             Run runtime capability smoke verification suite
+  lumi help (-h)              Show this help message
 `);
     process.exit(0);
   }
@@ -4784,8 +4817,27 @@ Usage:
   (async () => {
     const lumi = new LumiMonolith();
 
-    if (isSetup) {
+    if (isLogin || isSetup) {
       await lumi.setupWizard.runInteractiveWizard();
+    } else if (isLogout) {
+      lumi.setupWizard.logoutCodexOAuth();
+      console.log("\n\x1b[1;32m[✓] Successfully signed out of OpenAI Codex OAuth.\x1b[0m");
+      console.log("\x1b[90mRun \x1b[36mlumi login\x1b[90m anytime to reconnect.\x1b[0m\n");
+    } else if (isWhoAmI) {
+      lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel());
+    } else if (isDoctor) {
+      lumi.setupWizard.displayDoctor();
+    } else if (isModels) {
+      console.log("\n\x1b[1;35m╭─── LUMI Curated Model Catalog ────────────────────────────────╮\x1b[0m");
+      const models = lumi.modelCatalog.getAllModels();
+      const active = lumi.modelResolver.getActiveModel();
+      for (const m of models) {
+        const isCurrent = m.modelName === active ? " \x1b[32m[ACTIVE]\x1b[0m" : "";
+        const ctxKb = Math.round(m.contextWindowTokens / 1000);
+        console.log(`│  • \x1b[1;36m${m.modelName.padEnd(24)}\x1b[0m \x1b[90m(${m.provider.padEnd(14)})\x1b[0m \x1b[33m${ctxKb}k ctx\x1b[0m${isCurrent}`);
+      }
+      console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
+      console.log(`\x1b[90mSwitch model in interactive mode with \x1b[36m/model <name>\x1b[90m or press \x1b[36mAlt+M\x1b[90m.\x1b[0m\n`);
     } else if (isBaseline) {
       const passed = await updateLiveBaseline(lumi);
       if (!passed) throw new Error("Live baseline verification failed");

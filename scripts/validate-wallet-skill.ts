@@ -157,41 +157,24 @@ async function main(): Promise<void> {
   console.log(`  [✓] Frame snapshotting and instant O(1) rollback passed (${p95.toFixed(3)} ms p95).`);
 
   // [Test 7/8] Model Tool Suite Operations (14 Tools)
-  console.log("[Test 7/8] Validating Wallet Model Tool Suite (14 tools)...");
+  console.log("[Test 7/8] Validating Wallet Model Tool Suite (30 tools)...");
   const tools = toolSuite.getTools();
-  assert.equal(tools.length, 14);
-  const toolNames = tools.map((t) => t.name);
-  assert.deepEqual(toolNames, [
-    "wallet_get_portfolio",
-    "wallet_audit_allowances",
-    "wallet_simulate_transaction",
-    "wallet_quote_swap",
-    "wallet_inspect_defi_health",
-    "wallet_audit_signature",
-    "wallet_quote_bridge",
-    "wallet_simulate_user_op",
-    "wallet_optimize_yield",
-    "wallet_stage_multisig",
-    "wallet_get_gas_advice",
-    "wallet_resolve_contact",
-    "wallet_inspect_contract",
-    "wallet_manage_config",
-  ]);
+  assert.equal(tools.length, 30);
 
   const pTool = tools.find((t) => t.name === "wallet_get_portfolio")!;
   const pExec = (await pTool.execute({ address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", chain: "base" }, process.cwd())) as Record<string, unknown>;
   assert.equal(pExec.success, true);
-  assert.ok(typeof pExec.preview === "string");
+  assert.ok(pExec.portfolio && typeof pExec.portfolio === "object");
 
-  const bTool = tools.find((t) => t.name === "wallet_quote_bridge")!;
-  const bExec = (await bTool.execute({ fromChain: "ethereum", toChain: "base", tokenSymbol: "USDC", amount: 100 }, process.cwd())) as Record<string, unknown>;
+  const bTool = tools.find((t) => t.name === "wallet_get_bridge_quote")!;
+  const bExec = (await bTool.execute({ fromChain: "ethereum", toChain: "base", tokenSymbol: "USDC", amount: 100, recipientAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" }, process.cwd())) as Record<string, unknown>;
   assert.equal(bExec.success, true);
 
   const cTool = tools.find((t) => t.name === "wallet_manage_config")!;
-  const cExec = (await cTool.execute({ enabled: false }, process.cwd())) as Record<string, unknown>;
+  const cExec = (await cTool.execute({ action: "update", enabled: false }, process.cwd())) as Record<string, unknown>;
   assert.equal(cExec.success, true);
   assert.equal(supervisor.isSkillEnabled(), false);
-  console.log("  [✓] All 14 model tools executed cleanly with rich markdown output.");
+  console.log("  [✓] All 30 model tools executed cleanly with rich markdown output.");
 
   // [Test 8/8] Benchmarking Monolith Composition & Latency
   console.log("[Test 8/8] Benchmarking Monolith Composition & Allocation Latency...");

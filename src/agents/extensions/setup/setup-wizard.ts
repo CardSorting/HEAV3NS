@@ -10,6 +10,7 @@ import type { AuthStorageVault } from "../resolution/auth-storage-vault.js";
 import {
   CodexOAuthManager,
   OPENAI_CODEX_OAUTH_CONFIG,
+  writeAtomicJsonFile,
   type CodexAuthUrlDetails,
   type OpenAiCodexCredentials,
 } from "../resolution/codex-oauth-manager.js";
@@ -21,6 +22,23 @@ export interface ProviderAuditStatus {
   configured: boolean;
   source: "environment" | "vault" | "disk-oauth" | "proxy" | "none";
   maskedValue?: string;
+}
+
+export interface WhoAmIResult {
+  authenticated: boolean;
+  activeModel: string;
+  codexOAuth?: {
+    authenticated: boolean;
+    email?: string;
+    accountId?: string;
+    expiresInMs?: number;
+    syncStatus: string;
+  };
+  configuredProviders: Array<{
+    provider: string;
+    source: string;
+    maskedValue?: string;
+  }>;
 }
 
 export interface SetupWizardOptions {
@@ -131,13 +149,23 @@ export class SetupWizard {
     }
 
     // 2. OpenAI Codex OAuth
-    const codexCreds = this.codexOAuthManager.getCredentials();
-    const hasCodexOAuth = codexCreds !== null && !this.codexOAuthManager.isTokenExpired();
+    const diag = this.codexOAuthManager.getAuthDiagnostics();
+    let codexMasked: string | undefined = undefined;
+    if (diag.authenticated) {
+      const ttlMinutes = diag.expiresInMs ? Math.round(diag.expiresInMs / 60000) : 0;
+      const ttlHours = Math.floor(ttlMinutes / 60);
+      const ttlDays = Math.floor(ttlHours / 24);
+      const ttlStr = ttlDays > 0 ? `${ttlDays}d remaining` : `${ttlHours}h remaining`;
+      codexMasked = `Account: ${diag.accountId || "standard"} (${diag.email || "OAuth User"}) • ${ttlStr} [${diag.syncStatus}]`;
+    } else if (diag.isExpired && diag.hasValidRefreshToken) {
+      codexMasked = `Token Expired (Refresh Ready) [${diag.syncStatus}]`;
+    }
+
     statuses.push({
       provider: "openai-codex (OAuth)",
-      configured: hasCodexOAuth,
-      source: hasCodexOAuth ? "disk-oauth" : "none",
-      maskedValue: codexCreds ? `Account: ${codexCreds.accountId || "standard"} (${codexCreds.email || "OAuth User"})` : undefined,
+      configured: diag.authenticated || (diag.hasValidRefreshToken && !diag.isExpired),
+      source: diag.authenticated ? "disk-oauth" : "none",
+      maskedValue: codexMasked,
     });
 
     // 3. Custom LLM Proxy Gateway
@@ -152,6 +180,104 @@ export class SetupWizard {
     return statuses;
   }
 
+  getWhoAmI(activeModel = "gpt-5.6-terra"): WhoAmIResult {
+    const statuses = this.auditStatus();
+    const configured = statuses.filter((s) => s.configured);
+    const diag = this.codexOAuthManager.getAuthDiagnostics();
+
+    return {
+      authenticated: configured.length > 0,
+      activeModel,
+      codexOAuth: diag.authenticated
+        ? {
+            authenticated: true,
+            email: diag.email,
+            accountId: diag.accountId,
+            expiresInMs: diag.expiresInMs,
+            syncStatus: diag.syncStatus,
+          }
+        : undefined,
+      configuredProviders: configured.map((s) => ({
+        provider: s.provider,
+        source: s.source,
+        maskedValue: s.maskedValue,
+      })),
+    };
+  }
+
+  displayWhoAmI(activeModel = "gpt-5.6-terra"): void {
+    const who = this.getWhoAmI(activeModel);
+    console.log("\n\x1b[1;35m╭─── LUMI Identity & Active Session ────────────────────────────╮\x1b[0m");
+
+    if (who.codexOAuth?.authenticated) {
+      const ttlMinutes = who.codexOAuth.expiresInMs ? Math.round(who.codexOAuth.expiresInMs / 60000) : 0;
+      const ttlDays = Math.floor(ttlMinutes / 1440);
+      const ttlStr = ttlDays > 0 ? `${ttlDays} days remaining` : `${Math.floor(ttlMinutes / 60)} hours remaining`;
+
+      console.log(`│  \x1b[1;32m● Signed in with OpenAI Codex OAuth\x1b[0m`);
+      if (who.codexOAuth.email) {
+        console.log(`│    \x1b[90mUser Email:\x1b[0m    \x1b[1;37m${who.codexOAuth.email}\x1b[0m`);
+      }
+      console.log(`│    \x1b[90mAccount ID:\x1b[0m    \x1b[36m${who.codexOAuth.accountId || "standard"}\x1b[0m`);
+      console.log(`│    \x1b[90mToken Lease:\x1b[0m   \x1b[33m${ttlStr}\x1b[0m (\x1b[32m${who.codexOAuth.syncStatus}\x1b[0m)`);
+    } else {
+      console.log(`│  \x1b[1;33m○ No OpenAI Codex OAuth session active\x1b[0m`);
+    }
+
+    console.log(`│`);
+    console.log(`│  \x1b[90mActive LLM Model:\x1b[0m  \x1b[1;36m${who.activeModel}\x1b[0m`);
+
+    if (who.configuredProviders.length > 0) {
+      console.log(`│  \x1b[90mConfigured Providers (${who.configuredProviders.length}):\x1b[0m`);
+      for (const p of who.configuredProviders) {
+        const masked = p.maskedValue ? `(${p.maskedValue})` : "";
+        console.log(`│    \x1b[32m✓\x1b[0m \x1b[37m${p.provider.padEnd(20)}\x1b[0m \x1b[90mvia ${p.source}\x1b[0m ${masked}`);
+      }
+    } else {
+      console.log(`│  \x1b[31m✗ No external model providers configured\x1b[0m`);
+    }
+
+    console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
+    console.log(`\x1b[90mTip: Use \x1b[36mlumi login\x1b[90m to connect or \x1b[36mlumi logout\x1b[90m to sign out.\x1b[0m\n`);
+  }
+
+  logoutCodexOAuth(): boolean {
+    try {
+      this.codexOAuthManager.clearCredentials();
+
+      // Clean ~/.codex/auth.json
+      const codexAuthPath = path.join(os.homedir(), ".codex", "auth.json");
+      if (fs.existsSync(codexAuthPath)) {
+        const clearedCodex = {
+          auth_mode: "chatgpt",
+          OPENAI_API_KEY: null,
+          tokens: {
+            id_token: null,
+            access_token: null,
+            refresh_token: null,
+            account_id: null,
+          },
+          last_refresh: new Date().toISOString(),
+        };
+        writeAtomicJsonFile(codexAuthPath, clearedCodex);
+      }
+
+      this.saveConfigToDisk();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  clearAllCredentials(): void {
+    this.logoutCodexOAuth();
+    for (const provider of this.authStorageVault.listProviders()) {
+      this.authStorageVault.clearToken(provider);
+    }
+    this.proxyGateway.configureProxy(null);
+    this.saveConfigToDisk();
+  }
+
   displayAuditTable(): void {
     console.log("\n\x1b[1;36m--- LUMI Model Provider & OAuth Status Audit ---\x1b[0m");
     const statuses = this.auditStatus();
@@ -162,6 +288,52 @@ export class SetupWizard {
       console.log(`  ${icon} ${status.provider.padEnd(22)} ${sourceStr} ${details}`);
     }
     console.log();
+  }
+
+  displayDoctor(): void {
+    console.log("\n\x1b[1;36m============================================================\x1b[0m");
+    console.log("\x1b[1;36m   LUMI System Health & Connectivity Doctor                 \x1b[0m");
+    console.log("\x1b[1;36m============================================================\x1b[0m\n");
+
+    const diag = this.codexOAuthManager.getAuthDiagnostics();
+    const statuses = this.auditStatus();
+    const activeProviders = statuses.filter((s) => s.configured);
+
+    // Check 1: OAuth Session
+    if (diag.authenticated) {
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenAI Codex OAuth\x1b[0m`);
+      console.log(`         Signed in as \x1b[36m${diag.email || diag.accountId || "OAuth User"}\x1b[0m · Sync: \x1b[32m${diag.syncStatus}\x1b[0m`);
+    } else if (diag.isExpired && diag.hasValidRefreshToken) {
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mOpenAI Codex OAuth Token Expired\x1b[0m`);
+      console.log(`         Refresh token ready. Run \x1b[36mlumi login\x1b[0m or launch LUMI to auto-refresh.`);
+    } else {
+      console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mOpenAI Codex OAuth\x1b[0m`);
+      console.log(`         Not signed in. Connect anytime with \x1b[36mlumi login\x1b[0m.`);
+    }
+
+    // Check 2: Model Providers
+    if (activeProviders.length > 0) {
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mModel Providers (${activeProviders.length} active)\x1b[0m`);
+      for (const p of activeProviders) {
+        console.log(`         - ${p.provider} (${p.source})`);
+      }
+    } else {
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo Model Providers Configured\x1b[0m`);
+      console.log(`         Run \x1b[36mlumi login\x1b[0m or \x1b[36mlumi setup\x1b[0m to configure API keys or OAuth.`);
+    }
+
+    // Check 3: File Vault Security
+    const configPath = path.join(os.homedir(), ".lumi", "config.json");
+    if (fs.existsSync(configPath) && process.platform !== "win32") {
+      const mode = fs.statSync(configPath).mode & 0o777;
+      if (mode === 0o600) {
+        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (~/.lumi/config.json mode 0o600 intact)`);
+      } else {
+        console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mCredential Vault Permissions\x1b[0m (Current: 0o${mode.toString(8)}, recommended: 0o600)`);
+      }
+    }
+
+    console.log("\n\x1b[32mDoctor diagnostic completed.\x1b[0m\n");
   }
 
   async runInteractiveWizard(providedReadLine?: readline.Interface): Promise<void> {
@@ -335,7 +507,10 @@ export class SetupWizard {
         settle(code);
       });
 
-      callbackServer.listen(OPENAI_CODEX_OAUTH_CONFIG.callbackPort);
+      callbackServer.listen(
+        OPENAI_CODEX_OAUTH_CONFIG.callbackPort,
+        OPENAI_CODEX_OAUTH_CONFIG.callbackHost
+      );
       callbackServer.on("error", () => settle(null));
     } catch {
       settle(null);
@@ -382,7 +557,7 @@ export class SetupWizard {
     const authDetails = flow.auth;
     console.log("\n\x1b[1;33mStep 1: Open the following URL in your browser to authenticate:\x1b[0m");
     console.log(`\x1b[4;36m${authDetails.url}\x1b[0m\n`);
-    console.log(`\x1b[90mListening for OAuth redirect callback on http://localhost:${OPENAI_CODEX_OAUTH_CONFIG.callbackPort}/auth/callback...\x1b[0m`);
+    console.log(`\x1b[90mListening for OAuth redirect callback on http://${OPENAI_CODEX_OAUTH_CONFIG.callbackHost}:${OPENAI_CODEX_OAUTH_CONFIG.callbackPort}/auth/callback...\x1b[0m`);
 
     console.log("\x1b[1;34mStep 2:\x1b[0m Waiting for browser login redirect OR paste code/URL manually below.");
     
@@ -409,7 +584,7 @@ export class SetupWizard {
       console.log(`  Account ID: \x1b[36m${creds.accountId || "standard"}\x1b[0m`);
       if (creds.email) console.log(`  User Email: \x1b[36m${creds.email}\x1b[0m`);
       console.log(`  Expires In: \x1b[36m${Math.round((creds.expires - Date.now()) / 60000)} minutes\x1b[0m`);
-      console.log(`  Saved to:   \x1b[90m~/.lumi/config.json\x1b[0m (existing Codex CLI auth is left unchanged)\n`);
+      console.log(`  Saved to:   \x1b[90m~/.lumi/config.json & ~/.codex/auth.json\x1b[0m (synchronized for Codex CLI & SDK)\n`);
     } catch (err: any) {
       console.error(`\x1b[31m[✗] Codex OAuth Token Exchange Failed:\x1b[0m`, err?.message || err);
     }
@@ -463,12 +638,7 @@ export class SetupWizard {
 
   private saveConfigToDisk(): void {
     try {
-      const configDir = path.join(os.homedir(), ".lumi");
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
-      }
-
-      const configPath = path.join(configDir, "config.json");
+      const configPath = path.join(os.homedir(), ".lumi", "config.json");
       const tokens: Record<string, string> = {};
       for (const provider of this.authStorageVault.listProviders()) {
         if (provider === "openai-codex") continue;
@@ -487,8 +657,7 @@ export class SetupWizard {
         updatedAt: Date.now(),
       };
 
-      fs.writeFileSync(configPath, JSON.stringify(data, null, 2), { encoding: "utf-8", mode: 0o600 });
-      fs.chmodSync(configPath, 0o600);
+      writeAtomicJsonFile(configPath, data);
     } catch {
       // Ignore write errors
     }

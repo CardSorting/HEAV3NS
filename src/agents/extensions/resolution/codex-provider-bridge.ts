@@ -146,5 +146,9 @@ export class CodexProviderBridge {
   getModernModels(): readonly string[] {
     return MODERN_GPT56_MODELS;
   }
+
+  getOAuthManager(): CodexOAuthManager {
+    return this.codexOAuthManager;
+  }
 }
 

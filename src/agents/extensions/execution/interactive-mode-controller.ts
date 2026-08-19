@@ -201,30 +201,53 @@ export class InteractiveModeController {
 
     // Initial Welcome Card Box
     const welcomeCardBox = new Box(1, 0, (text: string) => `\x1b[48;5;236m${text}\x1b[0m`);
-    const welcomeMarkdown = new Markdown(
-      `# LUMI Monolith Agent Framework\n\n` +
-        `Welcome to the interactive agent shell. Type a prompt below to interact with the engine.\n\n` +
-        `**Quick Discoverability & Shortcuts:**\n` +
-        `- Press \`?\` or type \`/help\` : Display **Interactive Keyboard Guide**.\n` +
-        `- Press \`Ctrl+S\` or type \`/settings\` : Display **Interactive Settings View**.\n` +
-        `- Type \`/health\` or \`/status\` : View **Subsystem Diagnostic Audit**.\n` +
-        `- Type \`/\` : Open **Categorized Slash Commands Menu**.\n` +
-        `- Use \`↑ / ↓\` : Browse prompt history.\n`,
-      0,
-      0,
-      DEFAULT_MARKDOWN_THEME
-    );
+    const who = monolith.setupWizard.getWhoAmI(monolith.config.modelName);
+
+    let welcomeText = "";
+    if (!who.authenticated) {
+      welcomeText =
+        `# ✦ Welcome to LUMI Agent OS!\n\n` +
+        `To start chatting and executing agent workflows, connect an AI model:\n\n` +
+        `- **[1] Sign in with ChatGPT / OpenAI:** Type \`/login\` for instant browser OAuth.\n` +
+        `- **[2] Configure API Keys:** Type \`/setup\` for Claude, OpenAI, Gemini, or DeepSeek.\n` +
+        `- **[3] Run 100% Offline / Local:** Type \`/model ollama\` with zero setup or accounts.\n\n` +
+        `*Press \`?\` or type \`/help\` anytime for keyboard shortcuts.*`;
+    } else {
+      const identityStr = who.codexOAuth?.email
+        ? `Signed in as **${who.codexOAuth.email}**`
+        : who.codexOAuth?.accountId
+          ? `Signed in as Account **${who.codexOAuth.accountId}**`
+          : `**${who.configuredProviders.length}** provider(s) active`;
+
+      welcomeText =
+        `# ✦ LUMI Agent OS\n\n` +
+        `● ${identityStr}  │  Active Model: \`${monolith.config.modelName}\`\n\n` +
+        `**Quick Actions & Commands:**\n` +
+        `- Press \`Alt+M\` or type \`/model\` : Switch model or view catalog.\n` +
+        `- Type \`/whoami\` or \`/auth\` : View active login identity & tokens.\n` +
+        `- Type \`/doctor\` or \`/health\` : Run subsystem health diagnostics.\n` +
+        `- Press \`Ctrl+S\` or type \`/settings\` : Adjust reasoning effort & telemetry.\n` +
+        `- Press \`?\` or type \`/help\` : Display interactive keyboard guide.\n`;
+    }
+
+    const welcomeMarkdown = new Markdown(welcomeText, 0, 0, DEFAULT_MARKDOWN_THEME);
     welcomeCardBox.addChild(welcomeMarkdown);
     historyContainer.addChild(welcomeCardBox);
 
-    // 3. Categorized Slash Commands
+    // 3. Categorized Slash Commands (Mirroring familiar CLI/TUI standards)
     const slashCommands: SlashCommand[] = [
       { name: "help", description: "[Help] Display interactive keyboard shortcuts & usage guide" },
+      { name: "login", description: "[Auth] Connect OpenAI Codex OAuth via browser PKCE or configure keys" },
+      { name: "logout", description: "[Auth] Sign out of OpenAI Codex OAuth and clear stored credentials" },
+      { name: "whoami", description: "[Auth] Display current authenticated user, account ID, and token status" },
+      { name: "auth", description: "[Auth] Authentication & identity management (/auth login|logout|status)" },
       { name: "model", description: "[Config] Open interactive model selector or switch model (/model <name>)" },
+      { name: "models", description: "[Config] View curated model catalog and switch active LLM" },
       { name: "settings", description: "[Config] Open interactive framework settings view" },
+      { name: "doctor", description: "[System] Run system health & connectivity diagnostic checks" },
       { name: "health", description: "[System] Display subsystem health diagnostic audit" },
       { name: "status", description: "[System] Display subsystem health diagnostic audit" },
-      { name: "setup", description: "[System] Launch interactive API key configuration wizard" },
+      { name: "setup", description: "[System] Launch interactive model provider configuration wizard" },
       { name: "providers", description: "[System] Test live provider connection latencies" },
       { name: "snapshot", description: "[Session] Create immutable state snapshot checkpoint" },
       { name: "snapshots", description: "[Session] List all state snapshots in active session" },
@@ -714,6 +737,67 @@ export class InteractiveModeController {
           return;
         }
 
+        if (input === "/models") {
+          openModelSelectModal();
+          return;
+        }
+
+        if (input === "/login" || input === "/auth login") {
+          openGuidedSetupWalkthroughModal();
+          return;
+        }
+
+        if (input === "/logout" || input === "/auth logout") {
+          const success = monolith.setupWizard.logoutCodexOAuth();
+          updateHeader();
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          cardBox.addChild(
+            new Markdown(
+              success
+                ? `\x1b[1;32m[✓] Signed out successfully.\x1b[0m\n\nOAuth credentials removed from active session. Type \`/login\` anytime to reconnect.`
+                : `\x1b[1;31m[!] Logout completed with warnings.\x1b[0m`,
+              0,
+              0,
+              DEFAULT_MARKDOWN_THEME
+            )
+          );
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/whoami" || input === "/auth" || input === "/auth status") {
+          const who = monolith.setupWizard.getWhoAmI(monolith.config.modelName);
+          const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
+          const lines = [
+            `### ✦ LUMI Active Session & Identity`,
+            who.codexOAuth?.authenticated
+              ? `- **Auth Mode**: \`OpenAI Codex OAuth\` (Signed in as \`${who.codexOAuth.email || "OAuth User"}\`)`
+              : `- **Auth Mode**: \`Unauthenticated / Offline\``,
+            `- **Active Model**: \`${who.activeModel}\``,
+          ];
+          if (who.codexOAuth?.accountId) {
+            lines.push(`- **ChatGPT Account ID**: \`${who.codexOAuth.accountId}\``);
+          }
+          if (who.configuredProviders.length > 0) {
+            lines.push(`\n**Configured Providers (${who.configuredProviders.length}):**`);
+            for (const p of who.configuredProviders) {
+              lines.push(`- ${p.provider} (via \`${p.source}\`)`);
+            }
+          }
+          lines.push(`\n*Type \`/login\` to connect credentials or \`/logout\` to sign out.*`);
+
+          cardBox.addChild(new Markdown(lines.join("\n"), 0, 0, DEFAULT_MARKDOWN_THEME));
+          historyContainer.addChild(cardBox);
+          tui.requestRender();
+          return;
+        }
+
+        if (input === "/doctor") {
+          openHealthDiagnosticModal();
+          return;
+        }
+
         if (input === "/setup" || input === "/wizard") {
           openGuidedSetupWalkthroughModal();
           return;
@@ -960,10 +1044,39 @@ export class InteractiveModeController {
           const errorMsg = err instanceof Error ? err.message : String(err);
           const safeErrorMsg = sanitizeProgressText(errorMsg, 700) || "Unknown engine error";
           activityTimeline.failIfNeeded(safeErrorMsg, Date.now() - activeTurnStartedAt);
+
+          const isAuthError =
+            safeErrorMsg.includes("401") ||
+            safeErrorMsg.toLowerCase().includes("unauthorized") ||
+            safeErrorMsg.toLowerCase().includes("refresh token") ||
+            safeErrorMsg.toLowerCase().includes("authentication") ||
+            safeErrorMsg.toLowerCase().includes("api key") ||
+            safeErrorMsg.toLowerCase().includes("log out");
+
           const errorBox = new Box(1, 0, (str: string) => `\x1b[48;5;52m${str}\x1b[0m`);
-          errorBox.addChild(
-            new Markdown(`\x1b[1;31m⚠ Engine Tick Error:\x1b[0m ${safeErrorMsg}`, 0, 0, DEFAULT_MARKDOWN_THEME)
-          );
+
+          if (isAuthError) {
+            errorBox.addChild(
+              new Markdown(
+                `\x1b[1;31m⚠ Authentication / Sign-In Required\x1b[0m\n\n` +
+                  `Model \`${monolith.config.modelName}\` requires active credentials to complete live turns.\n\n` +
+                  `**Quick Remedies:**\n` +
+                  `- Type \`/login\` to connect your OpenAI Codex / ChatGPT subscription via browser.\n` +
+                  `- Type \`/setup\` to add API keys for Anthropic Claude, OpenAI, Gemini, or DeepSeek.\n` +
+                  `- Type \`/model\` to select a local/offline model (e.g. \`ollama\`).\n` +
+                  `- Type \`/doctor\` to inspect system connectivity status.\n\n` +
+                  `*Details: ${safeErrorMsg}*`,
+                0,
+                0,
+                DEFAULT_MARKDOWN_THEME
+              )
+            );
+          } else {
+            errorBox.addChild(
+              new Markdown(`\x1b[1;31m⚠ Engine Turn Error:\x1b[0m ${safeErrorMsg}`, 0, 0, DEFAULT_MARKDOWN_THEME)
+            );
+          }
+
           historyContainer.addChild(errorBox);
           updateHeader();
           historyScrollView.scrollToEnd();
@@ -985,7 +1098,7 @@ export class InteractiveModeController {
   private async startFallbackReadlineSession(monolith: LumiMonolith): Promise<void> {
     console.log("\x1b[1;36m========================================================\x1b[0m");
     console.log("\x1b[1;36m   LUMI Agent CLI - Interactive REPL (Fallback Mode)    \x1b[0m");
-    console.log("\x1b[90m   Commands: /help, /model, /setup, /settings, /health, /providers, /snapshot, /about, /clear, /exit  \x1b[0m");
+    console.log("\x1b[90m   Commands: /login, /whoami, /model, /setup, /doctor, /help, /exit\x1b[0m");
     console.log("\x1b[1;36m========================================================\x1b[0m\n");
 
     const rl = readline.createInterface({
@@ -1017,11 +1130,39 @@ export class InteractiveModeController {
           return;
         }
 
+        if (input === "/login" || input === "/auth login" || input === "/setup" || input === "/wizard") {
+          await monolith.setupWizard.runInteractiveWizard(rl);
+          rl.prompt();
+          return;
+        }
+
+        if (input === "/logout" || input === "/auth logout") {
+          monolith.setupWizard.logoutCodexOAuth();
+          console.log("\x1b[32m[✓] Signed out successfully.\x1b[0m");
+          rl.prompt();
+          return;
+        }
+
+        if (input === "/whoami" || input === "/auth" || input === "/auth status") {
+          monolith.setupWizard.displayWhoAmI(monolith.config.modelName);
+          rl.prompt();
+          return;
+        }
+
+        if (input === "/doctor" || input === "/health" || input === "/status" || input === "/diagnostics") {
+          monolith.setupWizard.displayDoctor();
+          rl.prompt();
+          return;
+        }
+
         if (input === "/help" || input === "?") {
           console.log("\x1b[1;36m--- LUMI REPL Commands Reference ---\x1b[0m");
+          console.log("  \x1b[35m/login\x1b[0m        : Connect OpenAI Codex OAuth or configure API keys");
+          console.log("  \x1b[35m/logout\x1b[0m       : Sign out and clear cached credentials");
+          console.log("  \x1b[35m/whoami\x1b[0m       : Display current identity & token status");
           console.log("  \x1b[35m/model [name]\x1b[0m : Switch active LLM model");
+          console.log("  \x1b[35m/doctor\x1b[0m       : Run connectivity & health diagnostics");
           console.log("  \x1b[35m/settings\x1b[0m     : View active engine configuration");
-          console.log("  \x1b[35m/health\x1b[0m       : Display subsystem health diagnostics");
           console.log("  \x1b[35m/providers\x1b[0m    : Run provider connectivity test");
           console.log("  \x1b[35m/snapshot\x1b[0m     : Create immutable state snapshot");
           console.log("  \x1b[35m/about\x1b[0m        : Display monolith specifications");

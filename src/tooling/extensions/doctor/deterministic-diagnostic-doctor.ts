@@ -66,9 +66,44 @@ export class DeterministicDiagnosticDoctor {
         : "Default offline simulation mode active; configure provider credentials for live LLM requests.",
     });
 
-    // 6. Monolith Architecture Invariants Check
+    // 6. OpenAI Codex OAuth & Token Synchronization Check
+    const codexOAuth = systemContext?.codexOAuth as {
+      authenticated?: boolean;
+      syncStatus?: string;
+      expiresInMs?: number;
+      isExpired?: boolean;
+    } | undefined;
+
+    if (codexOAuth) {
+      if (codexOAuth.authenticated && codexOAuth.syncStatus === "SYNCHRONIZED") {
+        checks.push({
+          checkId: "chk-codex-oauth-06",
+          category: "providers",
+          severity: "healthy",
+          message: `OpenAI Codex OAuth is active, valid, and synchronized across ~/.codex/auth.json and ~/.lumi/config.json.`,
+          details: { expiresInMs: codexOAuth.expiresInMs, syncStatus: codexOAuth.syncStatus },
+        });
+      } else if (codexOAuth.isExpired) {
+        checks.push({
+          checkId: "chk-codex-oauth-06",
+          category: "providers",
+          severity: "warning",
+          message: "OpenAI Codex OAuth access token is expired; token refresh is required.",
+          details: { syncStatus: codexOAuth.syncStatus },
+        });
+      } else if (codexOAuth.syncStatus === "DESYNCHRONIZED") {
+        checks.push({
+          checkId: "chk-codex-oauth-06",
+          category: "providers",
+          severity: "warning",
+          message: "OpenAI Codex credentials detected in only one storage vault; automatic synchronization recommended.",
+        });
+      }
+    }
+
+    // 7. Monolith Architecture Invariants Check
     checks.push({
-      checkId: "chk-integrity-invariants-06",
+      checkId: "chk-integrity-invariants-07",
       category: "integrity",
       severity: "healthy",
       message: "Zero barrel files and base class immutability contracts verified.",
