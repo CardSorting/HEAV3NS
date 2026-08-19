@@ -352,6 +352,9 @@ export class BroccoliKanbanSubstrate {
       updatedFrame: frameIndex,
       updatedAtMs: Date.now(),
       metadata: mutation.metadata ?? currentTask.metadata,
+      fsmVerificationStatus: mutation.fsmVerificationStatus !== undefined ? mutation.fsmVerificationStatus : currentTask.fsmVerificationStatus,
+      runbookRunId: mutation.runbookRunId !== undefined ? mutation.runbookRunId : currentTask.runbookRunId,
+      verificationErrors: mutation.verificationErrors !== undefined ? mutation.verificationErrors : currentTask.verificationErrors,
     };
 
     // Save to undo stack

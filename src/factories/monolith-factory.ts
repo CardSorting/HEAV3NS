@@ -1712,12 +1712,17 @@ export class MonolithFactory {
     );
     const multimodalVisionToolSuite = new MultimodalVisionToolSuite(multimodalVisionSupervisor);
 
+    const broccoliRunbookSubstrate = new BroccoliRunbookSubstrate(databaseKernel);
+    const runbookSupervisor = new RunbookSupervisor(broccoliRunbookSubstrate, { workspaceRoot: cwd });
+    const runbookToolSuite = new RunbookToolSuite(runbookSupervisor);
+
     const deterministicKanbanEngine = new DeterministicKanbanEngine();
     const broccoliKanbanSubstrate = new BroccoliKanbanSubstrate();
     const kanbanSnapshotManager = new KanbanSnapshotManager(broccoliKanbanSubstrate);
     const kanbanBoardSupervisor = new KanbanBoardSupervisor(
       deterministicKanbanEngine,
-      broccoliKanbanSubstrate
+      broccoliKanbanSubstrate,
+      runbookSupervisor
     );
     const kanbanOrchestrationToolSuite = new KanbanOrchestrationToolSuite(kanbanBoardSupervisor);
 
@@ -2218,7 +2223,7 @@ export class MonolithFactory {
     const broccoliGoalSubstrate = new BroccoliGoalSubstrate();
     const deterministicGoalEngine = new DeterministicGoalEngine(broccoliGoalSubstrate);
     const goalSnapshotManager = new GoalSnapshotManager(broccoliGoalSubstrate);
-    const goalSupervisor = new GoalSupervisor(broccoliGoalSubstrate, deterministicGoalEngine);
+    const goalSupervisor = new GoalSupervisor(broccoliGoalSubstrate, deterministicGoalEngine, runbookSupervisor);
     const goalToolSuite = new GoalToolSuite(goalSupervisor);
 
     const broccoliProfileSubstrate = new BroccoliProfileSubstrate();
@@ -2253,10 +2258,6 @@ export class MonolithFactory {
     const daemonSnapshotManager = new DaemonSnapshotManager(broccoliDaemonSubstrate);
     const daemonSupervisor = new DaemonSupervisor(broccoliDaemonSubstrate, deterministicDaemonEngine);
     const daemonToolSuite = new DaemonToolSuite(daemonSupervisor);
-
-    const broccoliRunbookSubstrate = new BroccoliRunbookSubstrate(databaseKernel);
-    const runbookSupervisor = new RunbookSupervisor(broccoliRunbookSubstrate, { workspaceRoot: cwd });
-    const runbookToolSuite = new RunbookToolSuite(runbookSupervisor);
 
     const slashRouter = new AgentSlashRouter();
     const mentionResolver = new MentionResolver();

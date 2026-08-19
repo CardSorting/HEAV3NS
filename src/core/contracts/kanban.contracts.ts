@@ -136,6 +136,9 @@ export interface KanbanTask {
   readonly createdAtMs: number;
   readonly updatedAtMs: number;
   readonly metadata?: Record<string, unknown>;
+  readonly runbookRunId?: string;
+  readonly fsmVerificationStatus?: "verified" | "gate_blocked" | "in_progress";
+  readonly verificationErrors?: readonly string[];
 }
 
 export interface KanbanBoard {
@@ -173,6 +176,9 @@ export interface KanbanTaskMutation {
   readonly commitSha?: string;
   readonly reasoningEffort?: KanbanReasoningEffort;
   readonly metadata?: Record<string, unknown>;
+  readonly runbookRunId?: string;
+  readonly fsmVerificationStatus?: "verified" | "gate_blocked" | "in_progress";
+  readonly verificationErrors?: readonly string[];
 }
 
 export interface KanbanQueryFilter {

@@ -318,6 +318,9 @@ export interface GoalState {
   targetDeadlineMs?: number;
   healthStatus?: GoalHealthStatus;
   estimatedRemainingTurns?: number;
+  runbookRunId?: string;
+  activeFsmStage?: string;
+  fsmVerificationStatus?: "verified" | "gate_blocked" | "in_progress";
 }
 
 export interface GoalEvaluationResult {

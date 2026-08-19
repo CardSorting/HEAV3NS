@@ -36,6 +36,8 @@ import type {
 import { BLOCK_RECURRENCE_LIMIT } from "../../../core/contracts/kanban.contracts.js";
 import { DeterministicKanbanEngine } from "../../../tooling/extensions/kanban/deterministic-kanban-engine.js";
 import { BroccoliKanbanSubstrate } from "../../../sessions/extensions/kanban/broccoli-kanban-substrate.js";
+import { FilePredicateEvaluator } from "../runbooks/file-predicate-evaluator.js";
+import type { RunbookSupervisor } from "../runbooks/runbook-supervisor.js";
 
 export interface CreateTaskParams {
   boardId?: string;
@@ -59,8 +61,8 @@ export interface CreateTaskParams {
   prUrl?: string;
   commitSha?: string;
   reasoningEffort?: KanbanReasoningEffort;
-  metadata?: Record<string, unknown>;
   frameIndex?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BoardStatusMetrics {
@@ -75,15 +77,26 @@ export interface BoardStatusMetrics {
   wipViolations: readonly string[];
 }
 
+export type BoardDiagnostics = BoardStatusMetrics;
+
 export class KanbanBoardSupervisor {
   private engine: DeterministicKanbanEngine;
   private substrate: BroccoliKanbanSubstrate;
   private taskCounter: number;
+  private readonly predicateEvaluator: FilePredicateEvaluator;
+  private readonly runbookSupervisor?: RunbookSupervisor;
 
-  constructor(engine: DeterministicKanbanEngine, substrate: BroccoliKanbanSubstrate) {
+  constructor(
+    engine: DeterministicKanbanEngine,
+    substrate: BroccoliKanbanSubstrate,
+    runbookSupervisor?: RunbookSupervisor,
+    predicateEvaluator?: FilePredicateEvaluator
+  ) {
     this.engine = engine;
     this.substrate = substrate;
     this.taskCounter = 1;
+    this.runbookSupervisor = runbookSupervisor;
+    this.predicateEvaluator = predicateEvaluator || new FilePredicateEvaluator();
   }
 
   /**
@@ -177,6 +190,7 @@ export class KanbanBoardSupervisor {
       createdAtMs: Date.now(),
       updatedAtMs: Date.now(),
       metadata: params.metadata,
+      fsmVerificationStatus: "in_progress",
     };
 
     const added = this.substrate.addTask(boardId, newTask);
@@ -227,13 +241,37 @@ export class KanbanBoardSupervisor {
       return { success: false, error: `Task '${taskId}' not found on board '${boardId}'` };
     }
 
-    // Validate column transition
+    // Validate column transition & Definition of Done verification gates
     if (mutation.column && mutation.column !== currentTask.column) {
       if (!this.engine.isValidTransition(currentTask.column, mutation.column)) {
         return {
           success: false,
           error: `Invalid transition from column '${currentTask.column}' to '${mutation.column}'`,
         };
+      }
+
+      // Enforce FSM Definition of Done gates when moving to 'done' or 'review'
+      if (mutation.column === "done") {
+        if (currentTask.subtaskChecklist && currentTask.subtaskChecklist.some((s) => !s.done)) {
+          const uncompleted = currentTask.subtaskChecklist.filter((s) => !s.done).length;
+          return {
+            success: false,
+            error: `🛑 Quality Gate Blocked: Cannot move task '${currentTask.title}' to 'done' with ${uncompleted} uncompleted subtask(s).`,
+          };
+        }
+
+        const verificationRules = (currentTask.metadata?.verification || currentTask.metadata?.gates) as any;
+        if (Array.isArray(verificationRules)) {
+          for (const rule of verificationRules) {
+            const evalRes = this.predicateEvaluator.evaluate(rule);
+            if (!evalRes.passed) {
+              return {
+                success: false,
+                error: `🛑 Quality Gate Blocked: ${evalRes.output}`,
+              };
+            }
+          }
+        }
       }
     }
 
@@ -247,7 +285,12 @@ export class KanbanBoardSupervisor {
       }
     }
 
-    const updated = this.substrate.updateTask(boardId, taskId, mutation, frameIndex);
+    const effectiveMutation: KanbanTaskMutation = {
+      ...mutation,
+      fsmVerificationStatus: mutation.column === "done" ? "verified" : mutation.fsmVerificationStatus || currentTask.fsmVerificationStatus || "in_progress",
+    };
+
+    const updated = this.substrate.updateTask(boardId, taskId, effectiveMutation, frameIndex);
     if (!updated) {
       return { success: false, error: `Failed to update task '${taskId}' in substrate` };
     }

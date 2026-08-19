@@ -45,17 +45,27 @@ import {
 import { BroccoliGoalSubstrate } from "../../../sessions/extensions/goals/broccoli-goal-substrate.js";
 import { BroccoliViewRenderer } from "../../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 import { DeterministicGoalEngine } from "./deterministic-goal-engine.js";
+import type { RunbookSupervisor } from "../runbooks/runbook-supervisor.js";
+import { RunbookCatalog } from "../runbooks/runbook-catalog.js";
+import { RunbookHumanizer } from "../runbooks/runbook-humanizer.js";
+import { FilePredicateEvaluator } from "../runbooks/file-predicate-evaluator.js";
+import { StatefulCompactionSynthesizer } from "../../../tooling/extensions/compaction/stateful-compaction-synthesizer.js";
 
 export class GoalSupervisor {
   private readonly substrate: BroccoliGoalSubstrate;
   private readonly engine: DeterministicGoalEngine;
+  private readonly runbookSupervisor?: RunbookSupervisor;
+  private readonly predicateEvaluator: FilePredicateEvaluator;
 
   constructor(
     substrate: BroccoliGoalSubstrate,
-    engine: DeterministicGoalEngine
+    engine: DeterministicGoalEngine,
+    runbookSupervisor?: RunbookSupervisor
   ) {
     this.substrate = substrate;
     this.engine = engine;
+    this.runbookSupervisor = runbookSupervisor;
+    this.predicateEvaluator = new FilePredicateEvaluator();
   }
 
   setGoal(
@@ -481,6 +491,19 @@ export class GoalSupervisor {
         `Category:           ${(state.category || "general").toUpperCase()}`,
       ];
 
+      if (this.runbookSupervisor) {
+        const preset = RunbookCatalog.getPreset(
+          state.category === "bugfix" ? "bugfix_patch" : state.category === "feature" ? "feature_delivery" : "coding_loop"
+        );
+        if (preset) {
+          out.push(
+            ``,
+            `\x1b[1;35mWorkflow FSM Pipeline:\x1b[0m`,
+            RunbookHumanizer.renderAsciiPipeline(preset, state.activeFsmStage || preset.initial)
+          );
+        }
+      }
+
       if (state.milestones.length > 0) {
         out.push(``, `\x1b[1;34mMilestone DAG Progress:\x1b[0m`);
         for (const m of state.milestones) {
@@ -499,8 +522,60 @@ export class GoalSupervisor {
         }
       }
 
-      out.push(``, `\x1b[90mCommands: /goal tree | /goal diff <a b> | /goal milestone add <title> | /goal retro\x1b[0m`);
+      out.push(``, `\x1b[90mCommands: /goal tree | /goal next [stage] | /goal compact | /goal diff <a b> | /goal milestone add <title> | /goal retro\x1b[0m`);
       return { success: true, output: out.join("\n") };
+    }
+
+    // /goal advance | /goal next | /goal goto <stage>
+    if (subCmd === "advance" || subCmd === "next" || subCmd === "goto") {
+      const state = this.substrate.getGoal(sessionId);
+      if (!state) return { success: false, output: "No active goal set for this session." };
+      const target = parts[2];
+      const spec =
+        RunbookCatalog.getPreset(
+          state.category === "bugfix" ? "bugfix_patch" : state.category === "feature" ? "feature_delivery" : "coding_loop"
+        ) || RunbookCatalog.instantiate("coding_loop");
+      const stages = Object.keys(spec.nodes);
+      const currentIdx = stages.indexOf(state.activeFsmStage || spec.initial);
+      const nextStage = target || (currentIdx >= 0 && currentIdx < stages.length - 1 ? stages[currentIdx + 1] : undefined);
+      if (!nextStage) {
+        return { success: false, output: `Already at final stage '${state.activeFsmStage}'.` };
+      }
+      state.activeFsmStage = nextStage;
+      state.fsmVerificationStatus = "verified";
+      this.substrate.setGoal(state);
+      if (this.runbookSupervisor && state.runbookRunId) {
+        this.runbookSupervisor.goto(nextStage, state.runbookRunId).catch(() => {});
+      }
+      return {
+        success: true,
+        output: `\x1b[1;32m✓ Advanced Goal FSM Stage:\x1b[0m ${RunbookHumanizer.formatTitle(nextStage)} (from '${stages[currentIdx] || "start"}')`,
+      };
+    }
+
+    // /goal compact
+    if (subCmd === "compact") {
+      const state = this.substrate.getGoal(sessionId);
+      if (!state) return { success: false, output: "No active goal set for this session." };
+      const synth = new StatefulCompactionSynthesizer();
+      const spec =
+        RunbookCatalog.getPreset(
+          state.category === "bugfix" ? "bugfix_patch" : state.category === "feature" ? "feature_delivery" : "coding_loop"
+        ) || RunbookCatalog.instantiate("coding_loop");
+      const pseudoRun = {
+        runId: state.runbookRunId || `goal-${sessionId}`,
+        specName: spec.name,
+        specHash: "active-goal",
+        current: state.activeFsmStage || spec.initial,
+        currentEntryId: `entry-${Date.now()}`,
+        status: "active" as const,
+        history: [],
+        edgeAttempts: {},
+        createdAt: state.createdAtMs,
+        updatedAt: Date.now(),
+      };
+      const prompt = synth.synthesizeCompactionPrompt(pseudoRun, spec);
+      return { success: true, output: prompt };
     }
 
     // /goal tree

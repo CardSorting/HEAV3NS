@@ -221,11 +221,16 @@ export class KanbanBoardModal implements Component, Focusable {
             const checklistProgress = task.subtaskChecklist && task.subtaskChecklist.length > 0
               ? ` \x1b[36m[✓ ${task.subtaskChecklist.filter((i) => i.done).length}/${task.subtaskChecklist.length}]\x1b[0m`
               : "";
+            const fsmBadge = task.fsmVerificationStatus === "verified"
+              ? ` \x1b[1;32m[🛡️ VERIFIED]\x1b[0m`
+              : task.fsmVerificationStatus === "gate_blocked"
+              ? ` \x1b[1;31m[🛑 GATE BLOCKED]\x1b[0m`
+              : "";
 
             if (isTaskSelected) {
-              md += `${taskPrefix}**\x1b[1;37m[#${task.id}] ${task.title}\x1b[0m** ${badge}${blocked}${checklistProgress}${assignee}\n`;
+              md += `${taskPrefix}**\x1b[1;37m[#${task.id}] ${task.title}\x1b[0m** ${badge}${blocked}${fsmBadge}${checklistProgress}${assignee}\n`;
             } else {
-              md += `${taskPrefix}[#${task.id}] ${task.title} ${badge}${blocked}${checklistProgress}${assignee}\n`;
+              md += `${taskPrefix}[#${task.id}] ${task.title} ${badge}${blocked}${fsmBadge}${checklistProgress}${assignee}\n`;
             }
           });
         }
