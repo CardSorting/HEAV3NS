@@ -154,6 +154,7 @@ import { DeterministicSkillCurator } from "./sessions/extensions/skills/determin
 import { EvolutionarySkillTreeEngine } from "./agents/extensions/skills/evolutionary-skill-tree-engine.js";
 import { SkillTreePromptComposer } from "./agents/extensions/skills/skill-tree-prompt-composer.js";
 import { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degeneration-guard.js";
+import { SkillStrategyEngine } from "./agents/extensions/skills/skill-strategy-engine.js";
 
 import { DeterministicSoulParser } from "./tooling/extensions/soul/deterministic-soul-parser.js";
 import { AnchoredSoulMutator } from "./tooling/extensions/soul/anchored-soul-mutator.js";
@@ -716,6 +717,26 @@ export type {
   SkillMutationPayload,
   SkillMutationResult,
   SkillEvolutionSignal,
+  SkillExecutionPolicy,
+  SkillStrategyGoal,
+  SkillStrategyStep,
+  SkillComboSynergy,
+  SkillStrategyPlan,
+  SkillEvolutionPath,
+  SpecializedBranch,
+  SkillRecommendation,
+  SkillProgressionTrack,
+  SkillEvolutionMilestone,
+  SkillCriticalPath,
+  SkillSpeciationEvaluation,
+  SkillTransactionContext,
+  SkillSnapshotDiffResult,
+  SkillPruningRecommendation,
+  SkillAutoRemediationReport,
+  SkillCompetencyUncertainty,
+  SkillCompetencyVector,
+  SkillEvolutionLineage,
+  ISkillStrategyEngine,
   ISkillTreeParser,
   IAnchoredSkillMutator,
   IBroccoliSkillTreeSubstrate,
@@ -1502,6 +1523,7 @@ export { BroccoliSkillTreeSubstrate } from "./sessions/extensions/skills/broccol
 export { SkillTreeSnapshotManager } from "./sessions/extensions/skills/skill-tree-snapshot-manager.js";
 export { DeterministicSkillCurator } from "./sessions/extensions/skills/deterministic-skill-curator.js";
 export { EvolutionarySkillTreeEngine } from "./agents/extensions/skills/evolutionary-skill-tree-engine.js";
+export { SkillStrategyEngine } from "./agents/extensions/skills/skill-strategy-engine.js";
 export { SkillTreePromptComposer } from "./agents/extensions/skills/skill-tree-prompt-composer.js";
 export { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degeneration-guard.js";
 
@@ -3698,6 +3720,7 @@ export class LumiMonolith implements IAgentEngine {
   readonly skillTreeSnapshotManager: SkillTreeSnapshotManager;
   readonly deterministicSkillCurator: DeterministicSkillCurator;
   readonly evolutionarySkillEngine: EvolutionarySkillTreeEngine;
+  readonly skillStrategyEngine: SkillStrategyEngine;
   readonly skillTreePromptComposer: SkillTreePromptComposer;
   readonly antiDegenerationGuard: AntiDegenerationGuard;
   readonly deterministicSoulParser: DeterministicSoulParser;
@@ -4232,6 +4255,7 @@ export class LumiMonolith implements IAgentEngine {
     this.skillTreeSnapshotManager = components.skillTreeSnapshotManager;
     this.deterministicSkillCurator = components.deterministicSkillCurator;
     this.evolutionarySkillEngine = components.evolutionarySkillEngine;
+    this.skillStrategyEngine = components.skillStrategyEngine;
     this.skillTreePromptComposer = components.skillTreePromptComposer;
     this.antiDegenerationGuard = components.antiDegenerationGuard;
     this.deterministicSoulParser = components.deterministicSoulParser;

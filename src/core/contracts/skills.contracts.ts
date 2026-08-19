@@ -12,6 +12,23 @@ export interface SkillSupportFile {
   byteSize: number;
 }
 
+export interface SkillCompetencyVector {
+  syntaxAccuracy: number; // 0 to 100
+  executionReliability: number; // 0 to 100
+  recoveryResilience: number; // 0 to 100
+  speedEfficiency: number; // 0 to 100
+}
+
+export interface SkillEvolutionLineage {
+  generation: number;
+  ancestorId?: string;
+  branchOrigin?: string;
+  mutationCount: number;
+  speciatedChildren?: readonly string[];
+  consolidatedFrom?: readonly string[];
+  createdAtMs?: number;
+}
+
 export interface SkillNodeManifest {
   id: string;
   name: string;
@@ -36,6 +53,9 @@ export interface SkillNodeManifest {
   body: string;
   contentHash: string;
   supportFiles: readonly SkillSupportFile[];
+  competencies?: SkillCompetencyVector;
+  lineage?: SkillEvolutionLineage;
+  synergies?: readonly string[];
   updatedAtMs?: number;
 }
 
@@ -63,7 +83,7 @@ export interface SkillMutationPayload {
   targetSkillId: string;
   action: "create" | "patch" | "rewrite" | "add_support_file" | "remove_support_file" | "archive" | "consolidate";
   reason: string;
-  signalOrigin?: "user_correction" | "workflow_refinement" | "debugging_technique" | "tool_workaround";
+  signalOrigin?: "user_correction" | "workflow_refinement" | "debugging_technique" | "tool_workaround" | "performance_breakthrough";
   chunks?: readonly SkillMutationChunk[];
   newNode?: Partial<SkillNodeManifest>;
   supportFile?: SkillSupportFile;
@@ -84,12 +104,130 @@ export interface SkillMutationResult {
 }
 
 export interface SkillEvolutionSignal {
-  type: "user_correction" | "workflow_refinement" | "debugging_technique" | "tool_workaround";
+  type: "user_correction" | "workflow_refinement" | "debugging_technique" | "tool_workaround" | "performance_breakthrough";
   context: string;
   confidence: number;
   targetSkillHint?: string;
-  suggestedAction: "patch_loaded" | "patch_umbrella" | "add_support_file" | "create_class_umbrella";
+  suggestedAction: "patch_loaded" | "patch_umbrella" | "add_support_file" | "create_class_umbrella" | "speciate_skill";
   proposedContent?: string;
+  detectedMetrics?: {
+    latencyReductionMs?: number;
+    toolCallCount?: number;
+    errorRecoverySuccess?: boolean;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Skill Strategy & Execution Plan Contracts
+// ---------------------------------------------------------------------------
+
+export type SkillExecutionPolicy =
+  | "greedy_mastery"
+  | "balanced_adaptive"
+  | "exploration_learning"
+  | "min_latency"
+  | "defensive_sovereign";
+
+export interface SkillStrategyGoal {
+  readonly prompt: string;
+  readonly categoryHint?: string;
+  readonly requiredCapabilities?: readonly string[];
+  readonly maxDepth?: number;
+  readonly policy?: SkillExecutionPolicy;
+  readonly preferredSkillIds?: readonly string[];
+}
+
+export interface SkillStrategyStep {
+  readonly stepIndex: number;
+  readonly skillId: string;
+  readonly skillName: string;
+  readonly tier: SkillTier;
+  readonly masteryScore: number;
+  readonly rationale: string;
+  readonly expectedOutput?: string;
+}
+
+export interface SkillComboSynergy {
+  readonly pairKey: string;
+  readonly skillIds: readonly string[];
+  readonly name: string;
+  readonly description: string;
+  readonly fitnessMultiplier: number;
+  readonly xpMultiplier: number;
+  readonly active: boolean;
+}
+
+export interface SkillStrategyPlan {
+  readonly strategyId: string;
+  readonly goal: SkillStrategyGoal;
+  readonly policy: SkillExecutionPolicy;
+  readonly primarySkill: SkillNodeManifest;
+  readonly executionChain: readonly SkillStrategyStep[];
+  readonly fallbackChain: readonly SkillStrategyStep[];
+  readonly synergies: readonly SkillComboSynergy[];
+  readonly confidenceScore: number; // 0.0 to 1.0
+  readonly estimatedLatencyMs: number;
+  readonly rationale: string;
+  readonly createdMs: number;
+}
+
+export interface SkillEvolutionPath {
+  readonly targetSkillId: string;
+  readonly targetSkillName: string;
+  readonly targetTier: SkillTier;
+  readonly currentMastery: number;
+  readonly unlocked: boolean;
+  readonly requiredPrerequisites: readonly string[];
+  readonly recommendedSequence: readonly {
+    readonly skillId: string;
+    readonly skillName: string;
+    readonly currentMastery: number;
+    readonly targetMastery: number;
+    readonly estimatedXpNeeded: number;
+  }[];
+  readonly totalXpToTarget: number;
+  readonly difficulty: "trivial" | "moderate" | "demanding" | "epic";
+}
+
+export interface SpecializedBranch {
+  readonly suffix: string;
+  readonly name: string;
+  readonly description: string;
+  readonly focusTags: readonly string[];
+  readonly specializedBody: string;
+}
+
+export interface SkillRecommendation {
+  readonly skill: SkillNodeManifest;
+  readonly score: number;
+  readonly reason: string;
+}
+
+export interface SkillProgressionTrack {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly icon: string;
+  readonly targetRole: string;
+  readonly stages: readonly {
+    readonly stageIndex: number;
+    readonly title: string;
+    readonly requiredSkillIds: readonly string[];
+    readonly minimumMastery: number;
+    readonly unlockedReward: string;
+  }[];
+  readonly progressPercent: number;
+}
+
+export interface SkillEvolutionMilestone {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly icon: string;
+  readonly unlocked: boolean;
+  readonly progress: number; // 0.0 to 1.0
+  readonly requirementText: string;
+  readonly rewardPerk: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +325,7 @@ export interface SkillNotificationRecord {
 // ---------------------------------------------------------------------------
 
 export interface SkillMutationUndoRecord {
-  readonly mutationType: "create" | "update" | "delete" | "patch" | "bulk";
+  readonly mutationType: "create" | "update" | "delete" | "patch" | "bulk" | "speciate" | "consolidate";
   readonly previousNode?: SkillNodeManifest;
   readonly nextNode?: SkillNodeManifest;
   readonly previousNodes?: readonly SkillNodeManifest[];
@@ -298,11 +436,32 @@ export interface IBroccoliSkillTreeSubstrate {
   clear(): void;
 }
 
+export interface SkillSnapshotDiffResult {
+  readonly snapshotAId: string;
+  readonly snapshotBId: string;
+  readonly addedNodeIds: readonly string[];
+  readonly removedNodeIds: readonly string[];
+  readonly modifiedNodes: readonly {
+    readonly skillId: string;
+    readonly masteryDelta: number;
+    readonly fitnessDelta: number;
+  }[];
+}
+
+export interface SkillPruningRecommendation {
+  readonly skillId: string;
+  readonly skillName: string;
+  readonly action: "archive" | "decay" | "consolidate";
+  readonly riskLevel: "low" | "medium" | "high";
+  readonly rationale: string;
+}
+
 export interface ISkillTreeSnapshotManager {
   createSnapshot(tickIndex: number): string;
   restoreSnapshot(snapshotId: string): boolean;
   rollbackLastMutation(): boolean;
   getSnapshotHistory(): readonly { snapshotId: string; tickIndex: number; timestamp: number }[];
+  diffSnapshots?(snapshotAId: string, snapshotBId: string): SkillSnapshotDiffResult | undefined;
 }
 
 export interface IDeterministicSkillCurator {
@@ -315,6 +474,61 @@ export interface IDeterministicSkillCurator {
     nodeIds: readonly string[];
     similarityScore: number;
   }[];
+  generatePruningRecommendations?(currentTick: number, staleThreshold?: number, archiveThreshold?: number): readonly SkillPruningRecommendation[];
+}
+
+
+
+export interface SkillCriticalPath {
+  readonly criticalPathNodeIds: readonly string[];
+  readonly totalPrerequisiteDepth: number;
+  readonly bottleneckNodes: readonly {
+    readonly skillId: string;
+    readonly skillName: string;
+    readonly blockedDownstreamCount: number;
+    readonly currentMastery: number;
+  }[];
+}
+
+export interface SkillSpeciationEvaluation {
+  readonly skillId: string;
+  readonly shouldSpeciate: boolean;
+  readonly divergenceScore: number;
+  readonly reason: string;
+  readonly recommendedBranches: readonly SpecializedBranch[];
+}
+
+export interface SkillTransactionContext {
+  readonly transactionId: string;
+  readonly startMs: number;
+  readonly operationsCount: number;
+}
+
+export interface SkillAutoRemediationReport {
+  readonly repairedCount: number;
+  readonly brokenEdgesFixed: number;
+  readonly unlockedOrphansCount: number;
+  readonly actionsTaken: readonly string[];
+  readonly healthStatusAfter: SkillHealthStatus;
+}
+
+export interface SkillCompetencyUncertainty {
+  readonly skillId: string;
+  readonly observationCount: number;
+  readonly epistemicUncertainty: number;
+  readonly confidenceInterval: { readonly min: number; readonly max: number };
+  readonly isStableSovereign: boolean;
+}
+
+export interface ISkillStrategyEngine {
+  synthesizeStrategy(goal: SkillStrategyGoal): SkillStrategyPlan;
+  evaluateSynergies(skillIds: readonly string[]): readonly SkillComboSynergy[];
+  computeEvolutionPath(targetSkillId: string): SkillEvolutionPath;
+  computeCriticalPath(): SkillCriticalPath;
+  optimizePipelineForCostAndLatency(plan: SkillStrategyPlan, maxLatencyMs: number): SkillStrategyPlan;
+  recommendNextSkills(context: string, limit?: number): readonly SkillRecommendation[];
+  getProgressionTracks(): readonly SkillProgressionTrack[];
+  getEvolutionMilestones(): readonly SkillEvolutionMilestone[];
 }
 
 export interface IEvolutionarySkillEngine {
@@ -329,11 +543,30 @@ export interface IEvolutionarySkillEngine {
   ): readonly SkillEvolutionSignal[];
   calculateFitness(node: SkillNodeManifest, currentTick: number): number;
   updateMastery(nodeId: string, success: boolean): number;
+  estimateCompetencyUncertainty(skillId: string): SkillCompetencyUncertainty;
+  recombineSkillBodies(nodes: readonly SkillNodeManifest[]): string;
+  evaluateSpeciationOpportunity(skillId: string): SkillSpeciationEvaluation;
+  speciateSkill(skillId: string, branches: readonly SpecializedBranch[]): readonly SkillNodeManifest[];
+  consolidateSkills(skillIds: readonly string[], mergedId: string, mergedName: string, mergedCategory: string): SkillNodeManifest;
+  getLineage(skillId: string): SkillEvolutionLineage | undefined;
+  autoRemediateHealthIssues?(): SkillAutoRemediationReport;
+  getStrategyEngine?(): ISkillStrategyEngine;
 }
+
 
 export interface IAntiDegenerationGuard {
   validateEvolutionProposal(signal: SkillEvolutionSignal, proposedContent: string): {
     allowed: boolean;
     violations: readonly string[];
   };
+  checkMutationThrashing?(targetSkillId: string, proposedContent: string, history: readonly SkillMutationResult[]): {
+    isThrashing: boolean;
+    reason?: string;
+  };
+  validateTextEntropy?(content: string): {
+    valid: boolean;
+    entropy: number;
+    reason?: string;
+  };
 }
+

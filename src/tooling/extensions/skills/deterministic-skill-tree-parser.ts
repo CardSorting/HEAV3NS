@@ -6,8 +6,17 @@ import type {
   SkillTier,
   SkillLifecycleState,
   SkillProvenance,
+  SkillCompetencyVector,
+  SkillEvolutionLineage,
 } from "../../../core/contracts/skills.contracts.js";
 
+/**
+ * DeterministicSkillTreeParser.
+ * Part of LUMI's World-Class Evolutionary Skill Tree System (ADR-014).
+ *
+ * Implements Trojan Unicode sanitization, strict frontmatter validation,
+ * SHA-256 hash invariant calculation, and Kahn's topological DAG construction.
+ */
 export class DeterministicSkillTreeParser implements ISkillTreeParser {
   /**
    * Sanitizes source text against invisible and bidirectional Unicode control characters
@@ -41,6 +50,7 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
     const prerequisites: string[] = [];
     const relatedSkills: string[] = [];
     const tags: string[] = [];
+    const synergies: string[] = [];
     let masteryScore = 0;
     let fitnessScore = 1.0;
     let useCount = 0;
@@ -50,6 +60,9 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
     let provenance: SkillProvenance = "user_created";
     let pinned = false;
     let body = sanitized;
+    let generation = 1;
+    let ancestorId: string | undefined;
+    let branchOrigin: string | undefined;
 
     const frontmatterMatch = sanitized.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
     if (frontmatterMatch) {
@@ -67,14 +80,15 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
           const item = trimmed.slice(2).trim().replace(/^["']|["']$/g, "");
           if (currentArrayKey === "platforms") platforms.push(item);
           else if (currentArrayKey === "prerequisites") prerequisites.push(item);
-          else if (currentArrayKey === "related_skills") relatedSkills.push(item);
+          else if (currentArrayKey === "related_skills" || currentArrayKey === "relatedskills") relatedSkills.push(item);
           else if (currentArrayKey === "tags") tags.push(item);
+          else if (currentArrayKey === "synergies") synergies.push(item);
           continue;
         }
 
         const colonIndex = trimmed.indexOf(":");
         if (colonIndex > -1) {
-          const key = trimmed.slice(0, colonIndex).trim();
+          const key = trimmed.slice(0, colonIndex).trim().toLowerCase();
           let value = trimmed.slice(colonIndex + 1).trim();
 
           if (value.startsWith("[") && value.endsWith("]")) {
@@ -85,8 +99,9 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
               .filter(Boolean);
             if (key === "platforms") platforms.push(...items);
             else if (key === "prerequisites") prerequisites.push(...items);
-            else if (key === "related_skills") relatedSkills.push(...items);
+            else if (key === "related_skills" || key === "relatedskills") relatedSkills.push(...items);
             else if (key === "tags") tags.push(...items);
+            else if (key === "synergies") synergies.push(...items);
             currentArrayKey = null;
             continue;
           }
@@ -101,17 +116,20 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
           else if (key === "tier" && ["novice", "adept", "master", "sovereign"].includes(value)) tier = value as SkillTier;
           else if (key === "version") version = value;
           else if (key === "author") author = value;
-          else if (key === "masteryScore") masteryScore = Number.parseInt(value, 10) || 0;
-          else if (key === "fitnessScore") fitnessScore = Number.parseFloat(value) || 1.0;
-          else if (key === "useCount") useCount = Number.parseInt(value, 10) || 0;
-          else if (key === "lastUsedTick") lastUsedTick = Number.parseInt(value, 10) || 0;
-          else if (key === "lifecycleState" && ["active", "dormant", "consolidated", "archived", "pinned"].includes(value)) {
+          else if (key === "masteryscore" || key === "mastery") masteryScore = Number.parseInt(value, 10) || 0;
+          else if (key === "fitnessscore" || key === "fitness") fitnessScore = Number.parseFloat(value) || 1.0;
+          else if (key === "usecount" || key === "uses") useCount = Number.parseInt(value, 10) || 0;
+          else if (key === "lastusedtick") lastUsedTick = Number.parseInt(value, 10) || 0;
+          else if (key === "generation") generation = Number.parseInt(value, 10) || 1;
+          else if (key === "ancestorid") ancestorId = value;
+          else if (key === "branchorigin") branchOrigin = value;
+          else if (key === "lifecyclestate" && ["active", "dormant", "consolidated", "archived", "pinned"].includes(value)) {
             lifecycleState = value as SkillLifecycleState;
           } else if (key === "provenance" && ["system_bundled", "user_created", "evolved_mutation", "hub_installed"].includes(value)) {
             provenance = value as SkillProvenance;
           } else if (key === "pinned") pinned = value === "true";
 
-          if (["platforms", "prerequisites", "related_skills", "tags"].includes(key) && !value) {
+          if (["platforms", "prerequisites", "related_skills", "relatedskills", "tags", "synergies"].includes(key) && !value) {
             currentArrayKey = key;
           } else {
             currentArrayKey = null;
@@ -122,6 +140,21 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
 
     const id = name.toLowerCase().replace(/[^a-z0-9-_]/g, "-");
     const contentHash = this.computeHash(sanitized);
+
+    const competencies: SkillCompetencyVector = {
+      syntaxAccuracy: masteryScore,
+      executionReliability: masteryScore,
+      recoveryResilience: masteryScore,
+      speedEfficiency: 85,
+    };
+
+    const lineage: SkillEvolutionLineage = {
+      generation,
+      ancestorId,
+      branchOrigin,
+      mutationCount: 0,
+      createdAtMs: Date.now(),
+    };
 
     return {
       id,
@@ -135,6 +168,7 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
       prerequisites: Object.freeze(prerequisites),
       relatedSkills: Object.freeze(relatedSkills),
       tags: Object.freeze(tags),
+      synergies: synergies.length > 0 ? Object.freeze(synergies) : undefined,
       masteryScore: Math.min(100, Math.max(0, masteryScore)),
       fitnessScore: Math.min(1.0, Math.max(0.0, fitnessScore)),
       useCount,
@@ -147,6 +181,8 @@ export class DeterministicSkillTreeParser implements ISkillTreeParser {
       body,
       contentHash,
       supportFiles: Object.freeze([]),
+      competencies,
+      lineage,
     };
   }
 

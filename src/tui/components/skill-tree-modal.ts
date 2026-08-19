@@ -3,25 +3,31 @@ import type {
   SkillMetricsReport,
   SkillMutationResult,
   SkillNodeManifest,
+  SkillProgressionTrack,
+  SkillEvolutionMilestone,
+  SkillStrategyPlan,
   SkillTier,
 } from "../../core/contracts/skills.contracts.js";
 import { EvolutionarySkillTreeEngine } from "../../agents/extensions/skills/evolutionary-skill-tree-engine.js";
+import { SkillStrategyEngine } from "../../agents/extensions/skills/skill-strategy-engine.js";
 import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
-export type SkillTreeModalViewMode = "skills" | "dag" | "mutations" | "curator" | "health" | "metrics";
+export type SkillTreeModalViewMode = "skills" | "dag" | "strategy" | "tracks" | "quests" | "lineage" | "mutations" | "curator" | "health" | "metrics";
 
 /**
  * SkillTreeModal.
- * Interactive Terminal TUI Modal Component for Evolutionary Skill Trees (ADR-014).
+ * World-Class Interactive Terminal TUI Modal for the Evolutionary Skill Tree (ADR-014).
  *
  * Features:
  * - Executive KPI Ribbon
  * - Filter Presets (1: All, 2: Active, 3: Pinned, 4: Master+)
- * - 6 View Modes (Skills, DAG Tree, Mutations, Curator Clusters, Health SLA, Metrics)
- * - Actions: Pin/Unpin, Reinforce Mastery, Test Notification
+ * - Dual-Pane Split Layout (Skill List + 4D Competency Inspector)
+ * - 10 View Modes (Skills, DAG Tree, Strategy Studio, Tracks, Quests, Lineage, Mutations, Curator, Health, Metrics)
+ * - Interactive Hotkeys: [s] Synthesize Strategy, [p] Pin, [+/-] Mastery Adjust, [v] Switch View
  */
 export class SkillTreeModal {
   private readonly engine: EvolutionarySkillTreeEngine;
+  private readonly strategyEngine: SkillStrategyEngine;
   private readonly onClose: () => void;
 
   private selectedIndex = 0;
@@ -29,15 +35,17 @@ export class SkillTreeModal {
   private pinnedFilterOnly = false;
   private viewMode: SkillTreeModalViewMode = "skills";
   private showHelp = false;
+  private activeStrategyPlan: SkillStrategyPlan | null = null;
 
   constructor(engine: EvolutionarySkillTreeEngine, onClose: () => void) {
     this.engine = engine;
+    this.strategyEngine = new SkillStrategyEngine(engine.getSubstrate() as any);
     this.onClose = onClose;
   }
 
   public render(maxWidth: number = 100): readonly string[] {
     const lines: string[] = [];
-    const width = Math.max(60, maxWidth);
+    const width = Math.max(70, maxWidth);
     const border = "─".repeat(width - 2);
 
     const metrics = this.engine.getSkillMetrics();
@@ -45,7 +53,7 @@ export class SkillTreeModal {
 
     // 1. Header
     lines.push(`┌${border}┐`);
-    lines.push(this.formatLine(` 🌲 LUMI EVOLUTIONARY SKILL TREE HUB (ADR-014) `, width));
+    lines.push(this.formatLine(` 🌲 LUMI EVOLUTIONARY SKILL TREE & TALENT HUB (ADR-014) `, width));
     lines.push(`├${border}┤`);
 
     // 2. Executive KPI Ribbon
@@ -57,10 +65,12 @@ export class SkillTreeModal {
     const viewTabs = [
       this.viewMode === "skills" ? "[1: 🌲 Skills]" : " 1: Skills ",
       this.viewMode === "dag" ? "[2: 🌳 DAG]" : " 2: DAG ",
-      this.viewMode === "mutations" ? "[3: ⚡ Mutations]" : " 3: Mutations ",
-      this.viewMode === "curator" ? "[4: 🧹 Curator]" : " 4: Curator ",
-      this.viewMode === "health" ? "[5: 🩺 Health]" : " 5: Health ",
-      this.viewMode === "metrics" ? "[6: 📊 Metrics]" : " 6: Metrics ",
+      this.viewMode === "strategy" ? "[3: ⚡ Strategy]" : " 3: Strategy ",
+      this.viewMode === "tracks" ? "[4: 🎯 Tracks]" : " 4: Tracks ",
+      this.viewMode === "quests" ? "[5: 🏆 Quests]" : " 5: Quests ",
+      this.viewMode === "lineage" ? "[6: 🧬 Lineage]" : " 6: Lineage ",
+      this.viewMode === "health" ? "[7: 🩺 Health]" : " 7: Health ",
+      this.viewMode === "metrics" ? "[8: 📊 Metrics]" : " 8: Metrics ",
     ].join(" │ ");
     lines.push(this.formatLine(` ${viewTabs}`, width));
     lines.push(`├${border}┤`);
@@ -68,10 +78,22 @@ export class SkillTreeModal {
     // 4. Content Area
     switch (this.viewMode) {
       case "skills":
-        this.renderSkillsView(lines, skills, width);
+        this.renderDualPaneSkillsView(lines, skills, width);
         break;
       case "dag":
         this.renderDagView(lines, width);
+        break;
+      case "strategy":
+        this.renderStrategyView(lines, width);
+        break;
+      case "tracks":
+        this.renderTracksView(lines, width);
+        break;
+      case "quests":
+        this.renderQuestsView(lines, width);
+        break;
+      case "lineage":
+        this.renderLineageView(lines, skills, width);
         break;
       case "mutations":
         this.renderMutationsView(lines, width);
@@ -91,31 +113,71 @@ export class SkillTreeModal {
 
     // 5. Footer & Keybindings
     if (this.showHelp) {
-      lines.push(this.formatLine(` [j/k] Navigate  [p] Pin/Unpin  [+/-] Adjust Mastery  [v] Switch View  [d] Test Alert  [q] Close`, width));
+      lines.push(this.formatLine(` [j/k] Navigate  [s] Synthesize Strategy  [p] Pin  [+/-] Mastery  [v] Switch View  [q] Close`, width));
     } else {
-      lines.push(this.formatLine(` [v] View (${this.viewMode})  [1-4] Filters  [p] Pin  [+/-] Mastery  [d] Alert  [?] Help  [q] Close`, width));
+      lines.push(this.formatLine(` [v] Tab (${this.viewMode})  [s] Strategy  [1-4] Filter  [p] Pin  [+/-] Mastery  [?] Help  [q] Close`, width));
     }
     lines.push(`└${border}┘`);
 
     return lines;
   }
 
-  private renderSkillsView(lines: string[], skills: readonly SkillNodeManifest[], width: number): void {
+  private renderDualPaneSkillsView(lines: string[], skills: readonly SkillNodeManifest[], width: number): void {
     if (skills.length === 0) {
       lines.push(this.formatLine(" (No skills matching current filter)", width));
       return;
     }
 
-    for (let i = 0; i < skills.length; i++) {
+    const current = skills[this.selectedIndex] || skills[0];
+    const leftWidth = Math.floor(width * 0.52);
+    const rightWidth = width - leftWidth - 3;
+
+    lines.push(this.formatLine(` ${"SKILL ROSTER".padEnd(leftWidth - 4)} │ ${"4D COMPETENCY INSPECTOR".padEnd(rightWidth - 2)}`, width));
+    lines.push(this.formatLine(` ${"─".repeat(leftWidth - 4)} ┼ ${"─".repeat(rightWidth - 2)}`, width));
+
+    const maxRows = Math.min(10, skills.length);
+
+    for (let i = 0; i < maxRows; i++) {
       const s = skills[i];
       const isSelected = i === this.selectedIndex;
       const marker = isSelected ? "▶" : " ";
+      const tierIcon = s.tier === "sovereign" ? "👑" : s.tier === "master" ? "🥇" : s.tier === "adept" ? "🥈" : "🥉";
       const pinIcon = s.pinned ? "📌" : "  ";
-      const masteryBar = "■".repeat(Math.floor(s.masteryScore / 10)) + "□".repeat(10 - Math.floor(s.masteryScore / 10));
+      const masteryBar = "■".repeat(Math.floor(s.masteryScore / 20)) + "□".repeat(5 - Math.floor(s.masteryScore / 20));
 
-      const row = `${marker} ${pinIcon} [${s.tier.toUpperCase().padEnd(9)}] ${s.name.slice(0, 24).padEnd(24)} [${masteryBar}] ${String(s.masteryScore).padStart(3)}% │ ${s.useCount} uses`;
-      lines.push(this.formatLine(row, width));
+      const leftText = `${marker} ${tierIcon}${pinIcon} ${s.name.slice(0, 16).padEnd(16)} [${masteryBar}] ${String(s.masteryScore).padStart(3)}%`;
+
+      let rightText = "";
+      if (i === 0) {
+        rightText = `Skill: ${current.name} [${current.tier.toUpperCase()}]`;
+      } else if (i === 1) {
+        const comp = current.competencies || { syntaxAccuracy: current.masteryScore, executionReliability: current.masteryScore, recoveryResilience: current.masteryScore, speedEfficiency: 85 };
+        rightText = `Syntax:      [${this.makeBar(comp.syntaxAccuracy)}] ${comp.syntaxAccuracy}%`;
+      } else if (i === 2) {
+        const comp = current.competencies || { syntaxAccuracy: current.masteryScore, executionReliability: current.masteryScore, recoveryResilience: current.masteryScore, speedEfficiency: 85 };
+        rightText = `Reliability: [${this.makeBar(comp.executionReliability)}] ${comp.executionReliability}%`;
+      } else if (i === 3) {
+        const comp = current.competencies || { syntaxAccuracy: current.masteryScore, executionReliability: current.masteryScore, recoveryResilience: current.masteryScore, speedEfficiency: 85 };
+        rightText = `Resilience:  [${this.makeBar(comp.recoveryResilience)}] ${comp.recoveryResilience}%`;
+      } else if (i === 4) {
+        const comp = current.competencies || { syntaxAccuracy: current.masteryScore, executionReliability: current.masteryScore, recoveryResilience: current.masteryScore, speedEfficiency: 85 };
+        rightText = `Speed:       [${this.makeBar(comp.speedEfficiency)}] ${comp.speedEfficiency}%`;
+      } else if (i === 5) {
+        rightText = `Prereqs: ${current.prerequisites.length > 0 ? current.prerequisites.join(", ") : "None (Root Node)"}`;
+      } else if (i === 6) {
+        rightText = `Ancestry: Gen ${current.lineage?.generation || 1} ${current.lineage?.branchOrigin ? `(${current.lineage.branchOrigin})` : ""}`;
+      } else if (i === 7) {
+        rightText = `Usage: ${current.useCount} runs | Fitness: ${current.fitnessScore}`;
+      }
+
+      const combined = ` ${leftText.padEnd(leftWidth - 4)} │ ${rightText.padEnd(rightWidth - 2)}`;
+      lines.push(this.formatLine(combined, width));
     }
+  }
+
+  private makeBar(score: number): string {
+    const filled = Math.min(8, Math.max(0, Math.floor(score / 12.5)));
+    return "█".repeat(filled) + "░".repeat(8 - filled);
   }
 
   private renderDagView(lines: string[], width: number): void {
@@ -124,6 +186,69 @@ export class SkillTreeModal {
     const dagLines = rawDag.split("\n");
     for (const d of dagLines) {
       lines.push(this.formatLine(d, width));
+    }
+  }
+
+  private renderStrategyView(lines: string[], width: number): void {
+    if (!this.activeStrategyPlan) {
+      const all = this.engine.getSubstrate().getAllNodes();
+      const sampleGoal = all[0]?.name || "general execution";
+      this.activeStrategyPlan = this.engine.synthesizeStrategy({
+        prompt: `Execute goal requiring ${sampleGoal}`,
+        policy: "balanced_adaptive",
+      });
+    }
+
+    const plan = this.activeStrategyPlan;
+    lines.push(this.formatLine(` ── Strategy Plan: ${plan.strategyId} [Policy: ${plan.policy.toUpperCase()}]`, width));
+    lines.push(this.formatLine(` Confidence: ${Math.round(plan.confidenceScore * 100)}% | Primary Anchor: ${plan.primarySkill.name}`, width));
+    lines.push(this.formatLine(` Execution Pipeline (${plan.executionChain.length} stages):`, width));
+
+    for (const step of plan.executionChain) {
+      lines.push(this.formatLine(`  ${step.stepIndex}. [${step.tier.toUpperCase()} | ${step.masteryScore}%] ${step.skillName} ── ${step.rationale.slice(0, 45)}`, width));
+    }
+
+    if (plan.synergies.length > 0) {
+      lines.push(this.formatLine(` ── Active Combo Synergies:`, width));
+      for (const syn of plan.synergies) {
+        lines.push(this.formatLine(`  ⚡ ${syn.name} (+${Math.round((syn.fitnessMultiplier - 1) * 100)}% fitness)`, width));
+      }
+    }
+  }
+
+  private renderTracksView(lines: string[], width: number): void {
+    const tracks = this.strategyEngine.getProgressionTracks();
+    lines.push(this.formatLine(` ── Role-Based Progression Tracks (${tracks.length} pathways):`, width));
+    for (const t of tracks) {
+      const bar = "█".repeat(Math.floor(t.progressPercent / 10)) + "░".repeat(10 - Math.floor(t.progressPercent / 10));
+      lines.push(this.formatLine(`  ${t.icon} ${t.name.padEnd(30)} [${bar}] ${t.progressPercent}%`, width));
+      lines.push(this.formatLine(`     Role: ${t.targetRole} | Stages: ${t.stages.length}`, width));
+    }
+  }
+
+  private renderQuestsView(lines: string[], width: number): void {
+    const quests = this.strategyEngine.getEvolutionMilestones();
+    lines.push(this.formatLine(` ── Evolutionary Quests & Milestone Achievements:`, width));
+    for (const q of quests) {
+      const statusIcon = q.unlocked ? "✓ [UNLOCKED]" : "○ [IN PROGRESS]";
+      lines.push(this.formatLine(`  ${q.icon} ${q.title.padEnd(25)} ${statusIcon.padEnd(16)} Perk: ${q.rewardPerk}`, width));
+    }
+  }
+
+  private renderLineageView(lines: string[], skills: readonly SkillNodeManifest[], width: number): void {
+    lines.push(this.formatLine(` ── Evolutionary Lineage & Speciation Ancestry:`, width));
+    const current = skills[this.selectedIndex] || skills[0];
+    if (current) {
+      const lin = current.lineage || { generation: 1, mutationCount: 0 };
+      lines.push(this.formatLine(` Skill: ${current.name} (${current.id})`, width));
+      lines.push(this.formatLine(` Generation: ${lin.generation} | Ancestor: ${lin.ancestorId || "Root Generation"}`, width));
+      lines.push(this.formatLine(` Branch Origin: ${lin.branchOrigin || "Core"} | Mutation Count: ${lin.mutationCount}`, width));
+      if (lin.speciatedChildren && lin.speciatedChildren.length > 0) {
+        lines.push(this.formatLine(` Speciated Children: ${lin.speciatedChildren.join(", ")}`, width));
+      }
+      if (lin.consolidatedFrom && lin.consolidatedFrom.length > 0) {
+        lines.push(this.formatLine(` Consolidated From: ${lin.consolidatedFrom.join(", ")}`, width));
+      }
     }
   }
 
@@ -210,9 +335,19 @@ export class SkillTreeModal {
         break;
 
       case "v": {
-        const modes: SkillTreeModalViewMode[] = ["skills", "dag", "mutations", "curator", "health", "metrics"];
+        const modes: SkillTreeModalViewMode[] = ["skills", "dag", "strategy", "tracks", "quests", "lineage", "mutations", "curator", "health", "metrics"];
         const nextIdx = (modes.indexOf(this.viewMode) + 1) % modes.length;
         this.viewMode = modes[nextIdx];
+        break;
+      }
+
+      case "s": {
+        const current = skills[this.selectedIndex];
+        this.activeStrategyPlan = this.engine.synthesizeStrategy({
+          prompt: current ? `Apply capability ${current.name}` : "General problem solving",
+          policy: "balanced_adaptive",
+        });
+        this.viewMode = "strategy";
         break;
       }
 

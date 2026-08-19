@@ -2,6 +2,7 @@ import type {
   IDeterministicSkillCurator,
   IBroccoliSkillTreeSubstrate,
   SkillNodeManifest,
+  SkillPruningRecommendation,
 } from "../../../core/contracts/skills.contracts.js";
 
 export class DeterministicSkillCurator implements IDeterministicSkillCurator {
@@ -14,7 +15,7 @@ export class DeterministicSkillCurator implements IDeterministicSkillCurator {
   /**
    * Evaluates decay based on elapsed game engine ticks rather than wall-clock time.
    */
-  evaluateDecay(
+  public evaluateDecay(
     currentTick: number,
     staleTickThreshold = 500,
     archiveTickThreshold = 2000
@@ -46,7 +47,7 @@ export class DeterministicSkillCurator implements IDeterministicSkillCurator {
   /**
    * Detects clusters of overlapping skills using Jaccard similarity across tags, related skills, and tokens.
    */
-  detectConsolidationClusters(similarityThreshold = 0.5): readonly {
+  public detectConsolidationClusters(similarityThreshold = 0.5): readonly {
     clusterName: string;
     nodeIds: readonly string[];
     similarityScore: number;
@@ -94,4 +95,52 @@ export class DeterministicSkillCurator implements IDeterministicSkillCurator {
 
     return Object.freeze(clusters);
   }
+
+  /**
+   * Generates prioritized pruning recommendations with risk assessments.
+   */
+  public generatePruningRecommendations(
+    currentTick: number,
+    staleThreshold = 500,
+    archiveThreshold = 800
+  ): readonly SkillPruningRecommendation[] {
+    const decay = this.evaluateDecay(currentTick, staleThreshold, archiveThreshold);
+    const dag = this.substrate.getDag();
+    const recommendations: SkillPruningRecommendation[] = [];
+
+    for (const archId of decay.archivableNodeIds) {
+      const node = this.substrate.getNode(archId);
+      if (!node) continue;
+
+      const dependents = dag.dependentsEdges.get(archId) || [];
+      const hasDependents = dependents.length > 0;
+      const riskLevel = hasDependents ? "high" : node.masteryScore > 75 ? "medium" : "low";
+
+      recommendations.push({
+        skillId: node.id,
+        skillName: node.name,
+        action: "archive",
+        riskLevel,
+        rationale: hasDependents
+          ? `Archiving node '${node.name}' blocks ${dependents.length} downstream skills.`
+          : `Node inactive for >${archiveThreshold} ticks with no active downstream dependencies.`,
+      });
+    }
+
+    for (const staleId of decay.staleNodeIds) {
+      const node = this.substrate.getNode(staleId);
+      if (!node) continue;
+
+      recommendations.push({
+        skillId: node.id,
+        skillName: node.name,
+        action: "decay",
+        riskLevel: "low",
+        rationale: `Node has not been utilized for >${staleThreshold} ticks; recommended for mastery refresh or soft decay.`,
+      });
+    }
+
+    return Object.freeze(recommendations);
+  }
 }
+

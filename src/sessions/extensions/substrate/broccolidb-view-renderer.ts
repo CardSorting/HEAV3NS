@@ -661,6 +661,40 @@ export class BroccoliViewRenderer {
   }
 
   /**
+   * Renders a human-readable ANSI CLI card for a Skill Strategy Plan.
+   */
+  static renderSkillStrategyPlan(plan: {
+    strategyId: string;
+    policy: string;
+    confidenceScore: number;
+    primarySkill: { name: string; tier: string; masteryScore: number };
+    executionChain: readonly { stepIndex: number; skillName: string; tier: string; masteryScore: number; rationale: string }[];
+    synergies: readonly { name: string; fitnessMultiplier: number }[];
+  }): string {
+    const lines: string[] = [];
+    lines.push(`┌────────────────────────────────────────────────────────────────────────┐`);
+    lines.push(`│ ⚡ LUMI SKILL STRATEGY PLAN: ${plan.strategyId.slice(0, 42).padEnd(42)} │`);
+    lines.push(`├────────────────────────────────────────────────────────────────────────┤`);
+    lines.push(`│ Policy:     ${plan.policy.toUpperCase().padEnd(58)} │`);
+    lines.push(`│ Confidence: ${`${Math.round(plan.confidenceScore * 100)}%`.padEnd(58)} │`);
+    lines.push(`│ Anchor:     ${`${plan.primarySkill.name} [${plan.primarySkill.tier.toUpperCase()}] (${plan.primarySkill.masteryScore}%)`.slice(0, 58).padEnd(58)} │`);
+    lines.push(`├────────────────────────────────────────────────────────────────────────┤`);
+    lines.push(`│ Pipeline Execution Stages:                                             │`);
+    for (const step of plan.executionChain) {
+      lines.push(`│  ${step.stepIndex}. [${step.tier.toUpperCase()}] ${step.skillName.padEnd(20)} │ ${step.rationale.slice(0, 38).padEnd(38)} │`);
+    }
+    if (plan.synergies.length > 0) {
+      lines.push(`├────────────────────────────────────────────────────────────────────────┤`);
+      lines.push(`│ Active Combo Synergies:                                                │`);
+      for (const syn of plan.synergies) {
+        lines.push(`│  ⚡ ${syn.name.padEnd(35)} │ +${Math.round((syn.fitnessMultiplier - 1) * 100)}% Fitness Boost  │`);
+      }
+    }
+    lines.push(`└────────────────────────────────────────────────────────────────────────┘`);
+    return lines.join("\n");
+  }
+
+  /**
    * Renders a human-readable ANSI CLI dashboard for a SOUL persona manifest.
    */
   static renderSoulDashboard(manifest: {

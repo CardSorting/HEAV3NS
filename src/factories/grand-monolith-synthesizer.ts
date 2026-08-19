@@ -477,6 +477,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "skillLinterSnapshotManager",
   "skillLinterSupervisor",
   "skillLinterToolSuite",
+  "skillStrategyEngine",
   "skillTreeParser",
   "skillTreePromptComposer",
   "skillTreeSnapshotManager",

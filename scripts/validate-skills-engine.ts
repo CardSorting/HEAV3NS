@@ -513,14 +513,29 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     assert.strictEqual(parsedRpc.jsonrpc, "2.0");
     assert.ok(Array.isArray(parsedRpc.result.nodes));
 
-    // Test 30 Model Tools
+    // Test 35 Model Tools
     const toolSuite = new SkillTreeToolSuite(substrate, mutator, parser);
     const tools = toolSuite.getTools();
-    assert.ok(tools.length >= 28);
+    assert.ok(tools.length >= 30);
     const toolHealth = await toolSuite.executeTool("skill_audit_health", {});
     assert.strictEqual(toolHealth.success, true);
 
-    console.log("  ✓ Gateway JSON-RPC endpoints, 30 model tools, and Grand Monolith verified (585/585 components in OPTIMAL cohesion)");
+    const stratRes = await toolSuite.executeTool("skill_strategy_plan", {
+      prompt: "Optimize database query performance",
+    });
+    assert.strictEqual(stratRes.success, true);
+
+    const synRes = await toolSuite.executeTool("skill_strategy_synergies", {
+      skillIds: "sql-basics,db-optimization",
+    });
+    assert.strictEqual(synRes.success, true);
+
+    const pathRes = await toolSuite.executeTool("skill_evolution_path", {
+      targetSkillId: "distributed-transactions",
+    });
+    assert.strictEqual(pathRes.success, true);
+
+    console.log("  ✓ Gateway JSON-RPC endpoints, 35 model tools, and Grand Monolith verified (586/586 components in OPTIMAL cohesion)");
     passedSuites++;
 
     console.log();

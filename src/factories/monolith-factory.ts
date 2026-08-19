@@ -155,6 +155,7 @@ import { DeterministicSkillCurator } from "../sessions/extensions/skills/determi
 import { EvolutionarySkillTreeEngine } from "../agents/extensions/skills/evolutionary-skill-tree-engine.js";
 import { SkillTreePromptComposer } from "../agents/extensions/skills/skill-tree-prompt-composer.js";
 import { AntiDegenerationGuard } from "../agents/extensions/skills/anti-degeneration-guard.js";
+import { SkillStrategyEngine } from "../agents/extensions/skills/skill-strategy-engine.js";
 
 import { DeterministicSoulParser } from "../tooling/extensions/soul/deterministic-soul-parser.js";
 import { AnchoredSoulMutator } from "../tooling/extensions/soul/anchored-soul-mutator.js";
@@ -841,6 +842,7 @@ export class MonolithFactory {
     skillTreeSnapshotManager: SkillTreeSnapshotManager;
     deterministicSkillCurator: DeterministicSkillCurator;
     evolutionarySkillEngine: EvolutionarySkillTreeEngine;
+    skillStrategyEngine: SkillStrategyEngine;
     skillTreePromptComposer: SkillTreePromptComposer;
     antiDegenerationGuard: AntiDegenerationGuard;
     deterministicSoulParser: DeterministicSoulParser;
@@ -1461,6 +1463,7 @@ export class MonolithFactory {
     const skillTreeSnapshotManager = new SkillTreeSnapshotManager(skillTreeSubstrate);
     const deterministicSkillCurator = new DeterministicSkillCurator(skillTreeSubstrate);
     const evolutionarySkillEngine = new EvolutionarySkillTreeEngine(skillTreeSubstrate);
+    const skillStrategyEngine = new SkillStrategyEngine(skillTreeSubstrate);
     const skillTreePromptComposer = new SkillTreePromptComposer();
     const antiDegenerationGuard = new AntiDegenerationGuard();
 
@@ -2536,6 +2539,7 @@ export class MonolithFactory {
       skillTreeSnapshotManager,
       deterministicSkillCurator,
       evolutionarySkillEngine,
+      skillStrategyEngine,
       skillTreePromptComposer,
       antiDegenerationGuard,
       deterministicSoulParser,

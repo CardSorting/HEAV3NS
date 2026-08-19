@@ -7,23 +7,27 @@ import type {
   SkillLifecycleState,
   SkillMutationPayload,
   SkillNodeManifest,
-  SkillProvenance,
   SkillSortBy,
   SkillSortDirection,
+  SkillStrategyGoal,
   SkillTier,
+  SpecializedBranch,
 } from "../../../core/contracts/skills.contracts.js";
 import type { Eyes } from "../../base/eyes.js";
 import { BroccoliSkillTreeSubstrate } from "../../../sessions/extensions/skills/broccoli-skill-tree-substrate.js";
 import { SkillTreeSnapshotManager } from "../../../sessions/extensions/skills/skill-tree-snapshot-manager.js";
 import { DeterministicSkillCurator } from "../../../sessions/extensions/skills/deterministic-skill-curator.js";
+import { EvolutionarySkillTreeEngine } from "../../../agents/extensions/skills/evolutionary-skill-tree-engine.js";
+import { SkillStrategyEngine } from "../../../agents/extensions/skills/skill-strategy-engine.js";
 import { BroccoliViewRenderer } from "../../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 /**
  * SkillTreeToolSuite.
- * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm).
+ * Part of LUMI's World-Class Evolutionary Skill Tree System (ADR-014).
  *
  * Model tool suite exposing skill DAG inspection, progressive on-demand loading,
- * anchored mutations, mastery scoring, and deterministic curation.
+ * anchored mutations, mastery scoring, deterministic curation, goal-oriented
+ * strategy planning, and autonomous speciation/consolidation.
  */
 export class SkillTreeToolSuite {
   private readonly substrate: BroccoliSkillTreeSubstrate;
@@ -32,6 +36,8 @@ export class SkillTreeToolSuite {
   private readonly eyes?: Eyes;
   private readonly snapshotManager: SkillTreeSnapshotManager;
   private readonly curator: DeterministicSkillCurator;
+  private readonly evolutionaryEngine: EvolutionarySkillTreeEngine;
+  private readonly strategyEngine: SkillStrategyEngine;
 
   constructor(
     substrate: IBroccoliSkillTreeSubstrate,
@@ -45,6 +51,8 @@ export class SkillTreeToolSuite {
     this.eyes = eyes;
     this.snapshotManager = new SkillTreeSnapshotManager(this.substrate);
     this.curator = new DeterministicSkillCurator(this.substrate);
+    this.evolutionaryEngine = new EvolutionarySkillTreeEngine(this.substrate);
+    this.strategyEngine = new SkillStrategyEngine(this.substrate);
   }
 
   getTools(): ToolDefinition[] {
@@ -83,6 +91,84 @@ export class SkillTreeToolSuite {
         },
         execute: async (args: Record<string, unknown>, cwd?: string) => {
           return this.executeTool("skill_mutate", args, cwd);
+        },
+      },
+      {
+        name: "skill_strategy_plan",
+        description: "Synthesize an optimal multi-step procedural execution plan tailored to a goal/task.",
+        parameters: {
+          prompt: { type: "string", required: true, description: "Task / objective description" },
+          policy: { type: "string", description: "Policy: 'greedy_mastery', 'balanced_adaptive', 'exploration_learning', 'min_latency', 'defensive_sovereign'" },
+          categoryHint: { type: "string", description: "Optional category hint" },
+          maxDepth: { type: "number", description: "Max execution steps in chain" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_strategy_plan", args, cwd);
+        },
+      },
+      {
+        name: "skill_strategy_synergies",
+        description: "Detect combinatorial synergies and combo multipliers across active skill sets.",
+        parameters: {
+          skillIds: { type: "string", required: true, description: "Comma-separated skill IDs" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_strategy_synergies", args, cwd);
+        },
+      },
+      {
+        name: "skill_evolution_path",
+        description: "Calculate the shortest leveling and prerequisite unlock path to reach a target master/sovereign skill.",
+        parameters: {
+          targetSkillId: { type: "string", required: true, description: "Target skill ID to unlock/master" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_evolution_path", args, cwd);
+        },
+      },
+      {
+        name: "skill_speciate",
+        description: "Autonomous speciation: Split an overloaded skill into specialized child branches with preserved lineage.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Parent skill ID to speciate" },
+          branchesJson: { type: "string", required: true, description: "JSON array of SpecializedBranch objects" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_speciate", args, cwd);
+        },
+      },
+      {
+        name: "skill_consolidate",
+        description: "Autonomous consolidation: Merge multiple overlapping skills into a unified cohesive skill.",
+        parameters: {
+          skillIds: { type: "string", required: true, description: "Comma-separated skill IDs to merge" },
+          mergedId: { type: "string", required: true, description: "Consolidated skill ID" },
+          mergedName: { type: "string", required: true, description: "Consolidated skill name" },
+          mergedCategory: { type: "string", description: "Consolidated category" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_consolidate", args, cwd);
+        },
+      },
+      {
+        name: "skill_get_lineage",
+        description: "Retrieve complete ancestral evolution lineage, generation, and speciation history for a skill.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID to inspect" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_get_lineage", args, cwd);
+        },
+      },
+      {
+        name: "skill_recommend_next",
+        description: "Suggest the next most impactful skills to practice or unlock based on active context.",
+        parameters: {
+          context: { type: "string", description: "Current work context or domain" },
+          limit: { type: "number", description: "Maximum recommendations to return" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_recommend_next", args, cwd);
         },
       },
       {
@@ -351,6 +437,77 @@ export class SkillTreeToolSuite {
           return this.executeTool("skill_delete_node", args, cwd);
         },
       },
+      {
+        name: "skill_strategy_critical_path",
+        description: "Analyze the DAG critical path and find prerequisite bottlenecks.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_strategy_critical_path", args, cwd);
+        },
+      },
+      {
+        name: "skill_speciate_evaluate",
+        description: "Evaluate if a skill is overloaded and ready for autonomous speciation.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID to evaluate" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_speciate_evaluate", args, cwd);
+        },
+      },
+      {
+        name: "skill_transaction_begin",
+        description: "Begin an isolated atomic transaction across multi-skill mutations.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_transaction_begin", args, cwd);
+        },
+      },
+      {
+        name: "skill_transaction_commit",
+        description: "Commit the active multi-skill transaction.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_transaction_commit", args, cwd);
+        },
+      },
+      {
+        name: "skill_transaction_rollback",
+        description: "Rollback and revert the active multi-skill transaction.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_transaction_rollback", args, cwd);
+        },
+      },
+      {
+        name: "skill_strategy_optimize_latency",
+        description: "Optimize an existing strategy plan to stay within a maximum latency budget (ms).",
+        parameters: {
+          prompt: { type: "string", required: true, description: "Task / goal prompt" },
+          maxLatencyMs: { type: "number", required: true, description: "Maximum latency budget in milliseconds" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_strategy_optimize_latency", args, cwd);
+        },
+      },
+      {
+        name: "skill_estimate_uncertainty",
+        description: "Estimate Bayesian epistemic uncertainty and confidence intervals for a skill's competencies.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_estimate_uncertainty", args, cwd);
+        },
+      },
+      {
+        name: "skill_auto_remediate_health",
+        description: "Automatically repair structural anomalies and broken prerequisite edges in the active tree.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_auto_remediate_health", args, cwd);
+        },
+      },
     ];
   }
 
@@ -361,6 +518,69 @@ export class SkillTreeToolSuite {
   ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown; error?: string }> {
     try {
       switch (name) {
+        case "skill_strategy_plan": {
+          const prompt = String(args.prompt || "");
+          const policy = typeof args.policy === "string" ? (args.policy as any) : "balanced_adaptive";
+          const categoryHint = typeof args.categoryHint === "string" ? args.categoryHint : undefined;
+          const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : undefined;
+
+          const plan = this.strategyEngine.synthesizeStrategy({
+            prompt,
+            policy,
+            categoryHint,
+            maxDepth,
+          });
+          return { success: true, plan };
+        }
+
+        case "skill_strategy_synergies": {
+          const skillIds = String(args.skillIds || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const synergies = this.strategyEngine.evaluateSynergies(skillIds);
+          return { success: true, count: synergies.length, synergies };
+        }
+
+        case "skill_evolution_path": {
+          const targetSkillId = String(args.targetSkillId || "");
+          const path = this.strategyEngine.computeEvolutionPath(targetSkillId);
+          return { success: true, path };
+        }
+
+        case "skill_speciate": {
+          const skillId = String(args.skillId || "");
+          const branchesJson = String(args.branchesJson || "[]");
+          const branches: SpecializedBranch[] = JSON.parse(branchesJson);
+          const children = this.evolutionaryEngine.speciateSkill(skillId, branches);
+          return { success: children.length > 0, count: children.length, children };
+        }
+
+        case "skill_consolidate": {
+          const skillIds = String(args.skillIds || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const mergedId = String(args.mergedId || "");
+          const mergedName = String(args.mergedName || "Consolidated Skill");
+          const mergedCategory = String(args.mergedCategory || "general");
+          const merged = this.evolutionaryEngine.consolidateSkills(skillIds, mergedId, mergedName, mergedCategory);
+          return { success: true, mergedNode: merged };
+        }
+
+        case "skill_get_lineage": {
+          const skillId = String(args.skillId || "");
+          const lineage = this.evolutionaryEngine.getLineage(skillId);
+          return { success: lineage !== undefined, skillId, lineage };
+        }
+
+        case "skill_recommend_next": {
+          const context = String(args.context || "");
+          const limit = typeof args.limit === "number" ? args.limit : 5;
+          const recommendations = this.strategyEngine.recommendNextSkills(context, limit);
+          return { success: true, count: recommendations.length, recommendations };
+        }
+
         case "skill_list_tree": {
           const dag = this.substrate.getDag();
           const category = typeof args.category === "string" ? args.category.toLowerCase() : undefined;
@@ -601,17 +821,9 @@ export class SkillTreeToolSuite {
 
         case "skill_reinforce_mastery": {
           const skillId = String(args.skillId || "");
-          const node = this.substrate.getNode(skillId);
-          if (!node) return { success: false, error: `Skill '${skillId}' not found` };
           const success = Boolean(args.success);
-          const newMastery = success ? Math.min(100, node.masteryScore + 5) : Math.max(0, node.masteryScore - 5);
-          const updated: SkillNodeManifest = {
-            ...node,
-            masteryScore: newMastery,
-            updatedAtMs: Date.now(),
-          };
-          this.substrate.saveNode(updated);
-          return { success: true, skillId: node.id, masteryScore: newMastery };
+          const newMastery = this.evolutionaryEngine.updateMastery(skillId, success);
+          return { success: true, skillId, masteryScore: newMastery };
         }
 
         case "skill_create_node": {
@@ -655,6 +867,51 @@ export class SkillTreeToolSuite {
           const id = String(args.id || "").toLowerCase();
           const deleted = this.substrate.deleteNode ? this.substrate.deleteNode(id) : false;
           return { success: deleted, id, deleted };
+        }
+
+        case "skill_strategy_critical_path": {
+          const criticalPath = this.strategyEngine.computeCriticalPath();
+          return { success: true, criticalPath };
+        }
+
+        case "skill_speciate_evaluate": {
+          const skillId = String(args.skillId || "").toLowerCase();
+          const evalResult = this.evolutionaryEngine.evaluateSpeciationOpportunity(skillId);
+          return { success: true, evaluation: evalResult };
+        }
+
+        case "skill_transaction_begin": {
+          const tx = this.substrate.beginTransaction();
+          return { success: true, transaction: tx };
+        }
+
+        case "skill_transaction_commit": {
+          const ok = this.substrate.commitTransaction();
+          return { success: ok, committed: ok };
+        }
+
+        case "skill_transaction_rollback": {
+          const ok = this.substrate.rollbackTransaction();
+          return { success: ok, rolledBack: ok };
+        }
+
+        case "skill_strategy_optimize_latency": {
+          const prompt = String(args.prompt || "");
+          const maxLatencyMs = typeof args.maxLatencyMs === "number" ? args.maxLatencyMs : 0.3;
+          const initialPlan = this.strategyEngine.synthesizeStrategy({ prompt, policy: "balanced_adaptive" });
+          const optimizedPlan = this.strategyEngine.optimizePipelineForCostAndLatency(initialPlan, maxLatencyMs);
+          return { success: true, initialPlan, optimizedPlan };
+        }
+
+        case "skill_estimate_uncertainty": {
+          const skillId = String(args.skillId || "").toLowerCase();
+          const uncertainty = this.evolutionaryEngine.estimateCompetencyUncertainty(skillId);
+          return { success: true, uncertainty };
+        }
+
+        case "skill_auto_remediate_health": {
+          const report = this.evolutionaryEngine.autoRemediateHealthIssues ? this.evolutionaryEngine.autoRemediateHealthIssues() : { repairedCount: 0, brokenEdgesFixed: 0, unlockedOrphansCount: 0, actionsTaken: [], healthStatusAfter: "mastered" as const };
+          return { success: true, report };
         }
 
         default:
