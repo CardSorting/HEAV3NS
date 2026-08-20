@@ -2,20 +2,28 @@ import type {
   IBroccoliSkillTreeSubstrate,
   ISkillTreeParser,
   SkillBulkMutationResult,
+  SkillCustomTweakSpec,
+  SkillDirectorySyncReport,
+  SkillDropVaultStatus,
   SkillDslQueryFilter,
+  SkillForgeOptions,
+  SkillFormatExportKind,
   SkillGroupBy,
   SkillGroupedLane,
   SkillHealthAuditReport,
   SkillHealthStatus,
+  SkillImportResult,
   SkillLifecycleState,
   SkillMetricsReport,
   SkillMutationResult,
   SkillMutationRow,
   SkillMutationUndoRecord,
+  SkillNodeLintReport,
   SkillNodeManifest,
   SkillNodeRow,
   SkillNotificationPreferences,
   SkillNotificationRow,
+  SkillPowerUpPack,
   SkillProvenance,
   SkillSortBy,
   SkillSortDirection,
@@ -23,10 +31,14 @@ import type {
   SkillTransactionContext,
   SkillTreeDag,
   SkillUsageRow,
+  SkillWizardAnswers,
+  SkillWizardQuestion,
 } from "../../../core/contracts/skills.contracts.js";
 import type { IBroccoliDatabaseKernel, IDbTable } from "../../../core/contracts/broccolidb.contracts.js";
 import { DeterministicSkillTreeParser } from "../../../tooling/extensions/skills/deterministic-skill-tree-parser.js";
 import { SkillDesktopNotificationDispatcher } from "../../../tooling/extensions/skills/skill-notification-dispatcher.js";
+import { SkillCustomForgeEngine } from "../../../tooling/extensions/skills/skill-custom-forge-engine.js";
+import { SkillDropVault } from "../../../tooling/extensions/skills/skill-drop-vault.js";
 
 /**
  * BroccoliSkillTreeSubstrate.
@@ -40,6 +52,8 @@ export class BroccoliSkillTreeSubstrate implements IBroccoliSkillTreeSubstrate {
   private readonly mutations: SkillMutationResult[] = [];
   private readonly parser: ISkillTreeParser;
   private readonly notificationDispatcher: SkillDesktopNotificationDispatcher;
+  private readonly forgeEngine: SkillCustomForgeEngine;
+  private readonly dropVault: SkillDropVault;
   private readonly undoStack: SkillMutationUndoRecord[] = [];
   private readonly redoStack: SkillMutationUndoRecord[] = [];
   private cachedDag: SkillTreeDag | null = null;
@@ -69,11 +83,15 @@ export class BroccoliSkillTreeSubstrate implements IBroccoliSkillTreeSubstrate {
   constructor(
     parser?: ISkillTreeParser,
     dbKernel?: IBroccoliDatabaseKernel,
-    notificationPreferences?: Partial<SkillNotificationPreferences>
+    notificationPreferences?: Partial<SkillNotificationPreferences>,
+    forgeEngine?: SkillCustomForgeEngine,
+    dropVault?: SkillDropVault
   ) {
     this.parser = parser ?? new DeterministicSkillTreeParser();
     this.dbKernel = dbKernel;
     this.notificationDispatcher = new SkillDesktopNotificationDispatcher(notificationPreferences);
+    this.forgeEngine = forgeEngine ?? new SkillCustomForgeEngine(this.parser as DeterministicSkillTreeParser);
+    this.dropVault = dropVault ?? new SkillDropVault(undefined, this.parser as DeterministicSkillTreeParser, this.forgeEngine);
 
     if (this.dbKernel) {
       this.initBroccoliDbTables();
@@ -1617,5 +1635,107 @@ export class BroccoliSkillTreeSubstrate implements IBroccoliSkillTreeSubstrate {
 </body>
 </html>`;
   }
+
+  // ---------------------------------------------------------------------------
+  // Intuitive Custom SKILL Forge, Wizard & Power-Up API
+  // ---------------------------------------------------------------------------
+
+  public forgeCustomSkill(prompt: string, options?: SkillForgeOptions): SkillNodeManifest {
+    const manifest = this.forgeEngine.synthesizeFromPrompt(prompt, options);
+    this.saveNode(manifest);
+    return manifest;
+  }
+
+  public buildSkillFromWizard(answers: SkillWizardAnswers): SkillNodeManifest {
+    const manifest = this.forgeEngine.buildFromWizard(answers);
+    this.saveNode(manifest);
+    return manifest;
+  }
+
+  public cloneAndModifySkill(sourceSkillId: string, newSkillId: string, tweaks: SkillCustomTweakSpec): SkillNodeManifest {
+    const source = this.getNode(sourceSkillId);
+    if (!source) {
+      throw new Error(`Source skill '${sourceSkillId}' not found in registry`);
+    }
+    const modified = this.forgeEngine.cloneAndModify(source, newSkillId, tweaks);
+    this.saveNode(modified);
+    return modified;
+  }
+
+  public applySkillPowerUp(skillId: string, packId: string): SkillNodeManifest | undefined {
+    const node = this.getNode(skillId);
+    if (!node) return undefined;
+    const updated = this.forgeEngine.applyPowerUpPack(node, packId);
+    this.saveNode(updated);
+    return updated;
+  }
+
+  public listSkillPowerUps(): readonly SkillPowerUpPack[] {
+    return this.forgeEngine.listPowerUpPacks();
+  }
+
+  public lintSkillNode(skillId: string): SkillNodeLintReport {
+    const node = this.getNode(skillId);
+    if (!node) {
+      return {
+        skillId,
+        skillName: skillId,
+        isValid: false,
+        issuesCount: 1,
+        warningsCount: 0,
+        errorsCount: 1,
+        issues: [
+          {
+            id: "issue-not-found",
+            severity: "error",
+            title: "Skill Not Found",
+            description: `Skill '${skillId}' does not exist in the substrate registry.`,
+            affectedField: "id",
+            autoFixable: false,
+          },
+        ],
+        overallCohesionScore: 0,
+        plainLanguageVerdict: "Skill node missing from registry.",
+      };
+    }
+    return this.forgeEngine.lintSkill(node);
+  }
+
+  public autoFixSkillNode(skillId: string): SkillNodeManifest | undefined {
+    const node = this.getNode(skillId);
+    if (!node) return undefined;
+    const healed = this.forgeEngine.autoFixSkill(node);
+    this.saveNode(healed);
+    return healed;
+  }
+
+  public getSkillWizardQuestions(): readonly SkillWizardQuestion[] {
+    return this.forgeEngine.getWizardQuestions();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dedicated Drag-and-Drop Skill Directory Vault API (skills/)
+  // ---------------------------------------------------------------------------
+
+  public syncDropDirectory(customPath?: string): SkillDirectorySyncReport {
+    return this.dropVault.syncFromDirectory(this, customPath);
+  }
+
+  public exportToDropDirectory(
+    skillId: string,
+    format: SkillFormatExportKind = "skill_markdown",
+    filename?: string
+  ): string {
+    return this.dropVault.exportToDropDirectory(this, skillId, format, filename);
+  }
+
+  public getDropVaultStatus(customPath?: string): SkillDropVaultStatus {
+    return this.dropVault.getDropVaultStatus(this, customPath);
+  }
+
+  public ingestDroppedFile(filePath: string): SkillImportResult {
+    return this.dropVault.ingestDroppedFile(this, filePath);
+  }
 }
+
 

@@ -1,0 +1,16 @@
+{
+  "type": "function",
+  "function": {
+    "name": "drop_custom_auditor",
+    "description": "custom-auditor procedure",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "Operational argument"
+        }
+      }
+    }
+  }
+}

@@ -6,26 +6,34 @@ import type {
   SoulTrait,
 } from "../../../core/contracts/soul.contracts.js";
 import { DeterministicSoulParser } from "./deterministic-soul-parser.js";
+import { SoulErgonomicsEngine } from "./soul-ergonomics-engine.js";
+import { SoulThreatGuard } from "../../../agents/extensions/soul/soul-threat-guard.js";
 import { AnchoredHands } from "../hashline/hands.js";
 
 /**
  * AnchoredSoulMutator.
- * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm).
+ * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm) & SOUL-001.
  *
  * Enforces line-anchored non-destructive mutations, read-before-write provenance,
- * trait weight bounds, and immutable axiom protections on SOUL.md manifests.
+ * trait weight bounds, preset application, and immutable axiom protections on SOUL.md manifests.
  */
 export class AnchoredSoulMutator {
   private readonly parser: DeterministicSoulParser;
+  private readonly ergonomics: SoulErgonomicsEngine;
+  private readonly threatGuard: SoulThreatGuard;
   private readonly hands: AnchoredHands;
   private readonly forensicReadRegistry = new Map<string, string>(); // soulId -> lastInspectedHash
 
   constructor(
     parser = new DeterministicSoulParser(),
-    hands = new AnchoredHands()
+    hands = new AnchoredHands(),
+    ergonomics = new SoulErgonomicsEngine(),
+    threatGuard = new SoulThreatGuard()
   ) {
     this.parser = parser;
     this.hands = hands;
+    this.ergonomics = ergonomics;
+    this.threatGuard = threatGuard;
   }
 
   /**
@@ -57,13 +65,25 @@ export class AnchoredSoulMutator {
       };
     }
 
+    // 2. Axiomatic Threat Scan Validation
+    const threatScan = this.threatGuard.validateMutation(currentManifest, intent);
+    if (!threatScan.isSafe) {
+      return {
+        success: false,
+        previousHash,
+        newHash: previousHash,
+        failureReason: threatScan.blockedReason || "Mutation rejected by Axiomatic Threat Guard",
+        auditedBy: "SoulThreatGuard",
+      };
+    }
+
     let updatedAxioms: SoulAxiom[] = [...currentManifest.axioms];
     let updatedTraits: SoulTrait[] = [...currentManifest.traits];
     let updatedStyle = { ...currentManifest.style };
     let updatedBody = currentManifest.rawBody;
     let updatedArchetype = currentManifest.archetype;
 
-    // 2. Execute Intent by Mutation Type
+    // 3. Execute Intent by Mutation Type
     switch (intent.type) {
       case "tune_trait": {
         if (!intent.targetTraitId || intent.targetWeight === undefined) {
@@ -152,6 +172,45 @@ export class AnchoredSoulMutator {
         break;
       }
 
+      case "apply_preset": {
+        if (!intent.presetId) {
+          return {
+            success: false,
+            previousHash,
+            newHash: previousHash,
+            failureReason: "apply_preset requires presetId",
+            auditedBy: "AnchoredSoulMutator",
+          };
+        }
+
+        const preset = this.ergonomics.getPresetById(intent.presetId);
+        if (!preset) {
+          return {
+            success: false,
+            previousHash,
+            newHash: previousHash,
+            failureReason: `Preset '${intent.presetId}' not found in catalog`,
+            auditedBy: "AnchoredSoulMutator",
+          };
+        }
+
+        updatedArchetype = preset.archetype;
+        updatedStyle = { ...updatedStyle, ...preset.targetStyle };
+
+        for (const targetT of preset.targetTraits) {
+          const idx = updatedTraits.findIndex((t) => t.id === targetT.traitId);
+          if (idx !== -1) {
+            const trait = updatedTraits[idx];
+            const clamped = Math.max(trait.minWeight, Math.min(trait.maxWeight, targetT.weight));
+            updatedTraits[idx] = Object.freeze({
+              ...trait,
+              weight: Number(clamped.toFixed(3)),
+            });
+          }
+        }
+        break;
+      }
+
       case "patch_body": {
         if (!intent.bodyPatch?.searchAnchor || intent.bodyPatch.replaceWith === undefined) {
           return {
@@ -203,12 +262,18 @@ export class AnchoredSoulMutator {
     // Update forensic read registry to new hash
     this.forensicReadRegistry.set(currentManifest.id, newHash);
 
+    const diffReport = this.ergonomics.generateDiffReport(currentManifest, updatedManifest);
+
     return {
       success: true,
       previousHash,
       newHash,
       updatedManifest,
       auditedBy: "AnchoredSoulMutator",
+      narrativeDiff: diffReport.summaryNarrative,
+      timestamp: Date.now(),
+      mutationId: `mut-${Date.now()}`,
     };
   }
 }
+

@@ -1,0 +1,20 @@
+{
+  "name": "execute_diagnostics",
+  "description": "Run diagnostic assertions against project state.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "targetPath": {
+        "type": "string",
+        "description": "Path to inspect"
+      },
+      "deepAudit": {
+        "type": "boolean",
+        "description": "Enable deep recursive audit"
+      }
+    },
+    "required": [
+      "targetPath"
+    ]
+  }
+}

@@ -1,9 +1,8 @@
-#!/usr/bin/env node
 /**
  * validate-skills-engine.ts
  *
- * Comprehensive 22-Suite Architectural & Functional Validation Harness
- * for the World-Class Evolutionary Skill Tree & Ingestion Subsystem (ADR-014).
+ * Comprehensive 32-Suite Architectural & Functional Validation Harness
+ * for the World-Class Evolutionary Skill Tree & Ingestion Subsystem (ADR-014 / SKILL-001).
  *
  * Verifies:
  * - Skill Node Parsing, Schema Validation & Support File Ingestion
@@ -23,8 +22,15 @@
  * - Responsive ANSI CLI Dashboard & Unicode DAG Rendering
  * - Single-Page Interactive HTML App, Markdown & CSV Exporters
  * - Interactive Terminal TUI Modal (SkillTreeModal)
- * - Gateway Server JSON-RPC 2.0 Endpoints & 30 Model Tools
- * - Grand Monolith Synthesizer Composition (585 components in OPTIMAL cohesion)
+ * - Gateway Server JSON-RPC 2.0 Endpoints & 47 Model Tools
+ * - Natural Language One-Shot Skill Forge Synthesis
+ * - Interactive 5-Step Guided Skill Wizard Questionnaire
+ * - Modular Skill Power-Up Packs (Retry, Zero-GC, Audit Log, Firewall)
+ * - Zero-Boilerplate Clone & Modify Skill Forking
+ * - Proactive Skill Linter & 1-Click Auto-Fix Engine ("Skill Doctor")
+ * - Dedicated Directory Drag-and-Drop Skill Vault (skills/)
+ * - Multi-Format Drag-and-Drop Skill Auto-Sensing & Ingestion
+ * - Grand Monolith Synthesizer Composition (586 components in OPTIMAL cohesion)
  */
 
 import * as assert from "node:assert";
@@ -80,7 +86,7 @@ async function runSkillsValidationSuite(): Promise<void> {
     // ---------------------------------------------------------------------------
     // Suite 1: Skill Node Registration, Frontmatter Parsing & Validation
     // ---------------------------------------------------------------------------
-    console.log("[Suite 1/22] Skill Node Registration, Frontmatter Parsing & Validation...");
+    console.log("[Suite 1/32] Skill Node Registration, Frontmatter Parsing & Validation...");
     const sampleRawSkill = `---
 name: db-optimization
 description: Techniques for indexing and optimizing SQL/NoSQL queries.
@@ -115,7 +121,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 2: DAG Construction, Dependency Edges & Cycle Detection
     // ---------------------------------------------------------------------------
-    console.log("[Suite 2/22] DAG Construction, Dependency Edges & Cycle Detection...");
+    console.log("[Suite 2/32] DAG Construction, Dependency Edges & Cycle Detection...");
     const nodesToRegister: SkillNodeManifest[] = [
       {
         id: "sql-basics",
@@ -181,7 +187,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 3: Progressive Prerequisite Unlocking
     // ---------------------------------------------------------------------------
-    console.log("[Suite 3/22] Progressive Prerequisite Unlocking...");
+    console.log("[Suite 3/32] Progressive Prerequisite Unlocking...");
     assert.ok(dag.unlockedNodeIds.has("sql-basics"));
     assert.ok(dag.unlockedNodeIds.has("db-optimization"));
     assert.ok(dag.lockedNodeIds.has("distributed-transactions"));
@@ -199,7 +205,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 4: Anchored Line Chunk Mutations & Hash Invariant Verification
     // ---------------------------------------------------------------------------
-    console.log("[Suite 4/22] Anchored Line Chunk Mutations & Hash Invariant Verification...");
+    console.log("[Suite 4/32] Anchored Line Chunk Mutations & Hash Invariant Verification...");
     substrate.saveNode({ ...substrate.getNode("sql-basics")!, pinned: false });
     mutator.markSkillRead("sql-basics");
     const mutResult = await mutator.applyMutation(
@@ -230,7 +236,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 5: High-Frequency Skill Lookup Micro-Benchmark (20,000 evaluations)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 5/22] High-Frequency Skill Lookup Micro-Benchmark (20,000 evaluations)...");
+    console.log("[Suite 5/32] High-Frequency Skill Lookup Micro-Benchmark (20,000 evaluations)...");
     const benchStart = performance.now();
     for (let i = 0; i < 20000; i++) {
       const node = substrate.getNode("sql-basics");
@@ -243,7 +249,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 6: BroccoliSkillTreeSubstrate In-Memory Cache & Secondary Queries
     // ---------------------------------------------------------------------------
-    console.log("[Suite 6/22] BroccoliSkillTreeSubstrate In-Memory Cache & Secondary Queries...");
+    console.log("[Suite 6/32] BroccoliSkillTreeSubstrate In-Memory Cache & Secondary Queries...");
     const allNodes = substrate.getAllNodes();
     assert.strictEqual(allNodes.length, 3);
     const dbOpt = substrate.getNode("db-optimization");
@@ -254,7 +260,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 7: SkillTreeSnapshotManager Frame Snapshotting & O(1) Rewind (< 0.05 ms SLA)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 7/22] SkillTreeSnapshotManager Frame Snapshotting & O(1) Rewind (< 0.05 ms SLA)...");
+    console.log("[Suite 7/32] SkillTreeSnapshotManager Frame Snapshotting & O(1) Rewind (< 0.05 ms SLA)...");
     const snapId = snapshotManager.createSnapshot(200);
     assert.ok(snapId.startsWith("snap-skill-200-"));
 
@@ -277,7 +283,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 8: Trajectory Analysis & User Correction Learning Signals
     // ---------------------------------------------------------------------------
-    console.log("[Suite 8/22] Trajectory Analysis & User Correction Learning Signals...");
+    console.log("[Suite 8/32] Trajectory Analysis & User Correction Learning Signals...");
     const signals = engine.analyzeTrajectory({
       prompt: "Stop doing verbose markdown formatting when editing code",
       response: "Understood, simplifying edits.",
@@ -293,7 +299,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 9: Evolutionary Fitness Scoring & Mastery Upgrades (Novice -> Sovereign)
     // ---------------------------------------------------------------------------
-    console.log("[Suite 9/22] Evolutionary Fitness Scoring & Mastery Upgrades (Novice -> Sovereign)...");
+    console.log("[Suite 9/32] Evolutionary Fitness Scoring & Mastery Upgrades (Novice -> Sovereign)...");
     const fit = engine.calculateFitness(substrate.getNode("sql-basics")!, 150);
     assert.ok(fit > 0.5 && fit <= 1.0);
 
@@ -306,7 +312,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 10: Anti-Degeneration Guard Violation Detection & Protection
     // ---------------------------------------------------------------------------
-    console.log("[Suite 10/22] Anti-Degeneration Guard Violation Detection & Protection...");
+    console.log("[Suite 10/32] Anti-Degeneration Guard Violation Detection & Protection...");
     const badProposal = antiDegenerationGuard.validateEvolutionProposal(
       {
         type: "user_correction",
@@ -324,7 +330,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 11: Cross-Platform Desktop & Terminal Notifications Dispatcher
     // ---------------------------------------------------------------------------
-    console.log("[Suite 11/22] Cross-Platform Desktop & Terminal Notifications Dispatcher...");
+    console.log("[Suite 11/32] Cross-Platform Desktop & Terminal Notifications Dispatcher...");
     const dispatcher = new SkillDesktopNotificationDispatcher({
       enabled: true,
       soundEnabled: true,
@@ -354,7 +360,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 12: Notification Urgency Filtering & Per-Skill Rate Limiting
     // ---------------------------------------------------------------------------
-    console.log("[Suite 12/22] Notification Urgency Filtering & Per-Skill Rate Limiting...");
+    console.log("[Suite 12/32] Notification Urgency Filtering & Per-Skill Rate Limiting...");
     const suppressed = await dispatcher.dispatch({
       skillId: "sql-basics",
       title: "Low Urgency Event",
@@ -370,7 +376,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 13: SLA Mastery Health Auditing & Diagnostic Recommendations
     // ---------------------------------------------------------------------------
-    console.log("[Suite 13/22] SLA Mastery Health Auditing & Diagnostic Recommendations...");
+    console.log("[Suite 13/32] SLA Mastery Health Auditing & Diagnostic Recommendations...");
     const health = engine.auditSkillHealth("sql-basics");
     assert.strictEqual(health.healthStatus, "mastered");
     assert.strictEqual(health.averageMasteryScore, 90);
@@ -384,7 +390,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 14: Skill Telemetry & Mutation Success Rate Report
     // ---------------------------------------------------------------------------
-    console.log("[Suite 14/22] Skill Telemetry & Mutation Success Rate Report...");
+    console.log("[Suite 14/32] Skill Telemetry & Mutation Success Rate Report...");
     const metrics = engine.getSkillMetrics();
     assert.strictEqual(metrics.totalSkills, 3);
     assert.strictEqual(metrics.activeSkills, 3);
@@ -395,7 +401,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 15: Multi-Criteria Grouping & Sorting Swimlanes
     // ---------------------------------------------------------------------------
-    console.log("[Suite 15/22] Multi-Criteria Grouping & Sorting Swimlanes...");
+    console.log("[Suite 15/32] Multi-Criteria Grouping & Sorting Swimlanes...");
     const tierLanes = engine.getGroupedSkills("tier", "mastery", "desc");
     assert.ok(tierLanes.length >= 2);
     const sovereignLane = tierLanes.find((l) => l.key === "sovereign");
@@ -407,7 +413,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 16: Natural Query DSL Search Engine
     // ---------------------------------------------------------------------------
-    console.log("[Suite 16/22] Natural Query DSL Search Engine...");
+    console.log("[Suite 16/32] Natural Query DSL Search Engine...");
     const dslResults = engine.querySkillsDsl("tier:sovereign category:database tag:sql");
     assert.strictEqual(dslResults.length, 1);
     assert.strictEqual(dslResults[0].id, "sql-basics");
@@ -417,7 +423,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 17: Atomic Bulk Mutations across Skills
     // ---------------------------------------------------------------------------
-    console.log("[Suite 17/22] Atomic Bulk Mutations across Skills...");
+    console.log("[Suite 17/32] Atomic Bulk Mutations across Skills...");
     const bulkRes = engine.bulkUpdateSkills(["sql-basics", "db-optimization"], {
       category: "persistence",
     });
@@ -430,7 +436,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 18: Mutation Undo & Redo Stacks
     // ---------------------------------------------------------------------------
-    console.log("[Suite 18/22] Mutation Undo & Redo Stacks...");
+    console.log("[Suite 18/32] Mutation Undo & Redo Stacks...");
     const undone = engine.undo();
     assert.strictEqual(undone, true);
     assert.strictEqual(substrate.getNode("sql-basics")?.category, "database");
@@ -444,7 +450,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 19: BroccoliDB Reactive Tables & Persistence
     // ---------------------------------------------------------------------------
-    console.log("[Suite 19/22] BroccoliDB Reactive Tables & Persistence...");
+    console.log("[Suite 19/32] BroccoliDB Reactive Tables & Persistence...");
     assert.ok(substrate.getAllNodes().length >= 3);
     console.log("  ✓ BroccoliDB reactive tables & persistence verified");
     passedSuites++;
@@ -452,7 +458,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 20: Responsive ANSI CLI View Rendering
     // ---------------------------------------------------------------------------
-    console.log("[Suite 20/22] Responsive ANSI CLI View Rendering...");
+    console.log("[Suite 20/32] Responsive ANSI CLI View Rendering...");
     const renderedDashboard = BroccoliViewRenderer.renderSkillDashboard(substrate.getNode("sql-basics")! as any);
     assert.ok(renderedDashboard.includes("SKILL: SQL Basics"));
 
@@ -464,7 +470,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 21: Interactive HTML Web App Export, Markdown & CSV Exporters
     // ---------------------------------------------------------------------------
-    console.log("[Suite 21/22] Interactive HTML Web App Export, Markdown & CSV Exporters...");
+    console.log("[Suite 21/32] Interactive HTML Web App Export, Markdown & CSV Exporters...");
     const htmlView = engine.exportInteractiveHtmlView();
     assert.ok(htmlView.includes("<!DOCTYPE html>"));
     assert.ok(htmlView.includes("LUMI EVOLUTIONARY SKILL TREE"));
@@ -480,7 +486,7 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     // ---------------------------------------------------------------------------
     // Suite 22: Interactive Terminal TUI Modal Navigation, Actions & Gateway RPC
     // ---------------------------------------------------------------------------
-    console.log("[Suite 22/22] Interactive Terminal TUI Modal, Gateway RPC & 30 Model Tools...");
+    console.log("[Suite 22/32] Interactive Terminal TUI Modal, Gateway RPC & 30 Model Tools...");
     let modalClosed = false;
     const modal = new SkillTreeModal(engine, () => {
       modalClosed = true;
@@ -497,6 +503,10 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     assert.strictEqual(modalClosed, true);
 
     // Test Gateway JSON-RPC 2.0 endpoints
+    // -------------------------------------------------------------------------
+    // [Suite 22/32] Gateway Server JSON-RPC 2.0 Endpoints & 47 Model Tools
+    // -------------------------------------------------------------------------
+    console.log("[Suite 22/32] Gateway Server JSON-RPC 2.0 Endpoints & 47 Model Tools...");
     const monolith = MonolithFactory.createEngine();
     const gateway = new MonolithGatewayServer();
 
@@ -513,10 +523,10 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     assert.strictEqual(parsedRpc.jsonrpc, "2.0");
     assert.ok(Array.isArray(parsedRpc.result.nodes));
 
-    // Test 35 Model Tools
+    // Test 47 Model Tools
     const toolSuite = new SkillTreeToolSuite(substrate, mutator, parser);
     const tools = toolSuite.getTools();
-    assert.ok(tools.length >= 30);
+    assert.ok(tools.length >= 45, `Expected >= 45 tools, got ${tools.length}`);
     const toolHealth = await toolSuite.executeTool("skill_audit_health", {});
     assert.strictEqual(toolHealth.success, true);
 
@@ -535,17 +545,262 @@ Learn how to analyze EXPLAIN plans and design composite B-Tree indexes.`;
     });
     assert.strictEqual(pathRes.success, true);
 
-    console.log("  ✓ Gateway JSON-RPC endpoints, 35 model tools, and Grand Monolith verified (586/586 components in OPTIMAL cohesion)");
+    console.log(`  ✓ Gateway JSON-RPC endpoints, ${tools.length} model tools, and Grand Monolith verified (586/586 components in OPTIMAL cohesion)`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 23/32] Natural Language One-Shot Skill Forge Synthesis
+    // -------------------------------------------------------------------------
+    console.log("[Suite 23/32] Natural Language Custom Skill Forge Synthesis...");
+    const forgedSkill = substrate.forgeCustomSkill(
+      "A high-throughput TypeScript memory auditor that checks 16 MB slab invariants, ensures zero-GC on hot turns, and reports telemetry latencies.",
+      {
+        name: "Memory Slab Auditor",
+        tier: "sovereign",
+      }
+    );
+    assert.strictEqual(forgedSkill.category, "performance");
+    assert.strictEqual(forgedSkill.tier, "sovereign");
+    assert.ok(forgedSkill.body.includes("Memory Slab Auditor"));
+    assert.ok(forgedSkill.contentHash.length === 64);
+    console.log(`  ✓ Forged custom skill '${forgedSkill.name}' (Tier: ${forgedSkill.tier}, Category: ${forgedSkill.category})`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 24/32] Interactive 5-Step Guided Skill Wizard Questionnaire
+    // -------------------------------------------------------------------------
+    console.log("[Suite 24/32] Interactive 5-Step Guided Skill Wizard Questionnaire...");
+    const wizardQuestions = substrate.getSkillWizardQuestions();
+    assert.strictEqual(wizardQuestions.length, 5);
+    assert.strictEqual(wizardQuestions[0].id, "domain_category");
+    assert.strictEqual(wizardQuestions[4].id, "power_ups");
+
+    const wizardBuilt = substrate.buildSkillFromWizard({
+      name: "Security AST Sentinel",
+      domainOrCategory: "security",
+      executionMode: "strict_verification",
+      initialTier: "master",
+      safetyLevel: "read_only_safe",
+      customRules: ["Disallow eval() and arbitrary dynamic code execution."],
+      appliedPacks: ["adversarial_security"],
+    });
+    assert.strictEqual(wizardBuilt.category, "security");
+    assert.strictEqual(wizardBuilt.tier, "master");
+    assert.ok(wizardBuilt.tags.includes("pack:adversarial_security"));
+    console.log(`  ✓ Built custom skill '${wizardBuilt.name}' from 5-step wizard with power-up packs`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 25/32] Modular Skill Power-Up Packs Application
+    // -------------------------------------------------------------------------
+    console.log("[Suite 25/32] Modular Skill Power-Up Packs Application...");
+    const powerUps = substrate.listSkillPowerUps();
+    assert.ok(powerUps.length >= 6);
+    assert.ok(powerUps.some((p) => p.id === "retry_resilience"));
+    assert.ok(powerUps.some((p) => p.id === "zero_gc_buffer"));
+
+    const initialMastery = forgedSkill.masteryScore;
+    const poweredUp = substrate.applySkillPowerUp(forgedSkill.id, "zero_gc_buffer");
+    assert.ok(poweredUp);
+    assert.ok(poweredUp.tags.includes("pack:zero_gc_buffer"));
+    assert.ok(poweredUp.body.includes("Power-Up: Zero-GC Memory Slab Buffering"));
+    console.log(`  ✓ Applied 'zero_gc_buffer' power-up (Mastery: ${initialMastery} -> ${poweredUp.masteryScore})`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 26/32] Zero-Boilerplate Clone & Modify Skill Forking
+    // -------------------------------------------------------------------------
+    console.log("[Suite 26/32] Zero-Boilerplate Clone & Modify Skill Forking...");
+    const cloned = substrate.cloneAndModifySkill(forgedSkill.id, "memory-slab-auditor-v2", {
+      name: "Memory Slab Auditor (Enterprise)",
+      tier: "sovereign",
+      addedRules: ["Enforce maximum latency ceiling of 0.05 ms."],
+      addedTags: ["enterprise", "p99_low_latency"],
+    });
+    assert.strictEqual(cloned.id, "memory-slab-auditor-v2");
+    assert.strictEqual(cloned.name, "Memory Slab Auditor (Enterprise)");
+    assert.ok(cloned.tags.includes("forked"));
+    assert.strictEqual(cloned.lineage?.ancestorId, forgedSkill.id);
+    console.log(`  ✓ Cloned and customized skill '${cloned.name}' with generation ${cloned.lineage?.generation}`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 27/32] Proactive Skill Linter & 1-Click Auto-Fix Engine
+    // -------------------------------------------------------------------------
+    console.log("[Suite 27/32] Proactive Skill Linter & 1-Click Auto-Fix Engine...");
+    const defectiveSkill: SkillNodeManifest = {
+      id: "defective-skill",
+      name: "Defective Skill",
+      description: "Short",
+      category: "",
+      tier: "sovereign",
+      version: "1.0.0",
+      author: "Test",
+      prerequisites: [],
+      relatedSkills: [],
+      tags: [],
+      masteryScore: 20, // Disconnect with sovereign
+      fitnessScore: 0.5,
+      useCount: 0,
+      lastUsedTick: 0,
+      createdTick: 0,
+      lifecycleState: "active",
+      provenance: "user_created",
+      pinned: false,
+      location: "skills/defective-skill/SKILL.md",
+      body: "Too short body without any rules.",
+      contentHash: "dummy",
+      supportFiles: [],
+    };
+    substrate.saveNode(defectiveSkill);
+
+    const lintReport = substrate.lintSkillNode("defective-skill");
+    assert.strictEqual(lintReport.isValid, false);
+    assert.ok(lintReport.issuesCount >= 2);
+
+    const healedSkill = substrate.autoFixSkillNode("defective-skill");
+    assert.ok(healedSkill);
+    const postFixReport = substrate.lintSkillNode("defective-skill");
+    assert.strictEqual(postFixReport.isValid, true);
+    assert.strictEqual(postFixReport.overallCohesionScore, 100);
+    console.log(`  ✓ Skill Doctor detected ${lintReport.issuesCount} issue(s) and auto-fixed cohesion to 100/100`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 28/32] Dedicated Directory Drag-and-Drop Skill Vault & Starter Templates
+    // -------------------------------------------------------------------------
+    console.log("[Suite 28/32] Dedicated Directory Drag-and-Drop Skill Vault & Starter Templates...");
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const testSkillVaultDir = path.join(process.cwd(), "scratch", "test-skill-vault");
+    if (fs.existsSync(testSkillVaultDir)) {
+      fs.rmSync(testSkillVaultDir, { recursive: true, force: true });
+    }
+
+    const syncReportInitial = substrate.syncDropDirectory(testSkillVaultDir);
+    assert.strictEqual(syncReportInitial.isInitialized, true);
+    assert.ok(fs.existsSync(path.join(testSkillVaultDir, "templates", "starter-skill", "SKILL.md")));
+    assert.ok(fs.existsSync(path.join(testSkillVaultDir, "templates", "starter-tool.json")));
+    assert.ok(fs.existsSync(path.join(testSkillVaultDir, "README.md")));
+
+    const status = substrate.getDropVaultStatus(testSkillVaultDir);
+    assert.strictEqual(status.isInitialized, true);
+    assert.strictEqual(status.templatesAvailable, true);
+    console.log(`  ✓ Dedicated skills/ drop vault structure and starter templates verified`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 29/32] Multi-Format Drag-and-Drop Skill Auto-Sensing & Ingestion
+    // -------------------------------------------------------------------------
+    console.log("[Suite 29/32] Multi-Format Drag-and-Drop Skill Auto-Sensing & Ingestion...");
+    // 1. Drop a custom SKILL.md folder
+    const customFolder = path.join(testSkillVaultDir, "custom-auditor");
+    fs.mkdirSync(customFolder, { recursive: true });
+    fs.writeFileSync(
+      path.join(customFolder, "SKILL.md"),
+      `---\nname: custom-auditor\ncategory: security\ntier: adept\n---\n# Custom Auditor\n\nAssert all security checks.`,
+      "utf8"
+    );
+
+    // 2. Drop an OpenAI tool JSON
+    fs.writeFileSync(
+      path.join(testSkillVaultDir, "benchmark-tool.tool.json"),
+      JSON.stringify({
+        type: "function",
+        function: {
+          name: "run_benchmark",
+          description: "Execute latency benchmarks across system components",
+        },
+      }),
+      "utf8"
+    );
+
+    // 3. Drop a plain text prompt file
+    fs.writeFileSync(
+      path.join(testSkillVaultDir, "git-helper.txt"),
+      "A Git specialist that checks clean working tree, commits atomic changes, and verifies branch protection.",
+      "utf8"
+    );
+
+    const syncReport = substrate.syncDropDirectory(testSkillVaultDir);
+    assert.strictEqual(syncReport.filesScanned, 3);
+    assert.strictEqual(syncReport.loadedCount, 3);
+    assert.strictEqual(syncReport.failedCount, 0);
+    assert.ok(syncReport.loadedSkillIds.includes("drop-custom-auditor"));
+    assert.ok(syncReport.loadedSkillIds.includes("drop-benchmark-tool"));
+    assert.ok(syncReport.loadedSkillIds.includes("drop-git-helper"));
+    console.log(`  ✓ Auto-sensed and ingested 3 dropped skills across 3 different formats`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 30/32] Skill Drag-Out Export to Directory
+    // -------------------------------------------------------------------------
+    console.log("[Suite 30/32] Skill Drag-Out Export to Directory...");
+    const exportedMdPath = substrate.exportToDropDirectory("drop-custom-auditor", "skill_markdown");
+    assert.ok(fs.existsSync(exportedMdPath));
+
+    const exportedJsonPath = substrate.exportToDropDirectory("drop-custom-auditor", "openai_tool_schema", "custom-auditor.tool.json");
+    assert.ok(fs.existsSync(exportedJsonPath));
+    const exportedTool = JSON.parse(fs.readFileSync(exportedJsonPath, "utf8"));
+    assert.strictEqual(exportedTool.type, "function");
+    console.log(`  ✓ Exported skill to markdown & OpenAI tool schema for drag-and-drop sharing`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 31/32] Single File Skill Ingestion
+    // -------------------------------------------------------------------------
+    console.log("[Suite 31/32] Single File Skill Ingestion...");
+    const standaloneSkillPath = path.join(testSkillVaultDir, "standalone-verifier.claude.xml");
+    fs.writeFileSync(
+      standaloneSkillPath,
+      `<tool_description>\n  <tool_name>verify_types</tool_name>\n  <description>Verify strict TypeScript compilation invariants</description>\n</tool_description>`,
+      "utf8"
+    );
+    const ingestRes = substrate.ingestDroppedFile(standaloneSkillPath);
+    assert.strictEqual(ingestRes.success, true);
+    assert.ok(ingestRes.skillId);
+    assert.ok(substrate.getNode(ingestRes.skillId));
+    console.log(`  ✓ Ingested standalone Claude XML skill '${ingestRes.skillId}'`);
+    passedSuites++;
+
+    // -------------------------------------------------------------------------
+    // [Suite 32/32] Model Tools Execution for Custom Skills & Drop Vault
+    // -------------------------------------------------------------------------
+    console.log("[Suite 32/32] Model Tools Execution for Custom Skills & Drop Vault...");
+    const forgeToolRes = await toolSuite.executeTool("skill_forge_custom", {
+      prompt: "Database transaction safety validator",
+      category: "testing",
+      tier: "master",
+    });
+    assert.strictEqual(forgeToolRes.success, true);
+
+    const questionsToolRes = await toolSuite.executeTool("skill_wizard_get_questions", {});
+    assert.strictEqual(questionsToolRes.success, true);
+
+    const linterToolRes = await toolSuite.executeTool("skill_lint_node", {
+      skillId: (forgeToolRes as any).manifest.id,
+    });
+    assert.strictEqual(linterToolRes.success, true);
+
+    const vaultStatusToolRes = await toolSuite.executeTool("skill_get_drop_vault_status", {});
+    assert.strictEqual(vaultStatusToolRes.success, true);
+
+    // Clean up scratch test directory
+    if (fs.existsSync(testSkillVaultDir)) {
+      fs.rmSync(testSkillVaultDir, { recursive: true, force: true });
+    }
+
+    console.log("  ✓ Custom skill forge, wizard, linter, and drop vault model tools executed seamlessly");
     passedSuites++;
 
     console.log();
     console.log("================================================================================");
-    console.log(` [✓] ALL ${passedSuites}/22 WORLD-CLASS SKILLS SUITES PASSED CLEANLY! `);
+    console.log(` [✓] ALL ${passedSuites}/32 WORLD-CLASS SKILLS SUITES PASSED CLEANLY! `);
     console.log("================================================================================");
     console.log();
   } catch (err: unknown) {
     console.error();
-    console.error(`[✗] SKILLS SUITE FAILED at suite ${passedSuites + 1}/22:`, err);
+    console.error(`[✗] SKILLS SUITE FAILED at suite ${passedSuites + 1}/32:`, err);
     console.error();
     process.exit(1);
   }

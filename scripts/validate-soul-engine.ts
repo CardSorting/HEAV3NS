@@ -2,7 +2,7 @@
 /**
  * validate-soul-engine.ts
  *
- * Comprehensive 22-Suite Architectural & Functional Validation Harness
+ * Comprehensive 32-Suite Architectural & Functional Validation Harness
  * for the World-Class Deterministic SOUL Evolution & Identity Subsystem (SOUL-001 / ADR-014).
  *
  * Verifies:
@@ -25,11 +25,23 @@
  * - Responsive ANSI CLI Dashboard & Trait Matrix Rendering
  * - Single-Page Interactive HTML App, Markdown & CSV Exporters
  * - Interactive Terminal TUI Modal (SoulDashboardModal)
- * - Gateway Server JSON-RPC 2.0 Endpoints & 30 Model Tools
+ * - Gateway Server JSON-RPC 2.0 Endpoints & 55 Model Tools
+ * - Standard Persona Preset Bundles Application & Checkpoint Auto-Creation
+ * - Plain-English Narrative Diff Explainability Engine
+ * - Natural Language Fuzzy Synonym Search & Typo Suggestions
+ * - Multi-Format Interoperability (CharacterCard V2, OpenAI GPT, Claude XML, JSON-LD)
+ * - Natural Language One-Shot SOUL Prompt Forge Synthesis
+ * - Interactive 5-Step Guided Wizard Questionnaire
+ * - Modular Personality Add-On Packs ("Power-Ups")
+ * - Proactive Persona Linter & 1-Click Auto-Fix Engine ("Soul Doctor")
+ * - Dedicated Directory Drag-and-Drop Vault & Starter Templates (.lumi/souls/)
+ * - Multi-Format Drag-and-Drop Auto-Sensing & Ingestion
  * - Grand Monolith Synthesizer Composition (585 components in OPTIMAL cohesion)
  */
 
 import * as assert from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { performance } from "node:perf_hooks";
 import {
   AnchoredSoulMutator,
@@ -39,6 +51,7 @@ import {
   MonolithFactory,
   MonolithGatewayServer,
   SoulDashboardModal,
+  SoulDropVault,
   SoulPromptComposer,
   SoulSnapshotManager,
   SoulThreatGuard,
@@ -346,9 +359,9 @@ async function runSoulValidationSuite(): Promise<void> {
     passedSuites++;
 
     // ---------------------------------------------------------------------------
-    // Suite 22: Gateway Server JSON-RPC 2.0 Endpoints & 30 Model Tools
+    // Suite 22: Gateway Server JSON-RPC 2.0 Endpoints & 55 Model Tools
     // ---------------------------------------------------------------------------
-    console.log("[Suite 22/22] Gateway Server JSON-RPC 2.0 Endpoints & 30 Model Tools...");
+    console.log("[Suite 22/32] Gateway Server JSON-RPC 2.0 Endpoints & 55 Model Tools...");
     const monolith = MonolithFactory.createEngine();
     const gateway = new MonolithGatewayServer();
 
@@ -365,28 +378,297 @@ async function runSoulValidationSuite(): Promise<void> {
     assert.strictEqual(parsedRpc.jsonrpc, "2.0");
     assert.ok(parsedRpc.result.manifest);
 
-    // Test 30 Model Tools
+    // Test Model Tools
     const toolSuite = new SoulToolSuite(parser, mutator, substrate);
     const tools = toolSuite.getTools();
-    assert.strictEqual(tools.length, 30);
+    assert.strictEqual(tools.length, 55);
 
     const toolHealth = await toolSuite.executeTool("soul_audit_health", {});
     assert.strictEqual(toolHealth.success, true);
 
-    console.log("  ✓ Gateway JSON-RPC endpoints, 30 model tools, and Grand Monolith verified (585/585 components in OPTIMAL cohesion)");
+    console.log("  ✓ Gateway JSON-RPC endpoints, 55 model tools, and Grand Monolith verified (585/585 components in OPTIMAL cohesion)");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 23: Standard Persona Preset Bundles Application & Checkpoint Auto-Creation
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 23/32] Standard Persona Preset Bundles Application & Auto-Checkpointing...");
+    const presets = substrate.listPresets();
+    assert.ok(presets.length >= 7);
+
+    const execPreset = presets.find((p) => p.id === "executive_briefing");
+    assert.ok(execPreset);
+    assert.strictEqual(execPreset.category, "productivity");
+
+    // Apply preset
+    const presetRes = substrate.applyPreset("executive_briefing", "Apply executive mode");
+    assert.strictEqual(presetRes.success, true);
+    assert.strictEqual(substrate.getActiveManifest().archetype, "executive_assistant");
+    assert.strictEqual(substrate.getActiveManifest().style.tone, "direct");
+    assert.ok(presetRes.narrativeDiff?.includes("Applied Preset"));
+
+    // Verify auto-checkpoint bookmark was generated
+    const bookmarks = substrate.listBookmarks();
+    assert.ok(bookmarks.length >= 1);
+    console.log("  ✓ Preset bundles catalog, 1-step activation, and auto-checkpointing verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 24: Plain-English Narrative Diff Explainability Engine
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 24/32] Plain-English Narrative Diff Explainability Engine...");
+    const diffReport = substrate.getDiffReport();
+    assert.ok(diffReport.entries.length > 0);
+    assert.ok(diffReport.summaryNarrative.length > 0);
+
+    const archetypeDiff = diffReport.entries.find((e) => e.target === "archetype");
+    assert.ok(archetypeDiff);
+    assert.ok(archetypeDiff.plainEnglishNarrative.includes("Switched agent archetype"));
+    console.log(`  ✓ Narrative diff generated: "${diffReport.summaryNarrative}"`);
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 25: Natural Language Fuzzy Synonym Search & Typo Suggestions
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 25/32] Natural Language Fuzzy Synonym Search & Typo Suggestions...");
+    // Synonym matching "brevity" -> Conciseness
+    const brevitySuggestions = substrate.queryTraitsFuzzy("brevity");
+    assert.ok(brevitySuggestions.length >= 1);
+    assert.strictEqual(brevitySuggestions[0].matchedTraitId, "trait-conciseness");
+    assert.ok(brevitySuggestions[0].confidenceScore >= 0.9);
+
+    // Fuzzy typo matching "consisness" -> Conciseness
+    const typoCorrections = substrate.suggestCorrections("consisness");
+    assert.ok(typoCorrections.length >= 1);
+    assert.ok(typoCorrections[0].includes("Conciseness"));
+
+    // Taxonomy inspection
+    const taxonomy = substrate.getTaxonomy();
+    assert.ok(taxonomy.length >= 4);
+    assert.ok(taxonomy.some((t) => t.dimension.includes("Communication")));
+    console.log("  ✓ Fuzzy synonym search, Levenshtein typo suggestions, and taxonomy verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 26: Multi-Format Interoperability & Named Semantic Bookmarks
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 26/32] Multi-Format Interoperability & Named Semantic Bookmarks...");
+    const activeManifest = substrate.getActiveManifest();
+
+    // 1. CharacterCard V2 JSON
+    const cardV2 = substrate.exportFormat("character_card_v2");
+    assert.ok(cardV2.includes("chara_card_v2"));
+    const cardImport = substrate.importFormat(cardV2, "character_card_v2");
+    assert.strictEqual(cardImport.success, true);
+    assert.ok(cardImport.manifest);
+
+    // 2. OpenAI Custom GPT Schema
+    const gptSchema = substrate.exportFormat("openai_gpt_schema");
+    assert.ok(gptSchema.includes("conversation_starters"));
+    const gptImport = substrate.importFormat(gptSchema, "openai_gpt_schema");
+    assert.strictEqual(gptImport.success, true);
+
+    // 3. Anthropic Claude XML
+    const claudeXml = substrate.exportFormat("anthropic_claude_xml");
+    assert.ok(claudeXml.includes("<agent_system_prompt>"));
+    const claudeImport = substrate.importFormat(claudeXml, "anthropic_claude_xml");
+    assert.strictEqual(claudeImport.success, true);
+
+    // 4. Named Bookmarking
+    const bm = substrate.createBookmark("release-baseline", "Production release candidate baseline", ["release", "v1"]);
+    assert.strictEqual(bm.label, "release-baseline");
+    assert.ok(substrate.listBookmarks("release").length >= 1);
+
+    // Mutate and restore bookmark
+    substrate.tuneTrait("trait-conciseness", 0.2);
+    const bmRestored = substrate.restoreBookmark("release-baseline");
+    assert.strictEqual(bmRestored, true);
+
+    const auditTrail = substrate.getAuditTrail(10);
+    assert.ok(auditTrail.length >= 1);
+
+    console.log("  ✓ CharacterCard V2, OpenAI GPT, Claude XML, bookmarks, and audit trail verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 27: Natural Language Custom SOUL Prompt Synthesis (One-Shot Forge)
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 27/32] Natural Language Custom SOUL Prompt Synthesis...");
+    const forgedManifest = substrate.forgeCustomSoul(
+      "A patient Python mentor who explains concepts with simple analogies and checks for understanding. Must never use complex mathematical jargon.",
+      { name: "Python Socratic Guide", appliedPacks: ["eli5_simplicity"] },
+      "python-mentor-profile"
+    );
+
+    assert.strictEqual(forgedManifest.name, "Python Socratic Guide");
+    assert.strictEqual(forgedManifest.archetype, "socratic_mentor");
+    assert.strictEqual(forgedManifest.style.tone, "collaborative");
+    assert.strictEqual(forgedManifest.style.mathematicalRigor, "informal");
+    assert.ok(forgedManifest.axioms.some((a) => a.statement.includes("never use complex mathematical jargon")));
+    assert.strictEqual(parser.computeSoulHash(forgedManifest), forgedManifest.integrityHash);
+    console.log(`  ✓ Forged custom persona '${forgedManifest.name}' from free-form prompt description`);
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 28: Interactive 5-Step Guided Wizard Questionnaire
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 28/32] Interactive 5-Step Guided Wizard Questionnaire...");
+    const questions = substrate.getWizardQuestions();
+    assert.strictEqual(questions.length, 5);
+    assert.ok(questions.every((q) => q.options.length >= 3));
+
+    const wizardBuilt = substrate.buildSoulFromWizard({
+      name: "Strict Code Auditor",
+      roleOrGoal: "coder",
+      personalityVibe: "direct_efficient",
+      communicationStyle: "code_first",
+      strictnessLevel: "uncompromising",
+      customRules: ["Always check array memory boundaries and avoid garbage collection."],
+      appliedPacks: ["zero_fluff", "pedantic_linter"],
+    });
+
+    assert.strictEqual(wizardBuilt.archetype, "game_engine_architect");
+    assert.strictEqual(wizardBuilt.style.tone, "direct");
+    assert.strictEqual(wizardBuilt.style.verbosity, "terse");
+    assert.strictEqual(wizardBuilt.style.codePreference, "typescript_strict");
+    assert.strictEqual(wizardBuilt.style.mathematicalRigor, "axiomatic");
+    assert.ok(wizardBuilt.axioms.some((a) => a.statement.includes("Always check array memory boundaries")));
+    console.log(`  ✓ Built custom persona '${wizardBuilt.name}' from 5-step wizard questionnaire`);
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 29: Modular Personality Packs & Clone-and-Tweak Forking
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 29/32] Modular Personality Packs & Clone-and-Tweak Forking...");
+    const packs = substrate.listPersonalityPacks();
+    assert.ok(packs.length >= 6);
+
+    // Apply Humor Pack
+    const humorRes = substrate.applyPersonalityPack("humor_wit");
+    assert.strictEqual(humorRes.success, true);
+    assert.ok(humorRes.updatedManifest?.rawBody.includes("Humor & Wit"));
+
+    // Clone and tweak
+    const cloned = substrate.cloneAndModifyProfile("python-mentor-profile", "python-mentor-v2", {
+      name: "Python Mentor Advanced",
+      summary: "Forked advanced edition with concise code snippets",
+      style: { verbosity: "terse", tone: "direct" },
+    });
+
+    assert.strictEqual(cloned.name, "Python Mentor Advanced");
+    assert.strictEqual(cloned.style.verbosity, "terse");
+    assert.strictEqual(cloned.style.tone, "direct");
+    console.log("  ✓ Modular personality pack mixing and zero-boilerplate profile cloning verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 30: Proactive Persona Linter & 1-Click Auto-Fix Engine ("Soul Doctor")
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 30/32] Proactive Persona Linter & 1-Click Auto-Fix Engine...");
+    // Deliberately create a flawed manifest with contradiction (high conciseness + detailed verbosity)
+    const flawedManifest = {
+      ...substrate.getActiveManifest(),
+      style: { ...substrate.getActiveManifest().style, verbosity: "detailed" as const },
+      traits: substrate.getActiveManifest().traits.map((t) => (t.id === "trait-conciseness" ? { ...t, weight: 0.95 } : t)),
+    };
+    substrate.saveManifest(flawedManifest);
+
+    const lintReport = substrate.lintProfile();
+    assert.ok(lintReport.issuesCount >= 1);
+    assert.ok(lintReport.issues.some((i) => i.id === "conflict-terse-detailed"));
+
+    // 1-Click Auto-Fix
+    const fixRes = substrate.autoFixProfile();
+    assert.strictEqual(fixRes.success, true);
+    assert.strictEqual(substrate.getActiveManifest().style.verbosity, "terse");
+
+    const healedReport = substrate.lintProfile();
+    assert.ok(healedReport.overallCohesionScore >= lintReport.overallCohesionScore);
+    console.log(`  ✓ Persona linter detected ${lintReport.issuesCount} issue(s) and auto-healed cohesion score to ${healedReport.overallCohesionScore}/100`);
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 31: Dedicated Directory Drag-and-Drop Vault & Starter Templates Seed
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 31/32] Dedicated Directory Drag-and-Drop Vault & Starter Templates...");
+    const testVaultDir = path.join(process.cwd(), "node_modules", ".tmp", "lumi-souls-vault-test");
+    if (fs.existsSync(testVaultDir)) {
+      fs.rmSync(testVaultDir, { recursive: true, force: true });
+    }
+
+    const testDropVault = new SoulDropVault(testVaultDir, parser);
+    testDropVault.ensureDirectoryStructure();
+
+    assert.ok(fs.existsSync(testVaultDir));
+    assert.ok(fs.existsSync(path.join(testVaultDir, "templates")));
+    assert.ok(fs.existsSync(path.join(testVaultDir, "templates", "starter-mentor.soul.md")));
+    assert.ok(fs.existsSync(path.join(testVaultDir, "templates", "starter-charactercard-v2.json")));
+
+    const status = testDropVault.getDropVaultStatus(substrate, testVaultDir);
+    assert.strictEqual(status.isInitialized, true);
+    assert.strictEqual(status.templatesAvailable, true);
+    console.log("  ✓ Dedicated .lumi/souls/ drop vault structure and starter templates verified");
+    passedSuites++;
+
+    // ---------------------------------------------------------------------------
+    // Suite 32: Multi-Format Drag-and-Drop Auto-Sensing & Ingestion
+    // ---------------------------------------------------------------------------
+    console.log("[Suite 32/32] Multi-Format Drag-and-Drop Auto-Sensing & Ingestion...");
+    // 1. Drop a custom markdown soul file
+    const customMdPath = path.join(testVaultDir, "security-guard.soul.md");
+    const securityManifest = parser.createDefaultSoulManifestForArchetype("security_sentinel");
+    fs.writeFileSync(customMdPath, parser.exportFormat(securityManifest, "soul_markdown"), "utf8");
+
+    // 2. Drop a custom CharacterCard JSON
+    const customCardPath = path.join(testVaultDir, "creative-bot.card.json");
+    const creativeManifest = parser.createDefaultSoulManifestForArchetype("creative_collaborator");
+    fs.writeFileSync(customCardPath, parser.exportFormat(creativeManifest, "character_card_v2"), "utf8");
+
+    // 3. Drop a raw text prompt description
+    const customTxtPath = path.join(testVaultDir, "analyst-bot.txt");
+    fs.writeFileSync(customTxtPath, "A rigorous data analyst agent who presents summary statistics first.", "utf8");
+
+    // Run Sync on the drop directory
+    const syncReport = testDropVault.syncFromDirectory(substrate, testVaultDir);
+    assert.strictEqual(syncReport.filesScanned, 3);
+    assert.strictEqual(syncReport.loadedCount, 3);
+    assert.strictEqual(syncReport.failedCount, 0);
+    assert.ok(syncReport.loadedProfiles.includes("drop-security-guard"));
+    assert.ok(syncReport.loadedProfiles.includes("drop-creative-bot"));
+    assert.ok(syncReport.loadedProfiles.includes("drop-analyst-bot"));
+
+    // Verify individual dropped file ingestion
+    const singleIngest = testDropVault.ingestDroppedFile(substrate, customMdPath);
+    assert.strictEqual(singleIngest.success, true);
+    assert.ok(singleIngest.manifest);
+
+    // Verify Drag-Out export to drop directory
+    const exportedFile = testDropVault.exportToDropDirectory(substrate, "drop-security-guard", "soul_markdown", "exported-security.soul.md", testVaultDir);
+    assert.ok(fs.existsSync(exportedFile));
+
+    // Clean up test directory
+    try {
+      fs.rmSync(testVaultDir, { recursive: true, force: true });
+    } catch {
+      // Non-blocking
+    }
+
+    console.log("  ✓ Zero-command directory scanning, multi-format auto-sensing, and drag-out export verified");
     passedSuites++;
 
     console.log();
     console.log("================================================================================");
-    console.log(` [✓] ALL ${passedSuites}/22 WORLD-CLASS SOUL SUITES PASSED CLEANLY! `);
+    console.log(` [✓] ALL ${passedSuites}/32 WORLD-CLASS SOUL SUITES PASSED CLEANLY! `);
     console.log("================================================================================");
     console.log();
   } catch (err: unknown) {
     console.error();
-    console.error(`[✗] SOUL SUITE FAILED at suite ${passedSuites + 1}/22:`, err);
+    console.error(`[✗] SOUL SUITE FAILED at suite ${passedSuites + 1}/32:`, err);
     console.error();
     process.exit(1);
   }
 }
 
 runSoulValidationSuite();
+
+

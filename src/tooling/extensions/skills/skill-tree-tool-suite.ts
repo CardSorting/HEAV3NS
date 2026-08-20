@@ -508,6 +508,140 @@ export class SkillTreeToolSuite {
           return this.executeTool("skill_auto_remediate_health", args, cwd);
         },
       },
+      {
+        name: "skill_forge_custom",
+        description: "Create a custom procedural skill in 1 step directly from a plain-English prompt description.",
+        parameters: {
+          prompt: { type: "string", required: true, description: "Natural language description of desired skill capabilities and actions" },
+          name: { type: "string", description: "Optional name for the custom skill" },
+          category: { type: "string", description: "Optional category (e.g. 'performance', 'security', 'debugging', 'architecture', 'testing')" },
+          tier: { type: "string", description: "Optional initial tier: 'novice', 'adept', 'master', 'sovereign'" },
+          appliedPacks: { type: "string", description: "Comma-separated power-up pack IDs (e.g. 'retry_resilience,zero_gc_buffer')" },
+          targetSkillId: { type: "string", description: "Optional explicit skill ID" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_forge_custom", args, cwd);
+        },
+      },
+      {
+        name: "skill_wizard_get_questions",
+        description: "Fetch the 5-step guided skill wizard questionnaire structure with friendly multiple-choice options.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_wizard_get_questions", args, cwd);
+        },
+      },
+      {
+        name: "skill_wizard_submit",
+        description: "Build a complete custom skill from wizard questionnaire choices.",
+        parameters: {
+          domainOrCategory: { type: "string", required: true, description: "Domain: 'performance', 'architecture', 'debugging', 'security', 'testing', 'workflow'" },
+          executionMode: { type: "string", required: true, description: "Execution mode: 'autonomous_scripting', 'interactive_guide', 'strict_verification', 'socratic_mentoring'" },
+          initialTier: { type: "string", description: "Tier: 'novice', 'adept', 'master', 'sovereign'" },
+          name: { type: "string", description: "Optional custom skill name" },
+          customRules: { type: "string", description: "Optional comma-separated custom rules" },
+          appliedPacks: { type: "string", description: "Optional comma-separated power-up pack IDs" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_wizard_submit", args, cwd);
+        },
+      },
+      {
+        name: "skill_clone_and_modify",
+        description: "Clone and tweak an existing skill node without touching raw boilerplate.",
+        parameters: {
+          sourceSkillId: { type: "string", required: true, description: "Source skill ID to clone from" },
+          newSkillId: { type: "string", required: true, description: "New skill identifier" },
+          name: { type: "string", description: "Optional new skill name" },
+          description: { type: "string", description: "Optional new description" },
+          tier: { type: "string", description: "Optional new tier override" },
+          category: { type: "string", description: "Optional category override" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_clone_and_modify", args, cwd);
+        },
+      },
+      {
+        name: "skill_list_power_ups",
+        description: "List modular skill add-on power-up packs like Retry Resilience, Zero-GC Buffers, Forensic Audit, and Input Firewall.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_list_power_ups", args, cwd);
+        },
+      },
+      {
+        name: "skill_apply_power_up",
+        description: "Equip a skill with a modular power-up pack to boost resilience, performance, or security.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Target skill ID" },
+          packId: { type: "string", required: true, description: "Power-Up ID (e.g. 'retry_resilience', 'zero_gc_buffer', 'audit_logging', 'adversarial_security', 'pedantic_types')" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_apply_power_up", args, cwd);
+        },
+      },
+      {
+        name: "skill_lint_node",
+        description: "Proactively inspect a skill node for missing instructions, empty guardrails, or complexity mismatches.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID to lint" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_lint_node", args, cwd);
+        },
+      },
+      {
+        name: "skill_autofix_node",
+        description: "One-click automatic resolution of all detected issues in a skill node.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID to autofix" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_autofix_node", args, cwd);
+        },
+      },
+      {
+        name: "skill_sync_directory",
+        description: "Auto-scan and synchronize all dropped skill folders & files in the dedicated skills/ workspace directory.",
+        parameters: {
+          directoryPath: { type: "string", description: "Optional custom directory path to sync (defaults to skills/)" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_sync_directory", args, cwd);
+        },
+      },
+      {
+        name: "skill_export_to_directory",
+        description: "Export an active skill into the dedicated skills/ directory for instant drag-and-drop sharing or git commits.",
+        parameters: {
+          skillId: { type: "string", required: true, description: "Skill ID to export" },
+          format: { type: "string", description: "Format: 'skill_markdown', 'openai_tool_schema', 'anthropic_tool_spec', 'compact_json'" },
+          filename: { type: "string", description: "Optional custom target filename" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_export_to_directory", args, cwd);
+        },
+      },
+      {
+        name: "skill_get_drop_vault_status",
+        description: "Inspect the status, directory path, total dropped skills, and template availability of the skills/ drop vault.",
+        parameters: {
+          directoryPath: { type: "string", description: "Optional custom directory path" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_get_drop_vault_status", args, cwd);
+        },
+      },
+      {
+        name: "skill_ingest_dropped_file",
+        description: "Ingest a single dropped skill file or folder by path and auto-register it into the active skill tree.",
+        parameters: {
+          filePath: { type: "string", required: true, description: "Absolute or relative path to the dropped skill file" },
+        },
+        execute: async (args: Record<string, unknown>, cwd?: string) => {
+          return this.executeTool("skill_ingest_dropped_file", args, cwd);
+        },
+      },
     ];
   }
 
@@ -912,6 +1046,120 @@ export class SkillTreeToolSuite {
         case "skill_auto_remediate_health": {
           const report = this.evolutionaryEngine.autoRemediateHealthIssues ? this.evolutionaryEngine.autoRemediateHealthIssues() : { repairedCount: 0, brokenEdgesFixed: 0, unlockedOrphansCount: 0, actionsTaken: [], healthStatusAfter: "mastered" as const };
           return { success: true, report };
+        }
+
+        case "skill_forge_custom": {
+          const prompt = String(args.prompt || "");
+          const name = typeof args.name === "string" ? args.name : undefined;
+          const category = typeof args.category === "string" ? args.category : undefined;
+          const tier = args.tier as any;
+          const appliedPacks = typeof args.appliedPacks === "string"
+            ? args.appliedPacks.split(",").map((s) => s.trim()).filter(Boolean)
+            : undefined;
+          const targetSkillId = typeof args.targetSkillId === "string" ? args.targetSkillId : undefined;
+          const manifest = this.substrate.forgeCustomSkill(prompt, {
+            name,
+            category,
+            tier,
+            appliedPacks,
+            targetSkillId,
+          });
+          return { success: true, manifest };
+        }
+
+        case "skill_wizard_get_questions": {
+          const questions = this.substrate.getSkillWizardQuestions();
+          return { success: true, questions };
+        }
+
+        case "skill_wizard_submit": {
+          const domainOrCategory = String(args.domainOrCategory || "workflow");
+          const executionMode = String(args.executionMode || "autonomous_scripting");
+          const initialTier = args.initialTier as any;
+          const name = typeof args.name === "string" ? args.name : undefined;
+          const customRules = typeof args.customRules === "string"
+            ? args.customRules.split(",").map((s) => s.trim()).filter(Boolean)
+            : undefined;
+          const appliedPacks = typeof args.appliedPacks === "string"
+            ? args.appliedPacks.split(",").map((s) => s.trim()).filter(Boolean)
+            : undefined;
+
+          const manifest = this.substrate.buildSkillFromWizard({
+            domainOrCategory,
+            executionMode,
+            initialTier,
+            name,
+            customRules,
+            appliedPacks,
+          });
+          return { success: true, manifest };
+        }
+
+        case "skill_clone_and_modify": {
+          const sourceSkillId = String(args.sourceSkillId || "");
+          const newSkillId = String(args.newSkillId || `fork-${Date.now()}`);
+          const name = typeof args.name === "string" ? args.name : undefined;
+          const description = typeof args.description === "string" ? args.description : undefined;
+          const tier = args.tier as any;
+          const category = typeof args.category === "string" ? args.category : undefined;
+
+          const manifest = this.substrate.cloneAndModifySkill(sourceSkillId, newSkillId, {
+            name,
+            description,
+            tier,
+            category,
+          });
+          return { success: true, manifest };
+        }
+
+        case "skill_list_power_ups": {
+          const packs = this.substrate.listSkillPowerUps();
+          return { success: true, packs };
+        }
+
+        case "skill_apply_power_up": {
+          const skillId = String(args.skillId || "");
+          const packId = String(args.packId || "");
+          const manifest = this.substrate.applySkillPowerUp(skillId, packId);
+          return { success: !!manifest, manifest };
+        }
+
+        case "skill_lint_node": {
+          const skillId = String(args.skillId || "");
+          const report = this.substrate.lintSkillNode(skillId);
+          return { success: true, report };
+        }
+
+        case "skill_autofix_node": {
+          const skillId = String(args.skillId || "");
+          const manifest = this.substrate.autoFixSkillNode(skillId);
+          return { success: !!manifest, manifest };
+        }
+
+        case "skill_sync_directory": {
+          const directoryPath = typeof args.directoryPath === "string" ? args.directoryPath : undefined;
+          const report = this.substrate.syncDropDirectory(directoryPath);
+          return { success: true, report };
+        }
+
+        case "skill_export_to_directory": {
+          const skillId = String(args.skillId || "");
+          const format = (args.format as any) || "skill_markdown";
+          const filename = typeof args.filename === "string" ? args.filename : undefined;
+          const filePath = this.substrate.exportToDropDirectory(skillId, format, filename);
+          return { success: true, filePath, format };
+        }
+
+        case "skill_get_drop_vault_status": {
+          const directoryPath = typeof args.directoryPath === "string" ? args.directoryPath : undefined;
+          const status = this.substrate.getDropVaultStatus(directoryPath);
+          return { success: true, status };
+        }
+
+        case "skill_ingest_dropped_file": {
+          const filePath = String(args.filePath || "");
+          const res = this.substrate.ingestDroppedFile(filePath);
+          return { success: res.success, result: res };
         }
 
         default:

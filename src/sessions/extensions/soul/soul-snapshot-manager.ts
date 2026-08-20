@@ -1,18 +1,23 @@
-import type { SoulSnapshot, SoulManifest } from "../../../core/contracts/soul.contracts.js";
+import type {
+  SoulSnapshot,
+  SoulManifest,
+  SoulBookmark,
+} from "../../../core/contracts/soul.contracts.js";
 import { BroccoliSoulSubstrate } from "./broccoli-soul-substrate.js";
 import { DeterministicSoulParser } from "../../../tooling/extensions/soul/deterministic-soul-parser.js";
 
 /**
  * SoulSnapshotManager.
- * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm).
+ * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm) & SOUL-001.
  *
- * Coordinates frame-level binary state snapshots of the active soul substrate,
- * enabling deterministic O(1) rollbacks without filesystem thrashing.
+ * Coordinates frame-level binary state snapshots and named semantic bookmarks of the active soul substrate,
+ * enabling deterministic O(1) rollbacks and checkpoint restoring without filesystem thrashing.
  */
 export class SoulSnapshotManager {
   private readonly substrate: BroccoliSoulSubstrate;
   private readonly parser: DeterministicSoulParser;
   private readonly snapshotHistory: SoulSnapshot[] = [];
+  private readonly bookmarks = new Map<string, SoulBookmark>();
   private readonly maxSnapshots = 50;
 
   constructor(
@@ -44,6 +49,64 @@ export class SoulSnapshotManager {
     }
 
     return snapshot;
+  }
+
+  /**
+   * Creates a named semantic bookmark of the current state.
+   */
+  createBookmark(label: string, description = "", tags: readonly string[] = []): SoulBookmark {
+    const manifest = this.substrate.getActiveManifest();
+    const bookmark: SoulBookmark = Object.freeze({
+      id: `bm-${Date.now()}-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      label,
+      description,
+      tags: Object.freeze([...tags]),
+      createdAt: Date.now(),
+      manifest,
+      frameTick: this.substrate.getCurrentTick(),
+    });
+
+    this.bookmarks.set(bookmark.id, bookmark);
+    this.bookmarks.set(label.toLowerCase(), bookmark);
+    return bookmark;
+  }
+
+  /**
+   * Lists all stored named bookmarks, optionally filtered by tag.
+   */
+  listBookmarks(tag?: string): readonly SoulBookmark[] {
+    const unique = new Map<string, SoulBookmark>();
+    for (const bm of this.bookmarks.values()) {
+      unique.set(bm.id, bm);
+    }
+    const all = Array.from(unique.values());
+    if (!tag) return Object.freeze(all);
+    return Object.freeze(all.filter((b) => b.tags.includes(tag) || b.tags.some((t) => t.toLowerCase() === tag.toLowerCase())));
+  }
+
+  /**
+   * Restores active soul state from a named bookmark.
+   */
+  restoreBookmark(bookmarkIdOrLabel: string): boolean {
+    const key = bookmarkIdOrLabel.toLowerCase();
+    const bookmark = this.bookmarks.get(bookmarkIdOrLabel) || this.bookmarks.get(key);
+    if (!bookmark) return false;
+
+    this.substrate.setActiveManifest(bookmark.manifest);
+    return true;
+  }
+
+  /**
+   * Deletes a named bookmark.
+   */
+  deleteBookmark(bookmarkIdOrLabel: string): boolean {
+    const key = bookmarkIdOrLabel.toLowerCase();
+    const bookmark = this.bookmarks.get(bookmarkIdOrLabel) || this.bookmarks.get(key);
+    if (!bookmark) return false;
+
+    this.bookmarks.delete(bookmark.id);
+    this.bookmarks.delete(bookmark.label.toLowerCase());
+    return true;
   }
 
   /**
@@ -101,5 +164,7 @@ export class SoulSnapshotManager {
 
   clear(): void {
     this.snapshotHistory.length = 0;
+    this.bookmarks.clear();
   }
 }
+

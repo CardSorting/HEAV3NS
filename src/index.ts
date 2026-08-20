@@ -755,7 +755,6 @@ export type {
   SkillNotificationUrgency,
   SkillNotificationEvent,
   SkillNotificationPreferences,
-  SkillNotificationRecord,
   SkillMutationUndoRecord,
   SkillDslQueryFilter,
   SkillBulkMutationResult,
@@ -764,6 +763,20 @@ export type {
   SkillMutationRow,
   SkillUsageRow,
   SkillNotificationRow,
+  SkillFormatExportKind,
+  SkillWizardOption,
+  SkillWizardQuestion,
+  SkillWizardAnswers,
+  SkillPowerUpPack,
+  SkillCustomTweakSpec,
+  SkillNodeLintSeverity,
+  SkillNodeLintIssue,
+  SkillNodeLintReport,
+  SkillForgeOptions,
+  SkillDroppedFileEntry,
+  SkillDirectorySyncReport,
+  SkillDropVaultStatus,
+  SkillImportResult,
 } from "./core/contracts/skills.contracts.js";
 export type {
   SoulArchetype,
@@ -788,6 +801,31 @@ export type {
   SoulTraitRow,
   SoulAxiomRow,
   SoulMutationRow,
+  SoulPresetCategory,
+  SoulPresetBundle,
+  SoulTaxonomyTraitInfo,
+  SoulTaxonomyNode,
+  SoulDiffEntry,
+  SoulDiffReport,
+  SoulBookmark,
+  SoulAuditTrailEntry,
+  SoulFormatExportKind,
+  SoulImportResult,
+  SoulFuzzyMatchSuggestion,
+  SoulRiskSeverity,
+  SoulThreatScanDetailed,
+  SoulWizardOption,
+  SoulWizardQuestion,
+  SoulWizardAnswers,
+  SoulPersonalityPack,
+  SoulCustomTweakSpec,
+  SoulLintSeverity,
+  SoulPersonaLintIssue,
+  SoulPersonaLintReport,
+  SoulForgeOptions,
+  SoulDroppedFileEntry,
+  SoulDirectorySyncReport,
+  SoulDropVaultStatus,
   IBroccoliSoulSubstrate,
 } from "./core/contracts/soul.contracts.js";
 export type {
@@ -1513,6 +1551,8 @@ export type { CentennialMilestone } from "./tooling/extensions/policy/centennial
 
 export { DeterministicSkillTreeParser } from "./tooling/extensions/skills/deterministic-skill-tree-parser.js";
 export { AnchoredSkillMutator } from "./tooling/extensions/skills/anchored-skill-mutator.js";
+export { SkillCustomForgeEngine } from "./tooling/extensions/skills/skill-custom-forge-engine.js";
+export { SkillDropVault } from "./tooling/extensions/skills/skill-drop-vault.js";
 export { SkillTreeToolSuite } from "./tooling/extensions/skills/skill-tree-tool-suite.js";
 export {
   SkillDesktopNotificationDispatcher,
@@ -1529,6 +1569,9 @@ export { AntiDegenerationGuard } from "./agents/extensions/skills/anti-degenerat
 
 export { DeterministicSoulParser } from "./tooling/extensions/soul/deterministic-soul-parser.js";
 export { AnchoredSoulMutator } from "./tooling/extensions/soul/anchored-soul-mutator.js";
+export { SoulErgonomicsEngine } from "./tooling/extensions/soul/soul-ergonomics-engine.js";
+export { SoulCustomForgeEngine } from "./tooling/extensions/soul/soul-custom-forge-engine.js";
+export { SoulDropVault } from "./tooling/extensions/soul/soul-drop-vault.js";
 export { SoulToolSuite } from "./tooling/extensions/soul/soul-tool-suite.js";
 export { SoulDashboardModal, type SoulDashboardViewMode } from "./tui/components/soul-dashboard-modal.js";
 export { BroccoliSoulSubstrate } from "./sessions/extensions/soul/broccoli-soul-substrate.js";

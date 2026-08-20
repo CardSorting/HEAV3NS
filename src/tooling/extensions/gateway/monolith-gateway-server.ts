@@ -318,6 +318,114 @@ export class MonolithGatewayServer {
         return this.formatSuccess(req.id, { audit });
       }
 
+      if (req.method === "skills/forgeCustom") {
+        const prompt = String((req.params as any)?.prompt || "");
+        const name = (req.params as any)?.name;
+        const category = (req.params as any)?.category;
+        const tier = (req.params as any)?.tier;
+        const appliedPacks = (req.params as any)?.appliedPacks;
+        const targetSkillId = (req.params as any)?.targetSkillId;
+        const manifest = monolith.evolutionarySkillEngine.getSubstrate().forgeCustomSkill(prompt, {
+          name,
+          category,
+          tier,
+          appliedPacks,
+          targetSkillId,
+        });
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "skills/wizardGetQuestions") {
+        const questions = monolith.evolutionarySkillEngine.getSubstrate().getSkillWizardQuestions();
+        return this.formatSuccess(req.id, { questions });
+      }
+
+      if (req.method === "skills/wizardSubmit") {
+        const domainOrCategory = String((req.params as any)?.domainOrCategory || "workflow");
+        const executionMode = String((req.params as any)?.executionMode || "autonomous_scripting");
+        const initialTier = (req.params as any)?.initialTier;
+        const name = (req.params as any)?.name;
+        const customRules = (req.params as any)?.customRules;
+        const appliedPacks = (req.params as any)?.appliedPacks;
+
+        const manifest = monolith.evolutionarySkillEngine.getSubstrate().buildSkillFromWizard({
+          domainOrCategory,
+          executionMode,
+          initialTier,
+          name,
+          customRules,
+          appliedPacks,
+        });
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "skills/cloneAndModify") {
+        const sourceSkillId = String((req.params as any)?.sourceSkillId || "");
+        const newSkillId = String((req.params as any)?.newSkillId || `fork-${Date.now()}`);
+        const name = (req.params as any)?.name;
+        const description = (req.params as any)?.description;
+        const tier = (req.params as any)?.tier;
+        const category = (req.params as any)?.category;
+
+        const manifest = monolith.evolutionarySkillEngine.getSubstrate().cloneAndModifySkill(sourceSkillId, newSkillId, {
+          name,
+          description,
+          tier,
+          category,
+        });
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "skills/listPowerUps") {
+        const packs = monolith.evolutionarySkillEngine.getSubstrate().listSkillPowerUps();
+        return this.formatSuccess(req.id, { packs });
+      }
+
+      if (req.method === "skills/applyPowerUp") {
+        const skillId = String((req.params as any)?.skillId || "");
+        const packId = String((req.params as any)?.packId || "");
+        const manifest = monolith.evolutionarySkillEngine.getSubstrate().applySkillPowerUp(skillId, packId);
+        return this.formatSuccess(req.id, { success: !!manifest, manifest });
+      }
+
+      if (req.method === "skills/lintNode") {
+        const skillId = String((req.params as any)?.skillId || "");
+        const report = monolith.evolutionarySkillEngine.getSubstrate().lintSkillNode(skillId);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "skills/autoFixNode") {
+        const skillId = String((req.params as any)?.skillId || "");
+        const manifest = monolith.evolutionarySkillEngine.getSubstrate().autoFixSkillNode(skillId);
+        return this.formatSuccess(req.id, { success: !!manifest, manifest });
+      }
+
+      if (req.method === "skills/syncDirectory") {
+        const directoryPath = (req.params as any)?.directoryPath;
+        const report = monolith.evolutionarySkillEngine.getSubstrate().syncDropDirectory(directoryPath);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "skills/exportToDirectory") {
+        const skillId = String((req.params as any)?.skillId || "");
+        const format = (req.params as any)?.format || "skill_markdown";
+        const filename = (req.params as any)?.filename;
+        const filePath = monolith.evolutionarySkillEngine.getSubstrate().exportToDropDirectory(skillId, format, filename);
+        return this.formatSuccess(req.id, { filePath, format });
+      }
+
+      if (req.method === "skills/getDropVaultStatus") {
+        const directoryPath = (req.params as any)?.directoryPath;
+        const status = monolith.evolutionarySkillEngine.getSubstrate().getDropVaultStatus(directoryPath);
+        return this.formatSuccess(req.id, { status });
+      }
+
+      if (req.method === "skills/ingestDroppedFile") {
+        const filePath = String((req.params as any)?.filePath || "");
+        const res = monolith.evolutionarySkillEngine.getSubstrate().ingestDroppedFile(filePath);
+        return this.formatSuccess(req.id, res);
+      }
+
       // --- SOUL Persona & Ethos Kernel Endpoints (SOUL-001) ---
       if (req.method === "soul/getManifest") {
         const profileId = (req.params as any)?.profileId;
@@ -367,6 +475,184 @@ export class MonolithGatewayServer {
         const profileId = (req.params as any)?.profileId;
         const audit = monolith.broccoliSoulSubstrate.auditSoulHealth(profileId);
         return this.formatSuccess(req.id, { audit });
+      }
+
+      if (req.method === "soul/listPresets") {
+        const category = (req.params as any)?.category;
+        const presets = monolith.broccoliSoulSubstrate.listPresets(category);
+        return this.formatSuccess(req.id, { presets });
+      }
+
+      if (req.method === "soul/applyPreset") {
+        const presetId = String((req.params as any)?.presetId || "");
+        const rationale = (req.params as any)?.rationale;
+        const profileId = (req.params as any)?.profileId;
+        const res = monolith.broccoliSoulSubstrate.applyPreset(presetId, rationale, profileId);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "soul/explainDiff") {
+        const previousHash = (req.params as any)?.previousHash;
+        const profileId = (req.params as any)?.profileId;
+        const diff = monolith.broccoliSoulSubstrate.getDiffReport(previousHash, profileId);
+        return this.formatSuccess(req.id, { diff });
+      }
+
+      if (req.method === "soul/searchFuzzy") {
+        const query = String((req.params as any)?.query || "");
+        const limit = Number((req.params as any)?.limit) || 5;
+        const profileId = (req.params as any)?.profileId;
+        const suggestions = monolith.broccoliSoulSubstrate.queryTraitsFuzzy(query, limit, profileId);
+        return this.formatSuccess(req.id, { suggestions });
+      }
+
+      if (req.method === "soul/createBookmark") {
+        const label = String((req.params as any)?.label || "checkpoint");
+        const description = (req.params as any)?.description || "";
+        const tags = Array.isArray((req.params as any)?.tags) ? (req.params as any)?.tags : [];
+        const profileId = (req.params as any)?.profileId;
+        const bookmark = monolith.broccoliSoulSubstrate.createBookmark(label, description, tags, profileId);
+        return this.formatSuccess(req.id, { bookmark });
+      }
+
+      if (req.method === "soul/listBookmarks") {
+        const tag = (req.params as any)?.tag;
+        const profileId = (req.params as any)?.profileId;
+        const bookmarks = monolith.broccoliSoulSubstrate.listBookmarks(tag, profileId);
+        return this.formatSuccess(req.id, { bookmarks });
+      }
+
+      if (req.method === "soul/restoreBookmark") {
+        const idOrLabel = String((req.params as any)?.bookmarkIdOrLabel || "");
+        const profileId = (req.params as any)?.profileId;
+        const restored = monolith.broccoliSoulSubstrate.restoreBookmark(idOrLabel, profileId);
+        return this.formatSuccess(req.id, { restored });
+      }
+
+      if (req.method === "soul/exportFormat") {
+        const format = (req.params as any)?.format || "soul_markdown";
+        const profileId = (req.params as any)?.profileId;
+        const exported = monolith.broccoliSoulSubstrate.exportFormat(format, profileId);
+        return this.formatSuccess(req.id, { format, content: exported });
+      }
+
+      if (req.method === "soul/importFormat") {
+        const content = String((req.params as any)?.content || "");
+        const format = (req.params as any)?.format;
+        const profileId = (req.params as any)?.profileId;
+        const importRes = monolith.broccoliSoulSubstrate.importFormat(content, format, profileId);
+        return this.formatSuccess(req.id, importRes);
+      }
+
+      if (req.method === "soul/getTaxonomy") {
+        const taxonomy = monolith.broccoliSoulSubstrate.getTaxonomy();
+        return this.formatSuccess(req.id, { taxonomy });
+      }
+
+      if (req.method === "soul/getAuditTrail") {
+        const limit = Number((req.params as any)?.limit) || 50;
+        const auditTrail = monolith.broccoliSoulSubstrate.getAuditTrail(limit);
+        return this.formatSuccess(req.id, { auditTrail });
+      }
+
+      if (req.method === "soul/forgeCustom") {
+        const prompt = String((req.params as any)?.prompt || "");
+        const name = (req.params as any)?.name;
+        const appliedPacks = (req.params as any)?.appliedPacks;
+        const profileId = (req.params as any)?.profileId;
+        const manifest = monolith.broccoliSoulSubstrate.forgeCustomSoul(prompt, { name, appliedPacks }, profileId);
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "soul/wizardGetQuestions") {
+        const questions = monolith.broccoliSoulSubstrate.getWizardQuestions();
+        return this.formatSuccess(req.id, { questions });
+      }
+
+      if (req.method === "soul/wizardSubmit") {
+        const roleOrGoal = String((req.params as any)?.roleOrGoal || "custom");
+        const personalityVibe = String((req.params as any)?.personalityVibe || "warm_encouraging");
+        const communicationStyle = String((req.params as any)?.communicationStyle || "conversational");
+        const strictnessLevel = String((req.params as any)?.strictnessLevel || "balanced");
+        const name = (req.params as any)?.name;
+        const customRules = (req.params as any)?.customRules;
+        const appliedPacks = (req.params as any)?.appliedPacks;
+
+        const manifest = monolith.broccoliSoulSubstrate.buildSoulFromWizard({
+          name,
+          roleOrGoal,
+          personalityVibe,
+          communicationStyle,
+          strictnessLevel,
+          customRules,
+          appliedPacks,
+        });
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "soul/cloneAndModify") {
+        const sourceProfileId = String((req.params as any)?.sourceProfileId || "default");
+        const newProfileId = String((req.params as any)?.newProfileId || `fork-${Date.now()}`);
+        const name = (req.params as any)?.name;
+        const summary = (req.params as any)?.summary;
+        const style = (req.params as any)?.style || {};
+
+        const manifest = monolith.broccoliSoulSubstrate.cloneAndModifyProfile(sourceProfileId, newProfileId, {
+          name,
+          summary,
+          style,
+        });
+        return this.formatSuccess(req.id, { manifest });
+      }
+
+      if (req.method === "soul/listPersonalityPacks") {
+        const packs = monolith.broccoliSoulSubstrate.listPersonalityPacks();
+        return this.formatSuccess(req.id, { packs });
+      }
+
+      if (req.method === "soul/applyPersonalityPack") {
+        const packId = String((req.params as any)?.packId || "");
+        const profileId = (req.params as any)?.profileId;
+        const res = monolith.broccoliSoulSubstrate.applyPersonalityPack(packId, profileId);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "soul/lintPersona") {
+        const profileId = (req.params as any)?.profileId;
+        const report = monolith.broccoliSoulSubstrate.lintProfile(profileId);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "soul/autoFixPersona") {
+        const profileId = (req.params as any)?.profileId;
+        const res = monolith.broccoliSoulSubstrate.autoFixProfile(profileId);
+        return this.formatSuccess(req.id, res);
+      }
+
+      if (req.method === "soul/syncDirectory") {
+        const directoryPath = (req.params as any)?.directoryPath;
+        const report = monolith.broccoliSoulSubstrate.syncDropDirectory(directoryPath);
+        return this.formatSuccess(req.id, { report });
+      }
+
+      if (req.method === "soul/exportToDirectory") {
+        const profileId = (req.params as any)?.profileId;
+        const format = (req.params as any)?.format || "soul_markdown";
+        const filename = (req.params as any)?.filename;
+        const filePath = monolith.broccoliSoulSubstrate.exportToDropDirectory(profileId, format, filename);
+        return this.formatSuccess(req.id, { filePath, format });
+      }
+
+      if (req.method === "soul/getDropVaultStatus") {
+        const directoryPath = (req.params as any)?.directoryPath;
+        const status = monolith.broccoliSoulSubstrate.getDropVaultStatus();
+        return this.formatSuccess(req.id, { status });
+      }
+
+      if (req.method === "soul/ingestDroppedFile") {
+        const filePath = String((req.params as any)?.filePath || "");
+        const res = monolith.broccoliSoulSubstrate.ingestDroppedFile(filePath);
+        return this.formatSuccess(req.id, res);
       }
 
       // --- Native Email & Inbox Endpoints (ADR-123) ---

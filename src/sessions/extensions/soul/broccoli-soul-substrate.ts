@@ -1,43 +1,69 @@
 import type {
   IBroccoliSoulSubstrate,
   SoulArchetype,
+  SoulAuditTrailEntry,
   SoulAxiom,
   SoulAxiomRow,
+  SoulBookmark,
   SoulBulkMutationResult,
+  SoulCustomTweakSpec,
+  SoulDiffReport,
+  SoulDirectorySyncReport,
+  SoulDropVaultStatus,
   SoulDslQueryFilter,
+  SoulForgeOptions,
+  SoulFormatExportKind,
+  SoulFuzzyMatchSuggestion,
   SoulGroupBy,
   SoulGroupedLane,
   SoulHealthAuditReport,
   SoulHealthStatus,
+  SoulImportResult,
   SoulManifest,
   SoulManifestRow,
   SoulMetricsReport,
   SoulMutationResult,
   SoulMutationRow,
   SoulMutationUndoRecord,
-  SoulSnapshot,
+  SoulPersonalityPack,
+  SoulPersonaLintReport,
+  SoulPresetBundle,
+  SoulPresetCategory,
   SoulSortBy,
   SoulSortDirection,
   SoulStyleRules,
+  SoulTaxonomyNode,
   SoulTrait,
   SoulTraitRow,
+  SoulWizardAnswers,
+  SoulWizardQuestion,
 } from "../../../core/contracts/soul.contracts.js";
 import type { IBroccoliDatabaseKernel, IDbTable } from "../../../core/contracts/broccolidb.contracts.js";
 import { DeterministicSoulParser } from "../../../tooling/extensions/soul/deterministic-soul-parser.js";
+import { SoulErgonomicsEngine } from "../../../tooling/extensions/soul/soul-ergonomics-engine.js";
+import { SoulCustomForgeEngine } from "../../../tooling/extensions/soul/soul-custom-forge-engine.js";
+import { SoulDropVault } from "../../../tooling/extensions/soul/soul-drop-vault.js";
 
 /**
  * BroccoliSoulSubstrate.
  * Absorbed under ADR-014 (AKD-DSO Osmosis Paradigm) & SOUL-001.
  *
  * Coordinates zero-GC in-memory persona caches, typed BroccoliDB persistence tables,
- * dynamic trait tuning, axiom protection invariants, and persona alignment diagnostics.
+ * dynamic trait tuning, preset application, custom SOUL forge synthesis, guided wizards,
+ * dedicated directory drag-and-drop ingestion (.lumi/souls/), modular personality packs,
+ * named bookmark revisions, fuzzy synonym search, multi-format converters, axiom protection
+ * invariants, and persona alignment diagnostics.
  */
 export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
   private readonly parser: DeterministicSoulParser;
+  private readonly ergonomics: SoulErgonomicsEngine;
+  private readonly forgeEngine: SoulCustomForgeEngine;
+  private readonly dropVault: SoulDropVault;
   private readonly profileStore = new Map<string, SoulManifest>();
   private readonly mutationHistory: SoulMutationResult[] = [];
   private readonly undoStack: SoulMutationUndoRecord[] = [];
   private readonly redoStack: SoulMutationUndoRecord[] = [];
+  private readonly bookmarks = new Map<string, SoulBookmark>();
   private activeProfileId: string;
   private currentTick = 0;
 
@@ -51,9 +77,18 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
   private axiomsTable?: IDbTable<SoulAxiomRow>;
   private mutationsTable?: IDbTable<SoulMutationRow>;
 
-  constructor(parser = new DeterministicSoulParser(), dbKernel?: IBroccoliDatabaseKernel) {
+  constructor(
+    parser = new DeterministicSoulParser(),
+    dbKernel?: IBroccoliDatabaseKernel,
+    ergonomics = new SoulErgonomicsEngine(),
+    forgeEngine?: SoulCustomForgeEngine,
+    dropVault?: SoulDropVault
+  ) {
     this.parser = parser;
     this.dbKernel = dbKernel;
+    this.ergonomics = ergonomics;
+    this.forgeEngine = forgeEngine ?? new SoulCustomForgeEngine(parser, ergonomics);
+    this.dropVault = dropVault ?? new SoulDropVault(undefined, parser);
     this.activeProfileId = "default";
     const defaultManifest = this.parser.createDefaultSoulManifest();
     this.profileStore.set(this.activeProfileId, defaultManifest);
@@ -142,7 +177,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
       this.manifestsTable.put(targetProfile, row);
     }
 
-    if (prev) {
+    if (prev && prev.integrityHash !== enriched.integrityHash) {
       this.recordUndo({
         mutationType: "patch_body",
         previousManifest: prev,
@@ -161,7 +196,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
   }
 
   // ---------------------------------------------------------------------------
-  // Mutation API (Tuning, Archetype Switch, Axioms, Style)
+  // Mutation API (Tuning, Archetype Switch, Axioms, Style, Presets)
   // ---------------------------------------------------------------------------
 
   public tuneTrait(traitId: string, deltaOrTarget: number, isDelta = false, profileId?: string): SoulMutationResult {
@@ -198,6 +233,8 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
 
     this.setActiveManifest(updatedManifest, profileId);
 
+    const diff = this.ergonomics.generateDiffReport(manifest, updatedManifest);
+
     const result: SoulMutationResult = {
       success: true,
       previousHash: manifest.integrityHash,
@@ -206,6 +243,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
       auditedBy: "BroccoliSoulSubstrate",
       timestamp: Date.now(),
       mutationId: `mut-trait-${Date.now()}`,
+      narrativeDiff: diff.summaryNarrative,
     };
 
     this.recordMutation(result);
@@ -233,6 +271,8 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
 
     this.setActiveManifest(updatedManifest, profileId);
 
+    const diff = this.ergonomics.generateDiffReport(manifest, updatedManifest);
+
     const result: SoulMutationResult = {
       success: true,
       previousHash: manifest.integrityHash,
@@ -241,6 +281,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
       auditedBy: "BroccoliSoulSubstrate",
       timestamp: Date.now(),
       mutationId: `mut-archetype-${Date.now()}`,
+      narrativeDiff: diff.summaryNarrative,
     };
 
     this.recordMutation(result);
@@ -270,6 +311,8 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
 
     this.setActiveManifest(updatedManifest, profileId);
 
+    const diff = this.ergonomics.generateDiffReport(manifest, updatedManifest);
+
     const result: SoulMutationResult = {
       success: true,
       previousHash: manifest.integrityHash,
@@ -278,6 +321,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
       auditedBy: "BroccoliSoulSubstrate",
       timestamp: Date.now(),
       mutationId: `mut-axiom-${Date.now()}`,
+      narrativeDiff: diff.summaryNarrative,
     };
 
     this.recordMutation(result);
@@ -300,6 +344,8 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
 
     this.setActiveManifest(updatedManifest, profileId);
 
+    const diff = this.ergonomics.generateDiffReport(manifest, updatedManifest);
+
     const result: SoulMutationResult = {
       success: true,
       previousHash: manifest.integrityHash,
@@ -308,10 +354,267 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
       auditedBy: "BroccoliSoulSubstrate",
       timestamp: Date.now(),
       mutationId: `mut-style-${Date.now()}`,
+      narrativeDiff: diff.summaryNarrative,
     };
 
     this.recordMutation(result);
     return result;
+  }
+
+  public applyPreset(presetId: string, rationale = "Preset applied", profileId?: string): SoulMutationResult {
+    const preset = this.ergonomics.getPresetById(presetId);
+    const manifest = this.getManifest(profileId);
+
+    if (!preset) {
+      return {
+        success: false,
+        previousHash: manifest.integrityHash,
+        newHash: manifest.integrityHash,
+        failureReason: `Preset '${presetId}' not found in catalog`,
+        auditedBy: "BroccoliSoulSubstrate",
+      };
+    }
+
+    // Auto-create checkpoint bookmark before applying preset
+    this.createBookmark(`pre-${preset.id}-${Date.now()}`, `Auto-checkpoint before applying preset ${preset.name}`, ["auto-preset"], profileId);
+
+    let updatedTraits = [...manifest.traits];
+    for (const targetT of preset.targetTraits) {
+      const idx = updatedTraits.findIndex((t) => t.id === targetT.traitId);
+      if (idx !== -1) {
+        const trait = updatedTraits[idx];
+        const clamped = Math.max(trait.minWeight, Math.min(trait.maxWeight, targetT.weight));
+        updatedTraits[idx] = Object.freeze({
+          ...trait,
+          weight: Number(clamped.toFixed(2)),
+        });
+      }
+    }
+
+    const updatedStyle = {
+      ...manifest.style,
+      ...preset.targetStyle,
+    };
+
+    const updatedManifest: SoulManifest = {
+      ...manifest,
+      archetype: preset.archetype,
+      traits: Object.freeze(updatedTraits),
+      style: Object.freeze(updatedStyle),
+      updatedTick: this.currentTick,
+      integrityHash: "",
+    };
+
+    const integrityHash = this.parser.computeSoulHash(updatedManifest);
+    const finalManifest: SoulManifest = Object.freeze({
+      ...updatedManifest,
+      integrityHash,
+    });
+
+    this.setActiveManifest(finalManifest, profileId);
+
+    const diff = this.ergonomics.generateDiffReport(manifest, finalManifest);
+
+    const result: SoulMutationResult = {
+      success: true,
+      previousHash: manifest.integrityHash,
+      newHash: finalManifest.integrityHash,
+      updatedManifest: finalManifest,
+      auditedBy: "BroccoliSoulSubstrate",
+      timestamp: Date.now(),
+      mutationId: `mut-preset-${preset.id}-${Date.now()}`,
+      narrativeDiff: `Applied Preset '${preset.name}': ${diff.summaryNarrative}`,
+    };
+
+    this.recordMutation(result);
+    return result;
+  }
+
+  public listPresets(category?: SoulPresetCategory): readonly SoulPresetBundle[] {
+    return this.ergonomics.listPresets(category);
+  }
+
+  public getTaxonomy(): readonly SoulTaxonomyNode[] {
+    return this.ergonomics.getTaxonomy();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Intuitive Custom SOUL Forge & Wizard API
+  // ---------------------------------------------------------------------------
+
+  public forgeCustomSoul(prompt: string, options: SoulForgeOptions = {}, profileId?: string): SoulManifest {
+    const targetProfile = profileId ?? options.targetProfileId ?? `custom-${Date.now()}`;
+    const manifest = this.forgeEngine.synthesizeFromPrompt(prompt, { ...options, targetProfileId: targetProfile });
+    this.setActiveManifest(manifest, targetProfile);
+    this.setActiveProfileId(targetProfile);
+    return manifest;
+  }
+
+  public buildSoulFromWizard(answers: SoulWizardAnswers, profileId?: string): SoulManifest {
+    const targetProfile = profileId ?? `wizard-${Date.now()}`;
+    const manifest = this.forgeEngine.buildFromWizard(answers);
+    this.setActiveManifest(manifest, targetProfile);
+    this.setActiveProfileId(targetProfile);
+    return manifest;
+  }
+
+  public cloneAndModifyProfile(sourceProfileId: string, newProfileId: string, tweaks: SoulCustomTweakSpec): SoulManifest {
+    const source = this.getManifest(sourceProfileId);
+    const modified = this.forgeEngine.cloneAndModify(source, tweaks);
+    this.setActiveManifest(modified, newProfileId);
+    return modified;
+  }
+
+  public applyPersonalityPack(packId: string, profileId?: string): SoulMutationResult {
+    const manifest = this.getManifest(profileId);
+    const updated = this.forgeEngine.applyPersonalityPack(manifest, packId);
+
+    if (updated.integrityHash === manifest.integrityHash) {
+      return {
+        success: false,
+        previousHash: manifest.integrityHash,
+        newHash: manifest.integrityHash,
+        failureReason: `Personality pack '${packId}' not found or produced no changes`,
+        auditedBy: "BroccoliSoulSubstrate",
+      };
+    }
+
+    this.setActiveManifest(updated, profileId);
+    const diff = this.ergonomics.generateDiffReport(manifest, updated);
+
+    const result: SoulMutationResult = {
+      success: true,
+      previousHash: manifest.integrityHash,
+      newHash: updated.integrityHash,
+      updatedManifest: updated,
+      auditedBy: "BroccoliSoulSubstrate",
+      timestamp: Date.now(),
+      mutationId: `mut-pack-${packId}-${Date.now()}`,
+      narrativeDiff: `Applied Personality Pack '${packId}': ${diff.summaryNarrative}`,
+    };
+
+    this.recordMutation(result);
+    return result;
+  }
+
+  public listPersonalityPacks(): readonly SoulPersonalityPack[] {
+    return this.forgeEngine.listPersonalityPacks();
+  }
+
+  public lintProfile(profileId?: string): SoulPersonaLintReport {
+    const manifest = this.getManifest(profileId);
+    return this.forgeEngine.lintPersona(manifest);
+  }
+
+  public autoFixProfile(profileId?: string): SoulMutationResult {
+    const manifest = this.getManifest(profileId);
+    const fixed = this.forgeEngine.autoFixPersona(manifest);
+
+    if (fixed.integrityHash === manifest.integrityHash) {
+      return {
+        success: true,
+        previousHash: manifest.integrityHash,
+        newHash: manifest.integrityHash,
+        updatedManifest: manifest,
+        auditedBy: "BroccoliSoulSubstrate",
+        narrativeDiff: "No auto-fixable issues detected in persona.",
+      };
+    }
+
+    this.setActiveManifest(fixed, profileId);
+    const diff = this.ergonomics.generateDiffReport(manifest, fixed);
+
+    const result: SoulMutationResult = {
+      success: true,
+      previousHash: manifest.integrityHash,
+      newHash: fixed.integrityHash,
+      updatedManifest: fixed,
+      auditedBy: "BroccoliSoulSubstrate",
+      timestamp: Date.now(),
+      mutationId: `mut-autofix-${Date.now()}`,
+      narrativeDiff: `Auto-remediated persona conflicts: ${diff.summaryNarrative}`,
+    };
+
+    this.recordMutation(result);
+    return result;
+  }
+
+  public getWizardQuestions(): readonly SoulWizardQuestion[] {
+    return this.forgeEngine.getWizardQuestions();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dedicated Drag-and-Drop Directory Vault API (.lumi/souls/)
+  // ---------------------------------------------------------------------------
+
+  public syncDropDirectory(customPath?: string): SoulDirectorySyncReport {
+    return this.dropVault.syncFromDirectory(this, customPath);
+  }
+
+  public exportToDropDirectory(
+    profileId?: string,
+    format: SoulFormatExportKind = "soul_markdown",
+    filename?: string
+  ): string {
+    return this.dropVault.exportToDropDirectory(this, profileId, format, filename);
+  }
+
+  public getDropVaultStatus(customPath?: string): SoulDropVaultStatus {
+    return this.dropVault.getDropVaultStatus(this, customPath);
+  }
+
+  public ingestDroppedFile(filePath: string): SoulImportResult {
+    return this.dropVault.ingestDroppedFile(this, filePath);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bookmarks & Semantic Checkpoints
+  // ---------------------------------------------------------------------------
+
+  public createBookmark(label: string, description = "", tags: readonly string[] = [], profileId?: string): SoulBookmark {
+    const manifest = this.getManifest(profileId);
+    const bookmark: SoulBookmark = Object.freeze({
+      id: `bm-${Date.now()}-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      label,
+      description,
+      tags: Object.freeze([...tags]),
+      createdAt: Date.now(),
+      manifest,
+      frameTick: this.currentTick,
+    });
+
+    this.bookmarks.set(bookmark.id, bookmark);
+    this.bookmarks.set(label.toLowerCase(), bookmark);
+    return bookmark;
+  }
+
+  public listBookmarks(tag?: string, _profileId?: string): readonly SoulBookmark[] {
+    const unique = new Map<string, SoulBookmark>();
+    for (const bm of this.bookmarks.values()) {
+      unique.set(bm.id, bm);
+    }
+    const all = Array.from(unique.values());
+    if (!tag) return Object.freeze(all);
+    return Object.freeze(all.filter((b) => b.tags.includes(tag) || b.tags.some((t) => t.toLowerCase() === tag.toLowerCase())));
+  }
+
+  public restoreBookmark(bookmarkIdOrLabel: string, profileId?: string): boolean {
+    const key = bookmarkIdOrLabel.toLowerCase();
+    const bookmark = this.bookmarks.get(bookmarkIdOrLabel) || this.bookmarks.get(key);
+    if (!bookmark) return false;
+
+    this.setActiveManifest(bookmark.manifest, profileId);
+    return true;
+  }
+
+  public deleteBookmark(bookmarkIdOrLabel: string, _profileId?: string): boolean {
+    const key = bookmarkIdOrLabel.toLowerCase();
+    const bookmark = this.bookmarks.get(bookmarkIdOrLabel) || this.bookmarks.get(key);
+    if (!bookmark) return false;
+
+    this.bookmarks.delete(bookmark.id);
+    this.bookmarks.delete(bookmark.label.toLowerCase());
+    return true;
   }
 
   // ---------------------------------------------------------------------------
@@ -480,7 +783,7 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
   }
 
   // ---------------------------------------------------------------------------
-  // Natural Query DSL Search
+  // Natural Query DSL & Fuzzy Search Engine
   // ---------------------------------------------------------------------------
 
   public parseDslQuery(rawQuery: string): SoulDslQueryFilter {
@@ -541,6 +844,16 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
     }
 
     return result;
+  }
+
+  public queryTraitsFuzzy(query: string, limit = 5, profileId?: string): readonly SoulFuzzyMatchSuggestion[] {
+    const manifest = this.getManifest(profileId);
+    return this.ergonomics.searchTraitsFuzzy(query, manifest.traits, limit);
+  }
+
+  public suggestCorrections(query: string, profileId?: string): readonly string[] {
+    const manifest = this.getManifest(profileId);
+    return this.ergonomics.suggestCorrections(query, manifest.traits);
   }
 
   // ---------------------------------------------------------------------------
@@ -620,11 +933,60 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
     return Object.freeze(this.mutationHistory.slice(0, limit));
   }
 
+  public getAuditTrail(limit = 50): readonly SoulAuditTrailEntry[] {
+    const mutations = this.getMutations(limit);
+    return Object.freeze(
+      mutations.map((m) => ({
+        mutationId: m.mutationId || "mut",
+        timestamp: m.timestamp || Date.now(),
+        mutationType: m.mutationId?.startsWith("mut-trait")
+          ? "tune_trait"
+          : m.mutationId?.startsWith("mut-preset")
+          ? "apply_preset"
+          : m.mutationId?.startsWith("mut-pack")
+          ? "apply_pack"
+          : m.mutationId?.startsWith("mut-autofix")
+          ? "autofix"
+          : m.mutationId?.startsWith("mut-archetype")
+          ? "switch_archetype"
+          : "general_mutation",
+        auditedBy: m.auditedBy,
+        plainEnglishRationale: m.narrativeDiff || (m.success ? "Successfully applied" : m.failureReason || "Failed"),
+        previousHash: m.previousHash,
+        newHash: m.newHash,
+        diffSummary: m.narrativeDiff || "",
+      }))
+    );
+  }
+
+  public getDiffReport(previousManifestOrHash?: string | SoulManifest, profileId?: string): SoulDiffReport {
+    const current = this.getManifest(profileId);
+    let previous: SoulManifest | undefined;
+
+    if (typeof previousManifestOrHash === "object" && previousManifestOrHash !== null) {
+      previous = previousManifestOrHash;
+    } else if (typeof previousManifestOrHash === "string") {
+      const rec = this.undoStack.find((u) => u.previousManifest.integrityHash === previousManifestOrHash);
+      if (rec) previous = rec.previousManifest;
+    }
+
+    if (!previous) {
+      if (this.undoStack.length > 0) {
+        previous = this.undoStack[this.undoStack.length - 1].previousManifest;
+      } else {
+        previous = this.parser.createDefaultSoulManifest();
+      }
+    }
+
+    return this.ergonomics.generateDiffReport(previous, current);
+  }
+
   public clear(): void {
     this.profileStore.clear();
     this.mutationHistory.length = 0;
     this.undoStack.length = 0;
     this.redoStack.length = 0;
+    this.bookmarks.clear();
     const defaultManifest = this.parser.createDefaultSoulManifest();
     this.profileStore.set("default", defaultManifest);
     this.activeProfileId = "default";
@@ -632,8 +994,21 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
   }
 
   // ---------------------------------------------------------------------------
-  // Export Renderers (HTML, Markdown, CSV)
+  // Multi-Format Export / Import & Renderers
   // ---------------------------------------------------------------------------
+
+  public exportFormat(format: SoulFormatExportKind, profileId?: string): string {
+    const manifest = this.getManifest(profileId);
+    return this.parser.exportFormat(manifest, format);
+  }
+
+  public importFormat(rawContent: string, format?: SoulFormatExportKind, profileId?: string): SoulImportResult {
+    const res = this.parser.importFormat(rawContent, format);
+    if (res.success && res.manifest) {
+      this.setActiveManifest(res.manifest, profileId);
+    }
+    return res;
+  }
 
   public exportMarkdownReport(profileId?: string): string {
     const manifest = this.getManifest(profileId);
@@ -804,3 +1179,6 @@ export class BroccoliSoulSubstrate implements IBroccoliSoulSubstrate {
 </html>`;
   }
 }
+
+
+

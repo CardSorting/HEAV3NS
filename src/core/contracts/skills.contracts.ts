@@ -425,6 +425,148 @@ export interface IAnchoredSkillMutator {
   markSkillRead(skillId: string): void;
 }
 
+// ---------------------------------------------------------------------------
+// Intuitive Custom SKILL Creation & Guided Wizard Contracts
+// ---------------------------------------------------------------------------
+
+export type SkillFormatExportKind =
+  | "skill_markdown"
+  | "openai_tool_schema"
+  | "anthropic_tool_spec"
+  | "json_ld_skill"
+  | "declarative_yaml"
+  | "compact_json";
+
+export interface SkillWizardOption {
+  readonly id: string;
+  readonly label: string;
+  readonly description: string;
+  readonly defaultTier?: SkillTier;
+  readonly defaultCategory?: string;
+}
+
+export interface SkillWizardQuestion {
+  readonly step: number;
+  readonly id: string;
+  readonly title: string;
+  readonly subtitle: string;
+  readonly isMultiSelect?: boolean;
+  readonly options: readonly SkillWizardOption[];
+}
+
+export interface SkillWizardAnswers {
+  readonly name?: string;
+  readonly domainOrCategory: string;
+  readonly executionMode: string;
+  readonly initialTier?: SkillTier;
+  readonly safetyLevel?: "read_only_safe" | "mutation_allowed" | "air_gapped_isolated" | "strict_zero_gc";
+  readonly customRules?: readonly string[];
+  readonly appliedPacks?: readonly string[];
+  readonly targetSkillId?: string;
+}
+
+export interface SkillPowerUpPack {
+  readonly id: string;
+  readonly name: string;
+  readonly tagLine: string;
+  readonly description: string;
+  readonly category: "resilience" | "performance" | "security" | "observability" | "governance";
+  readonly masteryScoreDelta: number;
+  readonly addedRules: readonly string[];
+  readonly tags: readonly string[];
+  readonly supportFiles?: readonly SkillSupportFile[];
+}
+
+export interface SkillCustomTweakSpec {
+  readonly name?: string;
+  readonly description?: string;
+  readonly category?: string;
+  readonly tier?: SkillTier;
+  readonly addedRules?: readonly string[];
+  readonly addedTags?: readonly string[];
+  readonly addedPrerequisites?: readonly string[];
+  readonly masteryDelta?: number;
+}
+
+export type SkillNodeLintSeverity = "info" | "warning" | "error";
+
+export interface SkillNodeLintIssue {
+  readonly id: string;
+  readonly severity: SkillNodeLintSeverity;
+  readonly title: string;
+  readonly description: string;
+  readonly affectedField: string;
+  readonly autoFixable: boolean;
+  readonly suggestedFix?: string;
+}
+
+export interface SkillNodeLintReport {
+  readonly skillId: string;
+  readonly skillName: string;
+  readonly isValid: boolean;
+  readonly issuesCount: number;
+  readonly warningsCount: number;
+  readonly errorsCount: number;
+  readonly issues: readonly SkillNodeLintIssue[];
+  readonly overallCohesionScore: number; // 0 to 100
+  readonly plainLanguageVerdict: string;
+}
+
+export interface SkillForgeOptions {
+  readonly name?: string;
+  readonly category?: string;
+  readonly tier?: SkillTier;
+  readonly appliedPacks?: readonly string[];
+  readonly targetSkillId?: string;
+}
+
+export interface SkillDroppedFileEntry {
+  readonly filename: string;
+  readonly fullPath: string;
+  readonly formatDetected: SkillFormatExportKind | "unknown_text" | "script_code";
+  readonly skillId: string;
+  readonly sizeBytes: number;
+  readonly lastModified: number;
+  readonly isValid: boolean;
+  readonly errorMessage?: string;
+  readonly skillName?: string;
+  readonly tier?: SkillTier;
+  readonly category?: string;
+}
+
+export interface SkillDirectorySyncReport {
+  readonly directoryPath: string;
+  readonly isInitialized: boolean;
+  readonly filesScanned: number;
+  readonly loadedCount: number;
+  readonly failedCount: number;
+  readonly droppedFiles: readonly SkillDroppedFileEntry[];
+  readonly loadedSkillIds: readonly string[];
+  readonly syncTimestamp: number;
+}
+
+export interface SkillDropVaultStatus {
+  readonly directoryPath: string;
+  readonly isInitialized: boolean;
+  readonly totalFiles: number;
+  readonly loadedSkillsCount: number;
+  readonly supportedExtensions: readonly string[];
+  readonly templatesAvailable: boolean;
+}
+
+export interface SkillImportResult {
+  readonly success: boolean;
+  readonly sourceFormat: SkillFormatExportKind;
+  readonly skillId?: string;
+  readonly manifest?: SkillNodeManifest;
+  readonly warnings: readonly string[];
+  readonly error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Substrate Interface
+// ---------------------------------------------------------------------------
+
 export interface IBroccoliSkillTreeSubstrate {
   initialize(initialNodes?: readonly SkillNodeManifest[]): void;
   getNode(id: string): SkillNodeManifest | undefined;
@@ -434,6 +576,22 @@ export interface IBroccoliSkillTreeSubstrate {
   deleteNode?(id: string): boolean;
   recordSkillUsage(id: string, tickIndex: number): void;
   clear(): void;
+
+  // Intuitive Custom SKILL Forge, Wizard & Power-Up API
+  forgeCustomSkill(prompt: string, options?: SkillForgeOptions): SkillNodeManifest;
+  buildSkillFromWizard(answers: SkillWizardAnswers): SkillNodeManifest;
+  cloneAndModifySkill(sourceSkillId: string, newSkillId: string, tweaks: SkillCustomTweakSpec): SkillNodeManifest;
+  applySkillPowerUp(skillId: string, packId: string): SkillNodeManifest | undefined;
+  listSkillPowerUps(): readonly SkillPowerUpPack[];
+  lintSkillNode(skillId: string): SkillNodeLintReport;
+  autoFixSkillNode(skillId: string): SkillNodeManifest | undefined;
+  getSkillWizardQuestions(): readonly SkillWizardQuestion[];
+
+  // Dedicated Drag-and-Drop Skill Directory Vault API (skills/)
+  syncDropDirectory(customPath?: string): SkillDirectorySyncReport;
+  exportToDropDirectory(skillId: string, format?: SkillFormatExportKind, filename?: string): string;
+  getDropVaultStatus(customPath?: string): SkillDropVaultStatus;
+  ingestDroppedFile(filePath: string): SkillImportResult;
 }
 
 export interface SkillSnapshotDiffResult {
