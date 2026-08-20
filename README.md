@@ -4,137 +4,119 @@
 
 ### **The Lightning-Fast, Zero-Lag AI Coding Assistant**
 
-*An ultra-fast AI assistant for TypeScript that never freezes, lets you instantly undo any mistake in 1 second, and is dead simple to customize with drag-and-drop.*
+*A blazing-fast AI helper for TypeScript that never freezes, lets you instantly undo any mistake, and is dead simple to customize with drag-and-drop.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Ancestral Teacher](https://img.shields.io/badge/Ancestral%20Teacher-Hermes--Agent%20(Nous%20Research)-FFD700?style=for-the-badge&logo=github)](https://github.com/NousResearch/hermes-agent)
-[![Grand Monolith](https://img.shields.io/badge/Grand%20Monolith-586%20Components-success?style=for-the-badge)](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md)
-[![Agent Size](https://img.shields.io/badge/Agent%20Size-215k%20LOC%20%7C%207.77%20MB-9C27B0?style=for-the-badge)](#-empirical-benchmarks--density)
-[![Academic Paper](https://img.shields.io/badge/Academic%20Paper-AKD--DSO-9C27B0?style=for-the-badge)](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Speed](https://img.shields.io/badge/Speed-%3C0.15ms%20per%20action-brightgreen?style=for-the-badge)](#-why-its-so-fast)
+[![Undo](https://img.shields.io/badge/Undo-Instant%20Rewind-blueviolet?style=for-the-badge)](#-why-its-so-fast)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
 
 <br/>
 
-| **Core Navigation** | **Documentation & Guides** | **Subsystem Source Code** |
-|---|---|---|
-| 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🔮 [SOUL & Skills Guide](SOUL_AND_SKILLS_GUIDE.md) | ⚡ [Composition Root](src/index.ts) |
-| 🎯 [Task Cookbook](#-i-want-to-task-cookbook) | 📐 [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) | 🏭 [Engine Factory](src/factories/monolith-factory.ts) |
-| 🔮 [SOUL & Skills Vaults](#-zero-command-customization-souls--skills) | ❓ [Frequently Asked Questions](docs/FAQ.md) | ⚙️ [Core Contracts](src/core/contracts/) |
-| 👤 [Agent Blueprints](#-agent-blueprints-matrix) | ⌨️ [TUI & Commands Guide](docs/TUI_COMMANDS_GUIDE.md) | 🧠 [Agents Tier](src/agents/) |
-| ⚡ [Empirical Benchmarks](#-empirical-benchmarks--density) | 🧬 [41 Osmotic Subsystems](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) | 💾 [Sessions Tier](src/sessions/) |
-| 🏛️ [Ancestral Heritage](#-heritage--open-science) | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) | 🔧 [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) |
+| 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🎯 [How-To Cookbook](#-how-to-do-anything-in-1-command) | 🔮 [Drag & Drop Setup](#-drag--drop-customization-souls--skills) | 👤 [AI Roles](#-pick-an-ai-role) | 📖 [Full Guide](SOUL_AND_SKILLS_GUIDE.md) |
+|---|---|---|---|---|
 
 ---
 
 </div>
 
-> *Dedicated to the open-source community and the visionary researchers at **Nous Research** & the **Hermes community**. Built with the belief that agent software can be fast, deterministic, and crafted with soul.*
-> — **William Andrew Cruz** (`bozoegg` / `CardSorting`), *Author & Hermes Ambassador* · [Read Preface](PREFACE.md)
+> *Dedicated to the open-source community and the creators at **Nous Research** & **Hermes**. Made with love so anyone can build with fast, reliable AI.*
+> — **William Andrew Cruz** (`bozoegg` / `CardSorting`) · [Read Author's Note](PREFACE.md)
 
 ---
 
-## 🌟 Core Engine Pillars
+## 🌟 Why It's So Fast & Easy
 
-| Pillar | Architectural Mechanism | Measured SLA / Result |
+| What You Get | Why It Matters to You | How Fast It Is |
 |---|---|---|
-| 🕹️ **Deterministic Frame Ticks** | Single-threaded atomic frame loop (`Input ➔ Dispatch ➔ Mutation ➔ Telemetry`) | **$0.12\text{ ms}$ latency**; eliminates microservice queues |
-| ⚡ **Zero-GC Contiguous Slab** | 16 MB pre-allocated `ArrayBuffer` arena with static cached UTF-8 encoders | **Zero GC pauses** during live token streaming |
-| 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC overhead | **$8,500+\text{ frames/sec}$** ($>8.5\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel** | Instant rollback of virtual files (`SessionVfs`), memory, and transcripts | **$0.01\text{ ms p95}$** instant rollback for MCTS branch search |
+| ⚡ **Zero Lag & No Waiting** | Runs directly on your machine with no bloated middleware or slow background delays. | **Instant (< 0.15 ms)** |
+| ⏪ **1-Click Instant Undo** | Made a bad edit? Type `/rewind 1` and all your files and conversation snap back instantly. | **Under 1 millisecond** |
+| 🛡️ **Never Freezes or Stutters** | Built with smooth, dedicated memory so your terminal never lags or locks up. | **Rock solid** |
+| 🚀 **Supercharged Speed** | Can run over **8,500 actions every second** without breaking a sweat. | **8,500+ actions/sec** |
 
 ---
 
-## 🔮 Zero-Command Customization: `souls/` & `skills/`
+## 🔮 Drag & Drop Customization (`souls/` & `skills/`)
 
-Customize your agent simply by dropping files into your workspace folders:
+Customize your AI without touching complicated config files:
 
-- 🎭 **`souls/`** — Drop persona files (`.soul.md`, `.card.json`, `.gpt.json`, `.claude.xml`, or `.txt`) to instantly update identity, voice & ethos.
-- ⚡ **`skills/`** — Drop capability files (`SKILL.md`, `*.tool.json`, `*.claude.xml`, `*.py`, or `.txt`) to instantly add tools & workflows.
+- 🎭 **`souls/` folder** — Drop in who the AI is (personality, tone, style rules, or custom prompts).
+- ⚡ **`skills/` folder** — Drop in what the AI can do (new tools, scripts, or automated workflows).
 
-> **💡 Effortless Setup**: Describe what you want in plain text (*One-Shot Forge*), answer the *5-Step Wizard*, apply *Power-Up Packs* (`zero_gc_buffer`, `retry_resilience`), or 1-click auto-heal with the *Doctor Linter*. See 📖 [SOUL_AND_SKILLS_GUIDE.md](SOUL_AND_SKILLS_GUIDE.md).
+> **💡 4 Easy Ways to Build**:
+> 1. **Drag & Drop**: Drop any `.md`, `.json`, `.py`, or `.txt` file into `souls/` or `skills/`.
+> 2. **Plain English**: Describe what you want in simple words (`/soul forge` or `/skill forge`).
+> 3. **5-Step Wizard**: Answer 5 quick multiple-choice questions to build a custom assistant.
+> 4. **1-Click Doctor**: Type `/soul doctor` or `/skill doctor` to automatically find and fix any errors.
+>
+> 📖 *Want all the details? See the [Easy SOUL & Skills Guide](SOUL_AND_SKILLS_GUIDE.md).*
 
 ---
 
 ## 🚀 Quick Start in 60 Seconds
 
 ```bash
-# 1. Clone & Install (Pure TypeScript, zero C++ bindings)
+# 1. Download & Install
 git clone https://github.com/CardSorting/LUMI-JOY.git && cd LUMI-JOY
 npm install && npm run build
 
-# 2. Interactive Provider Setup (Codex PKCE OAuth, Claude, OpenAI, Ollama)
+# 2. Add your AI API key (guided step-by-step setup)
 npx tsx src/index.ts --setup
 
-# 3. Launch with Specialized Persona (e.g. Coder, Researcher, SRE)
+# 3. Start coding!
 npx tsx src/index.ts --profile coder
 ```
 
-### 🖥️ Differential Terminal Canvas
+### 🖥️ Simple, Clean Terminal Screen
 
 ```text
 ╔══════════════════════════════════════════════════════════════════════════════════════════╗
 ║ ⚡ LUMI-JOY v1.0.0 │ 👤 [💻 Coder] │ 🧠 [gpt-5.6-luna] │ ⏱️ 0.12ms │ 💰 $0.0018 │ ⭐ Fav ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════╣
-║  👤 You: Refactor src/core/auth.ts to add strict token expiration validation             ║
+║  👤 You: Refactor auth.ts to add expiration checks                                        ║
 ║  ⚡ LUMI (Coder):                                                                        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │ 🔧 Tool: patch ("src/core/auth.ts") ➔ Line-anchored edit verified (0.04ms)         │  ║
+║  │ 🔧 Checked auth.ts and applied clean edits with unit tests (0.04ms)                │  ║
 ║  └────────────────────────────────────────────────────────────────────────────────────┘  ║
-║  I have added strict JWT expiration claims verification and unit test assertions.        ║
+║  I have updated auth.ts with clean expiration validation and verified the tests pass!    ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════╣
-║ 💡 Shortcuts: [Ctrl+M] Model  [Ctrl+P] Setup  [/profile] Switch Persona  [Ctrl+C] Abort  ║
+║ 💡 Shortcuts: [Ctrl+M] Switch Model  [Ctrl+P] Setup  [/profile] Change Role  [Ctrl+C] Quit ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## 🎯 "I Want To..." Task Cookbook
+## 🎯 How-To Do Anything in 1 Command
 
-| Goal | Command / Action | Mechanism |
+| What I Want to Do | Exact Command to Type | What Happens |
 |---|---|---|
-| **Write or refactor code** | `/profile use coder` | TypeScript LSP, AST parsers, line-anchored atomic mutators. |
-| **Academic & web research** | `/profile use researcher` | Citation rigor, arXiv tools, web intelligence synthesis. |
-| **Triage production crashes** | `/profile use sre` | Diagnostic ring buffers, health probes, self-healing tools. |
-| **Undo last file modification** | `/rewind 1` | Instantly rolls back VFS, memory, and transcript in **$0.01\text{ ms}$**. |
-| **Create custom persona** | Drop in `souls/` or `/soul forge` | Auto-senses format and verifies SHA-256 integrity. |
-| **Create custom skill** | Drop in `skills/` or `/skill forge` | Ingests tool schemas and builds procedural execution DAG. |
-| **Hot-swap AI model** | `Ctrl+M` *(or `/model claude-3-7`)* | Switches provider with 100% prefix cache retention. |
-| **Run StateM FSM runbook** | `/runbook start coding_loop` | 10-step atomic workflow state machine with zero-subshell predicates. |
+| **Write or fix code** | `/profile use coder` | Gives the AI coding tools, test checkers, and refactoring helpers. |
+| **Search the web & read papers** | `/profile use researcher` | Lets the AI search the web, read articles, and summarize findings. |
+| **Fix a broken app or bug** | `/profile use sre` | Turns on diagnostic tools to find crashes and suggest fixes. |
+| **Undo the AI's last action** | `/rewind 1` | Instantly rolls back all edited files to how they were before. |
+| **Create a custom AI persona** | Drop in `souls/` or `/soul forge` | Instantly creates and activates your custom assistant. |
+| **Add a new tool or skill** | Drop in `skills/` or `/skill forge` | Gives your AI new capabilities and scripts. |
+| **Switch AI model on the fly** | `Ctrl+M` *(or `/model claude-3-7`)* | Instantly swaps between OpenAI, Claude, or local models. |
 
 ---
 
-## 👤 Agent Blueprints Matrix
+## 👤 Pick an AI Role
 
-| Blueprint | Focus | Key Toolsets | Best Model |
-|:---|---|---|---|
-| 💻 **`coder`** | Software Engineering, Refactoring & Test Suites | `files`, `execution`, `lsp`, `git` | `gpt-5.6-luna` |
-| 🔬 **`researcher`** | Literature Synthesis, Fact Checking & Intelligence | `files`, `web`, `memory` | `claude-3-7-sonnet` |
-| 🛡️ **`sre`** | Incident Triage, System Forensics & Diagnostics | `execution`, `git`, `doctor` | `gpt-5.6-luna` |
-| ✍️ **`writer`** | Architecture ADRs, Technical Guides & Specs | `files`, `memory` | `claude-3-7-sonnet` |
-| 🎓 **`student`** | Socratic Learning Tutor & Walkthroughs | `files`, `memory` | `gpt-4o` |
-| 🎨 **`creative`** | Game Mechanics, Assets & Worldbuilding | `vision`, `memory` | `gpt-4o` |
-| ⚡ **`minimal`** | Headless High-Speed Scripting | `core`, `files` | `gpt-4o-mini` |
-
----
-
-## ⚡ Empirical Benchmarks & Density
-
-> **7.77 MB Source (`src/`)** · **215k LOC** · **16 MB Zero-GC Slab** · **586 Composed Components** · **0 Compilation Errors**
-
-| Metric | Legacy Monorepos | LUMI-JOY Monolith | Verified Mechanism |
-|---|---|---|---|
-| **Architecture** | 18+ Loose Packages | **3-Tier Monolith** (`agents`, `sessions`, `tooling`) | In-process zero-overhead dispatch |
-| **Turn Latency** | $14.2\text{ ms}$ | **$<0.15\text{ ms}$** | Atomic frame tick lifecycle ([LIVE_BASELINE.json](docs/LIVE_BASELINE.json)) |
-| **Throughput** | $70.4\text{ fps}$ | **$8,500+\text{ frames/sec}$** | In-process monolithic kernel ($>8.5\times$ SLA) |
-| **State Rewind** | $285.0\text{ ms}$ | **$0.01\text{ ms p95}$** | Frame snapshots restoring VFS and memory state |
-| **Memory Invariant**| Heap GC Sweeps | **16 MB Zero-GC Slab** | Pre-allocated `ArrayBuffer` eliminating GC pauses |
+| Role | What It Does Best | Included Tools |
+|:---|---|---|
+| 💻 **`coder`** | Writes code, fixes bugs, refactors, and generates unit tests | Files, Code editing, Terminal, Git |
+| 🔬 **`researcher`** | Searches the web, reads documentation, and summarizes research | Web search, File reader, Memory notes |
+| 🛡️ **`sre`** | Diagnoses errors, reads logs, and fixes system crashes | Diagnostics, Health checks, Terminal |
+| ✍️ **`writer`** | Writes documentation, user guides, and technical explanations | Files, Markdown, Memory notes |
+| 🎓 **`student`** | Friendly tutor that explains concepts step-by-step | Step-by-step hints, Explanations |
+| 🎨 **`creative`** | Brainstorms game designs, mechanics, stories, and ideas | Brainstorming, Vision, Memory notes |
+| ⚡ **`minimal`** | Super-fast, lightweight assistant with no extra fluff | Fast file editing, Minimal tokens |
 
 ---
 
-## 🏛️ Heritage & Open Science
+## 🏛️ Open Source & Credits
 
-- **☤ Ancestral Teacher**: Forged via **AKD-DSO** distillation from [`hermes-agent`](https://github.com/NousResearch/hermes-agent) (**Nous Research** / MIT License). Special thanks to Nous Research for championing open weights, agent self-improvement, and user sovereignty.
-- **🎯 StateM FSM Runbooks (`ADR-131`)**: State-machine-governed workflow execution with atomic verification gates.
-- **📄 License**: Distributed under the **Apache License 2.0** ([LICENSE](LICENSE) · [NOTICE](NOTICE) · [CONTRIBUTING.md](CONTRIBUTING.md) · [PATENT-NON-AGGRESSION-PLEDGE.md](PATENT-NON-AGGRESSION-PLEDGE.md)).
+- **❤️ Built with Inspiration from**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) by **Nous Research**. Thank you to the open-source community for making AI open and accessible to everyone.
+- **📄 License**: Free & Open Source under the **Apache License 2.0** ([LICENSE](LICENSE)).
 
