@@ -62,33 +62,18 @@ Serving as a community mentor and ambassador for Hermes, organizing meetups, and
 
 ---
 
-## 🌟 Executive Summary: What LUMI-JOY Is & Why This Matters
+## 🌟 Architecture & Core Pillars: Deterministic Game Engine Kernel
 
-**LUMI-JOY** is an enterprise-grade TypeScript autonomous AI agent framework engineered from the ground up like a **Deterministic Game Engine Kernel**.
-
-### The Core Problem in Modern AI Agents
-Traditional AI agent frameworks (such as LangChain, AutoGen, CrewAI, and uncoordinated REST micro-packages) treat LLM interactions as loose asynchronous network wrappers. This approach incurs severe structural bottlenecks:
-- **Framework Soup & Latency**: Multi-package microservices and IPC queues introduce $14\text{ ms} - 500\text{ ms}$ of serialization overhead per turn before model reasoning even begins.
-- **State Drift & Tool Desynchronization**: Multi-turn agent loops lose context and produce non-deterministic file edits when intermediate tool steps fail.
-- **Garbage Collection (GC) Stutter**: Generating thousands of short-lived V8 heap objects per turn triggers Node.js garbage collection sweeps, causing stutter and memory pressure during live streaming.
-- **Costly Re-Execution**: When an agent makes a mistake on turn 8, traditional frameworks require restarting the entire session from scratch.
-
-### The Architectural Breakthrough: Game Engine Architecture for AI Agents
-LUMI-JOY eliminates software friction by applying proven principles from high-performance video game physics and rendering engines:
+**LUMI-JOY** is an enterprise-grade TypeScript autonomous AI agent framework engineered from the ground up like a **Deterministic Game Engine Kernel**, eliminating microservice serialization queues and V8 garbage collection stutter:
 
 | Core Architecture Pillar | Implementation Mechanism | Concrete Impact & Measured Result |
 | :--- | :--- | :--- |
-| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`) | **$0.12\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
-| ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming and rapid multi-tool loops |
+| 🕹️ **Deterministic Frame Ticks (`tick()`)** | Single-threaded atomic frame lifecycle (`Input -> Context Assembly -> Dispatch -> Mutation -> Telemetry`) | **$0.12\text{ ms}$ fast-path mean latency**; eliminates microservice queues |
+| ⚡ **Zero-GC Contiguous Memory Slab** | 16MB pre-allocated `ArrayBuffer` slab (`ArenaAllocator`) with static cached UTF-8 encoders | **Zero Garbage Collection pauses** during live token streaming |
 | 🚀 **High-Throughput Execution** | In-process monolithic dispatch bypassing network IPC | **$8506.11\text{ frames/second}$** throughput ($>8.5\times$ above the $1,000\text{ fps}$ SLA) |
-| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts (`SessionMemoryStore`) | **$0.029\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
-| 👤 **Zenith Multi-Profile Substrate (`ADR-119`)** | Zero global mutation, prefix cache frame decomposition, ICL few-shot exemplars, resilient fallback ladders, and run step budgeting | **$29.37\text{M ops/sec}$ throughput** ($0.034\ \mu\text{s/op}$), $0.0024\text{ ms}$ state rewind, up to 90% prompt cache token savings |
-| 🖥️ **Differential Terminal User Interface** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive box borders, syntax highlighting, fuzzy autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
-
-### 🎯 Who This Is For & Why It Matters
-- **For Developers**: Instant feedback, zero UI tearing, instant state rollback (`/rewind`) during iterative debugging without restarting the agent or re-parsing transcripts, and sub-millisecond execution without garbage collection pauses.
-- **For AI Systems & Researchers**: Eliminating software friction enables high-frequency agent search techniques (Monte Carlo Tree Search, branch-and-bound, self-reflection loops) to run locally at thousands of frames per second instead of paying cloud microservice latency penalties.
-- **For Enterprises & Leaders**: Dramatic reduction in infrastructure compute costs, deterministic predictable behavior with 0 state drift, enterprise OAuth PKCE security, and Apache 2.0 open-source licensing backed by a defensive patent non-aggression pledge.
+| ⏪ **$O(1)$ State Time-Travel (`rewindToSnapshot()`)** | Restores conversation transcripts, staged virtual files (`SessionVfs`), and memory facts | **$0.029\text{ ms p95}$** instant rollback; enables multi-branch search (MCTS) |
+| 👤 **Zenith Multi-Profile Substrate (`ADR-119`)** | Zero global mutation, prefix cache frame decomposition, ICL exemplars, resilient fallback ladders | **$29.37\text{M ops/sec}$ throughput** ($0.034\ \mu\text{s/op}$), up to 90% prompt cache token savings |
+| 🖥️ **Differential Terminal UI** | Synchronized ANSI cell rendering (`\x1b[?2026h`), adaptive borders, syntax highlighting, autocomplete | **Zero visual flicker**; borders never wrap on split-screen terminals |
 
 ---
 
@@ -103,55 +88,15 @@ LUMI-JOY eliminates software friction by applying proven principles from high-pe
 
 ---
 
-## 💡 Why LUMI-JOY? (The Architectural Imperative)
-
-| Architectural Challenge | Traditional Frameworks (LangChain/CrewAI) | AKD-DSO Monolith (`LUMI-JOY`) | Business & Technical Impact |
-|---|---|---|---|
-| **Framework Overhead** | 18+ micro-packages with IPC queues | **Single 3-tier monolith** (`agents`, `sessions`, `tooling`) | **$<1.0\text{ ms}$ fast-path mean latency SLA** |
-| **Context Safety & DSL** | Loose string joins prone to injection | **Formal `ContextDslEngine` AST & SHA-256 digests** | **Deterministic bounds & injection defense** |
-| **Memory & GC Latency** | Dynamic heap allocations causing GC sweeps | **Contiguous 16MB ArrayBuffer zero-GC slab** | **Zero Garbage Collection pauses during live streaming** |
-| **State Rewind & Audit** | Slow transcript re-parsing | **$O(1)$ in-memory frame snapshot restoration** | **$0.029\text{ ms p95}$ instant time-travel rollback** |
-| **Persona Isolation** | Global environment mutation (`HERMES_HOME`) | **Zenith Multi-Profile Substrate (`ADR-119`)** | **$29.37\text{M ops/sec}$, prefix cache optimization** |
-
----
-
-## 🎮 Inspired by Game Engines: Deterministic Architecture
-
-LUMI-JOY adapts core principles from high-performance video game physics and rendering engines ([ADR-008](.wiki/adr/ADR-008-deterministic-game-engine-architecture.md)):
-
-- 🕹️ **Frame Ticks (`tick()`)**: Atomic 5-stage turn lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`).
-- 💾 **Frame Snapshots (`GameStateSnapshot`)**: Captures complete engine state (VFS staged overlays, memory facts, token budgets) at frame $t$.
-- ⏪ **State Rewind (`rewindToSnapshot()`)**: Restores engine state in **$<0.05\text{ ms}$**, enabling Monte Carlo Tree Search (MCTS) and subagent branching.
-- ⚡ **Zero-GC Arena Allocator**: 16MB contiguous memory slab eliminating V8 garbage collection stutter during token streaming.
-
----
-
 ## 🏛️ Heritage, Open Science & StateM FSM Runbooks
 
-### 🌟 Ancestral Heritage: Nous Research (`hermes-agent`)
-LUMI-JOY was forged through the **AKD-DSO** Osmosis methodology, taking foundational architectural inspiration from [`hermes-agent`](https://github.com/NousResearch/hermes-agent) (**Nous Research**). We express our deepest gratitude to Nous Research for championing open science, unconstrained reasoning models, and user sovereignty. LUMI-JOY distills these open paradigms into a high-density, deterministic TypeScript monolith operating over BroccoliDB.
-
-### 🎯 StateM Benchmark-Winning FSM Runbooks (ADR-131)
-Inspired by **StateM** (Terminal-Bench 2.1 champion), LUMI-JOY enforces workflow execution through formal finite state machines ([ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)):
-- **10-Step Atomic State Transitions** (`RunbookSupervisor`): Graph-theoretic state transitions with atomic rollback upon gate failure.
-- **Zero-Subshell In-Memory Predicates** (`FilePredicateEvaluator`): Instant file existence, regex, and JSONPath assertions in $<5.0\text{ ms}$.
-- **Amnesia-Proof Context Compaction** (`StatefulCompactionSynthesizer`): Guarantees that `/compact` preserves active stage directives with 0 context drift.
-- **Interactive Commands**: `/runbook start <preset>` · `/runbook goto <stage>` · `/runbook compact` (Presets: `coding_loop`, `bugfix_patch`, `feature_delivery`, `security_audit`).
-
-👉 **Read the Full Evaluation**: [StateM Runbook FSM Evaluation (docs/STATEM_RUNBOOK_FSM_EVALUATION.md)](docs/STATEM_RUNBOOK_FSM_EVALUATION.md) · [Hermes Osmosis Subsystems Matrix](docs/HERMES_OSMOSIS_SUBSYSTEMS.md).
+- **☤ Ancestral Heritage (Nous Research)**: Forged via the **AKD-DSO** Osmosis methodology, distilling the open paradigms of [`hermes-agent`](https://github.com/NousResearch/hermes-agent) into a high-density, typed TypeScript monolith over BroccoliDB.
+- **🎯 StateM Benchmark-Winning FSM Runbooks (`ADR-131`)**: 10-step atomic state transitions (`RunbookSupervisor`), zero-subshell predicates ($<5.0\text{ ms}$), and amnesia-proof context compaction.
+  - *Commands*: `/runbook start <preset>` · `/runbook goto <stage>` · `/runbook compact` (Presets: `coding_loop`, `bugfix_patch`, `feature_delivery`, `security_audit`).
 
 ---
 
-## 🌟 Business & Technical ROI Highlights
-
-- **⚡ Enforced Fast-Path Latency**: Direct function dispatch eliminates micro-package IPC/RPC queues; `ArchitectureGuardrailGate` requires mean local frame latency below $1.0\text{ ms}$.
-- **📈 Enforced Fast-Path Throughput**: The same guardrail requires at least $1,000$ deterministic frames/second and records the host-specific observation in the live baseline.
-- **🔄 $O(1)$ State Rewind**: In-memory snapshot restoration is verified for state correctness and a warmed p95 below $0.1\text{ ms}$.
-- **🔒 Enterprise Security & OAuth PKCE**: Native PKCE OAuth 2.0 integration with zero-leak credential storage in `~/.lumi/config.json` and strict permission gates (`CommandPermissionController`).
-- **🧠 Formal Context Envelope DSL & Template Engine**: Structured `ContextDslEngine` AST parsing (`LUMI-CONTEXT/1`, `LUMI-THREAD/1`, `LUMI-MEMORY/1`, `LUMI-TOOL-RESULT/1`, `LUMI-GOAL/1`) and `PromptTemplateEngine` (`{{#if}}`/`{{#unless}}`) prevent prompt injection and guarantee deterministic context control.
-- **🛡️ Contiguous Zero-GC Substrate**: 16MB pre-allocated ArrayBuffer memory slab eliminates runtime Garbage Collection latency spikes.
-
-### Latest verified workspace baseline
+### Latest Verified Workspace Baseline
 
 The authoritative run was generated on **2026-08-17T04:06:43.562Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
 
@@ -163,7 +108,7 @@ The authoritative run was generated on **2026-08-17T04:06:43.562Z** using Node.j
 | Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |
 | Architecture and performance guardrails | 6/6 checks |
 
-Performance timings are host-sensitive and must not be copied forward as permanent guarantees. Read the generated [machine-readable baseline](docs/LIVE_BASELINE.json), [benchmark evidence](docs/BENCHMARK_REPORT.md), and [architectural audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) for the exact current measurements and regeneration timestamp.
+*(Consult [LIVE_BASELINE.json](docs/LIVE_BASELINE.json), [BENCHMARK_REPORT.md](docs/BENCHMARK_REPORT.md), and [GRAND_ARCHITECTURAL_AUDIT.md](docs/GRAND_ARCHITECTURAL_AUDIT.md) for live host measurements).*
 
 ---
 
