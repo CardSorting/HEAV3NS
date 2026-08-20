@@ -7,6 +7,8 @@ This directory contains the authoritative current-worktree runtime evidence.
 [`LIVE_BASELINE.json`](LIVE_BASELINE.json) is the machine-readable source. [`BENCHMARK_REPORT.md`](BENCHMARK_REPORT.md) and [`GRAND_ARCHITECTURAL_AUDIT.md`](GRAND_ARCHITECTURAL_AUDIT.md) are generated from the same in-memory run by `npm run baseline:update`.
 
 For architectural deep-dives, see:
+- [`adr/README.md`](adr/README.md) — Master Architecture Decision Record (ADR) Workspace cataloging 173 system architectural decisions.
+- [`adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md`](adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) — Zenith-Tier Deterministic Byte-Stable Prompt Caching, Telemetry Headers & Auto-Tuning Substrate (Pass 195).
 - [`RUNTIME_ARCHITECTURE_GUIDE.md`](RUNTIME_ARCHITECTURE_GUIDE.md) — Comprehensive technical reference for memory layout, TUI rendering, and time-travel rewind.
 - [`RUNTIME_OPTIMIZATION_RECORD.md`](RUNTIME_OPTIMIZATION_RECORD.md) — Exhaustive optimization and hardening changelog across all runtime subsystems.
 - [`STATEM_RUNBOOK_FSM_EVALUATION.md`](STATEM_RUNBOOK_FSM_EVALUATION.md) — Empirical benchmark and evaluation report for the StateM Runbook FSM Strategy (Pass 193 / ADR-131).

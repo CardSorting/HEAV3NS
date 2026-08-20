@@ -21,7 +21,8 @@
 | 🎯 [How-To Cookbook](#-how-to-do-anything-in-1-command) | ❓ [Frequently Asked Questions](docs/FAQ.md) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
 | 🔮 [Drag & Drop Setup](#-drag--drop-customization-souls--skills) | ⌨️ [TUI Commands Guide](docs/TUI_COMMANDS_GUIDE.md) | 🧬 [41 Osmotic Subsystems](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) |
 | 👤 [AI Roles](#-pick-an-ai-role) | 📖 [Author's Preface & Story](PREFACE.md) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) |
-| ⚡ [Advanced Documentation](#-advanced-documentation--developer-reference) | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) | ⚡ [Composition Root](src/index.ts) |
+| ⚡ [Prompt Caching Subsystem](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) | 🏛️ [ADR Workspace](docs/adr/README.md) |
+| ⚡ [Advanced Documentation](#-advanced-documentation--developer-reference) | 🧪 [Verification Suites](scripts/validate-prompt-cache.ts) | ⚡ [Composition Root](src/index.ts) |
 
 ---
 
@@ -40,6 +41,25 @@
 | ⏪ **1-Click Instant Undo** | Made a bad edit? Type `/rewind 1` and all your files and conversation snap back instantly. | **Under 1 millisecond** |
 | 🛡️ **Never Freezes or Stutters** | Built with smooth, dedicated memory so your terminal never lags or locks up. | **Rock solid** |
 | 🚀 **Supercharged Speed** | Can run over **8,500 actions every second** without breaking a sweat. | **8,500+ actions/sec** |
+
+---
+
+## 💡 How LUMI Saves You Money & Time (In Plain English)
+
+Ever notice how AI bills get expensive and conversations feel slower the longer you talk? **LUMI fixes that automatically.**
+
+### ☕ The Coffee Shop Analogy: What is Prompt Caching?
+- **Without LUMI (Normal AI)**: Imagine ordering coffee, but before the barista takes your order, you have to read them the *entire history of coffee*, recite the entire menu, and re-explain your whole life story. You get billed for every single word, every single turn!
+- **With LUMI (Smart Prompt Caching)**: LUMI locks the heavy background rules, code schemas, and system tools into memory. The barista already knows you—you only pay for your quick, new question.
+
+| Feature | What It Means in Normal Words | The Result |
+|---|---|---|
+| 💸 **Up to 90% Cheaper** | You don't pay to re-send instructions the AI already read. | Slashes your Claude, OpenAI & DeepSeek bills by up to 90% |
+| ⚡ **Instant First Word** | The AI doesn't waste time re-reading your codebase from scratch. | Starts responding in milliseconds instead of seconds |
+| 🪄 **Magic Auto-Tuning** | Accidentally put dynamic dates or timestamps in your prompt? LUMI quietly cleans it up for you. | Turns messy prompts into Grade A+ cache efficiency |
+| 📊 **Clear Dollar Forecasts** | Shows you exact dollar savings (Daily, Monthly, Annual) in plain English. | No math needed—see exactly what you saved |
+
+> 📖 **Curious about how it works under the hood?** Check out our [Architecture Decision Records (ADRs)](docs/adr/README.md) and [ADR-135: Zenith Prompt Caching](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md). Think of them as the open recipe cards for how LUMI is built!
 
 ---
 

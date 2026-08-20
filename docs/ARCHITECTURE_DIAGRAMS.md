@@ -150,8 +150,55 @@ model context window
 
 ---
 
+## 6. ⚡ Zenith-Tier Prompt Caching Subsystem & Execution Span Waterfall (ADR-135)
+
+```mermaid
+graph TD
+    subgraph "1. Client Turn Request"
+        A[User Turn Request] --> B[Dynamic Variable Sanitizer]
+    end
+
+    subgraph "2. 5-Tier Semantic Segmentation"
+        B --> C[L0: Base Identity & System Kernel]
+        C --> D[L1: Canonical Tool Declarations]
+        D --> E[L2: Project Grounding & Rules]
+        E --> F[L3: History Compaction Markers]
+        F --> G[L4: Volatile User Message]
+    end
+
+    subgraph "3. Substrate & Telemetry Engine"
+        C -->|SHA-256 Hash| H[Layered Fingerprint L0-L3]
+        D -->|Canonical Sort| H
+        E -->|Rule Cache| H
+        H --> I[X-Lumi-Cache Headers]
+        H --> J[Datadog APM Spans & Trace]
+        H --> K[AWS Multi-Horizon Forecast]
+    end
+
+    subgraph "4. Execution & Savings"
+        I --> L[Provider Dispatch: Cache HIT 75-90% Discount]
+        J --> M[Prefill TTFT Reduction: 85-94% Faster]
+        K --> N[Real-Time ROI Accounting & Scorecard]
+    end
+
+    style A fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style C fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style D fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style E fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style F fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style G fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style H fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
+    style L fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style M fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style N fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+```
+
+---
+
 ## Related Architectural Documentation
 
+- [Master Architecture Decision Records (ADR) Workspace](adr/README.md)
+- [ADR-135: Zenith-Tier Prompt Caching Subsystem](adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md)
 - [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)
 - [Grand Architectural Audit](GRAND_ARCHITECTURAL_AUDIT.md)
 - [Benchmark Report](BENCHMARK_REPORT.md)

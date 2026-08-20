@@ -319,6 +319,164 @@ export class PromptCacheToolSuite {
           return this.executeTool("prompt_cache_get_latest_envelope", args);
         },
       },
+      {
+        name: "prompt_cache_analyze_efficiency",
+        description: "Analyzes prompt cache efficiency, structural coverage, and financial/latency ROI.",
+        parameters: {
+          systemPrompt: { type: "string", required: true, description: "System prompt" },
+          modelId: { type: "string", description: "Target model ID (e.g. anthropic/claude-3.7-sonnet)" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_analyze_efficiency", args);
+        },
+      },
+      {
+        name: "prompt_cache_simulate_savings",
+        description: "Simulates multi-turn cost and latency savings for a model and prompt size.",
+        parameters: {
+          modelId: { type: "string", description: "Target model ID" },
+          turnCount: { type: "number", description: "Projected turn count" },
+          promptTokens: { type: "number", description: "Prompt token size" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_simulate_savings", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_human_summary",
+        description: "Generates approachable plain-English diagnostic summary of prompt cache status.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_human_summary", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_provider_directives",
+        description: "Fetches provider-specific caching directives and breakpoint rules.",
+        parameters: {
+          modelId: { type: "string", description: "Target model ID" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_provider_directives", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_scorecard",
+        description: "Generates 4-dimensional prompt caching efficiency scorecard and grade (A+/A/B/C/D).",
+        parameters: {
+          systemPrompt: { type: "string", description: "System prompt text" },
+          modelId: { type: "string", description: "Target model ID" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_scorecard", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_invalidation_forensics",
+        description: "Pinpoints exact character, line, column, and byte offset where prompt prefix mutated.",
+        parameters: {
+          prevSystemPrompt: { type: "string", description: "Previous system prompt" },
+          newSystemPrompt: { type: "string", description: "New system prompt" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_invalidation_forensics", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_optimization_prescriptions",
+        description: "Retrieves prioritized, step-by-step actionable recommendations for maximizing cache retention.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_optimization_prescriptions", args);
+        },
+      },
+      {
+        name: "prompt_cache_calculate_provider_roi",
+        description: "Calculates multi-provider cost savings comparison matrix across frontier models.",
+        parameters: {
+          promptTokens: { type: "number", description: "Total prompt tokens" },
+          cachedTokens: { type: "number", description: "Cached prompt tokens" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_calculate_provider_roi", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_telemetry_headers",
+        description: "Generates Cloudflare/Vercel-style HTTP telemetry headers (X-Lumi-Cache-*) for prompt cache tracing.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_telemetry_headers", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_savings_forecast",
+        description: "Generates period-based savings forecasts (Daily/Weekly/Monthly/Annual) and warmth tiering.",
+        parameters: {
+          projectedDailyTurns: { type: "number", description: "Projected daily turns (default: 200)" },
+          modelId: { type: "string", description: "Target model ID" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_savings_forecast", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_layered_fingerprints",
+        description: "Generates Docker-style multi-layer SHA-256 cache fingerprints across L0-L3 tiers.",
+        parameters: {
+          systemPrompt: { type: "string", description: "System prompt text" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_layered_fingerprints", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_remediation_diffs",
+        description: "Retrieves step-by-step remediation recipes with before/after code diff patterns.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_remediation_diffs", args);
+        },
+      },
+      {
+        name: "prompt_cache_get_waterfall_trace",
+        description: "Generates Datadog/APM-style prefill waterfall execution timeline across semantic tiers.",
+        parameters: {
+          modelId: { type: "string", description: "Target model ID" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_get_waterfall_trace", args);
+        },
+      },
+      {
+        name: "prompt_cache_audit_alerts",
+        description: "Audits real-time anomaly detection and prompt cache health alert policies.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_audit_alerts", args);
+        },
+      },
+      {
+        name: "prompt_cache_explain_plan",
+        description: "PostgreSQL-style EXPLAIN simulation for prompt caching costs and prefill latency.",
+        parameters: {
+          systemPrompt: { type: "string", required: true, description: "System prompt text" },
+          modelId: { type: "string", description: "Target model ID" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_explain_plan", args);
+        },
+      },
+      {
+        name: "prompt_cache_auto_tune_prompt",
+        description: "Automatically restructures a system prompt to isolate volatile variables and maximize cache reuse.",
+        parameters: {
+          systemPrompt: { type: "string", required: true, description: "Raw system prompt" },
+        },
+        execute: async (args: Record<string, unknown>) => {
+          return this.executeTool("prompt_cache_auto_tune_prompt", args);
+        },
+      },
     ];
   }
 
@@ -555,6 +713,109 @@ export class PromptCacheToolSuite {
         case "prompt_cache_get_latest_envelope": {
           const env = this.supervisor.getLatestEnvelope();
           return { success: true, envelope: env };
+        }
+
+        case "prompt_cache_analyze_efficiency": {
+          const systemPrompt = typeof args.systemPrompt === "string" ? args.systemPrompt : "";
+          const modelId = typeof args.modelId === "string" ? args.modelId : undefined;
+          const analysis = this.supervisor.analyzePromptEfficiency(systemPrompt, [], [], modelId);
+          return { success: true, analysis };
+        }
+
+        case "prompt_cache_simulate_savings": {
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const turnCount = typeof args.turnCount === "number" ? args.turnCount : 20;
+          const promptTokens = typeof args.promptTokens === "number" ? args.promptTokens : 4096;
+          const simulation = this.supervisor.simulateSavings(modelId, turnCount, promptTokens);
+          return { success: true, simulation };
+        }
+
+        case "prompt_cache_get_human_summary": {
+          const summary = this.supervisor.getHumanDiagnosticSummary();
+          return { success: true, summary };
+        }
+
+        case "prompt_cache_get_provider_directives": {
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const directives = this.supervisor.getProviderDirectives(modelId);
+          return { success: true, directives };
+        }
+
+        case "prompt_cache_get_scorecard": {
+          const systemPrompt = typeof args.systemPrompt === "string" ? args.systemPrompt : "";
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const scorecard = systemPrompt
+            ? this.supervisor.getCacher().generateScorecard(systemPrompt, [], [], modelId)
+            : this.supervisor.getScorecard();
+          return { success: true, scorecard };
+        }
+
+        case "prompt_cache_get_invalidation_forensics": {
+          const prevPrompt = typeof args.prevSystemPrompt === "string" ? args.prevSystemPrompt : undefined;
+          const newPrompt = typeof args.newSystemPrompt === "string" ? args.newSystemPrompt : undefined;
+          const forensics = prevPrompt && newPrompt
+            ? this.supervisor.detectInvalidationPoint(prevPrompt, newPrompt)
+            : this.supervisor.getInvalidationForensics(prevPrompt);
+          return { success: true, forensics };
+        }
+
+        case "prompt_cache_get_optimization_prescriptions": {
+          const prescriptions = this.supervisor.getOptimizationPrescriptions();
+          return { success: true, count: prescriptions.length, prescriptions };
+        }
+
+        case "prompt_cache_calculate_provider_roi": {
+          const promptTokens = typeof args.promptTokens === "number" ? args.promptTokens : 8192;
+          const cachedTokens = typeof args.cachedTokens === "number" ? args.cachedTokens : Math.round(promptTokens * 0.75);
+          const matrix = this.supervisor.getMultiProviderRoiMatrix(promptTokens, cachedTokens);
+          return { success: true, matrix };
+        }
+
+        case "prompt_cache_get_telemetry_headers": {
+          const telemetry = this.supervisor.getTelemetryHeaders();
+          return { success: true, telemetry };
+        }
+
+        case "prompt_cache_get_savings_forecast": {
+          const projectedDailyTurns = typeof args.projectedDailyTurns === "number" ? args.projectedDailyTurns : 200;
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const forecast = this.supervisor.getSavingsForecast(projectedDailyTurns, modelId);
+          return { success: true, forecast };
+        }
+
+        case "prompt_cache_get_layered_fingerprints": {
+          const systemPrompt = typeof args.systemPrompt === "string" ? args.systemPrompt : undefined;
+          const fingerprint = this.supervisor.getLayeredFingerprint(systemPrompt);
+          return { success: true, fingerprint };
+        }
+
+        case "prompt_cache_get_remediation_diffs": {
+          const recipes = this.supervisor.getRemediationRecipes();
+          return { success: true, count: recipes.length, recipes };
+        }
+
+        case "prompt_cache_get_waterfall_trace": {
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const trace = this.supervisor.getWaterfallTrace(modelId);
+          return { success: true, trace };
+        }
+
+        case "prompt_cache_audit_alerts": {
+          const alerts = this.supervisor.auditAlerts();
+          return { success: true, count: alerts.length, alerts };
+        }
+
+        case "prompt_cache_explain_plan": {
+          const systemPrompt = typeof args.systemPrompt === "string" ? args.systemPrompt : "";
+          const modelId = typeof args.modelId === "string" ? args.modelId : "anthropic/claude-3.7-sonnet";
+          const plan = this.supervisor.explainPlan(systemPrompt, [], [], modelId);
+          return { success: true, plan };
+        }
+
+        case "prompt_cache_auto_tune_prompt": {
+          const systemPrompt = typeof args.systemPrompt === "string" ? args.systemPrompt : "";
+          const tuned = this.supervisor.autoTuneSystemPrompt(systemPrompt);
+          return { success: true, tuned };
         }
 
         default:

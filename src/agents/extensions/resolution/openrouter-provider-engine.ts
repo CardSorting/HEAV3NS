@@ -389,12 +389,17 @@ export class OpenRouterProviderEngine {
     const { normalizedId, is1m } = this.normalizeModelId(params.modelId);
     let openAiMessages = [...params.messages];
 
-    // Ephemeral Prompt Caching injection
+    // Ephemeral Multi-Breakpoint Prompt Caching injection (Anthropic / OpenRouter 4-breakpoint protocol)
+    let processedTools = params.tools ? [...params.tools] : undefined;
     if (this.supportsPromptCaching(normalizedId) && openAiMessages.length > 0) {
+      let injectedBreakpoints = 0;
+      const MAX_BREAKPOINTS = 4;
+
+      // Breakpoint 1: System Prompt Tail
       const firstMsg = openAiMessages[0];
-      if (firstMsg.role === "system") {
+      if (firstMsg && firstMsg.role === "system") {
         const textContent = typeof firstMsg.content === "string" ? firstMsg.content : "";
-        if (textContent) {
+        if (textContent && injectedBreakpoints < MAX_BREAKPOINTS) {
           openAiMessages[0] = {
             ...firstMsg,
             content: [
@@ -405,6 +410,58 @@ export class OpenRouterProviderEngine {
               },
             ],
           };
+          injectedBreakpoints++;
+        }
+      }
+
+      // Breakpoint 2: Tool Definitions Manifest Tail
+      if (processedTools && processedTools.length > 0 && injectedBreakpoints < MAX_BREAKPOINTS) {
+        const lastToolIndex = processedTools.length - 1;
+        const lastTool = processedTools[lastToolIndex] as Record<string, unknown>;
+        if (lastTool && typeof lastTool === "object") {
+          processedTools[lastToolIndex] = {
+            ...lastTool,
+            cache_control: { type: "ephemeral" },
+          };
+          injectedBreakpoints++;
+        }
+      }
+
+      // Breakpoint 3: History Midpoint Checkpoint (if >= 4 messages)
+      if (openAiMessages.length >= 4 && injectedBreakpoints < MAX_BREAKPOINTS) {
+        const midIndex = Math.floor(openAiMessages.length / 2);
+        const midMsg = openAiMessages[midIndex];
+        if (midMsg && typeof midMsg.content === "string" && midMsg.content.length > 0) {
+          openAiMessages[midIndex] = {
+            ...midMsg,
+            content: [
+              {
+                type: "text",
+                text: midMsg.content,
+                cache_control: { type: "ephemeral" },
+              },
+            ],
+          };
+          injectedBreakpoints++;
+        }
+      }
+
+      // Breakpoint 4: Penultimate Turn Checkpoint (if >= 2 messages)
+      if (openAiMessages.length >= 2 && injectedBreakpoints < MAX_BREAKPOINTS) {
+        const penultIndex = openAiMessages.length - 2;
+        const penultMsg = openAiMessages[penultIndex];
+        if (penultMsg && typeof penultMsg.content === "string" && penultMsg.content.length > 0) {
+          openAiMessages[penultIndex] = {
+            ...penultMsg,
+            content: [
+              {
+                type: "text",
+                text: penultMsg.content,
+                cache_control: { type: "ephemeral" },
+              },
+            ],
+          };
+          injectedBreakpoints++;
         }
       }
     }
@@ -464,7 +521,7 @@ export class OpenRouterProviderEngine {
       ...(topP !== undefined ? { top_p: topP } : {}),
       ...(reasoningPayload ? { reasoning: reasoningPayload } : {}),
       ...(providerConfig ? { provider: providerConfig } : {}),
-      ...(params.tools && params.tools.length > 0 ? { tools: params.tools } : {}),
+      ...(processedTools && processedTools.length > 0 ? { tools: processedTools } : {}),
     };
 
     return {

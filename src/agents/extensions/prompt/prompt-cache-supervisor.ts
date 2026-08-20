@@ -2,21 +2,37 @@
  * prompt-cache-supervisor.ts
  *
  * Master Prompt Cache Supervisor coordinating byte-stable system envelopes,
- * 4-breakpoint cache control planning, and <think> reasoning scrubbing (Phase 93 / ADR-045 / Target #82).
+ * 5-tier cache control planning, reasoning scrubbing, and ROI telemetry (Phase 93 / ADR-045 / Target #82).
  */
 
 import type {
   ByteStablePromptEnvelope,
+  HumanDiagnosticSummary,
+  PromptCacheAlertEvent,
+  PromptCacheAutoTuneResult,
   PromptCacheBreakpointRow,
   PromptCacheConfig,
   PromptCacheDslQueryFilter,
+  PromptCacheEfficiencyAnalysis,
+  PromptCacheExplainPlan,
   PromptCacheGroupBy,
   PromptCacheGroupedLane,
   PromptCacheHealthAuditReport,
+  PromptCacheInvalidationForensic,
+  PromptCacheLayeredFingerprint,
   PromptCacheMetrics,
   PromptCacheMetricsReport,
+  PromptCacheMultiProviderRoiMatrix,
+  PromptCachePrescription,
+  PromptCacheRemediationRecipe,
+  PromptCacheSavingsForecast,
+  PromptCacheSavingsSimulation,
+  PromptCacheScorecard,
   PromptCacheSortBy,
   PromptCacheSortDirection,
+  PromptCacheTelemetryHeaders,
+  PromptCacheWaterfallTrace,
+  ProviderCacheDirectives,
   ReasoningSanitizationResult,
 } from "../../../core/contracts/prompt-cache.contracts.js";
 import { DeterministicPromptCacher } from "../../../tooling/extensions/prompt/deterministic-prompt-cacher.js";
@@ -98,6 +114,99 @@ export class PromptCacheSupervisor {
     return this.substrate.getMetricsReport();
   }
 
+  public getHumanDiagnosticSummary(): HumanDiagnosticSummary {
+    return this.substrate.getHumanDiagnosticSummary();
+  }
+
+  public getScorecard(): PromptCacheScorecard {
+    return this.substrate.getScorecard();
+  }
+
+  public getInvalidationForensics(previousPrompt?: string): PromptCacheInvalidationForensic {
+    return this.substrate.getInvalidationForensic(previousPrompt);
+  }
+
+  public detectInvalidationPoint(prevSystemPrompt: string, newSystemPrompt: string): PromptCacheInvalidationForensic {
+    return this.cacher.detectInvalidationPoint(prevSystemPrompt, newSystemPrompt);
+  }
+
+  public getOptimizationPrescriptions(): readonly PromptCachePrescription[] {
+    return this.substrate.getOptimizationPrescriptions();
+  }
+
+  public getMultiProviderRoiMatrix(
+    promptTokens?: number,
+    cachedTokens?: number
+  ): PromptCacheMultiProviderRoiMatrix {
+    return this.substrate.getMultiProviderRoiMatrix(promptTokens, cachedTokens);
+  }
+
+  public getTelemetryHeaders(): PromptCacheTelemetryHeaders {
+    return this.substrate.getTelemetryHeaders();
+  }
+
+  public getSavingsForecast(projectedDailyTurns?: number, modelId?: string): PromptCacheSavingsForecast {
+    return this.substrate.getSavingsForecast(projectedDailyTurns, modelId);
+  }
+
+  public getLayeredFingerprint(
+    systemPrompt?: string,
+    tools?: readonly unknown[],
+    messages?: readonly { role: string; content?: string }[]
+  ): PromptCacheLayeredFingerprint {
+    return this.substrate.getLayeredFingerprint(systemPrompt, tools, messages);
+  }
+
+  public getRemediationRecipes(): readonly PromptCacheRemediationRecipe[] {
+    return this.substrate.getRemediationRecipes();
+  }
+
+  public getWaterfallTrace(modelId?: string): PromptCacheWaterfallTrace {
+    return this.substrate.getWaterfallTrace(modelId);
+  }
+
+  public auditAlerts(): readonly PromptCacheAlertEvent[] {
+    return this.substrate.auditAlerts();
+  }
+
+  public explainPlan(
+    systemPrompt?: string,
+    tools?: readonly unknown[],
+    messages?: readonly { role: string; content?: string }[],
+    modelId?: string
+  ): PromptCacheExplainPlan {
+    return this.substrate.explainPlan(systemPrompt, tools, messages, modelId);
+  }
+
+  public autoTuneSystemPrompt(systemPrompt: string): PromptCacheAutoTuneResult {
+    return this.substrate.autoTuneSystemPrompt(systemPrompt);
+  }
+
+  public analyzePromptEfficiency(
+    systemPrompt: string,
+    messages: readonly { role: string; content?: string }[] = [],
+    tools: readonly unknown[] = [],
+    modelId?: string
+  ): PromptCacheEfficiencyAnalysis {
+    return this.cacher.analyzeEfficiency(systemPrompt, messages, tools, modelId);
+  }
+
+  public simulateSavings(
+    modelId?: string,
+    turnCount?: number,
+    promptTokens?: number
+  ): PromptCacheSavingsSimulation {
+    return this.cacher.simulateSavings(modelId, turnCount, promptTokens);
+  }
+
+  public getProviderDirectives(modelId?: string): ProviderCacheDirectives {
+    return this.cacher.getProviderDirectives(modelId);
+  }
+
+  public canonicalizeTools(tools: readonly unknown[] = []): string {
+    return this.cacher.canonicalizeToolDefinitions(tools);
+  }
+
   public getGroupedBreakpoints(
     groupBy?: PromptCacheGroupBy,
     sortBy?: PromptCacheSortBy,
@@ -134,3 +243,4 @@ export class PromptCacheSupervisor {
     return this.substrate.exportCsvReport();
   }
 }
+

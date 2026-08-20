@@ -1,6 +1,6 @@
 {
   "name": "lumi-joy",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Lightning-fast, zero-lag AI coding assistant for TypeScript with instant undo and drag-and-drop customization",
   "type": "module",
   "main": "dist/index.js",
@@ -70,6 +70,8 @@
     "benchmark": "node --import tsx src/index.ts --benchmark",
     "baseline:update": "node --import tsx src/index.ts --baseline",
     "guardrail": "node --import tsx scripts/validate-repo.ts",
+    "validate:adr": "node --import tsx scripts/validate-adr-workspace.ts",
+    "validate:cache": "node --import tsx scripts/validate-prompt-cache.ts",
     "start": "node dist/index.js",
     "prepublishOnly": "npm run check && npm test && npm run build"
   },

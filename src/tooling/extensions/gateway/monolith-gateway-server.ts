@@ -1976,6 +1976,109 @@ export class MonolithGatewayServer {
         return this.formatSuccess(req.id, { config });
       }
 
+      if (req.method === "promptCache/analyzeEfficiency") {
+        const systemPrompt = String((req.params as any)?.systemPrompt || "");
+        const modelId = (req.params as any)?.modelId;
+        const analysis = monolith.promptCacheSupervisor.analyzePromptEfficiency(systemPrompt, [], [], modelId);
+        return this.formatSuccess(req.id, { analysis });
+      }
+
+      if (req.method === "promptCache/simulateSavings") {
+        const modelId = (req.params as any)?.modelId;
+        const turnCount = Number((req.params as any)?.turnCount) || 20;
+        const promptTokens = Number((req.params as any)?.promptTokens) || 4096;
+        const simulation = monolith.promptCacheSupervisor.simulateSavings(modelId, turnCount, promptTokens);
+        return this.formatSuccess(req.id, { simulation });
+      }
+
+      if (req.method === "promptCache/getHumanSummary") {
+        const summary = monolith.promptCacheSupervisor.getHumanDiagnosticSummary();
+        return this.formatSuccess(req.id, { summary });
+      }
+
+      if (req.method === "promptCache/getProviderDirectives") {
+        const modelId = (req.params as any)?.modelId;
+        const directives = monolith.promptCacheSupervisor.getProviderDirectives(modelId);
+        return this.formatSuccess(req.id, { directives });
+      }
+
+      if (req.method === "promptCache/getScorecard") {
+        const systemPrompt = (req.params as any)?.systemPrompt;
+        const modelId = (req.params as any)?.modelId;
+        const scorecard = systemPrompt
+          ? monolith.promptCacheSupervisor.getCacher().generateScorecard(systemPrompt, [], [], modelId)
+          : monolith.promptCacheSupervisor.getScorecard();
+        return this.formatSuccess(req.id, { scorecard });
+      }
+
+      if (req.method === "promptCache/getInvalidationForensics") {
+        const prevPrompt = (req.params as any)?.prevSystemPrompt;
+        const newPrompt = (req.params as any)?.newSystemPrompt;
+        const forensics = prevPrompt && newPrompt
+          ? monolith.promptCacheSupervisor.detectInvalidationPoint(prevPrompt, newPrompt)
+          : monolith.promptCacheSupervisor.getInvalidationForensics(prevPrompt);
+        return this.formatSuccess(req.id, { forensics });
+      }
+
+      if (req.method === "promptCache/getOptimizationPrescriptions") {
+        const prescriptions = monolith.promptCacheSupervisor.getOptimizationPrescriptions();
+        return this.formatSuccess(req.id, { prescriptions });
+      }
+
+      if (req.method === "promptCache/calculateProviderRoi") {
+        const promptTokens = Number((req.params as any)?.promptTokens) || 8192;
+        const cachedTokens = Number((req.params as any)?.cachedTokens) || 6144;
+        const matrix = monolith.promptCacheSupervisor.getMultiProviderRoiMatrix(promptTokens, cachedTokens);
+        return this.formatSuccess(req.id, { matrix });
+      }
+
+      if (req.method === "promptCache/getTelemetryHeaders") {
+        const telemetry = monolith.promptCacheSupervisor.getTelemetryHeaders();
+        return this.formatSuccess(req.id, { telemetry });
+      }
+
+      if (req.method === "promptCache/getSavingsForecast") {
+        const dailyTurns = Number((req.params as any)?.projectedDailyTurns) || 200;
+        const modelId = (req.params as any)?.modelId;
+        const forecast = monolith.promptCacheSupervisor.getSavingsForecast(dailyTurns, modelId);
+        return this.formatSuccess(req.id, { forecast });
+      }
+
+      if (req.method === "promptCache/getLayeredFingerprints") {
+        const systemPrompt = (req.params as any)?.systemPrompt;
+        const fingerprint = monolith.promptCacheSupervisor.getLayeredFingerprint(systemPrompt);
+        return this.formatSuccess(req.id, { fingerprint });
+      }
+
+      if (req.method === "promptCache/getRemediationDiffs") {
+        const recipes = monolith.promptCacheSupervisor.getRemediationRecipes();
+        return this.formatSuccess(req.id, { recipes });
+      }
+
+      if (req.method === "promptCache/getWaterfallTrace") {
+        const modelId = (req.params as any)?.modelId;
+        const trace = monolith.promptCacheSupervisor.getWaterfallTrace(modelId);
+        return this.formatSuccess(req.id, { trace });
+      }
+
+      if (req.method === "promptCache/auditAlerts") {
+        const alerts = monolith.promptCacheSupervisor.auditAlerts();
+        return this.formatSuccess(req.id, { alerts });
+      }
+
+      if (req.method === "promptCache/explainPlan") {
+        const systemPrompt = (req.params as any)?.systemPrompt;
+        const modelId = (req.params as any)?.modelId;
+        const plan = monolith.promptCacheSupervisor.explainPlan(systemPrompt, [], [], modelId);
+        return this.formatSuccess(req.id, { plan });
+      }
+
+      if (req.method === "promptCache/autoTunePrompt") {
+        const systemPrompt = String((req.params as any)?.systemPrompt || "");
+        const tuned = monolith.promptCacheSupervisor.autoTuneSystemPrompt(systemPrompt);
+        return this.formatSuccess(req.id, { tuned });
+      }
+
       // --- Progressive Tool Disclosure & Dynamic Schema Gateway Endpoints (Phase 91 / ADR-043 / Target #83) ---
       if (req.method === "disclosure/getMetrics") {
         const metrics = monolith.broccoliDisclosureSubstrate.getMetrics();
