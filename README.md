@@ -2,9 +2,9 @@
 
 # ⚡ LUMI-JOY
 
-### **AKD-DSO: Architectural Knowledge Distillation & Deterministic Substrate Optimization**
+### **The Lightning-Fast, Zero-Lag AI Coding Assistant**
 
-*An enterprise-grade TypeScript agent framework engineered like a deterministic game engine—built on frame-perfect state snapshotting, contiguous slab memory, and biological osmosis self-mutation.*
+*An ultra-fast AI assistant for TypeScript that never freezes, lets you instantly undo any mistake in 1 second, and is dead simple to customize with drag-and-drop.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)

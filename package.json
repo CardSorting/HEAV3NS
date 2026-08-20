@@ -1,7 +1,7 @@
 {
   "name": "lumi-joy",
   "version": "0.3.5",
-  "description": "Greenfield 3-tier monolithic agent framework and sovereign AI runtime",
+  "description": "Lightning-fast, zero-lag AI coding assistant for TypeScript with instant undo and drag-and-drop customization",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
