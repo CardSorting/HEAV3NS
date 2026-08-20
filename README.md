@@ -376,8 +376,6 @@ Try these 3 quick commands in the interactive shell to experience LUMI-JOY's uni
 
 ---
 
-### 🌐 Step 6: Enterprise Environment Variables Reference
-
 ### ⚙️ Developer & Verification Quick Reference
 
 | Task / Flow | Command | Key Invariants & Artifacts |
@@ -424,130 +422,37 @@ src/
 │   └── utilities/                         # Shared progress credential sanitizer
 │
 ├── agents/                                # Tier 1: Agents Subsystem
-│   ├── base/                              # Agent Base Config
-│   └── extensions/                        # Domain Mutation Subdirectories
-│       ├── compaction/                    # prompt-composer.ts
-│       ├── resolution/                    # model-resolver.ts, agent-slash-router.ts, model-catalog.ts
-│       ├── execution/                     # agent-engine.ts, Codex progress adapter, interactive controller
-│       ├── mentions/                      # mention-resolver.ts (Pass 9)
-│       ├── swarm/                         # agent-swarm-dispatcher.ts (Pass 11)
-│       └── intelligence/                  # workspace-intelligence.ts (Pass 13)
+│   ├── base/                              # Agent Base Config (Immutable)
+│   └── extensions/                        # Mutation subdirectories (compaction, execution, swarm, profiles)
 │
 ├── sessions/                              # Tier 2: Sessions Subsystem
-│   ├── base/                              # Session Context Base
-│   └── extensions/                        # Domain Mutation Subdirectories
-│       ├── substrate/                     # arena-allocator.ts, file-lock.ts (Pass 20)
-│       ├── persistence/                   # session-store.ts
-│       ├── memory/                        # session-memory-store.ts
-│       ├── vfs/                           # session-vfs.ts
-│       ├── compaction/                    # session-compactor.ts, snapcompact-engine.ts (Pass 15)
-│       └── substrate/                     # broccolidb-kernel.ts, broccolidb-cas.ts, broccolidb-wal.ts, broccolidb-table.ts (Phase 71 / ADR-120)
+│   ├── base/                              # Session Context Base (Immutable)
+│   └── extensions/                        # Mutation subdirectories (substrate, memory, vfs, broccolidb)
 │
-│       └──> 🛡️ **Non-Destructive Osmosis Extension Strategy (`ADR-012`)**:  
-> Base classes in `src/*/base/` remain immutable. Evolutionary passes introduce single-responsibility extension classes in dedicated mutation subdirectories (`src/*/extensions/<mutation-domain>/`) and compose them cleanly in `MonolithFactory` and `LumiMonolith`.
+└── tooling/                               # Tier 3: Tooling Subsystem
+    ├── base/                              # Eyes Tool Base (Immutable)
+    └── extensions/                        # 47 Model Tools, execution guards, LSP, browser CDP
+```
+
+> 🛡️ **Non-Destructive Osmosis Extension Strategy (`ADR-012`)**: Base classes in `src/*/base/` remain immutable. Evolutionary passes introduce single-responsibility extensions in dedicated domain subdirectories without intermediate barrel files.
 
 ---
 
 ## 🥦 Deterministic Hybrid BroccoliDB Kernel ($\mathcal{K}_{\text{broccoli}}$)
 
-LUMI-JOY features a Zenith-Tier hybrid database kernel combining zero-GC in-memory reactive tables with append-only Write-Ahead Logging (WAL) and 256-way sharded Content-Addressable Storage (CAS):
-
-- **L1 In-Memory Hotpath**: Microsecond-speed reactive tables (`BroccoliDbTable<T>`) with primary key and secondary index multi-map lookups ($<0.5\ \mu\text{s}$).
-- **L2 Crash-Proof WAL Journal**: Micro-batched write coalescing ($20\text{ms}$ debounce), cryptographic SHA-256 frame chaining, and automatic cold-start replay ($<50\text{ ms}$ for 10k frames).
-- **L3 Sharded CAS Vault**: 256-way sharded blob storage (`.broccolidb/cas/`) with adaptive Brotli compression ($\ge 1024\text{B}$, $\ge 10\%$ savings), cryptographic read verification, and automatic corruption quarantine (`.broccolidb/cas/corrupt/`).
-- **L4 Double-Buffered Base State Checkpoints**: Atomic `.tmp -> rename` snapshot compaction (`.broccolidb/checkpoint.db`) with safe WAL log rotation.
-- **L5 Re-Entrant Async Mutex**: `AsyncLocalStorage`-based nested locking, 30s dead-man leases, and randomized Poisson jitter backoff.
-- **🕒 Time Machine & Model Tools**: Exposes `db_inspect_status`, `db_query_table`, `db_checkpoint_wal`, `db_cas_audit`, `db_timeline_history`, and `db_rollback_timeline`.
+BroccoliDB combines zero-GC in-memory reactive tables with append-only Write-Ahead Logging and 256-way sharded Content-Addressable Storage ([ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)–[ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)):
+- **L1 Hotpath Tables (`BroccoliDbTable<T>`)**: Microsecond-speed reactive tables with primary/secondary index lookups ($<0.5\ \mu\text{s}$).
+- **L2 Crash-Proof WAL Journal**: Micro-batched write coalescing ($20\text{ms}$ debounce), SHA-256 frame chaining, and cold-start replay ($<50\text{ ms}$).
+- **L3 Sharded CAS Vault**: 256-way sharded storage with adaptive Brotli compression ($\ge 1024\text{B}$) and automatic corruption quarantine.
+- **L4 State Checkpoints & Branching**: Double-buffered base checkpoints (`checkpoint.db`) and Git-for-data table branching (`forkBranch`, `mergeBranch`).
 
 ---
 
-## 📡 Live Agent Activity Streaming
+## 📡 Structured Activity Streaming & Context Lifecycle
 
-Authenticated Codex turns use the official SDK event stream and render a persistent activity card instead of a single ambiguous `Thinking...` label. Stable activities update in place as they move through `started`, `in_progress`, and a terminal state.
-
-Use `/setup` to connect and activate a provider. Codex setup attempts to open the browser, but also displays a clickable and copyable OpenAI sign-in URL; press `O` to retry or paste the authorization code/full callback URL if automatic redirect capture is unavailable. When Codex is already authenticated, submit an empty field to keep the login and activate its default model. The selection is saved in `~/.lumi/config.json`.
-
-```text
-Agent activity · Working 4s · gpt-5.6-terra
-  ✓ Connected to Codex — gpt-5.6-terra
-  ◐ Analyzing the request — Understanding goals and workspace context
-  ◐ Running workspace command — npm test
-```
-
-The timeline can show safe reasoning summaries, plan progress, redacted commands, relative file changes, MCP/web activity, response-candidate state, elapsed time, and final token totals. A completed message item is only a candidate: LUMI reports success after the provider turn also terminates and the candidate passes final-response validation. It never displays raw chain-of-thought, aggregated tool output, MCP payloads, OAuth material, or full response text.
-
-Press `Esc` or `Ctrl+C` to cancel an active turn. Cancellation and failure settle active child rows, discard the failed Codex thread, restore the loop phase to idle, and leave the terminal audit trail visible.
-
-Programmatic callers can consume the same lifecycle through `EngineTickInput.onProgress`:
-
-```typescript
-const abortController = new AbortController();
-
-const result = await lumi.tick({
-  prompt: "make a racing game",
-  signal: abortController.signal,
-  onProgress: (event) => {
-    console.log(event.activityId, event.status, event.message, event.detail);
-  },
-});
-
-if (result.outcome !== "completed") {
-  // `response` contains safe failure or cancellation guidance, not a successful answer.
-  console.error(result.response);
-}
-```
-
-See the [complete streaming strategy](.wiki/agent/streaming-activity-strategy.md), [public API reference](.wiki/agent/api-reference.md), and [ADR-082](.wiki/adr/ADR-082-structured-agent-activity-streaming.md).
-
----
-
-## 🧠 Multi-Turn Context Lifecycle
-
-LUMI separates the full conversation transcript from the bounded context projection sent to a model. The transcript remains available for persistence, snapshots, forks, rewind, and SHA-256-addressed recall; the active projection keeps pinned system policy, one structured checkpoint, and the newest complete user turns.
-
-Context admission is model-aware and token-aware *(see the [Context Envelope Projection Diagram](docs/ARCHITECTURE_DIAGRAMS.md#5--token-aware-multi-turn-context-lifecycle))*:
-
-Compaction triggers before the hard provider limit and targets a lower utilization level, leaving space for subsequent tool rounds. A final turn-aware guard prevents provider-side blind truncation. All context envelopes (`LUMI-CONTEXT/1`, `LUMI-THREAD/1`, `LUMI-MEMORY/1`, `LUMI-TOOL-RESULT/1`, `LUMI-GOAL/1`) are parsed, validated, and serialized through `ContextDslEngine`. System prompts are compiled via `PromptTemplateEngine`, supporting handlebar variable placeholders (`{{var}}`) and conditional blocks (`{{#if}}`/`{{#unless}}`). Stateful Codex threads are automatically rehydrated from `LUMI-THREAD/1` after compaction, rewind, model changes, stateless provider turns, or local-only responses.
-
-Run `npm test` to exercise DSL AST parsing (`scripts/validate-dsl-strategy.ts`), message pressure, token pressure, oversized DSL/code input, checkpoint recurrence, durable persistence, rewind, and multi-turn thread handoff. See [ADR-083](.wiki/adr/ADR-083-token-aware-multi-turn-context-lifecycle.md) for the policy and trade-offs.
-
----
-
-## ⚡ Attempt Completion Gate Strategy & Autonomous Progression
-
-LUMI implements an apex / sovereign-tier **Attempt Completion Gate Strategy** (`RoadmapCompletionGate` and `AttemptCompletionGateStrategy`) to enable autonomous multi-attempt turn progression without manual user prompting or feedback:
-
-- **Phased Gating Lifecycle**: Evaluates quality bars across `admission`, `in_flight`, `completion`, and `postmortem` checkpoints.
-- **Dynamic Context Evaluators**: Analyzes candidate outputs, tool execution outcomes, and runtime error diagnostics.
-- **Differential Attempt Analysis (`computeAttemptDiff`)**: Tracks delta improvements and catches regressions (`newlyPassing`, `newlyFailing`, `stagnantFailing`) across attempts.
-- **Deterministic State Fingerprinting & Zero-Delta Stagnation Traps**: Uses SHA-256 state hashes to detect identical failing outputs and instantly pivot strategies.
-- **Forensic Flight Recording (`AttemptFlightRecorder`)**: Blackbox timeline recording exporting structured JSON logs and formatted Markdown postmortem reports.
-- **Direct Quantitative Criterion Scoring (`CriterionScoreEvaluator`)**: Eliminates subjective voting and quorum locks in favor of direct mathematical criterion scoring.
-- **Flattened Candidate Arbitration (`evaluateAttemptCandidates`)**: Deterministically ranks parallel candidate branches by gate pass rate, score optimization, and minimal critical violations, guaranteeing decisive candidate selection.
-- **Hierarchical DAG Gate Pipelines (`GatePipelineDag`)**: Directed Acyclic Graph execution with causal dependency short-circuiting.
-- **Cognitive Remediation Directives (`RemediationDirective`) & Divergence Sentinel**: Automatically synthesizes root causes, prioritized criteria, and concrete action steps, escalating strategies (`PATCH_LOCAL` $\to$ `REWRITE_MODULE` $\to$ `PIVOT_APPROACH` $\to$ `EXPAND_CONTEXT` $\to$ `RESTORE_CHECKPOINT`) with automatic regression unwinding when attempts diverge.
-- **Tri-State Circuit Breaker & Phase-Aware Watchdogs**: Self-healing `CLOSED` $\to$ `OPEN` $\to$ `HALF_OPEN` canary probe state machine, paired with phase-aware stream watchdogs (180s reasoning, 300s tool execution) and anti-oscillation safeguards.
-
-See [ADR-084](.wiki/adr/ADR-084-attempt-completion-gate-strategy.md) for architectural specifications and benchmarks.
-
----
-
-## 🛡️ Non-Destructive Osmosis Extension Strategy (`ADR-012`)
-
-To prevent code regression, file overwrites, and structural drift as new evolutionary passes are absorbed from `pi-main`, **LUMI-JOY** strictly enforces the **Non-Destructive Extension & Mutation Directory Strategy**:
-
-### 1. Core Architectural Tenets
-
-- **Base Class Immutability**: Base domain classes in `src/*/base/` (e.g. `Eyes`, `SessionContext`, `AgentConfig`) are foundational and immutable.
-- **Single-Responsibility Mutation Subdirectories**: Every evolutionary pass or feature mutation creates a dedicated, single-responsibility file in a domain-scoped subdirectory inside `src/*/extensions/<mutation-domain>/`.
-- **Zero-Barrel Import Policy**: All intermediate `index.ts` barrel re-export files are prohibited. Imports across subsystems MUST target explicit, deep relative paths.
-- **Dependency Inversion Monolith Composition**: Extension classes extend base abstractions and are composed at the composition root (`MonolithFactory` & `LumiMonolith`).
-
-### 2. Mutation Directory Responsibility Matrix
-
-Each feature pass creates a dedicated, single-responsibility module across the `agents/`, `sessions/`, `tooling/`, and `tui/` tiers, maintaining absolute immutability of the foundational domain base classes.
-
-👉 **View the complete table**: [Full Mutation Directory Responsibility Matrix (ADR-012)](docs/MUTATION_DIRECTORIES.md).
+- **Structured Live Streaming (`ADR-082`)**: Renders persistent real-time ANSI activity cards showing turn phases, tool executions, and redacted progress without leaking chain-of-thought, tokens, or credentials.
+- **Token-Aware Context DSL (`ADR-083`)**: Formal `ContextDslEngine` AST parsing (`LUMI-CONTEXT/1`, `LUMI-THREAD/1`, `LUMI-MEMORY/1`, `LUMI-TOOL-RESULT/1`, `LUMI-GOAL/1`) and `PromptTemplateEngine` (`{{#if}}`/`{{#unless}}`) prevent prompt injection and eliminate amnesia.
+- **Autonomous Attempt Completion Gate (`ADR-084`)**: Evaluates quality bars across `admission`, `in_flight`, `completion`, and `postmortem` checkpoints, using quantitative criterion scoring to arbitrate candidates.
 
 ---
 
