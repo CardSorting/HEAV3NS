@@ -32,6 +32,7 @@ LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-complet
 | `/rewind` | `[frames]` | Performs an instant $O(1)$ state rollback to frame $N-k$, restoring conversation, memory, and VFS state. |
 | `/compact` | `[--force]` | Manually triggers semantic trajectory compaction and AST `LUMI-CONTEXT/1` envelope serialization. |
 | `/db` | `[status\|query\|wal\|rollback]` | Opens BroccoliDB inspection dashboard, executes SQL-like AST queries, or rolls back table branches. |
+| `/profile` | `[list\|use\|init\|fav\|diff\|starters\|revisions\|rollback]` | Manages isolated multi-agent personas, blueprints, few-shot exemplars, resilient fallback ladders, and revision time-travel. |
 | `/swarm` | `[status\|tasks\|consensus]` | Inspects multi-agent swarm status, active DAG task dependencies, and Byzantine consensus voting logs. |
 | `/doctor` | `[--full]` | Runs the environment stability doctor, checks network, disk permissions, and audits orphaned turn state. |
 | `/benchmark` | `[--live]` | Runs the real-time deterministic benchmark harness and measures local frame latency and throughput. |
@@ -43,6 +44,7 @@ LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-complet
 ## 🖥️ 30+ Interactive Dashboard Modals
 
 LUMI-JOY includes 30+ specialized terminal modal dashboards (`src/tui/components/`), accessible via slash commands or direct hotkeys:
+- **`ProfileDashboardModal`**: 6-view orchestrator studio for browsing active agent personas, built-in blueprints, immutable revisions, few-shot exemplars, SLA health metrics, and raw JSON snapshots.
 - **`ToolExecutionGuardDashboardModal`**: Real-time batch parallelism timelines and anti-loop firewall violations.
 - **`PromptCacheDashboardModal`**: Prefix prompt cache byte layout inspection and hit rate analytics.
 - **`VerificationEvidenceDashboardModal`**: Turn-by-turn verification evidence ledgers and stop-gate evaluation.

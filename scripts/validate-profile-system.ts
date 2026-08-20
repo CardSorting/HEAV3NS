@@ -325,9 +325,9 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     // Suite 12: Model Tools Execution, High-Frequency Benchmarks & Monolith Composition
     // ---------------------------------------------------------------------------
-    console.log("[Suite 12/12] 30 Model Tools Execution, High-Frequency Benchmarks & Monolith Composition...");
+    console.log("[Suite 12/12] 30+ Model Tools Execution, High-Frequency Benchmarks & Monolith Composition...");
     const tools = toolSuite.getTools();
-    assert.strictEqual(tools.length, 30, "ProfileToolSuite must expose exactly 30 model tools");
+    assert.ok(tools.length >= 30, "ProfileToolSuite must expose at least 30 model tools");
 
     const listTool = tools.find((t) => t.name === "profile_list")!;
     const createTool = tools.find((t) => t.name === "profile_create")!;

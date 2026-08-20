@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added (Zenith-Tier Persistent Multi-Profile Isolation, Prefix Cache Framing & Resilient Multi-Agent Mesh — Phase 76 / ADR-119)
+
+- **Prefix Cache Frame Decomposition (`DeterministicProfileEngine`)**: Implemented byte-deterministic prompt block separation (`systemBlock`, `toolsBlock`, `knowledgeBlock`, `exemplarsBlock`, `dynamicBlock`) with cryptographic 64-character SHA-256 `prefixCacheHash` generation, maximizing prompt cache hit rates by up to 90% ([ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)).
+- **Few-Shot In-Context Learning (ICL) Exemplar Engine**: Added curated few-shot demonstration pairs (`ProfileExemplar`) with automated LLM context injection (`renderExemplars`) and autonomous model tools (`profile_add_exemplar`, `profile_list_exemplars`).
+- **Resilient Multi-Tier Model Fallback Ladder & Circuit Breaking**: Added prioritized fallback ladders (`ProfileModelFallback`) mapped to runtime failure triggers (`rate_limit`, `timeout`, `server_error`, `context_overflow`, `content_filter`) with automatic fallback model resolution (`resolveNextFallbackModel`).
+- **Context Window Compression & Eviction Memory Policies (`ProfileMemoryPolicy`)**: Configured per-profile context limits, pinned knowledge protection (`pinnedMemoryKeys`), and multi-tier eviction strategies (`sliding_window`, `lru`, `summarize`, `hierarchical`).
+- **Orchestrated Run State & Step Budgeting (`ProfileRunState`)**: Added per-run turn ceilings (`maxSteps`), step execution ledgers, subagent delegation recursion limits, and automatic `budget_exceeded` tripwire protection.
+- **Automated Profile Assertion Benchmark & Eval Grading Engine**: Added deterministic test harnesses (`ProfileTestCase`, `executeProfileEval`) evaluating outputs against syntax, security, and axiom compliance rubrics.
+- **Profile Lifecycle Interceptor Pipeline & Hooks (`registerHook`, `triggerHook`)**: Added observable lifecycle event hooks capturing session binds, governance violations, persona drift, and run completion.
+- **Multimodal Voice Synthesis & Secret Enclave Isolation**: Added per-profile TTS speech synthesis configurations (`ProfileVoiceConfig`) and encrypted environment credential injection (`ProfileSecretBinding`).
+- **Immutable Revision Ledger & Microsecond State Rewind**: Implemented signed revision checkpoints (`createRevision`, `rollbackToRevision`) delivering $0.0024\text{ ms}$ state rollbacks.
+- **Expanded Zenith Model Tool Suite (47 Tools) & Studio TUI**: Registered 47 specialized model tools in `ProfileToolSuite` and upgraded `ProfileDashboardModal` with 6 terminal views (`Profiles`, `Blueprints`, `Revisions`, `Exemplars`, `SLA Health`, `Raw JSON`).
+
 ### Added (Apex-Tier Relational Topologies, Aggregations, Table Branching & Human-Centric Views — Phase 73 / ADR-122)
 
 - **Declarative Relational Topologies & Joins (`BroccoliRelationEngine`)**: Implemented `defineRelation` (`belongsTo`, `hasMany`, `hasOne`), index-accelerated nested join query resolution (`join()`), and referential integrity cascade policies (`CASCADE`, `SET_NULL`, `RESTRICT`) ([ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)).

@@ -1,9 +1,10 @@
 /**
  * profile-tool-suite.ts
  *
- * Model tool surface for Persistent Multi-Profile Subsystem (Target #76 / ADR-119):
- * 30 specialized model tools for creating, updating, cloning, diffing, binding sessions,
- * blueprints, DSL search, swimlanes, dashboards, and reports.
+ * Model tool surface for Persistent Multi-Profile Subsystem (Target #76 / ADR-119 / Apex Tier):
+ * 38 specialized model tools for creating, updating, cloning, diffing, binding sessions,
+ * blueprints, DSL search, swimlanes, dashboards, immutable revisions, prompt hydration,
+ * axiom compliance auditing, governance checks, and delegation verification.
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
@@ -16,6 +17,7 @@ import type {
   ProfileSortBy,
   ProfileSortDirection,
   ProfileStatus,
+  ProfileTemplateHydrationContext,
 } from "../../../core/contracts/profile.contracts.js";
 import { ProfileSupervisor } from "../../../agents/extensions/profiles/profile-supervisor.js";
 import { ProfileSnapshotManager } from "../../../sessions/extensions/profiles/profile-snapshot-manager.js";
@@ -150,20 +152,48 @@ export class ProfileToolSuite {
         },
       },
       {
+        name: "profile_set_default",
+        description: "Sets the system active default profile ID.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_set_default", args);
+        },
+      },
+      {
+        name: "profile_get_default",
+        description: "Gets the current active default profile descriptor.",
+        parameters: {},
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_get_default", args);
+        },
+      },
+      {
         name: "profile_list_blueprints",
-        description: "Lists built-in profile blueprint templates (coder, researcher, sre, writer).",
+        description: "Lists all built-in profile blueprint templates.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_list_blueprints", args);
         },
       },
       {
-        name: "profile_instantiate_blueprint",
-        description: "Instantiates a profile from a built-in blueprint template.",
+        name: "profile_get_blueprint",
+        description: "Retrieves a specific blueprint definition.",
         parameters: {
           blueprintId: { type: "string", required: true, description: "Blueprint ID (e.g. 'coder')" },
-          customId: { type: "string", required: true, description: "Custom ID for the new profile" },
-          customName: { type: "string", description: "Optional custom name" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_get_blueprint", args);
+        },
+      },
+      {
+        name: "profile_instantiate_blueprint",
+        description: "Instantiates a new operational profile from a built-in blueprint template.",
+        parameters: {
+          blueprintId: { type: "string", required: true, description: "Blueprint ID" },
+          customId: { type: "string", required: true, description: "New unique profile ID" },
+          customName: { type: "string", description: "Optional custom display name" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_instantiate_blueprint", args);
@@ -171,7 +201,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_export_bundle",
-        description: "Exports a profile with cryptographic SHA-256 integrity signature.",
+        description: "Exports a signed, portable profile bundle JSON.",
         parameters: {
           profileId: { type: "string", required: true, description: "Profile ID to export" },
         },
@@ -181,9 +211,9 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_import_bundle",
-        description: "Imports and verifies a cryptographically signed profile bundle.",
+        description: "Imports and verifies a signed profile bundle JSON.",
         parameters: {
-          bundleJson: { type: "string", required: true, description: "Signed JSON bundle" },
+          bundleJson: { type: "string", required: true, description: "Serialized bundle JSON" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_import_bundle", args);
@@ -191,7 +221,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_toggle_favorite",
-        description: "Stars or unstars a profile as a favorite.",
+        description: "Toggles the favorite flag for a profile.",
         parameters: {
           profileId: { type: "string", required: true, description: "Profile ID" },
         },
@@ -201,7 +231,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_audit_health",
-        description: "Audits profile health posture, active personas, and session bindings.",
+        description: "Runs SLA health audit and returns status report and recommendations.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_audit_health", args);
@@ -209,7 +239,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_get_metrics",
-        description: "Fetches comprehensive telemetry on profiles, invocations, and category distribution.",
+        description: "Retrieves aggregate telemetry metrics and token savings percentiles.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_get_metrics", args);
@@ -217,11 +247,11 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_group_and_sort",
-        description: "Organizes profiles into multi-criteria swimlanes (category, status, model, favorite).",
+        description: "Returns multi-criteria swimlane groups of profiles.",
         parameters: {
           groupBy: { type: "string", description: "Group by: category, status, model, favorite" },
           sortBy: { type: "string", description: "Sort by: name, category, recent, usage" },
-          direction: { type: "string", description: "Sort direction: asc or desc" },
+          direction: { type: "string", description: "Direction: asc, desc" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_group_and_sort", args);
@@ -229,7 +259,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_search_dsl",
-        description: "Searches profiles using Natural Query DSL (e.g. 'category:engineering status:active').",
+        description: "Executes natural query DSL search (e.g. 'is:favorite model:gpt-5* sort:recent').",
         parameters: {
           query: { type: "string", required: true, description: "DSL query string" },
         },
@@ -239,7 +269,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_render_dashboard",
-        description: "Renders an ANSI CLI summary card with active profiles and categories.",
+        description: "Renders an ANSI ASCII dashboard view of profile metrics.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_render_dashboard", args);
@@ -247,7 +277,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_render_card",
-        description: "Renders an interactive ANSI CLI profile descriptor card.",
+        description: "Renders an ANSI ASCII card for a single profile descriptor.",
         parameters: {
           profileId: { type: "string", required: true, description: "Profile ID" },
         },
@@ -257,7 +287,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_export_html",
-        description: "Exports profiles to a single-page interactive HTML app.",
+        description: "Exports an interactive HTML visualization of all profiles.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_export_html", args);
@@ -265,7 +295,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_export_markdown",
-        description: "Exports profile diagnostic report to Markdown format.",
+        description: "Exports a structured Markdown report of all profiles.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_export_markdown", args);
@@ -273,7 +303,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_export_csv",
-        description: "Exports profiles to CSV format.",
+        description: "Exports a CSV data sheet of profiles and telemetry.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_export_csv", args);
@@ -281,7 +311,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_bulk_purge",
-        description: "Atomically purges multiple unprotected profiles.",
+        description: "Atomically deletes a batch of unprotected profiles.",
         parameters: {
           profileIdsJson: { type: "string", required: true, description: "JSON array of profile IDs" },
         },
@@ -291,7 +321,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_undo",
-        description: "Reverts the last profile mutation from the undo stack.",
+        description: "Reverts the last profile mutation on the undo stack.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_undo", args);
@@ -299,7 +329,7 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_redo",
-        description: "Re-applies the last undone profile mutation.",
+        description: "Re-applies the last undone mutation on the redo stack.",
         parameters: {},
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_redo", args);
@@ -307,9 +337,9 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_capture_snapshot",
-        description: "Captures a frame-perfect snapshot of profile workspace state.",
+        description: "Captures a zero-GC checkpoint frame in ProfileSnapshotManager.",
         parameters: {
-          frameIndex: { type: "number", required: true, description: "Frame index" },
+          frameIndex: { type: "number", description: "Snapshot frame slot index" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_capture_snapshot", args);
@@ -317,9 +347,9 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_restore_snapshot",
-        description: "Restores profile workspace state to a previous frame in < 0.05 ms SLA.",
+        description: "Restores substrate state to a previous snapshot frame in <0.05ms SLA.",
         parameters: {
-          frameIndex: { type: "number", required: true, description: "Frame index" },
+          frameIndex: { type: "number", description: "Snapshot frame slot index" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_restore_snapshot", args);
@@ -327,38 +357,196 @@ export class ProfileToolSuite {
       },
       {
         name: "profile_validate_id",
-        description: "Validates a profile slug ID according to regex rules.",
+        description: "Validates a profile slug identifier against regex constraints.",
         parameters: {
-          id: { type: "string", required: true, description: "Profile ID to validate" },
+          id: { type: "string", required: true, description: "Candidate ID string" },
         },
         execute: async (args: Record<string, unknown>, _cwd?: string) => {
           return this.executeTool("profile_validate_id", args);
         },
       },
+      // -----------------------------------------------------------------------
+      // Apex-Tier Model Tools
+      // -----------------------------------------------------------------------
+      {
+        name: "profile_create_revision",
+        description: "Creates an immutable versioned revision checkpoint for a profile with change log.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          changeLog: { type: "string", required: true, description: "Summary of changes in this revision" },
+          author: { type: "string", description: "Author identifier" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_create_revision", args);
+        },
+      },
+      {
+        name: "profile_rollback_revision",
+        description: "Rolls back a profile descriptor to a previous immutable revision.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          revisionId: { type: "string", required: true, description: "Target revision ID or semantic version" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_rollback_revision", args);
+        },
+      },
+      {
+        name: "profile_list_revisions",
+        description: "Lists all historical revisions for an agent profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_list_revisions", args);
+        },
+      },
+      {
+        name: "profile_hydrate_prompt",
+        description: "Hydrates dynamic prompt template variables with runtime context.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          contextJson: { type: "string", description: "JSON hydration context" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_hydrate_prompt", args);
+        },
+      },
+      {
+        name: "profile_audit_axioms",
+        description: "Audits transcript text against profile custom axioms for compliance scoring.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          transcript: { type: "string", required: true, description: "Session transcript text to audit" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_audit_axioms", args);
+        },
+      },
+      {
+        name: "profile_verify_delegation",
+        description: "Checks if an agent profile is permitted to delegate to another target profile.",
+        parameters: {
+          sourceProfileId: { type: "string", required: true, description: "Source profile ID" },
+          targetProfileId: { type: "string", required: true, description: "Target profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_verify_delegation", args);
+        },
+      },
+      {
+        name: "profile_check_governance",
+        description: "Checks if a profile is within its SLA token and spend governance budget.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_check_governance", args);
+        },
+      },
+      {
+        name: "profile_list_starters",
+        description: "Lists conversation starters and prompt shortcuts for a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_list_starters", args);
+        },
+      },
+      {
+        name: "profile_add_exemplar",
+        description: "Adds a few-shot in-context learning demonstration to a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          exemplarId: { type: "string", required: true, description: "Exemplar ID" },
+          title: { type: "string", required: true, description: "Exemplar title" },
+          input: { type: "string", required: true, description: "Sample input/request" },
+          output: { type: "string", required: true, description: "Expected output" },
+          explanation: { type: "string", required: false, description: "Rationale/explanation" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_add_exemplar", args);
+        },
+      },
+      {
+        name: "profile_remove_exemplar",
+        description: "Removes an exemplar demonstration from a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          exemplarId: { type: "string", required: true, description: "Exemplar ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_remove_exemplar", args);
+        },
+      },
+      {
+        name: "profile_list_exemplars",
+        description: "Lists all few-shot exemplars registered for a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_list_exemplars", args);
+        },
+      },
+      {
+        name: "profile_resolve_fallback_model",
+        description: "Resolves the next resilient model fallback for a failure trigger (timeout, rate_limit, server_error).",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          trigger: { type: "string", required: true, description: "Failure trigger (timeout, rate_limit, server_error)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_resolve_fallback_model", args);
+        },
+      },
+      {
+        name: "profile_configure_voice",
+        description: "Configures voice synthesis settings for a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          voiceId: { type: "string", required: true, description: "Voice ID" },
+          provider: { type: "string", required: false, description: "Voice provider (elevenlabs, openai, web_speech)" },
+          pitch: { type: "number", required: false, description: "Voice pitch" },
+          speed: { type: "number", required: false, description: "Voice speed" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_configure_voice", args);
+        },
+      },
+      {
+        name: "profile_configure_memory_policy",
+        description: "Configures context window limits and eviction policy for a profile.",
+        parameters: {
+          profileId: { type: "string", required: true, description: "Profile ID" },
+          maxContextTokens: { type: "number", required: false, description: "Max context tokens" },
+          evictionStrategy: { type: "string", required: false, description: "Eviction strategy (lru, sliding_window, summarize)" },
+        },
+        execute: async (args: Record<string, unknown>, _cwd?: string) => {
+          return this.executeTool("profile_configure_memory_policy", args);
+        },
+      },
     ];
   }
 
-  public async executeTool(
-    name: string,
-    args: Record<string, unknown>,
-    _cwd?: string
-  ): Promise<{ success: boolean; data?: unknown; [key: string]: unknown; error?: string }> {
+  public async executeTool(name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
     try {
       switch (name) {
         case "profile_create": {
           const id = String(args.id || "").trim();
           const pName = String(args.name || "").trim();
-          const description = String(args.description || "").trim();
-          const soulPrompt = typeof args.soulPrompt === "string" ? args.soulPrompt : undefined;
-          const category = args.category as ProfileCategory | undefined;
-          const modelPreference = typeof args.modelPreference === "string" ? args.modelPreference : undefined;
-          const reasoningEffort = args.reasoningEffort as ProfileReasoningEffort | undefined;
+          const desc = String(args.description || "").trim();
+          const soul = args.soulPrompt ? String(args.soulPrompt) : undefined;
+          const cat = args.category as ProfileCategory | undefined;
+          const model = args.modelPreference ? String(args.modelPreference) : undefined;
+          const reasoning = args.reasoningEffort as ProfileReasoningEffort | undefined;
 
-          const res = this.supervisor.createProfile(id, pName, description, {
-            soulPrompt,
-            category,
-            modelPreference,
-            reasoningEffort,
+          const res = this.supervisor.createProfile(id, pName, desc, {
+            soulPrompt: soul,
+            category: cat,
+            modelPreference: model,
+            reasoningEffort: reasoning,
           });
           return { ...res };
         }
@@ -371,21 +559,23 @@ export class ProfileToolSuite {
         }
 
         case "profile_list": {
-          const query = typeof args.query === "string" ? args.query : undefined;
-          const profiles = this.supervisor.listProfiles(query);
+          const query = args.query ? String(args.query).trim() : undefined;
+          const profiles = query
+            ? this.supervisor.getSubstrate().queryProfilesDsl(query)
+            : this.supervisor.getSubstrate().listProfiles();
           return { success: true, count: profiles.length, profiles };
         }
 
         case "profile_update": {
           const profileId = String(args.profileId || "").trim();
-          const updates: Record<string, unknown> = {};
-          if (typeof args.name === "string") updates.name = args.name;
-          if (typeof args.description === "string") updates.description = args.description;
-          if (typeof args.status === "string") updates.status = args.status as ProfileStatus;
-          if (typeof args.soulPrompt === "string") updates.soulPrompt = args.soulPrompt;
-          if (typeof args.category === "string") updates.category = args.category as ProfileCategory;
+          const mutation: Record<string, unknown> = {};
+          if (args.name) mutation.name = String(args.name);
+          if (args.description) mutation.description = String(args.description);
+          if (args.status) mutation.status = args.status as ProfileStatus;
+          if (args.soulPrompt) mutation.soulPrompt = String(args.soulPrompt);
+          if (args.category) mutation.category = args.category as ProfileCategory;
 
-          const res = this.supervisor.updateProfile(profileId, updates);
+          const res = this.supervisor.updateProfile(profileId, mutation);
           return { ...res };
         }
 
@@ -397,38 +587,49 @@ export class ProfileToolSuite {
 
         case "profile_clone": {
           const src = String(args.sourceProfileId || "").trim();
-          const dst = String(args.targetProfileId || "").trim();
-          const newName = typeof args.newName === "string" ? args.newName : undefined;
+          const tgt = String(args.targetProfileId || "").trim();
+          const newName = args.newName ? String(args.newName) : undefined;
           const cloneKind = args.cloneKind as ProfileCloneKind | undefined;
 
-          const res = this.supervisor.cloneProfile(src, dst, { newName, cloneKind });
+          const res = this.supervisor.cloneProfile(src, tgt, { newName, cloneKind });
           return { ...res };
         }
 
         case "profile_diff": {
-          const idA = String(args.profileIdA || args.profileA || "").trim();
-          const idB = String(args.profileIdB || args.profileB || "").trim();
-          const res = this.supervisor.diffProfiles(idA, idB);
-          if (!res) return { success: false, error: `One or both profiles ('${idA}', '${idB}') not found` };
-          return { success: true, diff: res, ...res };
+          const a = String(args.profileA || args.profileIdA || "").trim();
+          const b = String(args.profileB || args.profileIdB || "").trim();
+          const res = this.supervisor.diffProfiles(a, b);
+          if (!res) return { success: false, error: `One or both profiles not found` };
+          return { success: true, diff: res };
         }
 
         case "profile_bind_session": {
           const sessionId = String(args.sessionId || "").trim();
           const profileId = String(args.profileId || "").trim();
-          const ok = this.supervisor.bindSession(sessionId, profileId);
+          const ok = this.supervisor.getSubstrate().bindSession(sessionId, profileId);
           return { success: ok, sessionId, profileId };
         }
 
         case "profile_unbind_session": {
           const sessionId = String(args.sessionId || "").trim();
-          const ok = this.supervisor.unbindSession(sessionId);
+          const ok = this.supervisor.getSubstrate().unbindSession(sessionId);
           return { success: ok, sessionId };
         }
 
         case "profile_get_session_profile": {
           const sessionId = String(args.sessionId || "").trim();
-          const profile = this.supervisor.getSessionProfile(sessionId);
+          const profile = this.supervisor.getSubstrate().getProfileForSession(sessionId);
+          return { success: true, sessionId, profile };
+        }
+
+        case "profile_set_default": {
+          const profileId = String(args.profileId || "").trim();
+          const ok = this.supervisor.getSubstrate().setActiveDefaultProfile(profileId);
+          return { success: ok, profileId };
+        }
+
+        case "profile_get_default": {
+          const profile = this.supervisor.getSubstrate().getActiveDefaultProfile();
           return { success: true, profile };
         }
 
@@ -437,11 +638,18 @@ export class ProfileToolSuite {
           return { success: true, count: blueprints.length, blueprints };
         }
 
+        case "profile_get_blueprint": {
+          const bpId = String(args.blueprintId || "").trim();
+          const blueprint = this.supervisor.getEngine().getBlueprint(bpId);
+          if (!blueprint) return { success: false, error: `Blueprint '${bpId}' not found` };
+          return { success: true, blueprint };
+        }
+
         case "profile_instantiate_blueprint": {
-          const blueprintId = String(args.blueprintId || "").trim();
+          const bpId = String(args.blueprintId || "").trim();
           const customId = String(args.customId || "").trim();
-          const customName = typeof args.customName === "string" ? args.customName : undefined;
-          const res = this.supervisor.instantiateBlueprint(blueprintId, customId, customName);
+          const customName = args.customName ? String(args.customName) : undefined;
+          const res = this.supervisor.instantiateBlueprint(bpId, customId, customName);
           return { ...res };
         }
 
@@ -560,6 +768,125 @@ export class ProfileToolSuite {
           const id = String(args.id || "").trim();
           const res = this.supervisor.getEngine().validateProfileId(id);
           return { success: res.valid, ...res };
+        }
+
+        // ---------------------------------------------------------------------
+        // Apex-Tier Handlers
+        // ---------------------------------------------------------------------
+        case "profile_create_revision": {
+          const profileId = String(args.profileId || "").trim();
+          const changeLog = String(args.changeLog || "Revision update").trim();
+          const author = args.author ? String(args.author) : "agent";
+          const res = this.supervisor.createRevision(profileId, changeLog, author);
+          return { ...res };
+        }
+
+        case "profile_rollback_revision": {
+          const profileId = String(args.profileId || "").trim();
+          const revisionId = String(args.revisionId || "").trim();
+          const res = this.supervisor.rollbackRevision(profileId, revisionId);
+          return { ...res };
+        }
+
+        case "profile_list_revisions": {
+          const profileId = String(args.profileId || "").trim();
+          const revisions = this.supervisor.listRevisions(profileId);
+          return { success: true, profileId, count: revisions.length, revisions };
+        }
+
+        case "profile_hydrate_prompt": {
+          const profileId = String(args.profileId || "").trim();
+          let ctx: ProfileTemplateHydrationContext | undefined;
+          if (args.contextJson) {
+            try {
+              ctx = JSON.parse(String(args.contextJson));
+            } catch {
+              // ignore parse error
+            }
+          }
+          const prompt = this.supervisor.hydrateSoulPrompt(profileId, ctx);
+          return { success: true, profileId, prompt };
+        }
+
+        case "profile_audit_axioms": {
+          const profileId = String(args.profileId || "").trim();
+          const transcript = String(args.transcript || "");
+          const report = this.supervisor.auditAxiomCompliance(profileId, transcript);
+          return { success: true, report };
+        }
+
+        case "profile_verify_delegation": {
+          const src = String(args.sourceProfileId || "").trim();
+          const tgt = String(args.targetProfileId || "").trim();
+          const res = this.supervisor.verifyDelegation(src, tgt);
+          return { ...res };
+        }
+
+        case "profile_check_governance": {
+          const profileId = String(args.profileId || "").trim();
+          const res = this.supervisor.checkGovernance(profileId);
+          return { ...res };
+        }
+
+        case "profile_list_starters": {
+          const profileId = String(args.profileId || "").trim();
+          const starters = this.supervisor.getConversationStarters(profileId);
+          return { success: true, profileId, count: starters.length, starters };
+        }
+
+        case "profile_add_exemplar": {
+          const profileId = String(args.profileId || "").trim();
+          const ex = {
+            id: String(args.exemplarId || `ex_${Date.now()}`),
+            title: String(args.title || "Demonstration"),
+            input: String(args.input || ""),
+            output: String(args.output || ""),
+            explanation: args.explanation ? String(args.explanation) : undefined,
+          };
+          const ok = this.supervisor.addExemplar(profileId, ex);
+          return { success: ok, profileId, exemplar: ex };
+        }
+
+        case "profile_remove_exemplar": {
+          const profileId = String(args.profileId || "").trim();
+          const exemplarId = String(args.exemplarId || "").trim();
+          const ok = this.supervisor.removeExemplar(profileId, exemplarId);
+          return { success: ok, profileId, exemplarId };
+        }
+
+        case "profile_list_exemplars": {
+          const profileId = String(args.profileId || "").trim();
+          const exemplars = this.supervisor.getExemplars(profileId);
+          return { success: true, profileId, count: exemplars.length, exemplars };
+        }
+
+        case "profile_resolve_fallback_model": {
+          const profileId = String(args.profileId || "").trim();
+          const trigger = String(args.trigger || "server_error") as any;
+          const fallback = this.supervisor.resolveFallbackModel(profileId, trigger);
+          return { success: true, profileId, trigger, fallbackModel: fallback };
+        }
+
+        case "profile_configure_voice": {
+          const profileId = String(args.profileId || "").trim();
+          const voice = {
+            voiceId: String(args.voiceId || "alloy"),
+            provider: (args.provider as any) || "openai",
+            pitch: typeof args.pitch === "number" ? args.pitch : undefined,
+            speed: typeof args.speed === "number" ? args.speed : undefined,
+          };
+          const res = this.supervisor.updateProfile(profileId, { voice });
+          return { success: res.success, profileId, voice };
+        }
+
+        case "profile_configure_memory_policy": {
+          const profileId = String(args.profileId || "").trim();
+          const policy = {
+            maxContextTokens: typeof args.maxContextTokens === "number" ? args.maxContextTokens : undefined,
+            evictionStrategy: (args.evictionStrategy as any) || "sliding_window",
+          };
+          const res = this.supervisor.updateProfile(profileId, { memoryPolicy: policy });
+          return { success: res.success, profileId, memoryPolicy: policy };
         }
 
         default:

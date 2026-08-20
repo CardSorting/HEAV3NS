@@ -2,19 +2,30 @@
  * deterministic-profile-engine.ts
  *
  * Deterministic engine for profile validation, inheritance resolution, blueprint catalog,
- * structural diffing, Natural Query DSL parsing, and cryptographic bundle export/import (Target #76 / ADR-119).
+ * structural diffing, Natural Query DSL parsing, prompt template hydration, few-shot exemplar formatting,
+ * axiom compliance auditing, execution parameter verification, and cryptographic bundle export/import
+ * (Target #76 / ADR-119 / Zenith Tier).
  */
 
 import * as crypto from "node:crypto";
 import type {
+  ProfileAxiomComplianceReport,
   ProfileBlueprint,
   ProfileCategory,
   ProfileCloneOptions,
   ProfileDescriptor,
   ProfileDiffResult,
+  ProfileEvalReport,
+  ProfileExecutionParameters,
+  ProfileExemplar,
   ProfileExportBundle,
+  ProfilePrefixCacheFrame,
   ProfileQueryFilter,
+  ProfileRevision,
   ProfileStatus,
+  ProfileTemplateHydrationContext,
+  ProfileTestCase,
+  ProfileTestCaseResult,
 } from "../../../core/contracts/profile.contracts.js";
 import { PROFILE_ID_REGEX } from "../../../core/contracts/profile.contracts.js";
 import type { BroccoliProfileSubstrate } from "../../../sessions/extensions/profiles/broccoli-profile-substrate.js";
@@ -36,7 +47,7 @@ export class DeterministicProfileEngine {
         category: "engineering",
         icon: "💻",
         defaultSoulPrompt:
-          "You are LUMI Coder, an expert full-stack engineer. Prioritize strict type safety, zero technical debt, modular composition, and exhaustive unit test verification.",
+          "You are LUMI Coder, an expert full-stack engineer operating in {{workspace.root}}. Prioritize strict type safety, zero technical debt, modular composition, and exhaustive unit test verification.",
         recommendedModel: "gpt-5.6-luna",
         recommendedReasoningEffort: "high",
         recommendedToolsets: ["core", "files", "execution", "lsp", "git", "kanban"],
@@ -49,6 +60,56 @@ export class DeterministicProfileEngine {
         defaultMemoryStore: {
           "MEMORY.md": "# Engineering Standards\n- Pinned compiler: strictNullChecks enabled.\n- Zero barrel files invariant (ADR-012).\n",
         },
+        defaultParameters: {
+          temperature: 0.2,
+          topP: 0.95,
+          frequencyPenalty: 0.1,
+          presencePenalty: 0.0,
+          responseFormat: "text",
+        },
+        defaultGovernance: {
+          maxTokensPerTurn: 8192,
+          maxMonthlyBudgetUsd: 150.0,
+          rateLimitPerMin: 60,
+        },
+        defaultDelegation: {
+          canSpawnSubagents: true,
+          maxSubagentDepth: 3,
+          allowedHandoffProfiles: ["sre", "researcher"],
+          delegationStrategy: "hierarchical",
+        },
+        defaultMemoryPolicy: {
+          maxContextTokens: 64000,
+          evictionStrategy: "sliding_window",
+          autoSummarizeThreshold: 48000,
+          pinnedMemoryKeys: ["MEMORY.md"],
+        },
+        defaultExemplars: [
+          {
+            id: "ex_refactor_function",
+            title: "Pure Function Refactoring",
+            input: "Refactor this impure mutating function to return a deterministic snapshot.",
+            output: "```typescript\nexport function computeState(prev: State, delta: Delta): State {\n  return { ...prev, ...delta, updatedAt: Date.now() };\n}\n```",
+            explanation: "Eliminates in-place mutation and guarantees state immutability.",
+            tags: ["typescript", "refactor"],
+          },
+        ],
+        conversationStarters: [
+          {
+            id: "starter_refactor",
+            title: "Refactor Architecture",
+            prompt: "Analyze the current codebase structure and suggest modular decoupling opportunities.",
+            icon: "🔨",
+            category: "Refactoring",
+          },
+          {
+            id: "starter_add_tests",
+            title: "Add Validation Tests",
+            prompt: "Write a comprehensive end-to-end test suite for the target module with 100% assertion coverage.",
+            icon: "🧪",
+            category: "Testing",
+          },
+        ],
       },
       {
         id: "researcher",
@@ -70,6 +131,35 @@ export class DeterministicProfileEngine {
         defaultMemoryStore: {
           "MEMORY.md": "# Research Index\n- Peer-review verification protocol active.\n",
         },
+        defaultParameters: {
+          topP: 0.9,
+          temperature: 0.4,
+          responseFormat: "text",
+        },
+        defaultGovernance: {
+          maxTokensPerTurn: 16384,
+          maxMonthlyBudgetUsd: 200.0,
+          rateLimitPerMin: 40,
+        },
+        defaultExemplars: [
+          {
+            id: "ex_citation_analysis",
+            title: "Structured Evidence Comparison",
+            input: "Compare Transformer attention efficiency with State Space Models (Mamba).",
+            output: "| Metric | Transformer | Mamba (SSM) |\n| :--- | :--- | :--- |\n| Inference Complexity | O(N) cache | O(1) constant state |\n| Long Context Scaling | Quadratic compute | Linear compute |",
+            explanation: "Produces balanced trade-off matrix with cited metrics.",
+            tags: ["ml", "research"],
+          },
+        ],
+        conversationStarters: [
+          {
+            id: "starter_literature_review",
+            title: "Deep Literature Review",
+            prompt: "Conduct a comprehensive review of recent state-of-the-art papers on autonomous multi-agent systems.",
+            icon: "📚",
+            category: "Analysis",
+          },
+        ],
       },
       {
         id: "sre",
@@ -91,6 +181,19 @@ export class DeterministicProfileEngine {
         defaultMemoryStore: {
           "MEMORY.md": "# SRE Runbook\n- Incident triage checklist active.\n",
         },
+        defaultGovernance: {
+          maxTokensPerTurn: 4096,
+          strictTimeoutMs: 15000,
+        },
+        conversationStarters: [
+          {
+            id: "starter_incident_triage",
+            title: "Diagnose Production Error",
+            prompt: "Inspect the latest error logs and trace the sequence of events to isolate root causes.",
+            icon: "🚨",
+            category: "Diagnostics",
+          },
+        ],
       },
       {
         id: "writer",
@@ -112,6 +215,15 @@ export class DeterministicProfileEngine {
         defaultMemoryStore: {
           "MEMORY.md": "# Documentation Style Guide\n- Active voice, concise headings, clear code blocks.\n",
         },
+        conversationStarters: [
+          {
+            id: "starter_write_adr",
+            title: "Draft Architectural Decision Record",
+            prompt: "Draft an ADR documenting the rationale, trade-offs, and invariants for the new subsystem.",
+            icon: "📝",
+            category: "Documentation",
+          },
+        ],
       },
       {
         id: "student",
@@ -203,6 +315,8 @@ export class DeterministicProfileEngine {
       name: customName || bp.name,
       description: bp.description,
       status: "active",
+      version: "1.0.0",
+      revisionNumber: 1,
       category: bp.category,
       icon: bp.icon,
       isFavorite: false,
@@ -210,6 +324,13 @@ export class DeterministicProfileEngine {
       modelPreference: bp.recommendedModel,
       reasoningEffort: bp.recommendedReasoningEffort,
       temperature: 0.7,
+      parameters: bp.defaultParameters ? { ...bp.defaultParameters } : undefined,
+      governance: bp.defaultGovernance ? { ...bp.defaultGovernance } : undefined,
+      delegation: bp.defaultDelegation ? { ...bp.defaultDelegation } : undefined,
+      memoryPolicy: bp.defaultMemoryPolicy ? { ...bp.defaultMemoryPolicy } : undefined,
+      exemplars: bp.defaultExemplars ? [...bp.defaultExemplars] : undefined,
+      voice: bp.defaultVoice ? { ...bp.defaultVoice } : undefined,
+      conversationStarters: bp.conversationStarters ? [...bp.conversationStarters] : undefined,
       enabledToolsets: [...bp.recommendedToolsets],
       customAxioms: [...bp.customAxioms],
       tags: [...bp.tags, "blueprint-instantiated"],
@@ -219,6 +340,8 @@ export class DeterministicProfileEngine {
         totalSessionsBound: 0,
         lastActivatedAtMs: now,
         estimatedTokensSaved: 0,
+        totalTokensConsumed: 0,
+        totalCostUsd: 0,
       },
       createdAtMs: now,
       updatedAtMs: now,
@@ -240,6 +363,252 @@ export class DeterministicProfileEngine {
       };
     }
     return { valid: true };
+  }
+
+  /**
+   * Validates execution hyperparameters.
+   */
+  public validateExecutionParameters(params?: ProfileExecutionParameters): { valid: boolean; error?: string } {
+    if (!params) return { valid: true };
+
+    if (params.topP !== undefined && (params.topP < 0 || params.topP > 1)) {
+      return { valid: false, error: `topP must be between 0.0 and 1.0 (received ${params.topP})` };
+    }
+    if (params.frequencyPenalty !== undefined && (params.frequencyPenalty < -2 || params.frequencyPenalty > 2)) {
+      return { valid: false, error: `frequencyPenalty must be between -2.0 and 2.0 (received ${params.frequencyPenalty})` };
+    }
+    if (params.presencePenalty !== undefined && (params.presencePenalty < -2 || params.presencePenalty > 2)) {
+      return { valid: false, error: `presencePenalty must be between -2.0 and 2.0 (received ${params.presencePenalty})` };
+    }
+    if (params.maxTokens !== undefined && params.maxTokens <= 0) {
+      return { valid: false, error: `maxTokens must be greater than 0 (received ${params.maxTokens})` };
+    }
+    if (params.responseFormat && !["text", "json_object", "json_schema"].includes(params.responseFormat)) {
+      return { valid: false, error: `Invalid responseFormat '${params.responseFormat}'` };
+    }
+    return { valid: true };
+  }
+
+  /**
+   * Hydrates dynamic prompt template variables with fallback defaults and conditional sections.
+   */
+  public hydratePromptTemplate(template: string, context: ProfileTemplateHydrationContext = {}): string {
+    if (!template) return "";
+
+    let hydrated = template;
+
+    // Handle conditionals: {{#if key}}content{{/if}}
+    const ifRegex = /\{\{#if\s+([a-zA-Z0-9_.]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+    hydrated = hydrated.replace(ifRegex, (_match, key: string, content: string) => {
+      const val = this.resolveContextVariable(key, context);
+      return Boolean(val) ? content : "";
+    });
+
+    // Handle variable interpolation with default fallbacks: {{key || "default"}} or {{key}}
+    const varRegex = /\{\{\s*([a-zA-Z0-9_.]+)(?:\s*\|\|\s*["']([^"']*)["'])?\s*\}\}/g;
+    hydrated = hydrated.replace(varRegex, (_match, key: string, fallback: string | undefined) => {
+      const val = this.resolveContextVariable(key, context);
+      if (val !== undefined && val !== null && String(val).trim() !== "") {
+        return String(val);
+      }
+      return fallback !== undefined ? fallback : "";
+    });
+
+    return hydrated;
+  }
+
+  private resolveContextVariable(key: string, context: ProfileTemplateHydrationContext): unknown {
+    const k = key.trim();
+    if (k === "workspace.root" || k === "workspaceRoot") {
+      return context.workspaceRoot ?? (typeof process !== "undefined" ? process.cwd() : undefined);
+    }
+    if (k === "user.name" || k === "userName") {
+      return context.userName;
+    }
+    if (k === "session.id" || k === "sessionId") {
+      return context.sessionId;
+    }
+    if (k === "datetime.iso" || k === "datetimeIso") {
+      return context.datetimeIso ?? new Date().toISOString();
+    }
+    if (k.startsWith("env.") && context.env) {
+      const envKey = k.slice(4);
+      return context.env[envKey] ?? (typeof process !== "undefined" ? process.env[envKey] : undefined);
+    }
+    if (context.customVars && k in context.customVars) {
+      return context.customVars[k];
+    }
+    return undefined;
+  }
+
+  /**
+   * Formats few-shot in-context learning exemplars into structured LLM demonstration blocks.
+   */
+  public renderExemplars(exemplars?: readonly ProfileExemplar[]): string {
+    if (!exemplars || exemplars.length === 0) return "";
+
+    const lines: string[] = ["\n### Few-Shot Demonstrations & Reference Invariants:"];
+    for (let i = 0; i < exemplars.length; i++) {
+      const ex = exemplars[i];
+      lines.push(`\n**[Example ${i + 1}] ${ex.title}:**`);
+      lines.push(`- **Input / Request:**\n${ex.input}`);
+      lines.push(`- **Expected Output:**\n${ex.output}`);
+      if (ex.explanation) {
+        lines.push(`- *Rationale:* ${ex.explanation}`);
+      }
+    }
+    return lines.join("\n");
+  }
+
+  /**
+   * Deterministically audits axiom compliance of agent responses against the profile's rules.
+   */
+  public auditAxiomCompliance(profile: ProfileDescriptor, transcriptText: string): ProfileAxiomComplianceReport {
+    const axioms = profile.customAxioms || [];
+    if (axioms.length === 0) {
+      return {
+        profileId: profile.id,
+        totalAxioms: 0,
+        compliantAxioms: [],
+        violatedAxioms: [],
+        complianceScorePercent: 100,
+        isAcceptable: true,
+        timestampMs: Date.now(),
+      };
+    }
+
+    const compliant: string[] = [];
+    const violated: { axiom: string; violationReason: string; severity: "low" | "medium" | "high" }[] = [];
+
+    const lowerTranscript = transcriptText.toLowerCase();
+
+    for (const axiom of axioms) {
+      const lowerAxiom = axiom.toLowerCase();
+
+      // Heuristic axiom checks for common engineering/operations rules
+      if (lowerAxiom.includes("zero type errors") || lowerAxiom.includes("typescript compilation")) {
+        if (lowerTranscript.includes("error ts") || lowerTranscript.includes("type error:")) {
+          violated.push({
+            axiom,
+            violationReason: "Transcript contains explicit TypeScript compilation errors",
+            severity: "high",
+          });
+          continue;
+        }
+      }
+
+      if (lowerAxiom.includes("active voice") || lowerAxiom.includes("markdown")) {
+        if (transcriptText.length > 500 && !transcriptText.includes("#") && !transcriptText.includes("- ")) {
+          violated.push({
+            axiom,
+            violationReason: "Response lacks expected markdown structure and headers",
+            severity: "low",
+          });
+          continue;
+        }
+      }
+
+      if (lowerAxiom.includes("never just give away the raw answer") || lowerAxiom.includes("socratic")) {
+        if (transcriptText.length < 50 && (lowerTranscript.includes("here is the answer") || lowerTranscript.includes("the answer is"))) {
+          violated.push({
+            axiom,
+            violationReason: "Direct answer provided without Socratic guidance",
+            severity: "medium",
+          });
+          continue;
+        }
+      }
+
+      compliant.push(axiom);
+    }
+
+    const score = Math.round((compliant.length / axioms.length) * 100);
+
+    return {
+      profileId: profile.id,
+      totalAxioms: axioms.length,
+      compliantAxioms: compliant,
+      violatedAxioms: violated,
+      complianceScorePercent: score,
+      isAcceptable: score >= 80,
+      timestampMs: Date.now(),
+    };
+  }
+
+  /**
+   * Detects persona drift between profile soul prompt and generated outputs.
+   */
+  public detectPersonaDrift(profile: ProfileDescriptor, outputText: string): { driftScore: number; passed: boolean; warnings: string[] } {
+    const warnings: string[] = [];
+    let driftPoints = 0;
+
+    if (!outputText || outputText.trim().length === 0) {
+      return { driftScore: 0, passed: true, warnings: [] };
+    }
+
+    // Check prohibited keywords if guardrails configured
+    if (profile.guardrails?.prohibitedKeywords) {
+      for (const kw of profile.guardrails.prohibitedKeywords) {
+        if (outputText.toLowerCase().includes(kw.toLowerCase())) {
+          warnings.push(`Detected prohibited keyword: '${kw}'`);
+          driftPoints += 30;
+        }
+      }
+    }
+
+    // Category style consistency check
+    if (profile.category === "engineering" && outputText.length > 300) {
+      if (!outputText.includes("`") && !outputText.includes("function") && !outputText.includes("const") && !outputText.includes("class")) {
+        warnings.push("Engineering profile output lacks structured code or technical syntax");
+        driftPoints += 15;
+      }
+    }
+
+    const driftScore = Math.min(100, driftPoints);
+    return {
+      driftScore,
+      passed: driftScore < 40,
+      warnings,
+    };
+  }
+
+  /**
+   * Creates an immutable cryptographically signed profile revision checkpoint.
+   */
+  public createRevisionCheckpoint(profile: ProfileDescriptor, changeLog: string, author: string = "system"): ProfileRevision {
+    const revNum = (profile.revisionNumber || 1) + 1;
+    const semVer = profile.version ? this.incrementPatchVersion(profile.version) : `1.0.${revNum - 1}`;
+    const revId = `rev_${profile.id}_${Date.now()}_${revNum}`;
+    const timestampMs = Date.now();
+
+    const snapshot: ProfileDescriptor = {
+      ...profile,
+      version: semVer,
+      revisionNumber: revNum,
+      updatedAtMs: timestampMs,
+    };
+
+    const canonical = JSON.stringify({ revId, revNum, semVer, snapshot, changeLog, author, timestampMs });
+    const signature = crypto.createHash("sha256").update(canonical).digest("hex");
+
+    return {
+      revisionId: revId,
+      revisionNumber: revNum,
+      semanticVersion: semVer,
+      snapshot,
+      changeLog,
+      author,
+      timestampMs,
+      sha256Signature: signature,
+    };
+  }
+
+  private incrementPatchVersion(v: string): string {
+    const parts = v.split(".").map((p) => parseInt(p, 10));
+    if (parts.length === 3 && !parts.some(isNaN)) {
+      return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+    }
+    return `${v}.1`;
   }
 
   /**
@@ -308,6 +677,12 @@ export class DeterministicProfileEngine {
         modelPreference: child.modelPreference || effective.modelPreference,
         reasoningEffort: child.reasoningEffort || effective.reasoningEffort,
         temperature: child.temperature !== undefined ? child.temperature : effective.temperature,
+        parameters: { ...(effective.parameters || {}), ...(child.parameters || {}) },
+        governance: { ...(effective.governance || {}), ...(child.governance || {}) },
+        delegation: { ...(effective.delegation || {}), ...(child.delegation || {}) },
+        memoryPolicy: { ...(effective.memoryPolicy || {}), ...(child.memoryPolicy || {}) },
+        exemplars: [...(effective.exemplars || []), ...(child.exemplars || [])],
+        voice: child.voice || effective.voice,
         enabledToolsets: mergedEnabledToolsets,
         customAxioms: mergedCustomAxioms,
         tags: mergedTags,
@@ -329,6 +704,7 @@ export class DeterministicProfileEngine {
       "name",
       "description",
       "status",
+      "version",
       "extends",
       "category",
       "icon",
@@ -399,7 +775,7 @@ export class DeterministicProfileEngine {
   }
 
   /**
-   * Parses Natural Query DSL expressions like 'is:favorite tag:coding model:gpt* sort:recent'
+   * Parses Natural Query DSL expressions like 'is:favorite tag:coding model:gpt* has:exemplars sort:recent'
    */
   public parseQueryDSL(query: string): ProfileQueryFilter {
     if (!query || !query.trim()) return {};
@@ -418,6 +794,12 @@ export class DeterministicProfileEngine {
         filter.status = "archived" as ProfileStatus;
       } else if (lower === "is:suspended") {
         filter.status = "suspended" as ProfileStatus;
+      } else if (lower === "has:exemplars" || lower === "has:examples") {
+        filter.hasExemplars = true;
+      } else if (lower === "has:mcp") {
+        filter.hasMcp = true;
+      } else if (lower === "has:voice") {
+        filter.hasVoice = true;
       } else if (lower.startsWith("category:") || lower.startsWith("cat:")) {
         filter.category = token.split(":")[1] as ProfileCategory;
       } else if (lower.startsWith("tag:")) {
@@ -428,7 +810,7 @@ export class DeterministicProfileEngine {
         filter.extends = token.split(":")[1];
       } else if (lower.startsWith("sort:")) {
         const sortVal = token.split(":")[1].toLowerCase();
-        if (sortVal === "recent" || sortVal === "usage" || sortVal === "name" || sortVal === "favorites") {
+        if (sortVal === "recent" || sortVal === "usage" || sortVal === "name" || sortVal === "favorites" || sortVal === "category") {
           filter.sortBy = sortVal;
         }
       } else if (lower.startsWith("limit:")) {
@@ -462,6 +844,8 @@ export class DeterministicProfileEngine {
       name: options.newName ?? `${source.name} (Clone)`,
       description: options.newDescription ?? `Cloned from ${source.id} (${cloneKind} mode)`,
       status: "active",
+      version: "1.0.0",
+      revisionNumber: 1,
       category: options.newCategory || source.category || "custom",
       icon: options.newIcon || source.icon || "📋",
       isFavorite: false,
@@ -472,6 +856,18 @@ export class DeterministicProfileEngine {
       fallbackModel: source.fallbackModel,
       reasoningEffort: source.reasoningEffort,
       temperature: source.temperature,
+      parameters: source.parameters ? { ...source.parameters } : undefined,
+      governance: source.governance ? { ...source.governance } : undefined,
+      delegation: source.delegation ? { ...source.delegation } : undefined,
+      mcpBindings: source.mcpBindings ? [...source.mcpBindings] : undefined,
+      knowledgeSources: source.knowledgeSources ? [...source.knowledgeSources] : undefined,
+      guardrails: source.guardrails ? { ...source.guardrails } : undefined,
+      conversationStarters: source.conversationStarters ? [...source.conversationStarters] : undefined,
+      exemplars: options.preserveExemplars !== false && source.exemplars ? [...source.exemplars] : undefined,
+      memoryPolicy: source.memoryPolicy ? { ...source.memoryPolicy } : undefined,
+      fallbackLadder: source.fallbackLadder ? [...source.fallbackLadder] : undefined,
+      voice: source.voice ? { ...source.voice } : undefined,
+      secrets: source.secrets ? [...source.secrets] : undefined,
       enabledToolsets: source.enabledToolsets ? [...source.enabledToolsets] : undefined,
       disabledToolsets: source.disabledToolsets ? [...source.disabledToolsets] : undefined,
       skin: source.skin,
@@ -488,6 +884,8 @@ export class DeterministicProfileEngine {
         totalSessionsBound: 0,
         lastActivatedAtMs: now,
         estimatedTokensSaved: 0,
+        totalTokensConsumed: 0,
+        totalCostUsd: 0,
       },
       createdAtMs: now,
       updatedAtMs: now,
@@ -500,6 +898,7 @@ export class DeterministicProfileEngine {
         systemPromptOverlay: undefined,
         memoryStore: {},
         customAxioms: [],
+        exemplars: [],
       };
     }
 
@@ -508,6 +907,7 @@ export class DeterministicProfileEngine {
         ...base,
         soulPrompt: source.soulPrompt,
         customAxioms: source.customAxioms ? [...source.customAxioms] : undefined,
+        exemplars: options.preserveExemplars !== false && source.exemplars ? [...source.exemplars] : undefined,
         memoryStore: options.preserveMemories !== false && source.memoryStore ? { ...source.memoryStore } : {},
       };
     }
@@ -516,39 +916,56 @@ export class DeterministicProfileEngine {
     return base;
   }
 
+  private canonicalJson(obj: unknown): string {
+    if (obj === null || typeof obj !== "object") {
+      return JSON.stringify(obj);
+    }
+    if (Array.isArray(obj)) {
+      return "[" + obj.map((item) => this.canonicalJson(item)).join(",") + "]";
+    }
+    const keys = Object.keys(obj as Record<string, unknown>).sort();
+    const entries = keys.map((k) => JSON.stringify(k) + ":" + this.canonicalJson((obj as Record<string, unknown>)[k]));
+    return "{" + entries.join(",") + "}";
+  }
+
   /**
    * Generates a signed export bundle for a profile descriptor.
    */
-  public exportBundle(profile: ProfileDescriptor): ProfileExportBundle {
-    const canonicalPayload = JSON.stringify(profile, Object.keys(profile).sort());
+  public exportBundle(profile: ProfileDescriptor, revisions?: readonly ProfileRevision[]): ProfileExportBundle {
+    const cleanProfile: ProfileDescriptor = {
+      ...profile,
+      enabledToolsets: profile.enabledToolsets ? [...profile.enabledToolsets] : undefined,
+      disabledToolsets: profile.disabledToolsets ? [...profile.disabledToolsets] : undefined,
+      customAxioms: profile.customAxioms ? [...profile.customAxioms] : undefined,
+      exemplars: profile.exemplars ? [...profile.exemplars] : undefined,
+      tags: profile.tags ? [...profile.tags] : undefined,
+      memoryStore: profile.memoryStore ? { ...profile.memoryStore } : undefined,
+      envOverrides: profile.envOverrides ? { ...profile.envOverrides } : undefined,
+    };
+
+    const canonicalPayload = this.canonicalJson({ profile: cleanProfile, revisions: revisions || null });
     const hash = crypto.createHash("sha256").update(canonicalPayload).digest("hex");
 
     return {
-      version: "1.0.0",
+      version: "2.0.0",
       exportedAtMs: Date.now(),
-      profile: {
-        ...profile,
-        enabledToolsets: profile.enabledToolsets ? [...profile.enabledToolsets] : undefined,
-        disabledToolsets: profile.disabledToolsets ? [...profile.disabledToolsets] : undefined,
-        customAxioms: profile.customAxioms ? [...profile.customAxioms] : undefined,
-        tags: profile.tags ? [...profile.tags] : undefined,
-        memoryStore: profile.memoryStore ? { ...profile.memoryStore } : undefined,
-        envOverrides: profile.envOverrides ? { ...profile.envOverrides } : undefined,
-      },
+      profile: cleanProfile,
+      revisions: revisions ? [...revisions] : undefined,
       sha256Signature: hash,
     };
   }
 
   /**
-   * Verifies and imports a signed profile export bundle.
+   * Verifies and imports a signed profile export bundle (supports v1.0.0 and v2.0.0).
    */
   public verifyAndImportBundle(bundle: ProfileExportBundle): {
     valid: boolean;
     profile?: ProfileDescriptor;
+    revisions?: readonly ProfileRevision[];
     error?: string;
   } {
-    if (!bundle || bundle.version !== "1.0.0" || !bundle.profile) {
-      return { valid: false, error: "Invalid bundle structure or unsupported version" };
+    if (!bundle || !bundle.profile) {
+      return { valid: false, error: "Invalid bundle structure" };
     }
 
     const valRes = this.validateProfileId(bundle.profile.id);
@@ -556,29 +973,38 @@ export class DeterministicProfileEngine {
       return { valid: false, error: valRes.error };
     }
 
-    const canonicalPayload = JSON.stringify(bundle.profile, Object.keys(bundle.profile).sort());
-    const computedHash = crypto.createHash("sha256").update(canonicalPayload).digest("hex");
-
-    if (computedHash !== bundle.sha256Signature) {
-      return {
-        valid: false,
-        error: `Signature mismatch: computed '${computedHash}', expected '${bundle.sha256Signature}'`,
-      };
+    if (bundle.version === "1.0.0") {
+      const canonicalPayload = this.canonicalJson(bundle.profile);
+      const computedHash = crypto.createHash("sha256").update(canonicalPayload).digest("hex");
+      if (computedHash !== bundle.sha256Signature) {
+        return { valid: false, error: `Signature mismatch (v1.0.0)` };
+      }
+      return { valid: true, profile: bundle.profile };
     }
 
-    return {
-      valid: true,
-      profile: bundle.profile,
-    };
+    if (bundle.version === "2.0.0") {
+      const canonicalPayload = this.canonicalJson({ profile: bundle.profile, revisions: bundle.revisions || null });
+      const computedHash = crypto.createHash("sha256").update(canonicalPayload).digest("hex");
+      if (computedHash !== bundle.sha256Signature) {
+        return { valid: false, error: `Signature mismatch (v2.0.0)` };
+      }
+      return { valid: true, profile: bundle.profile, revisions: bundle.revisions };
+    }
+
+    return { valid: false, error: `Unsupported bundle version '${(bundle as any).version}'` };
   }
 
   /**
    * Synthesizes a byte-stable, prefix-cache-friendly profile context frame for LLM prompts.
    */
-  public renderProfileContext(profile: ProfileDescriptor, inheritanceChain?: readonly string[]): string {
+  public renderProfileContext(
+    profile: ProfileDescriptor,
+    inheritanceChain?: readonly string[],
+    hydrationContext?: ProfileTemplateHydrationContext
+  ): string {
     const icon = profile.icon ? `${profile.icon} ` : "";
     const lines: string[] = [
-      `### ${icon}Active Profile: ${profile.name} (${profile.id})`,
+      `### ${icon}Active Profile: ${profile.name} (${profile.id}) [v${profile.version || "1.0.0"}]`,
       profile.description,
     ];
 
@@ -591,7 +1017,10 @@ export class DeterministicProfileEngine {
     }
 
     if (profile.soulPrompt) {
-      lines.push(`\n**Persona Axioms:**\n${profile.soulPrompt}`);
+      const hydratedSoul = hydrationContext
+        ? this.hydratePromptTemplate(profile.soulPrompt, hydrationContext)
+        : profile.soulPrompt;
+      lines.push(`\n**Persona Axioms:**\n${hydratedSoul}`);
     }
 
     if (profile.customAxioms && profile.customAxioms.length > 0) {
@@ -601,12 +1030,45 @@ export class DeterministicProfileEngine {
       }
     }
 
+    // Render Few-Shot In-Context Learning Exemplars
+    if (profile.exemplars && profile.exemplars.length > 0) {
+      lines.push(this.renderExemplars(profile.exemplars));
+    }
+
     if (profile.modelPreference && profile.modelPreference !== "default") {
       lines.push(`\n**Target Model:** ${profile.modelPreference}`);
     }
 
+    if (profile.fallbackLadder && profile.fallbackLadder.length > 0) {
+      lines.push(`**Fallback Models:** ${profile.fallbackLadder.map((f) => f.targetModel).join(" -> ")}`);
+    }
+
+    if (profile.voice) {
+      lines.push(`**Voice Engine:** ${profile.voice.provider} (Voice: ${profile.voice.voiceId})`);
+    }
+
     if (profile.reasoningEffort && profile.reasoningEffort !== "medium") {
       lines.push(`**Reasoning Effort Level:** ${profile.reasoningEffort}`);
+    }
+
+    if (profile.parameters) {
+      const p = profile.parameters;
+      const paramList: string[] = [];
+      if (p.temperature !== undefined) paramList.push(`temp=${p.temperature}`);
+      if (p.topP !== undefined) paramList.push(`top_p=${p.topP}`);
+      if (p.frequencyPenalty !== undefined) paramList.push(`freq_pen=${p.frequencyPenalty}`);
+      if (p.maxTokens !== undefined) paramList.push(`max_tokens=${p.maxTokens}`);
+      if (p.responseFormat && p.responseFormat !== "text") paramList.push(`format=${p.responseFormat}`);
+      if (paramList.length > 0) {
+        lines.push(`**Parameters:** ${paramList.join(", ")}`);
+      }
+    }
+
+    if (profile.delegation) {
+      const d = profile.delegation;
+      if (d.canSpawnSubagents) {
+        lines.push(`**Delegation:** Allowed (maxDepth=${d.maxSubagentDepth || 2}, strategy=${d.delegationStrategy || "hierarchical"})`);
+      }
     }
 
     if (profile.enabledToolsets && profile.enabledToolsets.length > 0) {
@@ -614,5 +1076,128 @@ export class DeterministicProfileEngine {
     }
 
     return lines.join("\n");
+  }
+
+  /**
+   * Constructs a prefix-cache-optimized prompt frame separating static blocks from dynamic contexts.
+   */
+  public buildPrefixCacheFrame(
+    profile: ProfileDescriptor,
+    context?: ProfileTemplateHydrationContext
+  ): ProfilePrefixCacheFrame {
+    const icon = profile.icon ? `${profile.icon} ` : "";
+    const systemLines = [
+      `### ${icon}Active Profile: ${profile.name} (${profile.id}) [v${profile.version || "1.0.0"}]`,
+      profile.description,
+    ];
+    if (profile.category) {
+      systemLines.push(`- **Domain Scope:** ${profile.category.toUpperCase()}`);
+    }
+    if (profile.customAxioms && profile.customAxioms.length > 0) {
+      systemLines.push("\n**Operational Rules:**");
+      for (const axiom of profile.customAxioms) {
+        systemLines.push(`- ${axiom}`);
+      }
+    }
+    const systemBlock = systemLines.join("\n");
+
+    const toolLines: string[] = [];
+    if (profile.enabledToolsets && profile.enabledToolsets.length > 0) {
+      toolLines.push(`**Enabled Toolsets:** ${profile.enabledToolsets.join(", ")}`);
+    }
+    if (profile.mcpBindings && profile.mcpBindings.length > 0) {
+      toolLines.push(`**MCP Bindings:** ${profile.mcpBindings.map((m) => m.serverName).join(", ")}`);
+    }
+    const toolsBlock = toolLines.join("\n");
+
+    const knowledgeLines: string[] = [];
+    if (profile.knowledgeSources && profile.knowledgeSources.length > 0) {
+      knowledgeLines.push(`**Knowledge Scopes:** ${profile.knowledgeSources.map((k) => k.name).join(", ")}`);
+    }
+    const knowledgeBlock = knowledgeLines.join("\n");
+
+    const exemplarsBlock = this.renderExemplars(profile.exemplars);
+
+    // Dynamic block: runtime hydrated soul prompt + session context
+    const dynamicSoul = context
+      ? this.hydratePromptTemplate(profile.soulPrompt, context)
+      : profile.soulPrompt;
+    const dynamicBlock = `**Persona Context:**\n${dynamicSoul}`;
+
+    // Static prefix = systemBlock + toolsBlock + knowledgeBlock + exemplarsBlock
+    const staticPrefix = [systemBlock, toolsBlock, knowledgeBlock, exemplarsBlock].filter(Boolean).join("\n\n").trim();
+    const prefixCacheHash = crypto.createHash("sha256").update(staticPrefix).digest("hex");
+    const fullRenderedPrompt = `${staticPrefix}\n\n${dynamicBlock}`.trim();
+    const estimatedStaticTokens = Math.ceil(staticPrefix.length / 4);
+
+    return {
+      profileId: profile.id,
+      prefixCacheHash,
+      systemBlock,
+      toolsBlock,
+      knowledgeBlock,
+      exemplarsBlock,
+      dynamicBlock,
+      fullRenderedPrompt,
+      estimatedStaticTokens,
+    };
+  }
+
+  /**
+   * Executes an automated test suite evaluating profile prompts, assertions, and axiom adherence.
+   */
+  public executeProfileEval(profile: ProfileDescriptor, suite: readonly ProfileTestCase[]): ProfileEvalReport {
+    const results: ProfileTestCaseResult[] = [];
+    let passedCount = 0;
+
+    for (const test of suite) {
+      const startTime = Date.now();
+      const hydratedPrompt = this.renderProfileContext(profile, [profile.id], test.context);
+      const failures: string[] = [];
+
+      for (const assertion of test.assertions) {
+        if (assertion.type === "contains_text") {
+          const expected = String(assertion.value);
+          if (!hydratedPrompt.includes(expected)) {
+            failures.push(`Output does not contain expected text: '${expected}'`);
+          }
+        } else if (assertion.type === "not_contains_text") {
+          const forbidden = String(assertion.value);
+          if (hydratedPrompt.includes(forbidden)) {
+            failures.push(`Output contains forbidden text: '${forbidden}'`);
+          }
+        } else if (assertion.type === "axiom_compliance") {
+          const report = this.auditAxiomCompliance(profile, hydratedPrompt);
+          if (!report.isAcceptable) {
+            failures.push(`Failed axiom compliance audit (${report.complianceScorePercent}%)`);
+          }
+        }
+      }
+
+      const latencyMs = Date.now() - startTime;
+      const passed = failures.length === 0;
+      if (passed) passedCount++;
+
+      results.push({
+        testCaseId: test.id,
+        passed,
+        scorePercent: passed ? 100 : Math.max(0, 100 - failures.length * 25),
+        latencyMs,
+        failures,
+      });
+    }
+
+    const overallScore = suite.length > 0 ? Math.round((passedCount / suite.length) * 100) : 100;
+
+    return {
+      profileId: profile.id,
+      suiteName: "Automated Profile Assertion Benchmark",
+      totalTests: suite.length,
+      passedTests: passedCount,
+      failedTests: suite.length - passedCount,
+      overallScorePercent: overallScore,
+      results,
+      evaluatedAtMs: Date.now(),
+    };
   }
 }

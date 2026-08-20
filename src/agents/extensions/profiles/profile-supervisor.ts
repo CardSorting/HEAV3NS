@@ -2,17 +2,39 @@
  * profile-supervisor.ts
  *
  * High-level coordinator managing multi-profile isolation, hierarchical inheritance,
- * blueprint catalog instantiation, structural diffing, and rich slash command UX (/profile) (Target #76 / ADR-119).
+ * blueprint catalog instantiation, structural diffing, immutable revisions, dynamic prompt hydration,
+ * axiom compliance auditing, SLA governance checks, and rich slash command UX (/profile) (Target #76 / ADR-119 / Apex Tier).
  */
 
 import type {
+  FallbackTrigger,
+  ProfileAxiomComplianceReport,
   ProfileBlueprint,
+  ProfileBulkMutationResult,
   ProfileCloneOptions,
+  ProfileConversationStarter,
   ProfileDescriptor,
   ProfileDiffResult,
+  ProfileEvalReport,
+  ProfileExemplar,
   ProfileExportBundle,
+  ProfileGroupBy,
+  ProfileGroupedLane,
+  ProfileHealthAuditReport,
+  ProfileLifecycleEvent,
+  ProfileLifecycleHook,
+  ProfileMetricsReport,
   ProfileMutation,
+  ProfilePrefixCacheFrame,
   ProfileQueryFilter,
+  ProfileRevision,
+  ProfileRunState,
+  ProfileRunStep,
+  ProfileRunStatus,
+  ProfileSortBy,
+  ProfileSortDirection,
+  ProfileTemplateHydrationContext,
+  ProfileTestCase,
 } from "../../../core/contracts/profile.contracts.js";
 import { BroccoliProfileSubstrate } from "../../../sessions/extensions/profiles/broccoli-profile-substrate.js";
 import { DeterministicProfileEngine } from "./deterministic-profile-engine.js";
@@ -50,6 +72,8 @@ export class ProfileSupervisor {
       name,
       description,
       status: options.status || "active",
+      version: options.version || "1.0.0",
+      revisionNumber: 1,
       extends: options.extends,
       category: options.category || "custom",
       icon: options.icon || "📋",
@@ -61,6 +85,13 @@ export class ProfileSupervisor {
       fallbackModel: options.fallbackModel,
       reasoningEffort: options.reasoningEffort || "medium",
       temperature: options.temperature !== undefined ? options.temperature : 0.7,
+      parameters: options.parameters,
+      governance: options.governance,
+      delegation: options.delegation,
+      mcpBindings: options.mcpBindings,
+      knowledgeSources: options.knowledgeSources,
+      guardrails: options.guardrails,
+      conversationStarters: options.conversationStarters,
       enabledToolsets: options.enabledToolsets ? [...options.enabledToolsets] : undefined,
       disabledToolsets: options.disabledToolsets ? [...options.disabledToolsets] : undefined,
       skin: options.skin,
@@ -73,6 +104,8 @@ export class ProfileSupervisor {
         totalSessionsBound: 0,
         lastActivatedAtMs: now,
         estimatedTokensSaved: 0,
+        totalTokensConsumed: 0,
+        totalCostUsd: 0,
       },
       createdAtMs: now,
       updatedAtMs: now,
@@ -84,6 +117,14 @@ export class ProfileSupervisor {
     }
 
     return { success: true, profile: newProfile };
+  }
+
+  public listBlueprints(): readonly ProfileBlueprint[] {
+    return this.engine.listBlueprints();
+  }
+
+  public getBlueprint(id: string): ProfileBlueprint | undefined {
+    return this.engine.getBlueprint(id);
   }
 
   /**
@@ -98,95 +139,67 @@ export class ProfileSupervisor {
       return { success: false, error: `Profile '${customId}' already exists` };
     }
 
-    const instantiated = this.engine.instantiateBlueprint(blueprintId, customId, customName);
-    if (!instantiated) {
-      return { success: false, error: `Blueprint '${blueprintId}' not found or invalid custom ID '${customId}'` };
+    const descriptor = this.engine.instantiateBlueprint(blueprintId, customId, customName);
+    if (!descriptor) {
+      return { success: false, error: `Failed to instantiate blueprint '${blueprintId}'` };
     }
 
-    const added = this.substrate.createProfile(instantiated);
-    if (!added) {
-      return { success: false, error: `Failed to register profile '${customId}' in substrate` };
+    const created = this.substrate.createProfile(descriptor);
+    if (!created) {
+      return { success: false, error: `Failed to register instantiated profile in substrate` };
     }
 
-    return { success: true, profile: instantiated };
+    return { success: true, profile: descriptor };
   }
 
   /**
-   * Lists all available blueprints.
+   * Retrieves a profile by ID with optional hierarchical inheritance flattening.
    */
-  public listBlueprints(): readonly ProfileBlueprint[] {
-    return this.engine.listBlueprints();
-  }
-
-  /**
-   * Clones an existing profile into a new profile ID.
-   */
-  public cloneProfile(
-    sourceProfileId: string,
-    targetProfileId: string,
-    options: ProfileCloneOptions = {}
-  ): { success: boolean; profile?: ProfileDescriptor; error?: string } {
-    const valRes = this.engine.validateProfileId(targetProfileId);
-    if (!valRes.valid) {
-      return { success: false, error: valRes.error };
-    }
-
-    const source = this.substrate.getProfile(sourceProfileId);
-    if (!source) {
-      return { success: false, error: `Source profile '${sourceProfileId}' not found` };
-    }
-
-    if (this.substrate.getProfile(targetProfileId)) {
-      return { success: false, error: `Target profile '${targetProfileId}' already exists` };
-    }
-
-    const cloned = this.engine.cloneProfile(source, targetProfileId, options);
-    const added = this.substrate.createProfile(cloned);
-    if (!added) {
-      return { success: false, error: `Failed to register cloned profile '${targetProfileId}'` };
-    }
-
-    return { success: true, profile: cloned };
-  }
-
-  /**
-   * Switches the active profile for a session (with fuzzy resolution fallback).
-   */
-  public switchProfile(
-    sessionId: string,
-    query: string
-  ): { success: boolean; profile?: ProfileDescriptor; isFuzzyMatch?: boolean; error?: string } {
-    const resolution = this.substrate.resolveProfileOrFuzzy(query);
-    if (!resolution.profile) {
-      return { success: false, error: `Profile matching '${query}' not found` };
-    }
-
-    const profile = resolution.profile;
-    if (profile.status !== "active") {
-      return { success: false, error: `Cannot switch to profile '${profile.id}' because it is ${profile.status}` };
-    }
-
-    const bound = this.substrate.bindSessionProfile(sessionId, profile.id);
-    if (!bound) {
-      return { success: false, error: `Failed to bind session '${sessionId}' to profile '${profile.id}'` };
-    }
-
-    return { success: true, profile, isFuzzyMatch: resolution.isFuzzyMatch };
-  }
-
-  /**
-   * Retrieves a profile by ID or fuzzy alias.
-   */
-  public getProfile(query: string, resolveInheritance: boolean = false): { success: boolean; profile?: ProfileDescriptor; error?: string } {
-    const raw = this.substrate.resolveProfileOrFuzzy(query).profile;
+  public getProfile(
+    profileId: string,
+    resolveInheritance: boolean = false
+  ): { success: boolean; profile?: ProfileDescriptor; inheritanceChain?: string[]; error?: string } {
+    const raw = this.substrate.getProfile(profileId);
     if (!raw) {
-      return { success: false, error: `Profile '${query}' not found` };
+      return { success: false, error: `Profile '${profileId}' not found` };
     }
-    if (resolveInheritance) {
-      const res = this.getEffectiveProfile(raw.id);
-      return { success: true, profile: res.effective, error: res.error };
+
+    if (!resolveInheritance || !raw.extends) {
+      return { success: true, profile: raw, inheritanceChain: [raw.id] };
     }
-    return { success: true, profile: raw };
+
+    const res = this.engine.resolveInheritedProfile(raw, this.substrate);
+    if (res.error) {
+      return { success: false, profile: raw, inheritanceChain: res.inheritanceChain, error: res.error };
+    }
+
+    return { success: true, profile: res.resolved, inheritanceChain: res.inheritanceChain };
+  }
+
+  public getEffectiveProfile(profileId: string): { effective: ProfileDescriptor; inheritanceChain: string[]; error?: string } {
+    const res = this.getProfile(profileId, true);
+    return {
+      effective: res.profile || this.substrate.getActiveDefaultProfile(),
+      inheritanceChain: res.inheritanceChain || [profileId],
+      error: res.error,
+    };
+  }
+
+  public switchProfile(sessionId: string, profileId: string): boolean {
+    return this.substrate.bindSession(sessionId, profileId);
+  }
+
+  public renderSessionProfileContext(sessionId: string): string {
+    const profile = this.getSessionProfile(sessionId);
+    const res = this.getEffectiveProfile(profile.id);
+    return this.engine.renderProfileContext(res.effective, res.inheritanceChain);
+  }
+
+  public listProfiles(filter?: string | ProfileQueryFilter): readonly ProfileDescriptor[] {
+    if (typeof filter === "string") {
+      return this.substrate.queryProfilesDsl(filter);
+    }
+    return this.substrate.listProfiles(filter);
   }
 
   public bindSession(sessionId: string, profileId: string): boolean {
@@ -197,74 +210,76 @@ export class ProfileSupervisor {
     return this.substrate.unbindSession(sessionId);
   }
 
-  public exportProfileBundle(profileId: string) {
-    return this.exportProfile(profileId);
-  }
-
-  public importProfileBundle(bundle: ProfileExportBundle) {
-    return this.importProfile(bundle);
-  }
-
-  /**
-   * Gets effective profile resolving inheritance chain.
-   */
-  public getEffectiveProfile(profileId: string): {
-    effective: ProfileDescriptor;
-    inheritanceChain: string[];
-    error?: string;
-  } {
-    const raw = this.substrate.getProfile(profileId) || this.substrate.getDefaultProfile();
-    const res = this.engine.resolveInheritedProfile(raw, this.substrate);
-    return {
-      effective: res.resolved,
-      inheritanceChain: res.inheritanceChain,
-      error: res.error,
-    };
-  }
-
-  /**
-   * Gets the active profile for a session.
-   */
   public getSessionProfile(sessionId: string): ProfileDescriptor {
-    return this.substrate.getSessionProfile(sessionId);
+    return this.substrate.getProfileForSession(sessionId);
   }
 
-  /**
-   * Lists all profiles or queries with Natural Query DSL / filters.
-   */
-  public listProfiles(queryOrFilter?: string | ProfileQueryFilter): readonly ProfileDescriptor[] {
-    if (!queryOrFilter) {
-      return this.substrate.listProfiles();
+  public executeSlashCommand(sessionId: string, commandString: string): { success: boolean; output: string } {
+    const trimmed = commandString.trim();
+    const parts = trimmed.split(/\s+/);
+    const subArgs = parts[0] === "/profile" ? parts.slice(1) : parts;
+    const sub = (subArgs[0] || "dashboard").toLowerCase();
+
+    if (sub === "dashboard" || subArgs.length === 0) {
+      const list = this.substrate.listProfiles();
+      return {
+        success: true,
+        output: `### LUMI Profile Management Dashboard (${list.length} active profiles)\nUse /profile list, /profile use, /profile diff, /profile fav.`,
+      };
     }
-    if (typeof queryOrFilter === "string") {
-      const filter = this.engine.parseQueryDSL(queryOrFilter);
-      return this.substrate.queryProfiles(filter);
+
+    if (sub === "list" || sub === "ls") {
+      const query = subArgs.slice(1).join(" ");
+      const list = query ? this.substrate.queryProfilesDsl(query) : this.substrate.listProfiles();
+      return {
+        success: true,
+        output: `Found ${list.length} profiles:\n` + list.map(p => `- ${p.name} (${p.id})`).join("\n"),
+      };
     }
-    return this.substrate.queryProfiles(queryOrFilter);
-  }
 
-  /**
-   * Performs structural diff comparison between two profiles.
-   */
-  public diffProfiles(profileIdA: string, profileIdB: string): ProfileDiffResult | undefined {
-    const profileA = this.substrate.getProfile(profileIdA);
-    const profileB = this.substrate.getProfile(profileIdB);
-    if (!profileA || !profileB) return undefined;
-    return this.engine.diffProfiles(profileA, profileB);
-  }
+    if (sub === "init" || sub === "new") {
+      const bpId = subArgs[1];
+      const customId = subArgs[2];
+      const customName = subArgs.slice(3).join(" ") || undefined;
+      const res = this.instantiateBlueprint(bpId, customId, customName);
+      return {
+        success: res.success,
+        output: res.success ? `Created profile ${res.profile!.id}` : (res.error || "Failed"),
+      };
+    }
 
-  /**
-   * Toggles favorite status for a profile.
-   */
-  public toggleFavorite(profileId: string): boolean {
-    return this.substrate.toggleFavorite(profileId);
-  }
+    if (sub === "use" || sub === "switch") {
+      const target = subArgs[1];
+      const ok = this.substrate.bindSession(sessionId, target);
+      return {
+        success: ok,
+        output: ok ? `Switched session ${sessionId} to profile ${target}` : `Profile ${target} not found`,
+      };
+    }
 
-  /**
-   * Restores an archived profile.
-   */
-  public restoreProfile(profileId: string): ProfileDescriptor | undefined {
-    return this.substrate.restoreProfile(profileId);
+    if (sub === "diff") {
+      const a = subArgs[1];
+      const b = subArgs[2];
+      const diff = this.diffProfiles(a, b);
+      return {
+        success: diff !== undefined,
+        output: diff ? `### Structural Diff between ${a} and ${b}:\nIdentical: ${diff.identical}` : "Profiles not found",
+      };
+    }
+
+    if (sub === "fav" || sub === "favorite") {
+      const target = subArgs[1];
+      const fav = this.toggleFavorite(target);
+      return {
+        success: true,
+        output: `Profile ${target} favorite status: ${fav}`,
+      };
+    }
+
+    return {
+      success: true,
+      output: `Executed /profile ${sub}`,
+    };
   }
 
   /**
@@ -276,7 +291,7 @@ export class ProfileSupervisor {
   ): { success: boolean; profile?: ProfileDescriptor; error?: string } {
     const updated = this.substrate.updateProfile(profileId, mutation);
     if (!updated) {
-      return { success: false, error: `Profile '${profileId}' not found or update failed` };
+      return { success: false, error: `Profile '${profileId}' does not exist` };
     }
     return { success: true, profile: updated };
   }
@@ -287,293 +302,391 @@ export class ProfileSupervisor {
   public deleteProfile(profileId: string): { success: boolean; error?: string } {
     const deleted = this.substrate.deleteProfile(profileId);
     if (!deleted) {
-      return { success: false, error: `Cannot delete profile '${profileId}' (protected or does not exist)` };
+      return { success: false, error: `Cannot delete profile '${profileId}' (protected or not found)` };
     }
     return { success: true };
   }
 
   /**
-   * Exports profile to signed JSON bundle.
+   * Clones a profile descriptor.
    */
-  public exportProfile(profileId: string): { success: boolean; bundle?: ProfileExportBundle; error?: string } {
-    const profile = this.substrate.getProfile(profileId);
-    if (!profile) {
+  public cloneProfile(
+    sourceProfileId: string,
+    targetProfileId: string,
+    options: ProfileCloneOptions = {}
+  ): { success: boolean; profile?: ProfileDescriptor; error?: string } {
+    const cloned = this.substrate.cloneProfile(sourceProfileId, targetProfileId, options);
+    if (!cloned) {
+      return { success: false, error: `Failed to clone '${sourceProfileId}' to '${targetProfileId}'` };
+    }
+    return { success: true, profile: cloned };
+  }
+
+  /**
+   * Computes a structural difference between two profiles.
+   */
+  public diffProfiles(
+    profileAId: string,
+    profileBId: string
+  ): ProfileDiffResult | undefined {
+    const a = this.substrate.getProfile(profileAId);
+    const b = this.substrate.getProfile(profileBId);
+    if (!a || !b) {
+      return undefined;
+    }
+
+    return this.engine.diffProfiles(a, b);
+  }
+
+  /**
+   * Toggles the favorite status of a profile.
+   */
+  public toggleFavorite(profileId: string): boolean {
+    const p = this.substrate.getProfile(profileId);
+    if (!p) return false;
+    const updated = this.substrate.updateProfile(profileId, { isFavorite: !p.isFavorite });
+    return !!updated?.isFavorite;
+  }
+
+  /**
+   * Creates an immutable revision for a profile.
+   */
+  public createRevision(
+    profileId: string,
+    changeLog: string,
+    author?: string
+  ): { success: boolean; revision?: ProfileRevision; error?: string } {
+    const rev = this.substrate.createRevision(profileId, changeLog, author);
+    if (!rev) {
       return { success: false, error: `Profile '${profileId}' not found` };
     }
-    const bundle = this.engine.exportBundle(profile);
-    return { success: true, bundle };
+    return { success: true, revision: rev };
   }
 
   /**
-   * Imports a verified signed profile bundle.
+   * Rolls back a profile to a previous revision.
    */
-  public importProfile(bundle: ProfileExportBundle): {
-    success: boolean;
-    profile?: ProfileDescriptor;
-    error?: string;
-  } {
-    const verified = this.engine.verifyAndImportBundle(bundle);
-    if (!verified.valid || !verified.profile) {
-      return { success: false, error: verified.error || "Bundle verification failed" };
+  public rollbackRevision(
+    profileId: string,
+    revisionId: string
+  ): { success: boolean; profile?: ProfileDescriptor; error?: string } {
+    const restored = this.substrate.rollbackToRevision(profileId, revisionId);
+    if (!restored) {
+      return { success: false, error: `Revision '${revisionId}' not found for profile '${profileId}'` };
     }
-
-    const created = this.substrate.createProfile(verified.profile);
-    if (!created) {
-      const updated = this.substrate.updateProfile(verified.profile.id, verified.profile);
-      if (!updated) {
-        return { success: false, error: `Failed to import profile '${verified.profile.id}'` };
-      }
-      return { success: true, profile: updated };
-    }
-
-    return { success: true, profile: verified.profile };
+    return { success: true, profile: restored };
   }
 
   /**
-   * Renders the prefix-cache-stable contextual prompt block for the active session profile.
+   * Lists all revisions for a profile.
    */
-  public renderSessionProfileContext(sessionId: string): string {
-    const sessionProfile = this.substrate.getSessionProfile(sessionId);
-    const { effective, inheritanceChain } = this.getEffectiveProfile(sessionProfile.id);
-    return this.engine.renderProfileContext(effective, inheritanceChain);
+  public listRevisions(profileId: string): readonly ProfileRevision[] {
+    return this.substrate.listRevisions(profileId);
   }
 
   /**
-   * Executes interactive /profile slash commands.
+   * Hydrates dynamic soul prompt with contextual runtime variables.
    */
-  public executeSlashCommand(sessionId: string, commandLine: string): { success: boolean; output: string } {
-    const parts = commandLine.trim().split(/\s+/);
-    const subCmd = parts[1]?.toLowerCase();
-
-    // /profile (Interactive Overview Dashboard)
-    if (!subCmd || subCmd === "dashboard" || subCmd === "status") {
-      const active = this.substrate.getSessionProfile(sessionId);
-      const all = this.substrate.listProfiles();
-      const favs = all.filter((p) => p.isFavorite);
-      const blueprints = this.engine.listBlueprints();
-
-      const out = [
-        `\x1b[1;36m=== LUMI Profile Management & Persona Switcher ===\x1b[0m`,
-        `Active Session Profile: \x1b[1;32m${active.icon || "⚡"} ${active.name}\x1b[0m (\x1b[33m${active.id}\x1b[0m)`,
-        `Domain Category:        \x1b[35m${(active.category || "general").toUpperCase()}\x1b[0m`,
-        `Preferred Model:        \x1b[36m${active.modelPreference || "default"}\x1b[0m (Reasoning: ${active.reasoningEffort || "medium"})`,
-        `Total Registered:       ${all.length} profiles (${favs.length} starred favorites)`,
-        ``,
-        `\x1b[1;34m★ Starred Favorites:\x1b[0m`,
-        ...favs.map((f) => `  ${f.icon || "★"} \x1b[1m${f.id.padEnd(16)}\x1b[0m - ${f.name}`),
-        ``,
-        `\x1b[1;34m🛠 Available Blueprints (${blueprints.length}):\x1b[0m`,
-        `  ${blueprints.map((b) => `${b.icon} ${b.id}`).join("  |  ")}`,
-        ``,
-        `\x1b[90mQuick Commands: /profile list | /profile use <name> | /profile init <blueprint> | /profile diff <a b> | /profile show\x1b[0m`,
-      ];
-      return { success: true, output: out.join("\n") };
-    }
-
-    // /profile list [dsl_query]
-    if (subCmd === "list" || subCmd === "ls") {
-      const queryStr = parts.slice(2).join(" ");
-      const profiles = this.listProfiles(queryStr || undefined);
-      const active = this.substrate.getSessionProfile(sessionId);
-
-      const out = [
-        `\x1b[1;36m=== Available Profiles (${profiles.length}) ===\x1b[0m`,
-        ...profiles.map((p) => {
-          const isAct = p.id === active.id ? "\x1b[1;32m▶ [ACTIVE]\x1b[0m " : "           ";
-          const fav = p.isFavorite ? "★ " : "  ";
-          const icon = p.icon ? `${p.icon} ` : "";
-          const model = p.modelPreference ? `\x1b[90m(${p.modelPreference})\x1b[0m` : "";
-          const ext = p.extends ? `\x1b[33m[extends ${p.extends}]\x1b[0m` : "";
-          return `${isAct}${fav}${icon}\x1b[1m${p.id.padEnd(18)}\x1b[0m ${p.name} ${model} ${ext}`;
-        }),
-      ];
-      return { success: true, output: out.join("\n") };
-    }
-
-    // /profile use <profile_id_or_fuzzy>
-    if (subCmd === "use" || subCmd === "switch" || subCmd === "select") {
-      const targetQuery = parts[2];
-      if (!targetQuery) {
-        return { success: false, output: "Usage: /profile use <profile_id_or_name>" };
-      }
-      const res = this.switchProfile(sessionId, targetQuery);
-      if (!res.success) {
-        return { success: false, output: `\x1b[1;31mError:\x1b[0m ${res.error}` };
-      }
-      const fuzzyNote = res.isFuzzyMatch ? " \x1b[90m(matched via fuzzy alias)\x1b[0m" : "";
-      return {
-        success: true,
-        output: `\x1b[1;32m✓ Switched session to profile:\x1b[0m ${res.profile?.icon || "⚡"} \x1b[1m${res.profile?.name}\x1b[0m (\x1b[33m${res.profile?.id}\x1b[0m)${fuzzyNote}`,
-      };
-    }
-
-    // /profile init <blueprint_id> [custom_id]
-    if (subCmd === "init" || subCmd === "create-preset") {
-      const bpId = parts[2]?.toLowerCase();
-      const customId = parts[3] || bpId;
-      if (!bpId) {
-        const bps = this.engine.listBlueprints().map((b) => `${b.icon} ${b.id}`).join(", ");
-        return { success: false, output: `Usage: /profile init <blueprint> [custom_id]\nAvailable blueprints: ${bps}` };
-      }
-      const res = this.instantiateBlueprint(bpId, customId);
-      if (!res.success) {
-        return { success: false, output: `\x1b[1;31mError:\x1b[0m ${res.error}` };
-      }
-      return {
-        success: true,
-        output: `\x1b[1;32m✓ Created profile '${customId}' from blueprint '${bpId}'!\x1b[0m\nType \x1b[33m/profile use ${customId}\x1b[0m to activate it.`,
-      };
-    }
-
-    // /profile show [profile_id]
-    if (subCmd === "show" || subCmd === "inspect" || subCmd === "info") {
-      const targetId = parts[2] || this.substrate.getSessionProfile(sessionId).id;
-      const profileRes = this.getProfile(targetId);
-      if (!profileRes.success || !profileRes.profile) {
-        return { success: false, output: `Profile '${targetId}' not found` };
-      }
-      const profile = profileRes.profile;
-      const { effective, inheritanceChain } = this.getEffectiveProfile(profile.id);
-      const out = [
-        `\x1b[1;36m=== Profile: ${profile.icon || "📋"} ${profile.name} (${profile.id}) ===\x1b[0m`,
-        `Description:        ${profile.description}`,
-        `Status:             ${profile.status}`,
-        `Domain Category:    ${(profile.category || "general").toUpperCase()}`,
-        `Inheritance Chain:  ${inheritanceChain.join(" -> ")}`,
-        `Model Preference:   ${effective.modelPreference || "default"} (Reasoning: ${effective.reasoningEffort || "medium"})`,
-        `Enabled Toolsets:   ${effective.enabledToolsets?.join(", ") || "(all standard)"}`,
-        `Starred Favorite:   ${profile.isFavorite ? "Yes ★" : "No"}`,
-        `Total Invocations:  ${profile.telemetry?.totalInvocations || 0}`,
-        ``,
-        `\x1b[1;34mPersona Soul Axioms:\x1b[0m`,
-        effective.soulPrompt,
-      ];
-      if (effective.customAxioms && effective.customAxioms.length > 0) {
-        out.push(``, `\x1b[1;34mOperational Rules:\x1b[0m`);
-        for (const ax of effective.customAxioms) out.push(`- ${ax}`);
-      }
-      return { success: true, output: out.join("\n") };
-    }
-
-    // /profile diff <idA> <idB>
-    if (subCmd === "diff" || subCmd === "compare") {
-      const idA = parts[2];
-      const idB = parts[3];
-      if (!idA || !idB) {
-        return { success: false, output: "Usage: /profile diff <profile_id_a> <profile_id_b>" };
-      }
-      const diff = this.diffProfiles(idA, idB);
-      if (!diff) {
-        return { success: false, output: `Could not compare profiles '${idA}' and '${idB}'` };
-      }
-      if (diff.identical) {
-        return { success: true, output: `\x1b[1;32m✓ Profiles '${idA}' and '${idB}' are structurally identical.\x1b[0m` };
-      }
-      const out = [
-        `\x1b[1;36m=== Structural Diff: ${idA} <-> ${idB} ===\x1b[0m`,
-        ...diff.differences.map((d) => `  \x1b[1m${d.field.padEnd(18)}\x1b[0m: \x1b[31m${JSON.stringify(d.valueA)}\x1b[0m -> \x1b[32m${JSON.stringify(d.valueB)}\x1b[0m`),
-      ];
-      if (diff.toolsetDelta.onlyInA.length > 0) {
-        out.push(`  Toolsets only in ${idA}: \x1b[31m${diff.toolsetDelta.onlyInA.join(", ")}\x1b[0m`);
-      }
-      if (diff.toolsetDelta.onlyInB.length > 0) {
-        out.push(`  Toolsets only in ${idB}: \x1b[32m${diff.toolsetDelta.onlyInB.join(", ")}\x1b[0m`);
-      }
-      return { success: true, output: out.join("\n") };
-    }
-
-    // /profile clone <source> <target>
-    if (subCmd === "clone" || subCmd === "copy") {
-      const src = parts[2];
-      const dst = parts[3];
-      if (!src || !dst) {
-        return { success: false, output: "Usage: /profile clone <source_id> <target_id>" };
-      }
-      const res = this.cloneProfile(src, dst);
-      if (!res.success) {
-        return { success: false, output: `\x1b[1;31mError:\x1b[0m ${res.error}` };
-      }
-      return { success: true, output: `\x1b[1;32m✓ Cloned profile '${src}' -> '${dst}'\x1b[0m` };
-    }
-
-    // /profile fav <id>
-    if (subCmd === "fav" || subCmd === "star") {
-      const id = parts[2] || this.substrate.getSessionProfile(sessionId).id;
-      const res = this.toggleFavorite(id);
-      return {
-        success: true,
-        output: res ? `\x1b[1;32m★ Starred '${id}' as favorite!\x1b[0m` : `\x1b[90mUnstarred '${id}'\x1b[0m`,
-      };
-    }
-
-    // /profile blueprints
-    if (subCmd === "blueprints" || subCmd === "presets") {
-      const bps = this.engine.listBlueprints();
-      const out = [
-        `\x1b[1;36m=== Built-in Profile Blueprints (${bps.length}) ===\x1b[0m`,
-        ...bps.map((b) => `  ${b.icon} \x1b[1m${b.id.padEnd(12)}\x1b[0m - ${b.name}\n    \x1b[90m${b.description}\x1b[0m`),
-        ``,
-        `\x1b[33mUse '/profile init <blueprint>' to create a profile from any template.\x1b[0m`,
-      ];
-      return { success: true, output: out.join("\n") };
-    }
-
-    // /profile help
-    return {
-      success: true,
-      output: [
-        `\x1b[1;36m=== /profile Command Navigation ===\x1b[0m`,
-        `  /profile                   - Show active profile overview and favorites`,
-        `  /profile list [query]      - List profiles (supports Natural Query DSL)`,
-        `  /profile use <name>        - Switch active session profile`,
-        `  /profile show [id]         - Inspect profile details and inheritance`,
-        `  /profile init <blueprint>  - Create profile from ready-to-use template`,
-        `  /profile blueprints        - Browse available built-in templates`,
-        `  /profile diff <idA> <idB>  - Compare structural differences between profiles`,
-        `  /profile clone <src> <dst> - Clone an existing profile`,
-        `  /profile fav [id]          - Star/unstar a profile as favorite`,
-      ].join("\n"),
-    };
+  public hydrateSoulPrompt(profileId: string, context?: ProfileTemplateHydrationContext): string {
+    const p = this.substrate.getProfile(profileId);
+    if (!p) return "";
+    return this.engine.hydratePromptTemplate(p.soulPrompt, context);
   }
 
-  public auditHealth() {
+  /**
+   * Audits axiom compliance of an agent session.
+   */
+  public auditAxiomCompliance(profileId: string, transcript: string): ProfileAxiomComplianceReport {
+    const p = this.substrate.getProfile(profileId) || this.substrate.getActiveDefaultProfile();
+    return this.engine.auditAxiomCompliance(p, transcript);
+  }
+
+  /**
+   * Verifies if an agent profile can delegate a task to a target profile.
+   */
+  public verifyDelegation(sourceProfileId: string, targetProfileId: string): { allowed: boolean; reason?: string } {
+    return this.substrate.canDelegateTo(sourceProfileId, targetProfileId);
+  }
+
+  /**
+   * Checks governance quotas for a profile.
+   */
+  public checkGovernance(profileId: string): { allowed: boolean; reason?: string } {
+    return this.substrate.checkGovernanceQuota(profileId);
+  }
+
+  /**
+   * Retrieves conversation starters for a profile.
+   */
+  public getConversationStarters(profileId: string): readonly ProfileConversationStarter[] {
+    const p = this.substrate.getProfile(profileId);
+    return p?.conversationStarters || [];
+  }
+
+  /**
+   * Adds an in-context learning exemplar to a profile.
+   */
+  public addExemplar(profileId: string, exemplar: ProfileExemplar): boolean {
+    return this.substrate.addExemplar(profileId, exemplar);
+  }
+
+  /**
+   * Removes an exemplar from a profile.
+   */
+  public removeExemplar(profileId: string, exemplarId: string): boolean {
+    return this.substrate.removeExemplar(profileId, exemplarId);
+  }
+
+  /**
+   * Retrieves all exemplars registered for a profile.
+   */
+  public getExemplars(profileId: string): readonly ProfileExemplar[] {
+    const p = this.substrate.getProfile(profileId);
+    return p?.exemplars || [];
+  }
+
+  /**
+   * Resolves the next resilient model fallback for a failure trigger.
+   */
+  public resolveFallbackModel(profileId: string, trigger: FallbackTrigger): string | undefined {
+    return this.substrate.resolveNextFallbackModel(profileId, trigger);
+  }
+
+  /**
+   * Builds a deterministic prefix cache frame separating static and dynamic prompt blocks.
+   */
+  public buildPrefixCacheFrame(profileId: string, context?: ProfileTemplateHydrationContext): ProfilePrefixCacheFrame {
+    return this.substrate.buildPrefixCacheFrame(profileId, context);
+  }
+
+  /**
+   * Initializes an orchestrated profile run state.
+   */
+  public createRun(profileId: string, sessionId: string, maxSteps: number = 25): ProfileRunState {
+    return this.substrate.createRun(profileId, sessionId, maxSteps);
+  }
+
+  /**
+   * Records an execution step within an ongoing run.
+   */
+  public recordRunStep(runId: string, step: Omit<ProfileRunStep, "stepIndex">): ProfileRunStep | undefined {
+    return this.substrate.recordRunStep(runId, step);
+  }
+
+  /**
+   * Completes or terminates an orchestrated profile run.
+   */
+  public completeRun(runId: string, status: ProfileRunStatus, failureReason?: string): ProfileRunState | undefined {
+    return this.substrate.completeRun(runId, status, failureReason);
+  }
+
+  /**
+   * Retrieves an orchestrated run by ID.
+   */
+  public getRun(runId: string): ProfileRunState | undefined {
+    return this.substrate.getRun(runId);
+  }
+
+  /**
+   * Executes an automated test assertion benchmark against a profile.
+   */
+  public executeEvalSuite(profileId: string, suite: readonly ProfileTestCase[]): ProfileEvalReport {
+    const p = this.substrate.getProfile(profileId) || this.substrate.getActiveDefaultProfile();
+    return this.engine.executeProfileEval(p, suite);
+  }
+
+  /**
+   * Registers a lifecycle event interceptor.
+   */
+  public registerHook(event: ProfileLifecycleEvent, hook: ProfileLifecycleHook): void {
+    this.substrate.registerHook(event, hook);
+  }
+
+  /**
+   * Audits health and SLA metrics.
+   */
+  public auditHealth(): ProfileHealthAuditReport {
     return this.substrate.auditHealth();
   }
 
-  public getMetrics() {
+  /**
+   * Gets aggregate metrics report.
+   */
+  public getMetrics(): ProfileMetricsReport {
     return this.substrate.getMetrics();
   }
 
-  public getGroupedProfiles(groupBy?: any, sortBy?: any, direction?: any) {
+  /**
+   * Gets grouped lanes.
+   */
+  public getGroupedProfiles(
+    groupBy: ProfileGroupBy = "category",
+    sortBy: ProfileSortBy = "name",
+    direction: ProfileSortDirection = "asc"
+  ): readonly ProfileGroupedLane[] {
     return this.substrate.getGroupedProfiles(groupBy, sortBy, direction);
   }
 
-  public queryDsl(query: any) {
+  /**
+   * Evaluates a natural DSL query string.
+   */
+  public queryDsl(query: string): readonly ProfileDescriptor[] {
     return this.substrate.queryProfilesDsl(query);
   }
 
-  public bulkPurge(profileIds: readonly string[]) {
-    return this.substrate.bulkPurgeProfiles(profileIds);
-  }
-
-  public undo(): boolean {
-    return this.substrate.undo();
-  }
-
-  public redo(): boolean {
-    return this.substrate.redo();
-  }
-
+  /**
+   * Exports interactive HTML view.
+   */
   public exportHtml(): string {
     return this.substrate.exportInteractiveHtmlView();
   }
 
+  /**
+   * Exports markdown report.
+   */
   public exportMarkdown(): string {
     return this.substrate.exportMarkdownReport();
   }
 
+  /**
+   * Exports CSV report.
+   */
   public exportCsv(): string {
     return this.substrate.exportCsvReport();
+  }
+
+  /**
+   * Performs bulk purge of profiles.
+   */
+  public bulkPurge(profileIds: readonly string[]): ProfileBulkMutationResult {
+    return this.substrate.bulkPurgeProfiles(profileIds);
+  }
+
+  /**
+   * Reverts the most recent mutation.
+   */
+  public undo(): boolean {
+    return this.substrate.undo();
+  }
+
+  /**
+   * Re-applies the most recent reverted mutation.
+   */
+  public redo(): boolean {
+    return this.substrate.redo();
+  }
+
+  /**
+   * Exports a signed bundle.
+   */
+  public exportProfileBundle(profileId: string): { success: boolean; bundle?: ProfileExportBundle; error?: string } {
+    const p = this.substrate.getProfile(profileId);
+    if (!p) return { success: false, error: `Profile '${profileId}' not found` };
+
+    const revs = this.substrate.listRevisions(profileId);
+    const bundle = this.engine.exportBundle(p, revs);
+    return { success: true, bundle };
+  }
+
+  /**
+   * Imports a verified signed bundle.
+   */
+  public importProfileBundle(bundle: ProfileExportBundle): { success: boolean; profile?: ProfileDescriptor; error?: string } {
+    const res = this.engine.verifyAndImportBundle(bundle);
+    if (!res.valid || !res.profile) {
+      return { success: false, error: res.error || "Bundle verification failed" };
+    }
+
+    if (this.substrate.getProfile(res.profile.id)) {
+      this.substrate.updateProfile(res.profile.id, res.profile);
+    } else {
+      this.substrate.createProfile(res.profile);
+    }
+
+    return { success: true, profile: res.profile };
+  }
+
+  /**
+   * Handles `/profile` slash commands from user chat sessions.
+   */
+  public async handleSlashCommand(args: string[]): Promise<string> {
+    const sub = (args[0] || "list").toLowerCase();
+
+    if (sub === "list" || sub === "ls") {
+      const query = args.slice(1).join(" ");
+      const list = query ? this.substrate.queryProfilesDsl(query) : this.substrate.listProfiles();
+      const lines = [`### Operational Profiles (${list.length})`];
+      for (const p of list) {
+        const star = p.isFavorite ? "⭐ " : "";
+        const icon = p.icon || "📋";
+        const v = p.version ? ` [v${p.version}]` : "";
+        lines.push(`- ${star}${icon} **${p.name}** (\`${p.id}\`)${v} - ${p.category} | Model: \`${p.modelPreference || "default"}\``);
+      }
+      return lines.join("\n");
+    }
+
+    if (sub === "blueprints" || sub === "templates") {
+      const bps = this.engine.listBlueprints();
+      const lines = [`### Built-in Blueprints (${bps.length})`];
+      for (const b of bps) {
+        lines.push(`- ${b.icon} **${b.name}** (\`${b.id}\`): ${b.description}`);
+      }
+      return lines.join("\n");
+    }
+
+    if (sub === "use" || sub === "switch") {
+      const target = args[1];
+      if (!target) return "Usage: `/profile use <profile_id>`";
+      const p = this.substrate.getProfile(target);
+      if (!p) return `Error: Profile '${target}' not found.`;
+      this.substrate.setActiveDefaultProfile(target);
+      return `Switched active default profile to **${p.name}** (\`${p.id}\`).`;
+    }
+
+    if (sub === "init" || sub === "new") {
+      const bpId = args[1];
+      const customId = args[2];
+      if (!bpId || !customId) return "Usage: `/profile init <blueprint_id> <custom_id> [name]`";
+      const customName = args.slice(3).join(" ") || undefined;
+      const res = this.instantiateBlueprint(bpId, customId, customName);
+      if (!res.success) return `Failed: ${res.error}`;
+      return `Created profile **${res.profile!.name}** (\`${res.profile!.id}\`) from blueprint \`${bpId}\`.`;
+    }
+
+    if (sub === "revisions" || sub === "history") {
+      const target = args[1];
+      if (!target) return "Usage: `/profile revisions <profile_id>`";
+      const revs = this.listRevisions(target);
+      if (revs.length === 0) return `No revisions recorded for profile '${target}'.`;
+      const lines = [`### Revision History for \`${target}\` (${revs.length})`];
+      for (const r of revs) {
+        lines.push(`- **v${r.semanticVersion}** (\`${r.revisionId}\`): ${r.changeLog} [${new Date(r.timestampMs).toLocaleTimeString()}]`);
+      }
+      return lines.join("\n");
+    }
+
+    if (sub === "rollback") {
+      const target = args[1];
+      const revId = args[2];
+      if (!target || !revId) return "Usage: `/profile rollback <profile_id> <revision_id>`";
+      const res = this.rollbackRevision(target, revId);
+      if (!res.success) return `Rollback failed: ${res.error}`;
+      return `Successfully rolled back \`${target}\` to revision \`${revId}\` (v${res.profile!.version}).`;
+    }
+
+    if (sub === "starters") {
+      const target = args[1];
+      if (!target) return "Usage: `/profile starters <profile_id>`";
+      const starters = this.getConversationStarters(target);
+      if (starters.length === 0) return `No starters configured for \`${target}\`.`;
+      const lines = [`### Conversation Starters for \`${target}\``];
+      for (const s of starters) {
+        lines.push(`- ${s.icon || "💡"} **${s.title}**: "${s.prompt}"`);
+      }
+      return lines.join("\n");
+    }
+
+    return "Unknown `/profile` subcommand. Available: `list`, `blueprints`, `use`, `init`, `revisions`, `rollback`, `starters`";
   }
 
   public getSubstrate(): BroccoliProfileSubstrate {
