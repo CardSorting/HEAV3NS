@@ -8,14 +8,20 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Speed](https://img.shields.io/badge/Speed-%3C0.15ms%20per%20action-brightgreen?style=for-the-badge)](#-why-its-so-fast)
-[![Undo](https://img.shields.io/badge/Undo-Instant%20Rewind-blueviolet?style=for-the-badge)](#-why-its-so-fast)
+[![Speed](https://img.shields.io/badge/Speed-%3C0.15ms%20per%20action-brightgreen?style=for-the-badge)](#-why-its-so-fast--easy)
+[![Undo](https://img.shields.io/badge/Undo-Instant%20Rewind-blueviolet?style=for-the-badge)](#-why-its-so-fast--easy)
+[![Academic Paper](https://img.shields.io/badge/Paper-AKD--DSO-9C27B0?style=for-the-badge)](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
 
 <br/>
 
-| 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🎯 [How-To Cookbook](#-how-to-do-anything-in-1-command) | 🔮 [Drag & Drop Setup](#-drag--drop-customization-souls--skills) | 👤 [AI Roles](#-pick-an-ai-role) | 📖 [Full Guide](SOUL_AND_SKILLS_GUIDE.md) |
-|---|---|---|---|---|
+| **Getting Started** | **Guides & Manuals** | **Architecture & Deep Dives** |
+|---|---|---|
+| 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🔮 [SOUL & Skills Guide](SOUL_AND_SKILLS_GUIDE.md) | 📐 [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) |
+| 🎯 [How-To Cookbook](#-how-to-do-anything-in-1-command) | ❓ [Frequently Asked Questions](docs/FAQ.md) | 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
+| 🔮 [Drag & Drop Setup](#-drag--drop-customization-souls--skills) | ⌨️ [TUI Commands Guide](docs/TUI_COMMANDS_GUIDE.md) | 🧬 [41 Osmotic Subsystems](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) |
+| 👤 [AI Roles](#-pick-an-ai-role) | 📖 [Author's Preface & Story](PREFACE.md) | 🎓 [Academic Whitepaper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) |
+| ⚡ [Advanced Documentation](#-advanced-documentation--developer-reference) | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) | ⚡ [Composition Root](src/index.ts) |
 
 ---
 
@@ -115,8 +121,22 @@ npx tsx src/index.ts --profile coder
 
 ---
 
+## 📚 Advanced Documentation & Developer Reference
+
+For architects, engineers, and contributors looking for in-depth technical specifications:
+
+| Area | Direct Documentation Links |
+|---|---|
+| 📐 **Architecture & Design** | 📐 [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) · 🏗️ [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) · 🧬 [41 Osmotic Subsystems](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) · 📖 [ADR Decisions Index](.wiki/adr/README.md) · 📂 [Mutation Matrix](docs/MUTATION_DIRECTORIES.md) |
+| 🎓 **Research & Whitepapers** | 🎓 [AKD-DSO Academic Paper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) · 📄 [Osmosis Whitepaper](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md) · 📦 [Package Mappings](.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md) · 🧊 [Freeze Cutoff](.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md) |
+| 📈 **Evidence & Benchmarks** | 📈 [Live Baseline Measurements](docs/LIVE_BASELINE.json) · 🧪 [Benchmark Report](docs/BENCHMARK_REPORT.md) · 🏛️ [Grand Architectural Audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) · 📋 [Changelog](CHANGELOG.md) · 🛡️ [Patent Pledge](PATENT-NON-AGGRESSION-PLEDGE.md) |
+| ⚡ **Subsystem Source Code** | ⚡ [Composition Root](src/index.ts) · 🏭 [Engine Factory](src/factories/monolith-factory.ts) · ⚙️ [Core Contracts](src/core/contracts/) · 🧠 [Agents Tier](src/agents/) · 💾 [Sessions Tier](src/sessions/) · 🔧 [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) |
+
+---
+
 ## 🏛️ Open Source & Credits
 
 - **❤️ Built with Inspiration from**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) by **Nous Research**. Thank you to the open-source community for making AI open and accessible to everyone.
-- **📄 License**: Free & Open Source under the **Apache License 2.0** ([LICENSE](LICENSE)).
+- **📄 License**: Free & Open Source under the **Apache License 2.0** ([LICENSE](LICENSE) · [NOTICE](NOTICE) · [CONTRIBUTING.md](CONTRIBUTING.md) · [PATENT-NON-AGGRESSION-PLEDGE.md](PATENT-NON-AGGRESSION-PLEDGE.md)).
+
 
