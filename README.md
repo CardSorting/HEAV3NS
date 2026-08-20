@@ -242,61 +242,45 @@ graph TD
 
 ---
 
-### 💻 Programmatic TypeScript SDK & 60s Walkthrough
+### 💻 Programmatic TypeScript SDK & Developer Reference
 
 ```typescript
 import { LumiMonolith } from "lumi-joy";
 const lumi = new LumiMonolith();
 
-// Execute a frame-perfect turn with real-time streaming telemetry
-const result = await lumi.tick({
-  prompt: "Analyze repository architecture, run test suites, and fix compiler errors",
-  onProgress: (event) => console.log(`[${event.phase}] ${event.message}`),
+// Execute a deterministic turn with streaming telemetry
+const { outcome, response } = await lumi.tick({
+  prompt: "Analyze repository architecture and fix compiler errors",
+  onProgress: (e) => console.log(`[${e.phase}] ${e.message}`),
 });
-console.log("Turn Outcome:", result.outcome, "\nResponse:", result.response);
 ```
 
-| Interactive Shell Experiment | Exact Command | Measurable Result |
+| Task / Flow | Command | Key Invariants & Speed |
 | :--- | :--- | :--- |
-| **1. Instant App Synthesis** | `/flappy` | Materializes a 12-file React + TS + Vite Flappy Bird game in VFS in $<100\text{ ms}$. |
-| **2. $O(1)$ State Time-Travel** | `/rewind 0` | Instantly rolls back VFS, transcript, and memory facts to Frame #0 in **$0.029\text{ ms}$**. |
-| **3. BroccoliDB Reactive Query** | `/db query "SELECT * FROM profiles"` | Queries in-memory tables with $<0.5\ \mu\text{s}$ indexing in rich ANSI spreadsheet view. |
+| **Verify Repository** | `npm test` | Verifies 591 components, link integrity, and 6 guardrails. |
+| **Throughput Benchmark** | `npm run benchmark` | Enforces $\ge 1,000\text{ fps}$ throughput and $<0.1\text{ ms}$ state rewind. |
+| **Synthesize Demo Game** | `/flappy` *(in TUI)* | Generates a 12-file React + TS + Vite Flappy Bird in VFS in $<100\text{ ms}$. |
+| **$O(1)$ State Rollback** | `/rewind 0` *(in TUI)* | Restores VFS, transcripts, and memory to Frame #0 in **$0.029\text{ ms}$**. |
+| **Query BroccoliDB** | `/db query "SELECT * FROM profiles"` | Queries in-memory tables with $<0.5\ \mu\text{s}$ indexing. |
+| **Environment Overrides** | `export LUMI_MODEL="claude-3-7-sonnet"` | `LUMI_MODEL`, `LUMI_PROVIDER`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`. |
 
 ---
 
-### ⚙️ Developer & Verification Quick Reference
+## ⚡ Empirical Comparison & Architectural Density
 
-| Task / Flow | Command | Key Invariants & Artifacts |
-| :--- | :--- | :--- |
-| **Run Full Verification** | `npm test` | Verifies composition manifest (591 components), link integrity, and architecture guardrails. |
-| **Run Throughput Benchmark** | `npm run benchmark` | Enforces $\ge 1,000\text{ fps}$ fast-path throughput and warmed-p95 rollback $<0.1\text{ ms}$. |
-| **Run Smoke Test** | `npm run smoke` | Verifies runtime capabilities across all 9 evidence lanes. |
-| **Update Baseline Report** | `npm run baseline:update` | Atomically regenerates [LIVE_BASELINE.json](docs/LIVE_BASELINE.json) & [BENCHMARK_REPORT.md](docs/BENCHMARK_REPORT.md). |
-| **Environment Overrides** | `export LUMI_MODEL="claude-3-7-sonnet"` | Supported: `LUMI_MODEL`, `LUMI_PROVIDER`, `LUMI_REASONING_EFFORT`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`. |
+> **7.77 MB Source (`src/`)** · **215k LOC** · **16 MB Zero-GC Slab** · **1.8 MB Tarball** · **591 Composed Components**
 
----
-
-## ⚡ Comparison Matrix & Empirical Benchmarks
-
-| Metric / Feature | Legacy Monorepo (`pi-main`) | AKD-DSO Monolith (`LUMI-JOY`) | Underlying Mechanism / Speedup |
+| Metric / Feature | Legacy Monorepo (`pi-main`) | AKD-DSO Monolith (`LUMI-JOY`) | Concrete Mechanism & Speedup |
 |---|---|---|---|
 | **Architecture** | 18+ Micro-packages | **3-Tier Monolith** (`agents`, `sessions`, `tooling`) | **Zero Framework Bloat** |
-| **Agent Codebase Size** | ~18 repositories (>150MB node_modules) | **Unified Monolith: 7.77 MB (`src/`) · 215k LOC** | Zero-dependency high-density engine with **591 single-responsibility components**. |
+| **Codebase Size** | ~18 repos (>150MB node_modules) | **Unified Monolith: 7.77 MB · 215k LOC** | **591 single-responsibility components**. |
 | **Execution Loop** | Loose Async Handlers | **Deterministic Game Loop** (`tick()`) | **Frame-Perfect Isolation** |
-| **Mean Turn Latency** | $14.20\text{ ms}$ | **Live guardrail: $<1.0\text{ ms}$** | Direct function dispatch replacing IPC/RPC queues (see [LIVE_BASELINE.json](docs/LIVE_BASELINE.json)). |
-| **Execution Throughput** | $70.4\text{ turns/sec}$ | **Live guardrail: $\geq 1,000\text{ frames/sec}$** | Direct deterministic fast-path measurement ($8,506.11\text{ fps}$ measured baseline). |
-| **State Rewind Latency** | $285.00\text{ ms}$ (Re-parse) | **Live guardrail: $<0.1\text{ ms}$ p95** | In-memory frame snapshots restoring state in **$0.029\text{ ms}$**. |
-| **Profile Routing Latency**| Global env mutation | **$29.37\text{M ops/sec}$ ($0.034\ \mu\text{s/op}$)** | Zenith Multi-Profile Substrate with byte-stable prefix caching ([ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)). |
-| **Memory Allocation** | Dynamic Heap GC Sweep | **16MB Zero-GC Slab** | Pre-allocated `ArrayBuffer` slab eliminates Garbage Collection pauses. |
-| **Complete Game Synthesis** | Manual multi-file setup | **12-file React + TS + Vite Flappy Bird** | Temp-isolated generation, strict compiler diagnostics, and executable physics simulation. |
-
----
-
-## 📏 Total Agent Size & Density
-
-> **7.77 MB Source (`src/`)** · **215k LOC** · **16 MB Zero-GC Slab** · **1.8 MB NPM Tarball** · **591 Composed Components**
-
-LUMI-JOY replaces 18+ fragmented micro-packages (>150MB `node_modules`) with a high-density, single-binary monolith delivering **10x higher architectural density**, instant $<100\text{ ms}$ cold starts, and sub-millisecond execution with zero garbage collection pauses.
+| **Mean Turn Latency**| $14.20\text{ ms}$ | **Live guardrail: $<1.0\text{ ms}$** | In-process dispatch eliminating IPC queues ([LIVE_BASELINE.json](docs/LIVE_BASELINE.json)). |
+| **Throughput** | $70.4\text{ turns/sec}$ | **Live guardrail: $\geq 1,000\text{ fps}$** | **$8506.11\text{ frames/second}$** measured fast path. |
+| **State Rewind** | $285.00\text{ ms}$ (Re-parse) | **Live guardrail: $<0.1\text{ ms}$ p95** | In-memory frame snapshots restoring state in **$0.029\text{ ms}$**. |
+| **Profile Routing** | Global env mutation | **$29.37\text{M ops/sec}$ ($0.034\ \mu\text{s/op}$)** | Zenith Multi-Profile Substrate ([ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)). |
+| **Memory Allocation**| Dynamic Heap GC Sweep | **16MB Zero-GC Slab** | Pre-allocated `ArrayBuffer` slab eliminating GC pauses. |
+| **Game Synthesis** | Manual multi-file setup | **12-file React + TS + Vite Flappy Bird** | Isolated VFS generation, physics simulation, Canvas UI. |
 
 ---
 
@@ -304,29 +288,15 @@ LUMI-JOY replaces 18+ fragmented micro-packages (>150MB `node_modules`) with a h
 
 ```
 src/
-├── core/
-│   ├── contracts/                         # System Interfaces & GameStateSnapshot
-│   ├── abstracts/                         # Abstract Base Classes (DIP)
-│   └── utilities/                         # Shared progress credential sanitizer
-│
-├── agents/                                # Tier 1: Agents Subsystem
-│   ├── base/                              # Agent Base Config (Immutable)
-│   └── extensions/                        # Mutation subdirectories (compaction, execution, swarm, profiles)
-│
-├── sessions/                              # Tier 2: Sessions Subsystem
-│   ├── base/                              # Session Context Base (Immutable)
-│   └── extensions/                        # Mutation subdirectories (substrate, memory, vfs, broccolidb)
-│
-└── tooling/                               # Tier 3: Tooling Subsystem
-    ├── base/                              # Eyes Tool Base (Immutable)
-    └── extensions/                        # 47 Model Tools, execution guards, LSP, browser CDP
+├── core/                                  # Contracts, abstracts (DIP), credential sanitizers
+├── agents/                                # Tier 1: Base config (immutable), execution, swarm, profiles
+├── sessions/                              # Tier 2: Base context (immutable), substrate, memory, VFS, BroccoliDB
+└── tooling/                               # Tier 3: Base eyes (immutable), 47 model tools, LSP, browser CDP
 ```
 
 > 🛡️ **Non-Destructive Osmosis Extension Strategy (`ADR-012`)**: Base classes in `src/*/base/` remain immutable. Evolutionary passes introduce single-responsibility extensions in dedicated domain subdirectories without intermediate barrel files.
 
 ---
-
-## 🥦 Deterministic Hybrid BroccoliDB Kernel ($\mathcal{K}_{\text{broccoli}}$)
 
 ## 📜 Subsystem Synthesis Matrix (591 Components)
 
