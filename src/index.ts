@@ -5071,6 +5071,9 @@ if (isDirectCliExecution) {
 
   (async () => {
     const lumi = new LumiMonolith();
+    if (process.env.LUMI_MODEL_ID) {
+      lumi.setModel(process.env.LUMI_MODEL_ID);
+    }
 
     if (isLogin || isSetup) {
       await lumi.setupWizard.runInteractiveWizard();
