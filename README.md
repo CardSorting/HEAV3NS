@@ -181,47 +181,17 @@ graph LR
 
 ---
 
-### 📦 Step 1: Prerequisites & Installation
-
-LUMI-JOY is built as a zero-dependency, pure TypeScript monolith without native C++ compilation bindings. Ensure you have **Node.js 20.19+** and **Git** installed:
+### 📦 3-Step Zero-Friction Setup
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/CardSorting/LUMI-JOY.git
-cd LUMI-JOY
+# 1. Clone & Install (Zero C++ bindings, pure TypeScript)
+git clone https://github.com/CardSorting/LUMI-JOY.git && cd LUMI-JOY
+npm install && npm run build
 
-# 2. Install dependencies (pure TypeScript toolchain)
-npm install
-
-# 3. Compile the monolith into dist/
-npm run build
-```
-
----
-
-### 🔑 Step 2: Provider Authentication & Guided Setup
-
-LUMI-JOY features a guided onboarding wizard to configure your preferred LLM providers and reasoning models:
-
-```bash
-# Launch the interactive provider configuration wizard
+# 2. Interactive Provider Setup (Codex PKCE OAuth, Claude, OpenAI, Ollama)
 npx tsx src/index.ts --setup
-# or if linked globally:
-# lumi --setup
-```
 
-#### Supported Provider Authentication Options:
-1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in (`http://localhost:1455/auth/callback`).
-2. **Anthropic Claude**: Configure `ANTHROPIC_API_KEY` for Claude 3.7 Sonnet, Claude 3.5 Sonnet, and Claude 3 Opus.
-3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, `o1`, `o3-mini`.
-4. **OpenAI-Compatible Custom Proxy**: Connect private corporate endpoints, Ollama, vLLM, DeepSeek, or OpenRouter gateways.
-
----
-
-### 💻 Step 3: Launch with a Specialized Agent Persona
-
-```bash
-# Launch directly with the specialized Coder persona
+# 3. Launch with Specialized Persona (e.g. Coder, Researcher, SRE)
 npx tsx src/index.ts --profile coder
 ```
 
@@ -327,52 +297,25 @@ graph TD
 
 ---
 
-### 💻 Programmatic TypeScript / Node.js SDK
-
-Embed the deterministic engine directly into your enterprise developer tools, CI bots, or IDE extensions:
+### 💻 Programmatic TypeScript SDK & 60s Walkthrough
 
 ```typescript
 import { LumiMonolith } from "lumi-joy";
-
-// 1. Initialize the monolithic game engine agent container
 const lumi = new LumiMonolith();
 
-// 2. Execute a frame-perfect turn with real-time streaming telemetry
+// Execute a frame-perfect turn with real-time streaming telemetry
 const result = await lumi.tick({
   prompt: "Analyze repository architecture, run test suites, and fix compiler errors",
-  onProgress: (event) => {
-    console.log(`[${event.phase}] (${event.status}) ${event.message}`);
-  },
+  onProgress: (event) => console.log(`[${event.phase}] ${event.message}`),
 });
-
-console.log("Turn Outcome:", result.outcome);
-console.log("Agent Response:\n", result.response);
+console.log("Turn Outcome:", result.outcome, "\nResponse:", result.response);
 ```
 
----
-
-### ⏱️ 60-Second Hands-On Walkthrough
-
-Try these 3 quick commands in the interactive shell to experience LUMI-JOY's unique deterministic powers:
-
-#### 1. Instant Application Synthesis & VFS Overlay
-```text
-> /flappy
-```
-*Result*: Materializes a complete 12-file temp-isolated React + TypeScript + Vite Flappy Bird application in the in-memory VFS with executable physics simulation.
-
-#### 2. Sub-Millisecond $O(1)$ State Time-Travel
-```text
-> /snapshots
-> /rewind 0
-```
-*Result*: Instantly rolls back the virtual file system, conversation transcript, and memory facts to Frame #0 in under $0.05\text{ ms}$ with zero state drift.
-
-#### 3. In-Memory BroccoliDB Relational Query
-```text
-> /db query "SELECT * FROM tool_execution_plans WHERE status = 'COMPLETED'"
-```
-*Result*: Queries in-memory reactive tables with $<0.5\ \mu\text{s}$ latency and displays a rich ANSI spreadsheet grid.
+| Interactive Shell Experiment | Exact Command | Measurable Result |
+| :--- | :--- | :--- |
+| **1. Instant App Synthesis** | `/flappy` | Materializes a 12-file React + TS + Vite Flappy Bird game in VFS in $<100\text{ ms}$. |
+| **2. $O(1)$ State Time-Travel** | `/rewind 0` | Instantly rolls back VFS, transcript, and memory facts to Frame #0 in **$0.029\text{ ms}$**. |
+| **3. BroccoliDB Reactive Query** | `/db query "SELECT * FROM profiles"` | Queries in-memory tables with $<0.5\ \mu\text{s}$ indexing in rich ANSI spreadsheet view. |
 
 ---
 
