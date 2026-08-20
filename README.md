@@ -328,64 +328,38 @@ src/
 
 ## 🥦 Deterministic Hybrid BroccoliDB Kernel ($\mathcal{K}_{\text{broccoli}}$)
 
-BroccoliDB combines zero-GC in-memory reactive tables with append-only Write-Ahead Logging and 256-way sharded Content-Addressable Storage ([ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)–[ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)):
-- **L1 Hotpath Tables (`BroccoliDbTable<T>`)**: Microsecond-speed reactive tables with primary/secondary index lookups ($<0.5\ \mu\text{s}$).
-- **L2 Crash-Proof WAL Journal**: Micro-batched write coalescing ($20\text{ms}$ debounce), SHA-256 frame chaining, and cold-start replay ($<50\text{ ms}$).
-- **L3 Sharded CAS Vault**: 256-way sharded storage with adaptive Brotli compression ($\ge 1024\text{B}$) and automatic corruption quarantine.
-- **L4 State Checkpoints & Branching**: Double-buffered base checkpoints (`checkpoint.db`) and Git-for-data table branching (`forkBranch`, `mergeBranch`).
+## 📜 Subsystem Synthesis Matrix (591 Components)
+
+Synthesizes **591 single-responsibility components** in 100% optimal cohesion under the **AKD-DSO** methodology *(see [Topology Diagrams](docs/ARCHITECTURE_DIAGRAMS.md))*:
+
+| Subsystem / Pillar | Core Extension Engine & Substrate | Key Capabilities & Enforced SLAs |
+|---|---|---|
+| **👤 Multi-Profile Substrate** | `DeterministicProfileEngine`, `BroccoliProfileSubstrate` ([ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)) | Prefix cache frame optimization, few-shot ICL exemplars, fallback ladders, 47 model tools (**$29.37\text{M ops/sec}$**). |
+| **🛡️ Tool Execution Guard** | `DeterministicToolSegmenter`, `BroccoliExecutionGuardSubstrate` ([ADR-046](.wiki/adr/ADR-046-deterministic-tool-execution-segmenter.md)) | Read-only parallel batch scheduling, mutating sequential barriers, 4-stage loop firewall, $<0.05\text{ ms}$ state rewind. |
+| **🗄️ BroccoliDB Hybrid Kernel** | `BroccoliDatabaseKernel`, `BroccoliCASStorageService` ([ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)–[ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md)) | Reactive tables ($<0.5\ \mu\text{s}$ index), declarative joins, Brotli CAS vault, WAL replay, and Git-for-data branching. |
+| **🎯 StateM FSM Runbooks** | `RunbookSupervisor`, `FilePredicateEvaluator` ([ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)) | 10-step atomic transitions, zero-subshell predicates ($<5\text{ ms}$), task manifests, and amnesia-proof context compaction. |
+| **🧠 Byte-Stable Prompt Cache** | `DeterministicPromptCacher`, `BroccoliPromptCacheSubstrate` ([ADR-045](.wiki/adr/ADR-045-deterministic-prompt-cache-boundary.md)) | 4-breakpoint byte-stable prompt envelope isolating static axioms, persona ethos, and schemas for 100% cache retention. |
+| **🔍 Evidence & Verification** | `DeterministicEvidenceLedger`, `VerificationEvidenceSupervisor` ([ADR-044](.wiki/adr/ADR-044-deterministic-verification-evidence-ledger.md)) | Turn-by-turn verification recording, automated code path classification, and fail-closed stop-gate completion policies. |
+| **🔒 Secret Redactor & Firewall** | `DeterministicSecretRedactor`, `BroccoliRedactionSubstrate` ([ADR-047](.wiki/adr/ADR-047-deterministic-secret-redaction-and-path-safety.md)) | Entropy-based token scrubbing, query/body masking, suffix preservation, and sensitive file path access gating. |
+| **🖥️ Terminal UI & Modals** | `BroccoliViewRenderer`, `BroccoliSkinSubstrate` ([ADR-106](.wiki/adr/ADR-106-stream-diagnostics-and-forensic-header-capture.md)) | Synchronized ANSI rendering (`\x1b[?2026h`), 30+ interactive terminal modal dashboards, spreadsheet and diff views. |
+| **⚡ Attempt Completion Gate** | `RoadmapCompletionGate`, `AttemptFlightRecorder` ([ADR-084](.wiki/adr/ADR-084-attempt-completion-gate-strategy.md)) | 4-phase gating lifecycle (`admission` $\to$ `postmortem`), quantitative scoring, state hashing, and anti-oscillation watchdogs. |
 
 ---
 
-## 📡 Structured Activity Streaming & Context Lifecycle
-
-- **Structured Live Streaming (`ADR-082`)**: Renders persistent real-time ANSI activity cards showing turn phases, tool executions, and redacted progress without leaking chain-of-thought, tokens, or credentials.
-- **Token-Aware Context DSL (`ADR-083`)**: Formal `ContextDslEngine` AST parsing (`LUMI-CONTEXT/1`, `LUMI-THREAD/1`, `LUMI-MEMORY/1`, `LUMI-TOOL-RESULT/1`, `LUMI-GOAL/1`) and `PromptTemplateEngine` (`{{#if}}`/`{{#unless}}`) prevent prompt injection and eliminate amnesia.
-- **Autonomous Attempt Completion Gate (`ADR-084`)**: Evaluates quality bars across `admission`, `in_flight`, `completion`, and `postmortem` checkpoints, using quantitative criterion scoring to arbitrate candidates.
-
----
-
-## 📜 Subsystem Synthesis Matrix & Grand Monolith Baseline
-
-The evolutionary baseline of **LUMI-JOY** synthesizes **591 single-responsibility components** in 100% optimal cohesion under the **AKD-DSO** methodology *(see [Tool Execution Pipeline & Guardrail Topology](docs/ARCHITECTURE_DIAGRAMS.md#3-️-tool-execution-pipeline-guardrails--broccolidb-time-travel))*:
-
-| Subsystem / Pillar | Core Extension Engine | Storage & Snapshot Substrate | Phase / ADR | Key Capabilities & Technical Advantages |
-|---|---|---|---|---|
-| **👤 Zenith Multi-Profile Substrate** | `DeterministicProfileEngine`, `ProfileSupervisor` | `BroccoliProfileSubstrate`, `ProfileSnapshotManager` | Phase 76 / [ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md) | Prefix cache frame optimization, few-shot ICL exemplars, resilient model ladders, run step budgeting, and 47 model tools ($29.37\text{M ops/sec}$). |
-| **🛡️ Tool Execution Guard & Scheduler** | `DeterministicToolSegmenter`, `ToolExecutionGuardSupervisor` | `BroccoliExecutionGuardSubstrate`, `ExecutionGuardSnapshotManager` | Phase 94 / [ADR-046](.wiki/adr/ADR-046-deterministic-tool-execution-segmenter.md) | Batch parallelism for read-only tools, sequential mutating barriers, 4-stage escalating loop prevention, and $<0.05\text{ ms}$ state rewind. |
-| **🗄️ BroccoliDB Relational Kernel** | `BroccoliDatabaseKernel`, `BroccoliRelationEngine`, `BroccoliAggregateEngine` | `BroccoliWriteAheadLog`, `BroccoliCASStorageService`, `BroccoliDbTable<T>` | Phases 71–73 / [ADR-120](.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)–[ADR-122](.wiki/adr/ADR-122-apex-tier-relational-joins-aggregation-branching-and-views.md) | In-memory reactive tables ($<0.5\ \mu\text{s}$ indexing), declarative joins with cascade policies, statistical aggregations, and Git-for-data branching. |
-| **🎯 StateM Workflow FSM Runbooks** | `RunbookSupervisor`, `FilePredicateEvaluator` | `BroccoliRunbookSubstrate`, `StatefulCompactionSynthesizer` | Phase 131 / [ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md) | 10-step atomic state transitions, zero-subshell predicates ($<5\text{ ms}$), entry-scoped task manifests, and amnesia-proof context compaction. |
-| **🧠 Byte-Stable Prompt Cache Boundary** | `DeterministicPromptCacher`, `PromptCacheSupervisor` | `BroccoliPromptCacheSubstrate`, `PromptCacheSnapshotManager` | Phase 93 / [ADR-045](.wiki/adr/ADR-045-deterministic-prompt-cache-boundary.md) | 4-breakpoint byte-stable prompt envelope isolating static axioms, persona ethos, and active schemas for 100% prefix cache retention. |
-| **🔍 Verification Evidence Ledger** | `DeterministicEvidenceLedger`, `VerificationEvidenceSupervisor` | `BroccoliEvidenceSubstrate`, `EvidenceSnapshotManager` | Phase 92 / [ADR-044](.wiki/adr/ADR-044-deterministic-verification-evidence-ledger.md) | Turn-by-turn verification evidence recording, automated code path classification, and fail-closed stop-gate completion policies. |
-| **🔒 Secret Redactor & Path Firewall** | `DeterministicSecretRedactor`, `SecretRedactionSupervisor` | `BroccoliRedactionSubstrate`, `RedactionSnapshotManager` | Phase 95 / [ADR-047](.wiki/adr/ADR-047-deterministic-secret-redaction-and-path-safety.md) | Entropy-based token scrubbing, query/body masking, suffix-preservation rules, and sensitive path access gating. |
-| **🖥️ Terminal UI Modals & Renderers** | `BroccoliViewRenderer`, 30+ TUI Modal Classes | `BroccoliSkinSubstrate`, `SkinSnapshotManager` | Phase 130 / [ADR-106](.wiki/adr/ADR-106-stream-diagnostics-and-forensic-header-capture.md) | Synchronized ANSI cell rendering (`\x1b[?2026h`), 30+ interactive terminal modal dashboards, and rich spreadsheet/kanban/diff views. |
-| **🏛️ Grand Monolith Synthesis** | `GrandMonolithSynthesizer`, `MonolithFactory`, `LumiMonolith` | Contiguous 16MB ArrayBuffer slab | Pass 193 / [ADR-012](.wiki/adr/ADR-012-non-destructive-osmosis-class-extension-strategy.md) | 591 verified single-responsibility components with zero circular dependencies, deep relative imports, and full dependency inversion. |
-
----
-
-## 📚 Essential Documentation & Architecture Index
+## 📚 Documentation & Reference Directory
 
 | Category | Key Resources & Specifications |
 | :--- | :--- |
-| **Guides & FAQs** | ❓ [Complete FAQ & Self-Intuitive Onboarding Guide](docs/FAQ.md) · ⌨️ [TUI & Commands Guide](docs/TUI_COMMANDS_GUIDE.md) · 🏗️ [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
+| **Guides & FAQs** | ❓ [FAQ & Onboarding Guide](docs/FAQ.md) · ⌨️ [TUI & Commands Guide](docs/TUI_COMMANDS_GUIDE.md) · 🏗️ [Runtime Architecture](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
 | **Architecture & ADRs** | 📖 [Complete ADR Decision Index](.wiki/adr/README.md) · 📐 [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) · 🧬 [41 Osmotic Subsystems](docs/HERMES_OSMOSIS_SUBSYSTEMS.md) |
-| **Research & Whitepapers** | 🎓 [Academic Research Paper: AKD-DSO](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) · 📄 [Whitepaper: The Osmosis Paradigm](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md) · 🧠 [Osmosis Methodology](.wiki/agent/osmosis-methodology.md) |
-| **Verification & Metrics** | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) · 🧪 [Benchmark Report](docs/BENCHMARK_REPORT.md) · 🏛️ [Grand Architectural Audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) · 📋 [Changelog](CHANGELOG.md) |
+| **Research & Whitepapers** | 🎓 [AKD-DSO Academic Paper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) · 📄 [Osmosis Paradigm Whitepaper](.wiki/whitepaper/OSMOSIS-WHITEPAPER.md) · 🧠 [Methodology](.wiki/agent/osmosis-methodology.md) |
+| **Verification & Metrics** | 📈 [Live Baseline Evidence](docs/LIVE_BASELINE.json) · 🧪 [Benchmark Report](docs/BENCHMARK_REPORT.md) · 🏛️ [Architectural Audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) · 📋 [Changelog](CHANGELOG.md) |
 
 ---
 
----
+## 🙏 Ancestral Attribution & License
 
-## 🙏 Acknowledgments & Ancestral Attribution
-
-- ☤ **Ancestral Teacher & Inspiration**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) created and open-sourced by **Nous Research** and its incredible community of contributors (licensed under the MIT License). Special thanks to the Nous Research team for pushing the boundaries of open models, autonomous agents, and AI self-improvement.
-- 🎯 **StateM Research & Workflow FSM**: Deep credit and appreciation to the creators and contributors of **StateM** for their pioneering work on state-machine-governed agentic runbooks, verification gates, and dynamic check manifests that inspired LUMI-JOY's deterministic runbook substrate ([ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)).
-- 🧠 **Research Foundations**: Built on the open paradigms of autonomous skill evolution, dialectic agent memory (`Honcho`), and open-weights model intelligence advanced by the open AI research community.
-- 🎮 **Game Engine Pioneers**: Inspired by the deterministic architecture, memory arenas, and frame-tick discipline of classic game engines (id Software, John Carmack et al.).
-- 🌐 **Open Standards**: Fully compatible with the [`agentskills.io`](https://agentskills.io) open standard and the Agent Client Protocol (ACP) for modern IDEs.
-
----
-
-## 📄 License & Contributing
-
-- 🤝 [Contributor Guidelines](CONTRIBUTING.md)
-- 📄 Distributed under the Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.
+- ☤ **Ancestral Teacher & Inspiration**: [`hermes-agent`](https://github.com/NousResearch/hermes-agent) (**Nous Research** / MIT License). Special thanks to Nous Research for championing open weights, agent self-improvement, and user sovereignty.
+- 🎯 **StateM Research & Workflow FSM**: Deep appreciation to the creators of **StateM** for pioneering state-machine-governed runbooks and verification gates ([ADR-131](.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md)).
+- 🎮 **Game Engine Pioneers**: Inspired by the deterministic architecture, memory arenas, and frame-tick discipline of classic game engines.
+- 📄 **License & Contribution**: Distributed under the Apache License 2.0 ([LICENSE](LICENSE) · [NOTICE](NOTICE) · [CONTRIBUTING.md](CONTRIBUTING.md) · [PATENT-NON-AGGRESSION-PLEDGE.md](PATENT-NON-AGGRESSION-PLEDGE.md)).
