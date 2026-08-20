@@ -1,6 +1,6 @@
 {
   "name": "lumi-joy",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Greenfield 3-tier monolithic agent framework and sovereign AI runtime",
   "type": "module",
   "main": "dist/index.js",
