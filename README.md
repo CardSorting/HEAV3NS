@@ -264,15 +264,23 @@ Performance timings are host-sensitive and must not be copied forward as permane
 
 ---
 
-## 🚀 Quick Start & Onboarding
+## 🚀 Quick Start & Self-Intuitive Onboarding
 
-Get up and running with **LUMI-JOY** in under 60 seconds with our zero-friction onboarding flow *(see the visual [Onboarding & Interface Topology](docs/ARCHITECTURE_DIAGRAMS.md#2--onboarding--interface-topology) and [ANSI Terminal Layout Preview](docs/ARCHITECTURE_DIAGRAMS.md#4-️-interactive-ansi-terminal-ui-layout))*:
+Get up and running with **LUMI-JOY** in under 60 seconds with our zero-friction onboarding flow:
+
+```mermaid
+graph LR
+  A[1. Install & Build] --> B[2. Setup: lumi --setup]
+  B --> C[3. Launch: lumi --profile coder]
+  C --> D[💻 Interactive Terminal Canvas]
+  D --> E[Command Palette: /profile, /model, /rewind]
+```
 
 ---
 
 ### 📦 Step 1: Prerequisites & Installation
 
-LUMI-JOY is built as a zero-dependency, pure TypeScript monolith without native C++ compilation bindings. Ensure you have **Node.js 20.19+** (or a compatible newer LTS release) and **Git** installed:
+LUMI-JOY is built as a zero-dependency, pure TypeScript monolith without native C++ compilation bindings. Ensure you have **Node.js 20.19+** and **Git** installed:
 
 ```bash
 # 1. Clone the repository
@@ -288,7 +296,7 @@ npm run build
 
 ---
 
-### 🔑 Step 2: Provider Authentication & Configuration Schema
+### 🔑 Step 2: Provider Authentication & Guided Setup
 
 LUMI-JOY features a guided onboarding wizard to configure your preferred LLM providers and reasoning models:
 
@@ -300,62 +308,124 @@ npx tsx src/index.ts --setup
 ```
 
 #### Supported Provider Authentication Options:
-1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in. Supports automatic localhost callback redirect listening (`http://localhost:1455/auth/callback`) or manual authorization code entry.
-2. **Anthropic Claude**: Configure your `ANTHROPIC_API_KEY` for Claude 3.5 Sonnet, Claude 3 Opus, and custom temperature settings.
-3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, and reasoning models (`o1`, `o3-mini`).
+1. **OpenAI Codex OAuth (Recommended)**: Initiates an official RFC 7636 PKCE browser sign-in (`http://localhost:1455/auth/callback`).
+2. **Anthropic Claude**: Configure `ANTHROPIC_API_KEY` for Claude 3.7 Sonnet, Claude 3.5 Sonnet, and Claude 3 Opus.
+3. **OpenAI API Key**: Configure direct API keys for `gpt-4o`, `gpt-5`, `o1`, `o3-mini`.
 4. **OpenAI-Compatible Custom Proxy**: Connect private corporate endpoints, Ollama, vLLM, DeepSeek, or OpenRouter gateways.
 
-#### ⚙️ Configuration Storage Schema (`~/.lumi/config.json`)
-All settings and credentials are automatically persisted in restricted user storage with strict POSIX `0600` permissions:
+---
 
-```json
-{
-  "provider": "codex",
-  "model": "gpt-5-codex",
-  "reasoningEffort": "high",
-  "temperature": 0.2,
-  "auth": {
-    "codex": {
-      "accessToken": "ey...",
-      "refreshToken": "ey...",
-      "accountId": "user-corp-12345",
-      "expiresAt": 1787123456789
-    },
-    "anthropic": {
-      "apiKey": "sk-ant-api03-..."
-    }
-  },
-  "guardrails": {
-    "maxDuplicateExecutions": 2,
-    "actionOnLimit": "block_synthetic",
-    "budgetFloorMicroCents": 500000
-  }
-}
+### 💻 Step 3: Launch with a Specialized Agent Persona
+
+```bash
+# Launch directly with the specialized Coder persona
+npx tsx src/index.ts --profile coder
 ```
 
 ---
 
-### 💻 Step 3: Run Your First Agent Turn (3 Flexible Modes)
+### 🖥️ What You See on Your Screen (Canvas Anatomy)
 
-#### Mode A: Fullscreen Interactive TUI Shell (Recommended)
-Experience the differential-rendering terminal interface with live activity timelines, streaming reasoning scrubbers, and modal dashboards:
+When you start LUMI-JOY, the differential terminal interface presents an intuitive layout:
 
-```bash
-# Start the fullscreen interactive terminal shell
-npx tsx src/index.ts
-# or run the global binary if linked:
-# lumi
+```text
+╔══════════════════════════════════════════════════════════════════════════════════════════╗
+║ ⚡ LUMI-JOY v1.0.0 │ 👤 [💻 Coder] │ 🧠 [gpt-5.6-luna] │ ⏱️ 0.12ms │ 💰 $0.0018 │ ⭐ Fav ║
+╠══════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                          ║
+║  👤 You: Refactor src/core/auth.ts to add strict token expiration validation             ║
+║                                                                                          ║
+║  ⚡ LUMI (Coder):                                                                        ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │ 🔧 Tool: read_file ("src/core/auth.ts") ➔ Status: OK (124 lines)                  │  ║
+║  │ 🔧 Tool: patch ("src/core/auth.ts") ➔ Line-anchored edit verified (0.04ms)         │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────┘  ║
+║  I have added strict JWT expiration claims verification and unit test assertions.        ║
+║                                                                                          ║
+╠══════════════════════════════════════════════════════════════════════════════════════════╣
+║ 💡 Shortcuts: [Ctrl+M] Model  [Ctrl+P] Setup  [/profile] Switch Persona  [Ctrl+C] Abort  ║
+╠══════════════════════════════════════════════════════════════════════════════════════════╣
+║ (lumi:coder) > _                                                                         ║
+╚══════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-#### Mode B: Direct CLI Execution (Single-Shot Turns)
-Execute autonomous pair programming tasks directly from your terminal, scripts, or CI/CD pipelines:
+---
 
-```bash
-# Run a single prompt directly from the CLI
-npx tsx src/index.ts "Create a responsive Flappy Bird Canvas game in src/app.js"
+### 🎯 "I Want To..." Task-Oriented Cookbook
+
+Find your goal and execute the solution with zero guesswork:
+
+| What I Want to Do | Exact Command to Type | What Happens Behind the Scenes |
+| :--- | :--- | :--- |
+| **Write or refactor code with strict types** | `/profile use coder` | Activates TypeScript LSP, AST parsers, line-anchored patchers, and unit testing axioms. |
+| **Perform deep academic or web research** | `/profile use researcher` | Activates citation rigor, arXiv tools, fact verification, and web intelligence. |
+| **Triage a production bug or system crash** | `/profile use sre` | Activates doctor diagnostics, log ring buffers, health probes, and self-healing tools. |
+| **Draft architecture ADRs or documentation** | `/profile use writer` | Activates Keep-a-Changelog schemas, Mermaid diagram synthesis, and technical style guides. |
+| **Undo the agent's last file modification** | `/rewind 1` | Instantly rolls back virtual files, memory, and conversation history in **$0.029\text{ ms}$**. |
+| **Create my own customized agent persona** | `/profile init coder my_lead_dev` | Clones the battle-tested Coder blueprint into your isolated custom profile. |
+| **Compare two agent profiles side-by-side** | `/profile diff default my_lead_dev` | Generates a structural delta of toolsets, soul prompts, custom axioms, and memory. |
+| **Hot-swap the AI model without restarting** | `Ctrl+M` *(or `/model claude-3-7-sonnet`)* | Instantly routes future turns to the new model with 100% prefix cache retention. |
+| **Inspect database tables and memory facts** | `/db status` *(or `/db query profiles`)* | Opens the BroccoliDB reactive in-memory database inspection studio. |
+| **Open the full 6-tab Profile Studio Modal** | `/profile` *(or press `Tab` / `1-6` in modal)* | Opens the interactive visual orchestrator for profiles, blueprints, revisions, and health. |
+
+---
+
+### 👤 Built-in Agent Blueprint Matrix (ADR-119)
+
+Choose from 7 curated blueprints with tailored prompt axioms, toolsets, and reasoning profiles:
+
+| Blueprint | Icon | Primary Focus | Best Model | Toolsets Included |
+| :--- | :---: | :--- | :--- | :--- |
+| **`coder`** | 💻 | Software Engineering, Refactoring & Test Generation | `gpt-5.6-luna` | `core`, `files`, `execution`, `lsp`, `git` |
+| **`researcher`** | 🔬 | Deep Academic Literature Synthesis & Fact Checking | `claude-3-7-sonnet` | `core`, `files`, `web`, `memory` |
+| **`sre`** | 🛡️ | Incident Triage, System Forensics & Self-Healing | `gpt-5.6-luna` | `core`, `files`, `execution`, `git`, `doctor` |
+| **`writer`** | ✍️ | Technical Documentation, Architecture ADRs & Guides | `claude-3-7-sonnet` | `core`, `files`, `memory` |
+| **`student`** | 🎓 | Socratic Learning Tutor & Interactive Walkthroughs | `gpt-4o` | `core`, `files`, `memory` |
+| **`creative`** | 🎨 | Game Design, Mechanics Worldbuilding & Creative Assets | `gpt-4o` | `core`, `files`, `vision`, `memory` |
+| **`minimal`** | ⚡ | Headless High-Speed Scripting with Minimal Tokens | `gpt-4o-mini` | `core`, `files` |
+
+---
+
+### ⌨️ Universal Keyboard Shortcuts
+
+| Shortcut | Context | Function |
+| :--- | :--- | :--- |
+| `Ctrl+C` / `Esc` | Global | **Emergency Abort**: Halts running models, restores terminal state, and cancels pending tool loops. |
+| `Ctrl+M` | Global | **Model Switcher Modal**: Quick hotkey to toggle between OpenAI, Anthropic, DeepSeek, and local models. |
+| `Ctrl+P` | Global | **Setup Wizard**: Guided provider authentication and API key manager. |
+| `Ctrl+L` | Global | **Repaint Screen**: Clears buffer and redraws ANSI canvas to adapt to terminal resize. |
+| `Tab` | Input Mode | **Smart Autocomplete**: Tab-completes slash commands (`/profile`, `/rewind`) and workspace paths. |
+| `PageUp` / `PageDown` | View Mode | **Timeline Scroll**: Inspect previous model responses, diff blocks, and tool logs. |
+| `1` – `6` | Profile Modal | **Direct Tab Switch**: Jump between `[1] Profiles`, `[2] Blueprints`, `[3] Revisions`, `[4] Exemplars`, `[5] SLA Health`, `[6] Raw JSON`. |
+
+---
+
+### 🛠️ Self-Healing Troubleshooting & Decision Tree
+
+```mermaid
+graph TD
+  Problem{What issue did you encounter?}
+  Problem -->|Rate Limit / 429 Error| Fallback[Substrate triggers Resilient Fallback Model ladder automatically]
+  Problem -->|Infinite Tool Calling Loop| LoopFirewall[Anti-Loop Firewall blocks synthetic repeat and halts turn]
+  Problem -->|Agent Made a Bad File Edit| Rewind[Type /rewind 1 to restore exact state in 0.029 ms]
+  Problem -->|High Token Latency / Cost| PrefixCache[Check Prefix Cache status in /profile studio or run /compact]
+  Problem -->|Agent Forgot Operational Rules| Axioms[Type /profile diff to inspect custom axioms and few-shot exemplars]
 ```
 
-#### Mode C: Programmatic TypeScript / Node.js SDK
+#### Common Gotchas & 1-Second Fixes
+
+| Symptom | Cause | 1-Second Fix |
+| :--- | :--- | :--- |
+| **`Command not found: lumi`** | Monolith not linked globally | Run `npx tsx src/index.ts` or run `npm link` in the root folder. |
+| **`Missing Provider API Key`** | No credentials configured | Run `npx tsx src/index.ts --setup` or export `OPENAI_API_KEY="sk-..."`. |
+| **`Rate limit exceeded (429)`** | Provider quota limit reached | Fallback ladder routes automatically, or press `Ctrl+M` to switch providers. |
+| **`Agent edited the wrong file`** | LLM hallucination or stale context | Run `/rewind 1` to instantly undo the file edit and prompt again. |
+| **`Terminal borders wrapping`** | Terminal window resized too narrow | Press `Ctrl+L` to repaint canvas to fit your new window width. |
+
+---
+
+### 💻 Programmatic TypeScript / Node.js SDK
+
 Embed the deterministic engine directly into your enterprise developer tools, CI bots, or IDE extensions:
 
 ```typescript
@@ -378,15 +448,7 @@ console.log("Agent Response:\n", result.response);
 
 ---
 
-### ⌨️ Step 4: Interactive TUI Keybindings, Modals & Slash Commands
-
-LUMI-JOY delivers a desktop-grade differential terminal interface (`\x1b[?2026h`) featuring 30+ interactive dashboard modals, instant keyboard navigation (`Ctrl+M` for models, `Ctrl+G` for guards, `?` for help), and powerful slash commands (`/rewind`, `/guard`, `/db`, `/memory`, `/doctor`).
-
-👉 **Explore the full reference**: [Interactive TUI Keybindings, Modals & Slash Commands Guide](docs/TUI_COMMANDS_GUIDE.md).
-
----
-
-### ⏱️ Step 5: 60-Second Hands-On Walkthrough
+### ⏱️ 60-Second Hands-On Walkthrough
 
 Try these 3 quick commands in the interactive shell to experience LUMI-JOY's unique deterministic powers:
 
