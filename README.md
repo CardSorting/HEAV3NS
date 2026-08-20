@@ -157,7 +157,7 @@ The authoritative run was generated on **2026-08-17T04:06:43.562Z** using Node.j
 
 | Verification lane | Latest result |
 |---|---:|
-| Pass 192 composition manifest | 591/591 components (OPTIMAL) |
+| Pass 192 composition manifest | 566/566 components |
 | Runtime capability smoke | 9/9 checks |
 | Heterogeneous benchmark suite | 5/5 cases |
 | Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |
