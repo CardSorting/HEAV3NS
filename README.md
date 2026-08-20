@@ -132,6 +132,20 @@ For architects, engineers, and contributors looking for in-depth technical speci
 | 📈 **Evidence & Benchmarks** | 📈 [Live Baseline Measurements](docs/LIVE_BASELINE.json) · 🧪 [Benchmark Report](docs/BENCHMARK_REPORT.md) · 🏛️ [Grand Architectural Audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) · 📋 [Changelog](CHANGELOG.md) · 🛡️ [Patent Pledge](PATENT-NON-AGGRESSION-PLEDGE.md) |
 | ⚡ **Subsystem Source Code** | ⚡ [Composition Root](src/index.ts) · 🏭 [Engine Factory](src/factories/monolith-factory.ts) · ⚙️ [Core Contracts](src/core/contracts/) · 🧠 [Agents Tier](src/agents/) · 💾 [Sessions Tier](src/sessions/) · 🔧 [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) |
 
+### Latest Verified Workspace Baseline
+
+The authoritative run was generated on **2026-08-17T04:06:43.562Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+
+| Verification lane | Latest result |
+|---|---:|
+| Pass 192 composition manifest | 566/566 components |
+| Runtime capability smoke | 9/9 checks |
+| Heterogeneous benchmark suite | 5/5 cases |
+| Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |
+| Architecture and performance guardrails | 6/6 checks |
+
+*(Measured fast-path execution throughput: **8506.11 frames/sec**).*
+
 ---
 
 ## 🏛️ Open Source & Credits
