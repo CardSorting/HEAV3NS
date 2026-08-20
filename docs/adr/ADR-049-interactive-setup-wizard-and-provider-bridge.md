@@ -43,4 +43,4 @@ We implemented **SetupWizard** ([setup-wizard.ts](file:///Users/bozoegg/Desktop/
 
 ## Current Refinement: Model Selection and Activity
 
-Provider configuration now activates and persists that provider's default model. The header, setup audit, and `/health` must be read together: process health alone does not prove that credentials resolve for the selected model. Authenticated Codex turns expose structured activity and cancellation according to [ADR-082](ADR-082-structured-agent-activity-streaming.md). Operational recovery steps are documented in the [Troubleshooting Guide](../agent/troubleshooting.md).
+Provider configuration now activates and persists that provider's default model. The header, setup audit, and `/health` must be read together: process health alone does not prove that credentials resolve for the selected model. Authenticated Codex turns expose structured activity and cancellation according to [ADR-082](ADR-082-structured-agent-activity-streaming.md). Operational recovery steps are documented in the [Troubleshooting Guide](../../.wiki/agent/troubleshooting.md).

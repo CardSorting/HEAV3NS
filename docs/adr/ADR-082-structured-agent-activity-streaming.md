@@ -110,7 +110,7 @@ Rejected because provider routes expose different event fidelity. Coarse request
 
 ## References
 
-- [Agent Activity Streaming Strategy](../agent/streaming-activity-strategy.md)
+- [Agent Activity Streaming Strategy](../../.wiki/agent/streaming-activity-strategy.md)
 - [Official Codex SDK documentation](https://learn.chatgpt.com/docs/codex-sdk)
 - [Official Codex App Server event contract](https://learn.chatgpt.com/docs/app-server)
 - [ADR-023: LLM Proxy Gateway and Stream Event Formatter](ADR-023-phase-6-llm-proxy-gateway-and-stream-event-formatter.md)

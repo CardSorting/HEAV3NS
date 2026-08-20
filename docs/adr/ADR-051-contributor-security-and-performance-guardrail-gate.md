@@ -38,6 +38,6 @@ We implemented an automated, multi-layer repository protection gate centered aro
 
 ## Current Refinement: Streaming Regression Gate
 
-Changes to provider dispatch, `EngineProgressEvent`, the Codex adapter, cancellation, or terminal activity rendering require interactive authenticated completion and cancellation coverage in addition to `npm run check`, `npm test`, and `npm run build`. See [ADR-082](ADR-082-structured-agent-activity-streaming.md) and the [streaming strategy](../agent/streaming-activity-strategy.md).
+Changes to provider dispatch, `EngineProgressEvent`, the Codex adapter, cancellation, or terminal activity rendering require interactive authenticated completion and cancellation coverage in addition to `npm run check`, `npm test`, and `npm run build`. See [ADR-082](ADR-082-structured-agent-activity-streaming.md) and the [streaming strategy](../../.wiki/agent/streaming-activity-strategy.md).
 
 The five-case heterogeneous benchmark is intentionally separate from the sub-millisecond guardrail lane. It now includes a complete 12-file Flappy Bird React + TypeScript + Vite project with 8/8 deep assertions, so its compiler-heavy mean case latency is not a turn-tick SLA.

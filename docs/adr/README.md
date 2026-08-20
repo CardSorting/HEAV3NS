@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > **Architectural Cutoff & Workspace Freeze (August 16, 2026)**
-> The LUMI-JOY architecture is **FROZEN & SOLIDIFIED** at **549 Grand Monolith Components** across 117 ADRs (ADR-001 through ADR-117). All further additions are subject to strict anti-duplication, contract immutability, and forensic integrity gates. See the authoritative [Architectural Cutoff & Workspace Freeze Specification](../architecture/OSMOSIS-FREEZE-AND-CUTOFF.md).
+> The LUMI-JOY architecture is **FROZEN & SOLIDIFIED** at **549 Grand Monolith Components** across 117 ADRs (ADR-001 through ADR-117). All further additions are subject to strict anti-duplication, contract immutability, and forensic integrity gates. See the authoritative [Architectural Cutoff & Workspace Freeze Specification](../../.wiki/architecture/OSMOSIS-FREEZE-AND-CUTOFF.md).
 
 This index lists all Architecture Decision Records (ADRs) for the LUMI-NEW workspace.
 
