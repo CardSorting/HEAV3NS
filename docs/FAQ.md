@@ -68,10 +68,15 @@ Find your goal and execute the solution with zero guesswork:
 | What I Want to Do | Exact Command to Type | What Happens Behind the Scenes |
 | :--- | :--- | :--- |
 | **Write or refactor code with strict types** | `/profile use coder` | Activates TypeScript LSP, AST parsers, line-anchored patchers, and unit testing axioms. |
+| **Inspect staged file diffs before writing to disk** | `/diff [path]` | Synthesizes real-time unified diffs comparing disk files against staged VFS overlays without disk writes. |
+| **Commit staged file changes to disk** | `/commit [path]` | Atomically commits staged virtual file modifications directly to disk. |
+| **Revert experimental file changes** | `/discard [path]` | Discards staged VFS file modifications and restores the original disk file. |
 | **Perform deep academic or web research** | `/profile use researcher` | Activates citation rigor, arXiv tools, fact verification, and web intelligence. |
 | **Triage a production bug or system crash** | `/profile use sre` | Activates doctor diagnostics, log ring buffers, health probes, and self-healing tools. |
+| **Search code symbols with typo-tolerance & captures** | `grep_search` | Uses native zero-subprocess in-memory search with fuzzy matching, regex captures, and comment filtering. |
+| **Free a port locked by a ghost dev server** | `kill_port :3000` | Automatically finds and kills background processes blocking the specified TCP port. |
 | **Draft architecture ADRs or documentation** | `/profile use writer` | Activates Keep-a-Changelog schemas, Mermaid diagram synthesis, and technical style guides. |
-| **Undo the agent's last file modification** | `/rewind 1` | Instantly rolls back virtual files, memory, and conversation history in **$0.029\text{ ms}$**. |
+| **Undo the agent's last file modification** | `/rewind 1` | Instantly rolls back virtual files, memory, and conversation history in **$0.022\text{ ms}$**. |
 | **Create my own customized agent persona** | `/profile init coder my_lead_dev` | Clones the battle-tested Coder blueprint into your isolated custom profile. |
 | **Compare two agent profiles side-by-side** | `/profile diff default my_lead_dev` | Generates a structural delta of toolsets, soul prompts, custom axioms, and memory. |
 | **Hot-swap the AI model without restarting** | `Ctrl+M` *(or `/model claude-3-7-sonnet`)* | Instantly routes future turns to the new model with 100% prefix cache retention. |

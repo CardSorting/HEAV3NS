@@ -60,7 +60,11 @@ export class AnchoredHands extends AbstractHands {
     };
   }
 
-  async runCommand(command: string, cwd?: string): Promise<CommandResult> {
+  async runCommand(
+    command: string,
+    cwd?: string,
+    options?: { timeoutMs?: number; env?: NodeJS.ProcessEnv; maxBuffer?: number }
+  ): Promise<CommandResult> {
     const validation = this.permissionController.validateCommand(command);
     if (!validation.allowed) {
       return {
@@ -71,7 +75,7 @@ export class AnchoredHands extends AbstractHands {
     }
 
     const effectiveCwd = cwd ?? process.cwd();
-    return this.runRawProcess(command, effectiveCwd);
+    return this.runRawProcess(command, effectiveCwd, options);
   }
 }
 

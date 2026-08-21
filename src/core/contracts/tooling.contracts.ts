@@ -3,6 +3,7 @@ export interface CommandResult {
   stderr: string;
   exitCode: number;
   truncated?: boolean;
+  durationMs?: number;
 }
 
 export interface AnchoredEditResult {
@@ -42,7 +43,7 @@ export interface JsonRpcNotification {
 }
 
 export interface ParameterSchema {
-  type: "string" | "number" | "boolean";
+  type: "string" | "number" | "boolean" | "array" | "object";
   required?: boolean;
   description?: string;
 }

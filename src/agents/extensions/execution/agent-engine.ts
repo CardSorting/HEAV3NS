@@ -266,44 +266,175 @@ export class AgentEngine extends AbstractAgentEngine {
                 metadata: { source: `${providerName}-api`, scope: "turn", attempt: attempt + 1 },
               });
 
-              const payload = {
-                model: activeModel,
-                messages: preparedContext.messages.map((message) => ({
-                  role: message.role,
-                  content: message.content,
-                  ...(message.name ? { name: message.name } : {}),
-                  ...(message.toolCallId ? { tool_call_id: message.toolCallId } : {}),
-                })),
-                max_tokens: preparedContext.budget.reservedOutputTokens,
-              };
-
-              const res = await fetch(endpoint.url, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...endpoint.headers,
-                  ...auth.headers,
-                },
-                body: JSON.stringify(payload),
-                signal: requestSignal,
+              const availableTools = (this.toolRegistry ? this.toolRegistry.listTools() : []).map((t) => {
+                const properties: Record<string, { type: string; description: string }> = {};
+                const required: string[] = [];
+                if (t.parameters) {
+                  for (const [pName, pSchema] of Object.entries(t.parameters)) {
+                    properties[pName] = {
+                      type: pSchema.type,
+                      description: pSchema.description || pName,
+                    };
+                    if (pSchema.required) {
+                      required.push(pName);
+                    }
+                  }
+                }
+                return {
+                  type: "function" as const,
+                  function: {
+                    name: t.name,
+                    description: t.description,
+                    parameters: {
+                      type: "object",
+                      properties,
+                      required,
+                    },
+                  },
+                };
               });
 
-              if (!res.ok) {
-                const errorBody = await res.text();
-                throw new Error(`HTTP ${res.status}: ${errorBody.slice(0, 500)}`);
-              }
+              const apiMessages: Array<{
+                role: string;
+                content: string | null;
+                name?: string;
+                tool_call_id?: string;
+                tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }>;
+              }> = preparedContext.messages.map((message) => ({
+                role: message.role,
+                content: message.content,
+                ...(message.name ? { name: message.name } : {}),
+                ...(message.toolCallId ? { tool_call_id: message.toolCallId } : {}),
+              }));
 
-              const data = (await res.json()) as {
-                choices?: Array<{ message?: { content?: string } }>;
-              };
-              const responseContent = data.choices?.[0]?.message?.content?.trim() ?? "";
-              if (!responseContent) {
-                throw new Error(`${activeModel} returned a successful response without assistant content`);
+              const maxToolSteps = 10;
+              let stepCount = 0;
+              let accumulatedResponse = "";
+
+              while (stepCount < maxToolSteps) {
+                stepCount++;
+                const payload: {
+                  model: string;
+                  messages: typeof apiMessages;
+                  max_tokens: number;
+                  tools?: typeof availableTools;
+                } = {
+                  model: activeModel,
+                  messages: apiMessages,
+                  max_tokens: preparedContext.budget.reservedOutputTokens,
+                };
+
+                if (availableTools.length > 0) {
+                  payload.tools = availableTools;
+                }
+
+                const res = await fetch(endpoint.url, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...endpoint.headers,
+                    ...auth.headers,
+                  },
+                  body: JSON.stringify(payload),
+                  signal: requestSignal,
+                });
+
+                if (!res.ok) {
+                  const errorBody = await res.text();
+                  throw new Error(`HTTP ${res.status}: ${errorBody.slice(0, 500)}`);
+                }
+
+                const data = (await res.json()) as {
+                  choices?: Array<{
+                    message?: {
+                      content?: string | null;
+                      tool_calls?: Array<{
+                        id: string;
+                        type: "function";
+                        function: { name: string; arguments: string };
+                      }>;
+                    };
+                  }>;
+                };
+
+                const choiceMessage = data.choices?.[0]?.message;
+                const content = choiceMessage?.content?.trim() ?? "";
+                const toolCalls = choiceMessage?.tool_calls;
+
+                if (content) {
+                  accumulatedResponse = accumulatedResponse ? `${accumulatedResponse}\n${content}` : content;
+                }
+
+                if (toolCalls && toolCalls.length > 0) {
+                  apiMessages.push({
+                    role: "assistant",
+                    content: choiceMessage?.content ?? null,
+                    tool_calls: toolCalls,
+                  });
+
+                  for (const toolCall of toolCalls) {
+                    const toolName = toolCall.function.name;
+                    let parsedArgs: Record<string, unknown> = {};
+                    try {
+                      parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
+                    } catch {
+                      parsedArgs = {};
+                    }
+
+                    this.reportProgress(input.onProgress, {
+                      activityId: liveProgressActivityId,
+                      phase: "tool",
+                      status: "in_progress",
+                      message: `Executing ${toolName}`,
+                      detail: JSON.stringify(parsedArgs).slice(0, 100),
+                      timestamp: Date.now(),
+                      sequence: nextProgressSequence(),
+                      metadata: { itemType: toolName, scope: "activity", attempt: attempt + 1 },
+                    });
+
+                    let toolOutput = "";
+                    try {
+                      const toolResult = await this.toolRegistry.executeTool(
+                        toolName,
+                        parsedArgs,
+                        this.sessionContext.cwd
+                      );
+                      toolOutput = typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult);
+                    } catch (err: unknown) {
+                      toolOutput = JSON.stringify({
+                        error: err instanceof Error ? err.message : String(err),
+                      });
+                    }
+
+                    // Smart head/tail bounding for large tool outputs to protect token budget and response latency
+                    const maxOutputChars = 50_000;
+                    if (toolOutput.length > maxOutputChars) {
+                      const head = toolOutput.slice(0, 25_000);
+                      const tail = toolOutput.slice(-20_000);
+                      const omitted = toolOutput.length - 45_000;
+                      toolOutput = `${head}\n\n... [${omitted} characters omitted for context efficiency] ...\n\n${tail}`;
+                    }
+
+                    apiMessages.push({
+                      role: "tool",
+                      tool_call_id: toolCall.id,
+                      name: toolName,
+                      content: toolOutput,
+                    });
+                  }
+                  continue;
+                }
+
+                if (!content && !accumulatedResponse) {
+                  throw new Error(`${activeModel} returned a successful response without assistant content`);
+                }
+                liveResponse = accumulatedResponse || content;
+                break;
               }
-              liveResponse = responseContent;
               if (
                 typeof this.codexProviderBridge?.isLocalProvider === "function" &&
-                this.codexProviderBridge.isLocalProvider(providerName)
+                this.codexProviderBridge.isLocalProvider(providerName) &&
+                liveResponse
               ) {
                 const estTokens = Math.ceil((promptText.length + liveResponse.length) / 4);
                 this.proxyGateway?.getLocalEngine().recordTurn(

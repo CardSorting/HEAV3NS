@@ -238,6 +238,114 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
         return { handled: true, output: out };
       }
 
+      case "/rewind": {
+        const count = Math.max(1, parseInt(args[0] || "1", 10) || 1);
+        const currentMsgs = context.sessionStore.getMessages();
+        const removeCount = count * 2;
+        const remaining = Math.max(0, currentMsgs.length - removeCount);
+        const retained = currentMsgs.slice(0, remaining);
+        context.sessionStore.clear();
+        for (const msg of retained) {
+          context.sessionStore.addMessage(msg);
+        }
+        context.sessionContext.turnCount = Math.max(0, context.sessionContext.turnCount - count);
+        return {
+          handled: true,
+          output: `⏪ **Rewound ${count} turn(s)**. Active messages: ${remaining}. Turn count: ${context.sessionContext.turnCount}.`,
+        };
+      }
+
+      case "/diff": {
+        const staged = context.sessionVfs.exportStaged();
+        if (staged.length === 0) {
+          return { handled: true, output: "No staged file modifications in VFS overlay." };
+        }
+        const targetFile = args[0]?.trim();
+        if (targetFile) {
+          const diff = await context.sessionVfs.generateDiff(targetFile);
+          if (!diff) {
+            return { handled: true, output: `File '${targetFile}' is not staged in VFS overlay.` };
+          }
+          return { handled: true, output: `📝 **Diff for \`${targetFile}\`**:\n\n\`\`\`diff\n${diff}\n\`\`\`` };
+        }
+
+        let out = `📝 **Staged File Mutations (${staged.length} files)**:\n\n`;
+        for (const f of staged) {
+          out += `• \`${f.path}\` (${f.content.length} bytes)\n`;
+          const diff = await context.sessionVfs.generateDiff(f.path);
+          if (diff) {
+            out += `\`\`\`diff\n${diff.slice(0, 500)}${diff.length > 500 ? "\n..." : ""}\n\`\`\`\n`;
+          }
+        }
+        return { handled: true, output: out };
+      }
+
+      case "/commit": {
+        const targetFile = args[0]?.trim();
+        if (targetFile) {
+          const ok = await context.sessionVfs.commitFile(targetFile);
+          return {
+            handled: true,
+            output: ok
+              ? `✅ Committed staged file \`${targetFile}\` to disk.`
+              : `❌ File \`${targetFile}\` is not staged in VFS.`,
+          };
+        }
+        const committed = await context.sessionVfs.commitAll();
+        return {
+          handled: true,
+          output: `✅ Committed ${committed.length} staged file(s) to disk:\n` + committed.map((p) => `• \`${p}\``).join("\n"),
+        };
+      }
+
+      case "/discard": {
+        const targetFile = args[0]?.trim();
+        if (targetFile) {
+          const ok = context.sessionVfs.discardFile(targetFile);
+          return {
+            handled: true,
+            output: ok
+              ? `🗑️ Discarded staged changes for \`${targetFile}\`.`
+              : `❌ File \`${targetFile}\` is not staged in VFS.`,
+          };
+        }
+        context.sessionVfs.clear();
+        return { handled: true, output: "🗑️ Cleared and discarded all staged VFS files." };
+      }
+
+      case "/tools": {
+        const allTools = context.toolRegistry.listTools();
+        let out = `🔧 **Active Tool Registry (${allTools.length} tools)**:\n\n`;
+        for (const t of allTools.slice(0, 15)) {
+          const params = t.parameters ? Object.keys(t.parameters).join(", ") : "none";
+          out += `• **\`${t.name}\`** (\`${params}\`)\n  └─ ${t.description}\n`;
+        }
+        if (allTools.length > 15) {
+          out += `\n*(+ ${allTools.length - 15} more tools)*`;
+        }
+        return { handled: true, output: out };
+      }
+
+      case "/help":
+      case "/shortcuts": {
+        return {
+          handled: true,
+          output: `💡 **LUMI Quick-Reference & Shortcuts**:
+
+• \`/rewind [n]\` — Instantly rewind $n$ conversation turns
+• \`/stats\` — Inspect telemetry, token estimates, and slab metrics
+• \`/memory\` — List long-term facts & Knowledge Items
+• \`/vfs\` — Inspect staged virtual filesystem mutations
+• \`/diff\` — View line diff of staged file edits
+• \`/tools\` — List registered model and developer tools
+• \`/compact\` — Force progressive context window compaction
+• \`/clear\` — Reset active session state and turn counter
+• \`/terra\`, \`/luna\`, \`/sol\` — Fast model swapping
+• \`/model <name>\` — Switch active LLM model
+• \`/runbook presets\` — Explore interactive FSM runbook workflows`,
+        };
+      }
+
       case "/clear": {
         context.sessionStore.clear();
         context.sessionVfs.clear();

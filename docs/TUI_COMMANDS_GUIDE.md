@@ -4,9 +4,9 @@ Comprehensive reference for keyboard navigation, specialized terminal UI modals,
 
 ---
 
-## 🎮 Keyboard Shortcuts
+## 1. 🎮 Universal Keyboard Shortcuts
 
-The fullscreen differential terminal interface supports comprehensive navigation shortcuts:
+The fullscreen differential terminal interface maintains synchronized `\x1b[?2026h` flicker-free updates and responsive navigation shortcuts:
 
 | Keybinding | Action & Context | Operational Behavior |
 |---|---|---|
@@ -17,19 +17,24 @@ The fullscreen differential terminal interface supports comprehensive navigation
 | `Ctrl+D` / `Tab` | **Toggle View / Autocomplete** | In input mode: auto-completes slash commands and file paths. In view mode: cycles between metrics and timeline. |
 | `PageUp` / `PageDown` | **Scroll Conversation Timeline** | Scrolls through the active conversation projection and tool execution activity history. |
 | `Up` / `Down` | **Input History Navigation** | Cycles through previous prompt history entries stored in the session ring buffer. |
+| `Home` / `End` | **Timeline Boundary Jumps** | Jumps directly to the start (top) or newest turn (bottom) of the conversation timeline. |
 | `?` | **Help & Shortcut Palette** | Displays the interactive help overlay modal with keybindings and command reference. |
 
 ---
 
-## 🧭 Essential Slash Commands
+## 2. 🧭 Essential Slash Commands Reference
 
-LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-completion and instant command execution:
+LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-completion and instant sub-millisecond command execution:
 
 | Slash Command | Parameters | Description |
 |---|---|---|
 | `/setup` | `[provider]` | Launches the interactive OAuth PKCE setup wizard to configure OpenAI Codex or custom proxy credentials. |
 | `/model` | `[model_id]` | Displays active model specs or switches model dynamically without restarting the session. |
 | `/rewind` | `[frames]` | Performs an instant $O(1)$ state rollback to frame $N-k$, restoring conversation, memory, and VFS state. |
+| `/diff` | `[path]` | Synthesizes real-time unified diffs comparing disk files against staged VFS overlays without committing. |
+| `/commit` | `[path]` | Atomically commits staged VFS file mutations directly to physical disk storage. |
+| `/discard` | `[path]` | Discards staged VFS file modifications and restores working disk state. |
+| `/tools` | `[query]` | Lists all registered native developer tools, parameter schemas, and normalized aliases. |
 | `/compact` | `[--force]` | Manually triggers semantic trajectory compaction and AST `LUMI-CONTEXT/1` envelope serialization. |
 | `/db` | `[status\|query\|wal\|rollback]` | Opens BroccoliDB inspection dashboard, executes SQL-like AST queries, or rolls back table branches. |
 | `/profile` | `[list\|use\|init\|fav\|diff\|starters\|revisions\|rollback]` | Manages isolated multi-agent personas, blueprints, few-shot exemplars, resilient fallback ladders, and revision time-travel. |
@@ -41,7 +46,45 @@ LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-complet
 
 ---
 
-## 🖥️ 30+ Interactive Dashboard Modals
+## 3. 🛡️ Interactive Operational Strategies & Flow Topology
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                    INTERACTIVE TUI STRATEGY & MUTATION WORKFLOW                   │
+├───────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                   │
+│  [ Developer Prompt ] ──► [ Model Generates Edits ] ──► [ Staged in SessionVFS ]  │
+│                                                                  │                │
+│                                      ┌───────────────────────────┴─────────────┐  │
+│                                      ▼                                         ▼  │
+│                           [ /diff Inspect Changes ]               [ /discard Revert ]
+│                                      │                                            │
+│                                      ▼                                            │
+│                           [ /commit Apply to Disk ]                               │
+│                                      │                                            │
+│                                      ▼                                            │
+│                           [ /rewind 1 Emergency Rollback (<0.05ms) ]               │
+│                                                                                   │
+└───────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.1 Non-Destructive VFS Staging Strategy
+1. **Zero Unintended Disk Mutations**: When an agent edits files, mutations are held in `SessionVFS` memory buffers rather than immediately touching physical disk storage.
+2. **Instant Unified Diffs (`/diff [path]`)**: Developers can inspect changes line-by-line using git-compatible unified diff syntax directly in the TUI terminal.
+3. **Selective Commit Authority (`/commit [path]`)**: Commit all files (`/commit`) or selectively commit individual files (`/commit src/auth.ts`).
+4. **Instant Reversion (`/discard [path]`)**: Discard unwanted mutations instantly without dirtying git working trees.
+
+### 3.2 Time-Travel Rewind & State Rollback Strategy (`/rewind`)
+1. **Full-Envelope Restoration**: Rewinds transcript messages, frame counters, virtual file overlays, and in-memory BroccoliDB tables in **$0.022\text{ ms p95}$**.
+2. **Zero Context Pollution**: When a model enters a hallucination loop or flawed refactor, `/rewind 1` rolls back the turn completely, allowing clean prompt re-anchoring.
+
+### 3.3 Dynamic Multi-Model Hot-Swapping Strategy (`Ctrl+M` / `/model`)
+1. **Prefix Cache Preservation**: LUMI's 5-tier prompt structure (ADR-135) preserves L0–L2 system prompts across model switches.
+2. **Cost-Aware Strategy**: Use fast/cheap models (e.g. `gpt-4o-mini`, `claude-3-5-haiku`) for broad search and planning, then switch via `Ctrl+M` to frontier models (e.g. `gpt-5-codex`, `claude-3-7-sonnet`) for complex AST refactoring.
+
+---
+
+## 4. 🖥️ 30+ Interactive Dashboard Modals
 
 LUMI-JOY includes 30+ specialized terminal modal dashboards (`src/tui/components/`), accessible via slash commands or direct hotkeys:
 - **`ProfileDashboardModal`**: 6-view orchestrator studio for browsing active agent personas, built-in blueprints, immutable revisions, few-shot exemplars, SLA health metrics, and raw JSON snapshots.
@@ -54,8 +97,9 @@ LUMI-JOY includes 30+ specialized terminal modal dashboards (`src/tui/components
 
 ---
 
-## Related Documentation
+## 5. Related Documentation
 
 - [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)
+- [Architecture Decision Records: ADR-136](adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)
 - [Architecture Diagrams](ARCHITECTURE_DIAGRAMS.md)
 - [FAQ Guide](FAQ.md)

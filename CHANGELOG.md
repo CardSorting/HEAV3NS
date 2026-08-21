@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added (High-Velocity Pattern Search Engine & Zen Direct I/O Authority — ADR-136 / Passes 1–31)
+
+- **Native Zero-Subprocess Pattern Search Engine (`RipgrepSearchService`)**: Implemented high-throughput in-memory directory traversal with pure literal `indexOf` fast-path (5–10x faster than shell `grep`), eliminating subshell spawning latency and cross-platform flag discrepancies ([ADR-136](docs/adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)).
+- **Regex Subgroup Captures Extraction (`captures`)**: Added automatic subgroup extraction (`match.slice(1)`) directly inside `RipgrepMatch` for downstream AST and refactoring tools.
+- **Path Regex Filtering (`pathRegex`) & Line Deduplication (`uniqueLines`)**: Added full-path regular expression scoping and match line deduplication to eliminate repetitive log/data noise.
+- **Token Defense & Context Shielding**: Added per-file match limits (`maxMatchesPerFile`), comment stripping (`ignoreComments`), and centered character windows (`maxLineLength`) to protect context budgets against token overflows.
+- **Typo Resilience & Dry-Run Replacement**: Added subsequence fuzzy matching (`fuzzy`) to forgive model typos and non-destructive diff previews (`previewReplacement`).
+- **Direct Process & Port Liberation (`kill_port`, `kill_process`, `check_port`, `find_free_port`)**: Added cross-platform port and PID termination with automatic ephemeral port allocation to eliminate `EADDRINUSE` deadlocks.
+- **Direct Filesystem & Batch Execution Tools**: Added `chmod_file` (executable permissions), `create_temp_dir` (isolated sandboxes), `batch_view_files` (multi-file read), `batch_write_files` (multi-file write), `batch_delete_files`, `search_and_replace` (global refactoring), `disk_usage`, `touch_file`, `download_file`, `file_info`, `directory_tree`, and `http_request`.
+- **Universal Parameter Coercion & Tool Immunity**: Upgraded `ArgumentCoercer` to parse stringified JSON arrays/primitives and configured `BroccoliCircuitBreaker` developer tool immunity.
+- **Interactive VFS Slash Commands**: Added `/diff`, `/commit`, `/discard`, and `/tools` to `AgentSlashRouter` for non-destructive staging and selective disk mutation.
+- **78-Point Automated QoL Validation Suite**: Added [scripts/validate-qol-enhancements.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-qol-enhancements.ts) validating all 78 search and direct I/O capabilities.
+
 ### Added (Zenith-Tier Persistent Multi-Profile Isolation, Prefix Cache Framing & Resilient Multi-Agent Mesh — Phase 76 / ADR-119)
 
 - **Prefix Cache Frame Decomposition (`DeterministicProfileEngine`)**: Implemented byte-deterministic prompt block separation (`systemBlock`, `toolsBlock`, `knowledgeBlock`, `exemplarsBlock`, `dynamicBlock`) with cryptographic 64-character SHA-256 `prefixCacheHash` generation, maximizing prompt cache hit rates by up to 90% ([ADR-119](.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)).

@@ -195,11 +195,67 @@ graph TD
 
 ---
 
+## 7. ⚡ High-Velocity Regex-Safe Pattern Search & Zen Direct I/O Subsystem (ADR-136)
+
+The pattern search perception pipeline and direct I/O execution authority eliminate process spawning latency and token exhaustion through native in-memory traversal and token-density protection:
+
+```mermaid
+graph TD
+    subgraph "1. Model Intent & Dispatch"
+        A[Model Tool Call: grep_search / batch_write / kill_port] --> B[Universal Alias Normalizer]
+        B --> C[ArgumentCoercer JSON/Primitive Parser]
+        C --> D{Broccoli Circuit Breaker}
+        D -->|Immune Developer Tool| E[Direct Native Execution]
+    end
+
+    subgraph "2. RipgrepSearchService In-Memory Engine"
+        E --> F{Query Strategy Analyzer}
+        F -->|Pure Literal| G[Native indexOf Fast-Path 5-10x Speed]
+        F -->|Multiline / Regex| H[Global RegExp Engine + Captures]
+        F -->|Subsequence Fuzzy| I[Fuzzy Subsequence Compiler]
+        
+        G & H & I --> J[Parallel Chunked Directory Walker]
+        J --> K{Token Defense & Filters}
+        K -->|maxMatchesPerFile| L[Per-File Quota Guard]
+        K -->|ignoreComments| M[Comment Stripping Filter]
+        K -->|uniqueLines| N[Line Deduplication Set]
+        K -->|maxLineLength| O[Centered Window Slicer]
+    end
+
+    subgraph "3. Execution Authority & VFS Overlay"
+        E --> P[Native I/O Authority: kill_port / chmod / temp_dir]
+        P --> Q[SessionVFS Staging Overlay]
+        Q --> R[DiffSynthesizer Real-Time Diffs]
+        R --> S[Slash Commands /diff /commit /discard]
+    end
+
+    style A fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style B fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style C fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style D fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style E fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style G fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style H fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
+    style I fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#f8fafc
+    style L fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style M fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style N fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style O fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style P fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style Q fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#f8fafc
+    style R fill:#0c4a6e,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style S fill:#312e81,stroke:#a78bfa,stroke-width:2px,color:#f8fafc
+```
+
+---
+
 ## Related Architectural Documentation
 
 - [Master Architecture Decision Records (ADR) Workspace](adr/README.md)
 - [ADR-135: Zenith-Tier Prompt Caching Subsystem](adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md)
+- [ADR-136: High-Velocity Pattern Search & Zen I/O Execution Authority](adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)
 - [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)
+- [Runtime Optimization Record](RUNTIME_OPTIMIZATION_RECORD.md)
 - [Grand Architectural Audit](GRAND_ARCHITECTURAL_AUDIT.md)
 - [Benchmark Report](BENCHMARK_REPORT.md)
 - [Current Live Baseline](LIVE_BASELINE.json)

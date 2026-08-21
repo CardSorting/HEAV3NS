@@ -10,12 +10,22 @@ export class ArgumentCoercer {
 
     for (const [key, value] of Object.entries(params)) {
       if (typeof value === "string") {
-        if (value === "true") {
+        const trimmed = value.trim();
+        if (trimmed === "true") {
           coerced[key] = true;
-        } else if (value === "false") {
+        } else if (trimmed === "false") {
           coerced[key] = false;
-        } else if (!isNaN(Number(value)) && value.trim() !== "") {
-          coerced[key] = Number(value);
+        } else if (!isNaN(Number(trimmed)) && trimmed !== "") {
+          coerced[key] = Number(trimmed);
+        } else if (
+          (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+          (trimmed.startsWith("[") && trimmed.endsWith("]"))
+        ) {
+          try {
+            coerced[key] = JSON.parse(trimmed);
+          } catch {
+            coerced[key] = value;
+          }
         } else {
           coerced[key] = value;
         }

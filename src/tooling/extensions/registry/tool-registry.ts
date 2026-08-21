@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import { AbstractToolRegistry } from "../../../core/abstracts/abstract-tool-registry.js";
 import type { SchemaValidationResult } from "../../../core/contracts/tooling.contracts.js";
 import type { Eyes } from "../../base/eyes.js";
@@ -5,6 +6,7 @@ import type { AstPerceptionEyes } from "../perception/ast-eyes.js";
 import type { AnchoredHands } from "../hashline/hands.js";
 import type { ProtocolEars } from "../telemetry/ears.js";
 import { SkillsIngestor } from "./skills-ingestor.js";
+import { ArgumentCoercer } from "./argument-coercer.js";
 import type { SessionMemoryStore } from "../../../sessions/extensions/memory/session-memory-store.js";
 
 import { BroccoliCircuitBreaker } from "../policy/broccoli-circuit-breaker.js";
@@ -370,12 +372,18 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerBuiltins();
   }
 
-  validateToolArgs(name: string, args: Record<string, unknown>): SchemaValidationResult {
-    const tool = this.tools.get(name);
+  validateToolArgs(name: string, rawArgs: Record<string, unknown>): SchemaValidationResult {
+    const canonicalName = this.getTool(name)?.name ?? name;
+    const tool = this.tools.get(canonicalName);
     if (!tool) {
       return { valid: false, errors: [`Tool '${name}' not found`] };
     }
 
+    const coercer = new ArgumentCoercer();
+    const args = coercer.coerce(this.normalizeToolArgs(rawArgs));
+    for (const [k, v] of Object.entries(args)) {
+      rawArgs[k] = v;
+    }
     if (!tool.parameters) {
       return { valid: true, errors: [] };
     }
@@ -388,9 +396,16 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         continue;
       }
       if (val !== undefined && val !== null) {
-        const actualType = typeof val;
-        if (actualType !== schema.type) {
-          errors.push(`Parameter '${paramName}' must be of type '${schema.type}', got '${actualType}'`);
+        let matches = false;
+        if (schema.type === "array") {
+          matches = Array.isArray(val);
+        } else if (schema.type === "object") {
+          matches = typeof val === "object" && val !== null && !Array.isArray(val);
+        } else {
+          matches = typeof val === schema.type;
+        }
+        if (!matches) {
+          errors.push(`Parameter '${paramName}' must be of type '${schema.type}', got '${Array.isArray(val) ? "array" : typeof val}'`);
         }
       }
     }
@@ -403,25 +418,27 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
 
   override async executeTool(
     name: string,
-    args: Record<string, unknown>,
+    rawArgs: Record<string, unknown>,
     cwd: string
   ): Promise<unknown> {
-    if (!this.circuitBreaker.canExecute(name)) {
-      throw new Error(`Circuit Breaker OPEN: Execution of tool '${name}' is temporarily blocked due to repeated failures.`);
+    const canonicalName = this.getTool(name)?.name ?? name;
+    if (!this.circuitBreaker.canExecute(canonicalName)) {
+      throw new Error(`Circuit Breaker OPEN: Execution of tool '${canonicalName}' is temporarily blocked due to repeated failures.`);
     }
 
-    const validation = this.validateToolArgs(name, args);
+    const normalizedArgs = this.normalizeToolArgs(rawArgs);
+    const validation = this.validateToolArgs(canonicalName, normalizedArgs);
     if (!validation.valid) {
-      this.circuitBreaker.recordFailure(name);
-      throw new Error(`Tool '${name}' argument schema validation failed: ${validation.errors.join("; ")}`);
+      this.circuitBreaker.recordFailure(canonicalName);
+      throw new Error(`Tool '${canonicalName}' argument schema validation failed: ${validation.errors.join("; ")}`);
     }
 
     try {
-      const result = await super.executeTool(name, args, cwd);
-      this.circuitBreaker.recordSuccess(name);
+      const result = await super.executeTool(canonicalName, normalizedArgs, cwd);
+      this.circuitBreaker.recordSuccess(canonicalName);
       return result;
     } catch (err) {
-      this.circuitBreaker.recordFailure(name);
+      this.circuitBreaker.recordFailure(canonicalName);
       throw err;
     }
   }
@@ -431,15 +448,20 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
 
     this.registerTool({
       name: "view_file",
-      description: "Read contents of a file (Eyes)",
+      description: "Read contents of a file with optional line slicing and offset (Eyes)",
       parameters: {
         path: { type: "string", required: true, description: "Absolute or relative file path" },
+        startLine: { type: "number", required: false, description: "1-indexed starting line number" },
+        endLine: { type: "number", required: false, description: "1-indexed ending line number" },
+        contentOffset: { type: "number", required: false, description: "Byte offset to slice content from" },
       },
-      execute: async (args) => {
-        const filePath = String(args.path);
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
         const startLine = typeof args.startLine === "number" ? args.startLine : undefined;
         const endLine = typeof args.endLine === "number" ? args.endLine : undefined;
-        return this.eyes.readFile(filePath, { startLine, endLine });
+        const contentOffset = typeof args.contentOffset === "number" ? args.contentOffset : undefined;
+        return this.eyes.readFile(resolvedPath, { startLine, endLine, contentOffset });
       },
     });
 
@@ -450,11 +472,723 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         path: { type: "string", required: true, description: "Target file path" },
         content: { type: "string", required: true, description: "Content string" },
       },
-      execute: async (args) => {
-        const filePath = String(args.path);
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
         const content = String(args.content);
-        await hands.writeFile(filePath, content);
-        return { success: true, path: filePath };
+        await hands.writeFile(resolvedPath, content);
+        return { success: true, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "replace_file_content",
+      description: "Replace an exact target block of text in a file with new content (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Target file path" },
+        target: { type: "string", required: true, description: "Exact target text to find and replace" },
+        replacement: { type: "string", required: true, description: "Replacement text" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const target = String(args.target);
+        const replacement = String(args.replacement);
+        const res = await hands.replaceFileContent(resolvedPath, target, replacement);
+        if (!res.success) {
+          throw new Error(res.error || `Target block not found in '${targetPath}'`);
+        }
+        return { success: true, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "multi_replace_file_content",
+      description: "Apply multiple non-contiguous exact text replacements to a file atomically (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Target file path" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const chunks = Array.isArray(args.chunks) ? (args.chunks as Array<{ target: string; replacement: string }>) : [];
+        if (chunks.length === 0) {
+          throw new Error("No replacement chunks provided to multi_replace_file_content");
+        }
+        const res = await hands.multiReplaceFileContent(resolvedPath, chunks);
+        if (!res.success) {
+          throw new Error(res.error || `Multi-replace failed on '${targetPath}'`);
+        }
+        return { success: true, path: resolvedPath, replacementsApplied: res.replacementsApplied };
+      },
+    });
+
+    this.registerTool({
+      name: "delete_file",
+      description: "Safely delete a file or directory on disk (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to file or directory to delete" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.deleteFile(resolvedPath);
+        return { success, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "move_file",
+      description: "Move or rename a file or directory across workspace (Hands)",
+      parameters: {
+        source: { type: "string", required: true, description: "Source file path" },
+        target: { type: "string", required: true, description: "Target destination path" },
+      },
+      execute: async (args, cwd) => {
+        const sourcePath = String(args.source);
+        const targetPath = String(args.target);
+        const resolvedSource = sourcePath.startsWith("/") ? sourcePath : `${cwd}/${sourcePath}`;
+        const resolvedTarget = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.moveFile(resolvedSource, resolvedTarget);
+        return { success, source: resolvedSource, target: resolvedTarget };
+      },
+    });
+
+    this.registerTool({
+      name: "create_directory",
+      description: "Create a new directory and all parent directories (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Directory path to create" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.createDirectory(resolvedPath);
+        return { success, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "copy_file",
+      description: "Copy a file or directory recursively across workspace (Hands)",
+      parameters: {
+        source: { type: "string", required: true, description: "Source path to copy" },
+        target: { type: "string", required: true, description: "Destination target path" },
+      },
+      execute: async (args, cwd) => {
+        const sourcePath = String(args.source);
+        const targetPath = String(args.target);
+        const resolvedSource = sourcePath.startsWith("/") ? sourcePath : `${cwd}/${sourcePath}`;
+        const resolvedTarget = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.copyFile(resolvedSource, resolvedTarget);
+        return { success, source: resolvedSource, target: resolvedTarget };
+      },
+    });
+
+    this.registerTool({
+      name: "path_exists",
+      description: "Quickly verify if a file or directory exists on disk (Eyes)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to check" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const exists = await this.eyes.exists(resolvedPath);
+        return { exists, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "append_file",
+      description: "Append content to an existing file or create it if missing (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to file to append to" },
+        content: { type: "string", required: true, description: "Content string to append" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const content = String(args.content);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.appendFile(resolvedPath, content);
+        return { success, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "clear_file",
+      description: "Clear/truncate file content to 0 bytes on disk (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to file to truncate" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const success = await hands.clearFile(resolvedPath);
+        return { success, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "batch_delete_files",
+      description: "Delete multiple files simultaneously in a single turn (Hands)",
+      parameters: {
+        paths: { type: "array", required: true, description: "Array of file paths to delete" },
+      },
+      execute: async (args, cwd) => {
+        const rawPaths = Array.isArray(args.paths) ? args.paths : [String(args.paths)];
+        const resolvedPaths = rawPaths.map((p) => (String(p).startsWith("/") ? String(p) : `${cwd}/${String(p)}`));
+        return hands.deleteMultipleFiles(resolvedPaths);
+      },
+    });
+
+    this.registerTool({
+      name: "file_hash",
+      description: "Compute cryptographic checksum (SHA-256 / MD5) of a file (Eyes)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to file" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const algorithm = typeof args.algorithm === "string" ? args.algorithm : "sha256";
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        return this.eyes.getFileHash(resolvedPath, algorithm);
+      },
+    });
+
+    this.registerTool({
+      name: "get_env",
+      description: "Read environment variables or a specific environment key (Hands)",
+      execute: async (args) => {
+        if (typeof args.key === "string" && args.key.trim() !== "") {
+          const key = args.key.trim();
+          return { key, value: process.env[key] ?? null };
+        }
+        return { env: { ...process.env } };
+      },
+    });
+
+    this.registerTool({
+      name: "set_env",
+      description: "Set or update an environment variable in the current runtime process (Hands)",
+      parameters: {
+        key: { type: "string", required: true, description: "Environment variable key" },
+        value: { type: "string", required: true, description: "Environment variable value" },
+      },
+      execute: async (args) => {
+        const key = String(args.key).trim();
+        const value = String(args.value);
+        process.env[key] = value;
+        return { key, value, success: true };
+      },
+    });
+
+    this.registerTool({
+      name: "system_info",
+      description: "Inspect host system architecture, platform, memory, and Node.js runtime (Eyes)",
+      execute: async () => {
+        return {
+          platform: os.platform(),
+          arch: os.arch(),
+          release: os.release(),
+          cpus: os.cpus().length,
+          totalMemoryBytes: os.totalmem(),
+          freeMemoryBytes: os.freemem(),
+          uptimeSeconds: Math.floor(os.uptime()),
+          nodeVersion: process.version,
+          pid: process.pid,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "http_request",
+      description: "Perform an HTTP/HTTPS request (GET, POST, PUT, DELETE) with custom headers & body (Hands)",
+      parameters: {
+        url: { type: "string", required: true, description: "Target URL" },
+      },
+      execute: async (args) => {
+        const url = String(args.url);
+        const method = typeof args.method === "string" ? args.method.toUpperCase() : "GET";
+        const headers = typeof args.headers === "object" && args.headers !== null ? (args.headers as Record<string, string>) : {};
+        const body = args.body !== undefined
+          ? (typeof args.body === "string" ? args.body : JSON.stringify(args.body))
+          : undefined;
+        const timeoutMs = typeof args.timeoutMs === "number" ? args.timeoutMs : 15000;
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers,
+            body: method !== "GET" && method !== "HEAD" ? body : undefined,
+            signal: controller.signal,
+          });
+          const text = await res.text();
+          const responseHeaders: Record<string, string> = {};
+          res.headers.forEach((val, key) => {
+            responseHeaders[key] = val;
+          });
+
+          let json: unknown = undefined;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            // not json
+          }
+
+          return {
+            status: res.status,
+            statusText: res.statusText,
+            ok: res.ok,
+            headers: responseHeaders,
+            body: text,
+            json,
+          };
+        } catch (err: any) {
+          return {
+            error: err.name === "AbortError" ? `Request timed out after ${timeoutMs}ms` : err.message,
+            ok: false,
+            status: 0,
+          };
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+    });
+
+    this.registerTool({
+      name: "batch_write_files",
+      description: "Write multiple workspace files atomically in a single turn (Hands)",
+      parameters: {
+        files: { type: "array", required: true, description: "Array of { path: string, content: string } objects" },
+      },
+      execute: async (args, cwd) => {
+        let rawFiles: { path: string; content: string }[] = [];
+        if (Array.isArray(args.files)) {
+          rawFiles = args.files as any[];
+        } else if (typeof args.files === "string") {
+          try {
+            rawFiles = JSON.parse(args.files);
+          } catch {
+            rawFiles = [];
+          }
+        }
+        const resolvedFiles = rawFiles.map((f) => ({
+          path: String(f.path).startsWith("/") ? String(f.path) : `${cwd}/${String(f.path)}`,
+          content: String(f.content ?? ""),
+        }));
+        return hands.writeMultipleFiles(resolvedFiles);
+      },
+    });
+
+    this.registerTool({
+      name: "workspace_summary",
+      description: "Generate aggregate statistics (file counts, extensions, directory counts, size) of workspace (Eyes)",
+      execute: async (args, cwd) => {
+        const rootPath = typeof args.path === "string"
+          ? (args.path.startsWith("/") ? args.path : `${cwd}/${args.path}`)
+          : cwd;
+
+        const extCounts: Record<string, number> = {};
+        let totalFiles = 0;
+        let totalDirectories = 0;
+        let totalSizeBytes = 0;
+
+        const scan = async (dir: string, depth: number) => {
+          if (depth > 6) return;
+          let entries: any[] = [];
+          try {
+            entries = await fs.readdir(dir, { withFileTypes: true });
+          } catch {
+            return;
+          }
+
+          for (const entry of entries) {
+            if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist" || entry.name.startsWith(".")) {
+              continue;
+            }
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              totalDirectories++;
+              await scan(fullPath, depth + 1);
+            } else if (entry.isFile()) {
+              totalFiles++;
+              const ext = path.extname(entry.name).toLowerCase() || "[no_ext]";
+              extCounts[ext] = (extCounts[ext] || 0) + 1;
+              try {
+                const stat = await fs.stat(fullPath);
+                totalSizeBytes += stat.size;
+              } catch {
+                // ignore
+              }
+            }
+          }
+        };
+
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+        await scan(rootPath, 0);
+
+        return {
+          rootPath,
+          totalFiles,
+          totalDirectories,
+          totalSizeBytes,
+          extensions: extCounts,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "check_port",
+      description: "Check if a TCP port is in use or available on localhost (Eyes)",
+      parameters: {
+        port: { type: "number", required: true, description: "Port number to check" },
+      },
+      execute: async (args) => {
+        const port = Number(args.port);
+        const net = await import("node:net");
+        return new Promise((resolve) => {
+          const server = net.createServer();
+          server.once("error", (err: any) => {
+            if (err.code === "EADDRINUSE") {
+              resolve({ port, inUse: true, available: false });
+            } else {
+              resolve({ port, inUse: false, available: false, error: err.message });
+            }
+          });
+          server.once("listening", () => {
+            server.close(() => {
+              resolve({ port, inUse: false, available: true });
+            });
+          });
+          server.listen(port, "127.0.0.1");
+        });
+      },
+    });
+
+    this.registerTool({
+      name: "find_free_port",
+      description: "Find an open, available TCP port on localhost for starting servers (Hands)",
+      execute: async () => {
+        const net = await import("node:net");
+        return new Promise((resolve, reject) => {
+          const server = net.createServer();
+          server.unref();
+          server.on("error", reject);
+          server.listen(0, "127.0.0.1", () => {
+            const port = (server.address() as any).port;
+            server.close(() => {
+              resolve({ port, available: true });
+            });
+          });
+        });
+      },
+    });
+
+    this.registerTool({
+      name: "memory_usage",
+      description: "Inspect active Node.js V8 heap and RSS memory usage (Eyes)",
+      execute: async () => {
+        const mem = process.memoryUsage();
+        return {
+          rssBytes: mem.rss,
+          heapTotalBytes: mem.heapTotal,
+          heapUsedBytes: mem.heapUsed,
+          externalBytes: mem.external,
+          arrayBuffersBytes: mem.arrayBuffers,
+          heapUsedMB: +(mem.heapUsed / (1024 * 1024)).toFixed(2),
+          rssMB: +(mem.rss / (1024 * 1024)).toFixed(2),
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "download_file",
+      description: "Download a remote file or binary asset directly to workspace disk (Hands)",
+      parameters: {
+        url: { type: "string", required: true, description: "Source URL to download" },
+        path: { type: "string", required: true, description: "Destination file path on disk" },
+      },
+      execute: async (args, cwd) => {
+        const url = String(args.url);
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const timeoutMs = typeof args.timeoutMs === "number" ? args.timeoutMs : 30000;
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) {
+            return { success: false, status: res.status, error: `HTTP ${res.status}: ${res.statusText}` };
+          }
+          const arrayBuffer = await res.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          const fs = await import("node:fs/promises");
+          const path = await import("node:path");
+          await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+          await fs.writeFile(resolvedPath, buffer);
+
+          return {
+            success: true,
+            path: resolvedPath,
+            sizeBytes: buffer.length,
+            contentType: res.headers.get("content-type"),
+          };
+        } catch (err: any) {
+          return {
+            success: false,
+            error: err.name === "AbortError" ? `Download timed out after ${timeoutMs}ms` : err.message,
+          };
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+    });
+
+    this.registerTool({
+      name: "touch_file",
+      description: "Create an empty file or update access/modification timestamps without altering content (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "File path to touch" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+
+        await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+        const now = new Date();
+        try {
+          await fs.utimes(resolvedPath, now, now);
+        } catch {
+          await fs.writeFile(resolvedPath, "", { flag: "a" });
+        }
+        return { success: true, path: resolvedPath };
+      },
+    });
+
+    this.registerTool({
+      name: "disk_usage",
+      description: "Calculate disk space consumption for a directory or file tree (Eyes)",
+      parameters: {
+        path: { type: "string", required: true, description: "Directory or file path to inspect" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+
+        let totalBytes = 0;
+        let totalFiles = 0;
+        let totalDirectories = 0;
+
+        async function calc(current: string) {
+          try {
+            const stat = await fs.stat(current);
+            if (stat.isFile()) {
+              totalBytes += stat.size;
+              totalFiles++;
+            } else if (stat.isDirectory()) {
+              totalDirectories++;
+              const entries = await fs.readdir(current);
+              for (const entry of entries) {
+                if (entry === "node_modules" || entry === ".git") continue;
+                await calc(path.join(current, entry));
+              }
+            }
+          } catch {
+            // Ignore unreadable paths
+          }
+        }
+
+        await calc(resolvedPath);
+
+        const formatBytes = (bytes: number) => {
+          if (bytes < 1024) return `${bytes} B`;
+          if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+          return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+        };
+
+        return {
+          path: resolvedPath,
+          totalBytes,
+          formattedSize: formatBytes(totalBytes),
+          totalFiles,
+          totalDirectories,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "search_and_replace",
+      description: "Search and replace string occurrences across multiple files matching a glob or directory (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Root directory path to search within" },
+        find: { type: "string", required: true, description: "Exact string or pattern to find" },
+        replace: { type: "string", required: true, description: "Replacement string" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const findStr = String(args.find ?? args.target ?? "");
+        const replaceStr = String(args.replace ?? args.replacement ?? "");
+
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+
+        const modifiedFiles: { path: string; replacements: number }[] = [];
+
+        async function scanAndReplace(current: string) {
+          try {
+            const stat = await fs.stat(current);
+            if (stat.isFile()) {
+              const content = await fs.readFile(current, "utf-8");
+              if (content.includes(findStr)) {
+                const count = content.split(findStr).length - 1;
+                const newContent = content.replaceAll(findStr, replaceStr);
+                await fs.writeFile(current, newContent, "utf-8");
+                modifiedFiles.push({ path: current, replacements: count });
+              }
+            } else if (stat.isDirectory()) {
+              const entries = await fs.readdir(current);
+              for (const entry of entries) {
+                if (entry === "node_modules" || entry === ".git" || entry === "dist") continue;
+                await scanAndReplace(path.join(current, entry));
+              }
+            }
+          } catch {
+            // Ignore unreadable entries
+          }
+        }
+
+        await scanAndReplace(resolvedPath);
+
+        return {
+          success: true,
+          totalFilesModified: modifiedFiles.length,
+          totalReplacements: modifiedFiles.reduce((acc, f) => acc + f.replacements, 0),
+          modifiedFiles,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "chmod_file",
+      description: "Change file mode / permissions or mark file as executable (Hands)",
+      parameters: {
+        path: { type: "string", required: true, description: "Path to file" },
+        mode: { type: "string", required: false, description: "Octal permissions mode (e.g. '755' or '644') or 'executable'" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const modeStr = String(args.mode ?? "755");
+        const fs = await import("node:fs/promises");
+
+        const numericMode = modeStr === "executable" || modeStr === "+x" ? 0o755 : parseInt(modeStr, 8) || 0o755;
+        try {
+          await fs.chmod(resolvedPath, numericMode);
+          return { success: true, path: resolvedPath, mode: numericMode.toString(8) };
+        } catch (err: any) {
+          return { success: false, path: resolvedPath, error: err.message };
+        }
+      },
+    });
+
+    this.registerTool({
+      name: "create_temp_dir",
+      description: "Create an isolated temporary scratchpad directory in the OS temp space (Hands)",
+      parameters: {
+        prefix: { type: "string", required: false, description: "Prefix for temp dir name" },
+      },
+      execute: async (args) => {
+        const os = await import("node:os");
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+
+        const prefix = String(args.prefix ?? "lumi-scratch-");
+        const tempDirPath = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+        return {
+          success: true,
+          path: tempDirPath,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "kill_port",
+      description: "Terminate any process listening on a specified TCP port to free it up (Hands)",
+      parameters: {
+        port: { type: "number", required: true, description: "Port number to liberate" },
+      },
+      execute: async (args) => {
+        const port = Number(args.port);
+        const { exec } = await import("node:child_process");
+        const util = await import("node:util");
+        const execAsync = util.promisify(exec);
+
+        const isWin = process.platform === "win32";
+        try {
+          if (isWin) {
+            const { stdout } = await execAsync(`netstat -ano | findstr :${port}`);
+            const lines = stdout.trim().split("\n");
+            const pids = new Set<string>();
+            for (const line of lines) {
+              const parts = line.trim().split(/\s+/);
+              if (parts.length >= 5) {
+                pids.add(parts[parts.length - 1]);
+              }
+            }
+            for (const pid of pids) {
+              if (pid && pid !== "0") {
+                await execAsync(`taskkill /F /PID ${pid}`);
+              }
+            }
+            return { success: true, port, freed: true, killedPids: Array.from(pids) };
+          } else {
+            const { stdout } = await execAsync(`lsof -ti :${port}`);
+            const pids = stdout.trim().split("\n").map((p) => p.trim()).filter(Boolean);
+            for (const pid of pids) {
+              try {
+                process.kill(Number(pid), "SIGKILL");
+              } catch {
+                // Ignore if process already exited
+              }
+            }
+            return { success: true, port, freed: true, killedPids: pids };
+          }
+        } catch {
+          // If no process was on that port, lsof/netstat exits with code 1, which means port is already free
+          return { success: true, port, freed: true, message: `No active process found blocking port ${port}` };
+        }
+      },
+    });
+
+    this.registerTool({
+      name: "kill_process",
+      description: "Send termination signal (SIGTERM or SIGKILL) to a process by PID (Hands)",
+      parameters: {
+        pid: { type: "number", required: true, description: "Process ID to terminate" },
+        signal: { type: "string", required: false, description: "Signal to send (e.g. 'SIGTERM' or 'SIGKILL', default: 'SIGTERM')" },
+      },
+      execute: async (args) => {
+        const pid = Number(args.pid);
+        const signal = (args.signal as NodeJS.Signals) || "SIGTERM";
+        try {
+          process.kill(pid, signal);
+          return { success: true, pid, signal };
+        } catch (err: any) {
+          return { success: false, pid, error: err.message };
+        }
       },
     });
 
@@ -467,18 +1201,19 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         hash: { type: "string", required: true },
         replacement: { type: "string", required: true },
       },
-      execute: async (args) => {
-        const filePath = String(args.path);
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
         const line = Number(args.line);
         const hash = String(args.hash);
         const replacement = String(args.replacement);
-        return hands.applyAnchoredEdit(filePath, line, hash, replacement);
+        return hands.applyAnchoredEdit(resolvedPath, line, hash, replacement);
       },
     });
 
     this.registerTool({
       name: "run_command",
-      description: "Execute a shell command (Hands)",
+      description: "Execute a shell command with direct I/O execution authority (Hands)",
       parameters: {
         command: { type: "string", required: true, description: "Shell command string" },
       },
@@ -486,6 +1221,262 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         const command = String(args.command);
         const effectiveCwd = typeof args.cwd === "string" ? args.cwd : cwd;
         return hands.runCommand(command, effectiveCwd);
+      },
+    });
+
+    this.registerTool({
+      name: "list_dir",
+      description: "List directory contents with file metadata (isDir, sizeBytes) (Eyes)",
+      parameters: {
+        path: { type: "string", required: true, description: "Directory path to list" },
+      },
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        return this.eyes.listDirectoryDetails(resolvedPath);
+      },
+    });
+
+    this.registerTool({
+      name: "grep_search",
+      description: "Fast ripgrep / pattern search across workspace files or specific file (Eyes)",
+      parameters: {
+        query: { type: "string", required: false, description: "Search query or regex pattern (or provide queries array)" },
+        path: { type: "string", required: false, description: "Directory or file path to search" },
+        maxResults: { type: "number", required: false, description: "Maximum number of matches to return" },
+        includes: { type: "array", required: false, description: "File patterns to include (e.g. ['*.ts'])" },
+        excludes: { type: "array", required: false, description: "File or directory patterns to exclude" },
+        caseInsensitive: { type: "boolean", required: false, description: "Perform case-insensitive search (default true)" },
+        smartCase: { type: "boolean", required: false, description: "Auto-detect case sensitivity if query contains uppercase characters" },
+        isRegex: { type: "boolean", required: false, description: "Whether to treat query as a regex pattern (default: auto-detected, false for literal search)" },
+        wordMatch: { type: "boolean", required: false, description: "Match whole words only" },
+        multiline: { type: "boolean", required: false, description: "Enable multiline query matching" },
+        fuzzy: { type: "boolean", required: false, description: "Enable subsequence fuzzy pattern matching" },
+        pathRegex: { type: "string", required: false, description: "Regex pattern to filter matching file paths" },
+        previewReplacement: { type: "string", required: false, description: "Preview replacement on matched lines (diff preview without modifying files)" },
+        minMatchesPerFile: { type: "number", required: false, description: "Only return files having at least N matches" },
+        maxMatchesPerFile: { type: "number", required: false, description: "Cap matches returned per file (prevents huge files from monopolizing results)" },
+        ignoreComments: { type: "boolean", required: false, description: "Ignore comment lines (//, #, --, /*, *) to eliminate false positives" },
+        uniqueLines: { type: "boolean", required: false, description: "Deduplicate identical matched lines within each file" },
+        requireAllQueriesInFile: { type: "boolean", required: false, description: "Require file to contain ALL specified queries (AND matching)" },
+        contextLines: { type: "number", required: false, description: "Number of before/after context lines to return" },
+        contextBefore: { type: "number", required: false, description: "Number of before context lines" },
+        contextAfter: { type: "number", required: false, description: "Number of after context lines" },
+        minFileSize: { type: "number", required: false, description: "Minimum file size in bytes" },
+        maxFileSize: { type: "number", required: false, description: "Maximum file size in bytes to inspect (default: 4MB)" },
+        maxLineLength: { type: "number", required: false, description: "Maximum length of returned line snippet (default: 500)" },
+        maxDepth: { type: "number", required: false, description: "Maximum directory depth to traverse" },
+        mtimeAfter: { type: "number", required: false, description: "Only include files modified after this epoch timestamp (ms)" },
+        mtimeBefore: { type: "number", required: false, description: "Only include files modified before this epoch timestamp (ms)" },
+        preserveWhitespace: { type: "boolean", required: false, description: "Preserve original line indentation and whitespace (default: false)" },
+        invertMatch: { type: "boolean", required: false, description: "Invert match to select non-matching lines (like grep -v)" },
+        startLine: { type: "number", required: false, description: "1-indexed starting line to scope search" },
+        endLine: { type: "number", required: false, description: "1-indexed ending line to scope search" },
+        offset: { type: "number", required: false, description: "Number of matches to skip (pagination offset)" },
+        sortBy: { type: "string", required: false, description: "Sort matches by 'path', 'matches', or 'line'" },
+        sortOrder: { type: "string", required: false, description: "Sort direction 'asc' or 'desc'" },
+        filesOnly: { type: "boolean", required: false, description: "Only return unique matching filenames and counts without line snippets" },
+        groupByFile: { type: "boolean", required: false, description: "Group matches by file path in results" },
+        highlight: { type: "boolean", required: false, description: "Highlight matched token within returned lineContent" },
+        queries: { type: "array", required: false, description: "Multiple search queries / OR patterns" },
+        detailed: { type: "boolean", required: false, description: "Return full search statistics (filesScanned, filesMatched, durationMs, truncated)" },
+      },
+      execute: async (args, cwd) => {
+        const query = Array.isArray(args.query) ? args.query.map(String) : String(args.query ?? "");
+        const searchPath = typeof args.path === "string"
+          ? (args.path.startsWith("/") ? args.path : `${cwd}/${args.path}`)
+          : cwd;
+        const maxResults = typeof args.maxResults === "number" ? args.maxResults : undefined;
+        const offset = typeof args.offset === "number" ? args.offset : undefined;
+        let includes: string[] | undefined;
+        if (Array.isArray(args.includes)) {
+          includes = args.includes.map(String);
+        } else if (typeof args.includes === "string") {
+          try { includes = JSON.parse(args.includes); } catch { includes = [args.includes]; }
+        }
+
+        let excludes: string[] | undefined;
+        if (Array.isArray(args.excludes)) {
+          excludes = args.excludes.map(String);
+        } else if (typeof args.excludes === "string") {
+          try { excludes = JSON.parse(args.excludes); } catch { excludes = [args.excludes]; }
+        }
+
+        let queries: string[] | undefined;
+        if (Array.isArray(args.queries)) {
+          queries = args.queries.map(String);
+        } else if (typeof args.queries === "string") {
+          try { queries = JSON.parse(args.queries); } catch { queries = [args.queries]; }
+        }
+
+        const pathRegex = typeof args.pathRegex === "string" ? args.pathRegex : undefined;
+        const caseInsensitive = typeof args.caseInsensitive === "boolean" ? args.caseInsensitive : undefined;
+        const smartCase = typeof args.smartCase === "boolean" ? args.smartCase : undefined;
+        const isRegex = typeof args.isRegex === "boolean" ? args.isRegex : undefined;
+        const wordMatch = typeof args.wordMatch === "boolean" ? args.wordMatch : undefined;
+        const multiline = typeof args.multiline === "boolean" ? args.multiline : undefined;
+        const fuzzy = typeof args.fuzzy === "boolean" ? args.fuzzy : undefined;
+        const previewReplacement = typeof args.previewReplacement === "string" ? args.previewReplacement : undefined;
+        const minMatchesPerFile = typeof args.minMatchesPerFile === "number" ? args.minMatchesPerFile : undefined;
+        const maxMatchesPerFile = typeof args.maxMatchesPerFile === "number" ? args.maxMatchesPerFile : undefined;
+        const ignoreComments = typeof args.ignoreComments === "boolean" ? args.ignoreComments : undefined;
+        const uniqueLines = typeof args.uniqueLines === "boolean" ? args.uniqueLines : undefined;
+        const requireAllQueriesInFile = typeof args.requireAllQueriesInFile === "boolean" ? args.requireAllQueriesInFile : undefined;
+        const contextLines = typeof args.contextLines === "number" ? args.contextLines : undefined;
+        const contextBefore = typeof args.contextBefore === "number" ? args.contextBefore : undefined;
+        const contextAfter = typeof args.contextAfter === "number" ? args.contextAfter : undefined;
+        const minFileSize = typeof args.minFileSize === "number" ? args.minFileSize : undefined;
+        const maxFileSize = typeof args.maxFileSize === "number" ? args.maxFileSize : undefined;
+        const maxLineLength = typeof args.maxLineLength === "number" ? args.maxLineLength : undefined;
+        const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : undefined;
+        const mtimeAfter = typeof args.mtimeAfter === "number" ? args.mtimeAfter : undefined;
+        const mtimeBefore = typeof args.mtimeBefore === "number" ? args.mtimeBefore : undefined;
+        const preserveWhitespace = typeof args.preserveWhitespace === "boolean" ? args.preserveWhitespace : undefined;
+        const invertMatch = typeof args.invertMatch === "boolean" ? args.invertMatch : undefined;
+        const startLine = typeof args.startLine === "number" ? args.startLine : undefined;
+        const endLine = typeof args.endLine === "number" ? args.endLine : undefined;
+        const sortBy = args.sortBy === "path" || args.sortBy === "matches" || args.sortBy === "line" ? args.sortBy : undefined;
+        const sortOrder = args.sortOrder === "asc" || args.sortOrder === "desc" ? args.sortOrder : undefined;
+        const filesOnly = typeof args.filesOnly === "boolean" ? args.filesOnly : undefined;
+        const groupByFile = typeof args.groupByFile === "boolean" ? args.groupByFile : undefined;
+        const highlight = typeof args.highlight === "boolean" ? args.highlight : undefined;
+        const detailed = typeof args.detailed === "boolean" ? args.detailed : false;
+
+        const { RipgrepSearchService } = await import("../perception/ripgrep-search-service.js");
+        const service = new RipgrepSearchService();
+        if (detailed) {
+          return service.searchDetailed(query, searchPath, {
+            maxResults,
+            offset,
+            includes,
+            excludes,
+            pathRegex,
+            queries,
+            caseInsensitive,
+            smartCase,
+            isRegex,
+            wordMatch,
+            multiline,
+            fuzzy,
+            previewReplacement,
+            minMatchesPerFile,
+            maxMatchesPerFile,
+            ignoreComments,
+            uniqueLines,
+            requireAllQueriesInFile,
+            contextLines,
+            contextBefore,
+            contextAfter,
+            minFileSize,
+            maxFileSize,
+            maxLineLength,
+            maxDepth,
+            mtimeAfter,
+            mtimeBefore,
+            preserveWhitespace,
+            invertMatch,
+            startLine,
+            endLine,
+            sortBy,
+            sortOrder,
+            filesOnly,
+            groupByFile,
+            highlight,
+          });
+        }
+        return service.search(query, searchPath, {
+          maxResults,
+          offset,
+          includes,
+          excludes,
+          pathRegex,
+          queries,
+          caseInsensitive,
+          smartCase,
+          isRegex,
+          wordMatch,
+          multiline,
+          fuzzy,
+          previewReplacement,
+          minMatchesPerFile,
+          maxMatchesPerFile,
+          ignoreComments,
+          uniqueLines,
+          requireAllQueriesInFile,
+          contextLines,
+          contextBefore,
+          contextAfter,
+          minFileSize,
+          maxFileSize,
+          maxLineLength,
+          maxDepth,
+          mtimeAfter,
+          mtimeBefore,
+          preserveWhitespace,
+          invertMatch,
+          startLine,
+          endLine,
+          sortBy,
+          sortOrder,
+          filesOnly,
+          groupByFile,
+          highlight,
+        });
+      },
+    });
+
+    this.registerTool({
+      name: "batch_view_files",
+      description: "Read multiple workspace files simultaneously in a single turn (Eyes)",
+      execute: async (args, cwd) => {
+        let paths: string[] = [];
+        if (Array.isArray(args.paths)) {
+          paths = args.paths.map(String);
+        } else if (typeof args.paths === "string") {
+          try {
+            paths = JSON.parse(args.paths);
+          } catch {
+            paths = [args.paths];
+          }
+        }
+        const resolvedPaths = paths.map((p) => (p.startsWith("/") ? p : `${cwd}/${p}`));
+        const maxLines = typeof args.maxLines === "number" ? args.maxLines : undefined;
+        return this.eyes.readMultipleFiles(resolvedPaths, { maxLines });
+      },
+    });
+
+    this.registerTool({
+      name: "find_files",
+      description: "Find files matching name pattern / glob across workspace (Eyes)",
+      execute: async (args, cwd) => {
+        const searchPath = typeof args.path === "string"
+          ? (args.path.startsWith("/") ? args.path : `${cwd}/${args.path}`)
+          : cwd;
+        const pattern = typeof args.pattern === "string" ? args.pattern : (typeof args.query === "string" ? args.query : undefined);
+        const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : 5;
+        return this.eyes.findFiles(searchPath, pattern, maxDepth);
+      },
+    });
+
+    this.registerTool({
+      name: "file_info",
+      description: "Get metadata for a file or directory (exists, isDir, sizeBytes, line count) (Eyes)",
+      execute: async (args, cwd) => {
+        const targetPath = String(args.path);
+        const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        return this.eyes.getFileInfo(resolvedPath);
+      },
+    });
+
+    this.registerTool({
+      name: "directory_tree",
+      description: "Generate structured ASCII directory tree of workspace folder (Eyes)",
+      execute: async (args, cwd) => {
+        const searchPath = typeof args.path === "string"
+          ? (args.path.startsWith("/") ? args.path : `${cwd}/${args.path}`)
+          : cwd;
+        const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : 3;
+        return this.eyes.getDirectoryTree(searchPath, maxDepth);
       },
     });
 

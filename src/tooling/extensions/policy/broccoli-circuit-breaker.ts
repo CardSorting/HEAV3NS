@@ -22,6 +22,17 @@ export class BroccoliCircuitBreaker {
   private readonly toolFailures = new Map<string, number>();
   private readonly toolTripTimes = new Map<string, number>();
 
+  private readonly exemptTools = new Set([
+    "run_command",
+    "view_file",
+    "write_file",
+    "replace_file_content",
+    "edit_file_anchored",
+    "grep_search",
+    "list_dir",
+    "search_symbols",
+  ]);
+
   constructor(failureThreshold: number = 3, cooldownMs: number = 30000) {
     this.failureThreshold = failureThreshold;
     this.cooldownMs = cooldownMs;
@@ -31,6 +42,10 @@ export class BroccoliCircuitBreaker {
    * Evaluates if a tool can be safely executed under circuit state rules.
    */
   public canExecute(toolName: string): boolean {
+    if (this.exemptTools.has(toolName)) {
+      return true; // Never block primary developer I/O tools
+    }
+
     const tripTime = this.toolTripTimes.get(toolName);
     if (!tripTime) return true;
 
@@ -48,6 +63,10 @@ export class BroccoliCircuitBreaker {
    * Records a tool execution failure and trips the circuit if threshold exceeded.
    */
   public recordFailure(toolName: string): void {
+    if (this.exemptTools.has(toolName)) {
+      return; // Core interactive tools do not lock out on expected command errors
+    }
+
     const count = (this.toolFailures.get(toolName) ?? 0) + 1;
     this.toolFailures.set(toolName, count);
 
@@ -62,6 +81,19 @@ export class BroccoliCircuitBreaker {
   public recordSuccess(toolName: string): void {
     this.toolFailures.delete(toolName);
     this.toolTripTimes.delete(toolName);
+  }
+
+  /**
+   * Explicitly resets circuit breaker state for a tool or all tools.
+   */
+  public reset(toolName?: string): void {
+    if (toolName) {
+      this.toolFailures.delete(toolName);
+      this.toolTripTimes.delete(toolName);
+    } else {
+      this.toolFailures.clear();
+      this.toolTripTimes.clear();
+    }
   }
 
   /**

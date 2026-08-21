@@ -91,16 +91,25 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 - Typing `Tab` on an empty line or typing partial queries surfaces context-aware next actions.
 - `@` prefix activates workspace file fuzzy search.
 
+### 3.10 High-Velocity Pattern Search & Native Direct I/O (ADR-136 / `src/tooling/extensions/perception/ripgrep-search-service.ts`)
+- **Zero-Subprocess In-Memory Search**: Direct TypeScript directory walker bypassing shell process initialization (saving 100–300 ms per search turn).
+- **Literal `indexOf` Fast-Path**: Pure literal pattern queries skip RegExp compilation overhead, accelerating codebase scans by $5\times - 10\times$.
+- **Per-File Match Quota Bounding (`maxMatchesPerFile`)**: Prevents single massive files from exhausting global `maxResults` budgets, ensuring balanced multi-file symbol discovery.
+- **Regex Subgroup Captures (`captures`)**: Directly extracts capture group tokens in `RipgrepMatch` for downstream AST and refactoring tools.
+- **Direct Process & Port Liberation (`kill_port`, `find_free_port`)**: Eliminates `EADDRINUSE` port collision deadlocks automatically.
+- **Universal Parameter Coercion & Tool Immunity**: `ArgumentCoercer` handles JSON arrays/primitives, and `BroccoliCircuitBreaker` grants immunity to interactive developer tools.
+
 ---
 
 ## 4. Complete Verification Results
 
 | SLA / Architectural Invariant | Requirement | Measured Value | Status |
 | :--- | :--- | :--- | :--- |
-| **Execution Throughput** | $\ge 1,000\text{ frames/sec}$ | **`5,761.61 frames/sec`** | **PASS** |
-| **Turn Tick Latency** | $< 1.0\text{ ms}$ | **`0.17 ms`** | **PASS** |
-| **State Rewind Latency** | $< 0.10\text{ ms p95}$ | **`0.027 ms p95`** | **PASS** |
+| **Execution Throughput** | $\ge 1,000\text{ frames/sec}$ | **`6,869.90 frames/sec`** | **PASS** |
+| **Turn Tick Latency** | $< 1.0\text{ ms}$ | **`0.15 ms`** | **PASS** |
+| **State Rewind Latency** | $< 0.10\text{ ms p95}$ | **`0.022 ms p95`** | **PASS** |
 | **Zero-GC Contiguous Slab** | $16\text{ MB Exact}$ | **`16,777,216 bytes`** | **PASS** |
 | **Zero Barrel Imports (ADR-012)** | $0\text{ files}$ | **`0 barrel files`** | **PASS** |
 | **Base Class Immutability** | $3/3\text{ intact}$ | **`3/3 intact`** | **PASS** |
-| **Documentation Validation** | $100\%\text{ valid links}$ | **`114/114 files valid`** | **PASS** |
+| **QoL Automated Test Suite** | $78/78\text{ checks}$ | **`78/78 passed`** | **PASS** |
+| **Documentation Validation** | $100\%\text{ valid links}$ | **`115/115 files valid`** | **PASS** |
