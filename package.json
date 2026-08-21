@@ -1,6 +1,6 @@
 {
   "name": "lumi-joy",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Lightning-fast, zero-lag AI coding assistant for TypeScript with instant undo and drag-and-drop customization",
   "type": "module",
   "main": "dist/index.js",
@@ -37,7 +37,7 @@
     "access": "public"
   },
   "license": "Apache-2.0",
-  "author": "LUMI Engineering",
+  "author": "William Andrew Cruz <bozoegg@cardsorting.org>",
   "keywords": [
     "lumi",
     "agent",
@@ -56,7 +56,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/lumi-agents/lumi-joy.git"
+    "url": "https://github.com/CardSorting/LUMI-JOY.git"
   },
   "homepage": "https://github.com/lumi-agents/lumi-joy#readme",
   "bugs": {
