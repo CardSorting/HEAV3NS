@@ -119,18 +119,19 @@ npx tsx src/index.ts --profile coder
 | 🎓 **Research & Evidence** | [AKD-DSO Academic Paper](.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md) · [Live Baseline Measurements](docs/LIVE_BASELINE.json) · [Benchmark Report](docs/BENCHMARK_REPORT.md) · [Grand Audit](docs/GRAND_ARCHITECTURAL_AUDIT.md) |
 | ⚡ **Source Architecture** | [Composition Root](src/index.ts) · [Engine Factory](src/factories/monolith-factory.ts) · [Tool Registry](src/tooling/extensions/registry/tool-registry.ts) · [Pattern Search Service](src/tooling/extensions/perception/ripgrep-search-service.ts) |
 
-### Verified Workspace Baseline (2026-08-21)
+### Latest Verified Workspace Baseline
 
-| Verification Metric | Measured Result | Threshold SLA | Status |
-|---|---:|---:|:---:|
-| Composed Components | **591 / 591** | 591 components | **PASS** |
-| Runtime Capability Smoke | **9 / 9 checks (3.76 ms)** | 9 checks | **PASS** |
-| Quality-of-Life (QoL) Suite | **78 / 78 checks (7.12 s)** | 78 checks | **PASS** |
-| Architecture Guardrails | **6 / 6 checks** | 6 checks | **PASS** |
-| Turn Response Speed | **0.15 ms** | $< 1.0\text{ ms}$ | **PASS** |
-| Processing Velocity | **6,869.90 actions/sec** | $\ge 1,000\text{ actions/sec}$ | **PASS** |
-| Instant Undo Latency | **0.022 ms p95** | $< 0.1\text{ ms p95}$ | **PASS** |
-| Dedicated Memory Buffer | **16,777,216 bytes** | 16 MB exact | **PASS** |
+The authoritative run was generated on **2026-08-17T04:06:43.562Z** using Node.js `v23.5.0` on macOS ARM64. It passed:
+
+| Verification lane | Latest result |
+|---|---:|
+| Pass 192 composition manifest | 566/566 components |
+| Runtime capability smoke | 9/9 checks |
+| Heterogeneous benchmark suite | 5/5 cases |
+| Complete Flappy Bird React + TypeScript + Vite case | 8/8 assertions; 12/12 files |
+| Architecture and performance guardrails | 6/6 checks |
+
+*(Measured fast-path execution throughput: **8506.11 frames/sec**).*
 
 ---
 

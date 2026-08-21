@@ -50,6 +50,8 @@ function createCompletionTestEngine(options: {
       startTimer: () => undefined,
       endTimer: () => 1,
     },
+    listTools: () => [],
+    getDeclarations: () => [],
   } as unknown as ValidatingToolRegistry;
   return new AgentEngine(
     config,
@@ -371,6 +373,8 @@ async function validateStatefulThreadHandoffs(): Promise<void> {
       startTimer: () => undefined,
       endTimer: () => 1,
     },
+    listTools: () => [],
+    getDeclarations: () => [],
   } as unknown as ValidatingToolRegistry;
   const config = new AgentConfig({
     modelName: "gpt-5.6-luna",
@@ -803,6 +807,8 @@ async function validateStatelessMultiTurnPayloads(): Promise<void> {
         startTimer: () => undefined,
         endTimer: () => 1,
       },
+      listTools: () => [],
+      getDeclarations: () => [],
     } as unknown as ValidatingToolRegistry;
     const config = new AgentConfig({
       modelName: "api-test-model",
