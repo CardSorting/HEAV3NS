@@ -4,23 +4,23 @@
 
 ### **The Lightning-Fast, Zero-Lag AI Coding Assistant**
 
-*A blazing-fast AI coding companion that never freezes, lets you undo any mistake with one click, and cuts your AI bills by up to 90%.*
+*An AI coding companion that feels instant, lets you undo any mistake with one click, and slashes your AI bills by up to 90%.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Speed](https://img.shields.io/badge/Speed-%3C0.15ms%20instant-brightgreen?style=for-the-badge)](#-why-developers-love-it)
-[![Undo](https://img.shields.io/badge/Undo-Instant%20Rewind-blueviolet?style=for-the-badge)](#-why-developers-love-it)
-[![Throughput](https://img.shields.io/badge/Throughput-6800%2B%20actions%2Fsec-orange?style=for-the-badge)](#-why-developers-love-it)
+[![Speed](https://img.shields.io/badge/Speed-Instant%20Response-brightgreen?style=for-the-badge)](#-why-developers-love-it)
+[![Undo](https://img.shields.io/badge/Undo-1--Click%20Undo-blueviolet?style=for-the-badge)](#-why-developers-love-it)
+[![Savings](https://img.shields.io/badge/Savings-Up%20to%2090%25%20Off-orange?style=for-the-badge)](#-why-developers-love-it)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
 
 <br/>
 
-| **Quick Links** | **Guides & Manuals** | **Architecture & Deep Dives** |
+| **Quick Links** | **Guides & Manuals** | **Deep Dives & Architecture** |
 |---|---|---|
 | 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🔮 [Custom Assistants (SOULs & Skills)](SOUL_AND_SKILLS_GUIDE.md) | 📐 [Visual Architecture Maps](docs/ARCHITECTURE_DIAGRAMS.md) |
-| 🎯 [Real-World Benefits](#-what-you-get-real-world-benefits) | ❓ [Frequently Asked Questions](docs/FAQ.md) | 🏗️ [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
-| 👤 [Pick an AI Specialist](#-pick-your-ai-specialist) | ⌨️ [Interactive Terminal Guide](docs/TUI_COMMANDS_GUIDE.md) | 🔍 [Smart Search Engine (ADR-136)](docs/adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md) |
-| 📋 [What's New](#-whats-new-at-a-glance) | 📖 [Author's Story & Note](PREFACE.md) | ⚡ [Cost-Saving Memory Caching (ADR-135)](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) |
+| 🎯 [Everyday Benefits](#-what-you-get-everyday-superpowers) | ❓ [Frequently Asked Questions](docs/FAQ.md) | 🏗️ [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
+| 👤 [Pick an AI Specialist](#-pick-an-ai-specialist) | ⌨️ [Terminal & Commands Guide](docs/TUI_COMMANDS_GUIDE.md) | 🔍 [Smart Search Engine (ADR-136)](docs/adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md) |
+| 📋 [What's New](#-whats-new-in-plain-english) | 📖 [Author's Story & Note](PREFACE.md) | ⚡ [Cost-Saving Memory (ADR-135)](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) |
 | 🧪 [78-Test Verification Suite](scripts/validate-qol-enhancements.ts) | 📈 [Live Benchmark Measurements](docs/LIVE_BASELINE.json) | 🏛️ [Architecture Decision Records](docs/adr/README.md) |
 
 ---
@@ -34,14 +34,14 @@
 
 ## 🌟 Why Developers Love It
 
-| What You Get | Why It Helps You Every Day | How Fast & Effective It Is |
+| What You Get | Why It Helps You Every Day | How Fast & Simple It Is |
 |---|---|:---:|
-| ⚡ **Instant Responses, Zero Lag** | Runs directly on your machine with no bloated middleware or slow delays. | **Under 0.15 milliseconds** |
-| 🔍 **Lightning-Fast Code Search** | Finds any function, file, or symbol instantly without freezing your terminal. | **5–10x faster than normal search** |
-| ⏪ **1-Click Instant Undo** | Made a bad edit? One command snaps all your files and chat history back. | **Snap back in 0.02ms** |
-| 💸 **Up to 90% Cheaper Bills** | Remembers your rules and files so you only pay for your new questions. | **Slashes AI API costs** |
-| 🛡️ **No More Locked Ports** | If a background server is stuck on port 3000, LUMI frees it automatically. | **Automatic unblocking** |
-| 🚀 **Rock-Solid Stability** | Smooth memory management ensures your screen never stutters or freezes. | **6,800+ actions every second** |
+| ⚡ **Instant Responses** | Runs directly on your computer with no waiting, no lag, and no spinning wheels. | **Instant (< 0.15 ms)** |
+| 🔍 **Fast Code Search** | Finds any file, function, or word instantly without freezing your screen. | **5–10x faster than normal search** |
+| ⏪ **1-Click Undo** | Made a bad edit? One command snaps all your files back to how they were. | **Instant time-travel undo** |
+| 💸 **90% Cheaper Bills** | Remembers your project so you only pay for your new questions. | **Cuts API bills up to 90%** |
+| 🛡️ **No Stuck Ports** | If a background server is stuck on port 3000, LUMI unlocks it automatically. | **Zero "port in use" headaches** |
+| 🚀 **Smooth & Reliable** | Dedicated memory management ensures your screen never stutters or crashes. | **Over 6,800 actions every second** |
 
 ---
 
@@ -52,7 +52,7 @@
 git clone https://github.com/CardSorting/LUMI-JOY.git && cd LUMI-JOY
 npm install && npm run build
 
-# 2. Add your AI API key (guided step-by-step wizard)
+# 2. Add your AI API key (friendly step-by-step wizard)
 npx tsx src/index.ts --setup
 
 # 3. Start coding!
@@ -72,40 +72,40 @@ npx tsx src/index.ts --profile coder
 
 ---
 
-## 🎯 What You Get (Real-World Benefits)
+## 🎯 What You Get (Everyday Superpowers)
 
-| The Everyday Frustration | How LUMI Solves It | Your Real-World Benefit |
+| The Common Problem | How LUMI Solves It | Your Real-World Benefit |
 |---|---|---|
-| **Accidental bad edits or AI mistakes** | 1-Click Instant Time-Travel Undo | Roll back all files, memory, and chat history instantly with zero lost work. |
-| **Fear of AI breaking working code** | Safe Preview Sandbox & Live Diffs | Review every code edit visually in a safe sandbox before saving anything to disk. |
-| **Searches freezing on large projects** | Direct High-Speed Code Search | Scans your whole codebase in milliseconds with zero terminal lag or freezing. |
-| **Typos in function or variable names** | Typo-Tolerant Smart Matching | Finds what you're looking for even if you or the AI misspell the name. |
-| **Ghost servers locking port 3000** | Automatic Port Unlocking | Automatically finds and terminates stuck background servers for you. |
-| **Expensive AI token bills on long chats** | Smart Memory Caching | Locks system rules in memory so you pay up to **90% less per turn**. |
-| **Need a smarter model for hard bugs** | Switch AI Models on the Fly | Seamlessly switch between Claude, OpenAI, and local models mid-chat. |
-| **Want a customized AI teammate** | Drag & Drop Custom Assistants | Drop in any prompt or script file to create a personalized AI assistant. |
+| **Accidental bad edits or AI mistakes** | 1-Click Instant Undo | Snap all files, memory, and chat history back instantly with zero lost work. |
+| **Fear of AI breaking working code** | Safe Preview Sandbox | Look over proposed edits visually before anything is saved to your computer. |
+| **Searches freezing on big projects** | High-Speed In-Memory Search | Scans millions of lines of code in a flash with zero terminal freezing. |
+| **Typos in function or variable names** | Typo-Friendly Smart Matching | Finds what you're looking for even if you or the AI misspell the name. |
+| **Ghost servers locking port 3000** | Automatic Port Unlocking | Automatically frees up stuck background ports so your apps just run. |
+| **Expensive AI bills on long chats** | Smart Memory Caching | Locks heavy project rules in memory so you pay up to **90% less per turn**. |
+| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch between Claude, ChatGPT, or local models without losing conversation context. |
+| **Want a custom AI teammate** | Drag & Drop Customization | Drop any notes or script files into a folder to create a personalized AI assistant. |
 
 ---
 
-## 👤 Pick Your AI Specialist
+## 👤 Pick an AI Specialist
 
 | Specialist | Best For | What It Does For You |
 |---|---|---|
-| 💻 **`coder` (Lead Engineer)** | Coding & Refactoring | Writes clean TypeScript, fixes tricky bugs, and writes passing unit tests. |
-| 🔬 **`researcher` (Deep Researcher)** | Research & Learning | Searches documentation, summarizes web findings, and verifies sources. |
-| 🛡️ **`sre` (Reliability Engineer)** | Fixing Crashes & Errors | Diagnoses error logs, checks system health, and applies automated fixes. |
-| ✍️ **`writer` (Technical Author)** | Guides & Documentation | Writes crystal-clear documentation, release changelogs, and architecture notes. |
+| 💻 **`coder` (Lead Engineer)** | Coding & Refactoring | Writes clean code, fixes bugs, cleans up old code, and makes sure tests pass. |
+| 🔬 **`researcher` (Deep Researcher)** | Research & Learning | Searches documentation, summarizes web findings, and gives you verified facts. |
+| 🛡️ **`sre` (Reliability Engineer)** | Fixing Crashes & Errors | Diagnoses error logs, checks system health, and fixes system problems automatically. |
+| ✍️ **`writer` (Technical Author)** | Guides & Documentation | Writes crystal-clear documentation, user guides, and release notes. |
 | 🎓 **`student` (Patient Mentor)** | Learning & Onboarding | Breaks down difficult code into friendly, step-by-step explanations. |
 | ⚡ **`minimal` (Speed Script)** | Fast Automation | Gets straight to work on quick file edits using the lowest possible token cost. |
 
 ---
 
-## 📋 What's New at a Glance
+## 📋 What's New in Plain English
 
-| Major Upgrade | What It Means in Plain English | Why You'll Love It |
+| Feature | What It Means in Everyday Words | Why You'll Love It |
 |---|---|---|
-| **⚡ High-Speed Search & Smart Tools (ADR-136)** | • **Instant Code Search**: Search your whole project with zero terminal lockups.<br/>• **Typo Forgiveness**: Finds the right code even with spelling mistakes.<br/>• **Automatic Port Unlock**: Never get stuck on `port already in use` errors.<br/>• **Safe Sandbox Review**: Inspect visual diffs before saving changes to your disk. | **Faster coding flow, zero terminal freezes, and complete peace of mind when editing code.** |
-| **🧠 Smart Cost-Saving Memory (ADR-135)** | • **Up to 90% Cheaper**: Never pay to re-send instructions the AI already read.<br/>• **Sub-Second First Words**: Starts answering immediately without re-reading from scratch.<br/>• **Live Dollar Savings**: Shows your exact daily and monthly savings in real dollars. | **Massively cuts your monthly AI subscription and API costs.** |
+| **⚡ High-Speed Search & Smart Tools (ADR-136)** | • **Instant Code Search**: Search your whole project with zero terminal lockups.<br/>• **Typo Forgiveness**: Finds the right code even with spelling mistakes.<br/>• **Automatic Port Unlock**: Never get stuck on `port already in use` errors.<br/>• **Safe Sandbox Review**: Inspect visual diffs before saving changes to your computer. | **Faster coding flow, zero terminal freezes, and complete peace of mind when editing code.** |
+| **🧠 Smart Cost-Saving Memory (ADR-135)** | • **Up to 90% Cheaper**: Never pay to re-send instructions the AI already read.<br/>• **Instant Answers**: Starts answering immediately without re-reading from scratch.<br/>• **Live Dollar Savings**: Shows your exact daily and monthly savings in real dollars. | **Massively cuts your monthly AI subscription and API costs.** |
 
 > 📜 *See the complete release history in [CHANGELOG.md](CHANGELOG.md).*
 
