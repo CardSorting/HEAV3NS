@@ -789,14 +789,24 @@ export class InteractiveModeController {
         return { consume: true };
       }
 
-      // History scrolling beyond the fold: PageUp, PageDown, Shift+Up/Down, Ctrl+U/D
-      if (matchesKey(data, "pageUp") || matchesKey(data, "shift+up") || matchesKey(data, "ctrl+u")) {
-        historyScrollView.scrollBy(-12);
+      // History scrolling beyond the fold: PageUp, PageDown, Shift+Up/Down, Alt+Up/Down, Ctrl+U/D
+      if (
+        matchesKey(data, "pageUp") ||
+        matchesKey(data, "shift+up") ||
+        matchesKey(data, "alt+up") ||
+        matchesKey(data, "ctrl+u")
+      ) {
+        historyScrollView.scrollBy(-10);
         tui.requestRender();
         return { consume: true };
       }
-      if (matchesKey(data, "pageDown") || matchesKey(data, "shift+down") || (matchesKey(data, "ctrl+d") && editor.getText().trim().length > 0)) {
-        historyScrollView.scrollBy(12);
+      if (
+        matchesKey(data, "pageDown") ||
+        matchesKey(data, "shift+down") ||
+        matchesKey(data, "alt+down") ||
+        (matchesKey(data, "ctrl+d") && editor.getText().trim().length === 0)
+      ) {
+        historyScrollView.scrollBy(10);
         tui.requestRender();
         return { consume: true };
       }
