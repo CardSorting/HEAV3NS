@@ -42,22 +42,84 @@ export interface JsonRpcNotification {
   };
 }
 
+export type ParameterType =
+  | "string"
+  | "number"
+  | "integer"
+  | "boolean"
+  | "array"
+  | "object";
+
 export interface ParameterSchema {
-  type: "string" | "number" | "boolean" | "array" | "object";
+  type: ParameterType;
   required?: boolean;
   description?: string;
+  enum?: readonly (string | number | boolean)[];
+  items?: ParameterSchema;
+  properties?: Record<string, ParameterSchema>;
+  default?: unknown;
+  format?: string;
+  minimum?: number;
+  maximum?: number;
+  nullable?: boolean;
+}
+
+export type ToolCategory =
+  | "core"
+  | "filesystem"
+  | "execution"
+  | "search"
+  | "browser"
+  | "git"
+  | "memory"
+  | "analysis"
+  | "system"
+  | "database"
+  | "wallet"
+  | "email"
+  | "security"
+  | "vision"
+  | "voice"
+  | "lsp"
+  | "external";
+
+export interface ToolExample {
+  readonly input: Record<string, unknown>;
+  readonly outputDescription?: string;
 }
 
 export interface ToolDefinition {
   name: string;
   description: string;
+  category?: ToolCategory;
+  tags?: readonly string[];
   parameters?: Record<string, ParameterSchema>;
+  isMutating?: boolean;
+  requiresConfirmation?: boolean;
+  timeoutMs?: number;
+  examples?: readonly ToolExample[];
   execute: (args: Record<string, unknown>, cwd: string) => Promise<unknown>;
+}
+
+export interface ToolExecutionRecord {
+  readonly name: string;
+  readonly toolName?: string;
+  readonly callId?: string;
+  readonly args?: Record<string, unknown>;
+  readonly output: unknown;
+  readonly result?: unknown;
+  readonly durationMs?: number;
+  readonly success?: boolean;
+  readonly exitCode?: number;
+  readonly error?: string;
+  readonly diff?: string;
+  readonly timestamp?: number;
 }
 
 export interface SchemaValidationResult {
   valid: boolean;
   errors: string[];
+  suggestions?: string[];
 }
 
 export interface IHands {
@@ -72,5 +134,7 @@ export interface IEars {
 
 export interface IToolRegistry {
   registerTool(tool: ToolDefinition): void;
+  getTool(name: string): ToolDefinition | undefined;
+  listTools(): readonly ToolDefinition[];
   executeTool(name: string, args: Record<string, unknown>, cwd: string): Promise<unknown>;
 }

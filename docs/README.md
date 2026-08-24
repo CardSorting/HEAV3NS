@@ -7,7 +7,12 @@ This directory contains the authoritative current-worktree runtime evidence.
 [`LIVE_BASELINE.json`](LIVE_BASELINE.json) is the machine-readable source. [`BENCHMARK_REPORT.md`](BENCHMARK_REPORT.md) and [`GRAND_ARCHITECTURAL_AUDIT.md`](GRAND_ARCHITECTURAL_AUDIT.md) are generated from the same in-memory run by `npm run baseline:update`.
 
 For architectural deep-dives, see:
-- [`adr/README.md`](adr/README.md) — Master Architecture Decision Record (ADR) Workspace cataloging 173 system architectural decisions.
+- [`adr/README.md`](adr/README.md) — Master Architecture Decision Record (ADR) Workspace cataloging 177 system architectural decisions.
+- [`TOOL_EXECUTION_ERGONOMICS_GUIDE.md`](TOOL_EXECUTION_ERGONOMICS_GUIDE.md) — Exhaustive technical guide for universal multi-provider tool serialization, 4-pass self-healing parsing, parallel wave scheduling, read caching, topological DAG execution, and sentinel safety.
+- [`adr/ADR-138-apex-tier-multi-provider-tool-calling-and-execution-ergonomics.md`](adr/ADR-138-apex-tier-multi-provider-tool-calling-and-execution-ergonomics.md) — Universal Multi-Provider Serialization, Resilient Argument Parsing & Dynamic Routing.
+- [`adr/ADR-139-zenith-tier-tool-scheduling-caching-governance-and-auto-healing.md`](adr/ADR-139-zenith-tier-tool-scheduling-caching-governance-and-auto-healing.md) — Parallel Concurrency Scheduling, Read Caching, Output Governance & Diagnostic Healing.
+- [`adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md`](adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md) — Sentinel Confirmation Gatekeepers, Loop Breaker & Atomic Mutation Rollback Journals.
+- [`adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md`](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md) — Composable Middleware Pipelines, Dynamic Schema Compression & Topological DAG Scheduling.
 - [`adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md`](adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) — Zenith-Tier Deterministic Byte-Stable Prompt Caching, Telemetry Headers & Auto-Tuning Substrate (Pass 195).
 - [`RUNTIME_ARCHITECTURE_GUIDE.md`](RUNTIME_ARCHITECTURE_GUIDE.md) — Comprehensive technical reference for memory layout, TUI rendering, and time-travel rewind.
 - [`RUNTIME_OPTIMIZATION_RECORD.md`](RUNTIME_OPTIMIZATION_RECORD.md) — Exhaustive optimization and hardening changelog across all runtime subsystems.

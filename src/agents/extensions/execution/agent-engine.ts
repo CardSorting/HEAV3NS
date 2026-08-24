@@ -25,6 +25,15 @@ import type { AgentSlashRouter } from "../resolution/agent-slash-router.js";
 import type { CodexProviderBridge } from "../resolution/codex-provider-bridge.js";
 import type { LlmProxyGateway } from "../resolution/llm-proxy-gateway.js";
 import { RoadmapCompletionGate } from "../../../tooling/extensions/policy/roadmap-completion-gate.js";
+import { ToolSchemaSerializer } from "../../../tooling/extensions/registry/tool-schema-serializer.js";
+import { ToolCallArgParser } from "../../../tooling/extensions/registry/tool-call-arg-parser.js";
+import { DynamicToolRouter } from "../../../tooling/extensions/registry/dynamic-tool-router.js";
+import type { ToolExecutionRecord } from "../../../core/contracts/tooling.contracts.js";
+import { ToolExecutionScheduler, type ScheduledToolCall } from "../../../tooling/extensions/execution/tool-execution-scheduler.js";
+import { UniversalToolCallAdapter } from "../../../tooling/extensions/registry/universal-tool-call-adapter.js";
+import { ToolSchemaCompressor } from "../../../tooling/extensions/registry/tool-schema-compressor.js";
+import { ToolDependencyGraphPlanner } from "../../../tooling/extensions/execution/tool-dependency-graph-planner.js";
+import { ToolChoicePolicyOrchestrator } from "../../../tooling/extensions/registry/tool-choice-policy-orchestrator.js";
 import { CodexProgressAdapter } from "./codex-progress-adapter.js";
 import {
   FlappyBirdProjectSynthesizer,
@@ -58,6 +67,14 @@ export class AgentEngine extends AbstractAgentEngine {
   readonly codexProviderBridge?: CodexProviderBridge;
   readonly proxyGateway?: LlmProxyGateway;
   readonly completionGate: RoadmapCompletionGate;
+  readonly dynamicToolRouter: DynamicToolRouter;
+  readonly argParser: ToolCallArgParser;
+  readonly schemaSerializer: ToolSchemaSerializer;
+  readonly scheduler: ToolExecutionScheduler;
+  readonly universalAdapter: UniversalToolCallAdapter;
+  readonly schemaCompressor: ToolSchemaCompressor;
+  readonly dagPlanner: ToolDependencyGraphPlanner;
+  readonly choiceOrchestrator: ToolChoicePolicyOrchestrator;
   private readonly codex: Codex;
   private codexThread: Thread | null = null;
   private codexThreadModel: string | null = null;
@@ -98,6 +115,14 @@ export class AgentEngine extends AbstractAgentEngine {
     this.proxyGateway = proxyGateway;
     this.codex = codex;
     this.completionGate = contextServices.completionGate ?? new RoadmapCompletionGate();
+    this.dynamicToolRouter = new DynamicToolRouter();
+    this.argParser = new ToolCallArgParser();
+    this.schemaSerializer = new ToolSchemaSerializer();
+    this.scheduler = new ToolExecutionScheduler({ parser: this.argParser });
+    this.universalAdapter = new UniversalToolCallAdapter();
+    this.schemaCompressor = new ToolSchemaCompressor();
+    this.dagPlanner = new ToolDependencyGraphPlanner();
+    this.choiceOrchestrator = new ToolChoicePolicyOrchestrator();
     this.runtimeModelCatalog = contextServices.modelCatalog ?? new ModelCatalog();
     this.runtimeBudgetCalculator = contextServices.budgetCalculator ?? new ContextBudgetCalculator();
     this.runtimeTokenTruncator = contextServices.tokenTruncator ?? new TokenTruncator();
@@ -124,6 +149,14 @@ export class AgentEngine extends AbstractAgentEngine {
 
   protected async preTick(input: EngineTickInput): Promise<void> {
     this.sessionContext.incrementTurn();
+    if (this.toolRegistry && "journal" in this.toolRegistry) {
+      (this.toolRegistry as unknown as { journal: { setTurnId: (id: string) => void } }).journal.setTurnId(
+        `turn_${this.sessionContext.turnCount}`
+      );
+    }
+    if (this.toolRegistry && "loopBreaker" in this.toolRegistry) {
+      (this.toolRegistry as unknown as { loopBreaker: { reset: () => void } }).loopBreaker.reset();
+    }
   }
 
   protected async executeTick(input: EngineTickInput): Promise<EngineTickResult> {
@@ -169,6 +202,7 @@ export class AgentEngine extends AbstractAgentEngine {
     let responseText = "";
     let responseUsedCodexThread = false;
     let turnOutcome: EngineTickResult["outcome"] = "completed";
+    const accumulatedToolResults: ToolExecutionRecord[] = [];
 
     // Explicit local game-generation routes remain deterministic and never
     // hijack generic provider-bound creation requests.
@@ -215,6 +249,7 @@ export class AgentEngine extends AbstractAgentEngine {
       const liveStartedAt = Date.now();
       let progressManagedByCodex = false;
       let providerTimeoutSignal: AbortSignal | null = null;
+
       if (this.codexProviderBridge) {
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
@@ -232,7 +267,8 @@ export class AgentEngine extends AbstractAgentEngine {
                 input.onProgress,
                 attempt + 1,
                 attempt < 1,
-                nextProgressSequence
+                nextProgressSequence,
+                accumulatedToolResults
               );
               responseUsedCodexThread = liveResponse !== null;
             } else if (auth.authType === "api-key") {
@@ -266,33 +302,9 @@ export class AgentEngine extends AbstractAgentEngine {
                 metadata: { source: `${providerName}-api`, scope: "turn", attempt: attempt + 1 },
               });
 
-              const availableTools = (this.toolRegistry ? this.toolRegistry.listTools() : []).map((t) => {
-                const properties: Record<string, { type: string; description: string }> = {};
-                const required: string[] = [];
-                if (t.parameters) {
-                  for (const [pName, pSchema] of Object.entries(t.parameters)) {
-                    properties[pName] = {
-                      type: pSchema.type,
-                      description: pSchema.description || pName,
-                    };
-                    if (pSchema.required) {
-                      required.push(pName);
-                    }
-                  }
-                }
-                return {
-                  type: "function" as const,
-                  function: {
-                    name: t.name,
-                    description: t.description,
-                    parameters: {
-                      type: "object",
-                      properties,
-                      required,
-                    },
-                  },
-                };
-              });
+              const allRegisteredTools = this.toolRegistry ? this.toolRegistry.listTools() : [];
+              const relevantTools = this.dynamicToolRouter.selectRelevantTools(allRegisteredTools, promptText);
+              const availableTools = relevantTools.map((t) => this.schemaSerializer.toOpenAIFunction(t));
 
               const apiMessages: Array<{
                 role: string;
@@ -408,67 +420,56 @@ export class AgentEngine extends AbstractAgentEngine {
                     tool_calls: toolCalls,
                   });
 
-                  for (const toolCall of toolCalls) {
-                    const toolName = toolCall.function.name;
-                    let parsedArgs: Record<string, unknown> = {};
-                    try {
-                      parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
-                    } catch {
-                      parsedArgs = {};
+                  const scheduledCalls = toolCalls.map((tc) => ({
+                    id: tc.id,
+                    name: tc.function.name,
+                    args: tc.function.arguments,
+                  }));
+
+                  const { results: batchResults } = await this.scheduler.executeBatch(
+                    scheduledCalls,
+                    this.toolRegistry,
+                    this.sessionContext.cwd,
+                    {
+                      onToolStart: (call: ScheduledToolCall) => {
+                        this.reportProgress(input.onProgress, {
+                          activityId: liveProgressActivityId,
+                          phase: "tool",
+                          status: "in_progress",
+                          message: `Executing ${call.name}`,
+                          detail: typeof call.args === "string" ? call.args.slice(0, 100) : JSON.stringify(call.args).slice(0, 100),
+                          timestamp: Date.now(),
+                          sequence: nextProgressSequence(),
+                          metadata: { itemType: call.name, scope: "activity", attempt: attempt + 1 },
+                        });
+                      },
+                      onToolComplete: (record: ToolExecutionRecord) => {
+                        const durationText = record.durationMs ? ` (${record.durationMs}ms)` : "";
+                        const statusBadge = record.success ? "completed" : "failed";
+                        const outputStr = typeof record.output === "string" ? record.output : JSON.stringify(record.output);
+                        this.reportProgress(input.onProgress, {
+                          activityId: liveProgressActivityId,
+                          phase: "tool",
+                          status: statusBadge,
+                          message: `${record.success ? "Completed" : "Failed"} ${record.name}${durationText}`,
+                          detail: outputStr.slice(0, 100),
+                          timestamp: Date.now(),
+                          sequence: nextProgressSequence(),
+                          metadata: { itemType: record.name, scope: "activity", attempt: attempt + 1 },
+                        });
+                      },
                     }
+                  );
 
-                    this.reportProgress(input.onProgress, {
-                      activityId: liveProgressActivityId,
-                      phase: "tool",
-                      status: "in_progress",
-                      message: `Executing ${toolName}`,
-                      detail: JSON.stringify(parsedArgs).slice(0, 100),
-                      timestamp: Date.now(),
-                      sequence: nextProgressSequence(),
-                      metadata: { itemType: toolName, scope: "activity", attempt: attempt + 1 },
-                    });
-
-                    const toolStarted = Date.now();
-                    let toolOutput = "";
-                    try {
-                      const toolResult = await this.toolRegistry.executeTool(
-                        toolName,
-                        parsedArgs,
-                        this.sessionContext.cwd
-                      );
-                      toolOutput = typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult);
-                    } catch (err: unknown) {
-                      toolOutput = JSON.stringify({
-                        error: err instanceof Error ? err.message : String(err),
-                      });
-                    }
-                    const toolElapsed = Date.now() - toolStarted;
-
-                    this.reportProgress(input.onProgress, {
-                      activityId: liveProgressActivityId,
-                      phase: "tool",
-                      status: "completed",
-                      message: `Completed ${toolName} (${toolElapsed}ms)`,
-                      detail: toolOutput.slice(0, 100),
-                      timestamp: Date.now(),
-                      sequence: nextProgressSequence(),
-                      metadata: { itemType: toolName, scope: "activity", attempt: attempt + 1 },
-                    });
-
-                    // Smart head/tail bounding for large tool outputs to protect token budget and response latency
-                    const maxOutputChars = 50_000;
-                    if (toolOutput.length > maxOutputChars) {
-                      const head = toolOutput.slice(0, 25_000);
-                      const tail = toolOutput.slice(-20_000);
-                      const omitted = toolOutput.length - 45_000;
-                      toolOutput = `${head}\n\n... [${omitted} characters omitted for context efficiency] ...\n\n${tail}`;
-                    }
+                  for (const record of batchResults) {
+                    accumulatedToolResults.push(record);
+                    const outputStr = typeof record.output === "string" ? record.output : JSON.stringify(record.output);
 
                     apiMessages.push({
                       role: "tool",
-                      tool_call_id: toolCall.id,
-                      name: toolName,
-                      content: toolOutput,
+                      tool_call_id: record.callId || "call_unknown",
+                      name: record.name,
+                      content: outputStr,
                     });
                   }
                   continue;
@@ -650,7 +651,7 @@ export class AgentEngine extends AbstractAgentEngine {
       isSlashCommand: false,
       composedPrompt: promptText,
       response: responseText,
-      toolResults: [],
+      toolResults: accumulatedToolResults,
     };
   }
 
@@ -666,7 +667,8 @@ export class AgentEngine extends AbstractAgentEngine {
     onProgress?: (event: EngineProgressEvent) => void,
     attempt = 1,
     deferFailure = false,
-    nextSequence?: () => number
+    nextSequence?: () => number,
+    collectedToolResults?: ToolExecutionRecord[]
   ): Promise<string> {
     const cwd = this.sessionContext.cwd;
     const sessionStore = this.sessionStore as PersistentSessionStore;
@@ -759,6 +761,48 @@ export class AgentEngine extends AbstractAgentEngine {
           currentExecutionPhase = "TOOL_EXECUTION";
         } else if (event.type === "item.completed") {
           currentExecutionPhase = "REASONING";
+
+          // Capture completed tool items into collectedToolResults
+          if (collectedToolResults) {
+            if (event.item.type === "command_execution") {
+              collectedToolResults.push({
+                name: "terminal",
+                callId: event.item.id,
+                args: { command: event.item.command },
+                output: {
+                  command: event.item.command,
+                  exitCode: event.item.exit_code,
+                },
+                exitCode: event.item.exit_code,
+                success: event.item.exit_code === 0,
+              });
+            } else if (event.item.type === "file_change") {
+              collectedToolResults.push({
+                name: "file_change",
+                callId: event.item.id,
+                output: {
+                  changes: event.item.changes,
+                  status: event.item.status,
+                },
+                success: event.item.status === "completed",
+              });
+            } else if (event.item.type === "mcp_tool_call") {
+              collectedToolResults.push({
+                name: `${event.item.server}/${event.item.tool}`,
+                callId: event.item.id,
+                output: event.item.result || event.item.error,
+                success: !event.item.error,
+              });
+            } else if (event.item.type === "web_search") {
+              collectedToolResults.push({
+                name: "web_search",
+                callId: event.item.id,
+                args: { query: event.item.query },
+                output: { query: event.item.query },
+                success: true,
+              });
+            }
+          }
         }
 
         // Match the SDK's buffered run() semantics: only a completed message

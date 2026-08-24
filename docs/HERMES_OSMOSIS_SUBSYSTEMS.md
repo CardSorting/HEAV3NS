@@ -1,10 +1,10 @@
-# 🧬 The 41 Distilled Osmotic Subsystems
+# 🧬 The 43 Distilled Osmotic Subsystems
 
-This document chronicles the 41 evolutionary subsystems transmuted from ancestral Python implementations (`hermes-agent`) into the **LUMI-JOY Deterministic Monolith Architecture**.
+This document chronicles the 43 evolutionary subsystems transmuted from ancestral Python implementations (`hermes-agent`) into the **LUMI-JOY Deterministic Monolith Architecture**.
 
 ---
 
-## The 41 Subsystem Osmosis Matrix
+## The 43 Subsystem Osmosis Matrix
 
 | # | Ancestral Teacher Subsystem (`hermes-agent-main`) | Distilled Student Subsystem (`LUMI-JOY`) | Phase / ADR | Osmotic Transformation & Architectural Advantage |
 |:---:|---|---|---|---|
@@ -50,6 +50,7 @@ This document chronicles the 41 evolutionary subsystems transmuted from ancestra
 | **40** | `agent/think_scrubber.py`, `agent/reasoning_timeouts.py`, `agent/reasoning_summaries.py` (15,000+ LOC Reasoning Subsystem) | **Deterministic Streaming Reasoning Scrubber, Chunk-Boundary Tag Parser, Dynamic Timeout Floor & Adaptive Thinking Budget Substrate** (`DeterministicReasoningScrubber`, `BroccoliReasoningSubstrate`, `ReasoningSnapshotManager`, `ReasoningSupervisor`, `ReasoningToolSuite`) | Phase 102 / [ADR-056](../.wiki/adr/ADR-056-deterministic-streaming-reasoning-scrubber-and-budgets.md) | Transmuted regex boundary leaks and premature stale timeouts into an in-memory zero-GC streaming tag scrubber with chunk-boundary lookahead, dynamic timeout floors, adaptive effort budgets, and frame-perfect rollback. |
 | **41** | `tools/fuzzy_match.py` (49,500+ LOC Fuzzy Matching Subsystem) | **Deterministic 9-Strategy Fuzzy Line Matcher, Unicode Typography Normalizer, Block-Anchor Resolver & Edit Idempotency Substrate** (`DeterministicFuzzyMatcher`, `BroccoliFuzzySubstrate`, `FuzzySnapshotManager`, `FuzzyMatcherSupervisor`, `FuzzyMatcherToolSuite`) | Phase 103 / [ADR-057](../.wiki/adr/ADR-057-deterministic-fuzzy-line-matcher-and-idempotency.md) | Transmuted Python difflib loops, whitespace mismatches, and duplicate re-patch failures into an in-memory zero-GC 9-strategy fuzzy matching cascade with Unicode typography normalization, idempotency verification, and frame-perfect rollback. |
 | **42** | `/Users/bozoegg/Downloads/statem-main` (1,700+ LOC StateM FSM Subsystem) | **Deterministic Finite State Machine (FSM) Runbooks, Zero-Subshell File Predicates & Hybrid BroccoliDB Substrate** (`RunbookSupervisor`, `FilePredicateEvaluator`, `MiniYamlParser`, `BroccoliRunbookSubstrate`, `StatefulCompactionSynthesizer`, `RunbookHumanizer`, `RunbookCatalog`, `RunbookDashboardModal`, `RunbookToolSuite`) | Pass 193 / [ADR-131](../.wiki/adr/ADR-131-deterministic-fsm-runbooks-file-predicates-and-broccolidb-osmosis.md) | Transmuted foreign Python CLI subshell processes into an in-memory 10-step atomic transition transaction lifecycle, entry-scoped dynamic verification manifests, zero-subshell file/regex/JSONPath predicates, BroccoliDB WAL persistence, amnesia-proof `/compact` prompt synthesis, and an approachable visual TUI dashboard. |
+| **43** | `tools/tool_calling.py` & `tools/tool_scheduler.py` (22,000+ LOC Tool Subsystem) | **Apex-Tier Universal Multi-Provider Tool Calling, Resilient Parsing, Parallel Scheduling & DAG Orchestration** (`ToolSchemaSerializer`, `ToolCallArgParser`, `ToolExecutionScheduler`, `ToolExecutionCache`, `ToolDependencyGraphPlanner`, `ToolOutputSummarizer`, `ToolMockHarness`, `ToolChoicePolicyOrchestrator`) | Pass 196 / [ADR-138](adr/ADR-138-apex-tier-multi-provider-tool-calling-and-execution-ergonomics.md) – [ADR-141](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md) | Transmuted brittle single-provider schema dictionaries, argument parse crashes, and unmanaged serial execution into universal multi-provider serialization (OpenAI/Anthropic/Gemini/MCP), 4-pass self-healing parsing, parallel wave scheduling (~2.9x speedup), topological DAG data pipelines, dynamic schema compression (43% savings), sentinel safety confirmation gates, atomic inverse rollback journals, and error-aware log summarization. |
 
 ---
 

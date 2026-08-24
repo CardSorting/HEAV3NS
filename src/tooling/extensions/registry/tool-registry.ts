@@ -7,6 +7,26 @@ import type { AnchoredHands } from "../hashline/hands.js";
 import type { ProtocolEars } from "../telemetry/ears.js";
 import { SkillsIngestor } from "./skills-ingestor.js";
 import { ArgumentCoercer } from "./argument-coercer.js";
+import { ToolCallArgParser } from "./tool-call-arg-parser.js";
+import { ToolSchemaSerializer } from "./tool-schema-serializer.js";
+import { ToolExecutionScheduler } from "../execution/tool-execution-scheduler.js";
+import { ToolExecutionCache } from "../execution/tool-execution-cache.js";
+import { ToolOutputGovernor } from "../execution/tool-output-governor.js";
+import { ToolErrorAutoHealer } from "../execution/tool-error-auto-healer.js";
+import { ToolTransactionJournal } from "../execution/tool-transaction-journal.js";
+import { ToolSafetyPolicyManager } from "../execution/tool-safety-policy-manager.js";
+import { ToolConfirmationGatekeeper } from "../execution/tool-confirmation-gatekeeper.js";
+import { ToolLoopBreaker } from "../execution/tool-loop-breaker.js";
+import { ToolTelemetryLedger } from "../execution/tool-telemetry-ledger.js";
+import { MultiFileAtomicPatchOrchestrator } from "../execution/multi-file-atomic-patch-orchestrator.js";
+import { ToolPipelineMiddlewareChain } from "../execution/tool-pipeline-middleware.js";
+import { ToolSchemaCompressor } from "./tool-schema-compressor.js";
+import { ToolSpeculativePrefetcher } from "../execution/tool-speculative-prefetcher.js";
+import { DynamicToolRouter } from "./dynamic-tool-router.js";
+import { ToolDependencyGraphPlanner } from "../execution/tool-dependency-graph-planner.js";
+import { ToolOutputSummarizer } from "../execution/tool-output-summarizer.js";
+import { ToolMockHarness } from "../execution/tool-mock-harness.js";
+import { ToolChoicePolicyOrchestrator } from "./tool-choice-policy-orchestrator.js";
 import type { SessionMemoryStore } from "../../../sessions/extensions/memory/session-memory-store.js";
 
 import { BroccoliCircuitBreaker } from "../policy/broccoli-circuit-breaker.js";
@@ -188,6 +208,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly stabilityDoctor: StabilityDoctor;
   readonly circuitBreaker: BroccoliCircuitBreaker;
   readonly streamingExecutor: BroccoliStreamingToolExecutor;
+  readonly argParser: ToolCallArgParser;
+  readonly schemaSerializer: ToolSchemaSerializer;
 
   constructor(
     eyes: Eyes,
@@ -369,8 +391,52 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.stabilityDoctor = new StabilityDoctor();
     this.circuitBreaker = new BroccoliCircuitBreaker();
     this.streamingExecutor = new BroccoliStreamingToolExecutor();
+    this.argParser = new ToolCallArgParser();
+    this.schemaSerializer = new ToolSchemaSerializer();
+    this.cache = new ToolExecutionCache();
+    this.governor = new ToolOutputGovernor();
+    this.healer = new ToolErrorAutoHealer();
+    this.journal = new ToolTransactionJournal();
+    this.safetyPolicy = new ToolSafetyPolicyManager();
+    this.confirmationGatekeeper = new ToolConfirmationGatekeeper();
+    this.loopBreaker = new ToolLoopBreaker();
+    this.telemetryLedger = new ToolTelemetryLedger();
+    this.atomicPatchOrchestrator = new MultiFileAtomicPatchOrchestrator(this.journal);
+    this.middlewareChain = new ToolPipelineMiddlewareChain();
+    this.schemaCompressor = new ToolSchemaCompressor();
+    this.prefetcher = new ToolSpeculativePrefetcher();
+    this.dynamicRouter = new DynamicToolRouter();
+    this.dagPlanner = new ToolDependencyGraphPlanner();
+    this.summarizer = new ToolOutputSummarizer();
+    this.mockHarness = new ToolMockHarness();
+    this.choiceOrchestrator = new ToolChoicePolicyOrchestrator();
+    this.scheduler = new ToolExecutionScheduler({
+      cache: this.cache,
+      governor: this.governor,
+      healer: this.healer,
+      parser: this.argParser,
+    });
     this.registerBuiltins();
   }
+
+  readonly cache: ToolExecutionCache;
+  readonly governor: ToolOutputGovernor;
+  readonly healer: ToolErrorAutoHealer;
+  readonly scheduler: ToolExecutionScheduler;
+  readonly journal: ToolTransactionJournal;
+  readonly safetyPolicy: ToolSafetyPolicyManager;
+  readonly confirmationGatekeeper: ToolConfirmationGatekeeper;
+  readonly loopBreaker: ToolLoopBreaker;
+  readonly telemetryLedger: ToolTelemetryLedger;
+  readonly atomicPatchOrchestrator: MultiFileAtomicPatchOrchestrator;
+  readonly middlewareChain: ToolPipelineMiddlewareChain;
+  readonly schemaCompressor: ToolSchemaCompressor;
+  readonly prefetcher: ToolSpeculativePrefetcher;
+  readonly dynamicRouter: DynamicToolRouter;
+  readonly dagPlanner: ToolDependencyGraphPlanner;
+  readonly summarizer: ToolOutputSummarizer;
+  readonly mockHarness: ToolMockHarness;
+  readonly choiceOrchestrator: ToolChoicePolicyOrchestrator;
 
   validateToolArgs(name: string, rawArgs: Record<string, unknown>): SchemaValidationResult {
     const canonicalName = this.getTool(name)?.name ?? name;
@@ -379,41 +445,12 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
       return { valid: false, errors: [`Tool '${name}' not found`] };
     }
 
-    const coercer = new ArgumentCoercer();
-    const args = coercer.coerce(this.normalizeToolArgs(rawArgs));
-    for (const [k, v] of Object.entries(args)) {
+    const { args: preparedArgs, validation } = this.argParser.prepareArguments(tool, rawArgs);
+    for (const [k, v] of Object.entries(preparedArgs)) {
       rawArgs[k] = v;
     }
-    if (!tool.parameters) {
-      return { valid: true, errors: [] };
-    }
 
-    const errors: string[] = [];
-    for (const [paramName, schema] of Object.entries(tool.parameters)) {
-      const val = args[paramName];
-      if (schema.required && (val === undefined || val === null || val === "")) {
-        errors.push(`Missing required parameter '${paramName}'`);
-        continue;
-      }
-      if (val !== undefined && val !== null) {
-        let matches = false;
-        if (schema.type === "array") {
-          matches = Array.isArray(val);
-        } else if (schema.type === "object") {
-          matches = typeof val === "object" && val !== null && !Array.isArray(val);
-        } else {
-          matches = typeof val === schema.type;
-        }
-        if (!matches) {
-          errors.push(`Parameter '${paramName}' must be of type '${schema.type}', got '${Array.isArray(val) ? "array" : typeof val}'`);
-        }
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+    return validation;
   }
 
   override async executeTool(
@@ -426,19 +463,94 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
       throw new Error(`Circuit Breaker OPEN: Execution of tool '${canonicalName}' is temporarily blocked due to repeated failures.`);
     }
 
-    const normalizedArgs = this.normalizeToolArgs(rawArgs);
-    const validation = this.validateToolArgs(canonicalName, normalizedArgs);
-    if (!validation.valid) {
-      this.circuitBreaker.recordFailure(canonicalName);
-      throw new Error(`Tool '${canonicalName}' argument schema validation failed: ${validation.errors.join("; ")}`);
+    const tool = this.tools.get(canonicalName);
+    if (!tool) {
+      throw new Error(`Tool standard target '${name}' not found in registry`);
     }
 
+    const { args: preparedArgs, validation } = this.argParser.prepareArguments(tool, rawArgs);
+    for (const [k, v] of Object.entries(preparedArgs)) {
+      rawArgs[k] = v;
+    }
+
+    if (preparedArgs.isDryRun === true) {
+      return this.safetyPolicy.simulateDryRun(canonicalName, preparedArgs, cwd, tool);
+    }
+
+    if (!validation.valid) {
+      this.circuitBreaker.recordFailure(canonicalName);
+      const suggestionsMsg = validation.suggestions && validation.suggestions.length > 0
+        ? `\nSuggestions: ${validation.suggestions.join(" ")}`
+        : "";
+      throw new Error(`Tool '${canonicalName}' argument schema validation failed: ${validation.errors.join("; ")}${suggestionsMsg}`);
+    }
+
+    // Check mock sandbox harness
+    const mockHit = await this.mockHarness.interceptExecution(canonicalName, preparedArgs, cwd);
+    if (mockHit.intercepted) {
+      return mockHit.result;
+    }
+
+    // Check recursive tool loop
+    const loopCheck = this.loopBreaker.recordAndCheck(canonicalName, preparedArgs);
+    if (loopCheck.loopDetected) {
+      throw new Error(loopCheck.advisoryMessage);
+    }
+
+    // Check safety policy & confirmation gatekeeper
+    const safety = this.safetyPolicy.evaluateSafety(canonicalName, preparedArgs, cwd, tool);
+    const confirmation = await this.confirmationGatekeeper.checkConfirmation(canonicalName, preparedArgs, safety);
+    if (!confirmation.approved) {
+      throw new Error(confirmation.rejectionFeedback || `Execution of tool '${canonicalName}' was blocked by confirmation policy.`);
+    }
+
+    // Check speculative prefetch cache
+    const prefetchHit = await this.prefetcher.consumePrefetch(canonicalName, preparedArgs, cwd);
+    if (prefetchHit.hit) {
+      return prefetchHit.result;
+    }
+
+    // Check read cache
+    const cached = this.cache.get(canonicalName, preparedArgs, cwd);
+    if (cached !== null) {
+      return cached;
+    }
+
+    const startTime = Date.now();
     try {
-      const result = await super.executeTool(canonicalName, normalizedArgs, cwd);
+      const result = await super.executeTool(canonicalName, preparedArgs, cwd);
+      const elapsed = Date.now() - startTime;
       this.circuitBreaker.recordSuccess(canonicalName);
+      this.telemetryLedger.recordSample(
+        canonicalName,
+        elapsed,
+        true,
+        typeof result === "string" ? result.length : 0
+      );
+
+      this.mockHarness.recordExecution({
+        name: canonicalName,
+        toolName: canonicalName,
+        callId: `call_${Date.now()}`,
+        args: preparedArgs,
+        output: result,
+        result,
+        success: true,
+        durationMs: elapsed,
+      });
+
+      if (tool.isMutating) {
+        const paths = this.cache.extractPaths(preparedArgs, cwd);
+        this.cache.invalidatePaths(paths, cwd);
+      } else {
+        this.cache.set(canonicalName, preparedArgs, cwd, result);
+      }
+
       return result;
     } catch (err) {
+      const elapsed = Date.now() - startTime;
       this.circuitBreaker.recordFailure(canonicalName);
+      this.telemetryLedger.recordSample(canonicalName, elapsed, false);
       throw err;
     }
   }
@@ -468,6 +580,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "write_file",
       description: "Write content to a file (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Target file path" },
         content: { type: "string", required: true, description: "Content string" },
@@ -476,6 +589,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         const targetPath = String(args.path);
         const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
         const content = String(args.content);
+        await this.journal.recordFileMutation("write_file", resolvedPath, content);
         await hands.writeFile(resolvedPath, content);
         return { success: true, path: resolvedPath };
       },
@@ -484,6 +598,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "replace_file_content",
       description: "Replace an exact target block of text in a file with new content (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Target file path" },
         target: { type: "string", required: true, description: "Exact target text to find and replace" },
@@ -494,6 +609,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
         const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
         const target = String(args.target);
         const replacement = String(args.replacement);
+        await this.journal.recordFileMutation("replace_file_content", resolvedPath);
         const res = await hands.replaceFileContent(resolvedPath, target, replacement);
         if (!res.success) {
           throw new Error(res.error || `Target block not found in '${targetPath}'`);
@@ -505,16 +621,32 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "multi_replace_file_content",
       description: "Apply multiple non-contiguous exact text replacements to a file atomically (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Target file path" },
+        chunks: {
+          type: "array",
+          required: true,
+          description: "Array of { target, replacement } chunk objects",
+          items: { type: "object" },
+        },
       },
       execute: async (args, cwd) => {
         const targetPath = String(args.path);
         const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
-        const chunks = Array.isArray(args.chunks) ? (args.chunks as Array<{ target: string; replacement: string }>) : [];
+        let rawChunks = args.chunks ?? args.replacementChunks;
+        if (typeof rawChunks === "string") {
+          try {
+            rawChunks = JSON.parse(rawChunks);
+          } catch {
+            // fallback
+          }
+        }
+        const chunks = Array.isArray(rawChunks) ? (rawChunks as Array<{ target: string; replacement: string }>) : [];
         if (chunks.length === 0) {
           throw new Error("No replacement chunks provided to multi_replace_file_content");
         }
+        await this.journal.recordFileMutation("multi_replace_file_content", resolvedPath);
         const res = await hands.multiReplaceFileContent(resolvedPath, chunks);
         if (!res.success) {
           throw new Error(res.error || `Multi-replace failed on '${targetPath}'`);
@@ -524,14 +656,140 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     });
 
     this.registerTool({
+      name: "rollback_last_mutation",
+      description: "Atomically rollback the most recent file mutation or all mutations in the current turn (Journal)",
+      isMutating: true,
+      parameters: {
+        allInCurrentTurn: { type: "boolean", required: false, description: "If true, rolls back all file mutations in current turn" },
+      },
+      execute: async (args) => {
+        if (args.allInCurrentTurn) {
+          return this.journal.rollbackTurn();
+        }
+        return this.journal.rollbackLast();
+      },
+    });
+
+    this.registerTool({
+      name: "atomic_multi_file_patch",
+      description: "Atomically apply text replacements across multiple files. Fails with zero disk mutations if any chunk mismatches (Hands)",
+      isMutating: true,
+      parameters: {
+        files: {
+          type: "array",
+          required: true,
+          description: "Array of file patch objects: { path: string, chunks: [{ target: string, replacement: string }] }",
+          items: { type: "object" },
+        },
+        description: { type: "string", required: false, description: "Description of the atomic refactor" },
+      },
+      execute: async (args, cwd) => {
+        let rawFiles = args.files;
+        if (typeof rawFiles === "string") {
+          try {
+            rawFiles = JSON.parse(rawFiles);
+          } catch {
+            // ignore
+          }
+        }
+        const files = Array.isArray(rawFiles)
+          ? (rawFiles as Array<{ path: string; chunks: Array<{ target: string; replacement: string }> }>)
+          : [];
+        return this.atomicPatchOrchestrator.applyAtomicPatch(
+          {
+            files,
+            description: typeof args.description === "string" ? args.description : undefined,
+          },
+          cwd
+        );
+      },
+    });
+
+    this.registerTool({
+      name: "get_tool_telemetry",
+      description: "Inspect performance metrics, latency percentiles (p50, p95), and error rates for tools (Telemetry)",
+      parameters: {
+        toolName: { type: "string", required: false, description: "Optional specific tool name to filter" },
+      },
+      execute: async (args) => {
+        if (typeof args.toolName === "string" && args.toolName.trim()) {
+          const metric = this.telemetryLedger.getToolMetric(args.toolName.trim());
+          return metric || { message: `No telemetry recorded yet for '${args.toolName}'` };
+        }
+        return this.telemetryLedger.getAllMetrics();
+      },
+    });
+
+    this.registerTool({
+      name: "search_tools_catalog",
+      description: "Search the full system catalog of available tools using BM25 semantic ranking and keyword filtering (Discovery)",
+      parameters: {
+        query: { type: "string", required: true, description: "Search query or task description" },
+        limit: { type: "number", required: false, description: "Max tools to return (default: 10)" },
+      },
+      execute: async (args) => {
+        const query = String(args.query || "");
+        const limit = typeof args.limit === "number" ? args.limit : 10;
+        const allTools = this.listTools();
+        const results = this.dynamicRouter.searchTools(allTools, query);
+        return results.slice(0, limit).map((t) => ({
+          name: t.name,
+          description: t.description,
+          category: t.category,
+          parameters: Object.keys(t.parameters || {}),
+        }));
+      },
+    });
+
+    this.registerTool({
+      name: "explain_tool_parameters",
+      description: "Retrieve comprehensive JSON schema definitions, types, descriptions, and examples for a specific tool (Discovery)",
+      parameters: {
+        toolName: { type: "string", required: true, description: "Target tool name to inspect" },
+      },
+      execute: async (args) => {
+        const toolName = String(args.toolName || "").trim();
+        const tool = this.getTool(toolName);
+        if (!tool) {
+          return { error: `Tool '${toolName}' not found in registry.` };
+        }
+        return {
+          name: tool.name,
+          description: tool.description,
+          category: tool.category,
+          isMutating: tool.isMutating ?? false,
+          requiresConfirmation: tool.requiresConfirmation ?? false,
+          parameters: tool.parameters || {},
+          examples: tool.examples || [],
+        };
+      },
+    });
+
+    this.registerTool({
+      name: "summarize_tool_output",
+      description: "Intelligently summarize long tool outputs, preserving all compiler errors and stack traces while stripping noise (Summarizer)",
+      parameters: {
+        rawOutput: { type: "string", required: true, description: "Raw command or tool output to summarize" },
+        maxOutputLines: { type: "number", required: false, description: "Max output lines to retain (default: 60)" },
+      },
+      execute: async (args) => {
+        const raw = String(args.rawOutput || "");
+        const maxLines = typeof args.maxOutputLines === "number" ? args.maxOutputLines : 60;
+        return this.summarizer.summarizeOutput(raw, { maxOutputLines: maxLines });
+      },
+    });
+
+    this.registerTool({
       name: "delete_file",
       description: "Safely delete a file or directory on disk (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Path to file or directory to delete" },
       },
       execute: async (args, cwd) => {
         const targetPath = String(args.path);
         const resolvedPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        await this.journal.recordFileDeletion("delete_file", resolvedPath);
         const success = await hands.deleteFile(resolvedPath);
         return { success, path: resolvedPath };
       },
@@ -540,6 +798,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "move_file",
       description: "Move or rename a file or directory across workspace (Hands)",
+      isMutating: true,
       parameters: {
         source: { type: "string", required: true, description: "Source file path" },
         target: { type: "string", required: true, description: "Target destination path" },
@@ -557,6 +816,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "create_directory",
       description: "Create a new directory and all parent directories (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Directory path to create" },
       },
@@ -571,6 +831,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "copy_file",
       description: "Copy a file or directory recursively across workspace (Hands)",
+      isMutating: true,
       parameters: {
         source: { type: "string", required: true, description: "Source path to copy" },
         target: { type: "string", required: true, description: "Destination target path" },
@@ -602,6 +863,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.registerTool({
       name: "append_file",
       description: "Append content to an existing file or create it if missing (Hands)",
+      isMutating: true,
       parameters: {
         path: { type: "string", required: true, description: "Path to file to append to" },
         content: { type: "string", required: true, description: "Content string to append" },

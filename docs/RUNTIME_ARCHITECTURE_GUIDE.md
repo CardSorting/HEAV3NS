@@ -229,4 +229,56 @@ LUMI incorporates a native, zero-subprocess pattern perception and filesystem ma
 5. **Direct Process & Port Liberation**: Automatically detects available ports (`find_free_port`) and frees occupied ports (`kill_port`), eliminating `EADDRINUSE` deadlocks.
 6. **Universal Tool/Parameter Alias Normalization**: Maps standard model variations (`read_file`, `bash`, `find_files`, `filePath`, `text`) and auto-coerces stringified JSON payloads.
 
+## 10. Apex-Tier Tool Calling, Scheduling & Execution Subsystem (ADR-138 – ADR-141)
 
+LUMI incorporates an enterprise-grade, multi-pass tool calling and execution substrate engineered to eliminate model invocation friction, argument parse crashes, context token bloat, and destructive command execution:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│              APEX-TIER TOOL EXECUTION & ERGONOMICS ARCHITECTURE                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ Layer 1: Universal Serialization & Wire Format Adapters                         │
+│   ├── ToolSchemaSerializer (OpenAI Strict, Anthropic, Gemini, MCP)              │
+│   ├── UniversalToolCallAdapter (OpenAI tool_calls, Anthropic tool_use, Gemini)  │
+│   └── ToolChoicePolicyOrchestrator (auto, required, forced, system fallback)    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ Layer 2: Resilient Argument Parsing & Dynamic Discovery                         │
+│   ├── ToolCallArgParser (Multi-Pass Strip Fences, Python Literals, Auto-Repair) │
+│   ├── ToolSemanticIndex (In-Memory Robertson-Spärck Jones BM25 & Synonyms)      │
+│   ├── ToolSchemaCompressor (43% Token Minified Parameter Schemas)               │
+│   └── Model Discovery Tools (search_tools_catalog, explain_tool_parameters)     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ Layer 3: Composable Middleware Execution Pipeline Stack                         │
+│   ├── ToolPipelineMiddlewareChain (Onion Interceptor Architecture)              │
+│   ├── ToolSpeculativePrefetcher (Background Read Warming & Microsecond Hits)    │
+│   └── ToolExecutionCache (Deterministic SHA-256 Keying & Path Invalidation)     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ Layer 4: Parallel Scheduling & Topological DAG Execution                        │
+│   ├── ToolExecutionScheduler (Concurrent Read Waves: ~2.9x Speedup)             │
+│   └── ToolDependencyGraphPlanner (Kahn's Topological Sort & Piped Args: $node1)│
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ Layer 5: Output Intelligence, Sentinel Safety & Atomic Rollback Substrate       │
+│   ├── ToolOutputGovernor & ToolOutputSummarizer (Error Extraction & Spill Vault)│
+│   ├── ToolConfirmationGatekeeper & ToolSafetyPolicyManager (Dry-Run Simulation) │
+│   ├── ToolLoopBreaker (Sliding Ring Buffer Call Deduplication & Self-Correction)│
+│   ├── MultiFileAtomicPatchOrchestrator (Zero-Disk Mutation Mismatch Abort)      │
+│   ├── ToolTelemetryLedger (Execution p50/p95 Percentiles & Error Rates)         │
+│   └── ToolTransactionJournal (Atomic Inverse Rollbacks: rollback_last_mutation) │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Core Architectural Capabilities:
+1. **Universal Multi-Provider Portability (ADR-138)**: Losslessly converts tool declarations and wire payloads across OpenAI/OpenRouter (`tool_calls`), Anthropic (`tool_use` / `tool_result`), Google Gemini (`functionCall` / `functionResponse`), and MCP standard tool protocols.
+2. **Self-Healing Argument Parser (ADR-138)**: Automatically repairs markdown JSON fences, unbalanced braces, single quotes, Python boolean literals (`True`, `False`, `None`), and stringified parameter objects without throwing runtime turn errors.
+3. **Parallel Concurrency Wave Scheduler (ADR-139)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`), achieving a **~2.9x concurrency speedup** over sequential execution.
+4. **Deterministic In-Memory Read Cache (ADR-139)**: Computes deterministic SHA-256 hashes of tool arguments to serve read hits in microsecond latency, automatically invalidating cached paths upon file writes, edits, or deletions.
+5. **Output Governance & Semantic Failure Summarization (ADR-139 & ADR-141)**: Clamps verbose tool outputs into bounded windows, extracts critical compiler errors and stack traces, filters progress noise, and persists full payloads in the spill vault.
+6. **Sentinel Safety & Human-in-the-Loop Gatekeeper (ADR-140)**: Scores operations into `SAFE`, `MUTATING`, and `CRITICAL` risk tiers, intercepts destructive patterns (`rm -rf`, `git reset --hard`, database drops), supports `isDryRun: true` diff simulations, and provides interactive approval hooks.
+7. **Recursive Loop Breaker (ADR-140)**: Detects repetitive identical tool calling cycles (3x repeats) in a sliding ring buffer and halts runaway hallucination loops with self-correcting prompt advisories.
+8. **Atomic Transaction Rollback Journal (ADR-140)**: Intercepts disk mutations to record inverse recovery checkpoints, enabling one-shot atomic state rollbacks via the built-in `rollback_last_mutation` tool.
+9. **Multi-File Atomic Refactoring Patch Orchestrator (ADR-140)**: Pre-validates all targeted search-and-replace chunks across all files before touching disk. If any chunk mismatches, zero files are modified on disk.
+10. **Composable Onion Middleware Stack (ADR-141)**: Organizes execution cross-cutting concerns (`beforeExecute`, `next()`, `afterExecute`, `onError`) into a modular pipeline with isolated error boundaries.
+11. **Dynamic Tool Schema Compression (ADR-141)**: Minifies verbose JSON schemas into compact parameter descriptors, achieving **43% token savings** on tool manifests.
+12. **Topological Dependency DAG Execution Planner (ADR-141)**: Analyzes parameter pipelines (e.g. `$node1.result.path`) and constructs topological DAGs to execute independent branches concurrently while chaining dependent stages sequentially.
+13. **Model-Facing Discovery & Introspection DSL (ADR-141)**: Exposes `search_tools_catalog` (BM25 semantic tool discovery across all 1,600+ tools) and `explain_tool_parameters` (full schema and constraint introspection on demand).
+14. **Deterministic Mock Sandbox Harness (ADR-141)**: Enables offline testing, benchmark evaluations, and recorded fixture replay without modifying physical workspace files.

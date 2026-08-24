@@ -59,7 +59,17 @@ const DEFAULT_SELECT_LIST_THEME: SelectListTheme = {
   noMatch: (text) => `\x1b[31m${text}\x1b[0m`,
 };
 
-function formatUniversalToolSection(toolResults: Array<{ name: string; output: unknown }>): string {
+function formatUniversalToolSection(
+  toolResults: Array<{
+    name: string;
+    output: unknown;
+    durationMs?: number;
+    success?: boolean;
+    exitCode?: number;
+    callId?: string;
+    args?: Record<string, unknown>;
+  }>
+): string {
   if (!toolResults || toolResults.length === 0) return "";
 
   const formattedBlocks: string[] = [];
@@ -70,7 +80,8 @@ function formatUniversalToolSection(toolResults: Array<{ name: string; output: u
 
     let text = "";
     let lang = "sh";
-    let statusBadge = `[Tool: ${res.name}]`;
+    const durationLabel = res.durationMs ? ` · ${res.durationMs}ms` : "";
+    let statusBadge = `[Tool: ${res.name}${durationLabel}]`;
 
     if (typeof rawOutput === "string") {
       text = rawOutput.trim();
@@ -91,17 +102,33 @@ function formatUniversalToolSection(toolResults: Array<{ name: string; output: u
       }
     } else if (typeof rawOutput === "object") {
       const obj = rawOutput as Record<string, unknown>;
-      if (typeof obj.stdout === "string" || typeof obj.stderr === "string") {
+
+      if (typeof obj.command === "string" || typeof obj.stdout === "string" || typeof obj.stderr === "string") {
         const stdout = (obj.stdout as string)?.trim() ?? "";
         const stderr = (obj.stderr as string)?.trim() ?? "";
-        const exitCode = typeof obj.exitCode === "number" ? obj.exitCode : 0;
+        const exitCode = typeof obj.exitCode === "number" ? obj.exitCode : (typeof res.exitCode === "number" ? res.exitCode : 0);
+        const cmdHeader = obj.command ? `$ ${obj.command}\n` : "";
         statusBadge = exitCode !== 0
-          ? `[Tool: ${res.name} · Exit ${exitCode}]`
-          : `[Tool: ${res.name} · Success]`;
-        text = [stdout, stderr ? `[stderr]\n${stderr}` : ""].filter(Boolean).join("\n\n");
+          ? `[Tool: ${res.name} · Exit ${exitCode}${durationLabel}]`
+          : `[Tool: ${res.name} · Success${durationLabel}]`;
+        text = [cmdHeader + stdout, stderr ? `[stderr]\n${stderr}` : ""].filter(Boolean).join("\n\n");
         lang = "sh";
         if (!text) text = `Command finished with exit code ${exitCode}`;
+      } else if (Array.isArray(obj.changes)) {
+        const changes = obj.changes as Array<{ path?: string; kind?: string }>;
+        statusBadge = `[Tool: ${res.name} · ${changes.length} file(s) updated${durationLabel}]`;
+        text = changes.map((c) => `  ${c.kind || "modified"}: ${c.path || "workspace"}`).join("\n");
+        lang = "yaml";
+      } else if (typeof obj.diff === "string") {
+        statusBadge = `[Tool: ${res.name} · Patch applied${durationLabel}]`;
+        text = obj.diff;
+        lang = "diff";
       } else {
+        if (res.success !== undefined) {
+          statusBadge = res.success
+            ? `[Tool: ${res.name} · Success${durationLabel}]`
+            : `[Tool: ${res.name} · Error${durationLabel}]`;
+        }
         text = JSON.stringify(rawOutput, null, 2);
         lang = "json";
       }
@@ -113,10 +140,10 @@ function formatUniversalToolSection(toolResults: Array<{ name: string; output: u
 
     const lines = text.split("\n");
     let boundedText = text;
-    if (lines.length > 25) {
-      const head = lines.slice(0, 12);
-      const tail = lines.slice(-8);
-      const omitted = lines.length - 20;
+    if (lines.length > 30) {
+      const head = lines.slice(0, 15);
+      const tail = lines.slice(-10);
+      const omitted = lines.length - 25;
       boundedText = [...head, `... (${omitted} lines omitted) ...`, ...tail].join("\n");
     }
 

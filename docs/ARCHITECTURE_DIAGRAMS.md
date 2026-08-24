@@ -247,13 +247,125 @@ graph TD
     style S fill:#312e81,stroke:#a78bfa,stroke-width:2px,color:#f8fafc
 ```
 
+## 7. ⚡ Apex-Tier Universal Tool Calling, Scheduling & DAG Orchestration Engine
+
+LUMI's tool infrastructure unifies multi-provider serialization, self-healing argument recovery, parallel execution scheduling, topological DAG pipelines, sentinel safety gates, and atomic inverse rollback journals:
+
+### 7.1 Universal Wire Translation & Self-Healing Argument Recovery Pipeline
+
+```mermaid
+flowchart TD
+    subgraph "1. Multi-Provider Model Invocations"
+        M1[OpenAI / OpenRouter: tool_calls]
+        M2[Anthropic: tool_use]
+        M3[Google Gemini: functionCall]
+        M4[Model Context Protocol: mcp_request]
+    end
+
+    M1 & M2 & M3 & M4 --> UA[UniversalToolCallAdapter]
+    UA --> SC[ToolSchemaCompressor: 43% Token Savings]
+    
+    subgraph "2. 4-Pass Self-Healing Argument Parser"
+        UA --> P1[Pass 1: Markdown Fence Stripper]
+        P1 --> P2[Pass 2: Python Literal & Bracket Auto-Repair]
+        P2 --> P3[Pass 3: JSON Substring & Quote Extractor]
+        P3 --> P4[Pass 4: Primitive Type Coercer & Alias Resolver]
+    end
+
+    P4 --> VAL{JSON Schema Validator}
+    VAL -->|Valid Arguments| MID[ToolPipelineMiddlewareChain]
+    VAL -->|Invalid| HEAL[ToolErrorAutoHealer: Actionable Guidance]
+    HEAL --> ADVISORY[Model Self-Correction Prompt Advisory]
+
+    style UA fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style SC fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style P1 fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style P2 fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style P3 fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style P4 fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style VAL fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style HEAL fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style ADVISORY fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#f8fafc
+```
+
+### 7.2 Topological DAG Wave Scheduling & Memory Caching Engine
+
+```mermaid
+flowchart TD
+    subgraph "1. Turn Input & Dependency Graph"
+        INP[Multi-Tool Calls with $step1.result.path Data Pipelines] --> DAG[ToolDependencyGraphPlanner]
+        DAG --> CYC{Cycle Detection Check}
+        CYC -->|Cycle Detected| ABORT[Descriptive Cycle Error]
+        CYC -->|Acyclic Graph| PART[Topological Wave Partitioning]
+    end
+
+    subgraph "2. Concurrent Wave Execution"
+        PART --> W0[Wave 0: Independent Concurrent Reads]
+        W0 --> CACHE{ToolExecutionCache Check}
+        CACHE -->|Microsecond Hit| HIT[Instant Cache Return]
+        CACHE -->|Miss| EXEC0[Promise.all Concurrent Execution]
+        
+        EXEC0 --> PIPE[Resolve Piped Arguments: $node1.result]
+        PIPE --> W1[Wave 1: Dependent Sequential Mutations]
+    end
+
+    subgraph "3. Output Intelligence & Storage"
+        W1 --> GOV[ToolOutputGovernor: Bounded Tables & Head/Tail]
+        GOV --> SUM[ToolOutputSummarizer: Error Chunk Elevation]
+        GOV --> SPILL[Spill Vault Storage: Persistent File Vault]
+        W1 --> INVAL[Path Invalidation: Evict Dirty Cache Keys]
+    end
+
+    style DAG fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style W0 fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style W1 fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
+    style GOV fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style SUM fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style SPILL fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#f8fafc
+```
+
+### 7.3 Sentinel Threat Evaluation, Approval Gates & Atomic Rollback Substrate
+
+```mermaid
+flowchart TD
+    subgraph "1. Safety Policy & Threat Classification"
+        CALL[Target Tool Call] --> SAF[ToolSafetyPolicyManager]
+        SAF --> EVAL{Threat Classification}
+        EVAL -->|SAFE: Read Operations| ALLOW[Direct Pipeline Execution]
+        EVAL -->|MUTATING: File Modifications| GATE[ToolConfirmationGatekeeper]
+        EVAL -->|CRITICAL: rm -rf / git reset| PROMPT[Interactive User Confirmation]
+    end
+
+    subgraph "2. Hallucination Loop Protection"
+        ALLOW & GATE --> LOOP{ToolLoopBreaker Sliding Ring Buffer}
+        LOOP -->|Consecutive Identical Calls >= 3| BREAK[Halt & Feed Self-Correcting Prompt Advisory]
+        LOOP -->|Clean Execution| JRN[ToolTransactionJournal: Snapshot Pre-Mutation State]
+    end
+
+    subgraph "3. Atomic Execution & Rollback"
+        JRN --> RUN[Execute Tool Operation]
+        RUN -->|Success| LEDGER[ToolTelemetryLedger: Record p50/p95 & Error Rates]
+        RUN -->|Failure / Emergency Undo| RB[rollback_last_mutation: Restore Disk Checkpoint]
+    end
+
+    style SAF fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style GATE fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#f8fafc
+    style PROMPT fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#f8fafc
+    style LOOP fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc
+    style JRN fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc
+    style RB fill:#4c1d95,stroke:#c084fc,stroke-width:2px,color:#f8fafc
+    style LEDGER fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+```
+
 ---
 
 ## Related Architectural Documentation
 
 - [Master Architecture Decision Records (ADR) Workspace](adr/README.md)
-- [ADR-135: Zenith-Tier Prompt Caching Subsystem](adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md)
-- [ADR-136: High-Velocity Pattern Search & Zen I/O Execution Authority](adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)
+- [ADR-138: Apex-Tier Multi-Provider Tool Calling & Dynamic Routing](adr/ADR-138-apex-tier-multi-provider-tool-calling-and-execution-ergonomics.md)
+- [ADR-139: Zenith-Tier Parallel Tool Scheduling, Caching & Auto-Healing](adr/ADR-139-zenith-tier-tool-scheduling-caching-governance-and-auto-healing.md)
+- [ADR-140: Sentinel-Tier Confirmation Gates, Loop Breaking & Rollbacks](adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md)
+- [ADR-141: Apex-Tier Middleware Pipelines, Schema Compression & DAG Scheduling](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md)
 - [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)
 - [Runtime Optimization Record](RUNTIME_OPTIMIZATION_RECORD.md)
 - [Grand Architectural Audit](GRAND_ARCHITECTURAL_AUDIT.md)
