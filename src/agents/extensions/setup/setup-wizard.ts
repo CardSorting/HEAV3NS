@@ -340,7 +340,7 @@ export class SetupWizard {
     }
 
     // Check 4: File Vault Security
-    const configPath = path.join(os.homedir(), ".lumi", "config.json");
+    const configPath = this.getConfigPath();
     if (fs.existsSync(configPath) && process.platform !== "win32") {
       const mode = fs.statSync(configPath).mode & 0o777;
       if (mode === 0o600) {
@@ -510,13 +510,31 @@ export class SetupWizard {
     this.saveConfigToDisk();
   }
 
-  getSavedModel(): string | undefined {
-    if (this.savedModelName) return this.savedModelName;
-    const diag = this.codexOAuthManager.getAuthDiagnostics();
-    if (diag.authenticated || (diag.hasValidRefreshToken && !diag.isExpired)) {
-      return "gpt-5.6-terra";
+  getConfigPath(): string {
+    if (process.env.LUMI_CONFIG_PATH) {
+      return process.env.LUMI_CONFIG_PATH;
     }
-    return undefined;
+    if (process.env.LUMI_CONFIG_DIR) {
+      return path.join(process.env.LUMI_CONFIG_DIR, "config.json");
+    }
+    return path.join(os.homedir(), ".lumi", "config.json");
+  }
+
+  getSavedModel(): string | undefined {
+    const diag = this.codexOAuthManager.getAuthDiagnostics();
+    const isCodexAuthed = diag.authenticated || (diag.hasValidRefreshToken && !diag.isExpired);
+    if (isCodexAuthed) {
+      if (
+        !this.savedModelName ||
+        this.savedModelName.startsWith("llama") ||
+        this.savedModelName.startsWith("qwen") ||
+        this.savedModelName === "gemini-3.6-flash" ||
+        this.savedModelName === "ollama"
+      ) {
+        return "gpt-5.6-terra";
+      }
+    }
+    return this.savedModelName;
   }
 
   useDefaultProxyGateway(): void {
@@ -810,7 +828,7 @@ export class SetupWizard {
 
   private saveConfigToDisk(): void {
     try {
-      const configPath = path.join(os.homedir(), ".lumi", "config.json");
+      const configPath = this.getConfigPath();
       const tokens: Record<string, string> = {};
       for (const provider of this.authStorageVault.listProviders()) {
         if (provider === "openai-codex") continue;
@@ -840,7 +858,7 @@ export class SetupWizard {
   private loadSavedConfig(): void {
     this.loadDotEnvFile();
     try {
-      const configPath = path.join(os.homedir(), ".lumi", "config.json");
+      const configPath = this.getConfigPath();
       if (fs.existsSync(configPath)) {
         const raw = fs.readFileSync(configPath, "utf-8");
         const data = JSON.parse(raw) as {
@@ -878,13 +896,20 @@ export class SetupWizard {
           this.savedModelName = data.modelName.trim();
         }
 
-        if (
+        const hasValidCodexAuth =
           data.codexOAuth?.access_token &&
           data.codexOAuth.refresh_token &&
-          typeof data.codexOAuth.expires === "number"
-        ) {
-          this.codexOAuthManager.saveCredentials(data.codexOAuth);
-          if (!this.savedModelName) {
+          typeof data.codexOAuth.expires === "number";
+
+        if (hasValidCodexAuth) {
+          this.codexOAuthManager.saveCredentials(data.codexOAuth!);
+          if (
+            !this.savedModelName ||
+            this.savedModelName.startsWith("llama") ||
+            this.savedModelName.startsWith("qwen") ||
+            this.savedModelName === "gemini-3.6-flash" ||
+            this.savedModelName === "ollama"
+          ) {
             this.savedModelName = "gpt-5.6-terra";
           }
         }
