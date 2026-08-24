@@ -20,7 +20,7 @@ export class AgentConfig {
 
   static createDefault(): AgentConfig {
     return new AgentConfig({
-      modelName: "gemini-3.6-flash",
+      modelName: "gpt-5.6-terra",
       systemPrompt: "You are LUMI, an advanced agentic assistant.",
       maxTurns: 30,
       temperature: 0.2,

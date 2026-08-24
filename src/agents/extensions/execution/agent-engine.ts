@@ -328,16 +328,52 @@ export class AgentEngine extends AbstractAgentEngine {
                   payload.tools = availableTools;
                 }
 
-                const res = await fetch(endpoint.url, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...endpoint.headers,
-                    ...auth.headers,
-                  },
-                  body: JSON.stringify(payload),
-                  signal: requestSignal,
+                this.reportProgress(input.onProgress, {
+                  activityId: liveProgressActivityId,
+                  phase: "thinking",
+                  status: "in_progress",
+                  message: `[${activeModel}] Deliberating action (step ${stepCount}/${maxToolSteps})`,
+                  detail: `Sending request to ${providerName}...`,
+                  timestamp: Date.now(),
+                  sequence: nextProgressSequence(),
+                  metadata: { source: `${providerName}-api`, scope: "turn", attempt: attempt + 1 },
                 });
+
+                const stepStartedAt = Date.now();
+                const stepHeartbeat = setInterval(() => {
+                  const idle = Date.now() - stepStartedAt;
+                  if (idle >= 10_000) {
+                    const sec = Math.round(idle / 1000);
+                    const hint = idle >= 25_000 ? " · [Esc to cancel / retry with /terra]" : "";
+                    this.reportProgress(input.onProgress, {
+                      activityId: liveProgressActivityId,
+                      phase: "thinking",
+                      status: "in_progress",
+                      message: `[${activeModel}] Deliberation in progress (${sec}s elapsed)`,
+                      detail: `Awaiting response from ${providerName}${hint}`,
+                      timestamp: Date.now(),
+                      sequence: nextProgressSequence(),
+                      metadata: { source: `${providerName}-api`, scope: "turn", attempt: attempt + 1 },
+                    });
+                  }
+                }, 10_000);
+                stepHeartbeat.unref?.();
+
+                let res: Response;
+                try {
+                  res = await fetch(endpoint.url, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...endpoint.headers,
+                      ...auth.headers,
+                    },
+                    body: JSON.stringify(payload),
+                    signal: requestSignal,
+                  });
+                } finally {
+                  clearInterval(stepHeartbeat);
+                }
 
                 if (!res.ok) {
                   const errorBody = await res.text();
@@ -392,6 +428,7 @@ export class AgentEngine extends AbstractAgentEngine {
                       metadata: { itemType: toolName, scope: "activity", attempt: attempt + 1 },
                     });
 
+                    const toolStarted = Date.now();
                     let toolOutput = "";
                     try {
                       const toolResult = await this.toolRegistry.executeTool(
@@ -405,6 +442,18 @@ export class AgentEngine extends AbstractAgentEngine {
                         error: err instanceof Error ? err.message : String(err),
                       });
                     }
+                    const toolElapsed = Date.now() - toolStarted;
+
+                    this.reportProgress(input.onProgress, {
+                      activityId: liveProgressActivityId,
+                      phase: "tool",
+                      status: "completed",
+                      message: `Completed ${toolName} (${toolElapsed}ms)`,
+                      detail: toolOutput.slice(0, 100),
+                      timestamp: Date.now(),
+                      sequence: nextProgressSequence(),
+                      metadata: { itemType: toolName, scope: "activity", attempt: attempt + 1 },
+                    });
 
                     // Smart head/tail bounding for large tool outputs to protect token budget and response latency
                     const maxOutputChars = 50_000;

@@ -183,9 +183,11 @@ export class InteractiveModeController {
     const headerBg = (text: string) => `\x1b[48;5;234m${text}\x1b[0m`;
     const headerBox = new Box(1, 0, headerBg);
 
+    const initialIsCodex = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
+    const initialAuthTag = initialIsCodex ? " \x1b[32m[Codex OAuth]\x1b[0m" : "";
     const headerText = new Text(
       `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
-        `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
+        `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${initialAuthTag}  │  ` +
         `\x1b[90mHealth:\x1b[0m \x1b[1;32m[OPERATIONAL]\x1b[0m`,
       0,
       0
@@ -214,21 +216,30 @@ export class InteractiveModeController {
         `- **[3] Run 100% Offline / Local:** Type \`/model ollama\` with zero setup or accounts.\n\n` +
         `*Press \`?\` or type \`/help\` anytime for keyboard shortcuts.*`;
     } else {
-      const identityStr = who.codexOAuth?.email
-        ? `Signed in as **${who.codexOAuth.email}**`
-        : who.codexOAuth?.accountId
-          ? `Signed in as Account **${who.codexOAuth.accountId}**`
-          : `**${who.configuredProviders.length}** provider(s) active`;
+      const identityStr = who.codexOAuth?.authenticated
+        ? `Signed in as **${who.codexOAuth.email || who.codexOAuth.accountId || "OAuth User"}** *(OpenAI Codex OAuth)*`
+        : who.codexOAuth?.email
+          ? `Signed in as **${who.codexOAuth.email}**`
+          : who.codexOAuth?.accountId
+            ? `Signed in as Account **${who.codexOAuth.accountId}**`
+            : `**${who.configuredProviders.length}** provider(s) active`;
+
+      const isCodexEngine = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
+      const engineNote = isCodexEngine ? " *(Codex OAuth Active · 900k ctx)*" : "";
 
       welcomeText =
         `# ✦ LUMI Agent OS\n\n` +
-        `● ${identityStr}  │  Active Model: \`${monolith.config.modelName}\`\n\n` +
-        `**Quick Actions & Commands:**\n` +
-        `- Press \`Alt+M\` or type \`/model\` : Switch model or view catalog.\n` +
-        `- Type \`/whoami\` or \`/auth\` : View active login identity & tokens.\n` +
-        `- Type \`/doctor\` or \`/health\` : Run subsystem health diagnostics.\n` +
-        `- Press \`Ctrl+S\` or type \`/settings\` : Adjust reasoning effort & telemetry.\n` +
-        `- Press \`?\` or type \`/help\` : Display interactive keyboard guide.\n`;
+        `● ${identityStr}  │  Active Engine: \`${monolith.config.modelName}\`${engineNote}\n\n` +
+        `**Quick Model Switch:**\n` +
+        `- Type \`/terra\` : Flagship Reasoning Engine (\`gpt-5.6-terra\` · 900k ctx · 16k out)\n` +
+        `- Type \`/luna\` : High-Velocity Engine (\`gpt-5.6-luna\` · 900k ctx · 8k out)\n` +
+        `- Type \`/sol\` : Balanced Engine (\`gpt-5.6-sol\` · 900k ctx · 8k out)\n` +
+        `- Press \`Alt+M\` or type \`/model\` : Interactive Model Catalog Picker\n\n` +
+        `**Configuration & System:**\n` +
+        `- Press \`Ctrl+S\` or type \`/settings\` : Configure models, reasoning effort & policies\n` +
+        `- Type \`/providers\` or \`/setup\` : Provider keys & OpenAI Codex OAuth setup\n` +
+        `- Type \`/doctor\` or \`/health\` : Run subsystem health diagnostics\n` +
+        `- Press \`?\` or type \`/help\` : Display keyboard guide & slash commands\n`;
     }
 
     const welcomeMarkdown = new Markdown(welcomeText, 0, 0, DEFAULT_MARKDOWN_THEME);
@@ -368,6 +379,34 @@ export class InteractiveModeController {
       const currentEffort = monolith.reasoningEffortController.getEffortLevel();
       const settingItems: SettingItem[] = [
         {
+          id: "active_model",
+          label: "Active LLM Model & Engine",
+          description: "Select active model engine or choose [Open Full Catalog] for complete picker.",
+          currentValue: monolith.config.modelName,
+          values: [
+            "gpt-5.6-terra",
+            "gpt-5.6-luna",
+            "gpt-5.6-sol",
+            "anthropic/claude-3.5-sonnet",
+            "google/gemini-2.0-flash-001",
+            "deepseek/deepseek-r1",
+            "llama3.2:latest",
+            "qwen2.5-coder:latest",
+            "Open Full Catalog (Alt+M)...",
+          ],
+        },
+        {
+          id: "provider_setup",
+          label: "LLM Providers & Credentials",
+          description: "Audit and configure API keys, OpenAI Codex OAuth, or Local LLM servers.",
+          currentValue: "Configure",
+          values: [
+            "Configure",
+            "Open Provider Wizard (/providers)",
+            "Open Local Engine (/local)",
+          ],
+        },
+        {
           id: "reasoning_effort",
           label: "Reasoning Effort Level",
           description: "Controls the depth of model reasoning and reflection before output generation.",
@@ -407,7 +446,31 @@ export class InteractiveModeController {
       settingsModal = new SettingsModal(
         settingItems,
         (id, newValue) => {
-          if (id === "reasoning_effort") {
+          if (id === "active_model") {
+            if (newValue.startsWith("Open Full Catalog") || newValue.includes("Alt+M")) {
+              closeFn();
+              setTimeout(() => {
+                void openModelSelectModal();
+              }, 50);
+              return;
+            }
+            monolith.setModel(newValue);
+            updateHeader();
+          } else if (id === "provider_setup") {
+            if (newValue.includes("Provider Wizard") || newValue.includes("/providers")) {
+              closeFn();
+              setTimeout(() => {
+                openProviderSetupModal();
+              }, 50);
+              return;
+            } else if (newValue.includes("Local Engine") || newValue.includes("/local")) {
+              closeFn();
+              setTimeout(() => {
+                openLocalEndpointDashboardModal();
+              }, 50);
+              return;
+            }
+          } else if (id === "reasoning_effort") {
             monolith.reasoningEffortController.setEffortLevel(newValue as ReasoningEffortLevel);
           }
           const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
@@ -496,9 +559,11 @@ export class InteractiveModeController {
       const turnCount = monolith.sessionContext.turnCount;
       const memCount = monolith.sessionMemoryStore.listMemories().length;
       const memSuffix = memCount > 0 ? `  │  \x1b[90mMem:\x1b[0m \x1b[36m${memCount}\x1b[0m` : "";
+      const isCodex = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
+      const authTag = isCodex ? " \x1b[32m[Codex OAuth]\x1b[0m" : "";
       headerText.setText(
         `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
-          `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
+          `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${authTag}  │  ` +
           `\x1b[90mFrame:\x1b[0m \x1b[1;33m#${turnCount}\x1b[0m${memSuffix}  │  ` +
           `\x1b[90mHealth:\x1b[0m \x1b[1;32m[OPERATIONAL]\x1b[0m`
       );

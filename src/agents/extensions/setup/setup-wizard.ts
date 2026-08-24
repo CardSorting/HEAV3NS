@@ -511,7 +511,12 @@ export class SetupWizard {
   }
 
   getSavedModel(): string | undefined {
-    return this.savedModelName;
+    if (this.savedModelName) return this.savedModelName;
+    const diag = this.codexOAuthManager.getAuthDiagnostics();
+    if (diag.authenticated || (diag.hasValidRefreshToken && !diag.isExpired)) {
+      return "gpt-5.6-terra";
+    }
+    return undefined;
   }
 
   useDefaultProxyGateway(): void {
@@ -675,6 +680,7 @@ export class SetupWizard {
 
     const credentials = await this.codexOAuthManager.exchangeCodeForTokens(code, codeVerifier);
     this.saveCodexCredentialsToDisk(credentials);
+    this.setSavedModel("gpt-5.6-terra");
     return credentials;
   }
 
@@ -878,6 +884,9 @@ export class SetupWizard {
           typeof data.codexOAuth.expires === "number"
         ) {
           this.codexOAuthManager.saveCredentials(data.codexOAuth);
+          if (!this.savedModelName) {
+            this.savedModelName = "gpt-5.6-terra";
+          }
         }
       }
     } catch {

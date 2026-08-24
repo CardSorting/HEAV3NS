@@ -1435,9 +1435,18 @@ export class MonolithFactory {
       proxyGateway,
     });
     const savedModel = setupWizard.getSavedModel();
-    if (!options.config && savedModel) {
-      (config as { modelName: string }).modelName = savedModel;
-      modelResolver.setActiveModel(savedModel);
+    const codexDiag = codexOAuthManager.getAuthDiagnostics();
+    const isCodexAuthed = codexDiag.authenticated || (codexDiag.hasValidRefreshToken && !codexDiag.isExpired);
+    if (!options.config) {
+      if (savedModel) {
+        (config as { modelName: string }).modelName = savedModel;
+        modelResolver.setActiveModel(savedModel);
+      } else if (isCodexAuthed) {
+        const flagshipModel = "gpt-5.6-terra";
+        (config as { modelName: string }).modelName = flagshipModel;
+        modelResolver.setActiveModel(flagshipModel);
+        setupWizard.setSavedModel(flagshipModel);
+      }
     }
 
 

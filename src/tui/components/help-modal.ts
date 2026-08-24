@@ -55,17 +55,21 @@ export class HelpModal implements Component, Focusable {
         `- \`Ctrl + D\` : Exit interactive REPL session (EOF)\n` +
         `- \`?\` or \`/help\` : Display this Help & Shortcuts Reference\n\n` +
       `### Slash Commands Reference\n` +
+        `- **[Model]**   \`/terra\` : Switch to Flagship Reasoning Engine (gpt-5.6-terra · 900k ctx)\n` +
+        `- **[Model]**   \`/luna\` : Switch to High-Velocity Engine (gpt-5.6-luna · 900k ctx)\n` +
+        `- **[Model]**   \`/sol\` : Switch to Balanced Engine (gpt-5.6-sol · 900k ctx)\n` +
+        `- **[Model]**   \`/model [name]\` : Switch active LLM model or open catalog picker\n` +
         `- **[Session]** \`/snapshot\` : Create immutable state snapshot checkpoint\n` +
         `- **[Session]** \`/snapshots\` : List all snapshot checkpoints in session\n` +
         `- **[Session]** \`/rewind [id]\` : Rollback engine state to a snapshot\n` +
         `- **[Session]** \`/memory\` : View persistent memory facts & context\n` +
         `- **[Session]** \`/clear\` : Clear message history from TUI view\n` +
         `- **[Session]** \`/exit\` / \`/quit\` : Terminate interactive REPL session\n` +
-        `- **[Config]**  \`/model [name]\` : Switch LLM model or open selector\n` +
-        `- **[Config]**  \`/settings\` : Configure reasoning effort & engine policies\n` +
+        `- **[Config]**  \`/settings\` : Configure models, reasoning effort & engine policies\n` +
+        `- **[Config]**  \`/providers\` : Audit & setup LLM provider credentials\n` +
+        `- **[Config]**  \`/local\` : Open local LLM server dashboard & VRAM monitor\n` +
         `- **[System]**  \`/health\` / \`/status\` : Audit subsystem operational health\n` +
         `- **[System]**  \`/setup\` / \`/wizard\` : Launch interactive API key setup wizard\n` +
-        `- **[System]**  \`/providers\` : Test live provider connection latencies\n` +
         `- **[System]**  \`/about\` : Display monolith memory slab & performance specs\n\n` +
       `### Architecture Highlights\n` +
         `- **Zero-GC Contiguous Memory**: 16MB ArrayBuffer slab allocation\n` +

@@ -44,8 +44,8 @@ export class CodexProviderBridge {
     return (
       lower.includes("codex") ||
       lower.startsWith("openai-codex") ||
-      lower.includes("gpt-5") ||
-      lower.includes("gpt-6") ||
+      lower.startsWith("gpt-") ||
+      lower.includes("chatgpt") ||
       lower.includes("terra") ||
       lower.includes("luna") ||
       lower.includes("sol") ||

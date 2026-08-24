@@ -35,6 +35,13 @@ export class ModelResolver {
       case "gpt5.6-terra":
       case "codex":
       case "openai-codex":
+      case "codex-oauth":
+      case "gpt":
+      case "chatgpt":
+      case "openai":
+      case "5.6":
+      case "flagship":
+      case "reasoning":
         return "gpt-5.6-terra";
       case "luna":
       case "gpt-luna":
