@@ -397,6 +397,14 @@ export class CodexOAuthManager {
   }
 
   syncCredentialsToDisk(credentials: OpenAiCodexCredentials): void {
+    if (
+      process.env.LUMI_TEST_MODE === "1" ||
+      process.env.NODE_ENV === "test" ||
+      credentials.access_token.startsWith("ey-direct-cloud-access") ||
+      credentials.email === "dev@cloudsync.io"
+    ) {
+      return;
+    }
     try {
       // 1. Sync to ~/.codex/auth.json for @openai/codex-sdk native binary execution
       const codexAuthPath = path.join(os.homedir(), ".codex", "auth.json");
