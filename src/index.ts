@@ -1206,6 +1206,9 @@ export type {
   CodexAuthUrlDetails,
   CodexAuthDiagnostics,
   AuthSourceAudit,
+  GalxSyncResult,
+  GalxSessionConfig,
+  CloudSyncLedgerRecord,
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 export { CodexProviderBridge, MODERN_GPT56_MODELS } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export type { ResolvedAuthHeaders, ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
@@ -4935,12 +4938,12 @@ if (isDirectCliExecution) {
   lumi sol                    Quick-switch default model to Balanced Engine (gpt-5.6-sol)
   lumi model <name>           Set active model by name or alias (e.g. lumi model luna)
   lumi models [--refresh]     Fetch live models from Codex & OpenRouter and display catalog
-
 \x1b[1;34mAuthentication & Identity:\x1b[0m
-  lumi login                  Sign in with OpenAI Codex OAuth (PKCE browser flow) or enter API keys
-  lumi logout                 Sign out and clear cached credentials
-  lumi whoami                 Display current authenticated user, tokens, and active LLM model
-  lumi auth status            Display authentication and sync diagnostics
+  lumi login                  Sign in with ChatGPT / OpenAI (1-Click browser login)
+  lumi logout                 Sign out and clear local session
+  lumi whoami                 Display active account, subscription tier, and model
+  lumi doctor                 Run system health and connectivity check
+  lumi setup                  Interactive account and model settings
 
 \x1b[1;34mLocal On-Premises & Models:\x1b[0m
   lumi local                  Auto-sense and probe local LLM servers (Ollama, LM Studio, llama.cpp)
@@ -5075,11 +5078,13 @@ if (isDirectCliExecution) {
       lumi.setModel(process.env.LUMI_MODEL_ID);
     }
 
-    if (isLogin || isSetup) {
+    if (isLogin) {
+      await lumi.setupWizard.loginInteractive();
+    } else if (isSetup) {
       await lumi.setupWizard.runInteractiveWizard();
     } else if (isLogout) {
       lumi.setupWizard.logoutCodexOAuth();
-      console.log("\n\x1b[1;32m[✓] Successfully signed out of OpenAI Codex OAuth.\x1b[0m");
+      console.log("\n\x1b[1;32m[✓] Successfully signed out of ChatGPT / OpenAI.\x1b[0m");
       console.log("\x1b[90mRun \x1b[36mlumi login\x1b[90m anytime to reconnect.\x1b[0m\n");
     } else if (isWhoAmI) {
       lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel());

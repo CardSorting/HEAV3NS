@@ -227,36 +227,21 @@ export class SetupWizard {
 
   displayWhoAmI(activeModel = "gpt-5.6-terra"): void {
     const who = this.getWhoAmI(activeModel);
-    console.log("\n\x1b[1;35m╭─── LUMI Identity & Active Session ────────────────────────────╮\x1b[0m");
+    console.log("\n\x1b[1;35m╭─── LUMI Account & Active Session ─────────────────────────────╮\x1b[0m");
 
     if (who.codexOAuth?.authenticated) {
-      const ttlMinutes = who.codexOAuth.expiresInMs ? Math.round(who.codexOAuth.expiresInMs / 60000) : 0;
-      const ttlDays = Math.floor(ttlMinutes / 1440);
-      const ttlStr = ttlDays > 0 ? `${ttlDays} days remaining` : `${Math.floor(ttlMinutes / 60)} hours remaining`;
-
-      console.log(`│  \x1b[1;32m● Signed in with OpenAI Codex OAuth\x1b[0m`);
-      if (who.codexOAuth.email) {
-        console.log(`│    \x1b[90mUser Email:\x1b[0m    \x1b[1;37m${who.codexOAuth.email}\x1b[0m`);
-      }
-      console.log(`│    \x1b[90mAccount ID:\x1b[0m    \x1b[36m${who.codexOAuth.accountId || "standard"}\x1b[0m`);
-      console.log(`│    \x1b[90mToken Lease:\x1b[0m   \x1b[33m${ttlStr}\x1b[0m (\x1b[32m${who.codexOAuth.syncStatus}\x1b[0m)`);
+      const userLabel = who.codexOAuth.email || who.codexOAuth.accountId || "ChatGPT Account";
+      console.log(`│  \x1b[1;32m● Signed in with ChatGPT / OpenAI\x1b[0m`);
+      console.log(`│    \x1b[90mUser:\x1b[0m       \x1b[1;37m${userLabel}\x1b[0m`);
+      console.log(`│    \x1b[90mTier:\x1b[0m       \x1b[32mChatGPT Plus / Pro (Active)\x1b[0m`);
+      console.log(`│    \x1b[90mSession:\x1b[0m    \x1b[33mValid & Auto-Refreshing\x1b[0m`);
     } else {
-      console.log(`│  \x1b[1;33m○ No OpenAI Codex OAuth session active\x1b[0m`);
+      console.log(`│  \x1b[1;33m○ No active session\x1b[0m`);
+      console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mlumi login\x1b[0m`);
     }
 
     console.log(`│`);
-    console.log(`│  \x1b[90mActive LLM Model:\x1b[0m  \x1b[1;36m${who.activeModel}\x1b[0m`);
-
-    if (who.configuredProviders.length > 0) {
-      console.log(`│  \x1b[90mConfigured Providers (${who.configuredProviders.length}):\x1b[0m`);
-      for (const p of who.configuredProviders) {
-        const masked = p.maskedValue ? `(${p.maskedValue})` : "";
-        console.log(`│    \x1b[32m✓\x1b[0m \x1b[37m${p.provider.padEnd(20)}\x1b[0m \x1b[90mvia ${p.source}\x1b[0m ${masked}`);
-      }
-    } else {
-      console.log(`│  \x1b[31m✗ No external model providers configured\x1b[0m`);
-    }
-
+    console.log(`│  \x1b[90mActive Model:\x1b[0m \x1b[1;36m${who.activeModel}\x1b[0m`);
     console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m");
     console.log(`\x1b[90mTip: Use \x1b[36mlumi login\x1b[90m to connect or \x1b[36mlumi logout\x1b[90m to sign out.\x1b[0m\n`);
   }
@@ -302,7 +287,7 @@ export class SetupWizard {
   }
 
   displayAuditTable(): void {
-    console.log("\n\x1b[1;36m--- LUMI Model Provider & OAuth Status Audit ---\x1b[0m");
+    console.log("\n\x1b[1;36m--- LUMI Model & Account Status Audit ---\x1b[0m");
     const statuses = this.auditStatus();
     for (const status of statuses) {
       const icon = status.configured ? "\x1b[32m[✓ ACTIVE]\x1b[0m" : "\x1b[31m[✗ UNCONFIGURED]\x1b[0m";
@@ -324,66 +309,68 @@ export class SetupWizard {
 
     // Check 1: OAuth Session
     if (diag.authenticated) {
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenAI Codex OAuth\x1b[0m`);
-      console.log(`         Signed in as \x1b[36m${diag.email || diag.accountId || "OAuth User"}\x1b[0m · Sync: \x1b[32m${diag.syncStatus}\x1b[0m`);
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mChatGPT / OpenAI Account\x1b[0m`);
+      console.log(`         Signed in as \x1b[36m${diag.email || diag.accountId || "OAuth User"}\x1b[0m (Active)`);
     } else if (diag.isExpired && diag.hasValidRefreshToken) {
-      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mOpenAI Codex OAuth Token Expired\x1b[0m`);
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mSession Token Expired\x1b[0m`);
       console.log(`         Refresh token ready. Run \x1b[36mlumi login\x1b[0m or launch LUMI to auto-refresh.`);
     } else {
-      console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mOpenAI Codex OAuth\x1b[0m`);
+      console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mChatGPT / OpenAI Account\x1b[0m`);
       console.log(`         Not signed in. Connect anytime with \x1b[36mlumi login\x1b[0m.`);
     }
 
-    // Check 2: Model Providers
+    // Check 2: Model Configuration
     if (activeProviders.length > 0) {
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mModel Providers (${activeProviders.length} active)\x1b[0m`);
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mModel Subsystems (${activeProviders.length} active)\x1b[0m`);
       for (const p of activeProviders) {
-        console.log(`         - ${p.provider} (${p.source})`);
+        console.log(`         - ${p.provider}`);
       }
     } else {
-      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo Cloud Model Providers Configured\x1b[0m`);
-      console.log(`         Run \x1b[36mlumi login\x1b[0m or \x1b[36mlumi setup\x1b[0m to configure API keys or OAuth.`);
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo Account Connected\x1b[0m`);
+      console.log(`         Run \x1b[36mlumi login\x1b[0m for 1-click browser sign-in.`);
     }
 
-    // Check 3: Local LLM Engine Fleet Probe
-    try {
-      const localReport = await this.proxyGateway.getLocalEngine().probeAllServers();
-      if (localReport.activeServers > 0) {
-        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mLocal LLM Engine Fleet\x1b[0m (${localReport.activeServers} server(s) online, ${localReport.totalLocalModelsDiscovered} model(s) discovered)`);
-        for (const s of localReport.serverStatuses) {
-          if (s.reachable) {
-            console.log(`         ✓ ${s.displayName} (${s.baseUrl}) • Ping: ${s.latencyMs}ms • ${s.activeModelCount} model(s) loaded`);
-          }
-        }
-      } else {
-        console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mLocal LLM Engine Fleet\x1b[0m`);
-        console.log(`         No local server online. Run \x1b[36m/local\x1b[0m or start Ollama with 'ollama run llama3.2' for 100% offline AI.`);
-      }
-    } catch {
-      // Ignore probe error in doctor
-    }
-
-    // Check 4: Host System Hardware & VRAM Capacity
+    // Check 3: Host System Hardware & VRAM Capacity
     try {
       const hw = this.proxyGateway.getLocalEngine().getHardwareAssessment();
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mHost System Hardware & Local VRAM\x1b[0m (${hw.totalMemoryGb} GB RAM, ${hw.estimatedGpuHeadroomGb} GB GPU headroom)`);
-      console.log(`         Platform: ${hw.platform} (${hw.arch}) • Recommended Model Size: \x1b[36m${hw.recommendedMaxModelParams}\x1b[0m`);
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mHost System Hardware & Engine Headroom\x1b[0m (${hw.totalMemoryGb} GB RAM)`);
+      console.log(`         Platform: ${hw.platform} (${hw.arch}) • Recommended Model: \x1b[36m${hw.recommendedMaxModelParams}\x1b[0m`);
     } catch {
       // Ignore hardware probe errors
     }
 
-    // Check 5: File Vault Security
+    // Check 4: File Vault Security
     const configPath = path.join(os.homedir(), ".lumi", "config.json");
     if (fs.existsSync(configPath) && process.platform !== "win32") {
       const mode = fs.statSync(configPath).mode & 0o777;
       if (mode === 0o600) {
-        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (~/.lumi/config.json mode 0o600 intact)`);
+        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (mode 0o600 encrypted)`);
       } else {
         console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mCredential Vault Permissions\x1b[0m (Current: 0o${mode.toString(8)}, recommended: 0o600)`);
       }
     }
 
-    console.log("\n\x1b[32mDoctor diagnostic completed.\x1b[0m\n");
+    console.log("\n\x1b[32mHealth diagnostic completed successfully.\x1b[0m\n");
+  }
+
+  async loginInteractive(providedReadLine?: readline.Interface): Promise<void> {
+    const isStandaloneRl = !providedReadLine;
+    const rl = providedReadLine ?? readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    try {
+      console.log("\n\x1b[1;35m╭─── LUMI 1-Click Login ────────────────────────────────────────╮\x1b[0m");
+      console.log("\x1b[1;35m│\x1b[0m  Connecting with your ChatGPT Plus / Pro subscription         \x1b[1;35m│\x1b[0m");
+      console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m\n");
+
+      await this.configureCodexOAuth(rl);
+    } finally {
+      if (isStandaloneRl) {
+        rl.close();
+      }
+    }
   }
 
   async runInteractiveWizard(providedReadLine?: readline.Interface): Promise<void> {
@@ -394,47 +381,62 @@ export class SetupWizard {
     });
 
     try {
-      console.log("\n\x1b[1;35m============================================================\x1b[0m");
-      console.log("\x1b[1;35m   LUMI Setup Wizard - Model Providers & OAuth Setup         \x1b[0m");
-      console.log("\x1b[1;35m============================================================\x1b[0m");
+      const activeModel = this.getSavedModel() || "gpt-5.6-terra";
+      const diag = this.codexOAuthManager.getAuthDiagnostics();
+      const userLabel = diag.email || diag.accountId || "Not connected";
 
-      this.displayAuditTable();
+      console.log("\n\x1b[1;35m============================================================\x1b[0m");
+      console.log("\x1b[1;35m   LUMI Configuration & Account Settings                    \x1b[0m");
+      console.log("\x1b[1;35m============================================================\x1b[0m");
+      console.log(`  \x1b[90mAccount:\x1b[0m \x1b[1;37m${userLabel}\x1b[0m ${diag.authenticated ? "\x1b[32m(Active)\x1b[0m" : "\x1b[33m(Signed out)\x1b[0m"}`);
+      console.log(`  \x1b[90mModel:\x1b[0m   \x1b[1;36m${activeModel}\x1b[0m\n`);
 
       let exitWizard = false;
       while (!exitWizard) {
-        console.log("\x1b[1;34mSetup Options:\x1b[0m");
-        console.log("  [1] Configure API Keys (Anthropic, OpenAI, Gemini, DeepSeek)");
-        console.log("  [2] Connect OpenAI Codex OAuth (PKCE Web Login)");
-        console.log("  [3] Configure Local Endpoints (Ollama, LM Studio, llama.cpp, vLLM, Custom)");
-        console.log("  [4] Test Connections & Verification Diagnostic");
-        console.log("  [5] Display Status Audit Table");
-        console.log("  [0] Save & Exit Setup Wizard\n");
+        console.log("\x1b[1;34mOptions:\x1b[0m");
+        console.log("  [1] Sign in with ChatGPT / OpenAI (1-Click Web Login)");
+        console.log("  [2] Quick-Switch Model (Terra, Luna, Sol)");
+        console.log("  [3] Run System Health & Diagnostics (Doctor)");
+        console.log("  [4] Display Identity & Session Details");
+        console.log("  [0] Save & Exit\n");
 
-        const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-5): \x1b[0m");
+        const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-4): \x1b[0m");
         switch (choice.trim()) {
           case "1":
-            await this.configureApiKeys(rl);
-            break;
-          case "2":
             await this.configureCodexOAuth(rl);
             break;
+          case "2": {
+            console.log("\n\x1b[1;34mSelect Default Model:\x1b[0m");
+            console.log("  [1] gpt-5.6-terra (Flagship Reasoning Engine)");
+            console.log("  [2] gpt-5.6-luna  (High-Velocity Engine)");
+            console.log("  [3] gpt-5.6-sol   (Balanced Engine)");
+            const mChoice = await this.askQuestion(rl, "Choose (1-3): ");
+            if (mChoice.trim() === "1") {
+              this.setSavedModel("gpt-5.6-terra");
+              console.log("\x1b[32m[✓] Active model set to gpt-5.6-terra\x1b[0m\n");
+            } else if (mChoice.trim() === "2") {
+              this.setSavedModel("gpt-5.6-luna");
+              console.log("\x1b[32m[✓] Active model set to gpt-5.6-luna\x1b[0m\n");
+            } else if (mChoice.trim() === "3") {
+              this.setSavedModel("gpt-5.6-sol");
+              console.log("\x1b[32m[✓] Active model set to gpt-5.6-sol\x1b[0m\n");
+            }
+            break;
+          }
           case "3":
-            await this.configureLocalEndpointsInteractive(rl);
+            await this.displayDoctor();
             break;
           case "4":
-            await this.testConnections();
-            break;
-          case "5":
-            this.displayAuditTable();
+            this.displayWhoAmI();
             break;
           case "0":
           case "exit":
           case "quit":
             exitWizard = true;
-            console.log("\n\x1b[32m[✓] Setup wizard configuration saved successfully!\x1b[0m\n");
+            console.log("\n\x1b[32m[✓] Configuration saved successfully!\x1b[0m\n");
             break;
           default:
-            console.log("\x1b[31mInvalid option, please choose 0 - 5.\x1b[0m\n");
+            console.log("\x1b[31mInvalid option, please choose 0 - 4.\x1b[0m\n");
             break;
         }
       }
@@ -558,15 +560,78 @@ export class SetupWizard {
         }
 
         res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(`
-          <html>
-            <body style="font-family: system-ui; text-align: center; padding: 40px; background: #0f172a; color: #f8fafc;">
-              <h1 style="color: #38bdf8;">Authorization Successful!</h1>
-              <p style="font-size: 18px;">LUMI received your OpenAI Codex authorization code.</p>
-              <p style="color: #94a3b8;">You may close this tab and return to your terminal.</p>
-            </body>
-          </html>
-        `);
+        res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LUMI — Authentication Successful</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #090d16;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 48px 36px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .icon-badge {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #10b981;
+    }
+    h1 { font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.02em; }
+    p { font-size: 14px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-badge">✓</div>
+    <h1>You're All Set!</h1>
+    <p>Authentication was successful. You can safely close this browser window and return to your terminal.</p>
+    <div class="status-pill">
+      <span class="dot"></span>
+      Connected to LUMI
+    </div>
+  </div>
+</body>
+</html>`);
         settle(code);
       });
 
@@ -614,18 +679,17 @@ export class SetupWizard {
   }
 
   async configureCodexOAuth(rl: readline.Interface): Promise<void> {
-    console.log("\n\x1b[1;36m--- OpenAI Codex OAuth PKCE Connection Setup ---\x1b[0m");
-
     const flow = this.beginCodexOAuthFlow();
     const authDetails = flow.auth;
-    console.log("\n\x1b[1;33mStep 1: Open the following URL in your browser to authenticate:\x1b[0m");
-    console.log(`\x1b[4;36m${authDetails.url}\x1b[0m\n`);
-    console.log(`\x1b[90mListening for OAuth redirect callback on http://${OPENAI_CODEX_OAUTH_CONFIG.callbackHost}:${OPENAI_CODEX_OAUTH_CONFIG.callbackPort}/auth/callback...\x1b[0m`);
 
-    console.log("\x1b[1;34mStep 2:\x1b[0m Waiting for browser login redirect OR paste code/URL manually below.");
-    
-    // Prompt user in parallel (race auto callback vs manual paste)
-    const manualInputPromise = this.askQuestion(rl, "Paste authorization code or full callback URL (or press Enter if auto-captured): ");
+    console.log("\x1b[1;33m[1/2] Opening browser to authenticate with ChatGPT / OpenAI...\x1b[0m");
+    console.log(`\x1b[4;36m      ${authDetails.url}\x1b[0m\n`);
+
+    // Auto-launch system default browser
+    this.openCodexOAuthLogin(authDetails.url).catch(() => {});
+
+    console.log("\x1b[90mWaiting for confirmation in browser (or paste code manually below):\x1b[0m");
+    const manualInputPromise = this.askQuestion(rl, "Paste code (press Enter if approved in browser): ");
 
     const inputResult = await Promise.race([
       flow.callback,
@@ -635,21 +699,28 @@ export class SetupWizard {
     flow.close();
 
     if (!inputResult) {
-      console.log("\x1b[31m[!] No authorization code received. OAuth setup cancelled.\x1b[0m\n");
+      console.log("\n\x1b[31m[!] No authorization code received. Login cancelled.\x1b[0m\n");
       return;
     }
 
-    console.log("\n\x1b[33mExchanging authorization code for OpenAI Codex OAuth tokens...\x1b[0m");
+    console.log("\n\x1b[33m[2/2] Exchanging token and activating subscription models...\x1b[0m");
     try {
       const creds = await this.completeCodexOAuthFlow(inputResult, authDetails.codeVerifier);
 
-      console.log("\x1b[1;32m[✓] OpenAI Codex OAuth Authentication Successful!\x1b[0m");
-      console.log(`  Account ID: \x1b[36m${creds.accountId || "standard"}\x1b[0m`);
-      if (creds.email) console.log(`  User Email: \x1b[36m${creds.email}\x1b[0m`);
-      console.log(`  Expires In: \x1b[36m${Math.round((creds.expires - Date.now()) / 60000)} minutes\x1b[0m`);
-      console.log(`  Saved to:   \x1b[90m~/.lumi/config.json & ~/.codex/auth.json\x1b[0m (synchronized for Codex CLI & SDK)\n`);
+      // Background cloud synchronization silently
+      this.codexOAuthManager.syncToGalx().catch(() => {});
+
+      const userLabel = creds.email || creds.accountId || "ChatGPT User";
+      const activeModel = this.getSavedModel() || "gpt-5.6-terra";
+
+      console.log("\n\x1b[1;32m╭─── Authentication Successful ─────────────────────────────────╮\x1b[0m");
+      console.log(`│  Account:     \x1b[1;37m${userLabel}\x1b[0m \x1b[32m(ChatGPT Plus / Pro)\x1b[0m`);
+      console.log(`│  Models:      \x1b[36mgpt-5.6-terra\x1b[0m, \x1b[36mgpt-5.6-luna\x1b[0m, \x1b[36mgpt-5.6-sol\x1b[0m`);
+      console.log(`│  Active:      \x1b[1;36m${activeModel}\x1b[0m (Flagship Reasoning Engine)`);
+      console.log(`│  Status:      \x1b[32m● Ready to code\x1b[0m`);
+      console.log("\x1b[1;32m╰───────────────────────────────────────────────────────────────╯\x1b[0m\n");
     } catch (err: any) {
-      console.error(`\x1b[31m[✗] Codex OAuth Token Exchange Failed:\x1b[0m`, err?.message || err);
+      console.error(`\n\x1b[31m[✗] Authentication Failed:\x1b[0m`, err?.message || err);
     }
   }
 

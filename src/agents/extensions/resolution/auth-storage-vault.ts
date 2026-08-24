@@ -1,45 +1,59 @@
+import { BroccoliDbTable } from "../../../sessions/extensions/substrate/broccolidb-table.js";
+
 export interface AuthTokenRecord {
+  id?: string;
   provider: string;
   token: string;
   updatedAt: number;
 }
 
 /**
- * Pass 97: Auth Storage Vault
- * Ingests runtime authentication credential storage & OAuth token vault concepts from `packages/coding-agent/src/core/auth-storage.ts`.
- * Manages in-memory provider tokens, API keys, and authorization credentials safely.
+ * Pass 97 & Phase 112: Hybrid BroccoliDB-Backed Auth Storage Vault
+ * Backed by high-velocity in-memory BroccoliDbTable with secondary equality & sorted indices.
+ * Manages runtime provider tokens, API keys, and authorization credentials safely with sub-microsecond latency.
  */
 export class AuthStorageVault {
-  private vault: Map<string, AuthTokenRecord>;
+  private readonly table: BroccoliDbTable<AuthTokenRecord & Record<string, unknown>>;
 
   constructor() {
-    this.vault = new Map();
+    this.table = new BroccoliDbTable("auth_credentials_vault");
+    this.table.createIndex("provider");
+    this.table.createSortedIndex("updatedAt");
   }
 
   setToken(provider: string, token: string): AuthTokenRecord {
-    const record: AuthTokenRecord = {
-      provider: provider.toLowerCase(),
+    const key = provider.toLowerCase();
+    const record: AuthTokenRecord & Record<string, unknown> = {
+      id: key,
+      provider: key,
       token,
       updatedAt: Date.now(),
     };
-    this.vault.set(provider.toLowerCase(), record);
+    this.table.put(key, record);
     return record;
   }
 
   getToken(provider: string): string | undefined {
-    return this.vault.get(provider.toLowerCase())?.token;
+    const record = this.table.get(provider.toLowerCase());
+    return record?.token as string | undefined;
   }
 
   hasToken(provider: string): boolean {
-    const record = this.vault.get(provider.toLowerCase());
-    return record !== undefined && record.token.trim().length > 0;
+    const record = this.table.get(provider.toLowerCase());
+    const token = record?.token as string | undefined;
+    return token !== undefined && token.trim().length > 0;
   }
 
   clearToken(provider: string): boolean {
-    return this.vault.delete(provider.toLowerCase());
+    return this.table.delete(provider.toLowerCase());
   }
 
   listProviders(): readonly string[] {
-    return Array.from(this.vault.keys());
+    return this.table.getAll().map((rec) => (rec.provider as string) || (rec.id as string));
+  }
+
+  getTable(): BroccoliDbTable<AuthTokenRecord & Record<string, unknown>> {
+    return this.table;
   }
 }
+
