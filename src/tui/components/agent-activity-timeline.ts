@@ -6,6 +6,7 @@ import type {
 import type { Component } from "../tui.js";
 import { sanitizeProgressText } from "../../core/utilities/progress-sanitizer.js";
 import { Text } from "./text.js";
+import * as path from "node:path";
 
 const ACTIVE_FRAMES = ["◐", "◓", "◑", "◒"] as const;
 
@@ -29,7 +30,7 @@ export class AgentActivityTimeline implements Component {
 
   constructor(options: AgentActivityTimelineOptions) {
     this.model = sanitizeProgressText(options.model, 80);
-    this.maxVisibleActivities = Math.max(3, options.maxVisibleActivities ?? 8);
+    this.maxVisibleActivities = Math.max(3, options.maxVisibleActivities ?? 16);
     this.startedAt = options.startedAt ?? Date.now();
   }
 
@@ -359,6 +360,20 @@ export class AgentActivityTimeline implements Component {
       highlights.push(`  \x1b[1;32m📄 Artifacts:\x1b[0m \x1b[1;37m${uniqueFiles.slice(0, 4).join(", ")}${uniqueFiles.length > 4 ? ` (+${uniqueFiles.length - 4} more)` : ""}\x1b[0m`);
     }
 
+    // Look for screenshots captured
+    const screenshots: string[] = [];
+    for (const entry of this.entries.values()) {
+      const text = `${entry.message} ${entry.detail ?? ""}`;
+      const match = text.match(/(?:--screenshot=|\.impeccable\/review\/|screenshot\s+)([a-zA-Z0-9_./-]+\.png)/i);
+      if (match && match[1]) {
+        screenshots.push(path.basename(match[1]));
+      }
+    }
+    const uniqueScreenshots = Array.from(new Set(screenshots));
+    if (uniqueScreenshots.length > 0) {
+      highlights.push(`  \x1b[1;35m📸 Captures:\x1b[0m \x1b[1;37m${uniqueScreenshots.slice(0, 3).join(", ")}${uniqueScreenshots.length > 3 ? ` (+${uniqueScreenshots.length - 3} more)` : ""}\x1b[0m`);
+    }
+
     return highlights;
   }
 
@@ -384,6 +399,8 @@ export class AgentActivityTimeline implements Component {
         return "\x1b[35m[Draft]\x1b[0m";
       case "connecting":
         return `\x1b[90m[Init${attemptTag}]\x1b[0m`;
+      case "failed":
+        return `\x1b[31m[Fail${attemptTag}]\x1b[0m`;
       default:
         return "";
     }

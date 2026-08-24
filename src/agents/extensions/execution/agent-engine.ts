@@ -742,7 +742,7 @@ export class AgentEngine extends AbstractAgentEngine {
 
     try {
       const providerPrompt = requiresBootstrap
-        ? this.promptComposer.composeThreadBootstrap(contextMessages, promptText)
+        ? this.promptComposer.composeThreadBootstrap(contextMessages, promptText, this.sessionContext)
         : promptText;
       const { events } = await this.codexThread.runStreamed(providerPrompt, { signal: turnSignal });
 

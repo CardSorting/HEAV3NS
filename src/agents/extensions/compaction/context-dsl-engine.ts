@@ -30,6 +30,7 @@ export interface ThreadBootstrapEnvelope extends BaseDslEnvelope {
   kind: "thread";
   purpose: string;
   boundary: string;
+  workspaceCwd?: string;
   contextMessages: Array<{ role: string; content: string; name?: string; toolCallId?: string }>;
   currentRequest: string;
   instructions: string;

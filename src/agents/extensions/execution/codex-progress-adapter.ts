@@ -577,11 +577,32 @@ export class CodexProgressAdapter {
     if (/^npm run smoke\b/i.test(trimmed)) return "Running runtime smoke checks";
     if (/^npm run benchmark\b/i.test(trimmed)) return "Benchmarking performance SLAs";
 
+    // Browser Screenshots & Headless Automation
+    if (/Google\s+Chrome.*--screenshot|chrome.*--screenshot/i.test(trimmed)) {
+      return "Capturing browser screenshot";
+    }
+    if (/playwright\s+screenshot/i.test(trimmed)) {
+      return "Capturing Playwright screenshot";
+    }
+    if (/playwright\b/i.test(trimmed)) {
+      return "Running Playwright browser test";
+    }
+
+    // Skills & Evaluation Scripts
+    if (/skills\/impeccable\/scripts\/([a-zA-Z0-9_-]+)/i.test(trimmed)) {
+      const scriptName = trimmed.match(/skills\/impeccable\/scripts\/([a-zA-Z0-9_-]+)/i)?.[1];
+      return `Running design assistant (${scriptName})`;
+    }
+
     // File System Mutation Helpers
     if (/^mkdir\b/i.test(trimmed)) return "Creating directories";
     if (/^chmod\b/i.test(trimmed)) return "Updating file permissions";
     if (/^(?:cp|mv)\b/i.test(trimmed)) return "Managing workspace files";
-    if (/^node\s+-e\b/i.test(trimmed)) return "Executing inline Node script";
+    if (/^node\s+<<|node\s+-e\b/i.test(trimmed)) return "Executing Node evaluation script";
+    if (/^node\s+([a-zA-Z0-9_.-]+)/i.test(trimmed)) {
+      const file = trimmed.match(/^node\s+([a-zA-Z0-9_.-]+)/i)?.[1];
+      return `Running Node script (${file})`;
+    }
 
     return "Running workspace command";
   }
