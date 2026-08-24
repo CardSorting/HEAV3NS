@@ -204,6 +204,7 @@ export class InteractiveModeController {
 
     // Initial Welcome Card Box
     const welcomeCardBox = new Box(1, 0, (text: string) => `\x1b[48;5;236m${text}\x1b[0m`);
+    let welcomeCardShown = true;
     const who = monolith.setupWizard.getWhoAmI(monolith.config.modelName);
 
     let welcomeText = "";
@@ -1324,6 +1325,12 @@ export class InteractiveModeController {
           historyScrollView.scrollToEnd();
           tui.requestRender();
           return;
+        }
+
+        // Automatically hide initial welcome card once user begins active turns
+        if (welcomeCardShown) {
+          historyContainer.removeChild(welcomeCardBox);
+          welcomeCardShown = false;
         }
 
         // Render Framed User Prompt Card

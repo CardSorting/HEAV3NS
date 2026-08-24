@@ -172,14 +172,13 @@ export class CodexProgressAdapter {
     // Emit an active status telemetry pulse when operations have been quiet for >= 10s
     if (idleMs >= 10_000 && idleMs % 10_000 < 1500) {
       const phaseDesc = phase === "TOOL_EXECUTION" ? "Workspace tool execution" : "Model deliberation";
-      const modelTag = this.model ? `[${this.model}] ` : "";
-      const hint = idleMs >= 25_000 ? " · [Esc to cancel / retry with /terra]" : "";
+      const hint = idleMs >= 25_000 ? " · [Esc to cancel]" : "";
       this.emit({
         activityId: `codex:telemetry:${this.attempt}`,
         phase: phase === "TOOL_EXECUTION" ? "tool" : "thinking",
         status: "in_progress",
-        message: `${modelTag}${phaseDesc} in progress (${this.formatDuration(totalElapsedMs)} elapsed)`,
-        detail: `Stream quiet for ${this.formatDuration(idleMs)} · Watchdog budget: ${this.formatDuration(remainingBudgetMs)} remaining${hint}`,
+        message: `${phaseDesc} in progress`,
+        detail: `Quiet for ${this.formatDuration(idleMs)} · Watchdog: ${this.formatDuration(remainingBudgetMs)} remaining${hint}`,
         elapsedMs: totalElapsedMs,
         metadata: {
           ...this.turnMetadata(),
