@@ -6,9 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [Unreleased]
+## [1.0.9] - 2026-08-25
 
-### Added (High-Velocity Pattern Search Engine & Zen Direct I/O Authority — ADR-136 / Passes 1–31)
+### Added (Supreme Autonomous Agent Developer Tool Ergonomics & High-Throughput I/O Authority — ADRs 142–146)
+
+- **Sovereign Zenith Turn Execution Profiling & Transactional Checkpoints ([ADR-142](docs/adr/ADR-142-sovereign-zenith-turn-execution-profiling-and-transactional-checkpoints.md))**:
+  - Sub-millisecond workspace checkpoints (`create_workspace_checkpoint` / `restore_workspace_checkpoint`) with instant rollback.
+  - Unified diffs with fuzzy-factor fallback (`apply_unified_diff`).
+  - AST outline extraction (`get_file_outline`), syntax validation (`validate_code_syntax`), and automated indentation formatting (`format_code_content`).
+  - Diagnostic failure analysis (`diagnose_tool_failure`) and workspace integrity auditing (`audit_workspace_integrity`).
+
+- **Sovereign Omnipresence AST Import Resolution, Type Introspection & Codebase Refactoring ([ADR-143](docs/adr/ADR-143-sovereign-omnipresence-ast-imports-types-and-codebase-refactoring.md))**:
+  - AST-driven relative import auto-repair (`resolve_and_fix_imports`) inserting missing headers and fixing moved files.
+  - Type declaration compression (`introspect_type_signatures`) delivering 46.4% token savings on public interfaces.
+  - Whole-word codebase symbol renamer (`rename_symbol_across_codebase`) with dry-run previews and transactional journal rollback.
+  - In-memory git-free stash manager (`manage_workspace_stash`).
+  - Directed import dependency matrix and circular dependency cycle detection (`generate_dependency_matrix`).
+
+- **Transcendental Singularity In-Memory BM25 Search, Orphan Exports & Complexity Profiling ([ADR-144](docs/adr/ADR-144-transcendental-singularity-bm25-semantics-and-complexity-evaluation.md))**:
+  - Sub-5ms in-memory BM25 semantic code search (`search_codebase_semantic`).
+  - Unused orphan export pruner (`prune_unused_exports`).
+  - Standardized ADR-compliant file scaffolder (`scaffold_file_template`).
+  - Cyclomatic complexity and Maintainability Index calculator (`evaluate_code_complexity`).
+  - High-resolution latency benchmarking (`benchmark_tool_latency`).
+
+- **Infinite Omniscience Regex Mutator, Doc Link Validator & Debt Harvester ([ADR-145](docs/adr/ADR-145-infinite-omniscience-regex-mutator-doc-validator-and-debt-harvester.md))**:
+  - Multi-file regex mutations with capture group interpolation (`batch_regex_mutate`).
+  - Markdown documentation link and anchor validator (`validate_documentation_links`).
+  - Transaction journal revision history inspector (`inspect_file_history`).
+  - Technical debt and TODO harvester (`harvest_technical_debt`).
+  - Contiguous 16MB memory slab buffer optimizer (`optimize_memory_slab`).
+
+- **Supreme Sovereign Continuum Code Slicing, Contract Differ, Secret Scanner & Tree Hierarchy ([ADR-146](docs/adr/ADR-146-supreme-sovereign-continuum-code-slicing-contracts-secrets-and-tree-hierarchy.md))**:
+  - Context-compressing semantic code chunk slicer (`slice_code_chunks`).
+  - TypeScript interface contract mutation differ (`diff_interface_contracts`).
+  - In-memory security secret leak and dangerous eval scanner (`scan_security_vulnerabilities`).
+  - Token-shingling code clone and duplicate detector (`detect_code_duplicates`).
+  - Interactive Unicode workspace directory tree visualizer (`generate_workspace_tree`).
+  - Package.json semver and overlapping dependency auditor (`audit_package_dependencies`).
+  - Dot-notation JSON configuration patcher (`patch_json_config`).
+  - Code smell and anti-pattern detector (`detect_code_smells`).
+  - Diagnostic session state and telemetry exporter (`export_session_state`).
 
 - **Native Zero-Subprocess Pattern Search Engine (`RipgrepSearchService`)**: Implemented high-throughput in-memory directory traversal with pure literal `indexOf` fast-path (5–10x faster than shell `grep`), eliminating subshell spawning latency and cross-platform flag discrepancies ([ADR-136](docs/adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)).
 - **Regex Subgroup Captures Extraction (`captures`)**: Added automatic subgroup extraction (`match.slice(1)`) directly inside `RipgrepMatch` for downstream AST and refactoring tools.
