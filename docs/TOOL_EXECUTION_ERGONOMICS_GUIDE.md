@@ -210,10 +210,48 @@ harness.loadFixtures(savedFixtures);
 | **Tool Execution Concurrency Speedup** | $\ge 2.0\times$ speedup | **`2.91x speedup`** | [`scripts/validate-apex-tool-execution-pipeline.ts`](../scripts/validate-apex-tool-execution-pipeline.ts) |
 | **Read Cache Lookup Latency** | $< 0.05\text{ ms}$ | **`< 0.01 ms`** | [`scripts/validate-apex-tool-execution-pipeline.ts`](../scripts/validate-apex-tool-execution-pipeline.ts) |
 | **Schema Token Compression Ratio** | $\ge 35\%\text{ savings}$ | **`43.9% token savings`** | [`scripts/validate-apex-tool-middleware-engine.ts`](../scripts/validate-apex-tool-middleware-engine.ts) |
-| **State Rewind Latency** | $< 0.10\text{ ms p95}$ | **`0.022 ms p95`** | [`scripts/validate-apex-tool-ecosystem-zenith.ts`](../scripts/validate-apex-tool-ecosystem-zenith.ts) |
-| **Ergonomics & Schema Suite** | $6/6\text{ tests}$ | **`6/6 passed (100%)`** | [`scripts/validate-tool-calling-ergonomics.ts`](../scripts/validate-tool-calling-ergonomics.ts) |
-| **Sentinel Safety Suite** | $7/7\text{ tests}$ | **`7/7 passed (100%)`** | [`scripts/validate-apex-tool-runtime-sentinel.ts`](../scripts/validate-apex-tool-runtime-sentinel.ts) |
-| **DAG & Mock Engine Suite** | $6/6\text{ tests}$ | **`6/6 passed (100%)`** | [`scripts/validate-apex-tool-dag-engine.ts`](../scripts/validate-apex-tool-dag-engine.ts) |
-| **QoL I/O Authority Suite** | $78/78\text{ tests}$ | **`78/78 passed (100%)`** | [`scripts/validate-qol-enhancements.ts`](../scripts/validate-qol-enhancements.ts) |
+| **State Rewind Latency** | $< 0.10\text{ ms p95}$ | **`0.012 ms p95`** | [`scripts/validate-repo.ts`](../scripts/validate-repo.ts) |
+| **Turn Tick Latency** | $< 1.0\text{ ms}$ | **`0.22 ms`** | [`scripts/validate-repo.ts`](../scripts/validate-repo.ts) |
+| **Frame Execution Throughput** | $\ge 1000\text{ frames/sec}$ | **`4626.95 frames/sec`** | [`scripts/validate-repo.ts`](../scripts/validate-repo.ts) |
+| **Full Repository Test Runner** | $100\%\text{ suites green}$ | **`138/138 suites passed (47.35s)`** | [`scripts/test-runner.ts`](../scripts/test-runner.ts) |
 | **TypeScript Type Checking** | $0\text{ errors}$ | **`0 errors (tsc --noEmit)`** | `npm run check` |
-| **Documentation Integrity** | $100\%\text{ valid links}$ | **`409/409 files valid`** | `scripts/validate-documentation.ts` |
+
+---
+
+## 11. 🚀 Autonomous Agent Tool & Diagnostics Catalog
+
+LUMI equips agents with sub-millisecond, zero-blocker developer tools partitioned into 4 high-velocity execution domains:
+
+### 1. Codebase Discovery & Context Compression
+- **`search_codebase_semantic`**: In-memory BM25 term relevance scoring across workspace source code (< 5ms latency).
+- **`slice_code_chunks`**: Context-compressing function/method scope slicer prepending top imports and class signatures.
+- **`introspect_type_signatures`**: Extracts condensed `.d.ts` declaration signatures saving 46.4% prompt tokens.
+- **`get_file_outline`**: High-speed AST class, interface, method, and function outline extraction.
+- **`generate_workspace_tree`**: Depth-limited interactive Unicode directory hierarchy tree with file sizes and line counts.
+- **`generate_dependency_matrix`**: Directed graph import analysis, DFS circular dependency cycle detection, and Kahn's topological sort.
+
+### 2. High-Throughput Refactoring & Mutations
+- **`rename_symbol_across_codebase`**: Whole-word (`\b`) multi-file symbol refactoring with dry-run previews and transactional journal backups.
+- **`batch_regex_mutate`**: Multi-file regex search-and-replace supporting capture group interpolation (`$1`, `$2`), flags, and rollback tracking.
+- **`patch_json_config`**: In-memory dot-notation JSON mutator (`"compilerOptions.strict"`) with dry-run verification.
+- **`resolve_and_fix_imports`**: AST-driven auto-repair of broken relative imports and insertion of missing headers.
+- **`scaffold_file_template`**: Type-safe boilerplate scaffolding for `service`, `controller`, `test`, `component`, and `config` files.
+- **`format_code_content`**: Deterministic code indentation and whitespace normalizer.
+
+### 3. Codebase Hygiene, Quality & Anti-Pattern Auditing
+- **`evaluate_code_complexity`**: Calculates cyclomatic complexity, function count, LOC, and Maintainability Index (0–100).
+- **`detect_code_smells`**: Scans for giant functions (>80 LOC), deep nesting (>4 levels), long parameter lists, and empty catch blocks.
+- **`detect_code_duplicates`**: Token-shingling sliding window clone detector identifying copy-pasted blocks across files.
+- **`scan_security_vulnerabilities`**: In-memory scanner detecting hardcoded API keys (AWS, Stripe, GitHub), private keys, and dangerous invocations (`eval`, `child_process.exec`).
+- **`audit_package_dependencies`**: Audits `package.json` files for wildcard versions (`*`), overlapping dependencies, and missing script hooks.
+- **`prune_unused_exports`**: Cross-references workspace exports against the import graph to discover dead orphan code.
+- **`validate_documentation_links`**: Scans all markdown documentation to isolate broken relative links and anchors.
+
+### 4. Deterministic State, Telemetry & Memory Governance
+- **`manage_workspace_stash`**: Git-free in-memory snapshot stashing (`save`, `pop`, `list`, `drop`).
+- **`create_workspace_checkpoint` / `restore_workspace_checkpoint`**: Instantaneous working-tree snapshot and one-shot rollback.
+- **`inspect_file_history`**: Chronological mutation journal history querying past tool modifications and diffs.
+- **`inspect_monolith_health`**: Verifies Grand Monolith composition (591/591 components, OPTIMAL cohesion, slab integrity).
+- **`export_session_state`**: Diagnostic JSON snapshot of session variables, journal transaction counts, cache stats, and latency metrics.
+- **`optimize_memory_slab`**: Verifies zero-GC contiguous 16MB slab memory buffer health and runtime GC stats.
+

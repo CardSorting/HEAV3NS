@@ -15,6 +15,11 @@ export class ThreatFirewallToolSuite {
     this.supervisor = supervisor;
   }
 
+  public getSupervisor(): ThreatFirewallSupervisor {
+    return this.supervisor;
+  }
+
+
   public getTools(): ToolDefinition[] {
     return [
       {

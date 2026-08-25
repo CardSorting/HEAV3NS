@@ -8,11 +8,11 @@ const COMMON_PARAM_ALIASES: Record<string, readonly string[]> = {
   path: ["filePath", "file_path", "file", "targetFile", "target_file", "targetPath", "target_path", "filename", "directory", "dir"],
   paths: ["filePaths", "file_paths", "files", "targetFiles"],
   source: ["sourcePath", "source_path", "from", "src", "inputPath"],
-  target: ["targetPath", "target_path", "to", "dest", "destination", "outputPath"],
+  target: ["targetContent", "target_content", "targetSnippet", "targetPath", "target_path", "find", "search_text", "to", "dest", "destination", "outputPath"],
   command: ["cmd", "script", "shellCommand", "shell_command", "run"],
   content: ["text", "body", "data", "code", "fileContent", "file_content"],
   query: ["pattern", "search_term", "searchTerm", "search_query", "term", "q"],
-  replacement: ["replace", "new_text", "newText", "newContent", "new_content"],
+  replacement: ["replacementContent", "replacement_content", "replace", "new_text", "newText", "newContent", "new_content"],
   startLine: ["start_line", "fromLine", "start"],
   endLine: ["end_line", "toLine", "end"],
 };
@@ -108,6 +108,9 @@ export class ToolCallArgParser {
 
     // Fix single quotes around keys and values: {'key': 'val'} -> {"key": "val"}
     text = text.replace(/'((?:\\.|[^'])*)'/g, '"$1"');
+
+    // Fix unquoted property keys: { key: "val" } -> { "key": "val" }
+    text = text.replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":');
 
     // Fix Python boolean and null literals: True -> true, False -> false, None -> null
     text = text.replace(/:\s*\bTrue\b/g, ": true");
@@ -247,8 +250,12 @@ export class ToolCallArgParser {
       }
     }
 
-    // Auto-parse stringified JSON for any remaining properties not explicitly constrained
+    // Auto-parse stringified JSON for any remaining properties not explicitly constrained as string
     for (const [key, val] of Object.entries(coerced)) {
+      const explicitSchema = paramsSchema?.[key];
+      if (explicitSchema?.type === "string") {
+        continue;
+      }
       if (typeof val === "string") {
         const trimmed = val.trim();
         if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
@@ -260,6 +267,8 @@ export class ToolCallArgParser {
         }
       }
     }
+
+
 
     return coerced;
   }

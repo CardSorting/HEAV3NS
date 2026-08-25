@@ -162,4 +162,30 @@ export class ToolOutputGovernor {
     const entry = this.spillVault.get(spillId);
     return entry ? entry.content : null;
   }
+
+  /**
+   * Retrieves a specific line range slice from spilled content by spill ID.
+   */
+  public retrieveSpillSlice(
+    spillId: string,
+    startLine = 1,
+    endLine?: number
+  ): { content: string; totalLines: number; startLine: number; endLine: number } | null {
+    const raw = this.getSpillContent(spillId);
+    if (!raw) return null;
+
+    const lines = raw.split("\n");
+    const totalLines = lines.length;
+    const s = Math.max(1, Math.min(startLine, totalLines));
+    const e = Math.min(endLine ?? totalLines, totalLines);
+
+    const sliceLines = lines.slice(s - 1, e);
+    return {
+      content: sliceLines.join("\n"),
+      totalLines,
+      startLine: s,
+      endLine: e,
+    };
+  }
 }
+

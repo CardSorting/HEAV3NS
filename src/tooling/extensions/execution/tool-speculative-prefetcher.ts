@@ -21,6 +21,8 @@ export interface PrefetchEntry {
 export class ToolSpeculativePrefetcher {
   private activePrefetches = new Map<string, PrefetchEntry>();
   private readonly maxTtlMs: number;
+  private totalPrefetched = 0;
+  private totalConsumed = 0;
 
   constructor(options: { maxTtlMs?: number } = {}) {
     this.maxTtlMs = options.maxTtlMs ?? 15_000;
@@ -32,6 +34,42 @@ export class ToolSpeculativePrefetcher {
   public generateKey(toolName: string, args: Record<string, unknown>, cwd: string): string {
     const serialized = JSON.stringify({ toolName, args, cwd });
     return crypto.createHash("sha256").update(serialized).digest("hex").slice(0, 16);
+  }
+
+  /**
+   * Analyzes a streaming raw JSON token buffer and speculatively prefetches read targets early.
+   */
+  public onStreamChunk(
+    toolName: string,
+    partialJson: string,
+    cwd: string,
+    registry: IToolRegistry
+  ): boolean {
+    if (!partialJson || partialJson.length < 5) return false;
+
+    // Fast heuristic extraction of path or query arguments
+    const pathMatch = partialJson.match(/"(?:path|filePath|file|targetFile)"\s*:\s*"([^"]+)"/);
+    if (pathMatch && pathMatch[1]) {
+      const extractedPath = pathMatch[1];
+      if (toolName === "view_file" || toolName === "file_info" || toolName === "path_exists") {
+        this.prefetch(toolName, { path: extractedPath }, cwd, registry);
+        return true;
+      }
+    }
+
+    const queryMatch = partialJson.match(/"(?:query|pattern|search_term)"\s*:\s*"([^"]+)"/);
+    if (queryMatch && queryMatch[1] && toolName === "grep_search") {
+      this.prefetch(toolName, { query: queryMatch[1] }, cwd, registry);
+      return true;
+    }
+
+    const dirMatch = partialJson.match(/"(?:directory|dir)"\s*:\s*"([^"]+)"/);
+    if (dirMatch && dirMatch[1] && toolName === "list_dir") {
+      this.prefetch(toolName, { directory: dirMatch[1] }, cwd, registry);
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -50,6 +88,7 @@ export class ToolSpeculativePrefetcher {
     const key = this.generateKey(toolName, args, cwd);
     if (this.activePrefetches.has(key)) return;
 
+    this.totalPrefetched++;
     const promise = registry.executeTool(toolName, args, cwd).catch((err) => {
       // Isolate prefetch errors
       return { prefetchError: err instanceof Error ? err.message : String(err) };
@@ -70,6 +109,21 @@ export class ToolSpeculativePrefetcher {
   }
 
   /**
+   * Proactively warms a collection of workspace paths into cache via view_file / file_info.
+   */
+  public warmPaths(paths: readonly string[], cwd: string, registry: IToolRegistry): number {
+    let count = 0;
+    for (const p of paths) {
+      if (typeof p === "string" && p.trim()) {
+        this.prefetch("view_file", { path: p.trim() }, cwd, registry);
+        this.prefetch("file_info", { path: p.trim() }, cwd, registry);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Attempts to consume a pre-warmed execution result.
    */
   public async consumePrefetch(
@@ -85,6 +139,7 @@ export class ToolSpeculativePrefetcher {
     }
 
     this.activePrefetches.delete(key);
+    this.totalConsumed++;
 
     try {
       const result = await entry.promise;
@@ -95,9 +150,32 @@ export class ToolSpeculativePrefetcher {
   }
 
   /**
+   * Returns operational statistics of the speculative prefetcher.
+   */
+  public getStats(): {
+    activeCount: number;
+    totalPrefetched: number;
+    totalConsumed: number;
+    hitRatePercent: number;
+  } {
+    const hitRatePercent =
+      this.totalPrefetched > 0
+        ? Number(((this.totalConsumed / this.totalPrefetched) * 100).toFixed(1))
+        : 0;
+
+    return {
+      activeCount: this.activePrefetches.size,
+      totalPrefetched: this.totalPrefetched,
+      totalConsumed: this.totalConsumed,
+      hitRatePercent,
+    };
+  }
+
+  /**
    * Clears all pending prefetches.
    */
   public clear(): void {
     this.activePrefetches.clear();
   }
 }
+

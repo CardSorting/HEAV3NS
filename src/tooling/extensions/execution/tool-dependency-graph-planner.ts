@@ -22,6 +22,15 @@ export interface DAGExecutionPlan {
   readonly hasCycles: boolean;
 }
 
+export class DAGExecutionResultMap extends Map<string, ToolExecutionRecord> {
+  public metrics: { totalDurationMs: number; totalNodes: number; wavesCount: number; speedup: number } = {
+    totalDurationMs: 0,
+    totalNodes: 0,
+    wavesCount: 0,
+    speedup: 1.0,
+  };
+}
+
 export class ToolDependencyGraphPlanner {
   /**
    * Builds an execution DAG and partitions nodes into topological parallel waves.
@@ -136,20 +145,80 @@ export class ToolDependencyGraphPlanner {
   }
 
   /**
-   * Executes a DAG of tool calls wave by wave.
+   * Automatically infers DAGToolNode graph with dependencies from a flat array of tool calls.
+   */
+  public inferDependenciesFromBatch(
+    calls: readonly { id?: string; name: string; args: Record<string, unknown> }[],
+    cwd: string = process.cwd()
+  ): DAGToolNode[] {
+    const nodes: DAGToolNode[] = [];
+    const resourceWriters = new Map<string, string>(); // resourcePath -> nodeId
+
+    for (let i = 0; i < calls.length; i++) {
+      const call = calls[i];
+      const id = call.id || `node_${i + 1}`;
+      const dependencies: string[] = [];
+
+      // 1. Detect explicit pipe dependencies ($nodeId...)
+      const serialized = JSON.stringify(call.args);
+      const pipeMatches = serialized.match(/\$([a-zA-Z0-9_-]+)\./g);
+      if (pipeMatches) {
+        for (const m of pipeMatches) {
+          const depId = m.slice(1, -1);
+          if (!dependencies.includes(depId)) {
+            dependencies.push(depId);
+          }
+        }
+      }
+
+      // 2. Detect implicit resource dependencies (read after write)
+      const targetPath = typeof call.args.path === "string" ? call.args.path : (typeof call.args.filePath === "string" ? call.args.filePath : undefined);
+      if (targetPath) {
+        const fullPath = targetPath.startsWith("/") ? targetPath : `${cwd}/${targetPath}`;
+        const prevWriterId = resourceWriters.get(fullPath);
+        if (prevWriterId && prevWriterId !== id && !dependencies.includes(prevWriterId)) {
+          dependencies.push(prevWriterId);
+        }
+
+        // If this is a writer tool, record as active writer
+        if (
+          call.name.includes("write") ||
+          call.name.includes("replace") ||
+          call.name.includes("append") ||
+          call.name.includes("patch")
+        ) {
+          resourceWriters.set(fullPath, id);
+        }
+      }
+
+      nodes.push({
+        id,
+        toolName: call.name,
+        args: call.args,
+        dependencies,
+      });
+    }
+
+    return nodes;
+  }
+
+  /**
+   * Executes a DAG of tool calls wave by wave with rich metrics.
    */
   public async executeDAG(
     nodes: readonly DAGToolNode[],
     cwd: string,
     registry: IToolRegistry
-  ): Promise<Map<string, ToolExecutionRecord>> {
+  ): Promise<DAGExecutionResultMap> {
     const plan = this.planDAG(nodes);
     if (plan.hasCycles) {
       throw new Error("Cannot execute Tool DAG: cyclic dependency detected.");
     }
 
     const results = new Map<string, unknown>();
-    const records = new Map<string, ToolExecutionRecord>();
+    const records = new DAGExecutionResultMap();
+    const dagStartTime = Date.now();
+    let sequentialEstimatedMs = 0;
 
     for (const wave of plan.waves) {
       const wavePromises = wave.map(async (node) => {
@@ -158,6 +227,7 @@ export class ToolDependencyGraphPlanner {
         try {
           const res = await registry.executeTool(node.toolName, resolvedArgs, cwd);
           const durationMs = Date.now() - start;
+          sequentialEstimatedMs += durationMs;
           results.set(node.id, res);
           records.set(node.id, {
             name: node.toolName,
@@ -171,6 +241,7 @@ export class ToolDependencyGraphPlanner {
           });
         } catch (err) {
           const durationMs = Date.now() - start;
+          sequentialEstimatedMs += durationMs;
           const errMsg = err instanceof Error ? err.message : String(err);
           records.set(node.id, {
             name: node.toolName,
@@ -189,6 +260,18 @@ export class ToolDependencyGraphPlanner {
       await Promise.all(wavePromises);
     }
 
+    const totalDurationMs = Date.now() - dagStartTime;
+    const speedup = totalDurationMs > 0 ? Number((sequentialEstimatedMs / totalDurationMs).toFixed(2)) : 1.0;
+
+    records.metrics = {
+      totalDurationMs,
+      totalNodes: nodes.length,
+      wavesCount: plan.waves.length,
+      speedup: Math.max(1.0, speedup),
+    };
+
     return records;
   }
 }
+
+

@@ -42,6 +42,13 @@ export class ToolTransactionJournal {
   }
 
   /**
+   * Gets the active turn identifier.
+   */
+  public getCurrentTurnId(): string {
+    return this.currentTurnId;
+  }
+
+  /**
    * Records a file write or edit mutation before it is applied.
    */
   public async recordFileMutation(
@@ -179,6 +186,64 @@ export class ToolTransactionJournal {
     };
   }
 
+  private checkpoints: Map<string, { label?: string; transactionCount: number; timestamp: number }> = new Map();
+
+  /**
+   * Creates a named checkpoint representing the current mutation state.
+   */
+  public createCheckpoint(label?: string): string {
+    const id = `chk_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    this.checkpoints.set(id, {
+      label,
+      transactionCount: this.transactions.length,
+      timestamp: Date.now(),
+    });
+    return id;
+  }
+
+  /**
+   * Restores mutations back to the state at the given checkpoint ID.
+   */
+  public async restoreCheckpoint(checkpointId: string): Promise<RollbackResult> {
+    const checkpoint = this.checkpoints.get(checkpointId);
+    if (!checkpoint) {
+      return { rolledBackCount: 0, restoredPaths: [], errors: [`Checkpoint '${checkpointId}' does not exist.`] };
+    }
+
+    if (this.transactions.length <= checkpoint.transactionCount) {
+      return { rolledBackCount: 0, restoredPaths: [], errors: [] };
+    }
+
+    const txToRevert = this.transactions.slice(checkpoint.transactionCount);
+    const errors: string[] = [];
+    const restoredPaths: string[] = [];
+
+    // Revert in reverse order
+    for (let i = txToRevert.length - 1; i >= 0; i--) {
+      const tx = txToRevert[i];
+      try {
+        if (tx.createdNewFile) {
+          await fs.rm(tx.targetPath, { force: true });
+          restoredPaths.push(`[Deleted newly created] ${tx.targetPath}`);
+        } else if (tx.previousContent !== undefined) {
+          await fs.mkdir(path.dirname(tx.targetPath), { recursive: true });
+          await fs.writeFile(tx.targetPath, tx.previousContent, "utf-8");
+          restoredPaths.push(`[Restored content] ${tx.targetPath}`);
+        }
+      } catch (err: unknown) {
+        errors.push(`Failed to revert ${tx.targetPath}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    this.transactions = this.transactions.slice(0, checkpoint.transactionCount);
+
+    return {
+      rolledBackCount: txToRevert.length,
+      restoredPaths,
+      errors,
+    };
+  }
+
   /**
    * Returns list of recorded transactions.
    */
@@ -191,5 +256,6 @@ export class ToolTransactionJournal {
    */
   public clear(): void {
     this.transactions = [];
+    this.checkpoints.clear();
   }
 }

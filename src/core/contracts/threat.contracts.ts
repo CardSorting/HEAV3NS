@@ -17,6 +17,22 @@ export type ThreatCategory =
 
 export type ThreatTrustLevel = "builtin" | "trusted" | "community" | "agent";
 
+export type ThreatBypassMode =
+  | "enforce"
+  | "audit_only"
+  | "lenient"
+  | "bypass"
+  | "autonomous";
+
+export interface ThreatPolicyConfig {
+  readonly mode?: ThreatBypassMode;
+  readonly allowedCategories?: readonly ThreatCategory[];
+  readonly allowedRuleIds?: readonly string[];
+  readonly whitelistedLocations?: readonly string[];
+  readonly nonBlockingTelemetry?: boolean;
+  readonly maxScanChars?: number;
+}
+
 export interface ThreatFinding {
   readonly id: string;
   readonly category: ThreatCategory;
@@ -33,6 +49,8 @@ export interface ThreatScanResult {
   readonly scanDurationMs: number;
   readonly bytesScanned: number;
   readonly timestamp: number;
+  readonly bypassed?: boolean;
+  readonly bypassReason?: string;
 }
 
 export interface ThreatWorkspaceSnapshot {
@@ -40,5 +58,7 @@ export interface ThreatWorkspaceSnapshot {
   readonly totalScans: number;
   readonly threatCount: number;
   readonly blockedCount: number;
+  readonly bypassedCount?: number;
   readonly timestamp: number;
 }
+

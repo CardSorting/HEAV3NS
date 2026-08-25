@@ -1,13 +1,18 @@
+import type { ExecutionAuthorityLevel } from "../../../core/contracts/tooling.contracts.js";
+
 export interface CommandPermissionRule {
   allow?: string[];
   deny?: string[];
   allowRedirects?: boolean;
+  executionAuthority?: ExecutionAuthorityLevel;
 }
 
 export interface PermissionValidationResult {
   allowed: boolean;
   reason: string;
   blockedSegment?: string;
+  bypassed?: boolean;
+  authorityLevel?: ExecutionAuthorityLevel;
 }
 
 /**
@@ -28,15 +33,51 @@ export class CommandPermissionController {
   ];
 
   private ruleConfig: CommandPermissionRule | null = null;
+  private currentAuthority: ExecutionAuthorityLevel = "balanced";
 
   constructor(ruleConfig?: CommandPermissionRule) {
     this.ruleConfig = ruleConfig ?? null;
+    if (ruleConfig?.executionAuthority) {
+      this.currentAuthority = ruleConfig.executionAuthority;
+    }
   }
 
-  validateCommand(command: string): PermissionValidationResult {
+  public setExecutionAuthority(authority: ExecutionAuthorityLevel): void {
+    this.currentAuthority = authority;
+  }
+
+  public getExecutionAuthority(): ExecutionAuthorityLevel {
+    return this.currentAuthority;
+  }
+
+  validateCommand(
+    command: string,
+    authorityOverride?: ExecutionAuthorityLevel
+  ): PermissionValidationResult {
     const trimmed = command.trim();
     if (!trimmed) {
       return { allowed: false, reason: "empty_command" };
+    }
+
+    const effectiveAuthority = authorityOverride ?? this.currentAuthority;
+
+    // In autonomous mode with non-critical operations, allow execution with audit tracking
+    if (effectiveAuthority === "autonomous" || effectiveAuthority === "high_throughput") {
+      // Still prevent raw filesystem destruction like mkfs or raw disk overwrites
+      const isExtremeCatastrophic =
+        /\bmkfs\b/i.test(trimmed) ||
+        /\bdd\s+if=/i.test(trimmed) ||
+        />\s*\/dev\/sd/i.test(trimmed) ||
+        /\brm\s+-rf\s+\/(?:\s|$)/i.test(trimmed);
+
+      if (!isExtremeCatastrophic) {
+        return {
+          allowed: true,
+          reason: "permitted_autonomous_authority",
+          bypassed: true,
+          authorityLevel: effectiveAuthority,
+        };
+      }
     }
 
     // 1. Check default destructive security patterns
@@ -46,6 +87,7 @@ export class CommandPermissionController {
           allowed: false,
           reason: `Security Violation: Destructive shell pattern detected matching '${pattern.source}'`,
           blockedSegment: trimmed,
+          authorityLevel: effectiveAuthority,
         };
       }
     }
@@ -58,6 +100,7 @@ export class CommandPermissionController {
             allowed: false,
             reason: `Permission Denied: Command matches deny rule '${denyPattern}'`,
             blockedSegment: trimmed,
+            authorityLevel: effectiveAuthority,
           };
         }
       }
@@ -71,6 +114,7 @@ export class CommandPermissionController {
           allowed: false,
           reason: "Permission Denied: Command does not match any configured allowlist rules",
           blockedSegment: trimmed,
+          authorityLevel: effectiveAuthority,
         };
       }
     }
@@ -78,6 +122,8 @@ export class CommandPermissionController {
     return {
       allowed: true,
       reason: "permitted",
+      authorityLevel: effectiveAuthority,
     };
   }
 }
+

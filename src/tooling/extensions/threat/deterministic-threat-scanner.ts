@@ -8,6 +8,7 @@ import { performance } from "node:perf_hooks";
 import type {
   ThreatCategory,
   ThreatFinding,
+  ThreatPolicyConfig,
   ThreatScanResult,
   ThreatSeverity,
   ThreatTrustLevel,
@@ -24,8 +25,15 @@ interface CompiledRule {
 export class DeterministicThreatScanner {
   private static readonly MAX_SCAN_CHARS = 65536;
   private readonly rules: readonly CompiledRule[];
+  private activePolicy: ThreatPolicyConfig = {
+    mode: "enforce",
+    nonBlockingTelemetry: false,
+  };
 
-  constructor() {
+  constructor(initialPolicy?: ThreatPolicyConfig) {
+    if (initialPolicy) {
+      this.activePolicy = { ...this.activePolicy, ...initialPolicy };
+    }
     this.rules = [
       // Prompt Injection Patterns
       {
@@ -131,19 +139,45 @@ export class DeterministicThreatScanner {
   }
 
   /**
+   * Configures or updates the active threat scanning policy.
+   */
+  public setPolicy(policy: Partial<ThreatPolicyConfig>): void {
+    this.activePolicy = { ...this.activePolicy, ...policy };
+  }
+
+  /**
+   * Returns current active threat policy.
+   */
+  public getPolicy(): ThreatPolicyConfig {
+    return { ...this.activePolicy };
+  }
+
+  /**
    * Scans a text payload against compiled threat rules with bounded execution.
    */
-  scanPayload(
+  public scanPayload(
     payload: string,
     trustLevel: ThreatTrustLevel = "community",
-    location?: string
+    location?: string,
+    policyOverride?: ThreatPolicyConfig
   ): ThreatScanResult {
     const startedAt = performance.now();
-    const boundedPayload = payload.slice(0, DeterministicThreatScanner.MAX_SCAN_CHARS);
+    const effectivePolicy = policyOverride ? { ...this.activePolicy, ...policyOverride } : this.activePolicy;
+    const maxChars = effectivePolicy.maxScanChars ?? DeterministicThreatScanner.MAX_SCAN_CHARS;
+    const boundedPayload = payload.slice(0, maxChars);
     const findings: ThreatFinding[] = [];
+
+    const allowedCategories = new Set(effectivePolicy.allowedCategories ?? []);
+    const allowedRuleIds = new Set(effectivePolicy.allowedRuleIds ?? []);
 
     for (let i = 0; i < this.rules.length; i++) {
       const rule = this.rules[i];
+
+      // Check category and rule allowlist suppressions
+      if (allowedCategories.has(rule.category) || allowedRuleIds.has(rule.id)) {
+        continue;
+      }
+
       if (rule.pattern.test(boundedPayload)) {
         findings.push({
           id: rule.id,
@@ -160,11 +194,39 @@ export class DeterministicThreatScanner {
     const clean = findings.length === 0;
 
     let verdict: "allow" | "warn" | "block" = "allow";
+    let bypassed = false;
+    let bypassReason: string | undefined;
+
+    const mode = effectivePolicy.mode ?? "enforce";
+
+    // Check location whitelisting
+    const isWhitelistedLocation =
+      location && effectivePolicy.whitelistedLocations?.some((loc) => location.includes(loc));
 
     if (!clean) {
-      if (trustLevel === "builtin") {
+      if (trustLevel === "builtin" || isWhitelistedLocation) {
         verdict = "allow";
+        bypassed = true;
+        bypassReason = isWhitelistedLocation
+          ? `Location '${location}' is whitelisted.`
+          : "Builtin trust level granted.";
+      } else if (mode === "bypass" || mode === "autonomous") {
+        verdict = "allow";
+        bypassed = true;
+        bypassReason = `Threat bypass active (mode: ${mode}). Full forensic telemetry recorded without blocking.`;
+      } else if (mode === "audit_only") {
+        verdict = "warn";
+        bypassed = true;
+        bypassReason = "Audit-only mode active. Security findings recorded without blocking agent flow.";
+      } else if (mode === "lenient") {
+        const hasDestructive = findings.some((f) => f.category === "destructive_command");
+        verdict = hasDestructive ? "block" : "warn";
+        if (!hasDestructive) {
+          bypassed = true;
+          bypassReason = "Lenient mode permitted non-destructive pattern.";
+        }
       } else {
+        // Strict enforce mode
         const hasCritical = findings.some((f) => f.severity === "critical");
         const hasDangerous = findings.some((f) => f.severity === "dangerous");
 
@@ -185,6 +247,9 @@ export class DeterministicThreatScanner {
       scanDurationMs: duration,
       bytesScanned: boundedPayload.length,
       timestamp: Date.now(),
+      bypassed,
+      bypassReason,
     };
   }
 }
+

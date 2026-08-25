@@ -21,6 +21,124 @@ export interface HealedErrorResult {
 
 export class ToolErrorAutoHealer {
   /**
+   * Performs whitespace- and indentation-tolerant fuzzy chunk location in file content.
+   */
+  public healFuzzyPatch(
+    fileContent: string,
+    targetSnippet: string
+  ): { found: boolean; startIndex?: number; endIndex?: number; confidence: number; adjustedTarget?: string } {
+    if (!fileContent || !targetSnippet) {
+      return { found: false, confidence: 0 };
+    }
+
+    // Pass 1: Direct exact match
+    const exactIndex = fileContent.indexOf(targetSnippet);
+    if (exactIndex !== -1) {
+      return {
+        found: true,
+        startIndex: exactIndex,
+        endIndex: exactIndex + targetSnippet.length,
+        confidence: 1.0,
+        adjustedTarget: targetSnippet,
+      };
+    }
+
+    // Pass 2: Line-by-line whitespace-trimmed comparison
+    const fileLines = fileContent.split(/\r?\n/);
+    const targetLines = targetSnippet.split(/\r?\n/).filter((l) => l.length > 0);
+
+    if (targetLines.length === 0) {
+      return { found: false, confidence: 0 };
+    }
+
+    for (let i = 0; i <= fileLines.length - targetLines.length; i++) {
+      let matches = true;
+      for (let j = 0; j < targetLines.length; j++) {
+        if (fileLines[i + j].trim() !== targetLines[j].trim()) {
+          matches = false;
+          break;
+        }
+      }
+
+      if (matches) {
+        // Found matching line range [i, i + targetLines.length - 1]
+        const matchedLines = fileLines.slice(i, i + targetLines.length);
+        const adjustedTarget = matchedLines.join("\n");
+        const startIndex = fileContent.indexOf(matchedLines[0]);
+        if (startIndex !== -1) {
+          return {
+            found: true,
+            startIndex,
+            endIndex: startIndex + adjustedTarget.length,
+            confidence: 0.95,
+            adjustedTarget,
+          };
+        }
+      }
+    }
+
+    return { found: false, confidence: 0 };
+  }
+
+  /**
+   * Computes Levenshtein edit distance between two strings.
+   */
+  public levenshtein(a: string, b: string): number {
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+
+    return matrix[b.length][a.length];
+  }
+
+  /**
+   * Finds the best matching parameter name from valid parameters using Levenshtein distance.
+   */
+  public fuzzyMatchParameter(
+    paramName: string,
+    validParams: readonly string[]
+  ): { match?: string; score: number } {
+    const target = paramName.toLowerCase();
+    let bestMatch: string | undefined;
+    let minDistance = Infinity;
+
+    for (const valid of validParams) {
+      const v = valid.toLowerCase();
+      if (v === target) return { match: valid, score: 1.0 };
+      if (v.includes(target) || target.includes(v)) {
+        return { match: valid, score: 0.9 };
+      }
+
+      const dist = this.levenshtein(target, v);
+      if (dist < minDistance && dist <= 3) {
+        minDistance = dist;
+        bestMatch = valid;
+      }
+    }
+
+    if (bestMatch) {
+      const score = Math.max(0, 1 - minDistance / Math.max(target.length, bestMatch.length));
+      return { match: bestMatch, score };
+    }
+
+    return { score: 0 };
+  }
+
+  /**
    * Analyzes a tool execution failure and generates self-healing diagnostic guidance.
    */
   public diagnoseAndHeal(
@@ -161,3 +279,4 @@ export class ToolErrorAutoHealer {
     };
   }
 }
+

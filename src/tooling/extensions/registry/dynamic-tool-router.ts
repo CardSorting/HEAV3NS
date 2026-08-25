@@ -230,4 +230,41 @@ export class DynamicToolRouter {
     }
     return Math.ceil(charCount / 4);
   }
+
+  /**
+   * Computes dynamic tool context optimization metrics and provides token-saving recommendations.
+   */
+  public optimizeToolContext(
+    allTools: readonly ToolDefinition[],
+    contextPrompt = ""
+  ): {
+    totalTools: number;
+    selectedTools: number;
+    rawToolTokens: number;
+    optimizedToolTokens: number;
+    savingsTokens: number;
+    savingsPercent: number;
+    activeDomains: string[];
+    selectedToolNames: string[];
+  } {
+    const selected = this.selectRelevantTools(allTools, contextPrompt);
+    const rawTokens = this.estimateToolTokens(allTools);
+    const optimizedTokens = this.estimateToolTokens(selected);
+    const savingsTokens = Math.max(0, rawTokens - optimizedTokens);
+    const savingsPercent = rawTokens > 0 ? Number(((savingsTokens / rawTokens) * 100).toFixed(1)) : 0;
+
+    const activeDomains = Array.from(new Set(selected.map((t) => t.category || "core")));
+
+    return {
+      totalTools: allTools.length,
+      selectedTools: selected.length,
+      rawToolTokens: rawTokens,
+      optimizedToolTokens: optimizedTokens,
+      savingsTokens,
+      savingsPercent,
+      activeDomains,
+      selectedToolNames: selected.map((t) => t.name),
+    };
+  }
 }
+

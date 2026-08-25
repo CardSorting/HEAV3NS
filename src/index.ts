@@ -705,7 +705,22 @@ export type {
   ProgressTelemetryMetrics,
 } from "./core/contracts/agent.contracts.js";
 export type { GameStateSnapshot, SessionMessage, ISessionStore, SlabBufferSnapshot } from "./core/contracts/session.contracts.js";
-export type { CommandResult, AnchoredEditResult, ToolingEvent, JsonRpcNotification, TerminalProgressFrame, IHands, IEars, IToolRegistry } from "./core/contracts/tooling.contracts.js";
+export type {
+  CommandResult,
+  AnchoredEditResult,
+  ToolingEvent,
+  JsonRpcNotification,
+  TerminalProgressFrame,
+  IHands,
+  IEars,
+  IToolRegistry,
+  ExecutionAuthorityLevel,
+  ExecutionAuthorityConfig,
+  ResourceConflictAssessment,
+  ToolExecutionOptions,
+  PipelinedStreamChunk,
+} from "./core/contracts/tooling.contracts.js";
+
 export type {
   SkillTier,
   SkillLifecycleState,
@@ -2014,10 +2029,13 @@ export type {
   ThreatSeverity,
   ThreatCategory,
   ThreatTrustLevel,
+  ThreatBypassMode,
+  ThreatPolicyConfig,
   ThreatFinding,
   ThreatScanResult,
   ThreatWorkspaceSnapshot,
 } from "./core/contracts/threat.contracts.js";
+
 
 export { DeterministicCasStore } from "./tooling/extensions/checkpoint/deterministic-cas-store.js";
 export { BroccoliCheckpointSubstrate } from "./sessions/extensions/checkpoint/broccoli-checkpoint-substrate.js";

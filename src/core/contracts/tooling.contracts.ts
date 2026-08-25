@@ -132,9 +132,56 @@ export interface IEars {
   emit(eventType: string, source: string, payload: Record<string, unknown>, durationMs?: number): void;
 }
 
+export type { ThreatBypassMode } from "./threat.contracts.js";
+
+export type ExecutionAuthorityLevel =
+  | "autonomous"
+  | "high_throughput"
+  | "balanced"
+  | "interactive"
+  | "strict";
+
+
+export interface ExecutionAuthorityConfig {
+  readonly level: ExecutionAuthorityLevel;
+  readonly bypassConfirmation?: boolean;
+  readonly bypassThreatDeadlocks?: boolean;
+  readonly allowParallelDisjointMutations?: boolean;
+  readonly autoApproveRiskTiers?: readonly ("SAFE" | "MUTATING" | "CRITICAL")[];
+  readonly maxConcurrency?: number;
+  readonly nonBlockingAudit?: boolean;
+}
+
+export interface ResourceConflictAssessment {
+  readonly hasConflict: boolean;
+  readonly sharedResources: readonly string[];
+  readonly reason?: string;
+}
+
+export interface ToolExecutionOptions {
+  readonly bypassConfirmation?: boolean;
+  readonly bypassThreatDetection?: boolean;
+  readonly executionAuthority?: ExecutionAuthorityLevel;
+  readonly isDryRun?: boolean;
+  readonly nonBlockingAudit?: boolean;
+  readonly timeoutMs?: number;
+  readonly autoHeal?: boolean;
+}
+
+export interface PipelinedStreamChunk {
+  readonly waveIndex: number;
+  readonly totalWaves: number;
+  readonly callId: string;
+  readonly toolName: string;
+  readonly record: ToolExecutionRecord;
+  readonly isLastInWave: boolean;
+  readonly isFinal: boolean;
+}
+
 export interface IToolRegistry {
   registerTool(tool: ToolDefinition): void;
   getTool(name: string): ToolDefinition | undefined;
   listTools(): readonly ToolDefinition[];
-  executeTool(name: string, args: Record<string, unknown>, cwd: string): Promise<unknown>;
+  executeTool(name: string, args: Record<string, unknown>, cwd: string, options?: ToolExecutionOptions): Promise<unknown>;
 }
+

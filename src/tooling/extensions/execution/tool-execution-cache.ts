@@ -224,6 +224,28 @@ export class ToolExecutionCache {
   }
 
   /**
+   * Invalidates cached entries associated with a specific tool name.
+   */
+  public invalidateTool(toolName: string): number {
+    let purged = 0;
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.toolName === toolName) {
+        this.cache.delete(key);
+        purged++;
+      }
+    }
+    this.invalidations += purged;
+    return purged;
+  }
+
+  /**
+   * Returns current cache size.
+   */
+  public get size(): number {
+    return this.cache.size;
+  }
+
+  /**
    * Clears the entire cache.
    */
   public clear(): void {

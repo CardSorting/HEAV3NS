@@ -1,13 +1,5 @@
-/**
- * tool-safety-policy-manager.ts
- *
- * Multi-Tier Tool Safety Policy, Risk Scoring & Dry-Run Simulation Manager.
- * Evaluates tool operations for risk (SAFE, MUTATING, CRITICAL) and provides
- * dry-run simulation capabilities to preview modifications before touching disk.
- */
-
 import * as path from "node:path";
-import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
+import type { ExecutionAuthorityLevel, ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 
 export type ToolRiskTier = "SAFE" | "MUTATING" | "CRITICAL";
 
@@ -18,6 +10,7 @@ export interface ToolSafetyAssessment {
   readonly requiresConfirmation: boolean;
   readonly warnings: readonly string[];
   readonly allowedInDryRun: boolean;
+  readonly authorityLevel?: ExecutionAuthorityLevel;
 }
 
 export interface DryRunSimulationResult {
@@ -53,13 +46,82 @@ const PROTECTED_SYSTEM_PATHS = [
 
 export class ToolSafetyPolicyManager {
   /**
+   * Extracts affected target resource keys/paths (e.g. file paths, keys) for conflict analysis.
+   */
+  public extractResourceTargets(
+    toolName: string,
+    args: Record<string, unknown>,
+    cwd: string
+  ): string[] {
+    const canonicalName = toolName.toLowerCase();
+    const resources: string[] = [];
+
+    const pathCandidate =
+      typeof args.path === "string"
+        ? args.path
+        : typeof args.filePath === "string"
+          ? args.filePath
+          : typeof args.targetFile === "string"
+            ? args.targetFile
+            : typeof args.targetPath === "string"
+              ? args.targetPath
+              : undefined;
+
+    if (pathCandidate) {
+      const resolved = path.isAbsolute(pathCandidate)
+        ? path.normalize(pathCandidate)
+        : path.normalize(path.join(cwd, pathCandidate));
+      resources.push(resolved);
+    }
+
+    if (typeof args.source === "string") {
+      const resolvedSource = path.isAbsolute(args.source)
+        ? path.normalize(args.source)
+        : path.normalize(path.join(cwd, args.source));
+      resources.push(resolvedSource);
+    }
+
+    if (typeof args.target === "string") {
+      const resolvedTarget = path.isAbsolute(args.target)
+        ? path.normalize(args.target)
+        : path.normalize(path.join(cwd, args.target));
+      resources.push(resolvedTarget);
+    }
+
+    if (Array.isArray(args.files)) {
+      for (const item of args.files) {
+        if (typeof item === "string") {
+          resources.push(path.isAbsolute(item) ? path.normalize(item) : path.normalize(path.join(cwd, item)));
+        } else if (item && typeof item === "object" && typeof (item as any).path === "string") {
+          const p = (item as any).path;
+          resources.push(path.isAbsolute(p) ? path.normalize(p) : path.normalize(path.join(cwd, p)));
+        }
+      }
+    }
+
+    if (resources.length === 0) {
+      // Non-file resources or global namespace
+      if (canonicalName.includes("db_") || canonicalName.includes("database")) {
+        resources.push(`db:${String(args.table || args.collection || "global")}`);
+      } else if (canonicalName.includes("wallet")) {
+        resources.push(`wallet:${String(args.account || "global")}`);
+      } else if (canonicalName === "run_command" || canonicalName === "terminal" || canonicalName === "bash") {
+        resources.push("system:process");
+      }
+    }
+
+    return resources;
+  }
+
+  /**
    * Evaluates the safety profile of a tool invocation.
    */
   public evaluateSafety(
     toolName: string,
     args: Record<string, unknown>,
     cwd: string,
-    toolDef?: ToolDefinition
+    toolDef?: ToolDefinition,
+    authority?: ExecutionAuthorityLevel
   ): ToolSafetyAssessment {
     const warnings: string[] = [];
     let riskTier: ToolRiskTier = "SAFE";
@@ -116,7 +178,11 @@ export class ToolSafetyPolicyManager {
       warnings.push(`High-privilege domain tool execution.`);
     }
 
-    const requiresConfirmation = riskTier === "CRITICAL" || toolDef?.requiresConfirmation === true;
+    // Determine requiresConfirmation based on authority
+    let requiresConfirmation = riskTier === "CRITICAL" || toolDef?.requiresConfirmation === true;
+    if (authority === "autonomous" || authority === "high_throughput") {
+      requiresConfirmation = false;
+    }
 
     return {
       toolName,
@@ -125,8 +191,10 @@ export class ToolSafetyPolicyManager {
       requiresConfirmation,
       warnings,
       allowedInDryRun: true,
+      authorityLevel: authority ?? "balanced",
     };
   }
+
 
   /**
    * Simulates a tool execution in dry-run mode without modifying disk state.
@@ -135,9 +203,10 @@ export class ToolSafetyPolicyManager {
     toolName: string,
     args: Record<string, unknown>,
     cwd: string,
-    toolDef?: ToolDefinition
+    toolDef?: ToolDefinition,
+    authority: ExecutionAuthorityLevel = "autonomous"
   ): DryRunSimulationResult {
-    const safety = this.evaluateSafety(toolName, args, cwd, toolDef);
+    const safety = this.evaluateSafety(toolName, args, cwd, toolDef, authority);
     const targetPath = typeof args.path === "string" ? args.path : (typeof args.filePath === "string" ? args.filePath : undefined);
 
     let simulatedDiff: string | undefined;
@@ -166,3 +235,4 @@ export class ToolSafetyPolicyManager {
     };
   }
 }
+

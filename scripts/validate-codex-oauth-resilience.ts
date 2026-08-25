@@ -246,7 +246,7 @@ async function main(): Promise<void> {
     let galxPayloadReceived: any = null;
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const urlStr = String(input);
-      if (urlStr.includes("/api/auth/openai")) {
+      if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
         galxPayloadReceived = JSON.parse(String(init?.body || "{}"));
         return {
           ok: true,
@@ -287,7 +287,7 @@ async function main(): Promise<void> {
       let fetchCallCount = 0;
       globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const urlStr = String(input);
-        if (urlStr.includes("/api/auth/openai")) {
+        if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
           fetchCallCount++;
           await new Promise((r) => setTimeout(r, 20));
           return {
@@ -404,7 +404,7 @@ async function main(): Promise<void> {
           }),
         } as Response;
       }
-      if (urlStr.includes("/api/auth/openai")) {
+      if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
         cloudIngestionCount++;
         return {
           ok: true,

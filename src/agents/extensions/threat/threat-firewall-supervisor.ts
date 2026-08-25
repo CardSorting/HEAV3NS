@@ -7,6 +7,7 @@
 
 import type {
   ThreatFinding,
+  ThreatPolicyConfig,
   ThreatScanResult,
   ThreatTrustLevel,
   ThreatWorkspaceSnapshot,
@@ -24,14 +25,50 @@ export class ThreatFirewallSupervisor {
   }
 
   /**
+   * Configures threat policy thresholds and bypass modes.
+   */
+  public setPolicy(policy: Partial<ThreatPolicyConfig>): void {
+    this.scanner.setPolicy(policy);
+  }
+
+  /**
+   * Returns current active threat policy.
+   */
+  public getPolicy(): ThreatPolicyConfig {
+    return this.scanner.getPolicy();
+  }
+
+  /**
+   * Enables autonomous bypass mode (zero blocking deadlocks, full forensic telemetry).
+   */
+  public enableAutonomousBypass(): void {
+    this.scanner.setPolicy({ mode: "autonomous", nonBlockingTelemetry: true });
+  }
+
+  /**
+   * Enables non-blocking audit-only mode.
+   */
+  public enableAuditOnlyMode(): void {
+    this.scanner.setPolicy({ mode: "audit_only", nonBlockingTelemetry: true });
+  }
+
+  /**
+   * Enables strict enforcement mode.
+   */
+  public enableEnforceMode(): void {
+    this.scanner.setPolicy({ mode: "enforce", nonBlockingTelemetry: false });
+  }
+
+  /**
    * Scans an arbitrary text payload (code, prompt, tool output) and records the audit verdict.
    */
   scan(
     payload: string,
     trustLevel: ThreatTrustLevel = "community",
-    location?: string
+    location?: string,
+    policyOverride?: ThreatPolicyConfig
   ): ThreatScanResult {
-    const result = this.scanner.scanPayload(payload, trustLevel, location);
+    const result = this.scanner.scanPayload(payload, trustLevel, location, policyOverride);
     this.substrate.recordScan(result);
     return result;
   }
@@ -39,8 +76,12 @@ export class ThreatFirewallSupervisor {
   /**
    * Performs a rapid pre-flight safety check on a shell command string.
    */
-  isCommandSafe(command: string): boolean {
-    const result = this.scan(command, "community", "pre-exec-command");
+  isCommandSafe(
+    command: string,
+    trustLevel: ThreatTrustLevel = "community",
+    policyOverride?: ThreatPolicyConfig
+  ): boolean {
+    const result = this.scan(command, trustLevel, "pre-exec-command", policyOverride);
     return result.verdict !== "block";
   }
 
@@ -65,3 +106,4 @@ export class ThreatFirewallSupervisor {
     return this.substrate.listScans(limit);
   }
 }
+

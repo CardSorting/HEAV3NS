@@ -21,6 +21,7 @@ export interface ThreatScanResult {
  * with plain-language risk explanations for non-technical users.
  */
 export class SoulThreatGuard {
+  private threatAuditOnly: boolean = false;
   private readonly forbiddenPatterns: Array<{
     pattern: RegExp;
     name: string;
@@ -71,11 +72,29 @@ export class SoulThreatGuard {
     },
   ];
 
+  constructor(options: { threatAuditOnly?: boolean } = {}) {
+    this.threatAuditOnly = options.threatAuditOnly ?? false;
+  }
+
+  /**
+   * Sets non-blocking audit-only mode.
+   */
+  public setAuditOnlyMode(auditOnly: boolean): void {
+    this.threatAuditOnly = auditOnly;
+  }
+
+  /**
+   * Returns current audit-only mode status.
+   */
+  public isAuditOnlyMode(): boolean {
+    return this.threatAuditOnly;
+  }
+
   /**
    * Scans a text string (prompt or soul body) for threats.
    */
-  scanContent(text: string): ThreatScanResult {
-    const detailed = this.scanContentDetailed(text);
+  scanContent(text: string, options?: { auditOnly?: boolean }): ThreatScanResult {
+    const detailed = this.scanContentDetailed(text, options);
     return {
       isSafe: detailed.isSafe,
       blockedReason: detailed.blockedReason,
@@ -87,11 +106,12 @@ export class SoulThreatGuard {
   /**
    * Scans text and returns detailed multi-tier risk information and user-friendly explanation.
    */
-  scanContentDetailed(text: string): SoulThreatScanDetailed {
+  scanContentDetailed(text: string, options?: { auditOnly?: boolean }): SoulThreatScanDetailed {
     if (!text) {
       return { isSafe: true, severity: "low", threatsDetected: [], category: "clean" };
     }
 
+    const isAuditOnly = options?.auditOnly ?? this.threatAuditOnly;
     const threats: string[] = [];
     let detectedCategory: SoulThreatScanDetailed["category"] = "clean";
     let highestSeverity: SoulRiskSeverity = "low";
@@ -112,9 +132,9 @@ export class SoulThreatGuard {
 
     if (threats.length > 0) {
       return {
-        isSafe: false,
+        isSafe: isAuditOnly ? true : false,
         severity: highestSeverity,
-        blockedReason: `Axiomatic Threat Block: Content contained unauthorized patterns: ${threats.join(", ")}`,
+        blockedReason: isAuditOnly ? undefined : `Axiomatic Threat Block: Content contained unauthorized patterns: ${threats.join(", ")}`,
         plainLanguageExplanation: explanation,
         remediationGuidance: remediation,
         threatsDetected: Object.freeze(threats),
@@ -129,6 +149,7 @@ export class SoulThreatGuard {
       category: "clean",
     };
   }
+
 
   /**
    * Validates a proposed SoulMutationIntent against the active SoulManifest and axiomatic invariants.
