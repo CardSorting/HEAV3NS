@@ -26,6 +26,8 @@ import { AuthStorageVault } from "../agents/extensions/resolution/auth-storage-v
 import { CodexOAuthManager } from "../agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge } from "../agents/extensions/resolution/codex-provider-bridge.js";
 import { OpenRouterProviderEngine } from "../agents/extensions/resolution/openrouter-provider-engine.js";
+import { GalxProviderEngine } from "../agents/extensions/resolution/galx-provider-engine.js";
+import { GalxTransportClient, galxTransportClient } from "../integrations/galx/GalxTransportClient.js";
 import { SetupWizard } from "../agents/extensions/setup/setup-wizard.js";
 
 import { SessionContext } from "../sessions/base/session-context.js";
@@ -776,6 +778,8 @@ export class MonolithFactory {
     modelResolver: ModelResolver;
     modelCatalog: ModelCatalog;
     openRouterEngine: OpenRouterProviderEngine;
+    galxEngine: GalxProviderEngine;
+    galxTransportClient: GalxTransportClient;
     envKeyResolver: EnvironmentKeyResolver;
     imageModelRegistry: ImageModelRegistry;
     proxyGateway: LlmProxyGateway;
@@ -1376,7 +1380,9 @@ export class MonolithFactory {
       options.fallbackModels
     );
     const openRouterEngine = new OpenRouterProviderEngine();
-    const modelCatalog = new ModelCatalog(undefined, openRouterEngine);
+    const galxTransport = new GalxTransportClient();
+    const galxEngine = new GalxProviderEngine(undefined, galxTransport);
+    const modelCatalog = new ModelCatalog(undefined, openRouterEngine, galxEngine);
     const envKeyResolver = new EnvironmentKeyResolver();
     const imageModelRegistry = new ImageModelRegistry();
     const proxyGateway = new LlmProxyGateway();
@@ -2482,6 +2488,8 @@ export class MonolithFactory {
       modelResolver,
       modelCatalog,
       openRouterEngine,
+      galxEngine,
+      galxTransportClient: galxTransport,
       envKeyResolver,
       imageModelRegistry,
       proxyGateway,

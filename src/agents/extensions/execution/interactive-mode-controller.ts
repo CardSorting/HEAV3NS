@@ -551,7 +551,7 @@ export class InteractiveModeController {
             closeFn();
             const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
             let diagText = `### Live Provider Diagnostic Audit\n\n`;
-            const providers = ["anthropic", "openai", "google", "deepseek", "openai-codex"];
+            const providers = ["openai-codex", "galx", "openrouter"];
             for (const p of providers) {
               const res = await monolith.setupWizard.testProviderConnection(p);
               const icon = res.passed ? "`[PASS]`" : "`[FAIL]`";
@@ -647,23 +647,15 @@ export class InteractiveModeController {
       if (activeInlineView || isLoadingInlineView) return;
       isLoadingInlineView = true;
       try {
+        const galxModels = await monolith.modelCatalog.fetchGalxModels();
         const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
-        const nousModels = await monolith.modelCatalog.fetchNousModels();
         const codexModels = await monolith.modelCatalog.fetchCodexModels();
-        const ollamaModels = await monolith.modelCatalog.getModelsForProvider("ollama");
-        const llamaCppModels = await monolith.modelCatalog.getModelsForProvider("llamacpp");
-        const lmStudioModels = await monolith.modelCatalog.getModelsForProvider("lmstudio");
-        const vllmModels = await monolith.modelCatalog.getModelsForProvider("vllm");
         const catalogModels = monolith.modelCatalog.getAllModels();
 
         const combined = [
-          ...openRouterModels,
-          ...nousModels,
+          ...galxModels,
           ...codexModels,
-          ...ollamaModels,
-          ...llamaCppModels,
-          ...lmStudioModels,
-          ...vllmModels,
+          ...openRouterModels,
           ...catalogModels,
         ];
         const modelMap = new Map<string, ModelSpecs>();
@@ -1595,7 +1587,7 @@ export class InteractiveModeController {
 
         if (input === "/providers") {
           console.log("\x1b[1;36mTesting provider connections...\x1b[0m");
-          const providers = ["anthropic", "openai", "google", "deepseek", "openai-codex"];
+          const providers = ["openai-codex", "galx", "openrouter"];
           for (const p of providers) {
             const res = await monolith.setupWizard.testProviderConnection(p);
             const icon = res.passed ? "\x1b[32m[PASS]\x1b[0m" : "\x1b[31m[FAIL]\x1b[0m";

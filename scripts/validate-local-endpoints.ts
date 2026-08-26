@@ -27,37 +27,16 @@ async function testProviderResolution(): Promise<void> {
   const bridge = new CodexProviderBridge(oauthMgr, undefined, envResolver, proxyGateway);
 
   // Model Name -> Provider mapping
-  assert.equal(bridge.resolveProviderName("llama3:latest"), "ollama");
-  assert.equal(bridge.resolveProviderName("llama3.2:latest"), "ollama");
-  assert.equal(bridge.resolveProviderName("qwen2.5-coder:latest"), "ollama");
-  assert.equal(bridge.resolveProviderName("deepseek-r1:latest"), "ollama");
-  assert.equal(bridge.resolveProviderName("llamacpp/default"), "llamacpp");
-  assert.equal(bridge.resolveProviderName("llamacpp/qwen2.5-coder-7b"), "llamacpp");
-  assert.equal(bridge.resolveProviderName("llama.cpp/mistral-7b"), "llamacpp");
-  assert.equal(bridge.resolveProviderName("lmstudio/loaded-model"), "lmstudio");
-  assert.equal(bridge.resolveProviderName("lm-studio/deepseek-r1"), "lmstudio");
-  assert.equal(bridge.resolveProviderName("vllm/default"), "vllm");
-  assert.equal(bridge.resolveProviderName("local/onprem-model"), "local");
-  assert.equal(bridge.resolveProviderName("onprem/llama-3.3-70b"), "onprem");
+  assert.equal(bridge.resolveProviderName("galx/gpt-5.6-sol"), "galx");
+  assert.equal(bridge.resolveProviderName("gpt-5.6-terra"), "openai-codex");
+  assert.equal(bridge.resolveProviderName("openrouter/auto"), "openrouter");
 
   // Default Endpoints
-  assert.equal(bridge.getDefaultEndpointForModel("llama3.2:latest"), "http://localhost:11434/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("llamacpp/default"), "http://localhost:8080/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("lmstudio/loaded-model"), "http://localhost:1234/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("vllm/default"), "http://localhost:8000/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("galx/gpt-5.6-sol"), "https://galx.ai/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("openrouter/auto"), "https://openrouter.ai/api/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("gpt-5.6-terra"), "https://api.openai.com/v1/chat/completions");
 
-  // Zero-Key Auth Resolution
-  const authOllama = await bridge.resolveProviderAuth("llama3.2:latest");
-  assert.equal(authOllama.authType, "api-key");
-  assert.equal(Object.keys(authOllama.headers).length, 0);
-
-  const authLlamaCpp = await bridge.resolveProviderAuth("llamacpp/default");
-  assert.equal(authLlamaCpp.authType, "api-key");
-
-  const authLmStudio = await bridge.resolveProviderAuth("lmstudio/loaded-model");
-  assert.equal(authLmStudio.authType, "api-key");
-
-  console.log("  [✓] Provider and endpoint resolution verified across Ollama, llama.cpp, LM Studio, and vLLM.");
+  console.log("  [✓] Provider and endpoint resolution verified across GALX, Codex, and OpenRouter.");
 }
 
 async function testUrlNormalizationAndOverrides(): Promise<void> {
@@ -137,64 +116,40 @@ async function testLocalEngineProbingAndDiscovery(): Promise<void> {
 }
 
 async function testModelCatalogLocalSpecs(): Promise<void> {
-  console.log("[Test 4/8] Validating Model Catalog Local Specifications & Zero-Cost...");
+  console.log("[Test 4/8] Validating Model Catalog Specifications...");
   const catalog = new ModelCatalog();
 
-  const ollamaSpec = catalog.getModelInfo("qwen2.5-coder:latest");
-  assert.equal(ollamaSpec.provider, "ollama");
-  assert.equal(ollamaSpec.inputPricePer1M, 0.0);
-  assert.equal(ollamaSpec.outputPricePer1M, 0.0);
-  assert.equal(ollamaSpec.isLocal, true);
-  assert.equal(catalog.calculateTurnCost("qwen2.5-coder:latest", 5000, 2000), 0.0);
+  const galxSpec = catalog.getModelInfo("galx/gpt-5.6-sol");
+  assert.equal(galxSpec.provider, "galx");
+  assert.equal(galxSpec.inputPricePer1M, 3.75);
 
-  const llamaCppSpec = catalog.getModelInfo("llamacpp/default");
-  assert.equal(llamaCppSpec.provider, "llamacpp");
-  assert.equal(llamaCppSpec.inputPricePer1M, 0.0);
-  assert.equal(llamaCppSpec.isLocal, true);
-
-  const lmStudioSpec = catalog.getModelInfo("lmstudio/loaded-model");
-  assert.equal(lmStudioSpec.provider, "lmstudio");
-  assert.equal(lmStudioSpec.inputPricePer1M, 0.0);
-  assert.equal(lmStudioSpec.isLocal, true);
+  const codexSpec = catalog.getModelInfo("gpt-5.6-terra");
+  assert.equal(codexSpec.provider, "openai-codex");
+  assert.equal(codexSpec.inputPricePer1M, 0.0);
 
   // Provider filter
-  const ollamaList = await catalog.getModelsForProvider("ollama");
-  assert.ok(ollamaList.length >= 4);
+  const galxList = await catalog.getModelsForProvider("galx");
+  assert.ok(galxList.length >= 3);
 
-  const llamaCppList = await catalog.getModelsForProvider("llamacpp");
-  assert.ok(llamaCppList.length >= 2);
+  const codexList = await catalog.getModelsForProvider("openai-codex");
+  assert.ok(codexList.length >= 5);
 
-  const lmStudioList = await catalog.getModelsForProvider("lmstudio");
-  assert.ok(lmStudioList.length >= 2);
-
-  console.log("  [✓] Zero-cost accounting ($0.00/1M) and local hardware specs verified.");
+  console.log("  [✓] Model catalog specifications and provider filtering verified.");
 }
 
 async function testSetupWizardLocalAuditing(): Promise<void> {
-  console.log("[Test 5/8] Validating SetupWizard Local Fleet Auditing...");
+  console.log("[Test 5/8] Validating SetupWizard Auditing & Testing...");
   const monolith = new LumiMonolith();
 
   const statuses = monolith.setupWizard.auditStatus();
-  const hasOllama = statuses.some((s) => s.provider === "ollama");
-  const hasLmStudio = statuses.some((s) => s.provider === "lmstudio");
-  const hasLlamaCpp = statuses.some((s) => s.provider === "llamacpp");
-  assert.ok(hasOllama);
-  assert.ok(hasLmStudio);
-  assert.ok(hasLlamaCpp);
+  assert.ok(statuses.length >= 2);
 
-  // Configure local endpoint
-  monolith.setupWizard.configureLocalEndpoint("ollama", "http://localhost:11434/v1");
-  const updatedStatuses = monolith.setupWizard.auditStatus();
-  const ollamaStatus = updatedStatuses.find((s) => s.provider === "ollama");
-  assert.equal(ollamaStatus?.configured, true);
-  assert.equal(ollamaStatus?.source, "proxy");
-
-  // Connection test for local provider
-  const connTest = await monolith.setupWizard.testProviderConnection("ollama");
+  // Connection test for provider
+  const connTest = await monolith.setupWizard.testProviderConnection("galx");
   assert.ok(typeof connTest.passed === "boolean");
   assert.ok(typeof connTest.details === "string");
 
-  console.log("  [✓] SetupWizard local audit and configuration methods verified.");
+  console.log("  [✓] SetupWizard audit and test methods verified.");
 }
 
 async function testLocalDashboardModal(): Promise<void> {

@@ -282,3 +282,29 @@ LUMI incorporates an enterprise-grade, multi-pass tool calling and execution sub
 12. **Topological Dependency DAG Execution Planner (ADR-141)**: Analyzes parameter pipelines (e.g. `$node1.result.path`) and constructs topological DAGs to execute independent branches concurrently while chaining dependent stages sequentially.
 13. **Model-Facing Discovery & Introspection DSL (ADR-141)**: Exposes `search_tools_catalog` (BM25 semantic tool discovery across all 1,600+ tools) and `explain_tool_parameters` (full schema and constraint introspection on demand).
 14. **Deterministic Mock Sandbox Harness (ADR-141)**: Enables offline testing, benchmark evaluations, and recorded fixture replay without modifying physical workspace files.
+
+---
+
+## 8. GALX AI Provider & Wholesale Transport Substrate (ADR-147)
+
+LUMI consolidates all LLM routing into three first-class, hardened backends:
+1. **OpenAI / Codex** (`openai-codex`): Direct OpenAI API Keys and ChatGPT Subscription OAuth 2.0 PKCE.
+2. **GALX AI Wholesale Clearinghouse** (`galx`): Direct sub-cent wholesale compute clearinghouse at `https://galx.ai/v1`.
+3. **OpenRouter** (`openrouter`): Unified gateway for all external frontier models (Claude, Gemini, DeepSeek, Llama).
+
+### 8.1 GALX Model Fleet & Wholesale Economics
+
+| Model ID | Aliases | Context Window | Max Output | Input Price / 1M | Output Price / 1M | Cache Read / 1M | Reasoning |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **`gpt-5.6-sol`** | `galx`, `galx-sol`, `sol` | 200k | 32k | **$3.75** | **$15.00** | **$1.25** | Flagship Reasoning |
+| **`gpt-5.6-terra`** | `galx-terra`, `terra` | 128k | 16k | **$0.45** | **$1.80** | **$0.15** | Balanced Workhorse |
+| **`gpt-5.6-luna`** | `galx-luna`, `luna` | 128k | 8k | **$0.15** | **$0.60** | **$0.05** | Ultra-Fast Sub-Cent |
+
+### 8.2 Transport Hardening & Cryptographic Delivery Receipts
+
+- **Dual RFC 9530 / RFC 3230 Content-Digests**: Every outbound request payload is verified with both base64 `Digest: sha-256=...` and hex `X-Digest-SHA256: ...`.
+- **RFC 9421 HTTP Message Signatures**: Timing-safe HMAC-SHA256 signed dictionary headers (`@method`, `@path`, `@authority`, `content-digest`).
+- **RFC 9449 DPoP Proofs**: Ephemeral cryptographic JWT proofs binding access-token SHA-256 hashes (`ath`) to prevent token relay attacks.
+- **Write-Ahead Ledger (WAL)**: Outbox requests are staged atomically in `.broccolidb/galx/wal.json` with `0o600` permissions.
+- **Merkle Hash-Chained Delivery Receipts**: Each response seals a cryptographic receipt ($h_i = \text{SHA-256}(h_{i-1} \parallel \text{correlationId} \parallel \text{idempotencyKey} \parallel \text{status} \parallel \text{duration} \parallel \text{timestamp})$) calculating rolling P50, P90, and P99 latency SLAs.
+- **Circuit Breaker & AIMD Concurrency Throttle**: Automatic 3-state fail-fast protection (`CLOSED` -> `OPEN` -> `HALF_OPEN`) with token bucket rate governance.

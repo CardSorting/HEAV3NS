@@ -82,7 +82,7 @@ npx tsx src/index.ts --profile coder
 | **Typos in function or variable names** | Typo-Friendly Smart Matching | Finds what you're looking for even if you or the AI misspell the name. |
 | **Ghost servers locking port 3000** | Automatic Port Unlocking | Automatically frees up stuck background ports so your apps just run. |
 | **Expensive AI bills on long chats** | Smart Memory Caching | Locks heavy project rules in memory so you pay up to **90% less per turn**. |
-| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch between Claude, ChatGPT, or local models without losing conversation context. |
+| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch between Claude (via OpenRouter), ChatGPT (Codex), or GALX Wholesale without losing context. |
 | **Want a custom AI teammate** | Drag & Drop Customization | Drop any notes or script files into a folder to create a personalized AI assistant. |
 
 ---
@@ -104,6 +104,7 @@ npx tsx src/index.ts --profile coder
 
 | Feature | What It Means in Everyday Words | Why You'll Love It |
 |---|---|---|
+| **🌐 GALX AI Wholesale Compute & Streamlined Providers (ADR-147)** | • **Wholesale Sub-Cent Pricing**: Access `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna` directly from the GALX AI clearinghouse.<br/>• **Verified Cryptographic Receipts**: Every turn seals a tamper-proof Merkle delivery receipt with real SLA metrics.<br/>• **3 Focused Backends**: Clean, rock-solid provider routing across **OpenRouter**, **Codex (OpenAI)**, and **GALX AI**. | **Maximum reliability, transparent sub-cent GPU wholesale pricing, and zero configuration bloat.** |
 | **⚡ High-Speed Search & Smart Tools (ADR-136)** | • **Instant Code Search**: Search your whole project with zero terminal lockups.<br/>• **Typo Forgiveness**: Finds the right code even with spelling mistakes.<br/>• **Automatic Port Unlock**: Never get stuck on `port already in use` errors.<br/>• **Safe Sandbox Review**: Inspect visual diffs before saving changes to your computer. | **Faster coding flow, zero terminal freezes, and complete peace of mind when editing code.** |
 | **🧠 Smart Cost-Saving Memory (ADR-135)** | • **Up to 90% Cheaper**: Never pay to re-send instructions the AI already read.<br/>• **Instant Answers**: Starts answering immediately without re-reading from scratch.<br/>• **Live Dollar Savings**: Shows your exact daily and monthly savings in real dollars. | **Massively cuts your monthly AI subscription and API costs.** |
 

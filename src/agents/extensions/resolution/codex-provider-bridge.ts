@@ -22,13 +22,13 @@ export type ModernGpt56Model = typeof MODERN_GPT56_MODELS[number];
  * (Ollama, llama.cpp, LM Studio, vLLM, LocalAI) in LUMI-JOY model resolution.
  */
 export class CodexProviderBridge {
-  private readonly codexOAuthManager: CodexOAuthManager;
+  private readonly codexOAuthManager?: CodexOAuthManager;
   private readonly authVault?: AuthStorageVault;
   private readonly envKeyResolver?: EnvironmentKeyResolver;
   private readonly proxyGateway?: LlmProxyGateway;
 
   constructor(
-    codexOAuthManager: CodexOAuthManager,
+    codexOAuthManager?: CodexOAuthManager,
     authVault?: AuthStorageVault,
     envKeyResolver?: EnvironmentKeyResolver,
     proxyGateway?: LlmProxyGateway
@@ -41,6 +41,9 @@ export class CodexProviderBridge {
 
   isCodexProvider(modelName: string): boolean {
     const lower = modelName.toLowerCase();
+    if (lower.startsWith("galx/") || lower.startsWith("openrouter/")) {
+      return false;
+    }
     return (
       lower.includes("codex") ||
       lower.startsWith("openai-codex") ||
@@ -57,19 +60,7 @@ export class CodexProviderBridge {
   }
 
   isLocalProvider(providerName: string): boolean {
-    const p = providerName.toLowerCase();
-    return (
-      p === "ollama" ||
-      p === "llamacpp" ||
-      p === "llama.cpp" ||
-      p === "lmstudio" ||
-      p === "lm-studio" ||
-      p === "vllm" ||
-      p === "localai" ||
-      p === "local" ||
-      p === "onprem" ||
-      p === "custom"
-    );
+    return false;
   }
 
   createCodexFetchHeaders(accessToken: string, accountId?: string): Record<string, string> {
@@ -84,29 +75,11 @@ export class CodexProviderBridge {
 
   resolveProviderName(modelName: string): string {
     const lower = modelName.toLowerCase();
+    if (lower.startsWith("galx/") || lower === "galx" || lower.includes("galx")) return "galx";
     if (lower.startsWith("openrouter/") || lower.includes("openrouter")) return "openrouter";
-    if (lower.startsWith("nous/") || lower.includes("nous") || lower.includes("hermes")) return "nous";
-    if (lower.startsWith("cline-pass/") || lower.includes("clinepass")) return "clinepass";
-    if (lower.startsWith("llamacpp/") || lower.startsWith("llama.cpp/") || lower.startsWith("llama-cpp/") || lower.startsWith("gguf/")) return "llamacpp";
-    if (lower.startsWith("lmstudio/") || lower.startsWith("lm-studio/")) return "lmstudio";
-    if (lower.startsWith("vllm/")) return "vllm";
-    if (lower.startsWith("localai/")) return "localai";
-    if (lower.startsWith("onprem/")) return "onprem";
-    if (lower.startsWith("local/")) return "local";
-    if (lower.startsWith("ollama/") || lower.includes("ollama") || lower.includes(":latest")) return "ollama";
-    if (this.isCodexProvider(lower)) return "openai";
-    if (lower.startsWith("anthropic/") || lower.includes("claude")) return "anthropic";
-    if (lower.startsWith("google/") || lower.includes("gemini")) return "google";
-    if (lower.startsWith("deepseek/") || lower.includes("deepseek")) return "deepseek";
-    if (lower.startsWith("groq/") || lower.includes("groq")) return "groq";
-    if (lower.startsWith("cerebras/") || lower.includes("cerebras")) return "cerebras";
-    if (lower.startsWith("xai/") || lower.includes("grok")) return "xai";
-    if (lower.startsWith("qwen/") || lower.includes("dashscope")) return "qwen";
-    if (lower.startsWith("zai/") || lower.includes("bigmodel") || lower.includes("glm")) return "zai";
-    if (lower.startsWith("cloudflare/") || lower.startsWith("@cf/")) return "cloudflare";
-    if (lower.startsWith("openai/") || lower.includes("gpt")) return "openai";
-    if (lower.includes("/")) return lower.split("/")[0];
-    return lower;
+    if (this.isCodexProvider(lower) || lower.startsWith("openai/") || lower.includes("gpt")) return "openai-codex";
+    if (lower.includes("/")) return "openrouter";
+    return "openrouter";
   }
 
   getDefaultEndpointForModel(modelName: string): string {
@@ -121,47 +94,19 @@ export class CodexProviderBridge {
     }
 
     switch (provider) {
+      case "galx":
+        return "https://galx.ai/v1/chat/completions";
       case "openrouter":
         return "https://openrouter.ai/api/v1/chat/completions";
-      case "nous":
-        return "https://inference-api.nousresearch.com/v1/chat/completions";
-      case "clinepass":
-        return "https://api.cline.bot/api/v1/chat/completions";
-      case "deepseek":
-        return "https://api.deepseek.com/chat/completions";
-      case "groq":
-        return "https://api.groq.com/openai/v1/chat/completions";
-      case "cerebras":
-        return "https://api.cerebras.ai/v1/chat/completions";
-      case "xai":
-        return "https://api.x.ai/v1/chat/completions";
-      case "qwen":
-        return "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-      case "zai":
-        return "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-      case "ollama":
-        return "http://localhost:11434/v1/chat/completions";
-      case "llamacpp":
-        return "http://localhost:8080/v1/chat/completions";
-      case "lmstudio":
-        return "http://localhost:1234/v1/chat/completions";
-      case "vllm":
-        return "http://localhost:8000/v1/chat/completions";
-      case "localai":
-        return "http://localhost:8080/v1/chat/completions";
-      case "local":
-      case "onprem":
-      case "custom":
-        return "http://localhost:8000/v1/chat/completions";
-      case "anthropic":
-        return "https://api.anthropic.com/v1/messages";
+      case "openai-codex":
+      case "openai":
       default:
         return "https://api.openai.com/v1/chat/completions";
     }
   }
 
   async resolveProviderAuth(modelName: string, fallbackApiKey?: string): Promise<ResolvedAuthHeaders> {
-    if (this.isCodexProvider(modelName)) {
+    if (this.isCodexProvider(modelName) && this.codexOAuthManager) {
       const accessToken = await this.codexOAuthManager.getValidAccessToken();
       if (accessToken) {
         const accountId = this.codexOAuthManager.getChatGPTAccountId();
@@ -181,32 +126,21 @@ export class CodexProviderBridge {
     if (!apiKey) {
       const envMap: Record<string, string | undefined> = {
         openai: process.env.OPENAI_API_KEY,
-        anthropic: process.env.ANTHROPIC_API_KEY,
-        google: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
-        deepseek: process.env.DEEPSEEK_API_KEY,
-        nous: process.env.NOUS_API_KEY || process.env.HERMES_PORTAL_TOKEN,
-        clinepass: process.env.CLINEPASS_API_KEY || process.env.CLINE_API_KEY,
-        groq: process.env.GROQ_API_KEY,
-        cerebras: process.env.CEREBRAS_API_KEY,
-        xai: process.env.XAI_API_KEY,
-        qwen: process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY,
-        zai: process.env.BIGMODEL_API_KEY || process.env.ZAI_API_KEY,
+        "openai-codex": process.env.OPENAI_API_KEY,
         openrouter: process.env.OPENROUTER_API_KEY,
-        ollama: process.env.OLLAMA_API_KEY,
-        llamacpp: process.env.LLAMACPP_API_KEY,
-        lmstudio: process.env.LMSTUDIO_API_KEY,
-        vllm: process.env.VLLM_API_KEY,
-        localai: process.env.LOCALAI_API_KEY,
-        local: process.env.LOCAL_LLM_API_KEY,
-        onprem: process.env.ONPREM_API_KEY,
-        custom: process.env.CUSTOM_LLM_API_KEY,
+        galx: process.env.GALX_API_KEY || process.env.GALX_KEY,
       };
       apiKey = envMap[providerName] || undefined;
     }
 
     if (apiKey) {
       const headers: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
-      if (providerName === "openrouter") {
+      if (providerName === "galx") {
+        headers["X-GALX-Client"] = "LUMI/12.5.0";
+        headers["X-GALX-Client-ID"] = "lumi-ide";
+        headers["X-OpenRouter-Title"] = "LUMI";
+        headers["HTTP-Referer"] = "https://github.com/CardSorting/LUMI-JOY";
+      } else if (providerName === "openrouter") {
         headers["HTTP-Referer"] = "https://github.com/CardSorting/LUMI-JOY";
         headers["X-Title"] = "LUMI AGENT OS";
         headers["X-OpenRouter-Title"] = "LUMI";
@@ -237,7 +171,7 @@ export class CodexProviderBridge {
     return MODERN_GPT56_MODELS;
   }
 
-  getOAuthManager(): CodexOAuthManager {
+  getOAuthManager(): CodexOAuthManager | undefined {
     return this.codexOAuthManager;
   }
 }

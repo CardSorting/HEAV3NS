@@ -230,3 +230,35 @@ sequenceDiagram
 
 See [ADR-084](../adr/ADR-084-attempt-completion-gate-strategy.md) for detailed specifications.
 
+---
+
+## 6. GALX AI Wholesale Transport & Cryptographic Receipt Workflow
+
+The following sequence illustrates the RFC-hardened transport and Merkle hash-chained delivery receipt generation for wholesale LLM compute clearinghouse requests:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Agent as AgentEngine / Resolver
+    participant Engine as GalxProviderEngine
+    participant Client as GalxTransportClient
+    participant Substrate as BroccoliTransportSubstrate
+    participant Edge as GALX Clearinghouse Edge (galx.ai/v1)
+
+    Agent->>Engine: prepareRequestPayload(modelId, messages, tools)
+    Engine->>Client: post("/chat/completions", payload, { idempotencyKey })
+    Client->>Substrate: enqueueOutbox(path, payload) (Write-Ahead Ledger)
+    Client->>Client: computeDigests(jsonBody) (RFC 9530 / RFC 3230)
+    Client->>Client: generateSignatureHeaders(RFC 9421 HMAC-SHA256)
+    Client->>Substrate: generateDPoPProof(method, url, accessToken) (RFC 9449)
+    Client->>Client: acquireRateToken() (Token Bucket Governor)
+    Client->>Edge: HTTPS POST with Digest, Signature, DPoP, X-GALX-Client
+    Edge-->>Client: 200 OK + Stream/Completion Payload + Trace Headers
+    Client->>Substrate: sealReceipt(entryId, response, routingMeta)
+    Substrate->>Substrate: compute Merkle hash chain & rolling SLA percentiles (P50/P90/P99)
+    Client-->>Engine: GalxTransportResponse(success, data, durationMs, traceId)
+    Engine-->>Agent: Parsed LLM completion + Token Cost
+```
+
+See [ADR-147](../adr/ADR-147-galx-ai-provider-integration-and-auxiliary-provider-consolidation.md) for detailed specifications.
+

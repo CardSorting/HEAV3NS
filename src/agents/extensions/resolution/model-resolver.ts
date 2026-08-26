@@ -29,6 +29,16 @@ export class ModelResolver {
 
     // Exact or partial alias mappings
     switch (lower) {
+      case "galx":
+      case "galx-sol":
+      case "galx/gpt-5.6-sol":
+        return "galx/gpt-5.6-sol";
+      case "galx-terra":
+      case "galx/gpt-5.6-terra":
+        return "galx/gpt-5.6-terra";
+      case "galx-luna":
+      case "galx/gpt-5.6-luna":
+        return "galx/gpt-5.6-luna";
       case "terra":
       case "gpt-terra":
       case "5.6-terra":

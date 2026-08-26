@@ -114,6 +114,15 @@ When diagnosing state snapshots or using `/rewind`:
 2. **Deterministic Rewind**: Calling `/rewind <snapshotId>` restores the conversation transcript, frame index counter, virtual filesystem staging overlays (`SessionVfs`), and cognitive memory facts (`SessionMemoryStore`) in $< 0.05\text{ ms}$.
 3. **Memory Store Inspection**: Run `/memory` or `/facts` to view all currently active persistent rules, user facts, and troubleshooting insights.
 
+## GALX Provider & Clearinghouse Diagnostics
+
+When using GALX Wholesale Compute (`galx/gpt-5.6-sol`, `galx/gpt-5.6-terra`, `gpt-5.6-luna`):
+
+1. **Authentication**: Configure `GALX_API_KEY` in environment or through `/setup` under **GALX AI Wholesale Clearinghouse**.
+2. **Circuit Breaker Status**: If requests return HTTP 503 circuit open, inspect `lumi.galxTransportClient.getCircuitState()`. The client enters cooldown after 5 consecutive failures and automatically probes health before transitioning to `HALF_OPEN`.
+3. **Write-Ahead Ledger & Outbox**: Pending offline requests are recorded in `.broccolidb/galx/wal.json`. Run `lumi.galxTransportClient.flushPendingOutbox()` or enable `enableBackgroundOutboxWorker` to replay queued entries.
+4. **Merkle Delivery Receipts**: Audit cryptographic receipt chain hashes using `lumi.galxTransportClient.getTransportAuditReport()` or inspect SLA percentiles with `lumi.galxTransportClient.getBroccoliSlaMetrics()`.
+
 ## Repository verification
 
 Run the full local gate after changing provider dispatch, activity mapping, TUI behavior, or setup:

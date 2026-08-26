@@ -856,27 +856,21 @@ async function validateEnvironmentAuthAndNoPromptHijack(): Promise<void> {
   const bridge = new CodexProviderBridge(oauthMgr, undefined, envResolver);
 
   // Test provider name and endpoint resolution
-  assert.equal(bridge.resolveProviderName("claude-3-5-sonnet"), "anthropic");
-  assert.equal(bridge.resolveProviderName("gemini-1.5-pro"), "google");
-  assert.equal(bridge.resolveProviderName("deepseek-v3"), "deepseek");
+  assert.equal(bridge.resolveProviderName("galx/gpt-5.6-sol"), "galx");
+  assert.equal(bridge.resolveProviderName("gpt-5.6-terra"), "openai-codex");
   assert.equal(bridge.resolveProviderName("openrouter/meta-llama"), "openrouter");
-  assert.equal(bridge.resolveProviderName("llama3:latest"), "ollama");
 
+  assert.equal(bridge.getDefaultEndpointForModel("galx/gpt-5.6-sol"), "https://galx.ai/v1/chat/completions");
   assert.equal(bridge.getDefaultEndpointForModel("openrouter/anthropic/claude-3.5-sonnet"), "https://openrouter.ai/api/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("deepseek-v3"), "https://api.deepseek.com/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("llama3:latest"), "http://localhost:11434/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("gpt-5.6-terra"), "https://api.openai.com/v1/chat/completions");
 
   // Test environment variable authentication resolution
   const testOpenaiKey = ["sk", "test-env-key-for-lumi"].join("-");
-  const testAnthropicKey = ["sk", "ant", "test-key"].join("-");
-  const testGeminiKey = ["A", "Iza", "SyTestKey"].join("");
-  const testDeepseekKey = ["sk", "ds", "test-key"].join("-");
+  const testGalxKey = ["galx", "test-env-key"].join("_");
   const testOpenrouterKey = ["sk", "or", "test-key"].join("-");
 
   process.env.OPENAI_API_KEY = testOpenaiKey;
-  process.env.ANTHROPIC_API_KEY = testAnthropicKey;
-  process.env.GEMINI_API_KEY = testGeminiKey;
-  process.env.DEEPSEEK_API_KEY = testDeepseekKey;
+  process.env.GALX_API_KEY = testGalxKey;
   process.env.OPENROUTER_API_KEY = testOpenrouterKey;
 
   try {
@@ -888,25 +882,15 @@ async function validateEnvironmentAuthAndNoPromptHijack(): Promise<void> {
       assert.ok(authOpenAI.headers.Authorization?.startsWith("Bearer "));
     }
 
-    const authAnthropic = await bridge.resolveProviderAuth("claude-3-5-sonnet");
-    assert.equal(authAnthropic.authType, "api-key");
-    assert.equal(authAnthropic.headers.Authorization, `Bearer ${testAnthropicKey}`);
-
-    const authGemini = await bridge.resolveProviderAuth("gemini-1.5-pro");
-    assert.equal(authGemini.authType, "api-key");
-    assert.equal(authGemini.headers.Authorization, `Bearer ${testGeminiKey}`);
-
-    const authDeepSeek = await bridge.resolveProviderAuth("deepseek-v3");
-    assert.equal(authDeepSeek.authType, "api-key");
-    assert.equal(authDeepSeek.headers.Authorization, "Bearer sk-ds-test-key");
+    const authGalx = await bridge.resolveProviderAuth("galx/gpt-5.6-sol");
+    assert.equal(authGalx.authType, "api-key");
+    assert.equal(authGalx.headers.Authorization, `Bearer ${testGalxKey}`);
+    assert.equal(authGalx.headers["X-GALX-Client"], "LUMI/12.5.0");
 
     const authOpenRouter = await bridge.resolveProviderAuth("openrouter/anthropic/claude-3.5-sonnet");
     assert.equal(authOpenRouter.authType, "api-key");
     assert.equal(authOpenRouter.headers.Authorization, "Bearer sk-or-test-key");
     assert.equal(authOpenRouter.headers["HTTP-Referer"], "https://github.com/CardSorting/LUMI-JOY");
-
-    const authOllama = await bridge.resolveProviderAuth("llama3:latest");
-    assert.equal(authOllama.authType, "api-key");
   } finally {
     delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;

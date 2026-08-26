@@ -59,3 +59,13 @@ The public success boundary is `EngineTickResult.outcome === "completed"`. Promi
 This provides useful visibility without exposing raw command output, tool data, credentials, or hidden reasoning. It also keeps provider fidelity honest: Codex SDK dispatch can show item-level work, while basic HTTP dispatch reports only request-level status.
 
 See [Agent Activity Streaming Strategy](streaming-activity-strategy.md) and [ADR-082](../adr/ADR-082-structured-agent-activity-streaming.md).
+
+---
+
+## 5. GALX AI Wholesale Compute & Provider Consolidation (ADR-147)
+
+Consolidating legacy direct vendor drivers into three core backends (**OpenRouter**, **Codex (OpenAI)**, and **GALX AI**) achieved major structural improvements:
+
+1. **Wholesale Clearinghouse Precision**: GALX AI provides sub-cent token execution (`gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`) paired with cryptographic delivery receipts (`BroccoliDeliveryReceipt`) and Write-Ahead Ledger state tracking (`BroccoliTransportSubstrate`).
+2. **Hardened Transport Layer**: Implements dual Content-Digests (RFC 9530 / RFC 3230), HTTP message signatures (RFC 9421), DPoP proofs (RFC 9449), 3-state circuit breaking, and AIMD concurrency throttling.
+3. **Drastic Codebase De-duplication**: Eliminated 4,000+ lines of fragile auxiliary vendor adapters without loss of model capability (external frontier models route via OpenRouter with full prompt caching and unified billing).

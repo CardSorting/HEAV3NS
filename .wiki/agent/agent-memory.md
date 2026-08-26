@@ -35,4 +35,13 @@ This document defines non-negotiable architectural and syntax constraints for al
    - Never place credentials, raw command output, tool payloads, complete model responses, or hidden reasoning in progress events.
    - Keep `AbortSignal` and callbacks local; do not serialize them across remote session boundaries.
 
+7. **Active LLM Provider Scoping (ADR-147)**:
+   - The runtime provider ecosystem is strictly scoped to `openrouter`, `openai-codex`, and `galx`.
+   - Do not introduce ad-hoc auxiliary direct vendor drivers (e.g. Anthropic direct, Gemini direct, Groq, local daemons) without formal ADR approval.
+   - For all external models, route through OpenRouter (`openrouter/<model>`).
+
+8. **Zero Barrel Imports Invariant (ADR-012)**:
+   - Intermediate `index.ts` re-export barrel files are strictly forbidden inside `src/` subdirectories.
+   - All modules must import directly from specific canonical source files.
+
 See [Agent Activity Streaming Strategy](streaming-activity-strategy.md) for the normative lifecycle.

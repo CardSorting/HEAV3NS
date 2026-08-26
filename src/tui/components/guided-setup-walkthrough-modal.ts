@@ -14,10 +14,9 @@ import type {
 type SetupProviderId = ApiKeyProviderId | "codex_oauth";
 
 const PROVIDER_DETAILS: Record<SetupProviderId, { label: string; envVar?: string }> = {
-  anthropic: { label: "Anthropic Claude", envVar: "ANTHROPIC_API_KEY" },
+  galx: { label: "GALX AI Clearinghouse", envVar: "GALX_API_KEY" },
+  openrouter: { label: "OpenRouter", envVar: "OPENROUTER_API_KEY" },
   openai: { label: "OpenAI API", envVar: "OPENAI_API_KEY" },
-  google: { label: "Google Gemini", envVar: "GEMINI_API_KEY" },
-  deepseek: { label: "DeepSeek", envVar: "DEEPSEEK_API_KEY" },
   codex_oauth: { label: "OpenAI Codex OAuth" },
 };
 
@@ -135,22 +134,20 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
       stepMarkdownText =
         `### Step 2/4: Model Provider Selection & Purpose\n\n` +
         `Choose a provider below to configure its credentials and make its default model active:\n\n` +
-        `- **Anthropic Claude**: Ideal for deep code editing and multi-file reasoning.\n` +
-        `- **OpenAI GPT-4o**: Fast reasoning and high-throughput agent execution.\n` +
-        `- **Google Gemini**: Extended context windows and multimodal capabilities.\n` +
-        `- **DeepSeek**: High-performance open-weight model integration.\n` +
-        `- **OpenAI Codex OAuth**: Subscription-based OAuth browser login.\n` +
+        `- **OpenAI Codex OAuth**: Subscription-based OAuth browser login (ChatGPT Plus/Pro).\n` +
+        `- **GALX AI**: Wholesale sovereign compute clearinghouse (gpt-5.6-sol/terra/luna).\n` +
+        `- **OpenRouter**: Unified API routing across frontier and open-weight models.\n` +
+        `- **OpenAI API Key**: Direct OpenAI API key authentication.\n` +
         (this.providerFeedback ? `\n${this.providerFeedback}\n` : "");
 
       this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME);
       this.vstack.addChild(this.stepMarkdownComponent);
 
       const items: SelectItem[] = [
-        { value: "anthropic", label: "Anthropic Claude (sk-ant-...)", description: "Primary recommended model for complex coding tasks." },
-        { value: "openai", label: "OpenAI GPT-4o / O3 (sk-...)", description: "High velocity turn execution and structured outputs." },
-        { value: "google", label: "Google Gemini (AIzaSy...)", description: "Large context window support." },
-        { value: "deepseek", label: "DeepSeek V3 / R1 (sk-...)", description: "Cost-efficient reasoning model." },
-        { value: "codex_oauth", label: "OpenAI Codex OAuth (PKCE Web Login)", description: "Authenticate via browser OAuth." },
+        { value: "codex_oauth", label: "OpenAI Codex OAuth (PKCE Web Login)", description: "Authenticate via browser OAuth (ChatGPT Plus/Pro)." },
+        { value: "galx", label: "GALX AI API Key (galx_...)", description: "GALX Wholesale Compute Clearinghouse." },
+        { value: "openrouter", label: "OpenRouter API Key (sk-or-...)", description: "Frontier and open-source models via OpenRouter." },
+        { value: "openai", label: "OpenAI API Key (sk-...)", description: "Direct OpenAI API key authentication." },
         { value: "next", label: "Proceed to Step 3: Custom Proxy Setup", description: "Advance to optional proxy gateway configuration." },
         { value: "back", label: "Back to Step 1", description: "Return to environment audit step." },
       ];

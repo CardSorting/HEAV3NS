@@ -13,10 +13,9 @@ export interface ProviderKeyStatus {
  */
 export class EnvironmentKeyResolver {
   private readonly providerEnvMap: Record<string, string> = {
-    anthropic: "ANTHROPIC_API_KEY",
-    openai: "OPENAI_API_KEY",
-    google: "GEMINI_API_KEY",
-    deepseek: "DEEPSEEK_API_KEY",
+    "openai-codex": "OPENAI_API_KEY",
+    galx: "GALX_API_KEY",
+    openrouter: "OPENROUTER_API_KEY",
   };
 
   resolveKey(provider: string): string | null {
@@ -25,11 +24,14 @@ export class EnvironmentKeyResolver {
     if (envVar && process.env[envVar]) {
       return process.env[envVar]!;
     }
-    if (p === "openai" || p === "codex" || p.includes("gpt")) {
+    if (p === "galx" || p === "galxai") {
+      return process.env.GALX_API_KEY || process.env.GALX_KEY || null;
+    }
+    if (p === "openai" || p === "codex" || p === "openai-codex" || p.includes("gpt")) {
       return process.env.OPENAI_API_KEY || null;
     }
-    if (p === "google" || p === "gemini") {
-      return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || null;
+    if (p === "openrouter") {
+      return process.env.OPENROUTER_API_KEY || null;
     }
     return null;
   }

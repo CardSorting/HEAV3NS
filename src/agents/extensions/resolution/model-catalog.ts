@@ -2,32 +2,16 @@ import { DynamicModelCache } from "./dynamic-model-cache.js";
 import { DeterministicLocalEndpointEngine } from "../../../tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
 import type { LocalProviderKind } from "../../../core/contracts/local-endpoints.contracts.js";
 import { OpenRouterProviderEngine } from "./openrouter-provider-engine.js";
+import { GalxProviderEngine } from "./galx-provider-engine.js";
+import {
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
+  isOpenRouterFreeModel,
+} from "../../../core/contracts/openrouter.contracts.js";
 
 export interface ModelSpecs {
   modelName: string;
-  provider:
-    | "openrouter"
-    | "openai-codex"
-    | "ollama"
-    | "llamacpp"
-    | "lmstudio"
-    | "vllm"
-    | "localai"
-    | "local"
-    | "onprem"
-    | "anthropic"
-    | "google"
-    | "openai"
-    | "deepseek"
-    | "groq"
-    | "cerebras"
-    | "xai"
-    | "qwen"
-    | "zai"
-    | "nous"
-    | "clinepass"
-    | "cloudflare"
-    | "custom";
+  provider: "openrouter" | "openai-codex" | "galx" | "custom";
   contextWindowTokens: number;
   maxOutputTokens: number;
   inputPricePer1M: number;
@@ -52,7 +36,7 @@ interface OpenRouterModelApiResponse {
  * ModelCatalog & Context Pricing Registry.
  * Absorbed from packages/catalog (Pass 16 / ADR-012) & upgraded for Local On-Prem (Pass 105 / ADR-052).
  *
- * Maintains model spec definitions, dynamic OpenRouter, Nous Research & local engine auto-discovery (Ollama, llama.cpp, LM Studio, vLLM),
+ * Maintains model spec definitions, dynamic OpenRouter, GALX AI, Nous Research & local engine auto-discovery (Ollama, llama.cpp, LM Studio, vLLM),
  * context window limits, and turn token cost calculations with sub-cent honesty.
  */
 export class ModelCatalog {
@@ -60,55 +44,21 @@ export class ModelCatalog {
   private readonly dynamicCache: DynamicModelCache = new DynamicModelCache();
   private readonly localEngine: DeterministicLocalEndpointEngine;
   private readonly openRouterEngine: OpenRouterProviderEngine;
+  private readonly galxEngine: GalxProviderEngine;
 
   constructor(
     localEngine?: DeterministicLocalEndpointEngine,
-    openRouterEngine?: OpenRouterProviderEngine
+    openRouterEngine?: OpenRouterProviderEngine,
+    galxEngine?: GalxProviderEngine
   ) {
     this.localEngine = localEngine ?? new DeterministicLocalEndpointEngine();
     this.openRouterEngine = openRouterEngine ?? new OpenRouterProviderEngine();
+    this.galxEngine = galxEngine ?? new GalxProviderEngine();
     this.registerDefaults();
   }
 
   private registerDefaults(): void {
-    // Native Nous Portal Models
-    this.registerModel({
-      modelName: "nous/hermes-3-llama-3.1-405b",
-      provider: "nous",
-      contextWindowTokens: 131_072,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 3.5,
-      outputPricePer1M: 7.0,
-      supportsVision: false,
-      supportsReasoning: true,
-      description: "Nous Research Flagship 405B Frontier Open-Weights Model",
-    });
-
-    this.registerModel({
-      modelName: "nous/hermes-3-llama-3.1-70b",
-      provider: "nous",
-      contextWindowTokens: 131_072,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.7,
-      outputPricePer1M: 1.4,
-      supportsVision: false,
-      supportsReasoning: true,
-      description: "Nous Research High-Efficiency 70B Model",
-    });
-
-    this.registerModel({
-      modelName: "nous/deephermes-3-llama-3-8b-preview",
-      provider: "nous",
-      contextWindowTokens: 65_536,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.2,
-      outputPricePer1M: 0.5,
-      supportsVision: false,
-      supportsReasoning: true,
-      description: "Nous Research Deep Reasoning Model",
-    });
-
-    // OpenAI Codex OAuth Models (ChatGPT Subscription)
+    // 1. OpenAI Codex OAuth Models (ChatGPT Subscription)
     this.registerModel({
       modelName: "gpt-5.6-sol",
       provider: "openai-codex",
@@ -265,299 +215,16 @@ export class ModelCatalog {
       description: "Standard OpenAI GPT-4o Model",
     });
 
-    // Anthropic Claude Frontier Models
-    this.registerModel({
-      modelName: "claude-opus-4-7",
-      provider: "anthropic",
-      contextWindowTokens: 1_000_000,
-      maxOutputTokens: 128_000,
-      inputPricePer1M: 5.0,
-      outputPricePer1M: 25.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic Claude 4.7 Opus: Most capable autonomous model for long-horizon agentic work (1M context)",
-    });
+    // 2. GALX Wholesale Compute Clearinghouse Models
+    for (const galxSpec of this.galxEngine.getFallbackModelSpecs()) {
+      this.registerModel(galxSpec);
+    }
 
-    this.registerModel({
-      modelName: "claude-opus-4-6",
-      provider: "anthropic",
-      contextWindowTokens: 1_000_000,
-      maxOutputTokens: 128_000,
-      inputPricePer1M: 5.0,
-      outputPricePer1M: 25.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic Claude 4.6 Opus with 1M context window and advanced reasoning",
-    });
-
-    this.registerModel({
-      modelName: "claude-sonnet-4-6",
-      provider: "anthropic",
-      contextWindowTokens: 1_000_000,
-      maxOutputTokens: 64_000,
-      inputPricePer1M: 3.0,
-      outputPricePer1M: 15.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic Claude 4.6 Sonnet: 1M context balanced model offering strong coding and reasoning",
-    });
-
-    this.registerModel({
-      modelName: "claude-sonnet-4-5-20250929",
-      provider: "anthropic",
-      contextWindowTokens: 200_000,
-      maxOutputTokens: 64_000,
-      inputPricePer1M: 3.0,
-      outputPricePer1M: 15.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic Claude 4.5 Sonnet flagship reasoning & full-stack software engineer",
-    });
-
-    this.registerModel({
-      modelName: "claude-haiku-4-5-20251001",
-      provider: "anthropic",
-      contextWindowTokens: 200_000,
-      maxOutputTokens: 64_000,
-      inputPricePer1M: 1.0,
-      outputPricePer1M: 5.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic Claude 4.5 Haiku fast intelligence with reasoning",
-    });
-
-    this.registerModel({
-      modelName: "claude-3-7-sonnet-20250219",
-      provider: "anthropic",
-      contextWindowTokens: 200_000,
-      maxOutputTokens: 64_000,
-      inputPricePer1M: 3.0,
-      outputPricePer1M: 15.0,
-      supportsVision: true,
-      supportsReasoning: true,
-      description: "Anthropic frontier hybrid reasoning & coding engine with dynamic thinking budget",
-    });
-
-    this.registerModel({
-      modelName: "claude-3-5-sonnet-20241022",
-      provider: "anthropic",
-      contextWindowTokens: 200_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 3.0,
-      outputPricePer1M: 15.0,
-      supportsVision: true,
-      supportsReasoning: false,
-      description: "Top-tier agentic coding, refactoring, and multi-file editing precision",
-    });
-
-    // Default Fallback OpenRouter Presets from OpenRouterProviderEngine
+    // 3. OpenRouter Default Models
     const defaultOpenRouterModels = this.openRouterEngine.getFallbackModelSpecs();
     for (const m of defaultOpenRouterModels) {
       this.registerModel(m);
     }
-
-    // 1. Ollama Local Models
-    this.registerModel({
-      modelName: "llama3:latest",
-      provider: "ollama",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 5,
-      isLocal: true,
-      description: "Local Ollama Llama 3 Instance",
-    });
-
-    this.registerModel({
-      modelName: "llama3.2:latest",
-      provider: "ollama",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 4,
-      isLocal: true,
-      description: "Local Ollama Llama 3.2 (Lightweight, High-Velocity)",
-    });
-
-    this.registerModel({
-      modelName: "llama3.3:latest",
-      provider: "ollama",
-      contextWindowTokens: 128_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      supportsReasoning: true,
-      estimatedLatencyMs: 12,
-      isLocal: true,
-      description: "Local Ollama Llama 3.3 70B Flagship Model",
-    });
-
-    this.registerModel({
-      modelName: "qwen2.5-coder:latest",
-      provider: "ollama",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 6,
-      isLocal: true,
-      description: "Local Qwen 2.5 Coder Model",
-    });
-
-    this.registerModel({
-      modelName: "deepseek-r1:latest",
-      provider: "ollama",
-      contextWindowTokens: 64_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      supportsReasoning: true,
-      estimatedLatencyMs: 8,
-      isLocal: true,
-      description: "Local Ollama DeepSeek R1 Distill Reasoning Model",
-    });
-
-    this.registerModel({
-      modelName: "mistral:latest",
-      provider: "ollama",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 5,
-      isLocal: true,
-      description: "Local Ollama Mistral 7B Instruct Model",
-    });
-
-    // 2. llama.cpp (llama-server) Models
-    this.registerModel({
-      modelName: "llamacpp/default",
-      provider: "llamacpp",
-      contextWindowTokens: 16_384,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 4,
-      isLocal: true,
-      description: "llama.cpp Server Active Loaded GGUF Model",
-    });
-
-    this.registerModel({
-      modelName: "llamacpp/qwen2.5-coder-7b",
-      provider: "llamacpp",
-      contextWindowTokens: 32_768,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 5,
-      isLocal: true,
-      description: "llama.cpp Qwen 2.5 Coder 7B Instruct GGUF",
-    });
-
-    this.registerModel({
-      modelName: "llamacpp/mistral-7b",
-      provider: "llamacpp",
-      contextWindowTokens: 32_768,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 4,
-      isLocal: true,
-      description: "llama.cpp Mistral 7B Instruct v0.3 GGUF",
-    });
-
-    // 3. LM Studio Models
-    this.registerModel({
-      modelName: "lmstudio/loaded-model",
-      provider: "lmstudio",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 6,
-      isLocal: true,
-      description: "LM Studio Active Running Model (Port 1234)",
-    });
-
-    this.registerModel({
-      modelName: "lmstudio/qwen2.5-coder",
-      provider: "lmstudio",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 6,
-      isLocal: true,
-      description: "LM Studio Qwen 2.5 Coder Model",
-    });
-
-    this.registerModel({
-      modelName: "lmstudio/deepseek-r1",
-      provider: "lmstudio",
-      contextWindowTokens: 64_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      supportsReasoning: true,
-      estimatedLatencyMs: 8,
-      isLocal: true,
-      description: "LM Studio DeepSeek R1 Distill GGUF",
-    });
-
-    // 4. vLLM & Custom On-Premises Models
-    this.registerModel({
-      modelName: "vllm/default",
-      provider: "vllm",
-      contextWindowTokens: 64_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 3,
-      isLocal: true,
-      description: "vLLM High-Throughput Inference Engine",
-    });
-
-    this.registerModel({
-      modelName: "onprem/llama-3.3-70b",
-      provider: "onprem",
-      contextWindowTokens: 128_000,
-      maxOutputTokens: 8_192,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      supportsReasoning: true,
-      estimatedLatencyMs: 15,
-      isLocal: true,
-      description: "Private Corporate On-Premises Llama 3.3 Cluster",
-    });
-
-    this.registerModel({
-      modelName: "local/onprem-model",
-      provider: "local",
-      contextWindowTokens: 32_000,
-      maxOutputTokens: 4_096,
-      inputPricePer1M: 0.0,
-      outputPricePer1M: 0.0,
-      supportsVision: false,
-      estimatedLatencyMs: 5,
-      isLocal: true,
-      description: "Custom Local On-Premises OpenAI-Compatible Model",
-    });
   }
 
   registerModel(specs: ModelSpecs): void {
@@ -588,20 +255,20 @@ export class ModelCatalog {
       modelName.includes("/") ||
       this.openRouterEngine.isClaude1mModel(modelName);
 
-    const isNous =
-      modelName.startsWith("nous/") ||
-      modelName.toLowerCase().includes("hermes");
+    const isGalx =
+      modelName.startsWith("galx/") ||
+      provider?.toLowerCase() === "galx" ||
+      modelName === "gpt-5.6-sol" ||
+      modelName === "gpt-5.6-terra" ||
+      modelName === "gpt-5.6-luna";
 
-    const isLocal =
-      modelName.startsWith("ollama/") ||
-      modelName.startsWith("llamacpp/") ||
-      modelName.startsWith("lmstudio/") ||
-      modelName.startsWith("vllm/") ||
-      modelName.startsWith("local/") ||
-      modelName.startsWith("onprem/") ||
-      modelName.includes(":latest");
+    if (isGalx) {
+      const canonical = this.galxEngine.normalizeModelId(modelName);
+      const spec = this.catalog.get(`galx::${canonical}`) || Array.from(this.catalog.values()).find(m => m.provider === "galx" && m.modelName === canonical);
+      if (spec) return spec;
+    }
 
-    if (isOpenRouter && !isLocal) {
+    if (isOpenRouter) {
       const { normalizedId, is1m } = this.openRouterEngine.normalizeModelId(modelName);
       const baseSpec = this.catalog.get(`openrouter::${normalizedId}`) || Array.from(this.catalog.values()).find(m => m.modelName === normalizedId);
       if (baseSpec && is1m) {
@@ -618,157 +285,48 @@ export class ModelCatalog {
 
     return {
       modelName,
-      provider: isLocal ? "local" : isNous ? "nous" : isOpenRouter ? "openrouter" : "custom",
+      provider: isOpenRouter ? "openrouter" : "custom",
       contextWindowTokens: 128_000,
       maxOutputTokens: 4_096,
-      inputPricePer1M: isLocal ? 0.0 : 1.0,
-      outputPricePer1M: isLocal ? 0.0 : 3.0,
+      inputPricePer1M: 1.0,
+      outputPricePer1M: 3.0,
       supportsVision: false,
-      estimatedLatencyMs: isLocal ? 5 : 45,
-      isLocal,
-      description: isLocal ? "Local On-Premises Model" : isNous ? "Nous Research Inference Model" : isOpenRouter ? "Dynamic OpenRouter Model" : "Custom Proxy Model",
+      estimatedLatencyMs: 45,
+      description: isOpenRouter ? "Dynamic OpenRouter Model" : "Custom Proxy Model",
     };
   }
 
   /**
    * Dynamically fetches live available models from OpenRouter API (https://openrouter.ai/api/v1/models).
    * Automatically parses rich metadata, calculates per-1M token pricing, synthesizes 1M context variants,
-   * and caches in dynamic cache.
+   * and caches in dynamic cache. Optionally filters to :free models only.
    */
-  async fetchOpenRouterModels(apiToken?: string, forceRefresh = false): Promise<ModelSpecs[]> {
+  async fetchOpenRouterModels(apiToken?: string, forceRefresh = false, freeOnly = false): Promise<ModelSpecs[]> {
     const cached = !forceRefresh ? this.dynamicCache.getCachedModels("openrouter") : null;
     if (cached && cached.length > 0) {
-      return cached;
+      return freeOnly ? filterOpenRouterModelSpecs(cached, "openrouter") : cached;
     }
 
     try {
-      const models = await this.openRouterEngine.fetchOpenRouterModels(apiToken, undefined, forceRefresh);
+      const models = await this.openRouterEngine.fetchOpenRouterModels(apiToken, undefined, forceRefresh, false);
       for (const m of models) {
         this.registerModel(m);
       }
       if (models.length > 0) {
         this.dynamicCache.setCachedModels("openrouter", models);
       }
-      return models;
+      return freeOnly ? filterOpenRouterModelSpecs(models, "openrouter") : models;
     } catch {
-      return this.getFallbackOpenRouterModels();
+      const fallback = this.getFallbackOpenRouterModels();
+      return freeOnly ? filterOpenRouterModelSpecs(fallback, "openrouter") : fallback;
     }
   }
 
   /**
-   * Dynamically fetches all live models from Nous Research Inference API (https://inference-api.nousresearch.com/v1/models).
-   * Parses 370 live models with per-1M token pricing, modalities, and reasoning flags.
+   * Dynamically fetches live models from OpenRouter and returns only the free models available in real-time.
    */
-  async fetchNousModels(apiToken?: string, forceRefresh = false): Promise<ModelSpecs[]> {
-    const cacheKey = "nous:models";
-    const cached = !forceRefresh ? this.dynamicCache.getCachedModels(cacheKey) : null;
-    if (cached && cached.length > 0) {
-      return cached;
-    }
-
-    try {
-      const key = apiToken || process.env.NOUS_API_KEY || "";
-      const headers: Record<string, string> = { Accept: "application/json" };
-      if (key) {
-        headers["Authorization"] = `Bearer ${key}`;
-      }
-
-      const res = await fetch("https://inference-api.nousresearch.com/v1/models", {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(12_000),
-      });
-
-      if (res.ok) {
-        const json = (await res.json()) as { data?: Array<any> } | Array<any>;
-        const dataList = Array.isArray((json as any)?.data) ? (json as any).data : Array.isArray(json) ? json : [];
-        if (dataList.length > 0) {
-          const parsed: ModelSpecs[] = [];
-          for (const item of dataList) {
-            const id = item.id;
-            if (!id || typeof id !== "string") continue;
-            const name = item.name || id;
-            const contextLength = Number(item.context_length) || 131_072;
-            const pricing = item.pricing || {};
-            const promptPrice = (Number(pricing.prompt) || 0) * 1_000_000.0;
-            const completionPrice = (Number(pricing.completion) || 0) * 1_000_000.0;
-            const arch = item.architecture || {};
-            const inputModalities = Array.isArray(arch.input_modalities) ? arch.input_modalities : [];
-            const supportsVision = inputModalities.includes("image") || id.toLowerCase().includes("vision") || id.toLowerCase().includes("4o");
-            const isReasoning = item.reasoning === true || id.includes("r1") || id.includes("o1") || id.includes("o3") || id.includes("thinking") || id.includes("reason") || id.includes("405b");
-
-            const spec: ModelSpecs = {
-              modelName: id,
-              provider: "nous",
-              contextWindowTokens: contextLength,
-              maxOutputTokens: Math.min(contextLength, 32_000),
-              inputPricePer1M: promptPrice || 0.7,
-              outputPricePer1M: completionPrice || 1.4,
-              supportsVision,
-              supportsReasoning: isReasoning,
-              description: item.description || `Nous Research model ${name}`,
-            };
-            this.registerModel(spec);
-            parsed.push(spec);
-          }
-
-          if (parsed.length > 0) {
-            this.dynamicCache.setCachedModels(cacheKey, parsed, 300_000);
-            return parsed;
-          }
-        }
-      }
-    } catch {
-      // Fallback
-    }
-
-    const fallback = this.getFallbackNousModels();
-    this.dynamicCache.setCachedModels(cacheKey, fallback, 300_000);
-    return fallback;
-  }
-
-  /**
-   * Dynamically discovers live models loaded/running on local endpoints (Ollama, llama.cpp, LM Studio, vLLM).
-   * Caches in DynamicModelCache with a 5-minute TTL.
-   */
-  async fetchLocalEndpointModels(provider: LocalProviderKind, baseUrl?: string): Promise<ModelSpecs[]> {
-    const cacheKey = `local:${provider}`;
-    const cached = this.dynamicCache.getCachedModels(cacheKey);
-    if (cached && cached.length > 0) {
-      return cached;
-    }
-
-    try {
-      const probeResult = await this.localEngine.probeServer(provider, baseUrl, undefined, 2000);
-      if (probeResult.reachable && probeResult.detectedModels.length > 0) {
-        const specsList: ModelSpecs[] = probeResult.detectedModels.map((m) => {
-          const spec: ModelSpecs = {
-            modelName: m.modelId,
-            provider: m.provider,
-            contextWindowTokens: m.contextWindow,
-            maxOutputTokens: m.maxOutputTokens,
-            inputPricePer1M: 0.0,
-            outputPricePer1M: 0.0,
-            supportsVision: m.supportsVision,
-            supportsReasoning: m.supportsReasoning,
-            estimatedLatencyMs: probeResult.latencyMs,
-            isLocal: true,
-            description: `${probeResult.displayName} • ${m.parameterSize || "Local Model"}${m.quantization ? ` (${m.quantization})` : ""}`,
-          };
-          this.registerModel(spec);
-          return spec;
-        });
-
-        this.dynamicCache.setCachedModels(cacheKey, specsList, 300_000);
-        return specsList;
-      }
-    } catch {
-      // Ignore local probe errors
-    }
-
-    return Array.from(this.catalog.values()).filter(
-      (m) => m.provider.toLowerCase() === provider.toLowerCase()
-    );
+  async fetchOpenRouterFreeModels(apiToken?: string, forceRefresh = false): Promise<ModelSpecs[]> {
+    return this.fetchOpenRouterModels(apiToken, forceRefresh, true);
   }
 
   /**
@@ -869,6 +427,38 @@ export class ModelCatalog {
     return fallback;
   }
 
+  /**
+   * Dynamically fetches live available models from GALX Wholesale Compute Clearinghouse.
+   */
+  async fetchGalxModels(apiToken?: string, forceRefresh = false, baseUrl?: string): Promise<ModelSpecs[]> {
+    const cacheKey = "galx:models";
+    const cached = !forceRefresh ? this.dynamicCache.getCachedModels(cacheKey) : null;
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    try {
+      const models = await this.galxEngine.fetchGalxModels(apiToken, baseUrl, forceRefresh);
+      for (const m of models) {
+        this.registerModel(m);
+      }
+      if (models.length > 0) {
+        this.dynamicCache.setCachedModels(cacheKey, models, 300_000);
+        return models;
+      }
+    } catch {
+      // Ignore errors and return fallback
+    }
+
+    const fallback = this.getFallbackGalxModels();
+    this.dynamicCache.setCachedModels(cacheKey, fallback, 300_000);
+    return fallback;
+  }
+
+  private getFallbackGalxModels(): ModelSpecs[] {
+    return Array.from(this.catalog.values()).filter((m) => m.provider === "galx");
+  }
+
   private getFallbackCodexModels(): ModelSpecs[] {
     return Array.from(this.catalog.values()).filter((m) => m.provider === "openai-codex");
   }
@@ -877,37 +467,40 @@ export class ModelCatalog {
     return Array.from(this.catalog.values()).filter((m) => m.provider === "openrouter");
   }
 
-  private getFallbackNousModels(): ModelSpecs[] {
-    return Array.from(this.catalog.values()).filter((m) => m.provider === "nous");
-  }
-
   getAllModels(): ModelSpecs[] {
     return Array.from(this.catalog.values());
   }
 
-  async getModelsForProvider(provider: string): Promise<ModelSpecs[]> {
+  async getModelsForProvider(provider: string, freeOnly = false): Promise<ModelSpecs[]> {
     const normalized = provider.toLowerCase();
-    if (normalized === "openrouter") {
-      return this.fetchOpenRouterModels();
+    if (normalized === "galx" || normalized === "galxai") {
+      return this.fetchGalxModels();
     }
-    if (normalized === "nous" || normalized === "nousresearch" || normalized === "nous-research") {
-      return this.fetchNousModels();
+    if (normalized === "openrouter") {
+      return this.fetchOpenRouterModels(undefined, false, freeOnly);
     }
     if (normalized === "openai-codex" || normalized === "codex" || normalized === "openai") {
       return this.fetchCodexModels();
     }
-    if (
-      normalized === "ollama" ||
-      normalized === "llamacpp" ||
-      normalized === "lmstudio" ||
-      normalized === "vllm" ||
-      normalized === "localai"
-    ) {
-      return this.fetchLocalEndpointModels(normalized as LocalProviderKind);
-    }
     return Array.from(this.catalog.values()).filter(
       (m) => m.provider.toLowerCase() === normalized
     );
+  }
+
+  filterOpenRouterModelIds(
+    modelIds: string[],
+    provider = "openrouter",
+    allowedFreeModelIds: string[] = []
+  ): string[] {
+    return filterOpenRouterModelIds(modelIds, provider, allowedFreeModelIds);
+  }
+
+  filterOpenRouterModelSpecs<T extends { modelName: string }>(
+    models: T[],
+    provider = "openrouter",
+    allowedFreeModelIds: string[] = []
+  ): T[] {
+    return filterOpenRouterModelSpecs(models, provider, allowedFreeModelIds);
   }
 
   calculateTurnCost(modelName: string, inputTokens: number, outputTokens: number): number {
@@ -917,3 +510,4 @@ export class ModelCatalog {
     return Number((inputCost + outputCost).toFixed(6));
   }
 }
+

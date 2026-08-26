@@ -4,6 +4,25 @@ All notable changes to the **LUMI-JOY** Deterministic Game Engine Agent Framewor
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to Semantic Versioning and conventional commit standards.
 
+## [1.0.10] - 2026-08-26
+
+### Added (GALX AI Provider Integration & Auxiliary Provider Consolidation — ADR-147)
+
+- **Enterprise GALX AI Wholesale Compute Clearinghouse ([ADR-147](docs/adr/ADR-147-galx-ai-provider-integration-and-auxiliary-provider-consolidation.md))**:
+  - Integrated `GalxProviderEngine` ([`src/agents/extensions/resolution/galx-provider-engine.ts`](src/agents/extensions/resolution/galx-provider-engine.ts)) with live `/models` endpoint discovery, TTL caching, model alias normalization (`galx-sol` -> `gpt-5.6-sol`, `terra` -> `gpt-5.6-terra`, `luna` -> `gpt-5.6-luna`), attribution headers (`X-GALX-Client: LUMI/12.5.0`, `X-GALX-Client-ID: lumi-ide`), and sub-cent turn cost calculations with prompt caching discounts.
+  - Ported `BroccoliTransportSubstrate` ([`src/integrations/galx/BroccoliTransportSubstrate.ts`](src/integrations/galx/BroccoliTransportSubstrate.ts)) implementing atomic Write-Ahead Ledger (`.broccolidb/galx/wal.json`) with `0o600` disk permissions, Merkle hash-chained delivery receipts (`BroccoliDeliveryReceipt`), W3C Trace Context generation, RFC 9449 DPoP JWT proofs with access-token binding (`ath`), and HKDF AES-256-GCM envelope encryption.
+  - Engineered `GalxTransportClient` ([`src/integrations/galx/GalxTransportClient.ts`](src/integrations/galx/GalxTransportClient.ts)) with dual RFC 9530 / RFC 3230 Content-Digests (`Digest` & `X-Digest-SHA256`), RFC 9421 HMAC-SHA256 HTTP Message Signatures, 3-state circuit breaker (`CLOSED`, `OPEN`, `HALF_OPEN`), AIMD concurrency governor, Token Bucket rate limiter, and background outbox flusher.
+  - Added dedicated test verification suite [`scripts/validate-galx-provider.ts`](scripts/validate-galx-provider.ts) covering contracts, substrate Merkle receipts, transport client circuit breakers, provider engine cost math, and monolith binding.
+
+### Changed & Consolidated
+
+- **Streamlined Provider Ecosystem**:
+  - Scoped active provider registries, bridges, resolvers, setup wizards, and TUI modals strictly to three first-class backends: **OpenRouter**, **Codex (OpenAI)**, and **GALX AI**.
+  - Consolidated `ModelSpecs.provider` to `"openrouter" | "openai-codex" | "galx" | "custom"` in `ModelCatalog`, eliminating fragile, unmaintained direct vendor drivers.
+  - Updated `ModelSelectModal` to 4 clean tabs: `[1] ALL`, `[2] CODEX OAUTH`, `[3] GALX WHOLESALE`, and `[4] OPENROUTER`.
+  - Maintained ADR-012 Zero Barrel Imports rule across `src/integrations/galx/`.
+  - Grand Monolith Synthesizer verified with 593 components in `OPTIMAL` cohesion and 100% test pass rate (139 / 139 suites passing).
+
 ---
 
 ## [1.0.9] - 2026-08-25

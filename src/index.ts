@@ -40,9 +40,19 @@ import {
 } from "./agents/extensions/resolution/codex-oauth-manager.js";
 import { CodexProviderBridge, MODERN_GPT56_MODELS, type ResolvedAuthHeaders, type ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
 import { OpenRouterProviderEngine, OPENROUTER_STEALTH_MODELS } from "./agents/extensions/resolution/openrouter-provider-engine.js";
+import { GalxProviderEngine } from "./agents/extensions/resolution/galx-provider-engine.js";
+import { GalxTransportClient, galxTransportClient } from "./integrations/galx/GalxTransportClient.js";
+import { BroccoliTransportSubstrate, broccoliTransportSubstrate } from "./integrations/galx/BroccoliTransportSubstrate.js";
 import {
   CLAUDE_SONNET_1M_SUFFIX,
   OPENROUTER_PROVIDER_PREFERENCES,
+  OPENROUTER_FREE_MODEL_EXCEPTIONS,
+  CLINE_FREE_MODEL_EXCEPTIONS,
+  isDietCodeFreeModelException,
+  isOpenRouterFreeModelException,
+  isOpenRouterFreeModel,
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
   type OpenRouterModelInfo,
   type OpenRouterProviderPreferences,
   type OpenRouterStreamChunk,
@@ -1228,9 +1238,43 @@ export type {
 export { CodexProviderBridge, MODERN_GPT56_MODELS } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export type { ResolvedAuthHeaders, ModernGpt56Model } from "./agents/extensions/resolution/codex-provider-bridge.js";
 export { OpenRouterProviderEngine, OPENROUTER_STEALTH_MODELS } from "./agents/extensions/resolution/openrouter-provider-engine.js";
+export { GalxProviderEngine } from "./agents/extensions/resolution/galx-provider-engine.js";
+export { GalxTransportClient, galxTransportClient } from "./integrations/galx/GalxTransportClient.js";
+export { BroccoliTransportSubstrate, broccoliTransportSubstrate } from "./integrations/galx/BroccoliTransportSubstrate.js";
+export {
+  DEFAULT_GALX_BASE_URL,
+  DEFAULT_GALX_CLEARINGHOUSE_URL,
+  DEFAULT_GALX_MODEL_ID,
+  DEFAULT_GALX_CLIENT_TAG,
+  DEFAULT_GALX_CLIENT_ID,
+  GALX_DEFAULT_MODELS,
+} from "./core/contracts/galx.contracts.js";
+export type {
+  GalxModelInfo,
+  GalxModelSpec,
+  GalxHandlerOptions,
+  GalxTransportOptions,
+  GalxIngestPayload,
+  GalxTransportResponse,
+  CircuitBreakerState as GalxCircuitBreakerState,
+  TransportAuditReport,
+  BroccoliTransportEntry,
+  BroccoliDeliveryReceipt,
+  BroccoliSlaMetrics,
+  BroccoliEnvelopePayload,
+  TraceContext,
+  GalxAttributionHeaders,
+} from "./core/contracts/galx.contracts.js";
 export {
   CLAUDE_SONNET_1M_SUFFIX,
   OPENROUTER_PROVIDER_PREFERENCES,
+  OPENROUTER_FREE_MODEL_EXCEPTIONS,
+  CLINE_FREE_MODEL_EXCEPTIONS,
+  isDietCodeFreeModelException,
+  isOpenRouterFreeModelException,
+  isOpenRouterFreeModel,
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
 } from "./core/contracts/openrouter.contracts.js";
 export type {
   OpenRouterModelInfo,
@@ -3795,6 +3839,8 @@ export class LumiMonolith implements IAgentEngine {
   readonly codexOAuthManager: CodexOAuthManager;
   readonly codexProviderBridge: CodexProviderBridge;
   readonly openRouterEngine: OpenRouterProviderEngine;
+  readonly galxEngine: GalxProviderEngine;
+  readonly galxTransportClient: GalxTransportClient;
   readonly setupWizard: SetupWizard;
   readonly slashRouter: AgentSlashRouter;
   readonly mentionResolver: MentionResolver;
@@ -4330,6 +4376,8 @@ export class LumiMonolith implements IAgentEngine {
     this.codexOAuthManager = components.codexOAuthManager;
     this.codexProviderBridge = components.codexProviderBridge;
     this.openRouterEngine = components.openRouterEngine;
+    this.galxEngine = components.galxEngine;
+    this.galxTransportClient = components.galxTransportClient;
     this.setupWizard = components.setupWizard;
     this.slashRouter = components.slashRouter;
     this.mentionResolver = components.mentionResolver;
@@ -5193,9 +5241,9 @@ if (isDirectCliExecution) {
     } else if (isModels) {
       const force = args.includes("--refresh") || args.includes("-r");
       if (force) {
-        console.log("\n\x1b[33mFetching latest models dynamically from Codex, Nous Research, and OpenRouter...\x1b[0m");
+        console.log("\n\x1b[33mFetching latest models dynamically from Codex, GALX AI, and OpenRouter...\x1b[0m");
         await lumi.modelCatalog.fetchCodexModels(undefined, true);
-        await lumi.modelCatalog.fetchNousModels(undefined, true);
+        await lumi.modelCatalog.fetchGalxModels(undefined, true);
         await lumi.modelCatalog.fetchOpenRouterModels(undefined, true);
       }
       console.log("\n\x1b[1;35m╭─── LUMI Curated & Dynamic Model Catalog ──────────────────────╮\x1b[0m");

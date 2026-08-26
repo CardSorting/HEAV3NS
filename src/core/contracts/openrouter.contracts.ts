@@ -300,3 +300,99 @@ export const OPENROUTER_PROVIDER_PREFERENCES: Record<
     allow_fallbacks: false,
   },
 };
+
+function normalizeModelId(modelId: string): string {
+  return modelId.trim().toLowerCase();
+}
+
+export const CLINE_FREE_MODEL_EXCEPTIONS: readonly string[] = [
+  "minimax-m2",
+  "devstral-2512",
+  "arcee-ai/trinity-large",
+];
+
+export const OPENROUTER_FREE_MODEL_EXCEPTIONS = CLINE_FREE_MODEL_EXCEPTIONS;
+
+export function isDietCodeFreeModelException(modelId: string): boolean {
+  const normalizedModelId = normalizeModelId(modelId);
+  return CLINE_FREE_MODEL_EXCEPTIONS.some((token) => normalizedModelId.includes(token));
+}
+
+export const isOpenRouterFreeModelException = isDietCodeFreeModelException;
+
+export function isOpenRouterFreeModel(
+  modelId: string,
+  inputPricePer1M?: number,
+  outputPricePer1M?: number,
+): boolean {
+  const normalized = normalizeModelId(modelId);
+  if (normalized.endsWith(":free") || normalized.includes(":free")) return true;
+  if (isOpenRouterFreeModelException(normalized)) return true;
+  if (inputPricePer1M !== undefined && outputPricePer1M !== undefined) {
+    return inputPricePer1M === 0 && outputPricePer1M === 0;
+  }
+  return false;
+}
+
+/**
+ * Filters OpenRouter model IDs based on provider-specific rules.
+ * For OpenRouter provider (default): displays only :free models
+ * For DietCode provider: excludes :free models (except known exception models)
+ * For other providers: excludes dietcode/ prefixed models
+ */
+export function filterOpenRouterModelIds(
+  modelIds: string[],
+  provider: string = "openrouter",
+  allowedFreeModelIds: string[] = [],
+): string[] {
+  if (provider === "dietcode") {
+    const allowedFreeIdSet = new Set(allowedFreeModelIds.map((id) => normalizeModelId(id)));
+    return modelIds.filter((id) => {
+      const normalizedModelId = normalizeModelId(id);
+      if (allowedFreeIdSet.has(normalizedModelId)) {
+        return true;
+      }
+      if (isDietCodeFreeModelException(normalizedModelId)) {
+        return true;
+      }
+      return !normalizedModelId.includes(":free");
+    });
+  }
+
+  if (provider === "openrouter") {
+    return modelIds.filter((id) => {
+      const normalizedModelId = normalizeModelId(id);
+      return !id.startsWith("dietcode/") && (normalizedModelId.endsWith(":free") || normalizedModelId.includes(":free"));
+    });
+  }
+
+  return modelIds.filter((id) => !id.startsWith("dietcode/"));
+}
+
+/**
+ * Filters model spec objects based on OpenRouter model filtering rules.
+ */
+export function filterOpenRouterModelSpecs<T extends { modelName: string; inputPricePer1M?: number; outputPricePer1M?: number; provider?: string }>(
+  models: T[],
+  provider: string = "openrouter",
+  allowedFreeModelIds: string[] = [],
+): T[] {
+  if (provider === "openrouter") {
+    const allowedFreeIdSet = new Set(allowedFreeModelIds.map((id) => normalizeModelId(id)));
+    return models.filter((m) => {
+      const normalizedModelId = normalizeModelId(m.modelName);
+      if (m.modelName.startsWith("dietcode/")) return false;
+      if (allowedFreeIdSet.has(normalizedModelId)) return true;
+      if (isDietCodeFreeModelException(normalizedModelId)) return true;
+      if (normalizedModelId.endsWith(":free") || normalizedModelId.includes(":free")) return true;
+      if (m.inputPricePer1M === 0 && m.outputPricePer1M === 0 && (!m.provider || m.provider === "openrouter")) return true;
+      return false;
+    });
+  }
+
+  const modelNames = models.map((m) => m.modelName);
+  const filteredNames = new Set(filterOpenRouterModelIds(modelNames, provider, allowedFreeModelIds));
+  return models.filter((m) => filteredNames.has(m.modelName));
+}
+
+

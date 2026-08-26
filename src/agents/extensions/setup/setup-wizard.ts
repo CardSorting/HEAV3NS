@@ -51,7 +51,7 @@ export interface SetupWizardOptions {
   browserLauncher?: (targetUrl: string) => Promise<void>;
 }
 
-export type ApiKeyProviderId = "anthropic" | "openai" | "google" | "deepseek";
+export type ApiKeyProviderId = "openrouter" | "galx" | "openai";
 
 export interface CodexOAuthFlow {
   auth: CodexAuthUrlDetails;
@@ -166,35 +166,6 @@ export class SetupWizard {
       configured: diag.authenticated || (diag.hasValidRefreshToken && !diag.isExpired),
       source: diag.authenticated ? "disk-oauth" : "none",
       maskedValue: codexMasked,
-    });
-
-    // 3. Local / On-Premise Endpoints (Ollama, LM Studio, llama.cpp)
-    const localEndpoints = this.proxyGateway.getAllProviderEndpoints();
-    const knownLocals: Array<{ name: string; defaultUrl: string }> = [
-      { name: "ollama", defaultUrl: "http://localhost:11434" },
-      { name: "lmstudio", defaultUrl: "http://localhost:1234" },
-      { name: "llamacpp", defaultUrl: "http://localhost:8080" },
-    ];
-
-    for (const local of knownLocals) {
-      const customConfig = localEndpoints[local.name];
-      const envUrl = process.env[`${local.name.toUpperCase()}_BASE_URL`] || process.env[`${local.name.toUpperCase()}_HOST`];
-      const isConfigured = Boolean(customConfig || envUrl);
-      statuses.push({
-        provider: local.name,
-        configured: isConfigured,
-        source: customConfig ? "proxy" : envUrl ? "environment" : "none",
-        maskedValue: customConfig?.baseUrl || envUrl || local.defaultUrl,
-      });
-    }
-
-    // 4. Custom LLM Proxy Gateway
-    const proxyConfig = this.proxyGateway.getProxyConfig();
-    statuses.push({
-      provider: "custom-llm-proxy",
-      configured: Boolean(proxyConfig?.baseUrl),
-      source: proxyConfig?.baseUrl ? "proxy" : "none",
-      maskedValue: proxyConfig?.baseUrl,
     });
 
     return statuses;
@@ -450,10 +421,9 @@ export class SetupWizard {
   async configureApiKeys(rl: readline.Interface): Promise<void> {
     console.log("\n\x1b[1;36m--- Provider API Keys Setup ---\x1b[0m");
     const providers = [
-      { name: "anthropic", label: "Anthropic API Key (sk-ant-...)", envVar: "ANTHROPIC_API_KEY" },
+      { name: "galx", label: "GALX AI API Key (galx_...)", envVar: "GALX_API_KEY" },
+      { name: "openrouter", label: "OpenRouter API Key (sk-or-...)", envVar: "OPENROUTER_API_KEY" },
       { name: "openai", label: "OpenAI API Key (sk-...)", envVar: "OPENAI_API_KEY" },
-      { name: "google", label: "Google Gemini API Key (AIzaSy...)", envVar: "GEMINI_API_KEY" },
-      { name: "deepseek", label: "DeepSeek API Key (sk-...)", envVar: "DEEPSEEK_API_KEY" },
     ];
 
     for (const p of providers) {
@@ -474,7 +444,7 @@ export class SetupWizard {
   }
 
   configureProviderApiKey(provider: ApiKeyProviderId, apiKey: string): void {
-    const supportedProviders: readonly ApiKeyProviderId[] = ["anthropic", "openai", "google", "deepseek"];
+    const supportedProviders: readonly ApiKeyProviderId[] = ["galx", "openrouter", "openai"];
     if (!supportedProviders.includes(provider)) {
       throw new Error(`Unsupported API key provider: ${provider}`);
     }
@@ -806,12 +776,8 @@ export class SetupWizard {
 
     const testModels = [
       { name: "gpt-5.6-terra", provider: "OpenAI Codex OAuth" },
-      { name: "claude-3-5-sonnet", provider: "Anthropic" },
-      { name: "gpt-4o", provider: "OpenAI" },
-      { name: "gemini-1.5-pro", provider: "Google Gemini" },
-      { name: "deepseek-v3", provider: "DeepSeek" },
-      { name: "llama3:latest", provider: "Ollama (Local)" },
-      { name: "llamacpp/default", provider: "llama.cpp (Local)" },
+      { name: "galx/gpt-5.6-sol", provider: "GALX Wholesale" },
+      { name: "openrouter/auto", provider: "OpenRouter" },
     ];
 
     for (const item of testModels) {
@@ -930,6 +896,8 @@ export class SetupWizard {
           OPENAI_API_KEY: "openai",
           GEMINI_API_KEY: "google",
           DEEPSEEK_API_KEY: "deepseek",
+          GALX_API_KEY: "galx",
+          GALX_KEY: "galx",
           OLLAMA_API_KEY: "ollama",
           LLAMACPP_API_KEY: "llamacpp",
           LMSTUDIO_API_KEY: "lmstudio",
@@ -958,25 +926,14 @@ export class SetupWizard {
 
   async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
     const p = providerName.toLowerCase();
-    if (p === "ollama" || p === "llamacpp" || p === "lmstudio" || p === "vllm" || p === "custom" || p === "local" || p === "onprem") {
-      const probe = await this.proxyGateway.probeLocalEndpoint(p as LocalProviderKind);
-      return {
-        passed: probe.reachable,
-        details: probe.reachable
-          ? `Server Online (${probe.latencyMs}ms, ${probe.activeModelCount} models detected)`
-          : `Server unreachable at ${probe.baseUrl}: ${probe.error || "offline"}`,
-      };
-    }
-
     const modelMap: Record<string, string> = {
-      anthropic: "claude-3-5-sonnet",
-      openai: "gpt-4o",
-      google: "gemini-1.5-pro",
-      deepseek: "deepseek-v3",
+      galx: "galx/gpt-5.6-sol",
+      openrouter: "openrouter/auto",
       "openai-codex": "gpt-5.6-terra",
+      openai: "gpt-5.6-terra",
     };
 
-    const modelName = modelMap[p] || "gpt-4o";
+    const modelName = modelMap[p] || "gpt-5.6-terra";
     const auth = await this.codexProviderBridge.resolveProviderAuth(modelName);
     const passed = auth.authType !== "none";
     const headerCount = Object.keys(auth.headers).length;

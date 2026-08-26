@@ -210,6 +210,26 @@ Exposing dozens of verbose JSON schemas burns valuable context tokens. LUMI's `T
 
 ---
 
+## 🌐 Model Providers & GALX AI Wholesale Compute (FAQ)
+
+### Q: Which LLM providers are supported in LUMI?
+LUMI focuses strictly on three first-class, hardened backends:
+1. **OpenAI / Codex** (`openai-codex`): Direct OpenAI API Keys and ChatGPT Subscription OAuth 2.0 PKCE.
+2. **GALX AI Wholesale Clearinghouse** (`galx`): Direct wholesale GPU compute clearinghouse at `https://galx.ai/v1` featuring `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna`.
+3. **OpenRouter** (`openrouter`): Unified gateway connecting to all external frontier models (Claude, Gemini, DeepSeek, Llama).
+
+### Q: What is the GALX AI Wholesale Clearinghouse and why use it?
+GALX AI provides high-throughput wholesale model execution with:
+- **Sub-Cent Wholesale Pricing**: `gpt-5.6-sol` ($3.75 / $15.00), `gpt-5.6-terra` ($0.45 / $1.80), `gpt-5.6-luna` ($0.15 / $0.60 per 1M tokens) with prompt caching discounts.
+- **Cryptographic Delivery Receipts**: Every completion returns a Merkle hash-chained delivery receipt with tamper-proof SLA timestamps and latency metrics.
+- **RFC-Hardened Transport**: Outbox Write-Ahead Ledger (WAL), RFC 9530 Content-Digests, RFC 9421 HMAC-SHA256 signatures, and RFC 9449 DPoP proofs.
+- **Resilience**: Client-side AIMD concurrency throttling, token-bucket rate limiting, and automated 3-state circuit breaking.
+
+### Q: How do I configure my GALX API key?
+Run `npx tsx src/index.ts --setup` (or press `Ctrl+P` / type `/setup` inside the TUI) and choose **GALX AI Wholesale Clearinghouse**, or set `export GALX_API_KEY="your-key"` in your shell.
+
+---
+
 ## Related Documentation
 
 - [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)

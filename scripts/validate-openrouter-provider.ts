@@ -14,7 +14,12 @@ import {
   JitteredBackoffGovernor,
   ModelCatalog,
   ProviderAttributionComposer,
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
+  isOpenRouterFreeModel,
+  isOpenRouterFreeModelException,
   type OpenRouterStreamChunk,
+  type ModelSpecs,
 } from "../src/index.js";
 
 async function main(): Promise<void> {
@@ -24,8 +29,8 @@ async function main(): Promise<void> {
 
   const engine = new OpenRouterProviderEngine();
 
-  // ── [Test 1/11] Attribution Headers Synthesis ──────────────────────────────
-  console.log("[Test 1/11] Validating OpenRouter attribution headers...");
+  // ── [Test 1/12] Attribution Headers Synthesis ──────────────────────────────
+  console.log("[Test 1/12] Validating OpenRouter attribution headers...");
   {
     const headers = engine.buildAttributionHeaders();
     assert.equal(headers["HTTP-Referer"], "https://github.com/CardSorting/LUMI-JOY");
@@ -35,8 +40,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Attribution headers properly formatted and populated.");
   }
 
-  // ── [Test 2/11] Model Normalization & Claude 1M Routing ────────────────────
-  console.log("[Test 2/11] Validating Model Normalization & Claude 1M routing...");
+  // ── [Test 2/12] Model Normalization & Claude 1M Routing ────────────────────
+  console.log("[Test 2/12] Validating Model Normalization & Claude 1M routing...");
   {
     assert.equal(engine.isClaude1mModel("anthropic/claude-sonnet-4:1m"), true);
     assert.equal(engine.isClaude1mModel("anthropic/claude-sonnet-4.5:1m"), true);
@@ -63,8 +68,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Claude 1M suffix stripping and provider routing verified.");
   }
 
-  // ── [Test 3/11] Ephemeral Prompt Caching Injection ─────────────────────────
-  console.log("[Test 3/11] Validating Ephemeral Prompt Caching for Claude & MiniMax...");
+  // ── [Test 3/12] Ephemeral Prompt Caching Injection ─────────────────────────
+  console.log("[Test 3/12] Validating Ephemeral Prompt Caching for Claude & MiniMax...");
   {
     assert.equal(engine.supportsPromptCaching("anthropic/claude-3.7-sonnet"), true);
     assert.equal(engine.supportsPromptCaching("minimax/minimax-m2.5"), true);
@@ -86,8 +91,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Ephemeral cache control injected for compatible models.");
   }
 
-  // ── [Test 4/11] Model Temperature & Reasoning Calibration ──────────────────
-  console.log("[Test 4/11] Validating Model-Specific Temperature & Reasoning Calibration...");
+  // ── [Test 4/12] Model Temperature & Reasoning Calibration ──────────────────
+  console.log("[Test 4/12] Validating Model-Specific Temperature & Reasoning Calibration...");
   {
     // DeepSeek R1 should calibrate to temperature 0.7, top_p 0.95
     const r1Payload = engine.prepareRequestPayload({
@@ -129,8 +134,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Model parameter calibration and reasoning suppression verified.");
   }
 
-  // ── [Test 5/11] Provider Preference Routing ────────────────────────────────
-  console.log("[Test 5/11] Validating Exacto & Specialized Provider Preferences...");
+  // ── [Test 5/12] Provider Preference Routing ────────────────────────────────
+  console.log("[Test 5/12] Validating Exacto & Specialized Provider Preferences...");
   {
     const kimiPref = engine.getProviderPreferences("moonshotai/kimi-k2:exacto");
     assert.ok(kimiPref);
@@ -149,8 +154,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Provider preferences accurately resolved and embedded.");
   }
 
-  // ── [Test 6/11] Stream Chunk & Mid-Stream Error Parsing ─────────────────────
-  console.log("[Test 6/11] Validating Stream Chunk & Mid-Stream Error Parsing...");
+  // ── [Test 6/12] Stream Chunk & Mid-Stream Error Parsing ─────────────────────
+  console.log("[Test 6/12] Validating Stream Chunk & Mid-Stream Error Parsing...");
   {
     // Normal text chunk
     const textChunk: OpenRouterStreamChunk = {
@@ -225,8 +230,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Stream chunk delta, reasoning, usage, and error parsing verified.");
   }
 
-  // ── [Test 7/11] OAuth & URI Callback Code Parsing ──────────────────────────
-  console.log("[Test 7/11] Validating OpenRouter OAuth callback parsing...");
+  // ── [Test 7/12] OAuth & URI Callback Code Parsing ──────────────────────────
+  console.log("[Test 7/12] Validating OpenRouter OAuth callback parsing...");
   {
     const uriCallback = engine.handleOpenRouterCallback("vscode://dietcode.dietcode/openrouter?code=sk-or-code-12345");
     assert.equal(uriCallback.success, true);
@@ -245,8 +250,8 @@ async function main(): Promise<void> {
     console.log("  [✓] OAuth callback URI & code extraction verified.");
   }
 
-  // ── [Test 8/11] Dynamic Model Catalog Discovery & Fallback Presets ─────────
-  console.log("[Test 8/11] Validating Dynamic Model Catalog & Fallback Presets...");
+  // ── [Test 8/12] Dynamic Model Catalog Discovery & Fallback Presets ─────────
+  console.log("[Test 8/12] Validating Dynamic Model Catalog & Fallback Presets...");
   {
     const catalog = new ModelCatalog(undefined, engine);
     const fallbackModels = engine.getFallbackModelSpecs();
@@ -272,8 +277,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Dynamic model catalog specifications & pricing verified.");
   }
 
-  // ── [Test 9/11] Provider Attribution Composer ──────────────────────────────
-  console.log("[Test 9/11] Validating Provider Attribution Composer with OpenRouter...");
+  // ── [Test 9/12] Provider Attribution Composer ──────────────────────────────
+  console.log("[Test 9/12] Validating Provider Attribution Composer with OpenRouter...");
   {
     const attribution = new ProviderAttributionComposer();
     const rec = attribution.recordUsage("anthropic/claude-3.7-sonnet", 10_000, 2_000);
@@ -288,8 +293,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Provider attribution pricing calculations verified.");
   }
 
-  // ── [Test 10/11] Deterministic Error Classifier OpenRouter Taxonomies ──────
-  console.log("[Test 10/11] Validating Deterministic Error Classifier with OpenRouter...");
+  // ── [Test 10/12] Deterministic Error Classifier OpenRouter Taxonomies ──────
+  console.log("[Test 10/12] Validating Deterministic Error Classifier with OpenRouter...");
   {
     const governor = new JitteredBackoffGovernor(100);
     const classifier = new DeterministicErrorClassifier(governor);
@@ -319,8 +324,8 @@ async function main(): Promise<void> {
     console.log("  [✓] Error classifier handling of OpenRouter faults verified.");
   }
 
-  // ── [Test 11/11] Monolith Factory & Grand Monolith Integration ─────────────
-  console.log("[Test 11/11] Validating Monolith Factory & Component Wiring...");
+  // ── [Test 11/12] Monolith Factory & Grand Monolith Integration ─────────────
+  console.log("[Test 11/12] Validating Monolith Factory & Component Wiring...");
   {
     const monolith = new LumiMonolith();
 
@@ -338,8 +343,102 @@ async function main(): Promise<void> {
     console.log("  [✓] Grand Monolith component synthesis and OpenRouter wiring verified.");
   }
 
+  // ── [Test 12/12] OpenRouter Free Model Filtering ───────────────────────────
+  console.log("[Test 12/12] Validating OpenRouter Free Model Filtering...");
+  {
+    const sampleModelIds = [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "deepseek/deepseek-r1:free",
+      "google/gemini-2.0-flash-exp:free",
+      "qwen/qwq-32b:free",
+      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-opus-4.6",
+      "openai/gpt-4o",
+      "dietcode/special-model:free",
+      "dietcode/custom-coder",
+      "minimax-m2",
+      "devstral-2512",
+    ];
+
+    // 1. OpenRouter provider: returns only :free models and excludes dietcode/
+    const freeOnly = filterOpenRouterModelIds(sampleModelIds, "openrouter");
+    assert.deepEqual(freeOnly, [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "deepseek/deepseek-r1:free",
+      "google/gemini-2.0-flash-exp:free",
+      "qwen/qwq-32b:free",
+    ]);
+
+    // 2. OpenRouter provider: returns empty if no free models
+    const paidOnly = ["anthropic/claude-sonnet-4.5", "openai/gpt-4o"];
+    assert.deepEqual(filterOpenRouterModelIds(paidOnly, "openrouter"), []);
+
+    // 3. DietCode provider: excludes :free models except known exceptions or allowed list
+    const dietCodeFiltered = filterOpenRouterModelIds(sampleModelIds, "dietcode", ["google/gemini-2.0-flash-exp:free"]);
+    assert.ok(dietCodeFiltered.includes("google/gemini-2.0-flash-exp:free"));
+    assert.ok(dietCodeFiltered.includes("anthropic/claude-sonnet-4.5"));
+    assert.ok(dietCodeFiltered.includes("minimax-m2"));
+    assert.ok(!dietCodeFiltered.includes("meta-llama/llama-3.3-70b-instruct:free"));
+    assert.ok(!dietCodeFiltered.includes("deepseek/deepseek-r1:free"));
+
+    // 4. Exception detection helpers
+    assert.equal(isOpenRouterFreeModelException("minimax-m2"), true);
+    assert.equal(isOpenRouterFreeModelException("devstral-2512"), true);
+    assert.equal(isOpenRouterFreeModelException("arcee-ai/trinity-large"), true);
+    assert.equal(isOpenRouterFreeModelException("unknown-model"), false);
+    assert.equal(isOpenRouterFreeModel("deepseek/deepseek-r1:free"), true);
+    assert.equal(isOpenRouterFreeModel("anthropic/claude-3.5-sonnet"), false);
+
+    // 5. Spec filtering
+    const sampleSpecs: ModelSpecs[] = [
+      {
+        modelName: "deepseek/deepseek-r1:free",
+        provider: "openrouter",
+        contextWindowTokens: 64000,
+        maxOutputTokens: 8192,
+        inputPricePer1M: 0,
+        outputPricePer1M: 0,
+        supportsVision: false,
+      },
+      {
+        modelName: "anthropic/claude-3.7-sonnet",
+        provider: "openrouter",
+        contextWindowTokens: 200000,
+        maxOutputTokens: 16384,
+        inputPricePer1M: 3,
+        outputPricePer1M: 15,
+        supportsVision: true,
+      },
+    ];
+    const filteredSpecs = filterOpenRouterModelSpecs(sampleSpecs, "openrouter");
+    assert.equal(filteredSpecs.length, 1);
+    assert.equal(filteredSpecs[0].modelName, "deepseek/deepseek-r1:free");
+
+    // 6. Engine & Catalog dynamic free fetch & filter integration
+    const catalog = new ModelCatalog(undefined, engine);
+    const fallbackFree = catalog.filterOpenRouterModelSpecs(engine.getFallbackModelSpecs(), "openrouter");
+    assert.ok(fallbackFree.length >= 4);
+    assert.ok(fallbackFree.every((m) => m.modelName.includes(":free")));
+
+    const providerFreeModels = await catalog.getModelsForProvider("openrouter", true);
+    assert.ok(providerFreeModels.length >= 4);
+    assert.ok(providerFreeModels.every((m) => isOpenRouterFreeModel(m.modelName, m.inputPricePer1M, m.outputPricePer1M)));
+
+    const engineFreeModels = await engine.fetchOpenRouterFreeModels(undefined, undefined, false);
+    assert.ok(engineFreeModels.length >= 4);
+    assert.ok(engineFreeModels.every((m) => isOpenRouterFreeModel(m.modelName, m.inputPricePer1M, m.outputPricePer1M)));
+
+    const catalogFreeModels = await catalog.fetchOpenRouterFreeModels(undefined, false);
+    assert.ok(catalogFreeModels.length >= 4);
+    assert.ok(catalogFreeModels.every((m) => isOpenRouterFreeModel(m.modelName, m.inputPricePer1M, m.outputPricePer1M)));
+
+    console.log("  [✓] OpenRouter dynamic free model fetching, spec filtering, and exceptions verified.");
+  }
+
+
+
   console.log("\n================================================================");
-  console.log("   [✓] ALL 11 OPENROUTER INTEGRATION TESTS PASSED CLEANLY       ");
+  console.log("   [✓] ALL 12 OPENROUTER INTEGRATION TESTS PASSED CLEANLY       ");
   console.log("================================================================\n");
 }
 
@@ -347,3 +446,4 @@ main().catch((err) => {
   console.error("OpenRouter provider validation failed:", err);
   process.exit(1);
 });
+

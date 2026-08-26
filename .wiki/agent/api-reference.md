@@ -329,6 +329,37 @@ Source: [`src/agents/extensions/execution/agent-loop-harness.ts`](../../src/agen
 
 - `runAutonomousGatedTurn(prompt: string, options?: AutonomousHarnessOptions): Promise<HarnessExecutionResult>` simulates and validates multi-attempt autonomous turns, recording timeline events (`gate_evaluation`, `autonomous_feedback`, `auto_retry`).
 
+## GALX Provider & Hardened Transport Substrate
+
+### `GalxTransportClient`
+
+Source: [`src/integrations/galx/GalxTransportClient.ts`](../../src/integrations/galx/GalxTransportClient.ts)
+
+- `post<T>(path: string, payload: Record<string, unknown>, options?): Promise<GalxTransportResponse<T>>`: executes hardened POST request with dual RFC 9530 / RFC 3230 Content-Digests, RFC 9421 HMAC-SHA256 signatures, RFC 9449 DPoP proofs, 3-state circuit breaker, AIMD concurrency governance, and Token Bucket rate limiting.
+- `getCircuitState(): Readonly<CircuitBreakerState>`: returns tri-state circuit breaker state (`CLOSED`, `OPEN`, `HALF_OPEN`).
+- `getTransportAuditReport(): TransportAuditReport`: returns full transport security, active shard affinity, latest receipt hash, Merkle root, and SLA metrics.
+- `flushPendingOutbox(): Promise<{ processed, succeeded, failed }>`: drains and flushes offline outbox entries from the Write-Ahead Ledger.
+- `startBackgroundWorker(intervalMs?: number): void` / `stopBackgroundWorker(): void`: manages background outbox flusher worker.
+
+### `BroccoliTransportSubstrate`
+
+Source: [`src/integrations/galx/BroccoliTransportSubstrate.ts`](../../src/integrations/galx/BroccoliTransportSubstrate.ts)
+
+- `enqueueOutbox(path, payload, options?): BroccoliTransportEntry`: stages request in atomic Write-Ahead Ledger (`.broccolidb/galx/wal.json`) with `0o600` disk permissions.
+- `sealReceipt(entryId, response, routingMeta?): BroccoliDeliveryReceipt`: computes cryptographic Merkle receipt hash chain (`sha256(prevHash::correlationId::idempotencyKey::status::duration::timestamp)`).
+- `encryptEnvelope<T>(data: T, secretKey: string): BroccoliEnvelopePayload`: encrypts payload using HKDF AES-256-GCM.
+- `decryptEnvelope<T>(envelope: BroccoliEnvelopePayload, secretKey: string): T`: decrypts envelope payload with authentication tag validation.
+- `getSlaMetrics(): BroccoliSlaMetrics`: returns rolling P50, P90, P99 latency percentiles and Merkle root.
+
+### `GalxProviderEngine`
+
+Source: [`src/agents/extensions/resolution/galx-provider-engine.ts`](../../src/agents/extensions/resolution/galx-provider-engine.ts)
+
+- `buildAttributionHeaders(): GalxAttributionHeaders`: builds standard clearinghouse attribution (`X-GALX-Client: LUMI/12.5.0`, `X-GALX-Client-ID: lumi-ide`, `X-OpenRouter-Title: LUMI`).
+- `normalizeModelId(modelId: string): string`: canonicalizes model names and aliases (`galx-sol` -> `gpt-5.6-sol`, `terra` -> `gpt-5.6-terra`, `luna` -> `gpt-5.6-luna`).
+- `fetchGalxModels(apiToken?, baseUrl?): Promise<ModelSpecs[]>`: queries `/models` live endpoint with TTL fallback caching.
+- `calculateTurnCost(modelName, inputTokens, outputTokens, cachedTokens?): number`: computes sub-cent wholesale cost with prompt-caching discount pass-through.
+
 ## Other core subsystems
 
 - [`AbstractAgentEngine`](../../src/core/abstracts/abstract-agent-engine.ts) enforces `preTick -> executeTick -> postTick`.
@@ -337,3 +368,4 @@ Source: [`src/agents/extensions/execution/agent-loop-harness.ts`](../../src/agen
 - [`ProtocolEars`](../../src/tooling/extensions/telemetry/ears.ts) owns protocol telemetry; it does not replace the user-facing progress contract.
 - [`BroccoliStreamingToolExecutor`](../../src/tooling/extensions/registry/broccolidb-streaming-tool-executor.ts) owns an individual tool execution lifecycle; it is a separate layer from provider turn activity.
 - [`MonolithFactory`](../../src/factories/monolith-factory.ts) is the composition factory.
+- [`GrandMonolithSynthesizer`](../../src/factories/grand-monolith-synthesizer.ts) audits 593 component runtime baseline cohesion.

@@ -23,7 +23,23 @@ import type {
 import {
   CLAUDE_SONNET_1M_SUFFIX,
   OPENROUTER_PROVIDER_PREFERENCES,
+  OPENROUTER_FREE_MODEL_EXCEPTIONS,
+  CLINE_FREE_MODEL_EXCEPTIONS,
+  isDietCodeFreeModelException,
+  isOpenRouterFreeModelException,
+  isOpenRouterFreeModel,
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
 } from "../../../core/contracts/openrouter.contracts.js";
+export {
+  OPENROUTER_FREE_MODEL_EXCEPTIONS,
+  CLINE_FREE_MODEL_EXCEPTIONS,
+  isDietCodeFreeModelException,
+  isOpenRouterFreeModelException,
+  isOpenRouterFreeModel,
+  filterOpenRouterModelIds,
+  filterOpenRouterModelSpecs,
+};
 import type { ModelSpecs } from "./model-catalog.js";
 
 /**
@@ -164,21 +180,58 @@ export class OpenRouterProviderEngine {
   }
 
   /**
+   * Filters OpenRouter model IDs based on provider-specific rules.
+   */
+  public filterOpenRouterModelIds(
+    modelIds: string[],
+    provider = "openrouter",
+    allowedFreeModelIds: string[] = []
+  ): string[] {
+    return filterOpenRouterModelIds(modelIds, provider, allowedFreeModelIds);
+  }
+
+  /**
+   * Filters model specs using OpenRouter filtering rules.
+   */
+  public filterOpenRouterModelSpecs<T extends { modelName: string; inputPricePer1M?: number; outputPricePer1M?: number; provider?: string }>(
+    models: T[],
+    provider = "openrouter",
+    allowedFreeModelIds: string[] = []
+  ): T[] {
+    return filterOpenRouterModelSpecs(models, provider, allowedFreeModelIds);
+  }
+
+  /**
+   * Dynamically fetches all live models directly from OpenRouter and returns only the free models available in real-time.
+   */
+  public async fetchOpenRouterFreeModels(
+    apiToken?: string,
+    baseUrl?: string,
+    forceRefresh = false
+  ): Promise<ModelSpecs[]> {
+    return this.fetchOpenRouterModels(apiToken, baseUrl, forceRefresh, true);
+  }
+
+  /**
    * Dynamically fetches all live models directly from the OpenRouter API (https://openrouter.ai/api/v1/models)
    * without static truncation or artificial hardcoding.
    */
   public async fetchOpenRouterModels(
     apiToken?: string,
     baseUrl?: string,
-    forceRefresh = false
+    forceRefresh = false,
+    freeOnly = false
   ): Promise<ModelSpecs[]> {
+
     const now = Date.now();
     if (!forceRefresh && this.inMemoryModelCache.size > 0 && now < this.cacheExpiry) {
-      return Array.from(this.inMemoryModelCache.values());
+      const cached = Array.from(this.inMemoryModelCache.values());
+      return freeOnly ? filterOpenRouterModelSpecs(cached, "openrouter") : cached;
     }
 
     if (this.pendingFetchPromise) {
-      return this.pendingFetchPromise;
+      const res = await this.pendingFetchPromise;
+      return freeOnly ? filterOpenRouterModelSpecs(res, "openrouter") : res;
     }
 
     this.pendingFetchPromise = (async () => {
@@ -289,7 +342,8 @@ export class OpenRouterProviderEngine {
       }
     })();
 
-    return this.pendingFetchPromise;
+    const result = await this.pendingFetchPromise;
+    return freeOnly ? filterOpenRouterModelSpecs(result, "openrouter") : result;
   }
 
   /**
@@ -297,6 +351,61 @@ export class OpenRouterProviderEngine {
    */
   public getFallbackModelSpecs(): ModelSpecs[] {
     return [
+      {
+        modelName: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "openrouter",
+        contextWindowTokens: 128_000,
+        maxOutputTokens: 8_192,
+        inputPricePer1M: 0.0,
+        outputPricePer1M: 0.0,
+        supportsVision: false,
+        supportsReasoning: true,
+        description: "Meta Llama 3.3 70B Instruct (Free Tier)",
+      },
+      {
+        modelName: "deepseek/deepseek-r1:free",
+        provider: "openrouter",
+        contextWindowTokens: 64_000,
+        maxOutputTokens: 8_192,
+        inputPricePer1M: 0.0,
+        outputPricePer1M: 0.0,
+        supportsVision: false,
+        supportsReasoning: true,
+        description: "DeepSeek R1 Open-Weights Reasoning Engine (Free Tier)",
+      },
+      {
+        modelName: "google/gemini-2.0-flash-exp:free",
+        provider: "openrouter",
+        contextWindowTokens: 1_000_000,
+        maxOutputTokens: 8_192,
+        inputPricePer1M: 0.0,
+        outputPricePer1M: 0.0,
+        supportsVision: true,
+        supportsReasoning: true,
+        description: "Google Gemini 2.0 Flash Experimental Multimodal (Free Tier)",
+      },
+      {
+        modelName: "qwen/qwq-32b:free",
+        provider: "openrouter",
+        contextWindowTokens: 32_768,
+        maxOutputTokens: 8_192,
+        inputPricePer1M: 0.0,
+        outputPricePer1M: 0.0,
+        supportsVision: false,
+        supportsReasoning: true,
+        description: "Qwen QwQ 32B Reasoning Engine (Free Tier)",
+      },
+      {
+        modelName: "mistralai/mistral-7b-instruct:free",
+        provider: "openrouter",
+        contextWindowTokens: 32_000,
+        maxOutputTokens: 4_096,
+        inputPricePer1M: 0.0,
+        outputPricePer1M: 0.0,
+        supportsVision: false,
+        supportsReasoning: false,
+        description: "Mistral 7B Instruct (Free Tier)",
+      },
       {
         modelName: "anthropic/claude-3.7-sonnet",
         provider: "openrouter",
@@ -372,6 +481,7 @@ export class OpenRouterProviderEngine {
       },
     ];
   }
+
 
   /**
    * Prepares the full outbound JSON request payload for OpenRouter chat completions.

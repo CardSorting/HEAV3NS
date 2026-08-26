@@ -8,29 +8,34 @@ LUMI-NEW is a greenfield 3-tier monolithic agent framework built in TypeScript f
 
 Tiers expand organically as needed to support specialized subsystem features, with the primary constraint being strict alignment with the Deterministic Game Engine Strategy ([ADR-008](../adr/ADR-008-deterministic-game-engine-architecture.md)).
 
-Current generated verification is **Pass 192 + runtime hardening**: 142/142 exact composition entries, 9/9 smoke checks, 5/5 benchmark cases, 8/8 assertions for a complete 12-file Flappy Bird React + TypeScript + Vite project, and 6/6 guardrails. Use [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) for exact current measurements.
+Current generated verification is **Pass 193 + runtime hardening & GALX integration**: 593/593 exact composition entries in OPTIMAL cohesion, 139/139 test suites passing, and zero barrel imports (ADR-012). Active providers are strictly scoped to **OpenRouter**, **Codex (OpenAI)**, and **GALX AI Wholesale Compute** ([ADR-147](../adr/ADR-147-galx-ai-provider-integration-and-auxiliary-provider-consolidation.md)). Use [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) for exact current measurements.
 
 ### Deterministic Game Engine Subsystems
 
 - **Core Contracts & Abstracts (`src/core/`)**
-  - Contracts: `agent.contracts.ts`, `session.contracts.ts`, `tooling.contracts.ts`
+  - Contracts: `agent.contracts.ts`, `session.contracts.ts`, `tooling.contracts.ts`, `galx.contracts.ts`
   - Abstracts: `AbstractAgentEngine`, `AbstractSessionStore`, `AbstractHands`, `AbstractEars`, `AbstractToolRegistry`
 - **Tier 1: Agents (`src/agents/`)**
   - `base/agent-config.ts`: AgentConfig
   - `extensions/execution/`: AgentEngine, InteractiveModeController, CodexProgressAdapter
-  - `extensions/resolution/`: ModelResolver, AgentSlashRouter, OAuth/provider resolution
+  - `extensions/resolution/`: ModelResolver, AgentSlashRouter, GalxProviderEngine, OpenRouterProviderEngine, CodexProviderBridge, ModelCatalog, EnvironmentKeyResolver
   - `extensions/setup/`: SetupWizard
 - **Tier 2: Sessions (`src/sessions/`)**
   - `base/session-context.ts`: SessionContext
   - `extensions/`: SessionCompactor, SessionVfs, SessionMemoryStore, PersistentSessionStore (`extends AbstractSessionStore`)
 - **Tier 3: Tooling (`src/tooling/`)**
   - `base/eyes.ts`: Eyes
-  - `extensions/`: SkillsIngestor, AnchoredHands (`extends AbstractHands`), ProtocolEars (`extends AbstractEars`), ValidatingToolRegistry (`extends AbstractToolRegistry`), RoadmapCompletionGate (Zenith-Tier Attempt Completion Gate Strategy)
+  - `extensions/`: SkillsIngestor, AnchoredHands (`extends AbstractHands`), ProtocolEars (`extends AbstractEars`), ValidatingToolRegistry (`extends AbstractToolRegistry`), UniversalToolCallAdapter, RoadmapCompletionGate
+- **Integrations & Transport (`src/integrations/`)**
+  - `galx/GalxTransportClient.ts`: Enterprise Hardened Client (RFC 9530, RFC 9421, Circuit Breaker, AIMD, Token Bucket)
+  - `galx/BroccoliTransportSubstrate.ts`: BroccoliDB Write-Ahead Ledger, Merkle hash chain, RFC 9449 DPoP, AES-256-GCM Envelope Crypto
 - **Terminal UI (`src/tui/`)**
   - `components/agent-activity-timeline.ts`: identity-based, persistent provider activity rendering
+  - `components/model-select-modal.ts`: 4-tab model selector ([1] ALL, [2] CODEX OAUTH, [3] GALX WHOLESALE, [4] OPENROUTER)
   - `components/guided-setup-walkthrough-modal.ts`: credential setup, browser fallback, and model activation
 - **Container Factory & Composition Root**:
-  - `src/factories/monolith-factory.ts`: MonolithFactory
+  - `src/factories/monolith-factory.ts`: MonolithFactory (synthesizes all 593 components)
+  - `src/factories/grand-monolith-synthesizer.ts`: GrandMonolithSynthesizer (verifies OPTIMAL cohesion)
   - `src/index.ts`: LumiMonolith (`IAgentEngine`)
 
 ## Validation & Execution Commands
