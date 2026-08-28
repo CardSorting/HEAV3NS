@@ -487,6 +487,27 @@ export interface DbHealthReport {
 
 export interface IBroccoliDatabaseKernel {
   readonly workspaceRoot: string;
+  readonly connectionPool?: IBroccoliConnectionPool;
+  readonly lockAuthority?: IBroccoliLockAuthority;
+  readonly queryOptimizer?: IBroccoliQueryOptimizer;
+  readonly mvcc?: IBroccoliMvccEngine;
+  readonly sparseIndex?: IBroccoliSparseIndexEngine;
+  readonly cdc?: IBroccoliCdcStream;
+  readonly vectorEngine?: IBroccoliVectorEngine;
+  readonly invertedIndex?: IBroccoliInvertedIndexEngine;
+  readonly twoPhaseCommit?: IBroccoliTwoPhaseCommitCoordinator;
+  readonly bufferPool?: IBroccoliBufferPoolManager;
+  readonly lsmStore?: IBroccoliLsmStore;
+  readonly raftConsensus?: IBroccoliRaftConsensusEngine;
+  readonly planCache?: IBroccoliAdaptivePlanCache;
+  readonly sagaOrchestrator?: IBroccoliSagaOrchestrator;
+  readonly tieredKvCache?: IBroccoliTieredKvCache;
+  readonly vectorAnn?: IBroccoliVectorAnnEngine;
+  readonly hashRing?: IBroccoliConsistentHashRing;
+  readonly timeSeriesRollup?: IBroccoliTimeSeriesRollupEngine;
+  readonly bTree?: IBroccoliBTreeIndexEngine;
+  readonly deadlockDetector?: IBroccoliDeadlockDetector;
+  readonly materializedView?: IBroccoliMaterializedViewEngine;
   start(): Promise<void>;
   stop(): Promise<void>;
   flush(): Promise<void>;

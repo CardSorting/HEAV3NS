@@ -63,6 +63,18 @@ import { BroccoliCdcStream } from "../sessions/extensions/substrate/broccolidb-c
 import { BroccoliVectorEngine } from "../sessions/extensions/substrate/broccolidb-vector-engine.js";
 import { BroccoliInvertedIndexEngine } from "../sessions/extensions/substrate/broccolidb-inverted-index-engine.js";
 import { BroccoliTwoPhaseCommitCoordinator } from "../sessions/extensions/substrate/broccolidb-2pc-coordinator.js";
+import { BroccoliBufferPoolManager } from "../sessions/extensions/substrate/broccolidb-buffer-pool-manager.js";
+import { BroccoliLsmStore } from "../sessions/extensions/substrate/broccolidb-lsm-store.js";
+import { BroccoliRaftConsensusEngine } from "../sessions/extensions/substrate/broccolidb-raft-consensus.js";
+import { BroccoliAdaptivePlanCache } from "../sessions/extensions/substrate/broccolidb-plan-cache.js";
+import { BroccoliSagaOrchestrator } from "../sessions/extensions/substrate/broccolidb-saga-orchestrator.js";
+import { BroccoliTieredKvCache } from "../sessions/extensions/substrate/broccolidb-tiered-kv-cache.js";
+import { BroccoliVectorAnnEngine } from "../sessions/extensions/substrate/broccolidb-vector-ann-engine.js";
+import { BroccoliConsistentHashRing } from "../sessions/extensions/substrate/broccolidb-consistent-hash-ring.js";
+import { BroccoliTimeSeriesRollupEngine } from "../sessions/extensions/substrate/broccolidb-timeseries-rollup-engine.js";
+import { BroccoliBTreeIndexEngine } from "../sessions/extensions/substrate/broccolidb-btree-index-engine.js";
+import { BroccoliDeadlockDetector } from "../sessions/extensions/substrate/broccolidb-deadlock-detector.js";
+import { BroccoliMaterializedViewEngine } from "../sessions/extensions/substrate/broccolidb-materialized-view-engine.js";
 import { DatabaseToolSuite } from "../tooling/extensions/database/database-tools.js";
 import { BroccoliCasCompactor } from "../sessions/extensions/compaction/broccolidb-cas-compactor.js";
 import { ConvergenceEngineSubstrate } from "../agents/extensions/swarm/convergence-engine.js";
@@ -749,6 +761,18 @@ export class MonolithFactory {
     broccoliVectorEngine: BroccoliVectorEngine;
     broccoliInvertedIndexEngine: BroccoliInvertedIndexEngine;
     broccoliTwoPhaseCommitCoordinator: BroccoliTwoPhaseCommitCoordinator;
+    broccoliBufferPoolManager: BroccoliBufferPoolManager;
+    broccoliLsmStore: BroccoliLsmStore;
+    broccoliRaftConsensusEngine: BroccoliRaftConsensusEngine;
+    broccoliAdaptivePlanCache: BroccoliAdaptivePlanCache;
+    broccoliSagaOrchestrator: BroccoliSagaOrchestrator;
+    broccoliTieredKvCache: BroccoliTieredKvCache;
+    broccoliVectorAnnEngine: BroccoliVectorAnnEngine;
+    broccoliConsistentHashRing: BroccoliConsistentHashRing;
+    broccoliTimeSeriesRollupEngine: BroccoliTimeSeriesRollupEngine;
+    broccoliBTreeIndexEngine: BroccoliBTreeIndexEngine;
+    broccoliDeadlockDetector: BroccoliDeadlockDetector;
+    broccoliMaterializedViewEngine: BroccoliMaterializedViewEngine;
     databaseToolSuite: DatabaseToolSuite;
     broccoliTaskDagScheduler: BroccoliTaskDagScheduler;
     broccoliCircuitBreaker: BroccoliCircuitBreaker;
@@ -1363,6 +1387,18 @@ export class MonolithFactory {
     const broccoliVectorEngine = new BroccoliVectorEngine();
     const broccoliInvertedIndexEngine = new BroccoliInvertedIndexEngine();
     const broccoliTwoPhaseCommitCoordinator = new BroccoliTwoPhaseCommitCoordinator();
+    const broccoliBufferPoolManager = databaseKernel.bufferPool;
+    const broccoliLsmStore = databaseKernel.lsmStore;
+    const broccoliRaftConsensusEngine = databaseKernel.raftConsensus;
+    const broccoliAdaptivePlanCache = databaseKernel.planCache;
+    const broccoliSagaOrchestrator = databaseKernel.sagaOrchestrator;
+    const broccoliTieredKvCache = databaseKernel.tieredKvCache;
+    const broccoliVectorAnnEngine = databaseKernel.vectorAnn;
+    const broccoliConsistentHashRing = databaseKernel.hashRing;
+    const broccoliTimeSeriesRollupEngine = databaseKernel.timeSeriesRollup;
+    const broccoliBTreeIndexEngine = databaseKernel.bTree;
+    const broccoliDeadlockDetector = databaseKernel.deadlockDetector;
+    const broccoliMaterializedViewEngine = databaseKernel.materializedView;
     const databaseToolSuite = new DatabaseToolSuite(databaseKernel);
     const broccoliSubstrateStore = new BroccoliSubstrateStore(databaseKernel);
     const broccoliTaskDagScheduler = new BroccoliTaskDagScheduler();
@@ -3045,6 +3081,18 @@ export class MonolithFactory {
       broccoliVectorEngine,
       broccoliInvertedIndexEngine,
       broccoliTwoPhaseCommitCoordinator,
+      broccoliBufferPoolManager,
+      broccoliLsmStore,
+      broccoliRaftConsensusEngine,
+      broccoliAdaptivePlanCache,
+      broccoliSagaOrchestrator,
+      broccoliTieredKvCache,
+      broccoliVectorAnnEngine,
+      broccoliConsistentHashRing,
+      broccoliTimeSeriesRollupEngine,
+      broccoliBTreeIndexEngine,
+      broccoliDeadlockDetector,
+      broccoliMaterializedViewEngine,
       databaseToolSuite,
       deterministicWalletEngine,
       walletSupervisor,

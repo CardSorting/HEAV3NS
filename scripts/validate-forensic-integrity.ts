@@ -34,8 +34,8 @@ async function runForensicAudit(): Promise<void> {
 
   assert.strictEqual(
     CURRENT_REQUIRED_COMPONENTS.length,
-    609,
-    `Expected exactly 609 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
+    621,
+    `Expected exactly 621 required components, got ${CURRENT_REQUIRED_COMPONENTS.length}`
   );
 
   const seen = new Set<string>();
@@ -56,7 +56,7 @@ async function runForensicAudit(): Promise<void> {
       `Component at index ${i} ('${CURRENT_REQUIRED_COMPONENTS[i]}') is out of alphabetical order (expected '${sortedList[i]}')`
     );
   }
-  console.log(`  [✓] All 600 components strictly unique & alphabetically sorted.`);
+  console.log(`  [✓] All 621 components strictly unique & alphabetically sorted.`);
 
 
   // ---------------------------------------------------------------------------

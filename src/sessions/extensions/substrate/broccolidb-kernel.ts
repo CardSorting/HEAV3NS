@@ -25,14 +25,58 @@ import { BroccoliCASStorageService } from "./broccolidb-cas.js";
 import { ReentrantAsyncMutex } from "./broccolidb-mutex.js";
 import { BroccoliDbTable } from "./broccolidb-table.js";
 import { BroccoliWriteAheadLog } from "./broccolidb-wal.js";
+import { BroccoliConnectionPool } from "./broccolidb-connection-pool.js";
+import { BroccoliLockAuthority } from "./broccolidb-lock-authority.js";
+import { BroccoliQueryOptimizer } from "./broccolidb-query-optimizer.js";
+import { BroccoliMvccEngine } from "./broccolidb-mvcc-engine.js";
+import { BroccoliSparseIndexEngine } from "./broccolidb-sparse-index-engine.js";
+import { BroccoliCdcStream } from "./broccolidb-cdc-stream.js";
+import { BroccoliVectorEngine } from "./broccolidb-vector-engine.js";
+import { BroccoliInvertedIndexEngine } from "./broccolidb-inverted-index-engine.js";
+import { BroccoliTwoPhaseCommitCoordinator } from "./broccolidb-2pc-coordinator.js";
+import { BroccoliBufferPoolManager } from "./broccolidb-buffer-pool-manager.js";
+import { BroccoliLsmStore } from "./broccolidb-lsm-store.js";
+import { BroccoliRaftConsensusEngine } from "./broccolidb-raft-consensus.js";
+import { BroccoliAdaptivePlanCache } from "./broccolidb-plan-cache.js";
+import { BroccoliSagaOrchestrator } from "./broccolidb-saga-orchestrator.js";
+import { BroccoliTieredKvCache } from "./broccolidb-tiered-kv-cache.js";
+import { BroccoliVectorAnnEngine } from "./broccolidb-vector-ann-engine.js";
+import { BroccoliConsistentHashRing } from "./broccolidb-consistent-hash-ring.js";
+import { BroccoliTimeSeriesRollupEngine } from "./broccolidb-timeseries-rollup-engine.js";
+import { BroccoliBTreeIndexEngine } from "./broccolidb-btree-index-engine.js";
+import { BroccoliDeadlockDetector } from "./broccolidb-deadlock-detector.js";
+import { BroccoliMaterializedViewEngine } from "./broccolidb-materialized-view-engine.js";
 
 export interface DatabaseKernelOptions {
   readonly workspaceRoot?: string;
   readonly walDebounceMs?: number;
+  readonly nodeId?: string;
 }
 
 export class BroccoliDatabaseKernel implements IBroccoliDatabaseKernel {
   readonly workspaceRoot: string;
+  readonly connectionPool: BroccoliConnectionPool;
+  readonly lockAuthority: BroccoliLockAuthority;
+  readonly queryOptimizer: BroccoliQueryOptimizer;
+  readonly mvcc: BroccoliMvccEngine;
+  readonly sparseIndex: BroccoliSparseIndexEngine;
+  readonly cdc: BroccoliCdcStream;
+  readonly vectorEngine: BroccoliVectorEngine;
+  readonly invertedIndex: BroccoliInvertedIndexEngine;
+  readonly twoPhaseCommit: BroccoliTwoPhaseCommitCoordinator;
+  readonly bufferPool: BroccoliBufferPoolManager;
+  readonly lsmStore: BroccoliLsmStore;
+  readonly raftConsensus: BroccoliRaftConsensusEngine;
+  readonly planCache: BroccoliAdaptivePlanCache;
+  readonly sagaOrchestrator: BroccoliSagaOrchestrator;
+  readonly tieredKvCache: BroccoliTieredKvCache;
+  readonly vectorAnn: BroccoliVectorAnnEngine;
+  readonly hashRing: BroccoliConsistentHashRing;
+  readonly timeSeriesRollup: BroccoliTimeSeriesRollupEngine;
+  readonly bTree: BroccoliBTreeIndexEngine;
+  readonly deadlockDetector: BroccoliDeadlockDetector;
+  readonly materializedView: BroccoliMaterializedViewEngine;
+
   private readonly dbDir: string;
   private readonly checkpointsDir: string;
   private readonly baseDbPath: string;
@@ -53,6 +97,29 @@ export class BroccoliDatabaseKernel implements IBroccoliDatabaseKernel {
 
     this.wal = new BroccoliWriteAheadLog(this.workspaceRoot, options.walDebounceMs ?? 20);
     this.cas = new BroccoliCASStorageService(this.workspaceRoot);
+
+    // Initialize all 21 distributed substrate engines
+    this.connectionPool = new BroccoliConnectionPool();
+    this.lockAuthority = new BroccoliLockAuthority();
+    this.queryOptimizer = new BroccoliQueryOptimizer();
+    this.mvcc = new BroccoliMvccEngine();
+    this.sparseIndex = new BroccoliSparseIndexEngine();
+    this.cdc = new BroccoliCdcStream();
+    this.vectorEngine = new BroccoliVectorEngine();
+    this.invertedIndex = new BroccoliInvertedIndexEngine();
+    this.twoPhaseCommit = new BroccoliTwoPhaseCommitCoordinator();
+    this.bufferPool = new BroccoliBufferPoolManager();
+    this.lsmStore = new BroccoliLsmStore();
+    this.raftConsensus = new BroccoliRaftConsensusEngine(options.nodeId ?? "node_local_1");
+    this.planCache = new BroccoliAdaptivePlanCache();
+    this.sagaOrchestrator = new BroccoliSagaOrchestrator();
+    this.tieredKvCache = new BroccoliTieredKvCache();
+    this.vectorAnn = new BroccoliVectorAnnEngine();
+    this.hashRing = new BroccoliConsistentHashRing();
+    this.timeSeriesRollup = new BroccoliTimeSeriesRollupEngine();
+    this.bTree = new BroccoliBTreeIndexEngine();
+    this.deadlockDetector = new BroccoliDeadlockDetector();
+    this.materializedView = new BroccoliMaterializedViewEngine();
   }
 
   /**
