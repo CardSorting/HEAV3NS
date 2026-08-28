@@ -4,7 +4,28 @@ All notable changes to the **LUMI-JOY** Deterministic Game Engine Agent Framewor
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to Semantic Versioning and conventional commit standards.
 
-## [1.0.17] - 2026-08-28
+## [1.0.11] - 2026-08-28
+
+### Added (Pass 201 Centennial Evolution — 21-Engine Distributed Database Kernel — Pass 201 / ADR-139)
+
+- **BroccoliDB 21-Engine Distributed Database Substrate & Grand Monolith ([ADR-139](docs/adr/ADR-139-broccolidb-21-engine-distributed-database-kernel.md))**:
+  - Implemented `BroccoliBufferPoolManager` ([`src/sessions/extensions/substrate/broccolidb-buffer-pool-manager.ts`](src/sessions/extensions/substrate/broccolidb-buffer-pool-manager.ts)) with LRU-2 backward distance eviction, pin counting, and dirty frame flushing.
+  - Implemented `BroccoliLsmStore` ([`src/sessions/extensions/substrate/broccolidb-lsm-store.ts`](src/sessions/extensions/substrate/broccolidb-lsm-store.ts)) with MemTable, immutable sorted SSTables, 64-bit Bloom filters, and multi-level compaction.
+  - Implemented `BroccoliRaftConsensusEngine` ([`src/sessions/extensions/substrate/broccolidb-raft-consensus.ts`](src/sessions/extensions/substrate/broccolidb-raft-consensus.ts)) with leader election, term leases, and AppendEntries RPC replication.
+  - Implemented `BroccoliAdaptivePlanCache` ([`src/sessions/extensions/substrate/broccolidb-plan-cache.ts`](src/sessions/extensions/substrate/broccolidb-plan-cache.ts)) with query fingerprinting, latency telemetry, and $>20\%$ cardinality drift invalidation.
+  - Implemented `BroccoliSagaOrchestrator` ([`src/sessions/extensions/substrate/broccolidb-saga-orchestrator.ts`](src/sessions/extensions/substrate/broccolidb-saga-orchestrator.ts)) with forward action execution and reverse compensating rollbacks.
+  - Implemented `BroccoliTieredKvCache` ([`src/sessions/extensions/substrate/broccolidb-tiered-kv-cache.ts`](src/sessions/extensions/substrate/broccolidb-tiered-kv-cache.ts)) with L1/L2 caching and **XFetch** probabilistic stampede defense.
+  - Implemented `BroccoliVectorAnnEngine` ([`src/sessions/extensions/substrate/broccolidb-vector-ann-engine.ts`](src/sessions/extensions/substrate/broccolidb-vector-ann-engine.ts)) with Float64 vector index and Cosine/Euclidean Top-$K$ retrieval.
+  - Implemented `BroccoliConsistentHashRing` ([`src/sessions/extensions/substrate/broccolidb-consistent-hash-ring.ts`](src/sessions/extensions/substrate/broccolidb-consistent-hash-ring.ts)) with 128 vnodes per partition and bounded $K/N$ rebalancing.
+  - Implemented `BroccoliTimeSeriesRollupEngine` ([`src/sessions/extensions/substrate/broccolidb-timeseries-rollup-engine.ts`](src/sessions/extensions/substrate/broccolidb-timeseries-rollup-engine.ts)) with continuous window rollups and $P_{50}/P_{90}/P_{99}$ percentile downsampling.
+  - Implemented `BroccoliBTreeIndexEngine` ([`src/sessions/extensions/substrate/broccolidb-btree-index-engine.ts`](src/sessions/extensions/substrate/broccolidb-btree-index-engine.ts)) with order $B=32$ multi-way balanced tree, point lookups, and range scans.
+  - Implemented `BroccoliDeadlockDetector` ([`src/sessions/extensions/substrate/broccolidb-deadlock-detector.ts`](src/sessions/extensions/substrate/broccolidb-deadlock-detector.ts)) with Wait-For Graph DFS cycle detection and youngest-transaction victim abort.
+  - Implemented `BroccoliMaterializedViewEngine` ([`src/sessions/extensions/substrate/broccolidb-materialized-view-engine.ts`](src/sessions/extensions/substrate/broccolidb-materialized-view-engine.ts)) with CDC incremental view maintenance and $O(1)$ reads.
+  - Composed all 12 substrate engines in `MonolithFactory`, `GrandMonolithSynthesizer`, and `LumiMonolith`, advancing the baseline to **Pass 201 / 621 components** in `OPTIMAL` status.
+
+---
+
+## [1.0.10] - 2026-08-28
 
 ### Added (Pass 200 Centennial Landmark — Vectorized Execution, BM25 Inverted Search & 2PC Coordinator — Pass 200 / ADR-138)
 
