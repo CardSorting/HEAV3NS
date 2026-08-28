@@ -13,6 +13,8 @@ import type {
   IBroccoliSagaOrchestrator,
 } from "../../../core/contracts/broccolidb.contracts.js";
 
+export type { BroccoliSagaStep, BroccoliSagaExecutionResult, BroccoliSagaState };
+
 export class BroccoliSagaOrchestrator implements IBroccoliSagaOrchestrator {
   private readonly sagaHistory = new Map<string, BroccoliSagaExecutionResult<any>>();
 
