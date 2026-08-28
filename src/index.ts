@@ -255,8 +255,11 @@ import { AcpProtocolCodec } from "./tooling/extensions/acp/acp-protocol-codec.js
 import { AcpPermissionGate } from "./tooling/extensions/acp/acp-permission-gate.js";
 import { BroccoliAcpSubstrate } from "./sessions/extensions/acp/broccoli-acp-substrate.js";
 import { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js";
+import { AcpSpeculativeChangesetStager } from "./sessions/extensions/acp/acp-speculative-changeset-stager.js";
+import { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js";
 import { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js";
 import { AcpToolSuite } from "./tooling/extensions/acp/acp-tool-suite.js";
+import { AcpDashboardModal } from "./tui/components/acp-dashboard-modal.js";
 
 import { McpTransportCodec } from "./tooling/extensions/mcp/mcp-transport-codec.js";
 import { McpSecurityScrubber } from "./tooling/extensions/mcp/mcp-security-scrubber.js";
@@ -655,6 +658,15 @@ import { ProfileSnapshotManager } from "./sessions/extensions/profiles/profile-s
 import { ProfileToolSuite } from "./tooling/extensions/profiles/profile-tool-suite.js";
 
 import { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
+import { BroccoliConnectionPool } from "./sessions/extensions/substrate/broccolidb-connection-pool.js";
+import { BroccoliLockAuthority } from "./sessions/extensions/substrate/broccolidb-lock-authority.js";
+import { BroccoliQueryOptimizer } from "./sessions/extensions/substrate/broccolidb-query-optimizer.js";
+import { BroccoliMvccEngine } from "./sessions/extensions/substrate/broccolidb-mvcc-engine.js";
+import { BroccoliSparseIndexEngine } from "./sessions/extensions/substrate/broccolidb-sparse-index-engine.js";
+import { BroccoliCdcStream } from "./sessions/extensions/substrate/broccolidb-cdc-stream.js";
+import { BroccoliVectorEngine } from "./sessions/extensions/substrate/broccolidb-vector-engine.js";
+import { BroccoliInvertedIndexEngine } from "./sessions/extensions/substrate/broccolidb-inverted-index-engine.js";
+import { BroccoliTwoPhaseCommitCoordinator } from "./sessions/extensions/substrate/broccolidb-2pc-coordinator.js";
 import { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
 import { BroccoliNaturalQueryParser } from "./sessions/extensions/substrate/broccolidb-natural-query.js";
 import { BroccoliRelationEngine } from "./sessions/extensions/substrate/broccolidb-relations.js";
@@ -700,6 +712,17 @@ import { BroccoliRunbookSubstrate } from "./agents/extensions/runbooks/broccoli-
 import { RunbookSupervisor, TransitionBlockedError } from "./agents/extensions/runbooks/runbook-supervisor.js";
 import { RunbookToolSuite } from "./tooling/extensions/runbooks/runbook-tool-suite.js";
 import { StatefulCompactionSynthesizer } from "./tooling/extensions/compaction/stateful-compaction-synthesizer.js";
+
+import { BroccoliAdversarialSubstrate } from "./sessions/extensions/adversarial/broccoli-adversarial-substrate.js";
+import { AdversarialScrutinySupervisor } from "./agents/extensions/adversarial/adversarial-scrutiny-supervisor.js";
+import { AdversarialHumanizer } from "./agents/extensions/adversarial/adversarial-humanizer.js";
+import { AdversarialToolSuite } from "./tooling/extensions/adversarial/adversarial-tool-suite.js";
+import type {
+  AdversarialRedTeamVerdict,
+  AdversarialScrutinyOptions,
+  CognitiveDecompositionReport,
+  ProvenanceGroundingProof,
+} from "./core/contracts/adversarial-scrutiny.contracts.js";
 
 import { ArenaAllocator } from "./sessions/extensions/substrate/arena-allocator.js";
 
@@ -1105,12 +1128,17 @@ export type {
   AcpApprovalStatus,
   AcpClientCapabilities,
   AcpClientType,
+  AcpDashboardViewMode,
+  AcpDiagnosticItem,
+  AcpDiagnosticSeverity,
   AcpDiffCard,
   AcpEditApprovalDecision,
   AcpEditApprovalRequest,
   AcpFileChange,
   AcpMultiFileChangeset,
   AcpPermissionLevel,
+  AcpRiskAssessment,
+  AcpRiskLevel,
   AcpRpcNotification,
   AcpRpcRequest,
   AcpRpcResponse,
@@ -1119,6 +1147,8 @@ export type {
   AcpSessionInfo,
   AcpSessionMode,
   AcpSubstrateSnapshot,
+  AcpTurnStepNotification,
+  AcpTurnStepRequest,
   IAcpBridgeServer,
   IAcpPermissionGate,
   IAcpProtocolCodec,
@@ -1160,6 +1190,39 @@ export type {
   TimelineCheckpointRecord,
   DbHealthReport,
   IBroccoliDatabaseKernel,
+  BroccoliLeaseMode,
+  BroccoliLeaseHandle,
+  BroccoliPoolMetrics,
+  IBroccoliConnectionPool,
+  BroccoliLockMode,
+  BroccoliLockHandle,
+  IBroccoliLockAuthority,
+  BroccoliQueryPlanType,
+  BroccoliQueryPlan,
+  IBroccoliQueryOptimizer,
+  BroccoliRecordVersion,
+  BroccoliMvccTransaction,
+  IBroccoliMvccEngine,
+  BroccoliBlockSummary,
+  BroccoliSparseIndexScanResult,
+  IBroccoliSparseIndexEngine,
+  BroccoliCdcOp,
+  BroccoliCdcEvent,
+  BroccoliCdcFilter,
+  BroccoliCdcCallback,
+  BroccoliCdcSubscription,
+  IBroccoliCdcStream,
+  BroccoliVectorFilterOp,
+  BroccoliVectorAggType,
+  BroccoliVectorChunk,
+  IBroccoliVectorEngine,
+  TermPostingList,
+  Bm25SearchResult,
+  IBroccoliInvertedIndexEngine,
+  Broccoli2pcTxState,
+  IBroccoli2pcParticipant,
+  Broccoli2pcTransactionSession,
+  IBroccoliTwoPhaseCommitCoordinator,
 } from "./core/contracts/broccolidb.contracts.js";
 export {
   estimateMessageTokens,
@@ -1466,6 +1529,15 @@ export { BroccoliSemanticAxiomEngine } from "./tooling/extensions/permissions/br
 export type { AxiomViolation } from "./tooling/extensions/permissions/broccolidb-semantic-axiom.js";
 export { BroccoliSimulationEngine } from "./tooling/extensions/permissions/broccolidb-simulation-engine.js";
 export { BroccoliDatabaseKernel } from "./sessions/extensions/substrate/broccolidb-kernel.js";
+export { BroccoliConnectionPool } from "./sessions/extensions/substrate/broccolidb-connection-pool.js";
+export { BroccoliLockAuthority } from "./sessions/extensions/substrate/broccolidb-lock-authority.js";
+export { BroccoliQueryOptimizer } from "./sessions/extensions/substrate/broccolidb-query-optimizer.js";
+export { BroccoliMvccEngine } from "./sessions/extensions/substrate/broccolidb-mvcc-engine.js";
+export { BroccoliSparseIndexEngine } from "./sessions/extensions/substrate/broccolidb-sparse-index-engine.js";
+export { BroccoliCdcStream } from "./sessions/extensions/substrate/broccolidb-cdc-stream.js";
+export { BroccoliVectorEngine } from "./sessions/extensions/substrate/broccolidb-vector-engine.js";
+export { BroccoliInvertedIndexEngine } from "./sessions/extensions/substrate/broccolidb-inverted-index-engine.js";
+export { BroccoliTwoPhaseCommitCoordinator } from "./sessions/extensions/substrate/broccolidb-2pc-coordinator.js";
 export { BroccoliDbTable } from "./sessions/extensions/substrate/broccolidb-table.js";
 export { BroccoliNaturalQueryParser } from "./sessions/extensions/substrate/broccolidb-natural-query.js";
 export { BroccoliRelationEngine } from "./sessions/extensions/substrate/broccolidb-relations.js";
@@ -1738,8 +1810,32 @@ export { AcpProtocolCodec } from "./tooling/extensions/acp/acp-protocol-codec.js
 export { AcpPermissionGate } from "./tooling/extensions/acp/acp-permission-gate.js";
 export { BroccoliAcpSubstrate } from "./sessions/extensions/acp/broccoli-acp-substrate.js";
 export { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js";
+export { AcpSpeculativeChangesetStager } from "./sessions/extensions/acp/acp-speculative-changeset-stager.js";
+export { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js";
 export { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js";
 export { AcpToolSuite } from "./tooling/extensions/acp/acp-tool-suite.js";
+export { AcpDashboardModal } from "./tui/components/acp-dashboard-modal.js";
+export type {
+  AcpTransactionStatus,
+  AcpStagedFile,
+  AcpRollbackToken,
+  AcpSpeculativeTransaction,
+  AcpStreamChunkNotification,
+  AcpThoughtDeltaNotification,
+  AcpToolExecutionNotification,
+  AcpTurnCompletionReport,
+  AcpWorkspaceFolder,
+  AcpWorkspaceFolderChangeEvent,
+  IAcpSpeculativeChangesetStager,
+  AcpHunkLineType,
+  AcpHunkLine,
+  AcpHunkStatus,
+  AcpDiffHunk,
+  AcpClientToolDefinition,
+  AcpClientToolCallRequest,
+  AcpClientToolCallResult,
+  IAcpFineGrainedHunkPatcher,
+} from "./core/contracts/acp.contracts.js";
 
 export { McpTransportCodec } from "./tooling/extensions/mcp/mcp-transport-codec.js";
 export { McpSecurityScrubber } from "./tooling/extensions/mcp/mcp-security-scrubber.js";
@@ -3759,6 +3855,12 @@ export { RunbookDashboardModal, type RunbookDashboardViewMode } from "./tui/comp
 export type * from "./core/contracts/runbook.contracts.js";
 export type * from "./core/contracts/broccolidb-runbook.contracts.js";
 
+export { BroccoliAdversarialSubstrate } from "./sessions/extensions/adversarial/broccoli-adversarial-substrate.js";
+export { AdversarialScrutinySupervisor } from "./agents/extensions/adversarial/adversarial-scrutiny-supervisor.js";
+export { AdversarialHumanizer } from "./agents/extensions/adversarial/adversarial-humanizer.js";
+export { AdversarialToolSuite } from "./tooling/extensions/adversarial/adversarial-tool-suite.js";
+export type * from "./core/contracts/adversarial-scrutiny.contracts.js";
+
 export { MonolithFactory } from "./factories/monolith-factory.js";
 export {
   CURRENT_EVOLUTION_BASELINE,
@@ -3946,8 +4048,11 @@ export class LumiMonolith implements IAgentEngine {
   readonly acpPermissionGate: AcpPermissionGate;
   readonly broccoliAcpSubstrate: BroccoliAcpSubstrate;
   readonly acpSnapshotManager: AcpSnapshotManager;
+  readonly acpSpeculativeChangesetStager: AcpSpeculativeChangesetStager;
+  readonly acpFineGrainedHunkPatcher: AcpFineGrainedHunkPatcher;
   readonly acpBridgeServer: AcpBridgeServer;
   readonly acpToolSuite: AcpToolSuite;
+  readonly acpDashboardModal: AcpDashboardModal;
   readonly mcpTransportCodec: McpTransportCodec;
   readonly mcpSecurityScrubber: McpSecurityScrubber;
   readonly broccoliMcpSubstrate: BroccoliMcpSubstrate;
@@ -4279,6 +4384,15 @@ export class LumiMonolith implements IAgentEngine {
   readonly profileSnapshotManager: ProfileSnapshotManager;
   readonly profileToolSuite: ProfileToolSuite;
   readonly databaseKernel: BroccoliDatabaseKernel;
+  readonly broccoliConnectionPool: BroccoliConnectionPool;
+  readonly broccoliLockAuthority: BroccoliLockAuthority;
+  readonly broccoliQueryOptimizer: BroccoliQueryOptimizer;
+  readonly broccoliMvccEngine: BroccoliMvccEngine;
+  readonly broccoliSparseIndexEngine: BroccoliSparseIndexEngine;
+  readonly broccoliCdcStream: BroccoliCdcStream;
+  readonly broccoliVectorEngine: BroccoliVectorEngine;
+  readonly broccoliInvertedIndexEngine: BroccoliInvertedIndexEngine;
+  readonly broccoliTwoPhaseCommitCoordinator: BroccoliTwoPhaseCommitCoordinator;
   readonly databaseToolSuite: DatabaseToolSuite;
   readonly deterministicWalletEngine: DeterministicWalletEngine;
   readonly walletSupervisor: WalletSupervisor;
@@ -4305,6 +4419,10 @@ export class LumiMonolith implements IAgentEngine {
   readonly broccoliRunbookSubstrate: BroccoliRunbookSubstrate;
   readonly runbookSupervisor: RunbookSupervisor;
   readonly runbookToolSuite: RunbookToolSuite;
+  readonly broccoliAdversarialSubstrate: BroccoliAdversarialSubstrate;
+  readonly adversarialScrutinySupervisor: AdversarialScrutinySupervisor;
+  readonly adversarialHumanizer: AdversarialHumanizer;
+  readonly adversarialToolSuite: AdversarialToolSuite;
   readonly toolRegistry: ValidatingToolRegistry;
   readonly promptComposer: PromptComposer;
   readonly agentEngine: AgentEngine;
@@ -4483,8 +4601,11 @@ export class LumiMonolith implements IAgentEngine {
     this.acpPermissionGate = components.acpPermissionGate;
     this.broccoliAcpSubstrate = components.broccoliAcpSubstrate;
     this.acpSnapshotManager = components.acpSnapshotManager;
+    this.acpSpeculativeChangesetStager = components.acpSpeculativeChangesetStager;
+    this.acpFineGrainedHunkPatcher = components.acpFineGrainedHunkPatcher;
     this.acpBridgeServer = components.acpBridgeServer;
     this.acpToolSuite = components.acpToolSuite;
+    this.acpDashboardModal = components.acpDashboardModal;
     this.mcpTransportCodec = components.mcpTransportCodec;
     this.mcpSecurityScrubber = components.mcpSecurityScrubber;
     this.broccoliMcpSubstrate = components.broccoliMcpSubstrate;
@@ -4816,6 +4937,15 @@ export class LumiMonolith implements IAgentEngine {
     this.profileSnapshotManager = components.profileSnapshotManager;
     this.profileToolSuite = components.profileToolSuite;
     this.databaseKernel = components.databaseKernel;
+    this.broccoliConnectionPool = components.broccoliConnectionPool;
+    this.broccoliLockAuthority = components.broccoliLockAuthority;
+    this.broccoliQueryOptimizer = components.broccoliQueryOptimizer;
+    this.broccoliMvccEngine = components.broccoliMvccEngine;
+    this.broccoliSparseIndexEngine = components.broccoliSparseIndexEngine;
+    this.broccoliCdcStream = components.broccoliCdcStream;
+    this.broccoliVectorEngine = components.broccoliVectorEngine;
+    this.broccoliInvertedIndexEngine = components.broccoliInvertedIndexEngine;
+    this.broccoliTwoPhaseCommitCoordinator = components.broccoliTwoPhaseCommitCoordinator;
     this.databaseToolSuite = components.databaseToolSuite;
     this.deterministicWalletEngine = components.deterministicWalletEngine;
     this.walletSupervisor = components.walletSupervisor;
@@ -4842,6 +4972,10 @@ export class LumiMonolith implements IAgentEngine {
     this.broccoliRunbookSubstrate = components.broccoliRunbookSubstrate;
     this.runbookSupervisor = components.runbookSupervisor;
     this.runbookToolSuite = components.runbookToolSuite;
+    this.broccoliAdversarialSubstrate = components.broccoliAdversarialSubstrate;
+    this.adversarialScrutinySupervisor = components.adversarialScrutinySupervisor;
+    this.adversarialHumanizer = components.adversarialHumanizer;
+    this.adversarialToolSuite = components.adversarialToolSuite;
     this.toolRegistry = components.toolRegistry;
     this.promptComposer = components.promptComposer;
     this.agentEngine = components.agentEngine;
@@ -4906,6 +5040,26 @@ export class LumiMonolith implements IAgentEngine {
     (this.config as { modelName: string }).modelName = next;
     this.setupWizard.setSavedModel(next);
     return next;
+  }
+
+  /** Adversarially red-teams an architectural or implementation plan */
+  scrutinizePlan(planText: string, options?: AdversarialScrutinyOptions): AdversarialRedTeamVerdict {
+    return this.adversarialScrutinySupervisor.scrutinizePlan(planText, options);
+  }
+
+  /** Audits factual claims against evidence source to ensure fail-closed grounding */
+  auditProvenance(claim: string, evidenceSource: string, options?: AdversarialScrutinyOptions): ProvenanceGroundingProof {
+    return this.adversarialScrutinySupervisor.auditProvenance(claim, evidenceSource, options);
+  }
+
+  /** Decomposes cognitive token spend into compressible fluff vs irreducible core constraints */
+  decomposeCognitiveSpend(text: string): CognitiveDecompositionReport {
+    return this.adversarialScrutinySupervisor.decomposeCognitiveSpend(text);
+  }
+
+  /** Audits completion assertions against empirical execution receipts */
+  verifyTaskCompletion(declaredSummary: string, evidenceReceipts: readonly string[]): AdversarialRedTeamVerdict {
+    return this.adversarialScrutinySupervisor.verifyTaskCompletion(declaredSummary, evidenceReceipts);
   }
 
   /** Creates an immutable frame-perfect snapshot of active game engine state */

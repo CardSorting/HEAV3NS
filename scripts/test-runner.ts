@@ -88,7 +88,7 @@ async function main(): Promise<void> {
   const parallelSuites = testFiles.filter((f) => !f.endsWith("validate-repo.ts"));
 
   const total = testFiles.length;
-  const numWorkers = Math.min(os.cpus().length || 4, 6);
+  const numWorkers = Math.min(os.cpus().length || 4, 4);
 
   console.log("================================================================================");
   console.log(` ⚡ LUMI CONCURRENT TEST RUNNER (${total} suites · ${numWorkers} parallel workers)`);

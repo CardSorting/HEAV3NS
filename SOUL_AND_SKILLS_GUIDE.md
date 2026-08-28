@@ -30,6 +30,7 @@ LUMI-NEW/
 ├── souls/                                 🔮 SOUL Persona Drop Vault
 │   ├── README.md                          <- Instructional usage guide
 │   ├── active.soul.md                     <- Live active persona manifest
+│   ├── senior-adversarial-architect.soul.md <- Uncompromising Senior Architect adversarial persona
 │   ├── socratic-mentor.soul.md            <- Ready-to-use Socratic Mentor persona
 │   ├── game-engine-architect.card.json    <- Ready-to-use CharacterCard V2 persona
 │   ├── executive-assistant.gpt.json       <- Ready-to-use OpenAI Custom GPT schema
@@ -42,6 +43,8 @@ LUMI-NEW/
 │
 └── skills/                                ⚡ SKILL Capability Drop Vault
     ├── README.md                          <- Instructional usage guide
+    ├── adversarial-auditor/               <- Ready-to-use adversarial red-teaming skill
+    │   └── SKILL.md
     ├── performance-auditor/               <- Ready-to-use performance skill
     │   └── SKILL.md
     ├── code-refactor/                     <- Ready-to-use refactoring skill

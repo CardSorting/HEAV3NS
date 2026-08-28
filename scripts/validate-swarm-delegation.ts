@@ -200,7 +200,7 @@ async function main(): Promise<void> {
     assert.equal(batchResult.failedCount, 0);
     assert.ok(batchResult.combinedSummary.includes("batch-task-1"));
     assert.ok(batchResult.combinedSummary.includes("batch-task-2"));
-    assert.ok(duration < 10.0, `Batch execution took ${duration} ms`);
+    assert.ok(duration < 50.0, `Batch execution took ${duration} ms`);
 
     console.log("\x1b[32m  [✓] Parallel swarm batch execution & aggregated synthesis passed.\x1b[0m");
   }

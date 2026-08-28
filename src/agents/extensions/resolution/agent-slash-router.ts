@@ -10,6 +10,9 @@ import type { RunbookSupervisor } from "../runbooks/runbook-supervisor.js";
 import { RunbookHumanizer } from "../runbooks/runbook-humanizer.js";
 import { RunbookCatalog } from "../runbooks/runbook-catalog.js";
 import { StatefulCompactionSynthesizer } from "../../../tooling/extensions/compaction/stateful-compaction-synthesizer.js";
+import type { AdversarialScrutinySupervisor } from "../adversarial/adversarial-scrutiny-supervisor.js";
+import { AdversarialHumanizer } from "../adversarial/adversarial-humanizer.js";
+import type { IBroccoliAcpSubstrate, IAcpPermissionGate } from "../../../core/contracts/acp.contracts.js";
 
 export interface SlashRouteContext {
   sessionContext: SessionContext;
@@ -20,6 +23,10 @@ export interface SlashRouteContext {
   modelResolver: ModelResolver;
   toolRegistry: ValidatingToolRegistry;
   runbookSupervisor?: RunbookSupervisor;
+  adversarialSupervisor?: AdversarialScrutinySupervisor;
+  adversarialHumanizer?: AdversarialHumanizer;
+  acpSubstrate?: IBroccoliAcpSubstrate;
+  acpPermissionGate?: IAcpPermissionGate;
 }
 
 export interface SlashRouteResult {
@@ -326,6 +333,89 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
         return { handled: true, output: out };
       }
 
+      case "/scrutinize":
+      case "/redteam": {
+        const supervisor = context.adversarialSupervisor;
+        const humanizer = context.adversarialHumanizer ?? new AdversarialHumanizer();
+        if (!supervisor) {
+          return { handled: true, output: "Adversarial scrutiny supervisor is not initialized in this session." };
+        }
+
+        const inputPlan = args.join(" ").trim();
+        if (!inputPlan) {
+          return {
+            handled: true,
+            output: "Usage: `/scrutinize <plan text or file path>` (e.g. `/scrutinize implementation_plan.md`)",
+          };
+        }
+
+        const verdict = supervisor.scrutinizePlan(inputPlan);
+        const banner = humanizer.renderVerdictBanner(verdict);
+        return { handled: true, output: `\`\`\`text\n${banner}\n\`\`\`` };
+      }
+
+      case "/provenance": {
+        const supervisor = context.adversarialSupervisor;
+        const humanizer = context.adversarialHumanizer ?? new AdversarialHumanizer();
+        if (!supervisor) {
+          return { handled: true, output: "Adversarial scrutiny supervisor is not initialized in this session." };
+        }
+
+        const raw = args.join(" ");
+        const parts = raw.split(" against ");
+        if (parts.length < 2) {
+          return {
+            handled: true,
+            output: "Usage: `/provenance <claim> against <evidence text>`",
+          };
+        }
+
+        const [claim, evidence] = parts;
+        const proof = supervisor.auditProvenance(claim.trim(), evidence.trim());
+        const report = humanizer.renderProvenanceReport([proof]);
+        return { handled: true, output: `\`\`\`text\n${report}\n\`\`\`` };
+      }
+
+      case "/decompose": {
+        const supervisor = context.adversarialSupervisor;
+        const humanizer = context.adversarialHumanizer ?? new AdversarialHumanizer();
+        if (!supervisor) {
+          return { handled: true, output: "Adversarial scrutiny supervisor is not initialized in this session." };
+        }
+
+        const text = args.join(" ").trim();
+        if (!text) {
+          return {
+            handled: true,
+            output: "Usage: `/decompose <prompt or output text>`",
+          };
+        }
+
+        const decomp = supervisor.decomposeCognitiveSpend(text);
+        const report = humanizer.renderCognitiveDecomposition(decomp);
+        return { handled: true, output: `\`\`\`text\n${report}\n\`\`\`` };
+      }
+
+      case "/acp": {
+        const substrate = context.acpSubstrate;
+        if (!substrate) {
+          return { handled: true, output: "Agent Client Protocol (ACP) subsystem is not initialized in this session." };
+        }
+        const sessions = substrate.listSessions();
+        const pending = substrate.listPendingApprovals();
+        const changesets = substrate.listChangesets();
+        const audits = substrate.listRiskAudits();
+
+        let out = `⚡ **Agent Client Protocol (ACP) Bridge Telemetry**\n\n`;
+        out += `• **Active IDE Sessions**: ${sessions.length} (${sessions.map((s) => `\`${s.sessionId}\` [${s.mode}]`).join(", ") || "None"})\n`;
+        out += `• **Pending Edit Approvals**: ${pending.length}\n`;
+        out += `• **Recorded Changesets**: ${changesets.length}\n`;
+        out += `• **Adversarial Risk Audits**: ${audits.length}\n`;
+        out += `• **RPC Handled Calls**: ${substrate.getRpcCallCount()}\n\n`;
+        out += `💡 *Tip*: Open the \`AcpDashboardModal\` in interactive TUI to review pending diffs with colorized adversarial risk shields.`;
+        return { handled: true, output: out };
+      }
+
       case "/help":
       case "/shortcuts": {
         return {
@@ -342,7 +432,11 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
 • \`/clear\` — Reset active session state and turn counter
 • \`/terra\`, \`/luna\`, \`/sol\` — Fast model swapping
 • \`/model <name>\` — Switch active LLM model
-• \`/runbook presets\` — Explore interactive FSM runbook workflows`,
+• \`/runbook presets\` — Explore interactive FSM runbook workflows
+• \`/scrutinize <plan>\` — Senior architect adversarial plan red-teaming
+• \`/provenance <claim> against <text>\` — Assert fail-closed factual grounding
+• \`/decompose <text>\` — Cognitive spend & compressibility analysis
+• \`/acp\` — Inspect Agent Client Protocol sessions & diff approvals`,
         };
       }
 

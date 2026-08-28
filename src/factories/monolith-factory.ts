@@ -54,6 +54,15 @@ import { NativeMutationTransactionSubstrate } from "../sessions/extensions/subst
 import { WriteCoalescerSubstrate } from "../sessions/extensions/substrate/write-coalescer.js";
 import { BroccoliSubstrateStore } from "../sessions/extensions/substrate/broccoli-substrate-store.js";
 import { BroccoliDatabaseKernel } from "../sessions/extensions/substrate/broccolidb-kernel.js";
+import { BroccoliConnectionPool } from "../sessions/extensions/substrate/broccolidb-connection-pool.js";
+import { BroccoliLockAuthority } from "../sessions/extensions/substrate/broccolidb-lock-authority.js";
+import { BroccoliQueryOptimizer } from "../sessions/extensions/substrate/broccolidb-query-optimizer.js";
+import { BroccoliMvccEngine } from "../sessions/extensions/substrate/broccolidb-mvcc-engine.js";
+import { BroccoliSparseIndexEngine } from "../sessions/extensions/substrate/broccolidb-sparse-index-engine.js";
+import { BroccoliCdcStream } from "../sessions/extensions/substrate/broccolidb-cdc-stream.js";
+import { BroccoliVectorEngine } from "../sessions/extensions/substrate/broccolidb-vector-engine.js";
+import { BroccoliInvertedIndexEngine } from "../sessions/extensions/substrate/broccolidb-inverted-index-engine.js";
+import { BroccoliTwoPhaseCommitCoordinator } from "../sessions/extensions/substrate/broccolidb-2pc-coordinator.js";
 import { DatabaseToolSuite } from "../tooling/extensions/database/database-tools.js";
 import { BroccoliCasCompactor } from "../sessions/extensions/compaction/broccolidb-cas-compactor.js";
 import { ConvergenceEngineSubstrate } from "../agents/extensions/swarm/convergence-engine.js";
@@ -249,8 +258,11 @@ import { AcpProtocolCodec } from "../tooling/extensions/acp/acp-protocol-codec.j
 import { AcpPermissionGate } from "../tooling/extensions/acp/acp-permission-gate.js";
 import { BroccoliAcpSubstrate } from "../sessions/extensions/acp/broccoli-acp-substrate.js";
 import { AcpSnapshotManager } from "../sessions/extensions/acp/acp-snapshot-manager.js";
+import { AcpSpeculativeChangesetStager } from "../sessions/extensions/acp/acp-speculative-changeset-stager.js";
+import { AcpFineGrainedHunkPatcher } from "../sessions/extensions/acp/acp-fine-grained-hunk-patcher.js";
 import { AcpBridgeServer } from "../agents/extensions/acp/acp-bridge-server.js";
 import { AcpToolSuite } from "../tooling/extensions/acp/acp-tool-suite.js";
+import { AcpDashboardModal } from "../tui/components/acp-dashboard-modal.js";
 
 import { McpTransportCodec } from "../tooling/extensions/mcp/mcp-transport-codec.js";
 import { McpSecurityScrubber } from "../tooling/extensions/mcp/mcp-security-scrubber.js";
@@ -680,6 +692,11 @@ import { BroccoliRunbookSubstrate } from "../agents/extensions/runbooks/broccoli
 import { RunbookSupervisor } from "../agents/extensions/runbooks/runbook-supervisor.js";
 import { RunbookToolSuite } from "../tooling/extensions/runbooks/runbook-tool-suite.js";
 
+import { BroccoliAdversarialSubstrate } from "../sessions/extensions/adversarial/broccoli-adversarial-substrate.js";
+import { AdversarialScrutinySupervisor } from "../agents/extensions/adversarial/adversarial-scrutiny-supervisor.js";
+import { AdversarialHumanizer } from "../agents/extensions/adversarial/adversarial-humanizer.js";
+import { AdversarialToolSuite } from "../tooling/extensions/adversarial/adversarial-tool-suite.js";
+
 import type { GameStateSnapshot } from "../core/contracts/session.contracts.js";
 
 export interface MonolithFactoryOptions {
@@ -723,6 +740,15 @@ export class MonolithFactory {
     convergenceEngine: ConvergenceEngineSubstrate;
     broccoliSubstrateStore: BroccoliSubstrateStore;
     databaseKernel: BroccoliDatabaseKernel;
+    broccoliConnectionPool: BroccoliConnectionPool;
+    broccoliLockAuthority: BroccoliLockAuthority;
+    broccoliQueryOptimizer: BroccoliQueryOptimizer;
+    broccoliMvccEngine: BroccoliMvccEngine;
+    broccoliSparseIndexEngine: BroccoliSparseIndexEngine;
+    broccoliCdcStream: BroccoliCdcStream;
+    broccoliVectorEngine: BroccoliVectorEngine;
+    broccoliInvertedIndexEngine: BroccoliInvertedIndexEngine;
+    broccoliTwoPhaseCommitCoordinator: BroccoliTwoPhaseCommitCoordinator;
     databaseToolSuite: DatabaseToolSuite;
     broccoliTaskDagScheduler: BroccoliTaskDagScheduler;
     broccoliCircuitBreaker: BroccoliCircuitBreaker;
@@ -928,8 +954,11 @@ export class MonolithFactory {
     acpPermissionGate: AcpPermissionGate;
     broccoliAcpSubstrate: BroccoliAcpSubstrate;
     acpSnapshotManager: AcpSnapshotManager;
+    acpSpeculativeChangesetStager: AcpSpeculativeChangesetStager;
+    acpFineGrainedHunkPatcher: AcpFineGrainedHunkPatcher;
     acpBridgeServer: AcpBridgeServer;
     acpToolSuite: AcpToolSuite;
+    acpDashboardModal: AcpDashboardModal;
     mcpTransportCodec: McpTransportCodec;
     mcpSecurityScrubber: McpSecurityScrubber;
     broccoliMcpSubstrate: BroccoliMcpSubstrate;
@@ -1285,6 +1314,10 @@ export class MonolithFactory {
     broccoliRunbookSubstrate: BroccoliRunbookSubstrate;
     runbookSupervisor: RunbookSupervisor;
     runbookToolSuite: RunbookToolSuite;
+    broccoliAdversarialSubstrate: BroccoliAdversarialSubstrate;
+    adversarialScrutinySupervisor: AdversarialScrutinySupervisor;
+    adversarialHumanizer: AdversarialHumanizer;
+    adversarialToolSuite: AdversarialToolSuite;
     toolRegistry: ValidatingToolRegistry;
     promptComposer: PromptComposer;
     agentEngine: AgentEngine;
@@ -1321,6 +1354,15 @@ export class MonolithFactory {
     const writeCoalescer = new WriteCoalescerSubstrate();
     const convergenceEngine = new ConvergenceEngineSubstrate();
     const databaseKernel = new BroccoliDatabaseKernel({ workspaceRoot: cwd });
+    const broccoliConnectionPool = new BroccoliConnectionPool();
+    const broccoliLockAuthority = new BroccoliLockAuthority();
+    const broccoliQueryOptimizer = new BroccoliQueryOptimizer();
+    const broccoliMvccEngine = new BroccoliMvccEngine();
+    const broccoliSparseIndexEngine = new BroccoliSparseIndexEngine();
+    const broccoliCdcStream = new BroccoliCdcStream();
+    const broccoliVectorEngine = new BroccoliVectorEngine();
+    const broccoliInvertedIndexEngine = new BroccoliInvertedIndexEngine();
+    const broccoliTwoPhaseCommitCoordinator = new BroccoliTwoPhaseCommitCoordinator();
     const databaseToolSuite = new DatabaseToolSuite(databaseKernel);
     const broccoliSubstrateStore = new BroccoliSubstrateStore(databaseKernel);
     const broccoliTaskDagScheduler = new BroccoliTaskDagScheduler();
@@ -1634,17 +1676,31 @@ export class MonolithFactory {
     );
 
     const acpProtocolCodec = new AcpProtocolCodec();
-    const broccoliAcpSubstrate = new BroccoliAcpSubstrate();
+    const broccoliAcpSubstrate = new BroccoliAcpSubstrate(databaseKernel);
     const acpPermissionGate = new AcpPermissionGate(broccoliAcpSubstrate);
     const acpSnapshotManager = new AcpSnapshotManager(broccoliAcpSubstrate);
+    const acpSpeculativeChangesetStager = new AcpSpeculativeChangesetStager(
+      broccoliAcpSubstrate,
+      acpPermissionGate
+    );
+    const acpFineGrainedHunkPatcher = new AcpFineGrainedHunkPatcher();
     const acpBridgeServer = new AcpBridgeServer(
       acpProtocolCodec,
       acpPermissionGate,
-      broccoliAcpSubstrate
+      broccoliAcpSubstrate,
+      acpSpeculativeChangesetStager,
+      acpFineGrainedHunkPatcher
     );
     const acpToolSuite = new AcpToolSuite(
       acpPermissionGate,
-      broccoliAcpSubstrate
+      broccoliAcpSubstrate,
+      acpSpeculativeChangesetStager
+    );
+    const acpDashboardModal = new AcpDashboardModal(
+      broccoliAcpSubstrate,
+      acpPermissionGate,
+      acpSpeculativeChangesetStager,
+      acpFineGrainedHunkPatcher
     );
 
     const mcpTransportCodec = new McpTransportCodec();
@@ -1736,6 +1792,11 @@ export class MonolithFactory {
     const broccoliRunbookSubstrate = new BroccoliRunbookSubstrate(databaseKernel);
     const runbookSupervisor = new RunbookSupervisor(broccoliRunbookSubstrate, { workspaceRoot: cwd });
     const runbookToolSuite = new RunbookToolSuite(runbookSupervisor);
+
+    const broccoliAdversarialSubstrate = new BroccoliAdversarialSubstrate(databaseKernel);
+    const adversarialScrutinySupervisor = new AdversarialScrutinySupervisor(broccoliAdversarialSubstrate);
+    const adversarialHumanizer = new AdversarialHumanizer();
+    const adversarialToolSuite = new AdversarialToolSuite(adversarialScrutinySupervisor, adversarialHumanizer);
 
     const deterministicKanbanEngine = new DeterministicKanbanEngine();
     const broccoliKanbanSubstrate = new BroccoliKanbanSubstrate();
@@ -2378,7 +2439,8 @@ export class MonolithFactory {
       emailToolSuite,
       otlpToolSuite,
       daemonToolSuite,
-      runbookToolSuite
+      runbookToolSuite,
+      adversarialToolSuite
     );
 
     // Bind supervisor in-process tool calling
@@ -2638,8 +2700,11 @@ export class MonolithFactory {
       acpPermissionGate,
       broccoliAcpSubstrate,
       acpSnapshotManager,
+      acpSpeculativeChangesetStager,
+      acpFineGrainedHunkPatcher,
       acpBridgeServer,
       acpToolSuite,
+      acpDashboardModal,
       mcpTransportCodec,
       mcpSecurityScrubber,
       broccoliMcpSubstrate,
@@ -2971,6 +3036,15 @@ export class MonolithFactory {
       profileSnapshotManager,
       profileToolSuite,
       databaseKernel,
+      broccoliConnectionPool,
+      broccoliLockAuthority,
+      broccoliQueryOptimizer,
+      broccoliMvccEngine,
+      broccoliSparseIndexEngine,
+      broccoliCdcStream,
+      broccoliVectorEngine,
+      broccoliInvertedIndexEngine,
+      broccoliTwoPhaseCommitCoordinator,
       databaseToolSuite,
       deterministicWalletEngine,
       walletSupervisor,
@@ -2997,6 +3071,10 @@ export class MonolithFactory {
       broccoliRunbookSubstrate,
       runbookSupervisor,
       runbookToolSuite,
+      broccoliAdversarialSubstrate,
+      adversarialScrutinySupervisor,
+      adversarialHumanizer,
+      adversarialToolSuite,
       toolRegistry,
       promptComposer,
       agentEngine,

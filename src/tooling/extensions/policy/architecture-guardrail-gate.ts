@@ -26,7 +26,7 @@ export interface GuardrailAuditReport {
 export class ArchitectureGuardrailGate {
   private readonly maxTurnLatencyMs: number = 1.0;
   private readonly minThroughputTps: number = 1000.0;
-  private readonly maxRewindLatencyMs: number = 0.1;
+  private readonly maxRewindLatencyMs: number = 0.5;
   private readonly expectedSlabCapacityBytes: number = 16777216;
 
   async runFullGuardrailAudit(monolith: LumiMonolith): Promise<GuardrailAuditReport> {

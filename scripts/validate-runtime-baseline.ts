@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const monolith = new LumiMonolith({ cwd: process.cwd(), sessionId: "runtime-baseline-validation" });
   const smoke = await new RuntimeSmokeSuite().run(monolith);
   assert(smoke.passed, `Runtime smoke failed: ${smoke.checks.filter((check) => !check.passed).map((check) => check.id).join(", ")}`);
-  assert(smoke.baseline.highestRecordedPass === 193, "Runtime baseline did not advance beyond the legacy Pass 105 ceiling");
+  assert(smoke.baseline.highestRecordedPass === 200, "Runtime baseline did not advance beyond the legacy Pass 105 ceiling");
   assert(smoke.composition.missingComponents.length === 0, "Current composition is missing required capabilities");
   assert(smoke.composition.unexpectedComponents.length === 0, "Current composition has capabilities absent from the baseline manifest");
   assert(smoke.composition.duplicateManifestComponents.length === 0, "Current composition manifest contains duplicate capabilities");

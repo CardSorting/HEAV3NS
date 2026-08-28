@@ -160,6 +160,7 @@ import type { EmailToolSuite } from "../email/email-tool-suite.js";
 import type { OtlpToolSuite } from "../otlp/otlp-tool-suite.js";
 import type { DaemonToolSuite } from "../daemon/daemon-tool-suite.js";
 import type { RunbookToolSuite } from "../runbooks/runbook-tool-suite.js";
+import type { AdversarialToolSuite } from "../adversarial/adversarial-tool-suite.js";
 
 export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly skillsIngestor: SkillsIngestor;
@@ -246,6 +247,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
   readonly otlpToolSuite?: OtlpToolSuite;
   readonly daemonToolSuite?: DaemonToolSuite;
   readonly runbookToolSuite?: RunbookToolSuite;
+  readonly adversarialToolSuite?: AdversarialToolSuite;
   readonly memoryStore?: SessionMemoryStore;
   readonly moduleDecomposer: ModuleDecomposer;
   readonly stabilityDoctor: StabilityDoctor;
@@ -342,7 +344,8 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     emailToolSuite?: EmailToolSuite,
     otlpToolSuite?: OtlpToolSuite,
     daemonToolSuite?: DaemonToolSuite,
-    runbookToolSuite?: RunbookToolSuite
+    runbookToolSuite?: RunbookToolSuite,
+    adversarialToolSuite?: AdversarialToolSuite
   ) {
     super(eyes, hands, ears);
     this.skillsIngestor = skillsIngestor ?? new SkillsIngestor(eyes);
@@ -429,6 +432,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     this.otlpToolSuite = otlpToolSuite;
     this.daemonToolSuite = daemonToolSuite;
     this.runbookToolSuite = runbookToolSuite;
+    this.adversarialToolSuite = adversarialToolSuite;
     this.memoryStore = memoryStore;
     this.moduleDecomposer = new ModuleDecomposer();
     this.stabilityDoctor = new StabilityDoctor();
@@ -4447,6 +4451,11 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
     }
     if (this.runbookToolSuite) {
       for (const tool of this.runbookToolSuite.getTools()) {
+        this.registerTool(tool);
+      }
+    }
+    if (this.adversarialToolSuite) {
+      for (const tool of this.adversarialToolSuite.getTools()) {
         this.registerTool(tool);
       }
     }

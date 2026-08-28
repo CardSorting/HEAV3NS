@@ -500,3 +500,655 @@ export interface IBroccoliDatabaseKernel {
   readBlob(hash: string): Promise<Buffer | null>;
   gc(): Promise<number>;
 }
+
+// -------------------------------------------------------------
+// Multi-Tenant Connection Pooling, Lock Authority & Query Optimization (Pass 198 / ADR-136)
+// -------------------------------------------------------------
+
+export type BroccoliLeaseMode = "SHARED_READ" | "EXCLUSIVE_WRITE";
+
+export interface BroccoliLeaseHandle {
+  readonly leaseId: string;
+  readonly subsystem: string;
+  readonly mode: BroccoliLeaseMode;
+  readonly acquiredAt: number;
+  readonly expiresAt: number;
+  readonly isActive: boolean;
+}
+
+export interface BroccoliPoolMetrics {
+  readonly activeLeases: number;
+  readonly activeReads: number;
+  readonly activeWrites: number;
+  readonly waitingQueueLength: number;
+  readonly totalLeasesIssued: number;
+  readonly peakConcurrency: number;
+  readonly averageWaitMs: number;
+  readonly deadlocksPrevented: number;
+}
+
+export interface IBroccoliConnectionPool {
+  acquireLease(subsystem: string, mode?: BroccoliLeaseMode, timeoutMs?: number): Promise<BroccoliLeaseHandle>;
+  releaseLease(leaseId: string): boolean;
+  withLease<T>(subsystem: string, mode: BroccoliLeaseMode, fn: () => Promise<T>, timeoutMs?: number): Promise<T>;
+  getMetrics(): BroccoliPoolMetrics;
+  getActiveLeases(): readonly BroccoliLeaseHandle[];
+}
+
+export type BroccoliLockMode = "SHARED_READ" | "EXCLUSIVE_WRITE";
+
+export interface BroccoliLockHandle {
+  readonly lockId: string;
+  readonly resourceKey: string;
+  readonly ownerId: string;
+  readonly mode: BroccoliLockMode;
+  readonly acquiredAt: number;
+  readonly expiresAt: number;
+}
+
+export interface IBroccoliLockAuthority {
+  acquireLock(resourceKey: string, ownerId: string, mode?: BroccoliLockMode, ttlMs?: number): Promise<BroccoliLockHandle>;
+  acquireAll(resourceKeys: readonly string[], ownerId: string, mode?: BroccoliLockMode, ttlMs?: number): Promise<readonly BroccoliLockHandle[]>;
+  releaseLock(lockId: string): boolean;
+  releaseAllForOwner(ownerId: string): number;
+  isLocked(resourceKey: string): boolean;
+  getActiveLocks(): readonly BroccoliLockHandle[];
+}
+
+export type BroccoliQueryPlanType = "PRIMARY_KEY_LOOKUP" | "SECONDARY_INDEX_SEEK" | "RANGE_SCAN" | "FULL_TABLE_SCAN";
+
+export interface BroccoliQueryPlan {
+  readonly planType: BroccoliQueryPlanType;
+  readonly targetTable: string;
+  readonly selectedIndex?: string;
+  readonly estimatedCost: number;
+  readonly explanation: string;
+  readonly scanRange?: { readonly min?: unknown; readonly max?: unknown };
+}
+
+export interface IBroccoliQueryOptimizer {
+  planQuery<T extends Record<string, unknown>>(
+    tableName: string,
+    filter: Partial<T> | Record<string, unknown>,
+    indexNames?: readonly string[]
+  ): BroccoliQueryPlan;
+}
+
+// -------------------------------------------------------------
+// MVCC Snapshot Isolation, Sparse Bloom Indexing & CDC Streaming (Pass 199 / ADR-137)
+// -------------------------------------------------------------
+
+export interface BroccoliRecordVersion<T extends Record<string, unknown> = Record<string, unknown>> {
+  readonly recordId: string;
+  readonly txId: number;
+  readonly deletedTxId?: number;
+  readonly createdAt: number;
+  readonly isDeleted: boolean;
+  readonly data?: T;
+}
+
+export interface BroccoliMvccTransaction {
+  readonly txId: number;
+  readonly startedAt: number;
+  readonly isolationLevel: "SNAPSHOT_ISOLATION" | "READ_COMMITTED";
+  readonly status: "ACTIVE" | "COMMITTED" | "ROLLED_BACK";
+  readonly writtenRecords: readonly { readonly table: string; readonly recordId: string }[];
+}
+
+export interface IBroccoliMvccEngine {
+  beginTransaction(isolationLevel?: "SNAPSHOT_ISOLATION" | "READ_COMMITTED"): BroccoliMvccTransaction;
+  commitTransaction(txId: number): boolean;
+  rollbackTransaction(txId: number): boolean;
+  readRecord<T extends Record<string, unknown>>(table: string, recordId: string, txId: number): T | undefined;
+  writeRecord<T extends Record<string, unknown>>(table: string, recordId: string, data: T, txId: number): void;
+  deleteRecord(table: string, recordId: string, txId: number): void;
+  vacuum(minActiveTxId?: number): number;
+  getActiveTransactions(): readonly BroccoliMvccTransaction[];
+}
+
+export interface BroccoliBlockSummary {
+  readonly blockIndex: number;
+  readonly recordCount: number;
+  readonly startId: string;
+  readonly endId: string;
+  readonly bounds: Record<string, { readonly min: unknown; readonly max: unknown; readonly bloomMask?: bigint }>;
+  readonly bloomFilterMask: bigint;
+}
+
+export interface BroccoliSparseIndexScanResult {
+  readonly totalBlocks: number;
+  readonly scannedBlocks: number;
+  readonly prunedBlocks: number;
+  readonly matchedRecordIds: readonly string[];
+}
+
+export interface IBroccoliSparseIndexEngine {
+  buildSparseIndex<T extends Record<string, unknown>>(
+    tableName: string,
+    records: readonly T[],
+    indexedColumns?: readonly string[],
+    blockSize?: number
+  ): readonly BroccoliBlockSummary[];
+  pruneBlocks(
+    tableName: string,
+    filter: Record<string, unknown>
+  ): BroccoliSparseIndexScanResult;
+}
+
+export type BroccoliCdcOp = "INSERT" | "UPDATE" | "DELETE" | "TX_COMMIT" | "TX_ROLLBACK";
+
+export interface BroccoliCdcEvent<T extends Record<string, unknown> = Record<string, unknown>> {
+  readonly lsn: number;
+  readonly timestamp: number;
+  readonly table: string;
+  readonly op: BroccoliCdcOp;
+  readonly recordId: string;
+  readonly before?: T;
+  readonly after?: T;
+  readonly txId?: number;
+}
+
+export interface BroccoliCdcFilter {
+  readonly tables?: readonly string[];
+  readonly ops?: readonly BroccoliCdcOp[];
+  readonly fromLsn?: number;
+}
+
+export type BroccoliCdcCallback = (event: BroccoliCdcEvent) => void;
+
+export interface BroccoliCdcSubscription {
+  readonly subscriptionId: string;
+  unsubscribe(): void;
+}
+
+export interface IBroccoliCdcStream {
+  emitEvent<T extends Record<string, unknown>>(
+    table: string,
+    op: BroccoliCdcOp,
+    recordId: string,
+    before?: T,
+    after?: T,
+    txId?: number
+  ): BroccoliCdcEvent<T>;
+  subscribe(filter: BroccoliCdcFilter, callback: BroccoliCdcCallback): BroccoliCdcSubscription;
+  getEvents(fromLsn?: number, limit?: number): readonly BroccoliCdcEvent[];
+  getLatestLsn(): number;
+}
+
+// -------------------------------------------------------------
+// Vectorized Execution, BM25 Inverted Search & 2PC Coordinator (Pass 200 / ADR-138)
+// -------------------------------------------------------------
+
+export type BroccoliVectorFilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "contains";
+export type BroccoliVectorAggType = "SUM" | "AVG" | "MIN" | "MAX" | "COUNT";
+
+export interface BroccoliVectorChunk {
+  readonly length: number;
+  readonly columns: Record<string, Float64Array | Int32Array | readonly (string | null | undefined)[]>;
+  readonly nullMasks: Record<string, Uint8Array>;
+  readonly recordIds: readonly string[];
+}
+
+export interface IBroccoliVectorEngine {
+  createVectorChunk<T extends Record<string, unknown>>(
+    records: readonly T[],
+    numericColumns?: readonly string[],
+    stringColumns?: readonly string[]
+  ): BroccoliVectorChunk;
+  vectorFilter(
+    chunk: BroccoliVectorChunk,
+    column: string,
+    op: BroccoliVectorFilterOp,
+    value: unknown,
+    selectionVector?: readonly number[]
+  ): readonly number[];
+  vectorAggregate(
+    chunk: BroccoliVectorChunk,
+    column: string,
+    aggType: BroccoliVectorAggType,
+    selectionVector?: readonly number[]
+  ): number;
+}
+
+export interface TermPostingList {
+  readonly term: string;
+  readonly docFrequency: number;
+  readonly postings: ReadonlyMap<string, { readonly termFrequency: number; readonly positions: readonly number[] }>;
+}
+
+export interface Bm25SearchResult {
+  readonly docId: string;
+  readonly score: number;
+  readonly matchedTerms: readonly string[];
+}
+
+export interface IBroccoliInvertedIndexEngine {
+  indexDocument(table: string, docId: string, text: string, metadata?: Record<string, unknown>): void;
+  removeDocument(table: string, docId: string): boolean;
+  search(
+    table: string,
+    query: string,
+    limit?: number,
+    options?: { readonly k1?: number; readonly b?: number; readonly phrase?: boolean }
+  ): readonly Bm25SearchResult[];
+  getDocumentCount(table: string): number;
+}
+
+export type Broccoli2pcTxState = "PREPARING" | "PREPARED" | "COMMITTING" | "COMMITTED" | "ABORTING" | "ABORTED";
+
+export interface IBroccoli2pcParticipant {
+  readonly participantId: string;
+  prepare(txId: string): Promise<boolean>;
+  commit(txId: string): Promise<void>;
+  rollback(txId: string): Promise<void>;
+}
+
+export interface Broccoli2pcTransactionSession {
+  readonly txId: string;
+  readonly createdAt: number;
+  readonly state: Broccoli2pcTxState;
+  readonly participants: readonly string[];
+}
+
+export interface IBroccoliTwoPhaseCommitCoordinator {
+  registerParticipant(participant: IBroccoli2pcParticipant): void;
+  unregisterParticipant(participantId: string): void;
+  begin2pcTransaction(txId: string, participantIds?: readonly string[]): Broccoli2pcTransactionSession;
+  execute2pc(txId: string): Promise<boolean>;
+  getTransaction(txId: string): Broccoli2pcTransactionSession | undefined;
+  getActiveTransactions(): readonly Broccoli2pcTransactionSession[];
+}
+
+// -------------------------------------------------------------
+// Adaptive Buffer Pool & LRU-K Page Cache Manager
+// -------------------------------------------------------------
+
+export interface BroccoliPageFrame<T = unknown> {
+  readonly pageId: string;
+  readonly frameId: number;
+  data: T;
+  isDirty: boolean;
+  pinCount: number;
+  lastAccessTimestamps: number[]; // K access timestamps for LRU-K
+}
+
+export interface BroccoliBufferPoolMetrics {
+  readonly totalFrames: number;
+  readonly activePages: number;
+  readonly pinnedPages: number;
+  readonly dirtyPages: number;
+  readonly cacheHits: number;
+  readonly cacheMisses: number;
+  readonly hitRatioPct: number;
+  readonly evictions: number;
+}
+
+export interface IBroccoliBufferPoolManager {
+  fetchPage<T = unknown>(pageId: string, loader?: (pageId: string) => Promise<T>): Promise<BroccoliPageFrame<T>>;
+  unpinPage(pageId: string, isDirty?: boolean): void;
+  flushPage(pageId: string, writer?: (pageId: string, data: unknown) => Promise<void>): Promise<boolean>;
+  flushAllPages(writer?: (pageId: string, data: unknown) => Promise<void>): Promise<number>;
+  getMetrics(): BroccoliBufferPoolMetrics;
+  clear(): void;
+}
+
+// -------------------------------------------------------------
+// Log-Structured Merge-Tree (LSM) Storage Substrate
+// -------------------------------------------------------------
+
+export interface BroccoliSsTableMeta {
+  readonly tableId: string;
+  readonly level: number;
+  readonly recordCount: number;
+  readonly minKey: string;
+  readonly maxKey: string;
+  readonly bloomFilterMask: bigint;
+  readonly createdAt: number;
+  readonly sizeBytes: number;
+}
+
+export interface BroccoliLsmCompactionStats {
+  readonly compactedTablesCount: number;
+  readonly inputRecordsCount: number;
+  readonly outputRecordsCount: number;
+  readonly purgedTombstonesCount: number;
+  readonly durationMs: number;
+}
+
+export interface IBroccoliLsmStore {
+  put(key: string, value: unknown): void;
+  get(key: string): unknown | undefined;
+  delete(key: string): boolean;
+  scan(startKey?: string, endKey?: string, limit?: number): ReadonlyArray<{ readonly key: string; readonly value: unknown }>;
+  flushMemTable(): Promise<BroccoliSsTableMeta | null>;
+  compact(level?: number): Promise<BroccoliLsmCompactionStats>;
+  getMemTableSize(): number;
+  getSsTableMetas(): readonly BroccoliSsTableMeta[];
+}
+
+// -------------------------------------------------------------
+// Distributed Raft Consensus Substrate
+// -------------------------------------------------------------
+
+export type BroccoliRaftNodeRole = "FOLLOWER" | "CANDIDATE" | "LEADER";
+
+export interface BroccoliRaftLogEntry {
+  readonly index: number;
+  readonly term: number;
+  readonly command: string;
+  readonly payload?: unknown;
+  readonly timestamp: number;
+}
+
+export interface BroccoliRaftVoteRequest {
+  readonly term: number;
+  readonly candidateId: string;
+  readonly lastLogIndex: number;
+  readonly lastLogTerm: number;
+}
+
+export interface BroccoliRaftVoteResponse {
+  readonly term: number;
+  readonly voteGranted: boolean;
+}
+
+export interface BroccoliRaftAppendEntriesRequest {
+  readonly term: number;
+  readonly leaderId: string;
+  readonly prevLogIndex: number;
+  readonly prevLogTerm: number;
+  readonly entries: readonly BroccoliRaftLogEntry[];
+  readonly leaderCommit: number;
+}
+
+export interface BroccoliRaftAppendEntriesResponse {
+  readonly term: number;
+  readonly success: boolean;
+  readonly matchIndex: number;
+}
+
+export interface IBroccoliRaftConsensusEngine {
+  readonly nodeId: string;
+  getRole(): BroccoliRaftNodeRole;
+  getCurrentTerm(): number;
+  getLeaderId(): string | null;
+  getCommitIndex(): number;
+  requestVote(request: BroccoliRaftVoteRequest): BroccoliRaftVoteResponse;
+  appendEntries(request: BroccoliRaftAppendEntriesRequest): BroccoliRaftAppendEntriesResponse;
+  proposeCommand(command: string, payload?: unknown): Promise<BroccoliRaftLogEntry>;
+  startElection(): Promise<boolean>;
+  getLogEntries(fromIndex?: number): readonly BroccoliRaftLogEntry[];
+}
+
+// -------------------------------------------------------------
+// Adaptive Query Plan Cache
+// -------------------------------------------------------------
+
+export interface BroccoliCachedPlan {
+  readonly planId: string;
+  readonly queryFingerprint: string;
+  readonly plan: BroccoliQueryPlan;
+  readonly createdAt: number;
+  lastUsedAt: number;
+  executionCount: number;
+  totalExecutionTimeMicros: number;
+  averageExecutionTimeMicros: number;
+  lastRecordedRowCount?: number;
+}
+
+export interface BroccoliPlanCacheMetrics {
+  readonly cachedPlansCount: number;
+  readonly totalHits: number;
+  readonly totalMisses: number;
+  readonly hitRatioPct: number;
+  readonly invalidationsCount: number;
+  readonly driftReoptimizationsCount: number;
+}
+
+export interface IBroccoliAdaptivePlanCache {
+  getPlan(fingerprint: string): BroccoliCachedPlan | undefined;
+  setPlan(fingerprint: string, plan: BroccoliQueryPlan): BroccoliCachedPlan;
+  recordExecution(fingerprint: string, executionTimeMicros: number, actualRowCount?: number): void;
+  invalidateTable(tableName: string): number;
+  clear(): void;
+  getMetrics(): BroccoliPlanCacheMetrics;
+}
+
+// -------------------------------------------------------------
+// Distributed Transaction Sagas & Compensating Workflows
+// -------------------------------------------------------------
+
+export type BroccoliSagaStepStatus = "PENDING" | "EXECUTING" | "COMPLETED" | "COMPENSATING" | "COMPENSATED" | "FAILED";
+
+export interface BroccoliSagaStep<TContext = unknown, TResult = unknown> {
+  readonly stepName: string;
+  execute(context: TContext): Promise<TResult>;
+  compensate(context: TContext, result?: TResult): Promise<void>;
+}
+
+export type BroccoliSagaState = "PENDING" | "RUNNING" | "COMPLETED" | "COMPENSATING" | "COMPENSATED" | "FAILED";
+
+export interface BroccoliSagaExecutionResult<TContext = unknown> {
+  readonly sagaId: string;
+  readonly state: BroccoliSagaState;
+  readonly context: TContext;
+  readonly completedSteps: readonly string[];
+  readonly compensatedSteps: readonly string[];
+  readonly error?: Error;
+  readonly durationMs: number;
+}
+
+export interface IBroccoliSagaOrchestrator {
+  executeSaga<TContext = any>(
+    sagaId: string,
+    context: TContext,
+    steps: readonly BroccoliSagaStep<TContext, any>[]
+  ): Promise<BroccoliSagaExecutionResult<TContext>>;
+  getSagaResult(sagaId: string): BroccoliSagaExecutionResult | undefined;
+  listSagas(): readonly BroccoliSagaExecutionResult[];
+}
+
+// -------------------------------------------------------------
+// Multi-Tier Semantic KV Cache with XFetch Early Refresh
+// -------------------------------------------------------------
+
+export interface BroccoliTieredCacheEntry<T = unknown> {
+  readonly key: string;
+  readonly value: T;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly computationTimeMs: number; // delta in XFetch
+  readonly tier: "L1_MEMORY" | "L2_COMPRESSED" | "L3_STORAGE";
+  readCount: number;
+}
+
+export interface BroccoliTieredCacheMetrics {
+  readonly l1EntriesCount: number;
+  readonly l2EntriesCount: number;
+  readonly l3EntriesCount: number;
+  readonly l1Hits: number;
+  readonly l2Hits: number;
+  readonly l3Hits: number;
+  readonly misses: number;
+  readonly earlyRefreshes: number;
+}
+
+export interface IBroccoliTieredKvCache {
+  get<T = unknown>(
+    key: string,
+    fetcher?: () => Promise<T>,
+    options?: { readonly ttlMs?: number; readonly beta?: number }
+  ): Promise<T | undefined>;
+  put<T = unknown>(key: string, value: T, ttlMs?: number): void;
+  delete(key: string): boolean;
+  clear(): void;
+  getMetrics(): BroccoliTieredCacheMetrics;
+}
+
+// -------------------------------------------------------------
+// Approximate Nearest Neighbor (ANN) Vector Similarity Search
+// -------------------------------------------------------------
+
+export type VectorDistanceMetric = "COSINE" | "EUCLIDEAN" | "DOT_PRODUCT";
+
+export interface VectorAnnSearchResult {
+  readonly vectorId: string;
+  readonly score: number;
+  readonly distance: number;
+  readonly metadata?: Record<string, unknown>;
+}
+
+export interface IBroccoliVectorAnnEngine {
+  insertVector(
+    namespace: string,
+    vectorId: string,
+    embedding: Float64Array | Float32Array | readonly number[],
+    metadata?: Record<string, unknown>
+  ): void;
+  deleteVector(namespace: string, vectorId: string): boolean;
+  searchNearest(
+    namespace: string,
+    queryEmbedding: Float64Array | Float32Array | readonly number[],
+    topK?: number,
+    metric?: VectorDistanceMetric
+  ): readonly VectorAnnSearchResult[];
+  getVectorCount(namespace: string): number;
+}
+
+// -------------------------------------------------------------
+// Distributed Consistent Hash Ring & Virtual Nodes
+// -------------------------------------------------------------
+
+export interface HashRingNode {
+  readonly nodeId: string;
+  readonly weight?: number;
+  readonly metadata?: Record<string, unknown>;
+}
+
+export interface IBroccoliConsistentHashRing {
+  addNode(node: HashRingNode): void;
+  removeNode(nodeId: string): boolean;
+  getNode(key: string): HashRingNode | undefined;
+  getNodesForKey(key: string, replicaCount?: number): readonly HashRingNode[];
+  getAllNodes(): readonly HashRingNode[];
+  getVirtualNodeCount(): number;
+}
+
+// -------------------------------------------------------------
+// Continuous Time-Series Metric Rollup Engine
+// -------------------------------------------------------------
+
+export interface TimeSeriesPoint {
+  readonly timestamp: number;
+  readonly value: number;
+  readonly tags?: Record<string, string>;
+}
+
+export interface TimeSeriesWindowAggregation {
+  readonly windowStart: number;
+  readonly windowEnd: number;
+  readonly count: number;
+  readonly sum: number;
+  readonly min: number;
+  readonly max: number;
+  readonly avg: number;
+  readonly p50: number;
+  readonly p90: number;
+  readonly p99: number;
+}
+
+export interface IBroccoliTimeSeriesRollupEngine {
+  recordPoint(metricName: string, value: number, timestamp?: number, tags?: Record<string, string>): void;
+  queryRollup(
+    metricName: string,
+    windowSizeMs: number,
+    startTime: number,
+    endTime: number
+  ): readonly TimeSeriesWindowAggregation[];
+  getMetricNames(): readonly string[];
+}
+
+// -------------------------------------------------------------
+// Adaptive B-Tree Index Substrate
+// -------------------------------------------------------------
+
+export interface BTreeNodeEntry<TValue = unknown> {
+  readonly key: string | number;
+  readonly value: TValue;
+}
+
+export interface IBroccoliBTreeIndexEngine<TValue = unknown> {
+  insert(key: string | number, value: TValue): void;
+  search(key: string | number): TValue | undefined;
+  delete(key: string | number): boolean;
+  rangeScan(minKey: string | number, maxKey: string | number): readonly BTreeNodeEntry<TValue>[];
+  size(): number;
+  clear(): void;
+}
+
+// -------------------------------------------------------------
+// Distributed Wait-For Graph (WFG) Deadlock Detector
+// -------------------------------------------------------------
+
+export interface DeadlockEdge {
+  readonly waitingTxId: string;
+  readonly holdingTxId: string;
+  readonly resourceKey: string;
+  readonly timestamp: number;
+}
+
+export interface DeadlockDetectionResult {
+  readonly hasDeadlock: boolean;
+  readonly cycle?: readonly string[];
+  readonly victimTxId?: string;
+}
+
+export interface IBroccoliDeadlockDetector {
+  addWaitFor(waitingTxId: string, holdingTxId: string, resourceKey: string): void;
+  removeWaitFor(waitingTxId: string, holdingTxId: string, resourceKey?: string): void;
+  removeTx(txId: string): void;
+  detectDeadlock(): DeadlockDetectionResult;
+  getActiveWaitEdges(): readonly DeadlockEdge[];
+}
+
+// -------------------------------------------------------------
+// Continuous Incremental Materialized View Substrate
+// -------------------------------------------------------------
+
+export type MaterializedViewAggregateFunc = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX";
+
+export interface MaterializedViewDefinition<TRecord extends Record<string, any> = Record<string, any>> {
+  readonly viewName: string;
+  readonly sourceTable: string;
+  readonly groupByField?: Extract<keyof TRecord, string>;
+  readonly aggregateField?: Extract<keyof TRecord, string>;
+  readonly aggregateFunc?: MaterializedViewAggregateFunc;
+  readonly filterPredicate?: (record: TRecord) => boolean;
+}
+
+export interface MaterializedViewRow {
+  readonly groupKey: string;
+  readonly aggregateValue: number;
+  readonly rowCount: number;
+  readonly lastUpdatedAt: number;
+}
+
+export interface IBroccoliMaterializedViewEngine {
+  createView<TRecord extends Record<string, any> = Record<string, any>>(
+    def: MaterializedViewDefinition<TRecord>
+  ): void;
+  dropView(viewName: string): boolean;
+  applyMutation<TRecord extends Record<string, any> = Record<string, any>>(
+    sourceTable: string,
+    operation: "INSERT" | "UPDATE" | "DELETE",
+    before?: TRecord,
+    after?: TRecord
+  ): void;
+  getViewData(viewName: string): readonly MaterializedViewRow[];
+  getViewRow(viewName: string, groupKey: string): MaterializedViewRow | undefined;
+  listViews(): readonly string[];
+}
+
+
+
+

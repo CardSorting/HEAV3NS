@@ -7,7 +7,12 @@
  */
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
-import type { AcpApprovalStatus, AcpClientType, IAcpPermissionGate } from "../../../core/contracts/acp.contracts.js";
+import type {
+  AcpApprovalStatus,
+  AcpClientType,
+  IAcpPermissionGate,
+  IAcpSpeculativeChangesetStager,
+} from "../../../core/contracts/acp.contracts.js";
 import { AcpSupervisor } from "../../../agents/extensions/acp/acp-supervisor.js";
 import { BroccoliAcpSubstrate } from "../../../sessions/extensions/acp/broccoli-acp-substrate.js";
 import { DeterministicAcpEngine } from "./deterministic-acp-engine.js";
@@ -15,11 +20,14 @@ import { DeterministicAcpEngine } from "./deterministic-acp-engine.js";
 export class AcpToolSuite {
   private readonly supervisor: AcpSupervisor;
   private readonly substrate?: BroccoliAcpSubstrate;
+  private readonly stager?: IAcpSpeculativeChangesetStager;
 
   constructor(
     supervisorOrGate: AcpSupervisor | IAcpPermissionGate,
-    substrate?: BroccoliAcpSubstrate
+    substrate?: BroccoliAcpSubstrate,
+    stager?: IAcpSpeculativeChangesetStager
   ) {
+    this.stager = stager;
     if (supervisorOrGate instanceof AcpSupervisor) {
       this.supervisor = supervisorOrGate;
       this.substrate = substrate;
@@ -66,6 +74,29 @@ export class AcpToolSuite {
         success: true,
         result: { approved: true, approvalId: `app_${Date.now()}` },
       };
+    }
+
+    if (name === "acp_stage_transaction") {
+      if (!this.stager) return { success: false, error: "Stager not available" };
+      const sessionId = String(args.sessionId || "default");
+      const title = String(args.title || "Transaction");
+      const changes = (args.changes as any[]) || [];
+      const res = await this.stager.prepareTransaction(sessionId, title, changes);
+      return res;
+    }
+
+    if (name === "acp_commit_transaction") {
+      if (!this.stager) return { success: false, error: "Stager not available" };
+      const transactionId = String(args.transactionId || "");
+      const res = await this.stager.commitTransaction(transactionId);
+      return res;
+    }
+
+    if (name === "acp_rollback_transaction") {
+      if (!this.stager) return { success: false, error: "Stager not available" };
+      const rollbackToken = args.rollbackToken as any;
+      const res = await this.stager.rollbackTransaction(rollbackToken);
+      return res;
     }
 
     const tool = this.getTools().find((t) => t.name === name);
