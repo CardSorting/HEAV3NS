@@ -63,7 +63,7 @@
     "url": "https://github.com/lumi-agents/lumi-joy/issues"
   },
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "build": "tsc",
     "test": "node --import tsx scripts/test-runner.ts",
     "smoke": "node --import tsx src/index.ts --smoke",
@@ -72,6 +72,11 @@
     "guardrail": "node --import tsx scripts/validate-repo.ts",
     "validate:adr": "node --import tsx scripts/validate-adr-workspace.ts",
     "validate:cache": "node --import tsx scripts/validate-prompt-cache.ts",
+    "token:add": "node --import tsx scripts/add-token.ts",
+    "login": "node --import tsx scripts/login.ts",
+    "worker:types": "wrangler types src/worker-configuration.d.ts",
+    "worker:types:check": "wrangler types src/worker-configuration.d.ts --check",
+    "worker:build": "wrangler deploy --dry-run",
     "start": "node dist/index.js",
     "prepublishOnly": "npm run check && npm test && npm run build"
   },
@@ -83,6 +88,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "wrangler": "^4.129.0"
   }
 }

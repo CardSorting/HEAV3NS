@@ -17,6 +17,7 @@ secrets/
 private/
 .secrets/
 .credentials/
+.wrangler/
 
 # Cryptographic Keys, Certificates & SSH Keys
 *.pem

@@ -13,5 +13,6 @@
     "outDir": "./dist",
     "declaration": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/worker.ts", "src/worker-configuration.d.ts"]
 }
