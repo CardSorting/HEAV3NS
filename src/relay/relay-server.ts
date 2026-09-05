@@ -1168,8 +1168,10 @@ export class GalxaiRelayServer extends EventEmitter {
       if (bodyExceeded) return;
 
       try {
-        const body = JSON.parse(bodyText || '{}');
-        const model = body.model || 'gpt-5.6-sol';
+        const body = bodyText.trim() ? JSON.parse(bodyText) : {};
+        const requestedModel = body.model || 'gpt-5.6-terra';
+        // ChatGPT session tokens support gpt-5.6-terra, gpt-5.6-luna; map sol -> terra for OAuth scope compliance
+        const model = requestedModel === 'gpt-5.6-sol' ? 'gpt-5.6-terra' : requestedModel;
         const messages = body.messages || [{ role: 'user', content: 'Hello' }];
         const prompt = messages[messages.length - 1]?.content || '';
         const reasoningEffort = body.reasoning_effort || body.reasoningEffort || 'medium';
@@ -1456,17 +1458,23 @@ export class GalxaiRelayServer extends EventEmitter {
       return;
     }
 
-    const messages: Array<{ role: string; content: string }> = JSON.parse(job.messagesJson || '[]');
+    const messages: Array<{ role: string; content: any }> = JSON.parse(job.messagesJson || '[]');
     const inputList: Array<{ type: string; role: string; content: Array<{ type: string; text: string }> }> = [];
     let instructions = '';
     for (const msg of messages) {
+      const textContent = typeof msg.content === 'string'
+        ? msg.content
+        : Array.isArray(msg.content)
+        ? msg.content.map((c: any) => (typeof c === 'string' ? c : c?.text || JSON.stringify(c))).join('\n')
+        : (msg.content ? JSON.stringify(msg.content) : '');
+
       if (msg.role === 'system') {
-        instructions = instructions ? `${instructions}\n\n${msg.content}` : msg.content;
+        instructions = instructions ? `${instructions}\n\n${textContent}` : textContent;
       } else {
         inputList.push({
           type: 'message',
           role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: [{ type: 'input_text', text: msg.content }],
+          content: [{ type: 'input_text', text: textContent }],
         });
       }
     }
@@ -1567,6 +1575,18 @@ export class GalxaiRelayServer extends EventEmitter {
       session.lastSeenAliveMs = Date.now();
       attempt.heartbeatPending = false;
 
+      // Handle RFC 6455 protocol-level pongs from Node.js 'ws'
+      if (typeof (ws as any).on === 'function') {
+        (ws as any).on('pong', () => {
+          attempt.heartbeatPending = false;
+          session.lastSeenAliveMs = Date.now();
+          if (session.heartbeatAckTimeoutTimer) {
+            clearTimeout(session.heartbeatAckTimeoutTimer);
+            session.heartbeatAckTimeoutTimer = undefined;
+          }
+        });
+      }
+
       // Layer 1: Adaptive TTFT Deadlock Timer (Calibrated by Reasoning Effort)
       resetTtftTimer(session.activeTtftDeadlineMs);
 
@@ -1575,13 +1595,18 @@ export class GalxaiRelayServer extends EventEmitter {
       session.wsPingTimer = setInterval(() => {
         if (session.abortController.signal.aborted || failoverTriggered) return;
 
-        // Discord Heartbeat ACK Verification: If previous heartbeat was NOT acked, connection is zombied!
+        // Discord Heartbeat ACK Verification: If previous heartbeat was NOT acked, verify actual silence
         if (attempt.heartbeatPending) {
-          this.metrics.totalHeartbeatAckMisses++;
-          this.metrics.totalDeadPeerRecoveries++;
-          console.warn(`[AntiFragileRelay] Shard ${shard.id} Heartbeat ACK Miss (zombie peer detected). Evicting with code 4000...`);
-          triggerFailover('discord_heartbeat_ack_miss', false, 4000);
-          return;
+          const timeSinceLastActivity = Date.now() - session.lastSeenAliveMs;
+          if (timeSinceLastActivity < this.config.wsIntraChunkTimeoutMs) {
+            attempt.heartbeatPending = false;
+          } else {
+            this.metrics.totalHeartbeatAckMisses++;
+            this.metrics.totalDeadPeerRecoveries++;
+            console.warn(`[AntiFragileRelay] Shard ${shard.id} Heartbeat ACK Miss (zombie peer detected). Evicting with code 4000...`);
+            triggerFailover('discord_heartbeat_ack_miss', false, 4000);
+            return;
+          }
         }
 
         // Arm pending heartbeat ACK flag
@@ -1598,10 +1623,15 @@ export class GalxaiRelayServer extends EventEmitter {
           return;
         }
 
-        // Pong ACK Deadline Watchdog (5s)
+        // Pong ACK Deadline Watchdog (Only evict if genuinely silent)
         session.heartbeatAckTimeoutTimer = setTimeout(() => {
           if (session.abortController.signal.aborted || failoverTriggered) return;
           if (attempt.heartbeatPending) {
+            const timeSinceLastActivity = Date.now() - session.lastSeenAliveMs;
+            if (timeSinceLastActivity < this.config.wsIntraChunkTimeoutMs) {
+              attempt.heartbeatPending = false;
+              return;
+            }
             this.metrics.totalDeadPeerRecoveries++;
             console.warn(`[AntiFragileRelay] Shard ${shard.id} pong deadline expired (${this.config.wsDeadPeerPongTimeoutMs}ms); evicting dead peer.`);
             triggerFailover('dead_peer_pong_timeout', false, 4000);
@@ -1652,6 +1682,12 @@ export class GalxaiRelayServer extends EventEmitter {
           return;
         }
         if (data.type === 'pong' || data.type === 'response.pong') {
+          attempt.heartbeatPending = false;
+          session.lastSeenAliveMs = Date.now();
+          if (session.heartbeatAckTimeoutTimer) {
+            clearTimeout(session.heartbeatAckTimeoutTimer);
+            session.heartbeatAckTimeoutTimer = undefined;
+          }
           return;
         }
 
@@ -1787,7 +1823,7 @@ export class GalxaiRelayServer extends EventEmitter {
         // Upstream Error Frame (429 Rate Limit / 5xx Overloaded)
         if (data.type === 'error') {
           const isQuotaOrRateLimit = data.code === 429 || data.message?.includes('rate_limit') || data.message?.includes('quota');
-          console.warn(`[AntiFragileRelay] Upstream returned error frame on shard ${shard.id}:`, data.message || data.type);
+          console.warn(`[AntiFragileRelay] Upstream returned error frame on shard ${shard.id}:`, JSON.stringify(data));
           triggerFailover(`upstream_error_${data.code || 'generic'}`, isQuotaOrRateLimit);
           return;
         }

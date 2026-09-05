@@ -17,6 +17,9 @@ assert.match(workerSource, /MAX_CREDENTIAL_RECORDS/);
 assert.doesNotMatch(workerSource, /searchParams\.get\(['"]url['"]\)/);
 assert.doesNotMatch(workerSource, /bodyPreview|X-Lumi-Account-Id/);
 assert.doesNotMatch(workerSource, /request\.json\(\)|upstreamResp\.text\(\)/);
+assert.doesNotMatch(workerSource, /dispatchCodexWebSocket|CODEX_WEBSOCKET_URL/);
+assert.match(workerSource, /use_vm_relay_required/);
+assert.match(workerSource, /probe-ws/);
 
 assert.doesNotMatch(loginSource, /\.workers\.dev/);
 assert.match(loginSource, /returnedState !== state/);

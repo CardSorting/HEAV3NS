@@ -7,7 +7,7 @@
 
 ## Context
 
-LUMI needs an edge ingress that can project OpenAI-compatible HTTP/SSE traffic and Codex WebSocket traffic across a registered credential fleet. A single credential can be throttled or revoked, while naive rotation discards useful session affinity.
+LUMI needs an edge ingress that can project OpenAI-compatible HTTP/SSE traffic across a registered wholesale credential fleet (with persistent Codex WebSocket sessions authoritatively delegated to the Always-On VM Relay). A single credential can be throttled or revoked, while naive rotation discards useful session affinity.
 
 This gateway is infrastructure beneath the uncertain-execution runtime. It does not decide that an execution is complete, cancelled, or failed. WebSocket projects execution, queues deliver authorized intents, the journal records observations, and the control plane governs authoritative state.
 
@@ -17,8 +17,10 @@ This gateway is infrastructure beneath the uncertain-execution runtime. It does 
 
 1. Load the durable credential registry from the `TOKEN_POOL_KV` binding once per isolate.
 2. Select an eligible credential through the isolate-local `SmoothWeightedPool` projection.
-3. Proxy bounded, authenticated inference requests over HTTP/SSE or WebSocket.
-4. Expose authenticated administration for credential ingestion, removal, status, cooldown reset, and a fixed-target WebSocket probe.
+3. Proxy bounded, authenticated inference requests over standard HTTP/SSE for wholesale provider keys.
+4. Expose authenticated administration for credential ingestion, removal, status, and cooldown reset.
+
+> **Architectural Boundary Amendment (2026-09-04)**: Live testing confirmed that Cloudflare Edge Workers cannot sustain persistent bidirectional WebSockets to `wss://chatgpt.com/backend-api/codex/responses` due to V8 isolate execution wall-clock limits and Cloudflare WAF datacenter IP challenges. Per ADR 0112 and ADR 0115, Codex WebSocket handling is authoritatively migrated to the dedicated Always-On VM Relay (`src/relay/relay-server.ts`). The Cloudflare Worker is scoped strictly to HTTP/SSE proxying for standard wholesale API keys and metadata endpoints.
 
 The routing pool maintains smooth weighted round-robin state, a sliding request window, token buckets, circuit state, and bounded session affinity. These values are advisory and isolate-local. KV durably stores credential records, but it is not a strongly consistent quota or lease authority. A future globally authoritative governor must use an appropriate coordination primitive and fencing protocol.
 
@@ -28,7 +30,7 @@ The routing pool maintains smooth weighted round-robin state, a sliding request 
 - Missing server-side `LUMI_ADMIN_SECRET` configuration fails closed with HTTP 503.
 - Secret comparison uses a timing-safe digest comparison.
 - Chat requests never persist an incoming bearer credential. Durable enrollment occurs only through `/v1/tokens/ingest`.
-- The WebSocket probe has a fixed upstream target and returns no upstream headers, body, credential metadata, or stack traces.
+- The legacy `/v1/debug/probe-ws` endpoint is retired (`HTTP 410 Gone`); WebSocket probing and wire connectivity are handled authoritatively by the VM Relay or local CLI diagnostics.
 - Request bodies and upstream error bodies are bounded before they are accumulated.
 - Browser access is disabled by default. `CORS_ALLOWED_ORIGIN` must explicitly name an allowed origin.
 - Local credential files use atomic writes and mode `0600`. Remote synchronization requires an explicit HTTPS Worker URL and admin secret.

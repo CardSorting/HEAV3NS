@@ -1,15 +1,27 @@
+/// <reference path="./worker-configuration.d.ts" />
 /**
  * LUMI-NEW: Cloudflare Edge Worker & Multi-Token Round-Robin Gateway
  *
  * Runs on Cloudflare Anycast Global Edge:
- * 1. Multi-Token Smooth Weighted Round-Robin (SWRR) with Quota Guard.
+ * 1. Multi-Token Smooth Weighted Round-Robin (SWRR) with Quota Guard for wholesale HTTP/SSE keys.
  * 2. Session-sticky routing within a Worker isolate.
- * 3. OpenAI-compatible HTTP and Codex WebSocket transport projection.
+ * 3. OpenAI-compatible HTTP/SSE transport projection.
  * 4. Single-Flight Reactive OAuth Refresh & 429 Failover.
  * 5. Dynamic Runtime Ingestion API (/v1/tokens/ingest).
+ *
+ * ARCHITECTURAL BOUNDARY:
+ * Codex WebSockets (wss://chatgpt.com/backend-api/codex/responses) require persistent bidirectional
+ * streaming and are governed authoritatively by the Always-On VM Relay (LUMI-NEW/src/relay/relay-server.ts).
+ * Serverless V8 isolates in Cloudflare Workers do not handle Codex WebSockets.
  */
 
 import { SmoothWeightedPool, type PooledTokenAccount } from './agents/extensions/credential/smooth-weighted-pool.js';
+
+declare global {
+  interface SubtleCrypto {
+    timingSafeEqual(a: ArrayBuffer | ArrayBufferView, b: ArrayBuffer | ArrayBufferView): boolean;
+  }
+}
 
 interface WorkerEnv extends Env {
   LUMI_ADMIN_SECRET?: string;
@@ -24,7 +36,6 @@ const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_UPSTREAM_ERROR_BYTES = 16 * 1024;
 const MAX_SESSION_ID_LENGTH = 256;
 const MAX_CREDENTIAL_RECORDS = 1_000;
-const CODEX_WEBSOCKET_URL = 'https://chatgpt.com/backend-api/codex/responses';
 
 // This pool is an isolate-local routing projection. KV is the durable credential
 // registry; neither structure is an authoritative distributed quota ledger.
@@ -354,44 +365,12 @@ export default {
     }
 
     if (url.pathname === '/v1/debug/probe-ws') {
-      if (request.method !== 'POST') {
-        return jsonResponse(request, env, { error: 'Method not allowed' }, 405, { Allow: 'POST' });
-      }
-      const accounts = globalPool.listAccounts();
-      const targetAccount = accounts[0];
-      if (!targetAccount) {
-        return jsonResponse(request, env, { error: 'No account is available' }, 409);
-      }
-      try {
-        const wsHeaders: Record<string, string> = {
-          Upgrade: 'websocket',
-          Connection: 'Upgrade',
-          Authorization: `Bearer ${targetAccount.accessToken}`,
-          'User-Agent': 'Codex-CLI/0.150.1 (darwin; arm64)',
-          'X-Codex-Originator': 'codex_cli',
-          'OpenAI-Beta': 'responses_websockets=2026-02-06',
-          'X-OpenAI-Product-Sku': 'codex',
-        };
-        if (targetAccount.accountId) {
-          wsHeaders['ChatGPT-Account-Id'] = targetAccount.accountId;
+      return jsonResponse(request, env, {
+        error: {
+          message: 'WebSocket probing in Cloudflare Edge Worker has been retired. Use the dedicated VM Relay (LUMI-NEW/src/relay/relay-server.ts) or `npx tsx scripts/manage-shards.ts --test`.',
+          type: 'unsupported_operation_error'
         }
-        const response = await fetch(CODEX_WEBSOCKET_URL, { headers: wsHeaders });
-        const webSocket = response.webSocket;
-        if (webSocket) {
-          webSocket.accept();
-          webSocket.close(1000, 'probe complete');
-        }
-        else if (response.body) await response.body.cancel();
-        return jsonResponse(request, env, {
-          status: response.status,
-          hasWebSocket: Boolean(webSocket),
-        });
-      } catch (error: unknown) {
-        logEvent('warn', 'websocket_probe_failed', {
-          errorType: error instanceof Error ? error.name : 'UnknownError',
-        });
-        return jsonResponse(request, env, { error: 'WebSocket probe failed' }, 502);
-      }
+      }, 410);
     }
 
     if (url.pathname === '/v1/tokens/ingest') {
@@ -539,45 +518,14 @@ export default {
           (account as PooledTokenAccount & { auth_mode?: string }).auth_mode === 'chatgpt';
 
         if (isChatGptSession) {
-          try {
-            const wsResp = await dispatchCodexWebSocket(
-              account,
-              body,
-              sticky,
-              activeFleetSize,
-              request,
-              env
-            );
-            globalPool.recordSuccess(account.id);
-            globalPool.recordUsage(account.id, 50, Date.now(), sessionId);
-            return wsResp;
-          } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'WebSocket dispatch failed';
-            lastFailure = 'Codex WebSocket dispatch failed';
-            if (message.includes('HTTP 401') && account.refreshToken) {
-              const refreshedToken = await refreshAccountToken(account, env);
-              if (refreshedToken) {
-                account.accessToken = refreshedToken;
-                try {
-                  const retriedWs = await dispatchCodexWebSocket(
-                    account,
-                    body,
-                    sticky,
-                    activeFleetSize,
-                    request,
-                    env
-                  );
-                  globalPool.recordSuccess(account.id);
-                  globalPool.recordUsage(account.id, 50, Date.now(), sessionId);
-                  return retriedWs;
-                } catch {
-                  lastFailure = 'Codex WebSocket retry failed';
-                }
-              }
+          logEvent('warn', 'chatgpt_session_incompatible_with_edge_worker', { accountId: account.id });
+          return jsonResponse(request, env, {
+            error: {
+              message: 'ChatGPT Codex OAuth session tokens require persistent WebSocket connections and must be routed through the Always-On VM Relay (LUMI-NEW/src/relay/relay-server.ts). Cloudflare Edge Workers cannot maintain long-lived Codex WebSockets due to isolate execution limits and Cloudflare WAF restrictions.',
+              type: 'unsupported_transport_error',
+              code: 'use_vm_relay_required'
             }
-            globalPool.recordFailure(account.id, 500, message);
-            continue;
-          }
+          }, 400);
         }
 
         const upstreamUrl = env.DEFAULT_UPSTREAM_URL || 'https://api.openai.com/v1/chat/completions';
@@ -695,260 +643,3 @@ function wrapResponse(
   });
 }
 
-async function dispatchCodexWebSocket(
-  account: PooledTokenAccount,
-  body: JsonRecord,
-  sticky: boolean,
-  fleetSize: number,
-  request: Request,
-  env: WorkerEnv
-): Promise<Response> {
-  const wsHeaders: Record<string, string> = {
-    Upgrade: 'websocket',
-    Connection: 'Upgrade',
-    Authorization: `Bearer ${account.accessToken}`,
-    'User-Agent': 'Codex-CLI/0.150.1 (darwin; arm64)',
-    'X-Codex-Originator': 'codex_cli',
-    'OpenAI-Beta': 'responses_websockets=2026-02-06',
-    'X-OpenAI-Product-Sku': 'codex',
-  };
-  if (account.accountId) {
-    wsHeaders['ChatGPT-Account-Id'] = account.accountId;
-  }
-
-  const wsResp = await fetch(CODEX_WEBSOCKET_URL, { headers: wsHeaders });
-  const ws = wsResp.webSocket;
-  if (!ws) {
-    if (wsResp.body) await wsResp.body.cancel();
-    throw new Error(`Codex WebSocket handshake failed HTTP ${wsResp.status}`);
-  }
-  ws.accept();
-
-  // Format messages for OpenAI Codex Responses API:
-  // Requires: input: [{ type: "message", role: "user", content: [{ type: "input_text", text: "..." }] }]
-  // System messages MUST be passed via top-level instructions, NOT inside input.
-  const inputList: Array<{ type: string; role: string; content: Array<{ type: string; text: string }> }> = [];
-  let instructions = '';
-
-  if (Array.isArray(body.messages)) {
-    for (const msg of body.messages) {
-      const text = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-      if (msg.role === 'system') {
-        instructions = instructions ? `${instructions}\n\n${text}` : text;
-      } else {
-        inputList.push({
-          type: 'message',
-          role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: [{ type: 'input_text', text }]
-        });
-      }
-    }
-  } else if (body.prompt) {
-    inputList.push({
-      type: 'message',
-      role: 'user',
-      content: [{ type: 'input_text', text: String(body.prompt) }]
-    });
-  }
-
-  const targetModel = body.model === 'gpt-5.6-sol' ? 'gpt-5.6-terra' : (body.model || 'gpt-5.6-terra');
-  const reasoningEffort = body.reasoning_effort || body.reasoningEffort || 'low';
-
-  const createPayload: JsonRecord = {
-    type: 'response.create',
-    model: targetModel,
-    input: inputList,
-    stream: true,
-  };
-
-  if (instructions) {
-    createPayload.instructions = instructions;
-  }
-
-  if (reasoningEffort && reasoningEffort !== 'none') {
-    createPayload.reasoning = { effort: reasoningEffort };
-  }
-
-  ws.send(JSON.stringify(createPayload));
-
-  const isStream = !!body.stream;
-  const completionId = `chatcmpl_lumi_${crypto.randomUUID()}`;
-  const created = Math.floor(Date.now() / 1000);
-
-  if (isStream) {
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    const encoder = new TextEncoder();
-    let isClosed = false;
-    let terminalQueued = false;
-    let writeChain = Promise.resolve();
-
-    const safeClose = async () => {
-      if (isClosed) return;
-      isClosed = true;
-      try { ws.close(); } catch {}
-      try { await writer.close(); } catch {}
-    };
-
-    const enqueue = (chunk: string, closeAfter = false): void => {
-      if (isClosed || terminalQueued) return;
-      if (closeAfter) terminalQueued = true;
-      writeChain = writeChain
-        .then(async () => {
-          if (isClosed) return;
-          await writer.write(encoder.encode(chunk));
-          if (closeAfter) await safeClose();
-        })
-        .catch(() => safeClose());
-    };
-
-    ws.addEventListener('message', (event: MessageEvent) => {
-      if (isClosed || terminalQueued) return;
-      try {
-        const rawStr = typeof event.data === 'string' ? event.data : new TextDecoder().decode(event.data);
-        const data = JSON.parse(rawStr) as JsonRecord;
-
-        if (data.type === 'response.output_text.delta' && typeof data.delta === 'string') {
-          const sseChunk = `data: ${JSON.stringify({
-            id: completionId,
-            object: 'chat.completion.chunk',
-            created,
-            model: targetModel,
-            choices: [
-              {
-                index: 0,
-                delta: { content: data.delta },
-                finish_reason: null
-              }
-            ]
-          })}\n\n`;
-          enqueue(sseChunk);
-        } else if (data.type === 'response.completed' || data.type === 'response.done') {
-          const finalChunk = `data: ${JSON.stringify({
-            id: completionId,
-            object: 'chat.completion.chunk',
-            created,
-            model: targetModel,
-            choices: [
-              {
-                index: 0,
-                delta: {},
-                finish_reason: 'stop'
-              }
-            ]
-          })}\n\ndata: [DONE]\n\n`;
-          enqueue(finalChunk, true);
-        } else if (data.type === 'error') {
-          const upstreamError = data.error && typeof data.error === 'object'
-            ? data.error as JsonRecord
-            : undefined;
-          const errChunk = `data: ${JSON.stringify({
-            error: {
-              message: optionalString(upstreamError?.message, 1_024) ?? 'Upstream codex error',
-              type: optionalString(upstreamError?.type, 128) ?? 'api_error'
-            }
-          })}\n\n`;
-          enqueue(errChunk, true);
-        }
-      } catch {}
-    });
-
-    ws.addEventListener('close', () => { void safeClose(); });
-    ws.addEventListener('error', () => { void safeClose(); });
-    request.signal.addEventListener('abort', () => { void safeClose(); }, { once: true });
-
-    const responseHeaders = corsHeaders(request, env);
-    responseHeaders.set('Content-Type', 'text/event-stream; charset=utf-8');
-    responseHeaders.set('Cache-Control', 'no-cache, no-transform');
-    responseHeaders.set('X-Lumi-Shard-Id', account.id);
-    responseHeaders.set('X-Lumi-Session-Sticky', String(sticky));
-    responseHeaders.set('X-Lumi-Fleet-Size', String(fleetSize));
-    responseHeaders.set('X-Lumi-Governor', 'swrr-v1-websocket');
-
-    return new Response(readable, {
-      status: 200,
-      headers: responseHeaders,
-    });
-  } else {
-    return new Promise((resolve, reject) => {
-      let accumulatedText = '';
-      let settled = false;
-      const finish = (callback: () => void): void => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
-        try { ws.close(); } catch {}
-        callback();
-      };
-      const timeout = setTimeout(() => {
-        finish(() => reject(new Error('Codex WebSocket response timeout')));
-      }, 180_000);
-
-      ws.addEventListener('message', (event: MessageEvent) => {
-        if (settled) return;
-        try {
-          const rawStr = typeof event.data === 'string' ? event.data : new TextDecoder().decode(event.data);
-          const data = JSON.parse(rawStr) as JsonRecord;
-
-          if (data.type === 'response.output_text.delta' && typeof data.delta === 'string') {
-            accumulatedText += data.delta;
-            if (accumulatedText.length > 8 * 1024 * 1024) {
-              finish(() => reject(new Error('Codex WebSocket response exceeded the configured limit')));
-            }
-          } else if (data.type === 'response.completed' || data.type === 'response.done') {
-            const jsonResp = {
-              id: completionId,
-              object: 'chat.completion',
-              created,
-              model: targetModel,
-              choices: [
-                {
-                  index: 0,
-                  message: {
-                    role: 'assistant',
-                    content: accumulatedText
-                  },
-                  finish_reason: 'stop'
-                }
-              ],
-              usage: {
-                prompt_tokens: 50,
-                completion_tokens: Math.ceil(accumulatedText.length / 4),
-                total_tokens: 50 + Math.ceil(accumulatedText.length / 4)
-              }
-            };
-            finish(() => {
-              const responseHeaders = corsHeaders(request, env);
-              responseHeaders.set('Content-Type', 'application/json; charset=utf-8');
-              responseHeaders.set('X-Lumi-Shard-Id', account.id);
-              responseHeaders.set('X-Lumi-Session-Sticky', String(sticky));
-              responseHeaders.set('X-Lumi-Fleet-Size', String(fleetSize));
-              responseHeaders.set('X-Lumi-Governor', 'swrr-v1-websocket');
-              resolve(new Response(JSON.stringify(jsonResp), { status: 200, headers: responseHeaders }));
-            });
-          } else if (data.type === 'error') {
-            const upstreamError = data.error && typeof data.error === 'object'
-              ? data.error as JsonRecord
-              : undefined;
-            finish(() => resolve(jsonResponse(request, env, {
-              error: {
-                message: optionalString(upstreamError?.message, 1_024) ?? 'Upstream codex error',
-                type: optionalString(upstreamError?.type, 128) ?? 'api_error'
-              }
-            }, 502)));
-          }
-        } catch {}
-      });
-
-      ws.addEventListener('close', () => {
-        finish(() => reject(new Error('Codex WebSocket closed before completion')));
-      });
-      ws.addEventListener('error', () => {
-        finish(() => reject(new Error('Codex WebSocket connection error')));
-      });
-      request.signal.addEventListener('abort', () => {
-        finish(() => reject(new Error('Client disconnected')));
-      }, { once: true });
-    });
-  }
-}

@@ -82,6 +82,7 @@ private_key*.json
 *.broccolidb-wal
 *.broccolidb-snap
 *.broccolidb-checkpoint
+.broccolidb/
 
 # ==============================================================================
 # Build, Compilation & Distribution Outputs
