@@ -704,6 +704,9 @@ export class GalxaiRelayServer extends EventEmitter {
     totalProactiveRateLimitCooldowns: 0,
     totalBusEventsEmitted: 0,
     totalSlowSubscriberDrains: 0,
+    totalImageJobsSubmitted: 0,
+    totalImageJobsCompleted: 0,
+    totalImageJobsFailed: 0,
     startTimeMs: Date.now(),
   };
 
@@ -1107,6 +1110,11 @@ export class GalxaiRelayServer extends EventEmitter {
       return;
     }
 
+    if (method === 'POST' && (pathname === '/v1/images/generations' || pathname === '/images/generations')) {
+      await this.handleImageGenerations(req, res, tenantId);
+      return;
+    }
+
     const streamMatch = pathname.match(/^\/v1\/jobs\/([^/]+)\/stream$/);
     if (method === 'GET' && streamMatch) {
       const jobId = streamMatch[1];
@@ -1282,6 +1290,338 @@ export class GalxaiRelayServer extends EventEmitter {
         res.end(JSON.stringify({ error: { message: err.message, code: 'invalid_request' } }));
       }
     });
+  }
+
+  // --------------------------------------------------------------------------
+  // LIVE WIRE IMAGE GENERATION & SYNTHESIS GATEWAY
+  // --------------------------------------------------------------------------
+
+  private async handleImageGenerations(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    _tenantId: string
+  ): Promise<void> {
+    let bodyText = '';
+    let totalBytes = 0;
+    let bodyExceeded = false;
+
+    const bodyTimeout = setTimeout(() => {
+      if (!res.writableEnded) {
+        res.writeHead(408, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: 'Request body read timeout', code: 'request_timeout' } }));
+      }
+      req.destroy();
+    }, this.config.httpBodyTimeoutMs);
+
+    req.on('data', (chunk) => {
+      totalBytes += chunk.length;
+      if (totalBytes > this.config.maxPayloadBytes) {
+        bodyExceeded = true;
+        clearTimeout(bodyTimeout);
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: 'Payload Too Large: Maximum allowed body is 2 MB', code: 'payload_too_large' } }));
+        req.destroy();
+        return;
+      }
+      bodyText += chunk;
+    });
+
+    req.on('end', async () => {
+      clearTimeout(bodyTimeout);
+      if (bodyExceeded) return;
+
+      try {
+        const body = bodyText.trim() ? JSON.parse(bodyText) : {};
+        const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+        if (!prompt) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: { message: 'Missing required parameter: prompt', code: 'missing_prompt' } }));
+          return;
+        }
+
+        const requestedModel = body.model || 'gpt-5.6-terra';
+        // Map any DALL-E / GPT-Image alias to gpt-5.6-terra for Codex OAuth backend compatibility
+        const model = (requestedModel === 'gpt-5.6-sol' || requestedModel.startsWith('dall-e') || requestedModel.startsWith('gpt-image'))
+          ? 'gpt-5.6-terra'
+          : requestedModel;
+
+        const idempotencyKey = (req.headers['idempotency-key'] as string) || body.idempotency_key;
+        if (idempotencyKey) {
+          const cached = this.idempotencyTable.get(idempotencyKey);
+          if (cached && (cached as any).imageResponse) {
+            res.writeHead(200, {
+              'Content-Type': 'application/json',
+              'X-Galx-Idempotency-Hit': 'true',
+            });
+            res.end(JSON.stringify((cached as any).imageResponse));
+            return;
+          }
+        }
+
+        this.metrics.totalImageJobsSubmitted++;
+
+        // Acquire authoritative healthy shard from SWRR pool
+        const shard = this.acquireHealthyShard();
+        if (!shard) {
+          this.metrics.totalImageJobsFailed++;
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: {
+              message: 'All shards are currently exhausted or cooling down. Please retry shortly.',
+              code: 'all_shards_exhausted',
+            },
+          }));
+          return;
+        }
+
+        try {
+          let synthesisResult: { b64_json: string; revised_prompt?: string };
+
+          // Dual Dispatch: If shard has standard OpenAI API key (sk-...), dispatch to OpenAI REST
+          if (shard.accessToken.startsWith('sk-') && !shard.accountId.startsWith('acc_')) {
+            synthesisResult = await this.synthesizeImageViaOpenAiRest(prompt, body, shard.accessToken);
+          } else {
+            // Live Wire Codex WebSocket Synthesis (ChatGPT Plus/Pro OAuth Tokens)
+            synthesisResult = await this.synthesizeImageViaCodex(prompt, model, shard);
+          }
+
+          this.releaseShard(shard.id);
+          this.metrics.totalImageJobsCompleted++;
+
+          const responseData = {
+            created: Math.floor(Date.now() / 1000),
+            data: [
+              {
+                b64_json: synthesisResult.b64_json,
+                revised_prompt: synthesisResult.revised_prompt || prompt,
+              },
+            ],
+            model: requestedModel,
+          };
+
+          if (idempotencyKey) {
+            this.idempotencyTable.put(idempotencyKey, {
+              id: idempotencyKey,
+              jobId: `img_${Date.now()}`,
+              createdAtMs: Date.now(),
+              imageResponse: responseData,
+            } as any, { ttlMs: this.config.idempotencyTtlMs });
+          }
+
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'X-Galx-Shard-Id': shard.id,
+          });
+          res.end(JSON.stringify(responseData));
+        } catch (err: any) {
+          this.recordShardFailure(shard.id);
+          this.metrics.totalImageJobsFailed++;
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: {
+              message: `Image synthesis failed: ${err.message || 'Upstream synthesis error'}`,
+              code: 'upstream_image_synthesis_failed',
+            },
+          }));
+        }
+      } catch (err: any) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: err.message, code: 'invalid_request' } }));
+      }
+    });
+  }
+
+  private synthesizeImageViaCodex(
+    prompt: string,
+    model: string,
+    shard: ShardRecord
+  ): Promise<{ b64_json: string; revised_prompt?: string }> {
+    return new Promise((resolve, reject) => {
+      const WebSocketClass = (globalThis as any).WebSocket;
+      if (!WebSocketClass) {
+        return reject(new Error('WebSocket runtime is missing in environment'));
+      }
+
+      const wsHeaders: Record<string, string> = {
+        Authorization: `Bearer ${shard.accessToken}`,
+        'User-Agent': 'Codex-CLI/0.150.1 (darwin; arm64)',
+        'X-Codex-Originator': 'codex_cli',
+        'OpenAI-Beta': 'responses_websockets=2026-02-06',
+        'X-OpenAI-Product-Sku': 'codex',
+        'ChatGPT-Account-Id': shard.accountId,
+      };
+
+      let ws: any;
+      let settled = false;
+      let pingInterval: NodeJS.Timeout | null = null;
+      let watchdogTimer: NodeJS.Timeout | null = null;
+
+      let b64Result = '';
+      let revisedPrompt = '';
+
+      const cleanup = () => {
+        if (pingInterval) {
+          clearInterval(pingInterval);
+          pingInterval = null;
+        }
+        if (watchdogTimer) {
+          clearTimeout(watchdogTimer);
+          watchdogTimer = null;
+        }
+        if (ws) {
+          this.safeCloseSocket(ws, 1000, 'Image synthesis complete');
+        }
+      };
+
+      const finishSuccess = (b64: string, revised?: string) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve({ b64_json: b64, revised_prompt: revised });
+      };
+
+      const finishError = (err: Error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(err);
+      };
+
+      // Watchdog timeout (90s ceiling for neural visual synthesis)
+      watchdogTimer = setTimeout(() => {
+        finishError(new Error('Upstream visual synthesis timed out after 90s'));
+      }, 90_000);
+
+      try {
+        ws = new WebSocketClass(this.config.wsEndpoint, { headers: wsHeaders });
+        this.tuneSocket(ws);
+      } catch (err: any) {
+        return finishError(err);
+      }
+
+      ws.onopen = () => {
+        pingInterval = setInterval(() => {
+          try {
+            if (typeof ws.ping === 'function') {
+              ws.ping();
+            }
+          } catch {}
+        }, 15_000);
+
+        const initPayload = {
+          type: 'response.create',
+          model: model || 'gpt-5.6-terra',
+          input: [
+            {
+              type: 'message',
+              role: 'user',
+              content: [
+                {
+                  type: 'input_text',
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          tools: [
+            {
+              type: 'image_generation',
+            },
+          ],
+        };
+
+        try {
+          ws.send(JSON.stringify(initPayload));
+        } catch (err: any) {
+          finishError(new Error(`Failed to send initial image request frame: ${err.message}`));
+        }
+      };
+
+      ws.onmessage = (event: any) => {
+        try {
+          const raw = typeof event.data === 'string' ? event.data : event.data?.toString?.('utf-8');
+          if (!raw) return;
+          const frame = JSON.parse(raw);
+
+          // Capture image result from completed image_generation_call output item
+          if (frame.type === 'response.output_item.done' && frame.item?.type === 'image_generation_call') {
+            if (frame.item.result) {
+              b64Result = frame.item.result;
+            }
+            if (frame.item.revised_prompt) {
+              revisedPrompt = frame.item.revised_prompt;
+            }
+          }
+
+          if (frame.type === 'response.completed' || frame.type === 'response.done') {
+            if (b64Result) {
+              finishSuccess(b64Result, revisedPrompt);
+            } else {
+              finishError(new Error('Codex completed stream without returning image data'));
+            }
+          }
+
+          if (frame.type === 'error' || (frame.type === 'response.failed' && frame.response?.error)) {
+            const errorMsg = frame.error?.message || frame.response?.error?.message || JSON.stringify(frame);
+            finishError(new Error(`Codex WebSocket error: ${errorMsg}`));
+          }
+        } catch (err: any) {
+          // Ignore partial non-JSON frames
+        }
+      };
+
+      ws.onerror = (err: any) => {
+        finishError(new Error(`Codex WebSocket transport error: ${err.message || 'connection failed'}`));
+      };
+
+      ws.onclose = (event: any) => {
+        if (!settled) {
+          if (b64Result) {
+            finishSuccess(b64Result, revisedPrompt);
+          } else {
+            finishError(new Error(`Codex WebSocket closed prematurely (code: ${event?.code || 1006}, reason: ${event?.reason || 'none'})`));
+          }
+        }
+      };
+    });
+  }
+
+  private async synthesizeImageViaOpenAiRest(
+    prompt: string,
+    body: Record<string, unknown>,
+    apiKey: string
+  ): Promise<{ b64_json: string; revised_prompt?: string }> {
+    const resp = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        prompt,
+        model: body.model || 'dall-e-3',
+        size: body.size || '1024x1024',
+        quality: body.quality || 'standard',
+        n: 1,
+        response_format: 'b64_json',
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`OpenAI REST returned ${resp.status}: ${errText}`);
+    }
+
+    const data = await resp.json() as any;
+    const item = data.data?.[0];
+    if (!item?.b64_json) {
+      throw new Error('OpenAI REST response did not contain b64_json');
+    }
+
+    return {
+      b64_json: item.b64_json,
+      revised_prompt: item.revised_prompt,
+    };
   }
 
   // --------------------------------------------------------------------------

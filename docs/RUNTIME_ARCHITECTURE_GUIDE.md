@@ -308,3 +308,10 @@ LUMI consolidates all LLM routing into three first-class, hardened backends:
 - **Write-Ahead Ledger (WAL)**: Outbox requests are staged atomically in `.broccolidb/galx/wal.json` with `0o600` permissions.
 - **Merkle Hash-Chained Delivery Receipts**: Each response seals a cryptographic receipt ($h_i = \text{SHA-256}(h_{i-1} \parallel \text{correlationId} \parallel \text{idempotencyKey} \parallel \text{status} \parallel \text{duration} \parallel \text{timestamp})$) calculating rolling P50, P90, and P99 latency SLAs.
 - **Circuit Breaker & AIMD Concurrency Throttle**: Automatic 3-state fail-fast protection (`CLOSED` -> `OPEN` -> `HALF_OPEN`) with token bucket rate governance.
+
+### 8.3 Always-On Host VM Relay & Native Codex WebSocket Synthesis (ADR-149 / ADR-150)
+
+- **Decoupled WebSocket Runtime**: Dedicated Node.js daemon (`src/relay/relay-server.ts`) running under PM2 on port 3001, bridged via Cloudflare Tunnel for serverless clients (Vercel).
+- **Native Codex WebSocket Protocol**: Direct bidirectional streaming with `wss://chatgpt.com/backend-api/codex/responses` avoiding 401 scope restrictions on ChatGPT OAuth tokens.
+- **Multimodal Visual Synthesis**: Exposes `POST /v1/images/generations` sending tool `image_generation`, supervising 15s ping frames, and streaming lossless PNG renders into Cloudflare R2 session media partitions.
+
