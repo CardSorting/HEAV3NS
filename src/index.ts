@@ -4939,22 +4939,27 @@ export class LumiMonolith implements IAgentEngine {
 		return this.setModel("gpt-5.6-terra")
 	}
 
-	/** Switches active model to High-Velocity Engine (gpt-5.6-luna) */
+	/** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
 	switchToLuna(): string {
-		return this.setModel("gpt-5.6-luna")
+		return this.setModel("gpt-5.6-terra")
 	}
 
-	/** Switches active model to Balanced Engine (gpt-5.6-sol) */
+	/** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
 	switchToSol(): string {
-		return this.setModel("gpt-5.6-sol")
+		return this.setModel("gpt-5.6-terra")
 	}
 
-	/** Cycles through GALX models (terra -> luna -> sol) */
+	/** Cycles through models (exclusively gpt-5.6-terra) */
 	cycleModel(): string {
 		const next = this.modelResolver.cycleCodexModel()
 		;(this.config as { modelName: string }).modelName = next
 		this.setupWizard.setSavedModel(next)
 		return next
+	}
+
+	/** Backwards-compatible alias for cycleModel */
+	cycleCodexModel(): string {
+		return this.cycleModel()
 	}
 
 	/** Adversarially red-teams an architectural or implementation plan */

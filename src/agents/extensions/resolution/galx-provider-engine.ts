@@ -56,18 +56,21 @@ export class GalxProviderEngine {
     if (!modelId || typeof modelId !== "string") return DEFAULT_GALX_MODEL_ID;
     const trimmed = modelId.trim();
     const lower = trimmed.toLowerCase();
+    const stripped = lower.startsWith("galx/") ? lower.slice(5) : lower;
 
-    if (lower.startsWith("galx/")) {
-      return lower.slice(5);
-    }
-    if (lower === "galx" || lower === "galx-sol" || lower === "sol") {
-      return "gpt-5.6-sol";
-    }
-    if (lower === "galx-terra" || lower === "terra") {
+    if (
+      stripped === "galx" ||
+      stripped === "galx-sol" ||
+      stripped === "sol" ||
+      stripped === "gpt-5.6-sol" ||
+      stripped === "galx-terra" ||
+      stripped === "terra" ||
+      stripped === "gpt-5.6-terra" ||
+      stripped === "galx-luna" ||
+      stripped === "luna" ||
+      stripped === "gpt-5.6-luna"
+    ) {
       return "gpt-5.6-terra";
-    }
-    if (lower === "galx-luna" || lower === "luna") {
-      return "gpt-5.6-luna";
     }
     return trimmed;
   }
@@ -91,7 +94,7 @@ export class GalxProviderEngine {
   }
 
   /**
-   * Dynamically fetches live models from GALX AI endpoint.
+   * Dynamically fetches live models from GALX AI endpoint, serving exclusively gpt-5.6-terra.
    */
   public async fetchGalxModels(
     apiToken?: string,
@@ -100,7 +103,7 @@ export class GalxProviderEngine {
   ): Promise<ModelSpecs[]> {
     const now = Date.now();
     if (!forceRefresh && this.inMemoryModelCache.size > 0 && now < this.cacheExpiry) {
-      return Array.from(this.inMemoryModelCache.values());
+      return Array.from(this.inMemoryModelCache.values()).filter((m) => m.modelName === "gpt-5.6-terra");
     }
 
     const effectiveBaseUrl = (baseUrl || this.defaultBaseUrl).replace(/\/$/, "");
@@ -139,11 +142,11 @@ export class GalxProviderEngine {
               provider: "galx",
               contextWindowTokens: curated?.contextWindowTokens ?? (Number(item.context_length) || 900_000),
               maxOutputTokens: curated?.maxOutputTokens ?? 128_000,
-              inputPricePer1M: curated?.inputPricePer1M ?? (typeof item.pricing?.prompt === "number" ? item.pricing.prompt * 1_000_000 : 3.75),
-              outputPricePer1M: curated?.outputPricePer1M ?? (typeof item.pricing?.completion === "number" ? item.pricing.completion * 1_000_000 : 15.0),
+              inputPricePer1M: curated?.inputPricePer1M ?? (typeof item.pricing?.prompt === "number" ? item.pricing.prompt * 1_000_000 : 2.25),
+              outputPricePer1M: curated?.outputPricePer1M ?? (typeof item.pricing?.completion === "number" ? item.pricing.completion * 1_000_000 : 9.0),
               supportsVision: curated?.supportsVision ?? true,
-              supportsReasoning: curated?.supportsReasoning ?? (id.includes("sol") || id.includes("terra")),
-              estimatedLatencyMs: curated?.estimatedLatencyMs ?? 30,
+              supportsReasoning: curated?.supportsReasoning ?? true,
+              estimatedLatencyMs: curated?.estimatedLatencyMs ?? 25,
               description: curated?.description ?? `GALX Wholesale Model: ${item.name || id}`,
             };
             this.inMemoryModelCache.set(id, spec);
@@ -158,8 +161,10 @@ export class GalxProviderEngine {
             }
           }
 
+          const terraSpecs = fetchedSpecs.filter((m) => m.modelName === "gpt-5.6-terra");
+          const finalSpecs = terraSpecs.length > 0 ? terraSpecs : this.getFallbackModelSpecs();
           this.cacheExpiry = now + 300_000; // 5 minutes TTL
-          return fetchedSpecs;
+          return finalSpecs;
         }
       }
     } catch {
@@ -171,7 +176,7 @@ export class GalxProviderEngine {
       this.inMemoryModelCache.set(fb.modelName, fb);
     }
     this.cacheExpiry = now + 300_000;
-    return fallbacks;
+    return fallbacks.filter((m) => m.modelName === "gpt-5.6-terra");
   }
 
   /**

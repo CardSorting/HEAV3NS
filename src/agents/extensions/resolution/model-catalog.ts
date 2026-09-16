@@ -51,7 +51,9 @@ export class ModelCatalog {
 	}
 
 	getAllModels(): ModelSpecs[] {
-		return Array.from(this.catalog.values())
+		const all = Array.from(this.catalog.values())
+		const terraOnly = all.filter((m) => m.modelName === "gpt-5.6-terra")
+		return terraOnly.length > 0 ? terraOnly : [this.getModelInfo("gpt-5.6-terra")]
 	}
 
 	getModelsForProvider(provider: string): ModelSpecs[] {
@@ -88,6 +90,7 @@ export class ModelCatalog {
 
 	/**
 	 * Dynamically fetches live available models from GALX Wholesale Compute Clearinghouse.
+	 * Exclusively serves gpt-5.6-terra as the single model for selection.
 	 */
 	async fetchGalxModels(apiToken?: string, forceRefresh = false, baseUrl?: string): Promise<ModelSpecs[]> {
 		const cacheKey = "galx:models"
@@ -101,15 +104,23 @@ export class ModelCatalog {
 			for (const m of models) {
 				this.registerModel(m)
 			}
-			if (models.length > 0) {
-				this.dynamicCache.setCachedModels(cacheKey, models, 300_000)
-				return models
-			}
+			const terraModels = models.filter((m) => m.modelName === "gpt-5.6-terra")
+			const served = terraModels.length > 0 ? terraModels : [this.getModelInfo("gpt-5.6-terra")]
+			this.dynamicCache.setCachedModels(cacheKey, served, 300_000)
+			return served
 		} catch {
 			// Fall back to in-memory defaults
 		}
 
-		return this.getAllModels()
+		return [this.getModelInfo("gpt-5.6-terra")]
+	}
+
+	/**
+	 * Backwards-compatible alias for fetchGalxModels.
+	 */
+	async fetchCodexModels(apiToken?: string | { Authorization?: string }, forceRefresh = false, baseUrl?: string): Promise<ModelSpecs[]> {
+		const token = typeof apiToken === "string" ? apiToken : undefined;
+		return this.fetchGalxModels(token, forceRefresh, baseUrl);
 	}
 
 	calculateTurnCost(modelName: string, inputTokens: number, outputTokens: number): {

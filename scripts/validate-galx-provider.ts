@@ -37,18 +37,17 @@ async function runValidation(): Promise<void> {
   assert.strictEqual(DEFAULT_GALX_BASE_URL, "https://galx.ai/v1");
   assert.strictEqual(DEFAULT_GALX_CLEARINGHOUSE_URL, "https://galx.ai");
   assert.strictEqual(DEFAULT_GALX_MODEL_ID, "gpt-5.6-terra");
-  assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-sol"]);
   assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-terra"]);
-  assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-luna"]);
-  assert.strictEqual(GALX_DEFAULT_MODELS["gpt-5.6-sol"].contextWindowTokens, 900_000);
-  assert.strictEqual(GALX_DEFAULT_MODELS["gpt-5.6-sol"].inputPricePer1M, 3.75);
+  assert.strictEqual(Object.keys(GALX_DEFAULT_MODELS).length, 1);
+  assert.strictEqual(GALX_DEFAULT_MODELS["gpt-5.6-terra"].contextWindowTokens, 900_000);
+  assert.strictEqual(GALX_DEFAULT_MODELS["gpt-5.6-terra"].inputPricePer1M, 2.25);
   console.log("  ✔ Contracts and constants verified successfully.\n");
 
   // 2. Broccoli Transport Substrate Check
   console.log("▶ [Test 2] Validating Broccoli Transport Substrate & Merkle Tree Chain...");
   const substrate = new BroccoliTransportSubstrate();
   const entry = substrate.enqueueOutbox("/v1/chat/completions", {
-    model: "gpt-5.6-sol",
+    model: "gpt-5.6-terra",
     messages: [{ role: "user", content: "Hello GALX" }],
   });
   assert.ok(entry.id.startsWith("bwal_"));
@@ -106,17 +105,19 @@ async function runValidation(): Promise<void> {
   console.log("▶ [Test 4] Validating GalxProviderEngine...");
   const galxEngine = new GalxProviderEngine(undefined, transportClient);
   
-  // Model normalization
-  assert.strictEqual(galxEngine.normalizeModelId("sol"), "gpt-5.6-sol");
-  assert.strictEqual(galxEngine.normalizeModelId("galx-sol"), "gpt-5.6-sol");
+  // Model normalization - all aliases cleanly map to gpt-5.6-terra
+  assert.strictEqual(galxEngine.normalizeModelId("sol"), "gpt-5.6-terra");
+  assert.strictEqual(galxEngine.normalizeModelId("galx-sol"), "gpt-5.6-terra");
   assert.strictEqual(galxEngine.normalizeModelId("galx/gpt-5.6-terra"), "gpt-5.6-terra");
   assert.strictEqual(galxEngine.normalizeModelId("terra"), "gpt-5.6-terra");
-  assert.strictEqual(galxEngine.normalizeModelId("luna"), "gpt-5.6-luna");
+  assert.strictEqual(galxEngine.normalizeModelId("luna"), "gpt-5.6-terra");
+  assert.strictEqual(galxEngine.normalizeModelId("gpt-5.6-terra"), "gpt-5.6-terra");
 
   // Cost calculation
-  const solCost = galxEngine.calculateTurnCost("gpt-5.6-sol", 1_000_000, 1_000_000, 500_000);
-  // (0.5M * 3.75) + (1M * 15.00) + (0.5M * 1.25) = 1.875 + 15.00 + 0.625 = 17.50
-  assert.strictEqual(solCost, 17.5);
+  // gpt-5.6-terra: input $2.25/M, output $9.00/M, cache $0.75/M
+  const terraCost = galxEngine.calculateTurnCost("gpt-5.6-terra", 1_000_000, 1_000_000, 500_000);
+  // (0.5M * 2.25) + (1M * 9.00) + (0.5M * 0.75) = 1.125 + 9.00 + 0.375 = 10.50
+  assert.strictEqual(terraCost, 10.5);
 
   // Attribution headers
   const headers = galxEngine.buildAttributionHeaders();
@@ -140,17 +141,15 @@ async function runValidation(): Promise<void> {
     );
   }
 
-  // Verify GALX models are queryable
+  // Verify GALX models are queryable and exclusively serve gpt-5.6-terra
   const galxModels = await catalog.getModelsForProvider("galx");
-  assert.ok(galxModels.length >= 3);
-  assert.ok(galxModels.some((m) => m.modelName === "gpt-5.6-sol"));
-  assert.ok(galxModels.some((m) => m.modelName === "gpt-5.6-terra"));
-  assert.ok(galxModels.some((m) => m.modelName === "gpt-5.6-luna"));
+  assert.strictEqual(galxModels.length, 1);
+  assert.strictEqual(galxModels[0].modelName, "gpt-5.6-terra");
 
-  const solInfo = catalog.getModelInfo("galx/gpt-5.6-sol");
-  assert.strictEqual(solInfo.provider, "galx");
-  assert.strictEqual(solInfo.contextWindowTokens, 900_000);
-  console.log("  ✔ ModelCatalog correctly scopes only galx and local custom providers.\n");
+  const terraInfo = catalog.getModelInfo("galx/gpt-5.6-terra");
+  assert.strictEqual(terraInfo.provider, "galx");
+  assert.strictEqual(terraInfo.contextWindowTokens, 900_000);
+  console.log("  ✔ ModelCatalog correctly scopes only galx and local custom providers with gpt-5.6-terra exclusively.\n");
 
   // 6. GALX Clearinghouse Endpoint & Header Resolution Check
   console.log("▶ [Test 6] Validating GALX Clearinghouse Endpoint & Header Resolution...");
@@ -173,7 +172,7 @@ async function runValidation(): Promise<void> {
   // 8. Monolith Factory & LumiMonolith Check
   console.log("▶ [Test 8] Validating Monolith Factory & LumiMonolith Integration...");
   const monolith = new LumiMonolith();
-  monolith.setModel("gpt-5.6-sol");
+  monolith.setModel("gpt-5.6-terra");
 
   assert.ok(monolith.galxEngine, "LumiMonolith.galxEngine must be defined");
   assert.ok(monolith.galxTransportClient, "LumiMonolith.galxTransportClient must be defined");

@@ -23,8 +23,6 @@ async function main(): Promise<void> {
   assert.equal(freshResolver.getPrimaryModel(), "gpt-5.6-terra");
   assert.deepEqual([...KNOWN_CODEX_MODELS], [
     "gpt-5.6-terra",
-    "gpt-5.6-luna",
-    "gpt-5.6-sol",
   ]);
 
   const monolith = new LumiMonolith({ cwd: process.cwd() });
@@ -35,19 +33,19 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   // [Test 2/7] Alias Normalization (Terra, Luna, Sol, 4o, Claude, etc.)
   // -------------------------------------------------------------------------
-  console.log("[Test 2/7] Validating Canonical Alias Normalization...");
+  console.log("[Test 2/7] Validating Canonical Alias Normalization (Mapping to Terra)...");
   assert.equal(ModelResolver.normalizeModelName("terra"), "gpt-5.6-terra");
   assert.equal(ModelResolver.normalizeModelName("TERRA"), "gpt-5.6-terra");
   assert.equal(ModelResolver.normalizeModelName("gpt-terra"), "gpt-5.6-terra");
   assert.equal(ModelResolver.normalizeModelName("5.6-terra"), "gpt-5.6-terra");
 
-  assert.equal(ModelResolver.normalizeModelName("luna"), "gpt-5.6-luna");
-  assert.equal(ModelResolver.normalizeModelName("Luna"), "gpt-5.6-luna");
-  assert.equal(ModelResolver.normalizeModelName("5.6-luna"), "gpt-5.6-luna");
+  assert.equal(ModelResolver.normalizeModelName("luna"), "gpt-5.6-terra");
+  assert.equal(ModelResolver.normalizeModelName("Luna"), "gpt-5.6-terra");
+  assert.equal(ModelResolver.normalizeModelName("5.6-luna"), "gpt-5.6-terra");
 
-  assert.equal(ModelResolver.normalizeModelName("sol"), "gpt-5.6-sol");
-  assert.equal(ModelResolver.normalizeModelName("SOL"), "gpt-5.6-sol");
-  assert.equal(ModelResolver.normalizeModelName("5.6-sol"), "gpt-5.6-sol");
+  assert.equal(ModelResolver.normalizeModelName("sol"), "gpt-5.6-terra");
+  assert.equal(ModelResolver.normalizeModelName("SOL"), "gpt-5.6-terra");
+  assert.equal(ModelResolver.normalizeModelName("5.6-sol"), "gpt-5.6-terra");
 
   assert.equal(ModelResolver.normalizeModelName("codex"), "gpt-5.6-terra");
   assert.equal(ModelResolver.normalizeModelName("openai-codex"), "gpt-5.6-terra");
@@ -59,20 +57,20 @@ async function main(): Promise<void> {
   console.log("  [✓] Canonical aliases normalize cleanly across all model families.");
 
   // -------------------------------------------------------------------------
-  // [Test 3/7] Monolith Model Swapping Helpers & Cycling
+  // [Test 3/7] Monolith Model Swapping Helpers & Cycling (All route to Terra)
   // -------------------------------------------------------------------------
-  console.log("[Test 3/7] Validating Direct Swapping & Cycling...");
+  console.log("[Test 3/7] Validating Direct Swapping & Cycling (All route to Terra)...");
   // 1. Swap to Luna
   const setLuna = monolith.switchToLuna();
-  assert.equal(setLuna, "gpt-5.6-luna");
-  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-luna");
-  assert.equal(monolith.config.modelName, "gpt-5.6-luna");
+  assert.equal(setLuna, "gpt-5.6-terra");
+  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-terra");
+  assert.equal(monolith.config.modelName, "gpt-5.6-terra");
 
   // 2. Swap to Sol
   const setSol = monolith.switchToSol();
-  assert.equal(setSol, "gpt-5.6-sol");
-  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-sol");
-  assert.equal(monolith.config.modelName, "gpt-5.6-sol");
+  assert.equal(setSol, "gpt-5.6-terra");
+  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-terra");
+  assert.equal(monolith.config.modelName, "gpt-5.6-terra");
 
   // 3. Swap back to Terra
   const setTerra = monolith.switchToTerra();
@@ -82,73 +80,33 @@ async function main(): Promise<void> {
 
   // 4. setModel with alias
   monolith.setModel("luna");
-  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-luna");
+  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-terra");
 
-  // 5. Cycling through models: luna -> sol -> terra -> luna
+  // 5. Cycling through models: exclusively serves gpt-5.6-terra
   const cycle1 = monolith.cycleCodexModel();
-  assert.equal(cycle1, "gpt-5.6-sol");
+  assert.equal(cycle1, "gpt-5.6-terra");
   const cycle2 = monolith.cycleCodexModel();
   assert.equal(cycle2, "gpt-5.6-terra");
   const cycle3 = monolith.cycleCodexModel();
-  assert.equal(cycle3, "gpt-5.6-luna");
-  console.log("  [✓] Direct swapping and cycleCodexModel rotate through Terra, Luna, Sol seamlessly.");
+  assert.equal(cycle3, "gpt-5.6-terra");
+  console.log("  [✓] Direct swapping and cycleCodexModel route to Terra seamlessly.");
 
   // -------------------------------------------------------------------------
-  // [Test 4/7] Dynamic Codex Model Discovery via API & Dynamic Cache
+  // [Test 4/7] Dynamic Model Fetching & API Discovery (Exclusively serving Terra)
   // -------------------------------------------------------------------------
-  console.log("[Test 4/7] Validating Dynamic Codex Model Fetching & API Discovery...");
+  console.log("[Test 4/7] Validating Dynamic Model Fetching & API Discovery (Exclusively serving Terra)...");
   const catalog = new ModelCatalog();
 
   // Test fallback codex models when offline
   const fallbackCodex = await catalog.fetchCodexModels(undefined, true);
-  assert.ok(fallbackCodex.some((m) => m.modelName === "gpt-5.6-terra"));
-  assert.ok(fallbackCodex.some((m) => m.modelName === "gpt-5.6-luna"));
-  assert.ok(fallbackCodex.some((m) => m.modelName === "gpt-5.6-sol"));
-  assert.ok(fallbackCodex.some((m) => m.modelName === "gpt-4o"));
+  assert.equal(fallbackCodex.length, 1);
+  assert.equal(fallbackCodex[0].modelName, "gpt-5.6-terra");
 
-  // Mock OpenAI models endpoint returning a newly released model variant
-  const originalFetch = globalThis.fetch;
-  const mockApiUrl = "https://mock.openai.api/v1";
-  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const urlStr = String(input);
-    if (urlStr === `${mockApiUrl}/models`) {
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          object: "list",
-          data: [
-            { id: "gpt-5.6-terra", created: 1700000000, owned_by: "openai" },
-            { id: "gpt-5.6-luna", created: 1700000000, owned_by: "openai" },
-            { id: "gpt-5.6-sol", created: 1700000000, owned_by: "openai" },
-            { id: "gpt-5.7-terra-preview", created: 1710000000, owned_by: "openai" },
-          ],
-        }),
-      } as Response;
-    }
-    return originalFetch(input, init);
-  }) as typeof globalThis.fetch;
-
-  try {
-    const liveDiscovered = await catalog.fetchCodexModels(
-      { Authorization: "Bearer mock_token" },
-      true,
-      mockApiUrl
-    );
-
-    const newVariant = liveDiscovered.find((m) => m.modelName === "gpt-5.7-terra-preview");
-    assert.ok(newVariant, "Dynamically discovered model 'gpt-5.7-terra-preview' must be registered in catalog");
-    assert.equal(newVariant.provider, "openai-codex");
-    assert.equal(newVariant.contextWindowTokens, 900_000);
-    assert.equal(newVariant.supportsReasoning, true);
-
-    // Verify dynamic cache returns the cached models
-    const fromCache = await catalog.fetchCodexModels();
-    assert.ok(fromCache.some((m) => m.modelName === "gpt-5.7-terra-preview"));
-    console.log("  [✓] Dynamic model fetching auto-discovered new model variants and cached them with TTL.");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  // Verify dynamic cache returns the cached models
+  const fromCache = await catalog.fetchCodexModels();
+  assert.equal(fromCache.length, 1);
+  assert.equal(fromCache[0].modelName, "gpt-5.6-terra");
+  console.log("  [✓] Dynamic model fetching reliably and exclusively serves gpt-5.6-terra.");
 
   // -------------------------------------------------------------------------
   // [Test 5/7] Agent Slash Router Handlers (/terra, /luna, /sol, /model, /models)
@@ -172,13 +130,13 @@ async function main(): Promise<void> {
 
   const resLuna = await router.handleSlashCommand("/luna", slashCtx);
   assert.equal(resLuna.handled, true);
-  assert.ok(resLuna.output?.includes("gpt-5.6-luna"));
-  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-luna");
+  assert.ok(resLuna.output?.includes("gpt-5.6-terra"));
+  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-terra");
 
   const resSol = await router.handleSlashCommand("/sol", slashCtx);
   assert.equal(resSol.handled, true);
-  assert.ok(resSol.output?.includes("gpt-5.6-sol"));
-  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-sol");
+  assert.ok(resSol.output?.includes("gpt-5.6-terra"));
+  assert.equal(monolith.modelResolver.getActiveModel(), "gpt-5.6-terra");
 
   const resModel = await router.handleSlashCommand("/model terra", slashCtx);
   assert.equal(resModel.handled, true);
@@ -188,26 +146,18 @@ async function main(): Promise<void> {
   const resModels = await router.handleSlashCommand("/models", slashCtx);
   assert.equal(resModels.handled, true);
   assert.ok(resModels.output?.includes("gpt-5.6-terra"));
-  assert.ok(resModels.output?.includes("gpt-5.6-luna"));
-  assert.ok(resModels.output?.includes("gpt-5.6-sol"));
   console.log("  [✓] All slash commands handled correctly with informative Markdown responses.");
 
   // -------------------------------------------------------------------------
-  // [Test 6/7] Context Budget Calculations for Terra, Luna, Sol
+  // [Test 6/7] Context Budget Calculations for Terra (900k)
   // -------------------------------------------------------------------------
-  console.log("[Test 6/7] Validating 900K Context Budget across Terra, Luna, Sol...");
+  console.log("[Test 6/7] Validating 900K Context Budget for Terra...");
   const budgetCalc = new ContextBudgetCalculator();
   const terraBudget = budgetCalc.calculateBudget("gpt-5.6-terra", 16_384);
-  const lunaBudget = budgetCalc.calculateBudget("gpt-5.6-luna", 8_192);
-  const solBudget = budgetCalc.calculateBudget("gpt-5.6-sol", 8_192);
 
   assert.equal(terraBudget.maxTokens, 900_000);
   assert.equal(terraBudget.reservedOutputTokens, 16_384);
-  assert.equal(lunaBudget.maxTokens, 900_000);
-  assert.equal(lunaBudget.reservedOutputTokens, 8_192);
-  assert.equal(solBudget.maxTokens, 900_000);
-  assert.equal(solBudget.reservedOutputTokens, 8_192);
-  console.log("  [✓] Context budget calculator allocates 900k context properly for all 3 models.");
+  console.log("  [✓] Context budget calculator allocates 900k context properly for Terra.");
 
   // -------------------------------------------------------------------------
   // [Test 7/7] TUI ModelSelectModal Hotkeys (t, l, s) & Rendering
@@ -228,18 +178,18 @@ async function main(): Promise<void> {
     }
   );
 
-  // Test 'l' hotkey for Luna
+  // Test 'l' hotkey (routes to Terra)
   modal.handleInput("l");
-  assert.equal(selectedFromModal, "gpt-5.6-luna");
+  assert.equal(selectedFromModal, "gpt-5.6-terra");
   assert.equal(modalClosed, true);
 
-  // Test 's' hotkey for Sol
+  // Test 's' hotkey (routes to Terra)
   modalClosed = false;
   modal.handleInput("s");
-  assert.equal(selectedFromModal, "gpt-5.6-sol");
+  assert.equal(selectedFromModal, "gpt-5.6-terra");
   assert.equal(modalClosed, true);
 
-  // Test 't' hotkey for Terra
+  // Test 't' hotkey (routes to Terra)
   modalClosed = false;
   modal.handleInput("t");
   assert.equal(selectedFromModal, "gpt-5.6-terra");

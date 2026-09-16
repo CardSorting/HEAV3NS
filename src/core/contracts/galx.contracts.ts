@@ -188,21 +188,6 @@ export interface GalxAttributionHeaders {
 }
 
 export const GALX_DEFAULT_MODELS: Record<string, GalxModelSpec> = {
-  "gpt-5.6-sol": {
-    modelName: "gpt-5.6-sol",
-    provider: "galx",
-    contextWindowTokens: 900_000,
-    maxOutputTokens: 128_000,
-    inputPricePer1M: 3.75,
-    outputPricePer1M: 15.0,
-    cacheReadsPricePer1M: 1.25,
-    supportsVision: true,
-    supportsReasoning: true,
-    estimatedLatencyMs: 35,
-    wholesaleDiscountPercent: 25,
-    description:
-      "Flagship coding, deep mathematics, algorithmic reasoning, and multi-file architecture with 25% wholesale discount and 75% prompt cache pass-through.",
-  },
   "gpt-5.6-terra": {
     modelName: "gpt-5.6-terra",
     provider: "galx",
@@ -216,21 +201,6 @@ export const GALX_DEFAULT_MODELS: Record<string, GalxModelSpec> = {
     estimatedLatencyMs: 25,
     wholesaleDiscountPercent: 25,
     description:
-      "Balanced frontier agentic coding model for large-scale refactoring and daily development with 25% wholesale discount.",
-  },
-  "gpt-5.6-luna": {
-    modelName: "gpt-5.6-luna",
-    provider: "galx",
-    contextWindowTokens: 900_000,
-    maxOutputTokens: 128_000,
-    inputPricePer1M: 0.95,
-    outputPricePer1M: 3.8,
-    cacheReadsPricePer1M: 0.3,
-    supportsVision: true,
-    supportsReasoning: false,
-    estimatedLatencyMs: 12,
-    wholesaleDiscountPercent: 36,
-    description:
-      "High-velocity rapid iteration coding engine optimized for instant sub-second completions with 36% wholesale discount.",
+      "Flagship frontier agentic coding model for large-scale refactoring and daily development with 25% wholesale discount and 900k context window.",
   },
 };

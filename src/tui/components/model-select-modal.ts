@@ -43,9 +43,6 @@ export class ModelSelectModal implements Component, Focusable {
   private readonly modelMap: Map<string, ModelSpecs> = new Map();
   private readonly favoriteModels: Set<string> = new Set([
     "gpt-5.6-terra",
-    "gpt-5.6-luna",
-    "gpt-5.6-sol",
-    "galx/gpt-5.6-sol",
     "galx/gpt-5.6-terra",
   ]);
   private activeCategory: CategoryTab = "all";
@@ -60,12 +57,29 @@ export class ModelSelectModal implements Component, Focusable {
     onSelectModel: (modelName: string) => void,
     onClose: () => void
   ) {
-    this.availableModels = availableModels;
+    // Exclusively serve gpt-5.6-terra as the model for selection
+    const terraMatches = availableModels.filter(
+      (m) => m.modelName === "gpt-5.6-terra" || m.modelName === "galx/gpt-5.6-terra"
+    );
+    this.availableModels = terraMatches.length > 0 ? terraMatches : [
+      {
+        modelName: "gpt-5.6-terra",
+        provider: "galx",
+        contextWindowTokens: 900_000,
+        maxOutputTokens: 128_000,
+        inputPricePer1M: 2.25,
+        outputPricePer1M: 9.0,
+        supportsVision: true,
+        supportsReasoning: true,
+        estimatedLatencyMs: 25,
+        description: "Flagship Frontier Reasoning Engine (900k context window)",
+      },
+    ];
     this.currentModel = currentModel;
     this.onSelectModel = onSelectModel;
     this.onClose = onClose;
 
-    for (const m of availableModels) {
+    for (const m of this.availableModels) {
       this.modelMap.set(m.modelName, m);
     }
 
@@ -73,7 +87,7 @@ export class ModelSelectModal implements Component, Focusable {
     this.container = new Box(2, 1, bgFn);
     this.vstack = new VStack();
 
-    const firstModel = availableModels[0];
+    const firstModel = this.availableModels[0];
     this.inspectorMarkdown = new Markdown(
       this.buildInspectorText(firstModel, currentModel),
       0,
@@ -189,7 +203,7 @@ export class ModelSelectModal implements Component, Focusable {
     this.vstack.addChild(inspectorBox);
 
     const footerGuide = new Text(
-      "\x1b[90m[1-3/Tab] Filter  │  [t] Terra  [l] Luna  [s] Sol  │  [f] Toggle Fav  │  [Enter] Select  │  [Esc] Close\x1b[0m",
+      "\x1b[90m[Enter/t] Select gpt-5.6-terra (Flagship Frontier Reasoning)  │  [Esc] Close\x1b[0m",
       0,
       0
     );
@@ -206,7 +220,7 @@ export class ModelSelectModal implements Component, Focusable {
     const vision = spec.supportsVision ? "`[YES]`" : "`[NO]`";
     const reasoning = spec.supportsReasoning ? "`[YES]`" : "`[NO]`";
     const ctxKb = Math.round(spec.contextWindowTokens / 1000);
-    const latency = spec.estimatedLatencyMs ?? (isLocal ? 5 : 30);
+    const latency = spec.estimatedLatencyMs ?? (isLocal ? 5 : 25);
     const inPrice = isLocal || spec.inputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.inputPricePer1M.toFixed(2)}/1M`;
     const outPrice = isLocal || spec.outputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.outputPricePer1M.toFixed(2)}/1M`;
 
@@ -218,13 +232,19 @@ export class ModelSelectModal implements Component, Focusable {
     }
 
     return (
-      `#### Live Model Detail Inspector${isActive}${isFav}${localBadge}\n` +
-      `- **Provider**: \`${spec.provider.toUpperCase()}\` — ${spec.description || spec.modelName}\n` +
-      `- **Context Window**: \`${spec.contextWindowTokens.toLocaleString()} tokens (${ctxKb}k)\` │ **Max Output**: \`${spec.maxOutputTokens.toLocaleString()} tokens\`\n` +
-      `- **Pricing Specs**: Input: \`${inPrice}\` │ Output: \`${outPrice}\` │ **Est. Latency**: \`~${latency}ms\`\n` +
-      `- **Capabilities**: Vision: ${vision} │ Reasoning Mode: ${reasoning}` +
-      vramSection
+      `### ⚡ ${spec.modelName}${isActive}${isFav}${localBadge}\n\n` +
+      `- **Provider**: \`${spec.provider.toUpperCase()}\`\n` +
+      `- **Context Window**: \`${ctxKb}k tokens\`\n` +
+      `- **Max Output**: \`${spec.maxOutputTokens} tokens\`\n` +
+      `- **Pricing**: In: \`${inPrice}\` | Out: \`${outPrice}\`\n` +
+      `- **Capabilities**: Vision: ${vision} | Reasoning: ${reasoning}\n` +
+      `- **Est. Latency**: \`~${latency}ms\`\n` +
+      `- **Description**: *${spec.description || "Frontier Model"}*${vramSection}`
     );
+  }
+
+  render(width: number): string[] {
+    return this.container.render(width);
   }
 
   invalidate(): void {
@@ -233,19 +253,13 @@ export class ModelSelectModal implements Component, Focusable {
   }
 
   handleInput(data: string): void {
-    // Instant hotkeys for core GALX models: Terra, Luna, Sol
-    if (data === "t" || data === "T") {
+    // Hotkeys for model selection: all cleanly select gpt-5.6-terra
+    if (
+      data === "t" || data === "T" ||
+      data === "l" || data === "L" ||
+      data === "s" || data === "S"
+    ) {
       this.onSelectModel("gpt-5.6-terra");
-      this.onClose();
-      return;
-    }
-    if (data === "l" || data === "L") {
-      this.onSelectModel("gpt-5.6-luna");
-      this.onClose();
-      return;
-    }
-    if (data === "s" || data === "S") {
-      this.onSelectModel("gpt-5.6-sol");
       this.onClose();
       return;
     }
@@ -297,9 +311,5 @@ export class ModelSelectModal implements Component, Focusable {
     }
 
     this.selectList.handleInput(data);
-  }
-
-  render(width: number): string[] {
-    return this.container.render(width);
   }
 }

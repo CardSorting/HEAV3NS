@@ -8,8 +8,6 @@ export interface ModelResolutionMetrics {
 
 export const KNOWN_CODEX_MODELS = [
   "gpt-5.6-terra",
-  "gpt-5.6-luna",
-  "gpt-5.6-sol",
 ] as const;
 
 export class ModelResolver {
@@ -34,17 +32,25 @@ export class ModelResolver {
       case "galx":
       case "galx-sol":
       case "galx/gpt-5.6-sol":
-        return "galx/gpt-5.6-sol";
+      case "gpt-5.6-sol":
       case "galx-terra":
       case "galx/gpt-5.6-terra":
-        return "galx/gpt-5.6-terra";
+      case "gpt-5.6-terra":
       case "galx-luna":
       case "galx/gpt-5.6-luna":
-        return "galx/gpt-5.6-luna";
+      case "gpt-5.6-luna":
       case "terra":
       case "gpt-terra":
       case "5.6-terra":
       case "gpt5.6-terra":
+      case "luna":
+      case "gpt-luna":
+      case "5.6-luna":
+      case "gpt5.6-luna":
+      case "sol":
+      case "gpt-sol":
+      case "5.6-sol":
+      case "gpt5.6-sol":
       case "codex":
       case "openai-codex":
       case "codex-oauth":
@@ -55,16 +61,6 @@ export class ModelResolver {
       case "flagship":
       case "reasoning":
         return "gpt-5.6-terra";
-      case "luna":
-      case "gpt-luna":
-      case "5.6-luna":
-      case "gpt5.6-luna":
-        return "gpt-5.6-luna";
-      case "sol":
-      case "gpt-sol":
-      case "5.6-sol":
-      case "gpt5.6-sol":
-        return "gpt-5.6-sol";
       case "4o":
       case "gpt4o":
       case "gpt-4":
@@ -79,7 +75,7 @@ export class ModelResolver {
         return "anthropic/claude-3.5-haiku";
       case "gemini":
       case "flash":
-      case "gemini-flash":
+      case "gemini-2.0-flash-001":
         return "google/gemini-2.0-flash-001";
       case "deepseek":
       case "r1":
@@ -100,7 +96,7 @@ export class ModelResolver {
 
   constructor(
     primaryModel = "gpt-5.6-terra",
-    fallbackModels: readonly string[] = ["gpt-5.6-luna", "gpt-5.6-sol"]
+    fallbackModels: readonly string[] = ["gpt-5.6-terra"]
   ) {
     const normalizedPrimary = ModelResolver.normalizeModelName(primaryModel);
     this.primaryModel = normalizedPrimary;
@@ -127,11 +123,11 @@ export class ModelResolver {
   }
 
   switchToLuna(): string {
-    return this.setActiveModel("gpt-5.6-luna");
+    return this.setActiveModel("gpt-5.6-terra");
   }
 
   switchToSol(): string {
-    return this.setActiveModel("gpt-5.6-sol");
+    return this.setActiveModel("gpt-5.6-terra");
   }
 
   cycleCodexModel(): string {

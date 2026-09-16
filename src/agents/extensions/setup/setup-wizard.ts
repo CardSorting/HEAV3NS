@@ -219,7 +219,7 @@ export class SetupWizard {
       while (!exitWizard) {
         console.log("\x1b[1;34mOptions:\x1b[0m");
         console.log("  [1] Configure GALX AI API Key");
-        console.log("  [2] Quick-Switch Model (Terra, Luna, Sol)");
+        console.log("  [2] Select Model (gpt-5.6-terra)");
         console.log("  [3] Run System Health & Diagnostics (Doctor)");
         console.log("  [4] Display Identity & Session Details");
         console.log("  [0] Save & Exit\n");
@@ -230,21 +230,10 @@ export class SetupWizard {
             await this.configureApiKeys(rl);
             break;
           case "2": {
-            console.log("\n\x1b[1;34mSelect Default Model:\x1b[0m");
-            console.log("  [1] gpt-5.6-terra (Flagship Reasoning Engine - Default)");
-            console.log("  [2] gpt-5.6-luna  (High-Velocity Engine)");
-            console.log("  [3] gpt-5.6-sol   (Balanced Engine)");
-            const mChoice = await this.askQuestion(rl, "Choose (1-3): ");
-            if (mChoice.trim() === "1") {
-              this.setSavedModel("gpt-5.6-terra");
-              console.log("\x1b[32m[✓] Active model set to gpt-5.6-terra\x1b[0m\n");
-            } else if (mChoice.trim() === "2") {
-              this.setSavedModel("gpt-5.6-luna");
-              console.log("\x1b[32m[✓] Active model set to gpt-5.6-luna\x1b[0m\n");
-            } else if (mChoice.trim() === "3") {
-              this.setSavedModel("gpt-5.6-sol");
-              console.log("\x1b[32m[✓] Active model set to gpt-5.6-sol\x1b[0m\n");
-            }
+            console.log("\n\x1b[1;34mModel Selection (GALX AI Wholesale):\x1b[0m");
+            console.log("  [1] gpt-5.6-terra (Flagship Frontier Reasoning Engine · 900k Context · 128k Output)");
+            this.setSavedModel("gpt-5.6-terra");
+            console.log("\x1b[32m[✓] Active model configured to gpt-5.6-terra\x1b[0m\n");
             break;
           }
           case "3":

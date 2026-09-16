@@ -15,19 +15,6 @@ export {
 } from "./api-defaults"
 
 export const galxModels: Record<string, ModelInfo> = {
-	"gpt-5.6-sol": {
-		name: "OpenAI Codex GPT-5.6 Sol (Flagship SOTA)",
-		maxTokens: 128_000,
-		contextWindow: 900_000,
-		supportsImages: true,
-		supportsPromptCache: true,
-		supportsReasoning: true,
-		inputPrice: 3.75,
-		outputPrice: 15.0,
-		cacheReadsPrice: 1.25,
-		description:
-			"Flagship coding, deep mathematics, algorithmic reasoning, and multi-file architecture with 25% wholesale discount and 75% prompt cache pass-through.",
-	},
 	"gpt-5.6-terra": {
 		name: "OpenAI Codex GPT-5.6 Terra (Balanced Frontier)",
 		maxTokens: 128_000,
@@ -40,19 +27,6 @@ export const galxModels: Record<string, ModelInfo> = {
 		cacheReadsPrice: 0.75,
 		description:
 			"Balanced frontier agentic coding model for large-scale refactoring and daily development with 25% wholesale discount.",
-	},
-	"gpt-5.6-luna": {
-		name: "OpenAI Codex GPT-5.6 Luna (High-Velocity)",
-		maxTokens: 128_000,
-		contextWindow: 900_000,
-		supportsImages: true,
-		supportsPromptCache: true,
-		supportsReasoning: false,
-		inputPrice: 0.95,
-		outputPrice: 3.8,
-		cacheReadsPrice: 0.3,
-		description:
-			"High-velocity rapid iteration coding engine optimized for instant sub-second completions with 36% wholesale discount.",
 	},
 }
 

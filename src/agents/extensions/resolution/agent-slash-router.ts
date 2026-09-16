@@ -189,27 +189,13 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
         };
       }
 
-      case "/terra": {
+      case "/terra":
+      case "/luna":
+      case "/sol": {
         const active = context.modelResolver.switchToTerra();
         return {
           handled: true,
-          output: `✅ **Active Model set to**: \`${active}\` (Flagship Reasoning Engine · 900k Context · 16k Max Output)`,
-        };
-      }
-
-      case "/luna": {
-        const active = context.modelResolver.switchToLuna();
-        return {
-          handled: true,
-          output: `⚡ **Active Model set to**: \`${active}\` (High-Velocity Engine · 900k Context · 8k Max Output)`,
-        };
-      }
-
-      case "/sol": {
-        const active = context.modelResolver.switchToSol();
-        return {
-          handled: true,
-          output: `⚖️ **Active Model set to**: \`${active}\` (Balanced Engine · 900k Context · 8k Max Output)`,
+          output: `✅ **Active Model set to**: \`${active}\` (Flagship Frontier Reasoning Engine · 900k Context · 128k Max Output)`,
         };
       }
 
@@ -218,7 +204,7 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
           const current = context.modelResolver.getActiveModel();
           return {
             handled: true,
-            output: `Active Model: \`${current}\`\n\nQuick Switches:\n• \`/terra\` → \`gpt-5.6-terra\` (Flagship Reasoning)\n• \`/luna\` → \`gpt-5.6-luna\` (High-Velocity)\n• \`/sol\` → \`gpt-5.6-sol\` (Balanced)\n\nUsage: \`/model <name>\``,
+            output: `Active Model: \`${current}\`\n\nServed Model for Selection:\n• \`gpt-5.6-terra\` (Flagship Frontier Reasoning · 900k Context)\n\nUsage: \`/model <name>\``,
           };
         }
         const target = args.join(" ").trim();
@@ -232,16 +218,13 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
       case "/models": {
         const current = context.modelResolver.getActiveModel();
         const codexModels = context.modelResolver.getCodexModels();
-        let out = `🤖 **Available OpenAI Codex Models**:\n`;
+        let out = `🤖 **Available Model for Selection**:\n`;
         for (const m of codexModels) {
           const isActive = m === current ? " `[ACTIVE]`" : "";
-          let role = "OpenAI Codex Engine";
-          if (m.includes("terra")) role = "Flagship Reasoning (900k ctx)";
-          else if (m.includes("luna")) role = "High-Velocity (900k ctx)";
-          else if (m.includes("sol")) role = "Balanced (900k ctx)";
+          const role = "Flagship Frontier Reasoning (900k ctx · 128k out)";
           out += `• **\`${m}\`** — *${role}*${isActive}\n`;
         }
-        out += `\n💡 Quick Switch: Type \`/terra\`, \`/luna\`, or \`/sol\` to swap instantly.`;
+        out += `\n💡 Exclusively served: \`gpt-5.6-terra\``;
         return { handled: true, output: out };
       }
 
