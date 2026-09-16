@@ -1,12 +1,10 @@
 import type {
-  SoulArchetype,
   SoulDiffEntry,
   SoulDiffReport,
   SoulFuzzyMatchSuggestion,
   SoulManifest,
   SoulPresetBundle,
   SoulPresetCategory,
-  SoulStyleRules,
   SoulTaxonomyNode,
   SoulTrait,
 } from "../../../core/contracts/soul.contracts.js";

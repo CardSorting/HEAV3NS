@@ -9,7 +9,6 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type {
   BoundedResult,
-  DeadlineConfig,
   EstopState,
 } from "../../../core/contracts/deadline.contracts.js";
 import {

@@ -13,7 +13,6 @@ import {
   MAX_DERIVED_TITLE_CHARS,
   MAX_TITLE_INPUT_CHARS,
   MAX_MODEL_TITLE_CHARS,
-  type SessionTitleProvenance,
   type TitleGenerationOptions,
   type TitleGenerationResult,
 } from "../../../core/contracts/title-insights.contracts.js";

@@ -1,6 +1,5 @@
 import {
   DeterministicLocalEndpointEngine,
-  DEFAULT_LOCAL_ENDPOINT_PRESETS,
 } from "../../../tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";
 import type {
   LocalProviderKind,

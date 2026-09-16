@@ -5,14 +5,6 @@
  * dual-tier credit meters, transaction ledgers, and SLA health audits (Phase 132 / ADR-108 / Target #65).
  */
 
-import type {
-  BillingAccountInfo,
-  BillingTransaction,
-  BillingUsageHealthAuditReport,
-  BillingUsageMetricsReport,
-  BillingUsageWorkspaceSnapshot,
-  UsageModelDescriptor,
-} from "../../core/contracts/billing-usage.contracts.js";
 import { BroccoliBillingUsageSubstrate } from "../../sessions/extensions/billing_usage/broccoli-billing-usage-substrate.js";
 import { DeterministicBillingUsageEngine } from "../../agents/extensions/billing_usage/deterministic-billing-usage-engine.js";
 

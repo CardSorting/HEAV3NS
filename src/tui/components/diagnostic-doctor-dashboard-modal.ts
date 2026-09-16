@@ -5,13 +5,6 @@
  * check categories, session transcript salvages, and SLA health audits (Phase 97 / ADR-049 / Target #68).
  */
 
-import type {
-  DiagnosticCheckResult,
-  DiagnosticDoctorHealthAuditReport,
-  DiagnosticDoctorMetricsReport,
-  SessionSalvageReport,
-  SystemDiagnosticReport,
-} from "../../core/contracts/diagnostic-doctor.contracts.js";
 import { BroccoliDoctorSubstrate } from "../../sessions/extensions/doctor/broccoli-doctor-substrate.js";
 import { DeterministicDiagnosticDoctor } from "../../tooling/extensions/doctor/deterministic-diagnostic-doctor.js";
 

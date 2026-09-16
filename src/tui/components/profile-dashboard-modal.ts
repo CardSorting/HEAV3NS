@@ -6,14 +6,6 @@
  * (Target #76 / ADR-119 / Zenith Tier).
  */
 
-import type {
-  ProfileBlueprint,
-  ProfileDescriptor,
-  ProfileHealthAuditReport,
-  ProfileMetricsReport,
-  ProfileRevision,
-  ProfileWorkspaceSnapshot,
-} from "../../core/contracts/profile.contracts.js";
 import { BroccoliProfileSubstrate } from "../../sessions/extensions/profiles/broccoli-profile-substrate.js";
 import { DeterministicProfileEngine } from "../../agents/extensions/profiles/deterministic-profile-engine.js";
 

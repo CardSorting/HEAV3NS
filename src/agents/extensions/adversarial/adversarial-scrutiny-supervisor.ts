@@ -6,11 +6,9 @@
  */
 
 import type {
-  AdversarialCategory,
   AdversarialFinding,
   AdversarialRedTeamVerdict,
   AdversarialScrutinyOptions,
-  AdversarialSeverity,
   AdversarialVerdictStatus,
   CognitiveDecompositionReport,
   FluffCategorySpend,

@@ -11,7 +11,6 @@ import type {
   BillingAccountInfo,
   BillingTransaction,
   BillingUsageConfig,
-  BillingUsageMetrics,
   BillingUsageMetricsReport,
   UsageModelDescriptor,
 } from "../../../core/contracts/billing-usage.contracts.js";

@@ -1,0 +1,86 @@
+import { ModelFamily } from "@/shared/prompts"
+import { DietCodeDefaultTool } from "@/shared/tools"
+import type { DietCodeToolSpec } from "../spec"
+import { TASK_PROGRESS_PARAMETER } from "../types"
+
+/**
+ * ## search_files
+Description: Request to perform a regex search across files in a specified directory, providing context-rich results. This tool searches for patterns or specific content across multiple files, displaying each match with encapsulating context.
+Parameters:
+- path: (required) The path of the directory to search in (relative to the current working directory ${cwd.toPosix()}). This directory will be recursively searched.
+- regex: (required) The regular expression pattern to search for. Uses Rust regex syntax.
+- file_pattern: (optional) Glob pattern to filter files (e.g., '*.ts' for TypeScript files). If not provided, it will search all files (*).
+Usage:
+<search_files>
+<path>Directory path here</path>
+<regex>Your regex pattern here</regex>
+<file_pattern>file pattern here (optional)</file_pattern>
+</search_files>
+ */
+
+const id = DietCodeDefaultTool.SEARCH
+
+const generic: DietCodeToolSpec = {
+	variant: ModelFamily.GENERIC,
+	id,
+	name: "search_files",
+	description:
+		"[SEARCH_FILES_CONTRACT]\n- PURPOSE: Perform recursive Rust regex search across files in target directory with surrounding context.",
+	parameters: [
+		{
+			name: "path",
+			required: true,
+			instruction: `Directory path to search recursively (relative to {{CWD}}){{MULTI_ROOT_HINT}}.`,
+			usage: "Directory path here",
+		},
+		{
+			name: "regex",
+			required: true,
+			instruction: "Rust regex search pattern.",
+			usage: "Your regex pattern here",
+		},
+		{
+			name: "file_pattern",
+			required: false,
+			instruction: "Optional glob filter (e.g. '*.ts'). Defaults to *.",
+			usage: "file pattern here (optional)",
+		},
+		TASK_PROGRESS_PARAMETER,
+	],
+}
+
+const NATIVE_NEXT_GEN: DietCodeToolSpec = {
+	variant: ModelFamily.NATIVE_NEXT_GEN,
+	id,
+	name: "search_files",
+	description:
+		"[SEARCH_FILES_CONTRACT]\n- PURPOSE: Perform recursive Rust regex search across files in target directory with surrounding context.",
+	parameters: [
+		{
+			name: "path",
+			required: true,
+			instruction: `Directory path to search recursively (relative to {{CWD}}){{MULTI_ROOT_HINT}}.`,
+			usage: "Directory path here",
+		},
+		{
+			name: "regex",
+			required: true,
+			instruction: "Rust regex search pattern.",
+			usage: "Your regex pattern here",
+		},
+		{
+			name: "file_pattern",
+			required: false,
+			instruction: "Optional glob filter (e.g. '*.ts'). Defaults to *.",
+			usage: "file pattern here (optional)",
+		},
+		TASK_PROGRESS_PARAMETER,
+	],
+}
+
+const NATIVE_GPT_5: DietCodeToolSpec = {
+	...NATIVE_NEXT_GEN,
+	variant: ModelFamily.NATIVE_GPT_5,
+}
+
+export const search_files_variants = [generic, NATIVE_GPT_5, NATIVE_NEXT_GEN]

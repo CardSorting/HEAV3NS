@@ -5,11 +5,6 @@
  * unverified modified source files, stop-gate status, and quality metrics (Phase 92 / ADR-044 / Target #73).
  */
 
-import type {
-  VerificationEvidenceHealthAuditReport,
-  VerificationEvidenceMetricsReport,
-  VerificationEvidenceRecord,
-} from "../../core/contracts/verification-evidence.contracts.js";
 import { BroccoliEvidenceSubstrate } from "../../sessions/extensions/evidence/broccoli-evidence-substrate.js";
 import { DeterministicEvidenceLedger } from "../../tooling/extensions/evidence/deterministic-evidence-ledger.js";
 

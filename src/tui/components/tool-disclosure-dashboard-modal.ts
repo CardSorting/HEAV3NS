@@ -5,11 +5,6 @@
  * dynamic disclosure tiers, search catalog, and health posture (Phase 91 / ADR-043 / Target #83).
  */
 
-import type {
-  ToolDisclosureHealthAuditReport,
-  ToolDisclosureMetricsReport,
-  DeferredToolDefinition,
-} from "../../core/contracts/tool-disclosure.contracts.js";
 import { BroccoliDisclosureSubstrate } from "../../sessions/extensions/disclosure/broccoli-disclosure-substrate.js";
 import { DeterministicToolDiscloser } from "../../tooling/extensions/disclosure/deterministic-tool-discloser.js";
 

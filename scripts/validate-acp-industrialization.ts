@@ -95,7 +95,7 @@ async function runAcpIndustrializationValidation(): Promise<void> {
   // Dangerous edit with exposed secret
   const secretRisk = await permissionGate.scrutinizeEdit({
     filePath: ".env",
-    proposedContent: 'API_KEY="'+["sk","live","1234567890abcdef123456"].join("_")+'"',
+    proposedContent: `API_KEY="${["sk", "live", "1234567890abcdef123456"].join("_")}"`,
   });
   assert.ok(secretRisk.riskLevel === "HIGH" || secretRisk.riskLevel === "CRITICAL");
   assert.equal(secretRisk.recommendedAction, "REQUIRE_MANUAL_REVIEW");

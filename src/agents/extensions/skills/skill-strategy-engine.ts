@@ -11,7 +11,6 @@ import type {
   SkillStrategyGoal,
   SkillStrategyPlan,
   SkillStrategyStep,
-  SkillTier,
 } from "../../../core/contracts/skills.contracts.js";
 import { BroccoliSkillTreeSubstrate } from "../../../sessions/extensions/skills/broccoli-skill-tree-substrate.js";
 

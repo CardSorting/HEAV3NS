@@ -5,13 +5,6 @@
  * execution dispatch audit trails, security callback inheritance, and SLA health (Phase 133 / ADR-109 / Target #66).
  */
 
-import type {
-  AsyncTurnContextDescriptor,
-  ExecutionDispatchEvent,
-  ThreadContextHealthAuditReport,
-  ThreadContextMetricsReport,
-  ThreadContextWorkspaceSnapshot,
-} from "../../core/contracts/thread-context.contracts.js";
 import { BroccoliThreadContextSubstrate } from "../../sessions/extensions/thread_context/broccoli-thread-context-substrate.js";
 import { DeterministicThreadContextEngine } from "../../agents/extensions/thread_context/deterministic-thread-context-engine.js";
 

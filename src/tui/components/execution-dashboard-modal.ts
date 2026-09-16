@@ -5,15 +5,7 @@
  * programmatic tool call traces, security policies, and SLA health audits (Phase 82 / ADR-034).
  */
 
-import type {
-  ExecutionHealthAuditReport,
-  ExecutionMetricsReport,
-  ExecutionRecord,
-  ExecutionWorkspaceSnapshot,
-  ProgrammaticToolCall,
-} from "../../core/contracts/execution.contracts.js";
 import { BroccoliExecutionSubstrate } from "../../sessions/extensions/execution/broccoli-execution-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type ExecutionDashboardViewMode = "executions" | "toolCalls" | "metrics" | "health" | "raw";
 

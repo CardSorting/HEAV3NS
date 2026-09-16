@@ -15,13 +15,11 @@ import type {
   SkillLinterGroupedLane,
   SkillLinterHealthAuditReport,
   SkillLinterHealthStatus,
-  SkillLinterMetrics,
   SkillLinterMetricsReport,
   SkillLinterMutationUndoRecord,
   SkillLinterSortBy,
   SkillLinterSortDirection,
   SkillLinterWorkspaceSnapshot,
-  SkillLintFindingRow,
   SkillLintReport,
   SkillLintReportRow,
 } from "../../../core/contracts/skill-linter.contracts.js";

@@ -1,5 +1,4 @@
 import type {
-  ToolCategory,
   ToolDefinition,
 } from "../../../core/contracts/tooling.contracts.js";
 import { ToolSemanticIndex } from "./tool-semantic-index.js";

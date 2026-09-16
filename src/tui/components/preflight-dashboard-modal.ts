@@ -5,11 +5,6 @@
  * threat findings, security policies, and circuit breaker status (Phase 113 / ADR-089 / Target #79).
  */
 
-import type {
-  PreflightHealthAuditReport,
-  PreflightMetricsReport,
-  PreflightScanResultRow,
-} from "../../core/contracts/preflight-scanner.contracts.js";
 import { BroccoliPreflightSubstrate } from "../../sessions/extensions/preflight_scanner/broccoli-preflight-substrate.js";
 import { DeterministicPreflightScanner } from "../../agents/extensions/preflight_scanner/deterministic-preflight-scanner.js";
 

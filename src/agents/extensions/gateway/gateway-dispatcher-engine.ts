@@ -1,5 +1,4 @@
 import type {
-  GatewayDeliveryStatus,
   GatewayMessageEnvelope,
   GatewayOutboundPayload,
   GatewayPlatformType,

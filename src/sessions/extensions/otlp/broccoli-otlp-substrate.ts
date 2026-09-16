@@ -10,7 +10,6 @@ import type {
   OtlpExporterConfig,
   OtlpSpan,
   OtlpSubstrateSnapshot,
-  W3CTraceContext,
 } from "../../../core/contracts/otlp.contracts.js";
 
 const DEFAULT_OTLP_CONFIG: OtlpExporterConfig = {

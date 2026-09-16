@@ -18,7 +18,6 @@ import type {
   EmailThreatAnalysis,
   EmailTonePersona,
   EmailTriageReport,
-  FollowUpReminder,
   MeetingScheduleIntent,
   OutboundDlpReport,
   QuickReplyOption,

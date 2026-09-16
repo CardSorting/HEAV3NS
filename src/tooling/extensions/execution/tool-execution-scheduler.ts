@@ -3,7 +3,6 @@ import type {
   ExecutionAuthorityLevel,
   IToolRegistry,
   PipelinedStreamChunk,
-  ToolDefinition,
   ToolExecutionOptions,
   ToolExecutionRecord,
 } from "../../../core/contracts/tooling.contracts.js";

@@ -17,7 +17,6 @@ import type {
   CheckpointGroupBy,
   CheckpointSortBy,
   CheckpointSortDirection,
-  GitBundlePayload,
 } from "../../../core/contracts/checkpoint.contracts.js";
 
 export class CheckpointKernelToolSuite {

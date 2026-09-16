@@ -8,7 +8,6 @@
 
 import type {
   CuratorOptions,
-  CuratorReviewDirective,
   KnowledgeNode,
 } from "../../../core/contracts/memory-curator.contracts.js";
 import { BroccoliLearningSubstrate } from "../../../sessions/extensions/memory/broccoli-learning-substrate.js";

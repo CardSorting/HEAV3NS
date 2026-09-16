@@ -19,7 +19,6 @@ import type {
   RunbookCurrentStateView,
   RunbookEdgeDefinition,
   RunbookHistoryEvent,
-  RunbookNodeDefinition,
   RunbookRuntimeState,
   RunbookSpec,
   RunbookStateOverview,

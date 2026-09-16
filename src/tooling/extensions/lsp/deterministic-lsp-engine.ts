@@ -14,7 +14,6 @@ import type {
   LspRange,
   LspReferenceLocation,
   LspSymbolInformation,
-  LspSymbolKind,
 } from "../../../core/contracts/lsp.contracts.js";
 
 export class DeterministicLspEngine {

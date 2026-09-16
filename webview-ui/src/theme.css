@@ -1,0 +1,530 @@
+:root {
+	/* Default fallbacks for VSCode theme variables in standalone browser mode */
+	--vscode-foreground: #faf9f7;
+	--vscode-descriptionForeground: #8a8996;
+	--vscode-sideBar-background: #0f0f12;
+	--vscode-sideBar-foreground: #faf9f7;
+	--vscode-panel-background: #121216;
+	--vscode-panel-border: #20202a;
+	--vscode-focusBorder: #6366a0;
+	--vscode-editor-background: #16161d;
+	--vscode-editor-foreground: #faf9f7;
+	--vscode-input-background: #1a1a22;
+	--vscode-input-foreground: #faf9f7;
+	--vscode-input-border: #20202a;
+	--vscode-input-placeholderForeground: #8a8996;
+	--vscode-button-background: #6366a0;
+	--vscode-button-foreground: #ffffff;
+	--vscode-button-hoverBackground: #7a7db4;
+	--vscode-button-secondaryBackground: #272730;
+	--vscode-button-secondaryForeground: #faf9f7;
+	--vscode-button-secondaryHoverBackground: #32323e;
+	--vscode-list-hoverBackground: rgba(255, 255, 255, 0.05);
+	--vscode-list-activeSelectionBackground: #6366a0;
+	--vscode-list-activeSelectionForeground: #ffffff;
+	--vscode-textLink-foreground: #6bb5c9;
+	--vscode-textLink-activeForeground: #8a8996;
+	--vscode-editorGroup-border: #20202a;
+	--vscode-editorWidget-border: #20202a;
+	--vscode-textCodeBlock-background: #1a1a22;
+	--vscode-textBlockQuote-background: #1a1a22;
+	--vscode-textBlockQuote-foreground: #faf9f7;
+}
+
+/* Editor theme mapping */
+@theme {
+	/* LUMI brand palette — calm, technical, approachable */
+	--color-lumi: #6366a0;
+	--color-lumi-cyan: #6bb5c9;
+	--color-lumi-bg-dark: #121216;
+	--color-lumi-bg-sidebar: #1a1a22;
+	--color-lumi-panel: #1e1e26;
+	--color-lumi-border: rgba(255, 255, 255, 0.08);
+	--color-lumi-text-primary: #faf9f7;
+	--color-lumi-text-secondary: #8a8996;
+	--color-lumi-lavender: #b8b5d6;
+	--color-lumi-graphite: #3d4451;
+	--color-lumi-slate: #64748b;
+	--color-lumi-warm: #faf9f7;
+	--color-lumi-foreground: #faf9f7;
+	--color-fg-lumi: #6366a0;
+	/* Legacy aliases — keep existing utility class names working */
+	--color-dietcode: var(--color-lumi);
+	--color-dietcode-foreground: var(--color-lumi-foreground);
+	--color-fg-dietcode: var(--color-fg-lumi);
+	--color-background: var(--vscode-sideBar-background);
+	--color-border: var(--vscode-focusBorder);
+	--color-border-panel: var(--vscode-panel-border);
+	--color-foreground: var(--vscode-foreground);
+	--color-shadow: var(--vscode-widget-shadow);
+	--color-code: var(--vscode-editor-background);
+	--color-code-foreground: var(--vscode-editor-foreground);
+	--color-code-border: var(--vscode-editor-border);
+	--color-code-block-background: var(
+		--vscode-textCodeBlock-background,
+		--vscode-editor-background,
+		--vscode-sideBar-background,
+		rgb(30 30 30)
+	);
+	--color-quote: var(--vscode-textBlockQuote-background);
+	--color-quote-foreground: var(--vscode-textBlockQuote-foreground);
+	--color-text-block-background: var(--vscode-textCodeBlock-background);
+	--color-editor-group-border: var(--vscode-editorGroup-border);
+	--color-editor-widget-border: var(--vscode-editorWidget-border, #cccccc);
+	--color-editor-warning-foreground: var(--vscode-editorWarning-foreground);
+	--color-sidebar-background: var(--vscode-sideBar-background);
+	--color-sidebar-foreground: var(--vscode-sideBar-foreground);
+	--color-input-foreground: var(--vscode-input-foreground);
+	--color-input-background: var(--vscode-input-background);
+	--color-input-border: var(--vscode-input-border);
+	--color-input-placeholder: var(--vscode-input-placeholderForeground);
+	--color-input-error-background: var(--vscode-inputValidation-errorBackground, #a82424);
+	--color-input-error-foreground: var(--vscode-inputValidation-errorForeground, #8f1f1f);
+	--color-input-warning-background: var(--vscode-inputValidation-warningBackground, #663c00);
+	--color-input-warning-foreground: var(--vscode-inputValidation-warningForeground, #7e5100);
+	--color-selection: var(--vscode-list-activeSelectionBackground);
+	--color-selection-foreground: var(--vscode-list-activeSelectionForeground);
+	--color-selection-inactive: var(--vscode-editor-inactiveSelectionBackground);
+	--color-button-background: var(--vscode-button-background);
+	--color-button-hover: var(--vscode-button-hoverBackground);
+	--color-button-foreground: var(--vscode-button-foreground);
+	--color-button-separator: var(--vscode-button-separator);
+	--color-text-separator: var(--vscode-textSeparator-foreground, #424242);
+	--color-button-secondary-background: var(--vscode-button-secondaryBackground);
+	--color-button-secondary-background-hover: var(--vscode-button-secondaryHoverBackground);
+	--color-button-secondary-foreground: var(--vscode-button-secondaryForeground);
+	--color-muted: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 65%, transparent);
+	--color-muted-foreground: var(--vscode-editor-foldPlaceholderForeground);
+	--color-menu: var(--vscode-menu-background);
+	--color-menu-foreground: var(--vscode-menu-foreground);
+	--color-menu-border: var(--vscode-menu-border);
+	--color-menu-shadow: var(--vscode-menu-shadow);
+	--color-preformat: var(--vscode-textPreformat-foreground, #e74c3c);
+	--color-link: var(--vscode-textLink-foreground);
+	--color-link-hover: var(--vscode-textLink-activeForeground);
+	--color-list-hover: var(--vscode-list-hoverBackground);
+	--color-badge-foreground: var(--vscode-badge-foreground);
+	--color-badge-background: var(--vscode-badge-background);
+	--color-banner-background: var(--vscode-banner-background);
+	--color-banner-foreground: var(--vscode-banner-foreground);
+	--color-banner-icon: var(--vscode-banner-iconForeground);
+	--color-editor-match-highlight: var(--vscode-editor-findMatchHighlightBackground);
+	--color-icon-foreground: var(--vscode-icon-foreground);
+	--color-notification-foreground: var(--vscode-notificationsInfoIcon-foreground);
+	--color-toolbar-default: var(--vscode-toolbar-background);
+	--color-toolbar-hover: var(--vscode-toolbar-hoverBackground);
+	--color-diff-added: var(--vscode-diffEditor-insertedTextBackground);
+	--color-diff-removed: var(--vscode-diffEditor-removedTextBackground);
+	--color-error: var(--vscode-errorForeground);
+	--color-error-icon: var(--vscode-problemsErrorIcon-foreground);
+	--color-failed-icon: var(--vscode-testing-iconFailed);
+	--color-error: var(--vscode-errorForeground, #c42b2b);
+	--color-error-icon: var(--vscode-problemsErrorIcon-foreground, #c42b2b);
+	--color-description: var(--vscode-descriptionForeground);
+	--color-success: var(--vscode-charts-green);
+	--color-warning: var(--vscode-charts-yellow);
+	--font-base:
+		var(--vscode-font-family), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+		"Open Sans", "Helvetica Neue", sans-serif;
+	--font-mono:
+		var(--vscode-editor-font-family), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+		monospace;
+	--font-azeret-mono: Azeret Mono, monospace;
+	--font-editor: var(--vscode-editor-font-family);
+	--text-editor-size: var(--vscode-editor-font-size);
+	--text-2xl: calc(2.25 * var(--vscode-font-size));
+	--text-xl: calc(2 * var(--vscode-font-size));
+	--text-lg: calc(1.5 * var(--vscode-font-size));
+	--text-md: calc(1.25 * var(--vscode-font-size));
+	--text-base: var(--vscode-font-size, 14px);
+	--text-sm: calc(0.95 * var(--vscode-font-size));
+	--text-xs: calc(0.85 * var(--vscode-font-size));
+	--text-xxs: calc(0.5 * var(--vscode-font-size));
+	--breakpoint-xs: 400px;
+	--radius-half: 50%;
+	--radius-xs: 2px;
+	--breakpoint-xxs: 180px;
+
+	--animate-fade-in: fadeIn 0.4s ease-out forwards;
+	--animate-lumi-reading-reveal: lumiReadingReveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	@keyframes lumiReadingReveal {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 0.96;
+			transform: translateY(0);
+		}
+	}
+
+	--animate-cursor-blink: cursorBlink 1s ease-in-out infinite;
+	@keyframes cursorBlink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0;
+		}
+	}
+
+	--animate-icon-pulse: iconPulse 1s ease-in-out infinite;
+	@keyframes iconPulse {
+		0%,
+		100% {
+			opacity: 0.5;
+		}
+		50% {
+			opacity: 1;
+		}
+	}
+
+	--animate-shimmer: shimmer 5s infinite linear;
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	--animate-fade-slide-in: fadeSlideIn 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+	@keyframes fadeSlideIn {
+		from {
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	--animate-lumi-breathe: lumiBreathe 5s ease-in-out infinite;
+	--animate-lumi-breathe-slow: lumiBreathe 7s ease-in-out infinite;
+	--animate-lumi-breathe-rest: lumiBreatheRest 8.5s ease-in-out infinite;
+	@keyframes lumiBreathe {
+		0%,
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+		50% {
+			transform: scale(1.02);
+			opacity: 0.92;
+		}
+	}
+	@keyframes lumiBreatheRest {
+		0%,
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+		50% {
+			transform: scale(1.012);
+			opacity: 0.94;
+		}
+	}
+
+	--animate-lumi-blink: lumiBlink 5s ease-in-out infinite;
+	@keyframes lumiBlink {
+		0%,
+		42%,
+		58%,
+		100% {
+			opacity: 0.75;
+		}
+		50% {
+			opacity: 0.15;
+		}
+	}
+
+	--animate-lumi-dot-pulse: lumiDotPulse 1.4s ease-in-out infinite;
+	--animate-lumi-dot-pulse-slow: lumiDotPulse 3.2s ease-in-out infinite;
+	--animate-lumi-drift: lumiDrift 10s ease-in-out infinite;
+	--animate-lumi-glow-pulse: lumiGlowPulse 8s ease-in-out infinite;
+	--animate-lumi-settle: lumiSettle 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	--animate-lumi-reveal: lumiReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	@keyframes lumiSettle {
+		0% {
+			box-shadow: 0 0 0 rgba(122, 126, 184, 0);
+		}
+		40% {
+			box-shadow: var(--glow-lumi-soft);
+		}
+		100% {
+			box-shadow: 0 0 0 rgba(122, 126, 184, 0);
+		}
+	}
+	@keyframes lumiReveal {
+		from {
+			opacity: 0;
+			transform: translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	@keyframes lumiDrift {
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-1px);
+		}
+	}
+	@keyframes lumiGlowPulse {
+		0%,
+		100% {
+			opacity: 0.05;
+		}
+		50% {
+			opacity: 0.1;
+		}
+	}
+	@keyframes lumiDotPulse {
+		0%,
+		100% {
+			transform: translateY(0);
+			opacity: 0.25;
+		}
+		50% {
+			transform: translateY(-1px);
+			opacity: 0.55;
+		}
+	}
+
+	/* LUMI brand gradients & glow */
+	--gradient-lumi: linear-gradient(135deg, #7a7eb8 0%, #8ec4d4 100%);
+	--gradient-cola: var(--gradient-lumi);
+	--gradient-silver: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+	--shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 10px 15px -3px rgb(0 0 0 / 0.1);
+	--glow-lumi: 0 0 16px rgba(99, 102, 160, 0.12);
+	--glow-lumi-soft: 0 0 12px rgba(99, 102, 160, 0.07);
+	--glow-lumi-intense: 0 0 24px rgba(184, 181, 214, 0.2);
+	--glow-dietcode: var(--glow-lumi);
+	--glow-dietcode-intense: var(--glow-lumi-intense);
+}
+
+@theme inline {
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 65%, transparent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--size-1: calc(0.85 * var(--vscode-font-size));
+	--size-2: calc(1 * var(--vscode-font-size));
+	--size-3: calc(1.25 * var(--vscode-font-size));
+	--size-4: calc(1.5 * var(--vscode-font-size));
+	--size-5: calc(2 * var(--vscode-font-size));
+}
+
+:root {
+	--radius: 0.75rem;
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.145 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0 0);
+	--primary: oklch(0.205 0 0);
+	--primary-foreground: oklch(0.985 0 0);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.205 0 0);
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.556 0 0);
+	--accent: oklch(0.97 0 0);
+	--accent-foreground: oklch(0.205 0 0);
+	--destructive: oklch(0.577 0.245 27.325);
+	--border: oklch(0.922 0 0);
+	--input: oklch(0.922 0 0);
+	--ring: oklch(0.708 0 0);
+	--chart-1: oklch(0.646 0.222 41.116);
+	--chart-2: oklch(0.6 0.118 184.704);
+	--chart-3: oklch(0.398 0.07 227.392);
+	--chart-4: oklch(0.828 0.189 84.429);
+	--chart-5: oklch(0.769 0.188 70.08);
+	--sidebar: oklch(0.985 0 0);
+	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar-primary: oklch(0.205 0 0);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.97 0 0);
+	--sidebar-accent-foreground: oklch(0.205 0 0);
+	--sidebar-border: oklch(0.922 0 0);
+	--sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+	--background: oklch(0.145 0 0);
+	--foreground: oklch(0.985 0 0);
+	--card: oklch(0.205 0 0);
+	--card-foreground: oklch(0.985 0 0);
+	--popover: oklch(0.205 0 0);
+	--popover-foreground: oklch(0.985 0 0);
+	--primary: oklch(0.922 0 0);
+	--primary-foreground: oklch(0.205 0 0);
+	--secondary: oklch(0.269 0 0);
+	--secondary-foreground: oklch(0.985 0 0);
+	--muted: oklch(0.269 0 0);
+	--muted-foreground: oklch(0.708 0 0);
+	--accent: oklch(0.269 0 0);
+	--accent-foreground: oklch(0.985 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--border: oklch(1 0 0 / 10%);
+	--input: oklch(1 0 0 / 15%);
+	--ring: oklch(0.556 0 0);
+	--chart-1: oklch(0.488 0.243 264.376);
+	--chart-2: oklch(0.696 0.17 162.48);
+	--chart-3: oklch(0.769 0.188 70.08);
+	--chart-4: oklch(0.627 0.265 303.9);
+	--chart-5: oklch(0.645 0.246 16.439);
+	--sidebar: oklch(0.205 0 0);
+	--sidebar-foreground: oklch(0.985 0 0);
+	--sidebar-primary: oklch(0.488 0.243 264.376);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.269 0 0);
+	--sidebar-accent-foreground: oklch(0.985 0 0);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer utilities {
+	/**
+	 * Variant that becomes visible when focused
+	 * Useful for skip links and other keyboard navigation aids
+	 */
+	.sr-only-focusable:focus {
+		position: static;
+		width: auto;
+		height: auto;
+		padding: inherit;
+		margin: inherit;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+	}
+
+	@keyframes flash {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.animate-flash {
+		animation: flash 1.5s ease-in-out infinite;
+	}
+
+	.inline-markdown-block {
+		@apply text-base text-foreground font-base;
+
+		pre {
+			@apply bg-code rounded-xs overflow-x-auto overflow-y-hidden;
+			margin: 13px 0;
+			padding: 10px 10px;
+			max-width: calc(100vw - 20px);
+			padding-right: 70px;
+		}
+
+		pre > code .hljs-deletion {
+			@apply inline-block w-full bg-diff-removed;
+		}
+
+		pre > code .hljs-addition {
+			@apply inline-block w-full bg-diff-added;
+		}
+
+		code span.line:empty {
+			@apply hidden;
+		}
+		code {
+			@apply break-words rounded-xs;
+		}
+		p,
+		li,
+		ol,
+		ul {
+			@apply leading-tight;
+		}
+		hr,
+		ul,
+		ol {
+			@apply my-3 ml-5;
+		}
+		li > ul,
+		li > ol {
+			@apply my-1 ml-2;
+		}
+		table {
+			@apply border-collapse w-full my-3;
+		}
+		th,
+		td {
+			@apply p-2 border border-border-panel text-left;
+		}
+		th {
+			@apply bg-code/20 font-semibold;
+		}
+		tr:nth-child(even) {
+			@apply bg-list-hover;
+		}
+		del {
+			@apply line-through opacity-70;
+		}
+
+		code:not(pre > code) {
+			@apply font-mono text-preformat bg-code-block-background border border-text-separator rounded-xs py-0.5 whitespace-pre-line break-words text-editor-size;
+		}
+
+		/* Inline cursor container - adds blinking cursor after last child */
+		.inline-cursor-container > :last-child::after {
+			content: "";
+			@apply inline-block w-0.5 h-[1em] ml-0.5 bg-foreground align-text-bottom animate-cursor-blink;
+		}
+	}
+}

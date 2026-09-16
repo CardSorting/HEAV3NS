@@ -5,11 +5,6 @@
  * reasoning tag suppression metrics, and multi-session holdback states (Phase 137 / ADR-113 / Target #77).
  */
 
-import type {
-  StreamingScrubberHealthAuditReport,
-  StreamingScrubberMetricsReport,
-  StreamingScrubberEventRow,
-} from "../../core/contracts/streaming-think-scrubber.contracts.js";
 import { BroccoliStreamingScrubberSubstrate } from "../../sessions/extensions/streaming_scrubber/broccoli-streaming-scrubber-substrate.js";
 import { DeterministicStreamingScrubberEngine } from "../../agents/extensions/streaming_scrubber/deterministic-streaming-scrubber-engine.js";
 

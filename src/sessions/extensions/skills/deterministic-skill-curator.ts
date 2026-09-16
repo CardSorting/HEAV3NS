@@ -1,7 +1,6 @@
 import type {
   IDeterministicSkillCurator,
   IBroccoliSkillTreeSubstrate,
-  SkillNodeManifest,
   SkillPruningRecommendation,
 } from "../../../core/contracts/skills.contracts.js";
 

@@ -6,7 +6,6 @@
  */
 
 import type {
-  AccountStatus,
   BillingAccountInfo,
   BillingAccountRow,
   BillingAuditRow,

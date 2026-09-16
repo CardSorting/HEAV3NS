@@ -5,11 +5,6 @@
  * non-conforming property renamings, and LLM grammar firewall status (Phase 139 / ADR-115 / Target #80).
  */
 
-import type {
-  SchemaSanitizerHealthAuditReport,
-  SchemaSanitizerMetricsReport,
-  SchemaSanitizationEventRow,
-} from "../../core/contracts/schema-sanitizer.contracts.js";
 import { BroccoliSchemaSanitizerSubstrate } from "../../sessions/extensions/schema_sanitizer/broccoli-schema-sanitizer-substrate.js";
 import { DeterministicSchemaSanitizerEngine } from "../../agents/extensions/schema_sanitizer/deterministic-schema-sanitizer-engine.js";
 

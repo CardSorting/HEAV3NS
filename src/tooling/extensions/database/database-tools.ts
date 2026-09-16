@@ -16,7 +16,6 @@ import type { BroccoliDatabaseKernel } from "../../../sessions/extensions/substr
 import { BroccoliNaturalQueryParser } from "../../../sessions/extensions/substrate/broccolidb-natural-query.js";
 import type {
   DbAggregateQuery,
-  DbJoinOptions,
   MergeResolutionStrategy,
 } from "../../../core/contracts/broccolidb.contracts.js";
 

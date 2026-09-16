@@ -13,7 +13,6 @@ import {
   type UrlSafetyCheckResult,
   type UrlSafetyConfig,
   type UrlSafetyMetrics,
-  type UrlSafetyVerdict,
 } from "../../../core/contracts/url-safety.contracts.js";
 
 export class DeterministicUrlSafety {

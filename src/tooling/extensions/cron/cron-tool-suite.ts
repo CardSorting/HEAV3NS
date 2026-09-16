@@ -1,8 +1,6 @@
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 import type {
-  AutomationBlueprint,
   CronGroupBy,
-  CronJobManifest,
   CronJobStatus,
   CronScheduleType,
   CronSortBy,

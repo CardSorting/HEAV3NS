@@ -1,3 +1,5 @@
+import { Logger } from "../../../shared/services/Logger.js";
+
 export interface ModelResolutionMetrics {
   totalTurns: number;
   totalTokensEstimated: number;
@@ -153,7 +155,7 @@ export class ModelResolver {
     const nextIndex = (this.fallbackCount - 1) % this.fallbackModels.length;
     this.currentActiveModel = this.fallbackModels[nextIndex];
     if (reason) {
-      console.warn(`[ModelResolver] Fallback triggered to '${this.currentActiveModel}': ${reason}`);
+      Logger.warn(`[ModelResolver] Fallback triggered to '${this.currentActiveModel}': ${reason}`);
     }
     return this.currentActiveModel;
   }

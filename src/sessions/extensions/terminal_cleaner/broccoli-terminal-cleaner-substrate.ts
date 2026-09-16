@@ -16,7 +16,6 @@ import type {
   TerminalCleanerGroupedLane,
   TerminalCleanerHealthAuditReport,
   TerminalCleanerHealthStatus,
-  TerminalCleanerMetrics,
   TerminalCleanerMetricsReport,
   TerminalCleanerMutationUndoRecord,
   TerminalCleanerSortBy,

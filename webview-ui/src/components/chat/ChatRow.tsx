@@ -1,0 +1,1376 @@
+import { isAdvisoryAuditInfoMessage } from "@shared/audit/auditMessages"
+import { COMMAND_OUTPUT_STRING } from "@shared/combineCommandSequences"
+import { projectMessageForWebview } from "@shared/diagnostics/webviewDiagnostics"
+import {
+	COMPLETION_RESULT_CHANGES_FLAG,
+	DietCodeApiReqInfo,
+	DietCodeAskQuestion,
+	DietCodeAskUseMcpServer,
+	DietCodeMessage,
+	DietCodePlanModeResponse,
+	DietCodeSayGenerateExplanation,
+	DietCodeSayTool,
+} from "@shared/ExtensionMessage"
+import { parseGuidedSpecOutput } from "@shared/guidedSpec/parser"
+import type { DecisionOption } from "@shared/guidedSpec/types"
+import { StringRequest } from "@shared/proto/dietcode/common"
+import { Mode } from "@shared/storage/types"
+import deepEqual from "fast-deep-equal"
+import { MouseEvent, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useSize } from "react-use"
+import { ActionCheckboxes } from "@/components/chat/ActionCheckboxes"
+import { GuidedSpecCard } from "@/components/chat/GuidedSpecCard"
+import { OptionsButtons } from "@/components/chat/OptionsButtons"
+import { CheckmarkControl } from "@/components/common/CheckmarkControl"
+import { WithCopyButton } from "@/components/common/CopyButton"
+import { LumiProgressIndicator } from "@/components/common/LumiProgressIndicator"
+import McpResourceRow from "@/components/mcp/chat-display/McpResourceRow"
+import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay"
+import McpToolRow from "@/components/mcp/chat-display/McpToolRow"
+import { Icon } from "@/components/ui/icons"
+import { useExtensionState } from "@/context/ExtensionStateContext"
+import { APPROVAL, pickRecoveryLine, pickStuckLine } from "@/copy/lumiVoice"
+import { cn } from "@/lib/utils"
+import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
+import { findMatchingResourceOrTemplate, getMcpServerDisplayName } from "@/utils/mcp"
+import CodeAccordian, { cleanPathPrefix } from "../common/CodeAccordian"
+import { AlignmentGuard } from "./AlignmentGuard"
+import { AuditAdvisoryRow } from "./AuditAdvisoryRow"
+import { ClarificationHub } from "./ClarificationHub"
+import { CommandOutputContent, CommandOutputRow } from "./CommandOutputRow"
+import { CompletionOutputRow } from "./CompletionOutputRow"
+import { DiffEditRow } from "./DiffEditRow"
+import ErrorRow from "./ErrorRow"
+import { GroundingHeader } from "./GroundingHeader"
+import HookMessage from "./HookMessage"
+import { IntentDecomposition } from "./IntentDecomposition"
+import { MarkdownRow } from "./MarkdownRow"
+import NewTaskPreview from "./NewTaskPreview"
+import { OutcomeMapper } from "./OutcomeMapper"
+import PlanCompletionOutputRow from "./PlanCompletionOutputRow"
+import { RedTeamAlerts } from "./RedTeamAlerts"
+import ReportBugPreview from "./ReportBugPreview"
+import { RequestStartRow } from "./RequestStartRow"
+import SearchResultsDisplay from "./SearchResultsDisplay"
+import SubagentStatusRow from "./SubagentStatusRow"
+import { ThinkingRow } from "./ThinkingRow"
+import UserMessage from "./UserMessage"
+
+const HEADER_CLASSNAMES = "flex items-center gap-2.5 mb-3"
+const ASK_PANEL_CLASSNAMES = "rounded-lg border border-description/10 bg-black/[0.02] dark:bg-white/[0.03] p-3.5 mb-1"
+
+interface ChatRowProps {
+	message: DietCodeMessage
+	isExpanded: boolean
+	onToggleExpand: (ts: number) => void
+	lastModifiedMessage?: DietCodeMessage
+	isLast: boolean
+	onHeightChange: (isTaller: boolean) => void
+	inputValue?: string
+	sendMessageFromChatRow?: (text: string, images: string[], files: string[]) => void
+	onPendingQuoteChange: (text: string | null) => void
+	onCancelCommand?: () => void
+	mode?: Mode
+	reasoningContent?: string
+	isRequestInProgress?: boolean
+}
+
+interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange"> {}
+
+export const ProgressIndicator = LumiProgressIndicator
+const InvisibleSpacer = () => <div aria-hidden className="h-px" />
+
+const ChatRow = memo(
+	(props: ChatRowProps) => {
+		const { isLast, onHeightChange } = props
+		const { showInternalDiagnostics } = useExtensionState()
+		const projectedMessage = useMemo(
+			() => projectMessageForWebview(props.message, { showInternalDiagnostics: showInternalDiagnostics === true }),
+			[props.message, showInternalDiagnostics],
+		)
+		const projectedLastModifiedMessage = useMemo(
+			() =>
+				props.lastModifiedMessage
+					? projectMessageForWebview(props.lastModifiedMessage, {
+							showInternalDiagnostics: showInternalDiagnostics === true,
+						})
+					: undefined,
+			[props.lastModifiedMessage, showInternalDiagnostics],
+		)
+		// Store the previous height to compare with the current height
+		// This allows us to detect changes without causing re-renders
+		const prevHeightRef = useRef(0)
+
+		const [chatrow, { height }] = useSize(
+			<div
+				className="relative"
+				style={{
+					paddingLeft: "var(--lumi-row-px, 16px)",
+					paddingRight: "var(--lumi-row-px, 16px)",
+					paddingTop: "var(--lumi-row-pt, 16px)",
+				}}>
+				<ChatRowContent {...props} lastModifiedMessage={projectedLastModifiedMessage} message={projectedMessage} />
+			</div>,
+		)
+
+		useEffect(() => {
+			// used for partials command output etc.
+			// NOTE: it's important we don't distinguish between partial or complete here since our scroll effects in chatview need to handle height change during partial -> complete
+			const isInitialRender = prevHeightRef.current === 0 // prevents scrolling when new element is added since we already scroll for that
+			// height starts off at Infinity
+			if (isLast && height !== 0 && height !== Number.POSITIVE_INFINITY && height !== prevHeightRef.current) {
+				if (!isInitialRender) {
+					onHeightChange(height > prevHeightRef.current)
+				}
+				prevHeightRef.current = height
+			}
+		}, [height, isLast, onHeightChange])
+
+		// we cannot return null as virtuoso does not support it so we use a separate visibleMessages array to filter out messages that should not be rendered
+		return chatrow
+	},
+	// memo does shallow comparison of props, so we need to do deep comparison of arrays/objects whose properties might change
+	deepEqual,
+)
+
+export default ChatRow
+
+export const ChatRowContent = memo(
+	({
+		message,
+		isExpanded,
+		onToggleExpand,
+		lastModifiedMessage,
+		isLast,
+		inputValue,
+		sendMessageFromChatRow,
+		onPendingQuoteChange,
+		onCancelCommand,
+		mode,
+		isRequestInProgress,
+		reasoningContent,
+	}: ChatRowContentProps) => {
+		const { backgroundEditEnabled, mcpServers, mcpMarketplaceCatalog, onRelinquishControl, showInternalDiagnostics } =
+			useExtensionState()
+		const [seeNewChangesDisabled, setSeeNewChangesDisabled] = useState(false)
+		const [explainChangesDisabled, setExplainChangesDisabled] = useState(false)
+		const contentRef = useRef<HTMLDivElement>(null)
+
+		const initialActions = useMemo(() => {
+			if (message.ask === "followup") {
+				try {
+					const parsed = JSON.parse(message.text || "{}") as DietCodeAskQuestion
+					return parsed.actions?.filter((a) => a.isChecked).map((a) => a.id) || []
+				} catch {
+					return []
+				}
+			}
+			return []
+		}, [message.ask, message.text])
+
+		const [selectedActions, setSelectedActions] = useState<string[]>(initialActions)
+
+		// Command output expansion state (for all messages, but only used by command messages)
+		const [isOutputFullyExpanded, setIsOutputFullyExpanded] = useState(false)
+		const prevCommandExecutingRef = useRef<boolean>(false)
+
+		const hasAutoExpandedRef = useRef(false)
+		const hasAutoCollapsedRef = useRef(false)
+		const prevIsLastRef = useRef(isLast)
+
+		// Auto-expand completion output when it's the last message (runs once per message)
+		useEffect(() => {
+			const isCompletionResult = message.ask === "completion_result" || message.say === "completion_result"
+
+			// Auto-expand if it's last and we haven't already auto-expanded
+			if (isLast && isCompletionResult && !hasAutoExpandedRef.current) {
+				hasAutoExpandedRef.current = true
+				hasAutoCollapsedRef.current = false // Reset the auto-collapse flag when expanding
+			}
+		}, [isLast, message.ask, message.say])
+
+		// Auto-collapse completion output ONCE when transitioning from last to not-last
+		useEffect(() => {
+			const isCompletionResult = message.ask === "completion_result" || message.say === "completion_result"
+			const wasLast = prevIsLastRef.current
+
+			// Only auto-collapse if transitioning from last to not-last, and we haven't already auto-collapsed
+			if (wasLast && !isLast && isCompletionResult && !hasAutoCollapsedRef.current) {
+				hasAutoCollapsedRef.current = true
+				hasAutoExpandedRef.current = false // Reset the auto-expand flag when collapsing
+			}
+
+			prevIsLastRef.current = isLast
+		}, [isLast, message.ask, message.say])
+
+		const [cost, _apiReqCancelReason, apiReqStreamingFailedMessage] = useMemo(() => {
+			if (message.text != null && message.say === "api_req_started") {
+				const info: DietCodeApiReqInfo = JSON.parse(message.text)
+				return [info.cost, info.cancelReason, info.streamingFailedMessage, info.retryStatus]
+			}
+			return [undefined, undefined, undefined, undefined, undefined]
+		}, [message.text, message.say])
+
+		// when resuming task last won't be api_req_failed but a resume_task message so api_req_started will show loading spinner. that's why we just remove the last api_req_started that failed without streaming anything
+		const apiRequestFailedMessage =
+			isLast && lastModifiedMessage?.ask === "api_req_failed" // if request is retried then the latest message is a api_req_retried
+				? lastModifiedMessage?.text
+				: undefined
+
+		const type = message.type === "ask" ? message.ask : message.say
+
+		const isCommandMessage = type === "command"
+		// Check if command has output to determine if it's actually executing
+		const commandHasOutput = message.text?.includes(COMMAND_OUTPUT_STRING) ?? false
+		// A command is executing if it has output but hasn't completed yet
+		const isCommandExecuting = isCommandMessage && !message.commandCompleted && commandHasOutput
+		// A command is pending if it hasn't started (no output) and hasn't completed
+		const isCommandPending = isCommandMessage && isLast && !message.commandCompleted && !commandHasOutput
+		const isCommandCompleted = isCommandMessage && message.commandCompleted === true
+
+		const isMcpServerResponding = isLast && lastModifiedMessage?.say === "mcp_server_request_started"
+
+		const handleToggle = useCallback(() => {
+			onToggleExpand(message.ts)
+		}, [onToggleExpand, message.ts])
+
+		// Use the onRelinquishControl hook instead of message event
+		useEffect(() => {
+			return onRelinquishControl(() => {
+				setSeeNewChangesDisabled(false)
+				setExplainChangesDisabled(false)
+			})
+		}, [onRelinquishControl])
+
+		const handleMouseUp = useCallback(
+			(event: MouseEvent<HTMLDivElement>) => {
+				const targetElement = event.target as Element
+				const isClickOnQuoteBar = !!targetElement.closest(".quote-selection-bar")
+
+				setTimeout(() => {
+					const selection = window.getSelection()
+					const selectedText = selection?.toString().trim() ?? ""
+
+					if (selectedText && contentRef.current && selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+						const range = selection.getRangeAt(0)
+						const rangeRect = range.getBoundingClientRect()
+						const containerRect = contentRef.current?.getBoundingClientRect()
+
+						if (containerRect) {
+							const tolerance = 5
+							const isSelectionWithin =
+								rangeRect.top >= containerRect.top &&
+								rangeRect.left >= containerRect.left &&
+								rangeRect.bottom <= containerRect.bottom + tolerance &&
+								rangeRect.right <= containerRect.right
+
+							if (isSelectionWithin) {
+								onPendingQuoteChange(selectedText)
+								return
+							}
+						}
+					}
+
+					if (!isClickOnQuoteBar) {
+						onPendingQuoteChange(null)
+					}
+				}, 0)
+			},
+			[onPendingQuoteChange],
+		)
+
+		const [icon, title] = useMemo(() => {
+			switch (type) {
+				case "error":
+					return [
+						<Icon className="text-description/70 mb-[-1.5px]" key="error-icon" name="error" />,
+						<span className="text-foreground/90 font-medium text-sm" key="error-title">
+							That didn't quite work
+						</span>,
+					]
+				case "mistake_limit_reached":
+					return [
+						<Icon className="text-description/60 size-2" key="mistake-icon" name="CircleXIcon" />,
+						<span className="text-foreground font-medium text-sm" key="mistake-title">
+							{pickStuckLine(message.ts)}
+						</span>,
+					]
+				case "command":
+					return [
+						<Icon className="text-foreground size-2" key="command-icon" name="TerminalIcon" />,
+						<span className="font-medium text-foreground text-sm" key="command-title">
+							{message.type === "ask"
+								? APPROVAL.command
+								: isCommandExecuting
+									? "Trying that in the terminal…"
+									: isCommandCompleted
+										? "I tried that in the terminal."
+										: "Running a command…"}
+						</span>,
+					]
+				case "use_mcp_server":
+					const mcpServerUse = JSON.parse(message.text || "{}") as DietCodeAskUseMcpServer
+					return [
+						isMcpServerResponding ? (
+							<ProgressIndicator key="mcp-progress" />
+						) : (
+							<Icon className="text-foreground mb-[-1.5px]" key="mcp-icon" name="server" />
+						),
+						<span className="ph-no-capture font-medium text-foreground break-words text-sm" key="mcp-title">
+							{APPROVAL.mcpPrefix}{" "}
+							<code className="break-all text-xs">
+								{getMcpServerDisplayName(mcpServerUse.serverName, mcpMarketplaceCatalog)}
+							</code>
+							:
+						</span>,
+					]
+				case "completion_result":
+					return [
+						<Icon className="text-success/80 mb-[-1.5px]" key="completion-icon" name="check" />,
+						<span className="text-success/80 font-medium text-sm" key="completion-title">
+							All done.
+						</span>,
+					]
+				case "api_req_started":
+					// API request rows no longer render the request payload/cost accordion.
+					// Thinking/reasoning is handled directly in the api_req_started renderer below.
+					return [null, null]
+				case "followup":
+					return [
+						<Icon className="text-foreground mb-[-1.5px]" key="followup-icon" name="question" />,
+						<span className="font-medium text-foreground text-sm" key="followup-title">
+							A question
+						</span>,
+					]
+				default:
+					return [null, null]
+			}
+		}, [
+			type,
+			isMcpServerResponding,
+			message.text,
+			mcpMarketplaceCatalog,
+			message.type,
+			isCommandExecuting,
+			isCommandCompleted,
+			message.ts,
+		])
+
+		const tool = useMemo(() => {
+			if (message.ask === "tool" || message.say === "tool") {
+				return JSON.parse(message.text || "{}") as DietCodeSayTool
+			}
+			return null
+		}, [message.ask, message.say, message.text])
+
+		const conditionalRulesInfo = useMemo(() => {
+			if (message.say !== "conditional_rules_applied" || !message.text) return null
+			try {
+				const parsed = JSON.parse(message.text) as unknown
+				if (!parsed || typeof parsed !== "object" || !("rules" in parsed) || !Array.isArray(parsed.rules)) {
+					return null
+				}
+				return parsed as {
+					rules: Array<{ name: string; matchedConditions: Record<string, string[]> }>
+				}
+			} catch {
+				return null
+			}
+		}, [message.say, message.text])
+
+		// Helper function to check if file is an image
+		const isImageFile = (filePath: string): boolean => {
+			const imageExtensions = [".png", ".jpg", ".jpeg", ".webp"]
+			const extension = filePath.toLowerCase().split(".").pop()
+			return extension ? imageExtensions.includes(`.${extension}`) : false
+		}
+
+		if (conditionalRulesInfo) {
+			const names = conditionalRulesInfo.rules.map((r: { name: string }) => r.name).join(", ")
+			return (
+				<div className={HEADER_CLASSNAMES}>
+					<span style={{ fontWeight: "bold" }}>Conditional rules applied:</span>
+					<span className="ph-no-capture break-words whitespace-pre-wrap">{names}</span>
+				</div>
+			)
+		}
+
+		if (tool) {
+			const colorMap = {
+				red: "var(--vscode-errorForeground)",
+				yellow: "var(--vscode-editorWarning-foreground)",
+				green: "var(--vscode-charts-green)",
+			}
+			const toolIcon = (name: string, color?: string, rotation?: number, title?: string) => (
+				<Icon
+					className="ph-no-capture"
+					name={name}
+					style={{
+						color: color ? colorMap[color as keyof typeof colorMap] || color : "var(--vscode-foreground)",
+						marginBottom: "-1.5px",
+						transform: rotation ? `rotate(${rotation}deg)` : undefined,
+					}}
+					title={title}
+				/>
+			)
+
+			switch (tool.tool) {
+				case "editedExistingFile":
+					const content = tool?.content || ""
+					const isApplyingPatch = content?.startsWith("%%bash") && !content.endsWith("*** End Patch\nEOF")
+					const editToolTitle = isApplyingPatch
+						? "Updating this file for you…"
+						: message.type === "ask"
+							? APPROVAL.editFile
+							: "I updated this file:"
+					return (
+						<div className={message.type === "ask" ? ASK_PANEL_CLASSNAMES : undefined}>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="PencilIcon" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span style={{ fontWeight: "bold" }}>{editToolTitle}</span>
+							</div>
+							{backgroundEditEnabled && tool.path && tool.content ? (
+								<DiffEditRow
+									isLoading={message.partial}
+									patch={tool.content}
+									path={tool.path}
+									startLineNumbers={tool.startLineNumbers}
+								/>
+							) : (
+								<CodeAccordian
+									// isLoading={message.partial}
+									code={tool.content}
+									isExpanded={isExpanded}
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							)}
+						</div>
+					)
+				case "fileDeleted":
+					return (
+						<div className={message.type === "ask" ? ASK_PANEL_CLASSNAMES : undefined}>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="SquareMinusIcon" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span style={{ fontWeight: "500" }}>
+									{message.type === "ask" ? APPROVAL.deleteFile : "I removed that file."}
+								</span>
+							</div>
+							<CodeAccordian
+								// isLoading={message.partial}
+								code={tool.content}
+								isExpanded={isExpanded}
+								onToggleExpand={handleToggle}
+								path={tool.path!}
+							/>
+						</div>
+					)
+				case "newFileCreated":
+					return (
+						<div className={message.type === "ask" ? ASK_PANEL_CLASSNAMES : undefined}>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="FilePlus2Icon" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span className="font-medium">
+									{message.type === "ask" ? APPROVAL.newFile : "I added this file for you."}
+								</span>
+							</div>
+							{backgroundEditEnabled && tool.path && tool.content ? (
+								<DiffEditRow patch={tool.content} path={tool.path} startLineNumbers={tool.startLineNumbers} />
+							) : (
+								<CodeAccordian
+									code={tool.content!}
+									isExpanded={isExpanded}
+									isLoading={message.partial}
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							)}
+						</div>
+					)
+				case "readFile":
+					const isImage = isImageFile(tool.path || "")
+					return (
+						<div className={message.type === "ask" ? ASK_PANEL_CLASSNAMES : undefined}>
+							<div className={HEADER_CLASSNAMES}>
+								{isImage ? (
+									<Icon className="size-2" name="ImageUpIcon" />
+								) : (
+									<Icon className="size-2" name="FileCode2Icon" />
+								)}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span className="font-medium">
+									{message.type === "ask" ? APPROVAL.readFile : "I looked at this file."}
+								</span>
+							</div>
+							<div className="bg-code rounded-sm overflow-hidden border border-editor-group-border">
+								<div
+									className={cn("text-description flex items-center cursor-pointer select-none py-2 px-2.5", {
+										"cursor-default select-text": isImage,
+									})}
+									onClick={() => {
+										if (!isImage) {
+											FileServiceClient.openFile(StringRequest.create({ value: tool.content })).catch(
+												(err) => console.error("Failed to open file:", err),
+											)
+										}
+									}}>
+									{tool.path?.startsWith(".") && <span>.</span>}
+									{tool.path && !tool.path.startsWith(".") && <span>/</span>}
+									<span className="ph-no-capture whitespace-nowrap overflow-hidden text-ellipsis mr-2 text-left [direction: rtl]">
+										{`${cleanPathPrefix(tool.path ?? "")}\u200E`}
+									</span>
+									<div className="grow" />
+									{!isImage && <Icon className="size-2" name="SquareArrowOutUpRightIcon" />}
+								</div>
+							</div>
+						</div>
+					)
+				case "listFilesTopLevel":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("folder-opened")}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
+								<span style={{ fontWeight: "500" }}>
+									{message.type === "ask" ? APPROVAL.listFiles : "I peeked at the files here."}
+								</span>
+							</div>
+							<CodeAccordian
+								code={tool.content!}
+								isExpanded={isExpanded}
+								language="shell-session"
+								onToggleExpand={handleToggle}
+								path={tool.path!}
+							/>
+						</div>
+					)
+				case "listFilesRecursive":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("folder-opened")}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
+								<span style={{ fontWeight: "500" }}>
+									{message.type === "ask" ? APPROVAL.listRecursive : "I took a quick look through the files."}
+								</span>
+							</div>
+							<CodeAccordian
+								code={tool.content!}
+								isExpanded={isExpanded}
+								language="shell-session"
+								onToggleExpand={handleToggle}
+								path={tool.path!}
+							/>
+						</div>
+					)
+				case "listCodeDefinitionNames":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("file-code")}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span style={{ fontWeight: "500" }}>
+									{message.type === "ask" ? APPROVAL.definitions : "I checked the definitions in this folder."}
+								</span>
+							</div>
+							<CodeAccordian
+								code={tool.content!}
+								isExpanded={isExpanded}
+								onToggleExpand={handleToggle}
+								path={tool.path!}
+							/>
+						</div>
+					)
+				case "searchFiles":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("search")}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
+								<span className="font-medium">
+									{message.type === "ask" ? (
+										<>
+											{APPROVAL.searchPrefix} <code className="break-all">{tool.regex}</code>?
+										</>
+									) : (
+										<>Here's what I found in this folder.</>
+									)}
+								</span>
+							</div>
+							<SearchResultsDisplay
+								content={tool.content!}
+								filePattern={tool.filePattern}
+								isExpanded={isExpanded}
+								onToggleExpand={handleToggle}
+								path={tool.path!}
+							/>
+						</div>
+					)
+				case "summarizeTask":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="FoldVerticalIcon" />
+								<span className="font-medium">I tidied up our chat.</span>
+							</div>
+							<div className="bg-code overflow-hidden border border-editor-group-border rounded-[3px]">
+								<div
+									aria-label={isExpanded ? "Collapse summary" : "Expand summary"}
+									className="text-description py-2 px-2.5 cursor-pointer select-none"
+									onClick={handleToggle}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault()
+											e.stopPropagation()
+											handleToggle()
+										}
+									}}>
+									{isExpanded ? (
+										<div>
+											<div className="flex items-center mb-2">
+												<span className="font-medium mr-1">Summary</span>
+												<div className="grow" />
+												<Icon className="my-0.5 shrink-0 size-4" name="ChevronDownIcon" />
+											</div>
+											<span className="ph-no-capture break-words whitespace-pre-wrap">{tool.content}</span>
+										</div>
+									) : (
+										<div className="flex items-center">
+											<span className="ph-no-capture whitespace-nowrap overflow-hidden text-ellipsis text-left flex-1 mr-2 [direction:rtl]">
+												{`${tool.content}\u200E`}
+											</span>
+											<Icon className="my-0.5 shrink-0 size-4" name="ChevronRightIcon" />
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+					)
+				case "webFetch":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="Link2Icon" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This URL is external")}
+								<span className="font-medium">
+									{message.type === "ask" ? APPROVAL.webFetch : "Here's what I found on that page."}
+								</span>
+							</div>
+							<div
+								className="bg-code rounded-xs overflow-hidden border border-editor-group-border py-2 px-2.5 cursor-pointer select-none"
+								onClick={() => {
+									// Open the URL in the default browser using gRPC
+									if (tool.path) {
+										UiServiceClient.openUrl(StringRequest.create({ value: tool.path })).catch((err) => {
+											console.error("Failed to open URL:", err)
+										})
+									}
+								}}>
+								<span className="ph-no-capture whitespace-nowrap overflow-hidden text-ellipsis mr-2 [direction:rtl] text-left text-link underline">
+									{`${tool.path}\u200E`}
+								</span>
+							</div>
+						</div>
+					)
+				case "webSearch":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2 rotate-90" name="SearchIcon" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This search is external")}
+								<span className="font-medium">
+									{message.type === "ask" ? APPROVAL.webSearch : "Here's what turned up:"}
+								</span>
+							</div>
+							<div className="bg-code border border-editor-group-border overflow-hidden rounded-xs select-text py-[9px] px-2.5">
+								<span className="ph-no-capture whitespace-nowrap overflow-hidden text-ellipsis mr-2 text-left [direction:rtl]">
+									{`${tool.path}\u200E`}
+								</span>
+							</div>
+						</div>
+					)
+				case "useSkill":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								<Icon className="size-2" name="LightbulbIcon" />
+								<span className="font-medium">Found a skill:</span>
+							</div>
+							<div className="bg-code border border-editor-group-border overflow-hidden rounded-xs py-[9px] px-2.5">
+								<span className="ph-no-capture font-medium">{tool.path}</span>
+							</div>
+						</div>
+					)
+				default:
+					return <InvisibleSpacer />
+			}
+		}
+
+		// Reset output expansion state when command stops (completes or is cancelled)
+		useEffect(() => {
+			// If command was executing and now isn't, clean up
+			if (isCommandMessage && prevCommandExecutingRef.current && !isCommandExecuting) {
+				setIsOutputFullyExpanded(false)
+			}
+
+			// Update ref for next render
+			prevCommandExecutingRef.current = isCommandExecuting
+		}, [isCommandMessage, isCommandExecuting])
+
+		// Auto-expand when command starts executing (only if running > 500ms)
+		useEffect(() => {
+			if (isCommandMessage && isCommandExecuting && !isExpanded) {
+				// Wait 500ms before auto-expanding to avoid animating fast commands
+				const timer = setTimeout(() => {
+					// Expand after 500ms
+					onToggleExpand(message.ts)
+				}, 500)
+
+				return () => clearTimeout(timer)
+			}
+		}, [isCommandMessage, isCommandExecuting, isExpanded, onToggleExpand, message.ts])
+
+		if (message.ask === "command" || message.say === "command") {
+			return (
+				<CommandOutputRow
+					icon={icon}
+					isBackgroundExec={false}
+					isCommandCompleted={isCommandCompleted}
+					isCommandExecuting={isCommandExecuting}
+					isCommandPending={isCommandPending}
+					isOutputFullyExpanded={isOutputFullyExpanded}
+					message={message}
+					onCancelCommand={onCancelCommand}
+					setIsOutputFullyExpanded={setIsOutputFullyExpanded}
+					title={title}
+				/>
+			)
+		}
+
+		if (message.ask === "use_subagents" || message.say === "use_subagents") {
+			return <SubagentStatusRow isLast={isLast} lastModifiedMessage={lastModifiedMessage} message={message} />
+		}
+
+		if (message.ask === "use_mcp_server" || message.say === "use_mcp_server") {
+			const useMcpServer = JSON.parse(message.text || "{}") as DietCodeAskUseMcpServer
+			const server = mcpServers.find((server) => server.name === useMcpServer.serverName)
+			return (
+				<div>
+					<div className={HEADER_CLASSNAMES}>
+						{icon}
+						{title}
+					</div>
+
+					<div className="bg-code rounded-xs py-2 px-2.5 mt-2">
+						{useMcpServer.type === "access_mcp_resource" && (
+							<McpResourceRow
+								item={{
+									...(findMatchingResourceOrTemplate(
+										useMcpServer.uri || "",
+										server?.resources,
+										server?.resourceTemplates,
+									) || {
+										name: "",
+										mimeType: "",
+										description: "",
+									}),
+									uri: useMcpServer.uri || "",
+								}}
+							/>
+						)}
+
+						{useMcpServer.type === "use_mcp_tool" && (
+							<div>
+								<div onClick={(e) => e.stopPropagation()}>
+									<McpToolRow
+										serverName={useMcpServer.serverName}
+										tool={{
+											name: useMcpServer.toolName || "",
+											description:
+												server?.tools?.find((tool) => tool.name === useMcpServer.toolName)?.description ||
+												"",
+											autoApprove:
+												server?.tools?.find((tool) => tool.name === useMcpServer.toolName)?.autoApprove ||
+												false,
+										}}
+									/>
+								</div>
+								{useMcpServer.arguments && useMcpServer.arguments !== "{}" && (
+									<div className="mt-2">
+										<div className="mb-1 text-[10px] font-medium text-muted-foreground">Details</div>
+										<CodeAccordian
+											code={useMcpServer.arguments}
+											isExpanded={true}
+											language="json"
+											onToggleExpand={handleToggle}
+										/>
+									</div>
+								)}
+							</div>
+						)}
+					</div>
+				</div>
+			)
+		}
+
+		switch (message.type) {
+			case "say":
+				switch (message.say) {
+					case "api_req_started":
+						return (
+							<RequestStartRow
+								apiReqStreamingFailedMessage={apiReqStreamingFailedMessage}
+								apiRequestFailedMessage={apiRequestFailedMessage}
+								cost={cost}
+								handleToggle={handleToggle}
+								isExpanded={isExpanded}
+								message={message}
+								reasoningContent={reasoningContent}
+							/>
+						)
+					case "api_req_finished":
+						return <InvisibleSpacer /> // we should never see this message type
+					case "mcp_server_response":
+						return <McpResponseDisplay responseText={message.text || ""} />
+					case "info":
+						if (message.auditMetadata?.gate_blocked) {
+							return (
+								<AuditAdvisoryRow
+									auditMetadata={message.auditMetadata}
+									messageTs={message.ts}
+									text={message.text}
+								/>
+							)
+						}
+						if (isAdvisoryAuditInfoMessage(message) && message.auditMetadata) {
+							return (
+								<AuditAdvisoryRow
+									auditMetadata={message.auditMetadata}
+									messageTs={message.ts}
+									text={message.text}
+								/>
+							)
+						}
+						if (message.text?.trim()) {
+							return (
+								<>
+									<div className="flex items-start gap-2 py-2 px-3 my-2 bg-quote/60 rounded-sm border border-description/15 text-[11px] text-description/90">
+										<Icon className="mt-0.5 size-2 shrink-0" name="InfoIcon" />
+										<div className="break-words flex-1 ph-no-capture">
+											<MarkdownRow markdown={message.text} showCursor={false} />
+										</div>
+									</div>
+									{showInternalDiagnostics === true && message.diagnostics && (
+										<details className="my-2 rounded-sm border border-description/20 p-2 text-[10px]">
+											<summary>Internal diagnostics</summary>
+											<pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words">
+												{JSON.stringify(message.diagnostics, null, 2)}
+											</pre>
+										</details>
+									)}
+								</>
+							)
+						}
+						return <InvisibleSpacer />
+					case "mcp_notification":
+						return (
+							<div className="flex items-start gap-2 py-2.5 px-3 bg-quote rounded-sm text-base text-foreground opacity-90 mb-2">
+								<Icon className="mt-0.5 size-2 text-notification-foreground shrink-0" name="BellIcon" />
+								<div className="break-words flex-1">
+									<span className="font-medium">Note from your tools: </span>
+									<span className="ph-no-capture">{message.text}</span>
+								</div>
+							</div>
+						)
+					case "text": {
+						const isAutoMode = mode === "auto"
+						const textContent = message.text || ""
+						const isGuidedSpecText =
+							textContent.includes("BREADBOARD") ||
+							textContent.includes("Visual Layout Map") ||
+							textContent.includes("MILESTONE STEPPER") ||
+							textContent.includes("WAYPOINT") ||
+							textContent.includes("Option A")
+
+						if (isAutoMode || isGuidedSpecText) {
+							const specState = parseGuidedSpecOutput(textContent)
+							return (
+								<GuidedSpecCard
+									isLast={isLast}
+									onSelectOption={(opt: DecisionOption) => {
+										if (sendMessageFromChatRow) {
+											const text = (opt.payload?.text as string) || opt.label
+											sendMessageFromChatRow(text, [], [])
+										}
+									}}
+									specState={specState}
+								/>
+							)
+						}
+
+						return (
+							<WithCopyButton onMouseUp={handleMouseUp} ref={contentRef} textToCopy={message.text}>
+								<div className="my-2 px-3 py-2.5 rounded-lg border border-border/30 bg-code">
+									<MarkdownRow markdown={message.text} showCursor={false} />
+								</div>
+							</WithCopyButton>
+						)
+					}
+					case "reasoning": {
+						const isReasoningStreaming = message.partial === true
+						const hasReasoningText = !!message.text?.trim()
+						return (
+							<ThinkingRow
+								isExpanded={(isReasoningStreaming && hasReasoningText) || isExpanded}
+								isStreaming={isReasoningStreaming}
+								isVisible={true}
+								onToggle={isReasoningStreaming ? undefined : handleToggle}
+								reasoningContent={message.text}
+								showChevron={!isReasoningStreaming || hasReasoningText}
+								showTitle={true}
+								title={isReasoningStreaming ? "Thinking..." : "Thinking"}
+							/>
+						)
+					}
+					case "user_feedback":
+						return (
+							<UserMessage
+								files={message.files}
+								images={message.images}
+								messageTs={message.ts}
+								sendMessageFromChatRow={sendMessageFromChatRow}
+								text={message.text}
+							/>
+						)
+					case "user_feedback_diff":
+						const tool = JSON.parse(message.text || "{}") as DietCodeSayTool
+						return (
+							<div className="w-full -mt-2.5">
+								<CodeAccordian
+									diff={tool.diff!}
+									isExpanded={isExpanded}
+									isFeedback={true}
+									onToggleExpand={handleToggle}
+								/>
+							</div>
+						)
+					case "error":
+						return <ErrorRow errorType="error" message={message} />
+					case "diff_error":
+						return <ErrorRow errorType="diff_error" message={message} />
+					case "dietcodeignore_error":
+						return <ErrorRow errorType="dietcodeignore_error" message={message} />
+					case "checkpoint_created":
+						return <CheckmarkControl isCheckpointCheckedOut={message.isCheckpointCheckedOut} messageTs={message.ts} />
+					case "load_mcp_documentation":
+						return (
+							<div className="text-foreground flex items-center opacity-70 text-[12px] py-1 px-0">
+								<Icon className="mr-1.5" name="book" />
+								Loading tool docs
+							</div>
+						)
+					case "generate_explanation": {
+						let explanationInfo: DietCodeSayGenerateExplanation = {
+							title: "code changes",
+							fromRef: "",
+							toRef: "",
+							status: "generating",
+						}
+						try {
+							if (message.text) {
+								explanationInfo = JSON.parse(message.text)
+							}
+						} catch {
+							// Use defaults if parsing fails
+						}
+						// Check if generation was interrupted:
+						// 1. If status is "generating" but this isn't the last message, it was interrupted
+						// 2. If status is "generating" and lastModifiedMessage is a resume ask, task was just cancelled
+						const wasCancelled =
+							explanationInfo.status === "generating" &&
+							(!isLast ||
+								lastModifiedMessage?.ask === "resume_task" ||
+								lastModifiedMessage?.ask === "resume_completed_task")
+						const isGenerating = explanationInfo.status === "generating" && !wasCancelled
+						const isError = explanationInfo.status === "error"
+						return (
+							<div className="bg-code flex flex-col border border-editor-group-border rounded-sm py-2.5 px-3">
+								<div className="flex items-center">
+									{isGenerating ? (
+										<ProgressIndicator />
+									) : isError ? (
+										<Icon className="size-2 mr-2 text-error" name="CircleXIcon" />
+									) : wasCancelled ? (
+										<Icon className="size-2 mr-2" name="CircleSlashIcon" />
+									) : (
+										<Icon className="size-2 mr-2 text-success" name="CheckIcon" />
+									)}
+									<span className="font-semibold">
+										{isGenerating
+											? "Putting together an explanation…"
+											: isError
+												? "Couldn't put that together yet"
+												: wasCancelled
+													? "Explanation skipped"
+													: "Here's a quick explanation"}
+									</span>
+								</div>
+								{isError && explanationInfo.error && (
+									<div className="opacity-80 ml-6 mt-1.5 text-error break-words">{explanationInfo.error}</div>
+								)}
+								{!isError && (explanationInfo.title || explanationInfo.fromRef) && (
+									<div className="opacity-80 ml-6 mt-1.5">
+										<div>{explanationInfo.title}</div>
+										{explanationInfo.fromRef && (
+											<div className="opacity-70 mt-1.5 break-all text-xs">
+												<code className="bg-quote rounded-sm py-0.5 pr-1.5">
+													{explanationInfo.fromRef}
+												</code>
+												<Icon className="inline size-2 mx-1" name="ArrowRightIcon" />
+												<code className="bg-quote rounded-sm py-0.5 px-1.5">
+													{explanationInfo.toRef || "working directory"}
+												</code>
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+						)
+					}
+					case "plan_summary": {
+						let planResponse: string | undefined
+						try {
+							const parsedMessage = JSON.parse(message.text || "{}") as DietCodePlanModeResponse
+							planResponse = parsedMessage.response
+						} catch {
+							planResponse = message.text
+						}
+						return (
+							<PlanCompletionOutputRow
+								auditMetadata={message.auditMetadata}
+								headClassNames={HEADER_CLASSNAMES}
+								isStreaming={message.partial === true}
+								text={planResponse || message.text || ""}
+							/>
+						)
+					}
+					case "completion_result":
+						const hasChanges = message.text?.endsWith(COMPLETION_RESULT_CHANGES_FLAG) ?? false
+						const text = hasChanges ? message.text?.slice(0, -COMPLETION_RESULT_CHANGES_FLAG.length) : message.text
+
+						return (
+							<WithCopyButton onMouseUp={handleMouseUp} ref={contentRef} textToCopy={text}>
+								<CompletionOutputRow
+									auditMetadata={message.auditMetadata}
+									explainChangesDisabled={explainChangesDisabled}
+									headClassNames={HEADER_CLASSNAMES}
+									messageTs={message.ts}
+									seeNewChangesDisabled={seeNewChangesDisabled}
+									setExplainChangesDisabled={setExplainChangesDisabled}
+									setSeeNewChangesDisabled={setSeeNewChangesDisabled}
+									showActionRow={message.partial !== true && hasChanges}
+									text={text || ""}
+								/>
+							</WithCopyButton>
+						)
+					case "shell_integration_warning":
+						return (
+							<div className="flex flex-col bg-warning/20 p-2 rounded-xs border border-error">
+								<div className="flex items-center mb-1">
+									<Icon className="mr-2 size-2 stroke-3 text-error" name="TriangleAlertIcon" />
+									<span className="font-medium text-foreground">Shell Integration Unavailable</span>
+								</div>
+								<div className="text-foreground opacity-80">
+									I might not see the full command output here. Please update VSCode (
+									<code>CMD/CTRL + Shift + P</code> → "Update") and make sure you're using a supported shell:
+									zsh, bash, fish, or PowerShell (<code>CMD/CTRL + Shift + P</code> → "Terminal: Select Default
+									Profile").
+									<a
+										className="px-1"
+										href="https://github.com/dietcode/dietcode/wiki/Troubleshooting-%E2%80%90-Shell-Integration-Unavailable">
+										Still having trouble?
+									</a>
+								</div>
+							</div>
+						)
+					case "error_retry":
+						try {
+							const retryInfo = JSON.parse(message.text || "{}")
+							const { attempt, maxAttempts, delaySeconds, failed, errorMessage } = retryInfo
+							const isFailed = failed === true
+
+							return (
+								<div className="flex flex-col gap-3 rounded-lg border border-description/10 bg-black/[0.02] dark:bg-white/[0.02] p-3.5 animate-lumi-reveal [animation-duration:1.2s]">
+									{errorMessage && (
+										<p className="m-0 whitespace-pre-wrap text-description/90 wrap-anywhere text-xs leading-relaxed">
+											{errorMessage}
+										</p>
+									)}
+									<div className="flex flex-col gap-1.5">
+										<div className="flex items-center gap-2">
+											{(!isFailed || isRequestInProgress) && <ProgressIndicator />}
+											<span className="font-medium text-foreground/90 text-xs">
+												{isFailed ? "That didn't quite work" : "Taking another look…"}
+											</span>
+										</div>
+										<div className="text-description text-xs leading-relaxed">
+											{isFailed ? (
+												<span>
+													I tried{" "}
+													<strong className="font-medium text-foreground/80">{maxAttempts}</strong>{" "}
+													times. {pickRecoveryLine(message.ts)}
+												</span>
+											) : (
+												<span>
+													Giving it another go (
+													<strong className="font-medium text-foreground/80">{attempt}</strong> of{" "}
+													<strong className="font-medium text-foreground/80">{maxAttempts}</strong>) in{" "}
+													{delaySeconds}s…
+												</span>
+											)}
+										</div>
+									</div>
+								</div>
+							)
+						} catch (_e) {
+							// Fallback if JSON parsing fails
+							return (
+								<div className="text-foreground">
+									<MarkdownRow markdown={message.text} />
+								</div>
+							)
+						}
+					case "hook_status":
+						return <HookMessage CommandOutput={CommandOutputContent} message={message} />
+					case "hook_output_stream":
+						// hook_output_stream messages are combined with hook_status messages, so we don't render them separately
+						return <InvisibleSpacer />
+					case "subagent":
+						return <SubagentStatusRow isLast={isLast} lastModifiedMessage={lastModifiedMessage} message={message} />
+					case "shell_integration_warning_with_suggestion":
+						return (
+							<div className="p-2 bg-link/10 border border-link/30 rounded-xs">
+								<div className="flex items-center mb-1">
+									<Icon className="mr-1.5 size-2 text-link" name="LightbulbIcon" />
+									<span className="font-medium text-foreground">Shell integration issues</span>
+								</div>
+								<div className="text-foreground opacity-90 mb-2">
+									Since you're experiencing repeated shell integration issues, increase the terminal timeout in
+									settings or run the command manually in the VS Code terminal.
+								</div>
+							</div>
+						)
+					case "task_progress":
+						return <InvisibleSpacer /> // task_progress messages should be displayed in TaskHeader only, not in chat
+					default:
+						return (
+							<div>
+								{title && (
+									<div className={HEADER_CLASSNAMES}>
+										{icon}
+										{title}
+									</div>
+								)}
+								<div className="pt-1">
+									<MarkdownRow markdown={message.text} />
+								</div>
+							</div>
+						)
+				}
+			case "ask":
+				switch (message.ask) {
+					case "mistake_limit_reached":
+						return <ErrorRow errorType="mistake_limit_reached" message={message} />
+					case "completion_result":
+						if (message.text) {
+							const hasChanges = message.text.endsWith(COMPLETION_RESULT_CHANGES_FLAG) ?? false
+							const text = hasChanges ? message.text.slice(0, -COMPLETION_RESULT_CHANGES_FLAG.length) : message.text
+							return (
+								<WithCopyButton onMouseUp={handleMouseUp} ref={contentRef} textToCopy={text}>
+									<CompletionOutputRow
+										auditMetadata={message.auditMetadata}
+										explainChangesDisabled={explainChangesDisabled}
+										headClassNames={HEADER_CLASSNAMES}
+										messageTs={message.ts}
+										seeNewChangesDisabled={seeNewChangesDisabled}
+										setExplainChangesDisabled={setExplainChangesDisabled}
+										setSeeNewChangesDisabled={setSeeNewChangesDisabled}
+										showActionRow={message.partial !== true && hasChanges}
+										text={text || ""}
+									/>
+								</WithCopyButton>
+							)
+						}
+						// Virtuoso cannot handle zero-height items; render a spacer instead of null
+						return <InvisibleSpacer />
+					case "followup":
+						let question: string | undefined
+						let options: string[] | undefined
+						let selected: string | undefined
+						let actions: DietCodeAskQuestion["actions"] | undefined
+						let confidenceScore: number | undefined
+						let ambiguityReasoning: string | undefined
+						let verifiedEntities: string[] | undefined
+						let risks: DietCodeAskQuestion["risks"] | undefined
+						let intentDecomposition: DietCodeAskQuestion["intentDecomposition"] | undefined
+						let constraints: string[] | undefined
+						let constraintExplanations: Record<string, string> | undefined
+						let architecturalLayers: DietCodeAskQuestion["architecturalLayers"] | undefined
+						let policyCompliance: DietCodeAskQuestion["policyCompliance"] | undefined
+						let outcomeMapping: DietCodeAskQuestion["outcomeMapping"] | undefined
+						let adversarialCritique: DietCodeAskQuestion["adversarialCritique"] | undefined
+						let interactiveClarifications: DietCodeAskQuestion["interactiveClarifications"] | undefined
+						let swarmConsensus: DietCodeAskQuestion["swarmConsensus"] | undefined
+						try {
+							const parsedMessage = JSON.parse(message.text || "{}") as DietCodeAskQuestion
+							question = parsedMessage.question
+							options = parsedMessage.options
+							selected = parsedMessage.selected
+							actions = parsedMessage.actions
+							confidenceScore = parsedMessage.confidenceScore
+							ambiguityReasoning = parsedMessage.ambiguityReasoning
+							verifiedEntities = parsedMessage.verifiedEntities
+							risks = parsedMessage.risks
+							intentDecomposition = parsedMessage.intentDecomposition
+							constraints = parsedMessage.constraints
+							constraintExplanations = parsedMessage.constraintExplanations
+							architecturalLayers = parsedMessage.architecturalLayers
+							policyCompliance = parsedMessage.policyCompliance
+							outcomeMapping = parsedMessage.outcomeMapping
+							adversarialCritique = parsedMessage.adversarialCritique
+							interactiveClarifications = parsedMessage.interactiveClarifications
+							swarmConsensus = parsedMessage.swarmConsensus
+						} catch (_e) {
+							// legacy messages would pass question directly
+							question = message.text
+						}
+
+						return (
+							<div>
+								{title && (
+									<div className={HEADER_CLASSNAMES}>
+										{icon}
+										{title}
+									</div>
+								)}
+								<WithCopyButton className="pt-1" onMouseUp={handleMouseUp} ref={contentRef} textToCopy={question}>
+									<MarkdownRow markdown={question} />
+								</WithCopyButton>
+								{confidenceScore !== undefined && (
+									<GroundingHeader
+										ambiguityReasoning={ambiguityReasoning}
+										confidenceScore={confidenceScore}
+										constraintExplanations={constraintExplanations}
+										constraints={constraints}
+										hasActions={!!actions?.length}
+										risks={risks}
+										verifiedEntities={verifiedEntities}
+									/>
+								)}
+								{intentDecomposition && <IntentDecomposition phases={intentDecomposition} />}
+								{(policyCompliance || architecturalLayers) && (
+									<AlignmentGuard
+										architecturalLayers={architecturalLayers}
+										policyCompliance={policyCompliance}
+									/>
+								)}
+								{outcomeMapping && <OutcomeMapper outcomeMapping={outcomeMapping} />}
+								{adversarialCritique && <RedTeamAlerts adversarialCritique={adversarialCritique} />}
+								{(interactiveClarifications || swarmConsensus) && (
+									<ClarificationHub
+										interactiveClarifications={interactiveClarifications}
+										swarmConsensus={swarmConsensus}
+									/>
+								)}
+								{actions && actions.length > 0 && (
+									<ActionCheckboxes
+										actions={actions.map((a) => ({
+											...a,
+											isChecked: selectedActions.includes(a.id),
+										}))}
+										onActionsChange={(updated) =>
+											setSelectedActions(updated.filter((a) => a.isChecked).map((a) => a.id))
+										}
+									/>
+								)}
+								<div className="pt-3">
+									<OptionsButtons
+										inputValue={inputValue}
+										isActive={
+											(isLast && lastModifiedMessage?.ask === "followup") ||
+											(!selected && options && options.length > 0)
+										}
+										options={options}
+										selected={selected}
+										selectedActions={selectedActions}
+									/>
+								</div>
+							</div>
+						)
+					case "new_task":
+						return (
+							<div>
+								<div className={HEADER_CLASSNAMES}>
+									<Icon className="size-2" name="FilePlus2Icon" />
+									<span className="text-foreground font-medium">Should we start fresh?</span>
+								</div>
+								<NewTaskPreview context={message.text || ""} />
+							</div>
+						)
+					case "condense":
+						return (
+							<div className={ASK_PANEL_CLASSNAMES}>
+								<div className={HEADER_CLASSNAMES}>
+									<Icon className="size-2" name="FoldVerticalIcon" />
+									<span className="text-foreground font-medium">{APPROVAL.condense}</span>
+								</div>
+								<NewTaskPreview context={message.text || ""} />
+							</div>
+						)
+					case "report_bug":
+						return (
+							<div>
+								<div className={HEADER_CLASSNAMES}>
+									<Icon className="size-2" name="FilePlus2Icon" />
+									<span className="text-foreground font-medium">Should I open a GitHub issue?</span>
+								</div>
+								<ReportBugPreview data={message.text || ""} />
+							</div>
+						)
+					case "plan_mode_respond": {
+						let response: string | undefined
+						try {
+							const parsedMessage = JSON.parse(message.text || "{}") as DietCodePlanModeResponse
+							response = parsedMessage.response
+						} catch (_e) {
+							response = message.text
+						}
+						return (
+							<div>
+								<PlanCompletionOutputRow
+									auditMetadata={message.auditMetadata}
+									headClassNames={HEADER_CLASSNAMES}
+									text={response || message.text || ""}
+								/>
+							</div>
+						)
+					}
+					default:
+						return <InvisibleSpacer />
+				}
+		}
+	},
+)

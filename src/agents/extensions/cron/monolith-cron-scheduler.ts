@@ -1,5 +1,4 @@
 import type {
-  AutomationBlueprint,
   CronBulkMutationResult,
   CronDslQueryFilter,
   CronExecutionRecord,
@@ -9,8 +8,6 @@ import type {
   CronJobManifest,
   CronJobStatus,
   CronMetricsReport,
-  CronNotificationPreferences,
-  CronQueryFilter,
   CronSortBy,
   CronSortDirection,
   ICronScheduler,

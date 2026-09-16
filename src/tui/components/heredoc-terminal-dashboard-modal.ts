@@ -5,12 +5,6 @@
  * risk evaluations, actionable diagnostics, and health posture (Phase 110 / ADR-086 / Target #86).
  */
 
-import type {
-  HeredocTerminalHealthAuditReport,
-  HeredocTerminalMetricsReport,
-  HeredocSanitizationLogRecord,
-  TerminalExecutionDiagnostics,
-} from "../../core/contracts/heredoc-terminal.contracts.js";
 import { BroccoliHeredocTerminalSubstrate } from "../../sessions/extensions/heredoc_terminal/broccoli-heredoc-terminal-substrate.js";
 import { DeterministicHeredocSanitizer } from "../../agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.js";
 

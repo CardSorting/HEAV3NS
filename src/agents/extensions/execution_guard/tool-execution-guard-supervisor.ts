@@ -20,7 +20,6 @@ import type {
   ToolExecutionGuardSortBy,
   ToolExecutionGuardSortDirection,
   ToolExecutionSegmentRow,
-  ToolExecutionWorkspaceSnapshot,
   ToolLoopViolationRecord,
   ToolLoopViolationRow,
 } from "../../../core/contracts/tool-execution-segment.contracts.js";

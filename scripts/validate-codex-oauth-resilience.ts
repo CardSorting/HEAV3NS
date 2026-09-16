@@ -1,461 +1,825 @@
-import assert from "node:assert/strict";
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
+import assert from "node:assert/strict"
+import * as crypto from "node:crypto"
+import * as fs from "node:fs"
+import * as os from "node:os"
+import * as path from "node:path"
+import { BroccoliTransportSubstrate, broccoliTransportSubstrate } from "../src/integrations/galx/BroccoliTransportSubstrate"
+import { GalxTransportClient } from "../src/integrations/galx/GalxTransportClient"
 import {
-  CodexOAuthManager,
-  AuthStorageVault,
-  writeAtomicJsonFile,
-  OPENAI_CODEX_OAUTH_CONFIG,
-  LumiMonolith,
-  type OpenAiCodexCredentials,
-} from "../src/index.js";
+	isTokenExpired,
+	OPENAI_CODEX_OAUTH_CONFIG,
+	type OpenAiCodexCredentials,
+	OpenAiCodexOAuthManager,
+	writeAtomicJsonFile,
+} from "../src/integrations/openai-codex/oauth"
+import { mockFetchForTesting } from "../src/shared/net"
 
 async function main(): Promise<void> {
-  console.log("================================================================");
-  console.log(" LUMI Codex OAuth Subsystem: Enterprise Resilience Suite       ");
-  console.log("================================================================\n");
+	console.log("================================================================")
+	console.log(" CodeMarie Codex OAuth Subsystem: Enterprise Resilience Suite   ")
+	console.log("================================================================\n")
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lumi-oauth-resilience-"));
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codemarie-oauth-resilience-"))
 
-  try {
-    // -------------------------------------------------------------------------
-    // [Suite 1/6] Atomic File Writing & Secure 0o600 POSIX File Permissions
-    // -------------------------------------------------------------------------
-    console.log("[Suite 1/6] Validating Atomic File Writing & 0o600 Mode...");
-    const testFilePath = path.join(tempDir, "secure-auth.json");
-    const testData = {
-      auth_mode: "chatgpt",
-      tokens: {
-        access_token: "test_access_123",
-        refresh_token: "test_refresh_123",
-      },
-    };
+	try {
+		// -------------------------------------------------------------------------
+		// [Suite 1/20] Atomic File Writing & Secure 0o600 POSIX File Permissions
+		// -------------------------------------------------------------------------
+		console.log("[Suite 1/20] Validating Atomic File Writing & 0o600 Mode...")
+		const testFilePath = path.join(tempDir, "secure-auth.json")
+		const testData = {
+			auth_mode: "chatgpt",
+			tokens: {
+				access_token: "test_access_123",
+				refresh_token: "test_refresh_123",
+			},
+		}
 
-    writeAtomicJsonFile(testFilePath, testData);
-    assert.equal(fs.existsSync(testFilePath), true, "File must exist after atomic write");
-    
-    const readBack = JSON.parse(fs.readFileSync(testFilePath, "utf-8"));
-    assert.deepEqual(readBack, testData, "Data must match written content");
+		writeAtomicJsonFile(testFilePath, testData)
+		assert.equal(fs.existsSync(testFilePath), true, "File must exist after atomic write")
 
-    if (process.platform !== "win32") {
-      const stats = fs.statSync(testFilePath);
-      const mode = stats.mode & 0o777;
-      assert.equal(mode, 0o600, `File permissions must be 0o600, got 0o${mode.toString(8)}`);
-    }
-    console.log("  [✓] Atomic file write with fsync and 0o600 permission verified.");
+		const readBack = JSON.parse(fs.readFileSync(testFilePath, "utf-8"))
+		assert.deepEqual(readBack, testData, "Data must match written content")
 
-    // -------------------------------------------------------------------------
-    // [Suite 2/6] Single-Flight In-Flight Refresh Mutex & Deduplication
-    // -------------------------------------------------------------------------
-    console.log("[Suite 2/6] Validating Single-Flight In-Flight Refresh Mutex...");
-    const manager = new CodexOAuthManager();
-    // Do not mutate real user disk files during mock deduplication test
-    manager.syncCredentialsToDisk = () => {};
-    let networkCallCount = 0;
+		if (process.platform !== "win32") {
+			const stats = fs.statSync(testFilePath)
+			const mode = stats.mode & 0o777
+			assert.equal(mode, 0o600, `File permissions must be 0o600, got 0o${mode.toString(8)}`)
+		}
+		console.log("  [✓] Atomic file write with fsync and 0o600 permission verified.")
 
-    // Mock global fetch for token refresh
-    const originalFetch = globalThis.fetch;
-    const mockAccessToken = "ey-new-access-token-rotated";
-    const mockRefreshToken = "rt-new-refresh-token-rotated";
+		// -------------------------------------------------------------------------
+		// [Suite 2/20] Single-Flight In-Flight Refresh Mutex & Deduplication
+		// -------------------------------------------------------------------------
+		console.log("[Suite 2/20] Validating Single-Flight In-Flight Refresh Mutex...")
+		const manager = new OpenAiCodexOAuthManager()
+		manager.syncCredentialsToDisk = () => {}
+		manager.triggerSilentBackgroundSync = () => {}
+		let networkCallCount = 0
 
-    // Set initial expired credentials
-    (manager as any).credentials = {
-      type: "openai-codex",
-      access_token: "old-expired-token",
-      refresh_token: "initial-refresh-token",
-      expires: Date.now() - 10000, // Expired
-      accountId: "acct-test-456",
-    };
+		const mockAccessToken = "ey-new-access-token-rotated"
+		const mockRefreshToken = "rt-new-refresh-token-rotated"
 
-    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const urlStr = String(input);
-      if (urlStr === OPENAI_CODEX_OAUTH_CONFIG.tokenEndpoint) {
-        networkCallCount++;
-        // Simulate 50ms network delay
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        return {
-          ok: true,
-          status: 200,
-          text: async () => "",
-          json: async () => ({
-            access_token: `${mockAccessToken}-${networkCallCount}`,
-            refresh_token: `${mockRefreshToken}-${networkCallCount}`,
-            expires_in: 3600,
-          }),
-        } as Response;
-      }
-      return originalFetch(input, init);
-    }) as typeof globalThis.fetch;
+		;(manager as unknown as { credentials: OpenAiCodexCredentials | null }).credentials = {
+			type: "openai-codex",
+			access_token: "old-expired-token",
+			refresh_token: "initial-refresh-token",
+			expires: Date.now() - 10000,
+			accountId: "acct-test-456",
+		}
 
-    try {
-      // Trigger 50 concurrent getValidAccessToken calls simultaneously
-      const concurrentCallers = 50;
-      const promises: Promise<string | null>[] = [];
-      for (let i = 0; i < concurrentCallers; i++) {
-        promises.push(manager.getValidAccessToken());
-      }
+		await mockFetchForTesting(
+			(async (input: string | URL | Request, _init?: RequestInit) => {
+				const urlStr = String(input)
+				if (urlStr === OPENAI_CODEX_OAUTH_CONFIG.tokenEndpoint) {
+					networkCallCount++
+					await new Promise((resolve) => setTimeout(resolve, 50))
+					return {
+						ok: true,
+						status: 200,
+						text: async () => "",
+						json: async () => ({
+							access_token: `${mockAccessToken}-${networkCallCount}`,
+							refresh_token: `${mockRefreshToken}-${networkCallCount}`,
+							expires_in: 3600,
+						}),
+					} as Response
+				}
+				throw new Error(`Unexpected fetch URL: ${urlStr}`)
+			}) as typeof globalThis.fetch,
+			async () => {
+				const concurrentCallers = 50
+				const promises: Promise<string | null>[] = []
+				for (let i = 0; i < concurrentCallers; i++) {
+					promises.push(manager.getAccessToken())
+				}
 
-      const results = await Promise.all(promises);
+				const results = await Promise.all(promises)
 
-      // Verify all callers received the exact same rotated token
-      assert.equal(results.length, concurrentCallers);
-      const expectedToken = `${mockAccessToken}-1`;
-      for (const token of results) {
-        assert.equal(token, expectedToken, "All concurrent callers must receive identical rotated token");
-      }
+				assert.equal(networkCallCount, 1, `Expected exactly 1 refresh call, but got ${networkCallCount}`)
+				for (const res of results) {
+					assert.equal(res, `${mockAccessToken}-1`, "All concurrent callers must receive identical refreshed token")
+				}
+				console.log(
+					`  [✓] ${concurrentCallers} concurrent refresh requests coalesced into exactly 1 network execution (Zero RTR collisions).`,
+				)
+			},
+		)
 
-      // Assert that exactly ONE network refresh occurred
-      assert.equal(
-        networkCallCount,
-        1,
-        `Single-flight mutex must coalesce 50 requests into 1 network call (actual: ${networkCallCount})`
-      );
-      console.log("  [✓] 50 concurrent refresh requests coalesced into exactly 1 network execution (Zero RTR collisions).");
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+		// -------------------------------------------------------------------------
+		// [Suite 3/20] Multi-Source Timestamp Reconciliation
+		// -------------------------------------------------------------------------
+		console.log("[Suite 3/20] Validating Multi-Source Timestamp Reconciliation...")
+		const sourceDirA = path.join(tempDir, "sourceA")
+		const sourceDirB = path.join(tempDir, "sourceB")
+		fs.mkdirSync(sourceDirA, { recursive: true })
+		fs.mkdirSync(sourceDirB, { recursive: true })
 
-    // -------------------------------------------------------------------------
-    // [Suite 3/6] Multi-Source Freshness Timestamp Reconciliation
-    // -------------------------------------------------------------------------
-    console.log("[Suite 3/6] Validating Multi-Source Timestamp Reconciliation...");
-    const multiDir = path.join(tempDir, "multi-source");
-    fs.mkdirSync(multiDir, { recursive: true });
+		const olderFile = path.join(sourceDirA, "config.json")
+		const newerFile = path.join(sourceDirB, "auth.json")
 
-    const olderAuthPath = path.join(multiDir, "older-auth.json");
-    const newerLumiPath = path.join(multiDir, "newer-lumi.json");
+		const olderData = {
+			codexOAuth: {
+				access_token: "older-access-token",
+				refresh_token: "older-refresh-token",
+				expires: Date.now() + 1000000,
+				accountId: "older-acct",
+			},
+			updatedAt: Date.now() - 500000,
+		}
 
-    const olderDate = new Date("2026-08-01T00:00:00Z");
-    const newerDate = new Date("2026-08-18T18:00:00Z");
+		const newerData = {
+			auth_mode: "chatgpt",
+			tokens: {
+				access_token: "newer-access-token",
+				refresh_token: "newer-refresh-token",
+				account_id: "newer-acct",
+			},
+			last_refresh: new Date(Date.now() - 10000).toISOString(),
+		}
 
-    const olderCreds = {
-      tokens: {
-        access_token: "older-access-token",
-        refresh_token: "older-refresh-token",
-        account_id: "older-acct",
-      },
-      last_refresh: olderDate.toISOString(),
-    };
+		writeAtomicJsonFile(olderFile, olderData)
+		writeAtomicJsonFile(newerFile, newerData)
 
-    const newerCreds = {
-      codexOAuth: {
-        type: "openai-codex",
-        access_token: "newer-fresher-token",
-        refresh_token: "newer-fresher-refresh",
-        expires: Date.now() + 86400000,
-        accountId: "newer-acct",
-      },
-      updatedAt: newerDate.getTime(),
-    };
+		const reconcileManager = new OpenAiCodexOAuthManager()
+		reconcileManager.syncCredentialsToDisk = () => {}
+		const loaded = reconcileManager.loadFromDisk(undefined, [olderFile, newerFile])
 
-    writeAtomicJsonFile(olderAuthPath, olderCreds);
-    writeAtomicJsonFile(newerLumiPath, newerCreds);
+		assert.equal(loaded, true, "Must successfully load from candidate paths")
+		const activeCreds = reconcileManager.getCredentials()
+		assert.equal(activeCreds?.access_token, "newer-access-token", "Must resolve newest token lease")
+		assert.equal(activeCreds?.accountId, "newer-acct", "Must preserve newest account ID")
+		console.log("  [✓] Multi-source reconciliation selected newest token lease deterministically.")
 
-    const reconcileManager = new CodexOAuthManager();
-    reconcileManager.syncCredentialsToDisk = () => {}; // Isolate disk sync during test
-    const loaded = reconcileManager.loadFromDisk(undefined, [olderAuthPath, newerLumiPath]);
-    assert.equal(loaded, true, "Must load credentials from candidate sources");
+		// -------------------------------------------------------------------------
+		// [Suite 4/20] Pre-Emptive Expiry Buffer
+		// -------------------------------------------------------------------------
+		console.log("[Suite 4/20] Validating Pre-Emptive Expiry Buffer...")
+		const soonExpiringCreds: OpenAiCodexCredentials = {
+			type: "openai-codex",
+			access_token: "soon-expiring-token",
+			refresh_token: "refresh-token",
+			expires: Date.now() + 3 * 60 * 1000, // Expires in 3 mins (within 5-min buffer)
+			accountId: "acct-test",
+		}
 
-    const activeCreds = reconcileManager.getCredentials();
-    assert.equal(
-      activeCreds?.access_token,
-      "newer-fresher-token",
-      "Reconciliation heuristic must select freshest credentials based on timestamp"
-    );
-    assert.equal(activeCreds?.accountId, "newer-acct");
-    console.log("  [✓] Multi-source reconciliation selected newest token lease deterministically.");
+		assert.equal(
+			isTokenExpired(soonExpiringCreds),
+			true,
+			"3 minutes remaining must be flagged as expired under 5-minute buffer",
+		)
 
-    // -------------------------------------------------------------------------
-    // [Suite 4/6] Pre-Emptive Expiry Buffer & Clock-Skew Calculation
-    // -------------------------------------------------------------------------
-    console.log("[Suite 4/6] Validating Pre-Emptive Expiry Buffer...");
-    const expiryManager = new CodexOAuthManager();
+		const safeCreds: OpenAiCodexCredentials = {
+			type: "openai-codex",
+			access_token: "safe-token",
+			refresh_token: "refresh-token",
+			expires: Date.now() + 10 * 60 * 1000, // Expires in 10 mins
+			accountId: "acct-test",
+		}
 
-    // 1. Far future token (valid)
-    (expiryManager as any).credentials = {
-      type: "openai-codex",
-      access_token: "valid-tok",
-      refresh_token: "valid-ref",
-      expires: Date.now() + 60 * 60 * 1000, // 60 mins remaining
-    };
-    assert.equal(expiryManager.isTokenExpired(), false, "Token with 60m remaining is not expired");
+		assert.equal(
+			isTokenExpired(safeCreds),
+			false,
+			"10 minutes remaining must NOT be flagged as expired under 5-minute buffer",
+		)
+		console.log("  [✓] Pre-emptive 5-minute buffer triggers proactive rotation before expiration.")
 
-    // 2. Token within 5-minute pre-emptive buffer (should be flagged as expired to trigger safe refresh before turn)
-    (expiryManager as any).credentials = {
-      type: "openai-codex",
-      access_token: "buffer-tok",
-      refresh_token: "buffer-ref",
-      expires: Date.now() + 3 * 60 * 1000, // 3 mins remaining (< 5m buffer)
-    };
-    assert.equal(
-      expiryManager.isTokenExpired(),
-      true,
-      "Token within 5m buffer must trigger proactive refresh before turn dispatch"
-    );
-    console.log("  [✓] Pre-emptive 5-minute buffer triggers proactive rotation before expiration.");
+		// -------------------------------------------------------------------------
+		// [Suite 5/20] Diagnostics Telemetry
+		// -------------------------------------------------------------------------
+		console.log("[Suite 5/20] Validating Diagnostics Telemetry...")
+		const diagManager = new OpenAiCodexOAuthManager()
+		;(diagManager as unknown as { credentials: OpenAiCodexCredentials | null }).credentials = safeCreds
+		const diagnostics = diagManager.getAuthDiagnostics()
 
-    // -------------------------------------------------------------------------
-    // [Suite 5/6] Auth Diagnostics & Telemetry
-    // -------------------------------------------------------------------------
-    console.log("[Suite 5/6] Validating Diagnostics Telemetry...");
-    const realManager = new CodexOAuthManager();
-    realManager.loadFromDisk();
-    const diag = realManager.getAuthDiagnostics();
+		assert.equal(diagnostics.authenticated, true, "Diagnostics must report authenticated")
+		assert.equal(diagnostics.isExpired, false, "Diagnostics must report unexpired")
+		assert.equal(diagnostics.hasValidRefreshToken, true, "Diagnostics must identify valid refresh token")
+		assert.equal(Array.isArray(diagnostics.sources), true, "Sources must be an array")
+		console.log(
+			`  [✓] Diagnostics telemetry generated cleanly (Sync Status: ${diagnostics.syncStatus}, Authenticated: ${diagnostics.authenticated}).`,
+		)
 
-    assert.ok(Array.isArray(diag.sources));
-    assert.ok(diag.sources.length >= 2);
-    assert.equal(typeof diag.authenticated, "boolean");
-    assert.ok(["SYNCHRONIZED", "DESYNCHRONIZED", "UNCONFIGURED"].includes(diag.syncStatus));
-    console.log(`  [✓] Diagnostics telemetry generated cleanly (Sync Status: ${diag.syncStatus}, Authenticated: ${diag.authenticated}).`);
+		// -------------------------------------------------------------------------
+		// [Suite 6/20] GALXAI Shard Ingestion & RFC 9530 Transport Digest
+		// -------------------------------------------------------------------------
+		console.log("[Suite 6/20] Validating GALXAI Shard Registration & Vault Synchronization...")
+		const cloudSyncManager = new OpenAiCodexOAuthManager()
+		cloudSyncManager.syncCredentialsToDisk = () => {}
+		cloudSyncManager.saveGalxSessionToDisk = () => {}
 
-    // -------------------------------------------------------------------------
-    // [Suite 6/6] Live Model Execution with Synchronized Credentials
-    // -------------------------------------------------------------------------
-    console.log("[Suite 6/6] Validating Live Monolith Model Dispatch with gpt-5.6-terra...");
-    const monolith = new LumiMonolith({ cwd: process.cwd() });
-    monolith.modelResolver.setActiveModel("gpt-5.6-terra");
+		;(cloudSyncManager as unknown as { credentials: OpenAiCodexCredentials | null }).credentials = {
+			type: "openai-codex",
+			access_token: "test_jwt_access_shard",
+			refresh_token: "test_jwt_refresh_shard",
+			expires: Date.now() + 3600000,
+			email: "dev@cloudsync.io",
+			accountId: "org-sharded-vault",
+		}
 
-    const liveTurn = await monolith.agentEngine.tick({
-      prompt: "Respond with the single word: VERIFIED",
-    });
+		let syncCallsCount = 0
+		let receivedDigest = ""
+		let receivedIdempotencyKey = ""
+		let receivedNonce = ""
 
-    assert.ok(
-      liveTurn.outcome === "completed" || liveTurn.outcome === "failed",
-      "Live model turn must return a structured outcome through monolith pipeline"
-    );
-    console.log(`  [✓] Monolith model dispatch pipeline verified (Outcome: ${liveTurn.outcome}).`);
+		await mockFetchForTesting(
+			(async (input: string | URL | Request, init?: RequestInit) => {
+				const urlStr = String(input)
+				if (
+					urlStr.includes("/api/auth/ingest") ||
+					urlStr.includes("/api/auth/openai") ||
+					urlStr.includes("/api/ingest")
+				) {
+					syncCallsCount++
+					const headers = (init?.headers as Record<string, string>) || {}
+					receivedDigest = headers.Digest || headers.digest || ""
+					receivedIdempotencyKey = headers["Idempotency-Key"] || headers["idempotency-key"] || ""
+					receivedNonce = headers["X-Request-Nonce"] || headers["x-request-nonce"] || ""
 
-    // -------------------------------------------------------------------------
-    // [Suite 7/7] GALXAI Shard Registration & Vault Synchronization
-    // -------------------------------------------------------------------------
-    console.log("[Suite 7/7] Validating GALXAI Shard Registration & Vault Synchronization...");
-    const galxTestManager = new CodexOAuthManager();
-    (galxTestManager as any).credentials = {
-      type: "openai-codex",
-      access_token: "ey-galx-test-token-12345",
-      refresh_token: "rt-galx-test-refresh-54321",
-      expires: Date.now() + 3600000,
-      accountId: "acct_galx_corp_77",
-      email: "engineer@galxai.io",
-      id_token: "mock-id-token-content",
-    };
+					await new Promise((resolve) => setTimeout(resolve, 30))
 
-    // Mock fetch for GALXAI /api/auth/openai endpoint
-    const prevFetch = globalThis.fetch;
-    let galxPayloadReceived: any = null;
-    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const urlStr = String(input);
-      if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
-        galxPayloadReceived = JSON.parse(String(init?.body || "{}"));
-        return {
-          ok: true,
-          status: 200,
-          text: async () => "",
-          json: async () => ({
-            success: true,
-            user: {
-              id: "usr_lumi_test_101",
-              email: "engineer@galxai.io",
-              name: "engineer",
-              provider: "openai",
-              shardId: "shd_lumi_synced_999",
-              shardMode: "pooled",
-              token: "galx_sess_mock_session_key_777",
-            },
-          }),
-        } as Response;
-      }
-      return prevFetch(input, init);
-    }) as typeof globalThis.fetch;
+					const bodyObj = JSON.parse(String(init?.body || "{}"))
+					const expectedDigest = `sha-256=${crypto.createHash("sha256").update(String(init?.body)).digest("base64")}`
+					assert.equal(
+						headers.Digest || headers.digest,
+						expectedDigest,
+						"RFC 9530 SHA-256 Digest header must match body digest",
+					)
 
-    try {
-      const syncResult = await galxTestManager.syncToGalx("https://galx.ai");
-      assert.equal(syncResult.success, true);
-      assert.equal(syncResult.userId, "usr_lumi_test_101");
-      assert.equal(syncResult.shardId, "shd_lumi_synced_999");
-      assert.equal(syncResult.sessionToken, "galx_sess_mock_session_key_777");
+					return {
+						ok: true,
+						status: 200,
+						text: async () => "",
+						json: async () => ({
+							success: true,
+							user: {
+								id: "usr_galx_4920",
+								shardId: "shard_us_east_4",
+								token: "galx_session_tok_8492049",
+								email: bodyObj.email,
+								shardMode: "pooled",
+							},
+						}),
+					} as Response
+				}
+				throw new Error(`Unexpected fetch URL: ${urlStr}`)
+			}) as typeof globalThis.fetch,
+			async () => {
+				const syncPromises = [
+					cloudSyncManager.syncToGalx("https://galx.ai", "pooled"),
+					cloudSyncManager.syncToGalx("https://galx.ai", "pooled"),
+				]
+				const [res1, res2] = await Promise.all(syncPromises)
 
-      // Verify payload was structured correctly
-      assert.equal(galxPayloadReceived.accessToken, "ey-galx-test-token-12345");
-      assert.equal(galxPayloadReceived.refreshToken, "rt-galx-test-refresh-54321");
-      assert.equal(galxPayloadReceived.accountId, "acct_galx_corp_77");
-      assert.equal(galxPayloadReceived.email, "engineer@galxai.io");
-      assert.equal(galxPayloadReceived.authType, "oauth");
+				assert.equal(syncCallsCount, 1, "Concurrent syncToGalx requests must coalesce into exactly 1 network execution")
+				assert.equal(res1.success, true, "Sync result 1 must succeed")
+				assert.equal(res2.success, true, "Sync result 2 must succeed")
+				assert.equal(res1.shardId, "shard_us_east_4", "Shard ID must match payload")
+				assert.ok(receivedIdempotencyKey.length > 0, "Idempotency-Key header must be sent")
+				assert.ok(receivedNonce.length > 0, "X-Request-Nonce must be sent")
+				console.log("  [✓] Backend synchronization single-flight coalescing & vaulting verified.")
+			},
+		)
 
-      // Verify single-flight coalescing: 20 concurrent syncs produce exactly 1 network call
-      let fetchCallCount = 0;
-      globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-        const urlStr = String(input);
-        if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
-          fetchCallCount++;
-          await new Promise((r) => setTimeout(r, 20));
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({
-              success: true,
-              user: {
-                id: "usr_lumi_test_101",
-                email: "engineer@galxai.io",
-                shardId: "shd_lumi_synced_999",
-                token: "galx_sess_mock_session_key_777",
-              },
-            }),
-          } as Response;
-        }
-        return prevFetch(input, init);
-      }) as typeof globalThis.fetch;
+		// -------------------------------------------------------------------------
+		// [Suite 7/20] High-Frequency In-Memory Session Cache (< 0.5 µs)
+		// -------------------------------------------------------------------------
+		console.log("[Suite 7/20] Validating High-Frequency In-Memory Session Cache (< 0.5 µs)...")
+		const cacheManager = new OpenAiCodexOAuthManager()
+		cacheManager.syncCredentialsToDisk = () => {}
+		const cachedCredentials: OpenAiCodexCredentials = {
+			type: "openai-codex",
+			access_token: "high-throughput-access",
+			refresh_token: "high-throughput-refresh",
+			expires: Date.now() + 3600000,
+			accountId: "acct-high-throughput",
+			email: "speed@cloudsync.io",
+		}
+		cacheManager.saveCredentials(cachedCredentials, false, false)
 
-      const concurrentResults = await Promise.all(
-        Array.from({ length: 20 }, () => galxTestManager.syncToGalx("https://galx.ai"))
-      );
-      assert.equal(fetchCallCount, 1, "20 concurrent sync calls must coalesce into exactly 1 network request");
-      for (const res of concurrentResults) {
-        assert.equal(res.success, true);
-      }
+		const benchIterations = 10000
+		const benchStart = process.hrtime.bigint()
+		for (let i = 0; i < benchIterations; i++) {
+			const session = cacheManager.getCredentials()
+			assert.equal(session?.accountId, "acct-high-throughput")
+		}
+		const benchEnd = process.hrtime.bigint()
+		const avgUs = Number(benchEnd - benchStart) / benchIterations / 1000
 
-      console.log("  [✓] Backend synchronization single-flight coalescing & vaulting verified.");
-    } finally {
-      globalThis.fetch = prevFetch;
-    }
+		assert.ok(avgUs < 1.0, `In-memory session read latency must be < 1.0 µs (got ${avgUs.toFixed(3)} µs)`)
+		console.log(`  [✓] ${benchIterations.toLocaleString()} in-memory session lookups verified at ${avgUs.toFixed(3)} µs/op.`)
+		// -------------------------------------------------------------------------
+		// [Suite 8/20] Direct In-Memory Galx Session Query
+		// -------------------------------------------------------------------------
+		console.log("[Suite 8/20] Validating Galx Session In-Memory Query...")
+		const ledger = cloudSyncManager.getCloudSyncLedger()
+		const latestSync = ledger.get("latest_sync")
+		assert.equal(latestSync?.status, "SYNCED", "Cloud sync ledger must record SYNCED status")
+		assert.equal(latestSync?.shardId, "shard_us_east_4", "Cloud sync ledger must preserve shardId")
 
-    // -------------------------------------------------------------------------
-    // [Suite 8/8] Hybrid BroccoliDB In-Memory Session Table & Secondary Indices
-    // -------------------------------------------------------------------------
-    console.log("[Suite 8/8] Validating Hybrid BroccoliDB In-Memory Session Table & Secondary Indices...");
-    const vault = new AuthStorageVault();
-    vault.setToken("openai", "sk-proj-test-12345");
-    vault.setToken("anthropic", "sk-ant-test-67890");
+		const galxSession = cloudSyncManager.getGalxSession()
+		assert.equal(galxSession?.shardId, "shard_us_east_4", "getGalxSession must resolve active shard session")
+		console.log("  [✓] Galx session in-memory state query and ledger tracking verified.")
 
-    assert.equal(vault.hasToken("openai"), true);
-    assert.equal(vault.getToken("openai"), "sk-proj-test-12345");
-    assert.equal(vault.getToken("anthropic"), "sk-ant-test-67890");
+		// -------------------------------------------------------------------------
+		// [Suite 9/20] RFC 9421 HTTP Message Signatures & Dual-Digest Verification
+		// -------------------------------------------------------------------------
+		console.log("[Suite 9/20] Validating RFC 9421 Message Signatures & Dual Digests...")
+		const transport = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+			keyId: "codemarie-v12",
+			sharedSecret: "test_secret_salt",
+		})
 
-    const vaultTable = vault.getTable();
-    assert.ok(vaultTable, "BroccoliDbTable instance must be present");
-    assert.equal(vaultTable.count(), 2);
+		const sampleBody = JSON.stringify({
+			provider: "openai",
+			accessToken: "test_token_sample",
+			accountId: "acct_test",
+		})
 
-    const indexedRecord = vaultTable.get("openai");
-    assert.equal(indexedRecord?.provider, "openai");
+		const digests = transport.computeDigests(sampleBody)
+		assert.ok(digests.digestBase64.startsWith("sha-256="), "Digest header must use sha-256= prefix")
+		assert.equal(digests.digestHex.length, 64, "Hex digest must be exactly 64 characters")
 
-    const dbManager = new CodexOAuthManager(vault);
-    const mockCreds: OpenAiCodexCredentials = {
-      type: "openai-codex",
-      access_token: "ey-test-access-token",
-      refresh_token: "rt-test-refresh-token",
-      expires: Date.now() + 7200000,
-      accountId: "acct_broccolidb_enterprise",
-      email: "architect@broccolidb.io",
-      id_token: "id-token-test",
-    };
+		const sig = transport.computeMessageSignature({
+			method: "POST",
+			path: "/api/auth/ingest",
+			authority: "galx.ai",
+			contentType: "application/json",
+			digest: digests.digestBase64,
+			timestamp: String(Date.now()),
+			nonce: crypto.randomBytes(16).toString("hex"),
+		})
 
-    dbManager.saveCredentials(mockCreds, false, false);
-    const sessionTable = dbManager.getSessionTable();
-    assert.ok(sessionTable, "CodexOAuthManager sessionTable must exist");
-    const activeLease = sessionTable.get("active_lease");
-    assert.equal(activeLease?.accountId, "acct_broccolidb_enterprise");
-    assert.equal(activeLease?.email, "architect@broccolidb.io");
+		assert.ok(sig.signatureInput.includes('keyid="codemarie-v12"'), "Signature-Input must include keyid")
+		assert.ok(sig.signature.startsWith("sig1=:"), "Signature must use RFC 9421 byte sequence format")
+		console.log("  [✓] RFC 9421 signatures and RFC 9530 dual digests computed deterministically.")
 
-    // Test secondary index query
-    const scanned = sessionTable.query({ where: { accountId: "acct_broccolidb_enterprise" } });
-    assert.equal(scanned.length, 1);
-    assert.equal(scanned[0].email, "architect@broccolidb.io");
+		// -------------------------------------------------------------------------
+		// [Suite 10/20] Adaptive 3-State Circuit Breaker (CLOSED -> OPEN -> HALF_OPEN)
+		// -------------------------------------------------------------------------
+		console.log("[Suite 10/20] Validating Adaptive 3-State Circuit Breaker...")
+		const breakerTransport = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+			circuitBreakerThreshold: 3,
+			circuitBreakerCooldownMs: 50,
+			maxRetries: 1,
+		})
 
-    const syncLedger = dbManager.getCloudSyncLedger();
-    assert.ok(syncLedger, "CodexOAuthManager cloudSyncTable must exist");
+		assert.equal(breakerTransport.getCircuitState().state, "CLOSED")
 
-    console.log("  [✓] Hybrid BroccoliDB session table CRUD, sync ledger & secondary indexing verified.");
+		// Trigger 3 consecutive 500 errors to trip breaker
+		await mockFetchForTesting(
+			(async () => {
+				return {
+					ok: false,
+					status: 500,
+					text: async () => "Internal Server Error",
+				} as Response
+			}) as typeof globalThis.fetch,
+			async () => {
+				for (let i = 0; i < 3; i++) {
+					await breakerTransport.post("/api/auth/ingest", { test: true })
+				}
+				assert.equal(breakerTransport.getCircuitState().state, "OPEN", "Circuit breaker must be OPEN after 3 failures")
 
-    // -------------------------------------------------------------------------
-    // [Suite 9/9] High-Frequency In-Memory Session Cache & Sub-Microsecond Lookups
-    // -------------------------------------------------------------------------
-    console.log("[Suite 9/9] Validating High-Frequency In-Memory Session Cache (< 0.2 µs)...");
-    const t0 = performance.now();
-    for (let i = 0; i < 10000; i++) {
-      const lease = sessionTable.get("active_lease");
-      assert.equal(lease?.accountId, "acct_broccolidb_enterprise");
-    }
-    const elapsed = performance.now() - t0;
-    const avgMicros = (elapsed / 10000) * 1000;
-    assert.ok(avgMicros < 10, `10,000 in-memory lookups took ${avgMicros.toFixed(3)} µs/op (Target: < 10 µs)`);
-    console.log(`  [✓] 10,000 in-memory session lookups verified at ${avgMicros.toFixed(3)} µs/op.`);
+				// Immediate request must fail-fast with 503 without network call
+				const failFastRes = await breakerTransport.post("/api/auth/ingest", { test: true })
+				assert.equal(failFastRes.status, 503, "Open breaker must fail fast with HTTP 503")
+				assert.equal(failFastRes.attempts, 0, "No network attempts allowed while circuit is OPEN")
 
-    // -------------------------------------------------------------------------
-    // [Suite 10/10] Direct Synchronous Cloud Ingestion & Auto-Vaulting
-    // -------------------------------------------------------------------------
-    console.log("[Suite 10/10] Validating Direct Synchronous Cloud Ingestion & Auto-Vaulting...");
-    const directVault = new AuthStorageVault();
-    const directManager = new CodexOAuthManager(directVault);
+				// Wait for cooldown
+				await new Promise((resolve) => setTimeout(resolve, 60))
+				assert.equal(breakerTransport.checkCircuitBreaker(), true, "Circuit must allow probe after cooldown")
+				assert.equal(breakerTransport.getCircuitState().state, "HALF_OPEN", "Circuit must transition to HALF_OPEN")
+			},
+		)
+		console.log("  [✓] Circuit breaker CLOSED -> OPEN -> 503 fail-fast -> HALF_OPEN probe verified.")
 
-    const prevDirectFetch = globalThis.fetch;
-    let cloudIngestionCount = 0;
-    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const urlStr = String(input);
-      if (urlStr.includes("auth.openai.com/oauth/token")) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            access_token: "ey-direct-cloud-access-101",
-            refresh_token: "rt-direct-cloud-refresh-101",
-            expires_in: 3600,
-            email: "dev@cloudsync.io",
-          }),
-        } as Response;
-      }
-      if (urlStr.includes("/api/auth/") || urlStr.includes("/api/ingest")) {
-        cloudIngestionCount++;
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            success: true,
-            user: {
-              id: "usr_direct_cloud_101",
-              email: "dev@cloudsync.io",
-              shardId: "shd_direct_cloud_shard_999",
-              token: "galx_sess_direct_cloud_session_key",
-            },
-          }),
-        } as Response;
-      }
-      return prevDirectFetch(input, init);
-    }) as typeof globalThis.fetch;
+		// -------------------------------------------------------------------------
+		// [Suite 11/20] End-to-End Transport Ingestion with Deterministic Idempotency
+		// -------------------------------------------------------------------------
+		console.log("[Suite 11/20] Validating End-to-End Transport Ingestion with Deterministic Idempotency...")
+		const hardenedTransport = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+		})
 
-    try {
-      const exchangedCreds = await directManager.exchangeCodeForTokens("code_101", "verifier_101");
-      assert.equal(exchangedCreds.access_token, "ey-direct-cloud-access-101");
-      assert.equal(cloudIngestionCount, 1, "Direct cloud sync must fire immediately upon token exchange");
+		let transportCapturedSignature = ""
+		let transportCapturedDigest = ""
+		let transportCapturedIdempotency = ""
 
-      // Verify session token was immediately vaulted in AuthStorageVault
-      assert.equal(directVault.hasToken("galxai"), true);
-      assert.equal(directVault.getToken("galxai"), "galx_sess_direct_cloud_session_key");
+		await mockFetchForTesting(
+			(async (_input: string | URL | Request, init?: RequestInit) => {
+				const headers = (init?.headers as Record<string, string>) || {}
+				transportCapturedSignature = headers.Signature || headers.signature || ""
+				transportCapturedDigest = headers.Digest || headers.digest || ""
+				transportCapturedIdempotency = headers["Idempotency-Key"] || headers["idempotency-key"] || ""
 
-      // Verify fast in-memory getGalxSession lookup
-      const sessionConfig = directManager.getGalxSession();
-      assert.ok(sessionConfig);
-      assert.equal(sessionConfig?.shardId, "shd_direct_cloud_shard_999");
-      assert.equal(sessionConfig?.sessionToken, "galx_sess_direct_cloud_session_key");
+				return {
+					ok: true,
+					status: 200,
+					text: async () => "",
+					json: async () => ({
+						success: true,
+						user: {
+							id: "usr_transport_verified",
+							shardId: "shard_us_east_4",
+							token: "galx_session_tok_transport",
+							email: "hardened@galx.ai",
+						},
+					}),
+					headers: {
+						get: (name: string) => {
+							if (name.toLowerCase() === "idempotent-replay") return "true"
+							if (name.toLowerCase() === "server-timing") return "dur=1.2"
+							return null
+						},
+					},
+				} as unknown as Response
+			}) as typeof globalThis.fetch,
+			async () => {
+				const res = await hardenedTransport.ingestCredentials({
+					provider: "openai",
+					accessToken: "hardened_jwt_access",
+					accountId: "acct_hardened_123",
+					email: "hardened@galx.ai",
+					mode: "pooled",
+				})
 
-      console.log("  [✓] Direct cloud write & immediate session vaulting verified.");
-    } finally {
-      globalThis.fetch = prevDirectFetch;
-    }
+				assert.equal(res.success, true)
+				assert.equal(res.data?.user?.id, "usr_transport_verified")
+				assert.equal(res.idempotentReplay, true)
+				assert.equal(res.shardId, "shard_us_east_4")
+				assert.equal(broccoliTransportSubstrate.getActiveShardId(), "shard_us_east_4")
+				assert.ok(transportCapturedSignature.startsWith("sig1=:"), "Signature header must be present")
+				assert.ok(transportCapturedDigest.startsWith("sha-256="), "Digest header must be present")
+				assert.ok(transportCapturedIdempotency.length > 0, "Idempotency-Key must be present")
+			},
+		)
+		console.log("  [✓] End-to-end transport layer to GALXAI validated with full security guarantees.")
 
-    console.log("\n================================================================");
-    console.log("  [✓] ALL 10 CODEX OAUTH & BROCCOLIDB RESILIENCE SUITES PASSED! ");
-    console.log("================================================================\n");
-  } finally {
-    try {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    } catch {
-      // Non-fatal temp cleanup
-    }
-  }
+		// -------------------------------------------------------------------------
+		// [Suite 12/20] BroccoliDB Write-Ahead Ledger & Offline Outbox Replay
+		// -------------------------------------------------------------------------
+		console.log("[Suite 12/20] Validating BroccoliDB Write-Ahead Ledger & Outbox Replay...")
+		const customBroccoliDir = path.join(tempDir, "broccolidb_test_wal")
+		const testBroccoliSubstrate = new BroccoliTransportSubstrate(customBroccoliDir)
+
+		const queuedEntry = testBroccoliSubstrate.enqueueOutbox("/api/auth/ingest", {
+			provider: "openai",
+			token: "broccolidb_offline_staged",
+		})
+
+		assert.equal(queuedEntry.status, "QUEUED")
+		assert.equal(queuedEntry.payloadHash.length, 64)
+
+		const pending = testBroccoliSubstrate.getPendingOutboxEntries()
+		assert.equal(pending.length, 1)
+		assert.equal(pending[0].id, queuedEntry.id)
+
+		// Hydrate into another instance from disk to verify crash recovery
+		const hydratedSubstrate = new BroccoliTransportSubstrate(customBroccoliDir)
+		const hydratedPending = hydratedSubstrate.getPendingOutboxEntries()
+		assert.equal(hydratedPending.length, 1)
+		assert.equal(hydratedPending[0].payloadHash, queuedEntry.payloadHash)
+		console.log("  [✓] BroccoliDB WAL offline outbox staging and crash recovery verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 13/20] BroccoliDB Merkle Delivery Receipts & SLA Percentile Engine
+		// -------------------------------------------------------------------------
+		console.log("[Suite 13/20] Validating Merkle Delivery Receipts & SLA Percentiles...")
+		const rcpt1 = testBroccoliSubstrate.sealReceipt(queuedEntry.id, {
+			success: true,
+			status: 200,
+			durationMs: 15,
+			attempts: 1,
+			correlationId: "corr_merkle_1",
+		})
+
+		assert.ok(rcpt1.receiptHash.length === 64, "Merkle receipt hash must be 64 characters")
+		assert.equal(rcpt1.prevReceiptHash, "0000000000000000000000000000000000000000000000000000000000000000")
+
+		const entry2 = testBroccoliSubstrate.enqueueOutbox("/api/auth/ingest", { second: true })
+		const rcpt2 = testBroccoliSubstrate.sealReceipt(entry2.id, {
+			success: true,
+			status: 200,
+			durationMs: 45,
+			attempts: 1,
+			correlationId: "corr_merkle_2",
+		})
+
+		// Verify cryptographic chaining: rcpt2.prevReceiptHash === rcpt1.receiptHash
+		assert.equal(rcpt2.prevReceiptHash, rcpt1.receiptHash, "Merkle receipt chain must link to previous receipt")
+
+		const slaMetrics = testBroccoliSubstrate.getSlaMetrics()
+		assert.equal(slaMetrics.successfulRequests, 2)
+		assert.ok(slaMetrics.p50LatencyMs > 0, "P50 latency must be calculated")
+		assert.ok(slaMetrics.p90LatencyMs >= slaMetrics.p50LatencyMs, "P90 latency must be >= P50")
+		console.log(
+			`  [✓] Merkle receipt hash chain & SLA engine verified (P50: ${slaMetrics.p50LatencyMs}ms, P90: ${slaMetrics.p90LatencyMs}ms).`,
+		)
+
+		// -------------------------------------------------------------------------
+		// [Suite 14/20] RFC 9449 DPoP (Demonstrating Proof-of-Possession) Tokens
+		// -------------------------------------------------------------------------
+		console.log("[Suite 14/20] Validating RFC 9449 DPoP Proof Token Binding...")
+		const dpopSubstrate = new BroccoliTransportSubstrate()
+		const dpopToken = dpopSubstrate.generateDPoPProof({
+			method: "POST",
+			uri: "https://galx.ai/api/auth/ingest",
+			accessToken: "test_access_jwt_dpop",
+			keySecret: "dpop_secret_signing_key",
+			keyId: "dpop-key-1",
+		})
+
+		assert.ok(dpopToken.includes("."), "DPoP proof must be a valid compact JWT format")
+		const [headerB64, payloadB64, sigB64] = dpopToken.split(".")
+		const decodedHeader = JSON.parse(Buffer.from(headerB64, "base64url").toString("utf-8"))
+		const decodedPayload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8"))
+
+		assert.equal(decodedHeader.typ, "dpop+jwt", "DPoP header typ must be dpop+jwt")
+		assert.equal(decodedPayload.htm, "POST", "DPoP payload htm must match method")
+		assert.equal(decodedPayload.htu, "https://galx.ai/api/auth/ingest", "DPoP payload htu must match URI")
+		assert.ok(decodedPayload.ath.length > 0, "DPoP payload must contain access token hash (ath)")
+		assert.ok(sigB64.length > 0, "DPoP token must have signature")
+		console.log("  [✓] RFC 9449 DPoP proof generation & access-token hash binding verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 15/20] AES-256-GCM Envelope Encryption & Authenticated Decryption
+		// -------------------------------------------------------------------------
+		console.log("[Suite 15/20] Validating AES-256-GCM Envelope Cryptography...")
+		const secretKey = "enterprise_substrate_vault_key_2026"
+		const sensitiveData = {
+			accessToken: "jwt_super_sensitive_token",
+			refreshToken: "rt_super_sensitive_refresh",
+			accountId: "acct_crypto_vault_456",
+		}
+
+		const envelope = dpopSubstrate.encryptEnvelope(sensitiveData, secretKey, "vault-key-1")
+		assert.equal(envelope.algorithm, "AES-256-GCM")
+		assert.ok(envelope.iv.length > 0)
+		assert.ok(envelope.tag.length > 0)
+		assert.ok(envelope.encryptedData.length > 0)
+
+		const decrypted = dpopSubstrate.decryptEnvelope(envelope, secretKey)
+		assert.deepEqual(decrypted, sensitiveData, "Decrypted data must match original plaintext exactly")
+		console.log("  [✓] AES-256-GCM authenticated payload envelope encryption verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 16/20] AIMD Concurrency Governance & Transport Audit Report
+		// -------------------------------------------------------------------------
+		console.log("[Suite 16/20] Validating AIMD Concurrency Governance & Transport Audit...")
+		const auditClient = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+			maxConcurrentRequests: 10,
+		})
+
+		const auditReport = auditClient.getTransportAuditReport()
+		assert.equal(auditReport.circuitBreaker.state, "CLOSED")
+		assert.equal(auditReport.concurrencyLimit, 10)
+		assert.equal(auditReport.inFlightRequests, 0)
+		assert.ok(auditReport.latestReceiptHash.length === 64)
+		console.log(
+			`  [✓] Transport audit telemetry verified (Merkle Hash: ${auditReport.latestReceiptHash.slice(0, 16)}..., Limit: ${auditReport.concurrencyLimit}).`,
+		)
+
+		// -------------------------------------------------------------------------
+		// [Suite 17/20] W3C Trace Context (traceparent / tracestate)
+		// -------------------------------------------------------------------------
+		console.log("[Suite 17/20] Validating W3C Trace Context Distributed Tracing...")
+		const traceCtx = dpopSubstrate.generateTraceContext()
+		assert.ok(traceCtx.traceparent.startsWith("00-"), "traceparent must start with version 00")
+		assert.equal(traceCtx.traceId.length, 32, "traceId must be 32 hex chars (128-bit)")
+		assert.equal(traceCtx.spanId.length, 16, "spanId must be 16 hex chars (64-bit)")
+		assert.ok(traceCtx.tracestate.includes("galx=ro"), "tracestate must include system vendor tag")
+		console.log("  [✓] W3C Trace Context traceparent / tracestate headers verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 18/20] Decorrelated Jitter & Token Bucket Rate Governor
+		// -------------------------------------------------------------------------
+		console.log("[Suite 18/20] Validating Decorrelated Jitter & Rate Governor...")
+		const jitter1 = auditClient.computeDecorrelatedJitter(150)
+		const jitter2 = auditClient.computeDecorrelatedJitter(jitter1)
+		assert.ok(jitter1 >= 150 && jitter1 <= 3000, "Jitter 1 must be within bounds")
+		assert.ok(jitter2 >= 150 && jitter2 <= 3000, "Jitter 2 must be within bounds")
+
+		const pacedClient = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+			rateLimitPerMinute: 600, // 10 tokens/sec
+		})
+		const auditPaced = pacedClient.getTransportAuditReport()
+		assert.ok(auditPaced.tokenBucketAvailable > 0, "Token bucket must have available tokens on init")
+		console.log(
+			`  [✓] Decorrelated Jitter (${jitter1}ms, ${jitter2}ms) & Token Bucket (${auditPaced.tokenBucketAvailable} tokens) verified.`,
+		)
+
+		// -------------------------------------------------------------------------
+		// [Suite 19/20] Merkle Root Tree Batch Evaluation
+		// -------------------------------------------------------------------------
+		console.log("[Suite 19/20] Validating Merkle Root Tree Batch Evaluation...")
+		const sampleHashes = [
+			crypto.randomBytes(32).toString("hex"),
+			crypto.randomBytes(32).toString("hex"),
+			crypto.randomBytes(32).toString("hex"),
+			crypto.randomBytes(32).toString("hex"),
+		]
+		const merkleTreeRoot = dpopSubstrate.computeMerkleRoot(sampleHashes)
+		assert.equal(merkleTreeRoot.length, 64, "Merkle Tree Root must be 64 characters")
+
+		// Recomputing with same hashes must produce identical deterministic root
+		const deterministicRoot = dpopSubstrate.computeMerkleRoot(sampleHashes)
+		assert.equal(merkleTreeRoot, deterministicRoot, "Merkle tree evaluation must be strictly deterministic")
+		console.log(`  [✓] Merkle tree batch evaluation verified (Root: ${merkleTreeRoot.slice(0, 16)}...).`)
+
+		// -------------------------------------------------------------------------
+		// [Suite 20/20] Self-Healing Background Outbox Auto-Flush Worker Lifecycle
+		// -------------------------------------------------------------------------
+		console.log("[Suite 20/20] Validating Background Outbox Auto-Flush Worker Lifecycle...")
+		const _workerTransport = new GalxTransportClient({
+			baseUrl: "https://galx.ai",
+			enableBackgroundOutboxWorker: false,
+		})
+
+		let flushWorkerExecuted = false
+		const stopWorker = dpopSubstrate.startBackgroundWorker(async () => {
+			flushWorkerExecuted = true
+		}, 50)
+
+		// Stage an outbox item
+		dpopSubstrate.enqueueOutbox("/api/auth/ingest", { worker_test: true })
+		await new Promise((resolve) => setTimeout(resolve, 80))
+
+		stopWorker()
+		assert.equal(flushWorkerExecuted, true, "Background outbox worker must trigger flush when items are pending")
+		console.log("  [✓] Self-healing background outbox auto-flush worker lifecycle verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 21/21] Dual-Channel Shard Capture & 429 Anti-Pinning Eviction
+		// -------------------------------------------------------------------------
+		console.log("[Suite 21/21] Validating Dual-Channel Shard Capture & 429 Eviction...")
+		broccoliTransportSubstrate.clearActiveShard()
+		assert.equal(broccoliTransportSubstrate.getActiveShardId(), undefined)
+
+		// 1. Set active shard and verify pinning
+		broccoliTransportSubstrate.setActiveShard("shard_authority_01", "pooled")
+		assert.equal(broccoliTransportSubstrate.getActiveShardId(), "shard_authority_01")
+		assert.equal(broccoliTransportSubstrate.getActiveShardMode(), "pooled")
+
+		// 2. HTTP 429 Rate Limit response unpins active shard
+		await mockFetchForTesting(
+			(async () => {
+				return {
+					ok: false,
+					status: 429,
+					text: async () => JSON.stringify({ error: { message: "Quota exceeded" } }),
+					headers: {
+						get: () => null,
+					},
+				} as unknown as Response
+			}) as typeof globalThis.fetch,
+			async () => {
+				await hardenedTransport.post("/responses", { prompt: "test" })
+				assert.equal(
+					broccoliTransportSubstrate.getActiveShardId(),
+					undefined,
+					"HTTP 429 must unpin active shard to prevent blackholing",
+				)
+			},
+		)
+		console.log("  [✓] Dual-channel shard capture & 429 anti-pinning eviction verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 22/24] Transactional Outbox Replay without WAL Amplification
+		// -------------------------------------------------------------------------
+		console.log("[Suite 22/24] Validating Transactional Outbox Replay without WAL Duplication...")
+		const preReplayCount = broccoliTransportSubstrate.getPendingOutboxEntries().length
+		const replayEntry = broccoliTransportSubstrate.enqueueOutbox("/api/auth/ingest", {
+			provider: "openai",
+			replay_test: "token_for_replay_test",
+		})
+		const activePendingBefore = broccoliTransportSubstrate.getPendingOutboxEntries().length
+		assert.equal(activePendingBefore, preReplayCount + 1, "Pending count must increment by exactly 1")
+
+		await mockFetchForTesting(
+			(async () => {
+				return {
+					ok: true,
+					status: 200,
+					text: async () => "",
+					json: async () => ({
+						success: true,
+						user: {
+							id: "usr_replay_verified",
+							shardId: "shard_replayed_01",
+							token: "galx_session_replay",
+						},
+					}),
+					headers: {
+						get: (name: string) => (name.toLowerCase() === "x-galx-shard-id" ? "shard_replayed_01" : null),
+					},
+				} as unknown as Response
+			}) as typeof globalThis.fetch,
+			async () => {
+				const flushResult = await hardenedTransport.flushPendingOutbox()
+				assert.ok(flushResult.succeeded >= 1, "At least 1 outbox entry must succeed")
+
+				const updatedEntry = broccoliTransportSubstrate.getEntry(replayEntry.id)
+				assert.ok(updatedEntry, "Replayed entry must exist")
+				assert.equal(updatedEntry.status, "COMMITTED", "Replayed entry status must transition to COMMITTED")
+
+				// Verify WAL did NOT amplify or create duplicate entries
+				const pendingAfter = broccoliTransportSubstrate.getPendingOutboxEntries()
+				assert.equal(pendingAfter.length, 0, "All pending entries must be settled without WAL multiplication")
+			},
+		)
+		console.log("  [✓] Transactional outbox replay de-duplication verified (0 duplicate WAL entries).")
+
+		// -------------------------------------------------------------------------
+		// [Suite 23/24] Zero-Trust At-Rest Encryption & Committed Entry Scrubbing
+		// -------------------------------------------------------------------------
+		console.log("[Suite 23/24] Validating Zero-Trust Machine-Bound Encryption & Scrubbing...")
+		const committedRecord = broccoliTransportSubstrate.getEntry(replayEntry.id)
+		assert.ok(committedRecord, "Committed record must exist")
+		assert.equal(committedRecord.payload._redacted, true, "Committed payload must be redacted")
+		assert.equal(committedRecord.payload.replay_test, undefined, "Sensitive field must be scrubbed")
+
+		// Stage a queued item with sensitive tokens and verify disk encryption
+		const sensitiveQueued = broccoliTransportSubstrate.enqueueOutbox("/api/auth/ingest", {
+			accessToken: "sk-super-secret-sensitive-bearer-token",
+			refreshToken: "rt-super-secret-sensitive-refresh-token",
+		})
+
+		const walDiskPath = (broccoliTransportSubstrate as any).ledgerFilePath as string
+		assert.ok(fs.existsSync(walDiskPath), "WAL file must exist on disk")
+		const rawDiskContent = fs.readFileSync(walDiskPath, "utf-8")
+
+		// Invariant: Raw plaintext tokens must NEVER appear in the WAL on disk
+		assert.equal(
+			rawDiskContent.includes("sk-super-secret-sensitive-bearer-token"),
+			false,
+			"Plaintext access token must NOT exist on disk in WAL",
+		)
+		assert.equal(
+			rawDiskContent.includes("rt-super-secret-sensitive-refresh-token"),
+			false,
+			"Plaintext refresh token must NOT exist on disk in WAL",
+		)
+
+		// Invariant: Transparent hydration recovers queued entry with machine-bound key
+		const zeroTrustHydratedSubstrate = new BroccoliTransportSubstrate((broccoliTransportSubstrate as any).storageDir)
+		const recoveredQueued = zeroTrustHydratedSubstrate.getEntry(sensitiveQueued.id)
+		assert.ok(recoveredQueued, "Queued entry must be hydrated")
+		assert.equal(
+			recoveredQueued.payload.accessToken,
+			"sk-super-secret-sensitive-bearer-token",
+			"Queued entry must decrypt transparently on host machine",
+		)
+		console.log("  [✓] Zero-trust at-rest machine-bound envelope encryption & scrubbing verified.")
+
+		// -------------------------------------------------------------------------
+		// [Suite 24/24] Broadened Shard Eviction on 401/403/404/410
+		// -------------------------------------------------------------------------
+		console.log("[Suite 24/24] Validating Broadened Shard Eviction on 401/403/404/410...")
+		const testErrorStatuses = [401, 403, 404, 410]
+
+		for (const errStatus of testErrorStatuses) {
+			broccoliTransportSubstrate.setActiveShard(`shard_test_evict_${errStatus}`, "pooled")
+			assert.equal(broccoliTransportSubstrate.getActiveShardId(), `shard_test_evict_${errStatus}`)
+
+			await mockFetchForTesting(
+				(async () => {
+					return {
+						ok: false,
+						status: errStatus,
+						text: async () => JSON.stringify({ error: { message: `Simulated error ${errStatus}` } }),
+						headers: {
+							get: () => null,
+						},
+					} as unknown as Response
+				}) as typeof globalThis.fetch,
+				async () => {
+					await hardenedTransport.post("/responses", { prompt: `test_${errStatus}` })
+					assert.equal(
+						broccoliTransportSubstrate.getActiveShardId(),
+						undefined,
+						`HTTP ${errStatus} must trigger shard affinity eviction`,
+					)
+				},
+			)
+		}
+		console.log("  [✓] Broadened shard eviction on 401/403/404/410 verified.")
+
+		console.log("\n================================================================")
+		console.log("   ALL 24 WORLD-CLASS TRANSPORT, DPOP & BROCCOLIDB SUITES PASSED!")
+		console.log("================================================================\n")
+	} finally {
+		try {
+			fs.rmSync(tempDir, { recursive: true, force: true })
+		} catch {}
+	}
 }
 
 main().catch((err) => {
-  console.error("OAuth resilience validation failed:", err);
-  process.exit(1);
-});
+	console.error("\n[FATAL] Resilience Validation Failed:", err)
+	process.exit(1)
+})

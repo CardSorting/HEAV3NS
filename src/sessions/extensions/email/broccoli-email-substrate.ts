@@ -20,7 +20,6 @@ import type {
   EmailMessageRow,
   EmailMetricsReport,
   EmailMutationUndoRecord,
-  EmailNotificationEvent,
   EmailNotificationRow,
   EmailReminderRow,
   EmailSkillConfig,

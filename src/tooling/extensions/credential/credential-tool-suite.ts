@@ -1,5 +1,5 @@
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
-import type { ICredentialPool, CredentialRotationStrategy } from "../../../core/contracts/credential.contracts.js";
+import type { ICredentialPool, } from "../../../core/contracts/credential.contracts.js";
 
 /**
  * Model-facing tool suite for credential pool inspection and rotation.

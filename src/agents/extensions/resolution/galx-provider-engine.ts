@@ -9,13 +9,11 @@
 
 import {
   DEFAULT_GALX_BASE_URL,
-  DEFAULT_GALX_CLEARINGHOUSE_URL,
   DEFAULT_GALX_MODEL_ID,
   DEFAULT_GALX_CLIENT_TAG,
   DEFAULT_GALX_CLIENT_ID,
   GALX_DEFAULT_MODELS,
   type GalxAttributionHeaders,
-  type GalxModelSpec,
 } from "../../../core/contracts/galx.contracts.js";
 import { GalxTransportClient, galxTransportClient } from "../../../integrations/galx/GalxTransportClient.js";
 import type { ModelSpecs } from "./model-catalog.js";

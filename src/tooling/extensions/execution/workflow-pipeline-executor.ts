@@ -6,7 +6,7 @@
  * (e.g. `$step1.output.result`), early exit conditions, and transaction safety.
  */
 
-import type { IToolRegistry, ToolExecutionRecord } from "../../../core/contracts/tooling.contracts.js";
+import type { IToolRegistry, } from "../../../core/contracts/tooling.contracts.js";
 
 export interface WorkflowStep {
   readonly id: string;

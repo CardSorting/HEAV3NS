@@ -5,13 +5,6 @@
  * extracted candidate knowledge (facts/skills), session insights, and SLA health (Phase 96 / ADR-048 / Target #67).
  */
 
-import type {
-  BackgroundReviewHealthAuditReport,
-  BackgroundReviewMetricsReport,
-  CandidateFactItem,
-  CandidateSkillItem,
-  TurnReviewResult,
-} from "../../core/contracts/background-review.contracts.js";
 import { BroccoliReviewSubstrate } from "../../sessions/extensions/review/broccoli-review-substrate.js";
 import { DeterministicReviewEvaluator } from "../../tooling/extensions/review/deterministic-review-evaluator.js";
 

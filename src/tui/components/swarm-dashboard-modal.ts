@@ -1,6 +1,4 @@
 import type {
-  DelegationOutcome,
-  SwarmHealthAuditReport,
   SwarmMetricsReport,
   SwarmTaskManifest,
   SwarmTaskStatus,

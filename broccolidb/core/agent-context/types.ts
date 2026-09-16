@@ -1,0 +1,267 @@
+// [LAYER: CORE]
+import type { LifecycleRegistryHealth } from './LifecycleRegistry.js';
+import type { CapabilityHealth } from './capability-health.js';
+import type { BufferedDbPool } from '../../infrastructure/db/BufferedDbPool.js';
+import type { LRUCache } from '../lru-cache.js';
+import type { Workspace } from '../workspace.js';
+import type { LspService } from './LspService.js';
+import type { CoordinatorService } from './CoordinatorService.js';
+import type { ScratchpadService } from './ScratchpadService.js';
+import type { BlastRadius } from './StructuralDiscoveryService.js';
+import type { MailboxService } from './MailboxService.js';
+
+export interface MemoryMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
+
+export interface ToolDef {
+  name: string;
+  description: string;
+  parameters: any; // JSON Schema
+  isSearchOrReadCommand?: boolean;
+  isDestructive?: boolean;
+  maxResultSizeChars?: number;
+  timeoutMs?: number;
+  execute: (args: any, context: ServiceContext) => Promise<any>;
+}
+
+export interface ToolUseContext {
+  agentId?: string;
+  sessionId?: string;
+  toolUseId?: string;
+  startedAt?: number;
+  signal?: AbortSignal;
+  options: {
+    tools: ToolDef[];
+  };
+  onProgress?: (progress: any) => void;
+}
+
+export interface AgentProfile {
+  agentId: string;
+  name: string;
+  role: string;
+  permissions: string[];
+  status: 'active' | 'completed' | 'failed' | 'running';
+  memoryLayer?: MemoryMessage[];
+  createdAt: number;
+  lastActive: number;
+}
+
+export interface GraphEdge {
+  targetId: string;
+  type: 'supports' | 'contradicts' | 'blocks' | 'depends_on' | 'references';
+  weight?: number; // 0.0 to 1.0 relevance scalar
+}
+
+export interface KnowledgeBaseItem {
+  itemId: string;
+  type:
+    | 'fact'
+    | 'vector'
+    | 'rule'
+    | 'hypothesis'
+    | 'conclusion'
+    | 'structural_snapshot'
+    | 'user'
+    | 'feedback'
+    | 'project'
+    | 'reference';
+  content: string;
+  tags: string[];
+  edges: GraphEdge[]; // Outbound edges
+  inboundEdges: GraphEdge[]; // Reverse index: edges pointing AT this node
+  embedding?: number[]; // Vector embeddings
+  confidence: number; // 0.0–1.0 confidence score
+  hubScore: number; // Pre-calculated centrality
+  expiresAt?: number | null;
+  metadata: Record<string, any>;
+  createdAt: number;
+}
+
+export interface TaskItem {
+  taskId: string;
+  agentId: string;
+  status: 'pending' | 'active' | 'completed' | 'failed';
+  description: string;
+  linkedKnowledgeIds?: string[];
+  dependsOnTaskIds?: string[];
+  blockedByTaskIds?: string[];
+  result?: any;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface TaskContext {
+  task: TaskItem;
+  resolvedGraph: KnowledgeBaseItem[];
+}
+
+export interface TraversalFilter {
+  edgeTypes?: GraphEdge['type'][];
+  minWeight?: number;
+  direction?: 'outbound' | 'inbound' | 'both';
+}
+
+export interface SubgraphResult {
+  nodes: KnowledgeBaseItem[];
+  edges: { sourceId: string; targetId: string; type: string; weight?: number }[];
+}
+
+export interface ContradictionReport {
+  nodeId: string;
+  conflictingNodeId: string;
+  confidence: number;
+  evidencePath: string[];
+}
+
+export interface Pedigree {
+  nodeId: string;
+  effectiveConfidence: number;
+  lineage: {
+    nodeId: string;
+    type: string;
+    content: string;
+    timestamp: number;
+    confidence: number;
+  }[];
+  supportingEvidenceIds: string[];
+}
+
+export interface ImpactReport {
+  isValid: boolean;
+  contradictions: ContradictionReport[];
+  suggestions: string[];
+  soundnessDelta: number;
+}
+
+export interface AiService {
+  isAvailable: () => boolean;
+  getGraphForSession: (sessionId: string) => Promise<any>;
+  auditCodeAgainstRule: (path: string, code: string, rule: string) => Promise<any>;
+  completeOneOff(prompt: string, options: { model: string; maxTokens: number; system: string }): Promise<{ text: string; usage: { inputTokens: number; outputTokens: number } }>;
+  evaluateLogicRelationship: (contentA: string, contentB: string) => Promise<'supports' | 'contradicts' | 'blocks' | 'depends_on' | 'references' | 'neutral'>;
+  explainReasoningChain: (content: string, lineage: { content: string; type: string }[]) => Promise<string>;
+}
+
+export type RepairAction =
+  | 'UPDATE_IMPORT_PATH'
+  | 'ADD_MISSING_EXPORT'
+  | 'REMOVE_STALE_IMPORT'
+  | 'RENAME_SYMBOL_REFERENCE'
+  | 'MOVE_SYMBOL_REFERENCE'
+  | 'BREAK_CYCLE_BY_INTERFACE'
+  | 'FIX_LAYER_VIOLATION'
+  | 'REFRESH_GRAPH_NODE'
+  | 'RESYNC_DISK_PARITY'
+  | 'EXPORT_SYMBOL'
+  | 'DECOUPLE_INTERFACE';
+
+export interface RepairDirective {
+  directiveId?: string;
+  action?: RepairAction;
+  type?: RepairAction;
+  symbol?: string;
+  filePath?: string;
+  targetFile?: string;
+  targetRange?: import('../policy/spider/report-types.js').SourceRange;
+  suggestedValue?: string;
+  rationale: string;
+  preconditions?: string[];
+  verificationCommand?: string;
+  riskLevel?: 'low' | 'medium' | 'high';
+  supportingEvidenceIds?: string[];
+}
+
+export interface ServiceContext {
+  db: BufferedDbPool;
+  aiService: AiService | null;
+  kbCache: LRUCache<string, KnowledgeBaseItem>;
+  workspace: Workspace;
+  userId: string;
+  push: (op: any, agentId?: string) => Promise<void>;
+  pushBatch: (ops: any[], agentId?: string) => Promise<void>;
+  searchKnowledge: (
+    query: string,
+    tags?: string[],
+    limit?: number,
+    queryEmbedding?: number[],
+    options?: { augmentWithGraph?: boolean; skipVerification?: boolean }
+  ) => Promise<KnowledgeBaseItem[]>;
+  updateTaskStatus: (taskId: string, status: any, result?: any) => Promise<void>;
+  getStructuralImpact: (filePath: string) => { 
+    summary: string; 
+    blastRadius: BlastRadius; 
+    deficiencies: { 
+        depId: string, 
+        symbols: string[], 
+        displacements: { symbol: string, newPath: string }[],
+        directives: RepairDirective[],
+        line: number, 
+        character: number 
+    }[] 
+  };
+  compact: import('./capabilities/CompactionCapability.js').CompactionCapability;
+  storage: import('../../infrastructure/storage/StorageService.js').StorageService;
+  token: import('./TokenService.js').TokenService;
+  lsp: LspService;
+  coordinator: CoordinatorService;
+  scratchpad: ScratchpadService;
+  mailbox: MailboxService;
+  spider: import('./SpiderService.js').SpiderService;
+  toolUseContext?: ToolUseContext;
+}
+
+import type { GraphCapability } from './capabilities/GraphCapability.js';
+import type { QueryCapability } from './capabilities/QueryCapability.js';
+
+export interface IAgentContext {
+  graph: Pick<GraphCapability, 'getStructuralImpact' | 'annotateKnowledge'>;
+  query: Pick<QueryCapability, 'search'>;
+  flush(): Promise<void>;
+}
+
+export type SuggestionType = 'fix' | 'design' | 'learn' | 'feature';
+
+export interface PromptSuggestion {
+  text: string;
+  type: SuggestionType;
+  impact?: number; // 0.0 to 1.0 architectural impact
+}
+
+export interface AgentBundle {
+  profile: AgentProfile;
+  activeTasks: TaskItem[];
+  recentKnowledge: KnowledgeBaseItem[];
+}
+
+export interface BroccoliDbCacheStats {
+  hits: number;
+  misses: number;
+  size: number;
+}
+
+import type { IntentTracerHealth } from './intent-types.js';
+
+export interface BroccoliDbHealth {
+  status: 'healthy' | 'degraded' | 'critical' | 'stopped';
+  lifecycle: 'new' | 'starting' | 'started' | 'stopping' | 'stopped';
+  registry: LifecycleRegistryHealth;
+  capabilities: Record<string, CapabilityHealth>;
+  cache: BroccoliDbCacheStats;
+  intent: IntentTracerHealth;
+  invariantViolations?: string[];
+  compatibilityBridgeViolations?: string[];
+}
+
+export interface BroccoliDbRecoveryReport {
+  recovered: boolean;
+  warmedTables: Record<string, number>;
+  errors: string[];
+}

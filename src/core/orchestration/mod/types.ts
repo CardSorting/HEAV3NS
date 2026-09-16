@@ -1,0 +1,542 @@
+export type MoDOutcome = "auto" | "plan-only" | "plan-and-implement"
+
+export type MoDStage =
+	| "initializing"
+	| "observe"
+	| "intent"
+	| "classification"
+	| "build-mental-model"
+	| "audit"
+	| "investigate"
+	| "specialist-selection"
+	| "specialist-analysis"
+	| "explore-design"
+	| "recommendation-validation"
+	| "convergence"
+	| "decision-lock"
+	| "contract-generation"
+	| "implementation-planning"
+	| "implementation"
+	| "validation"
+	| "critique"
+	| "post-implementation-audit"
+	| "completed"
+	| "completed-with-limitations"
+	| "failed"
+	| "blocked"
+
+export interface ProductDesignIntent {
+	request: {
+		originalRequest: string
+		interpretedGoal: string
+		explicitRequirements: string[]
+		implicitRequirements: string[]
+	}
+	product: {
+		productArea: string
+		productPurpose: string
+		targetUsers: string[]
+		userExperienceLevels: Array<"new" | "returning" | "advanced">
+		primaryJobs: string[]
+		secondaryJobs: string[]
+	}
+	currentExperience: {
+		workflow: string[]
+		strengths: string[]
+		weaknesses: string[]
+		frictionPoints: string[]
+		existingPatterns: string[]
+		unresolvedQuestions: string[]
+	}
+	constraints: {
+		technical: string[]
+		product: string[]
+		brand: string[]
+		accessibility: string[]
+		performance: string[]
+		platform: string[]
+	}
+	boundaries: {
+		preserve: string[]
+		allowedToChange: string[]
+		outOfScope: string[]
+	}
+	success: {
+		desiredOutcomes: string[]
+		measurableSignals: string[]
+		qualitativeSignals: string[]
+		failureConditions: string[]
+	}
+}
+
+export type ProductProblemDimension =
+	| "product-strategy"
+	| "information-architecture"
+	| "workflow"
+	| "interaction"
+	| "system-status"
+	| "visual-hierarchy"
+	| "content"
+	| "design-system"
+	| "accessibility"
+	| "responsive-design"
+	| "implementation-quality"
+	| "agentic-control"
+	| "generative-workflow"
+	| "cross-surface-consistency"
+
+export interface ClassifiedProductProblem {
+	id: string
+	dimension: ProductProblemDimension
+	target: string
+	observation: string
+	userImpact: string
+	evidence: string[]
+	severity: "critical" | "high" | "medium" | "low"
+	confidence: "high" | "medium" | "low"
+}
+
+export interface ProductProblemClassification {
+	problems: ClassifiedProductProblem[]
+	preservedStrengths: string[]
+	insufficientEvidence: string[]
+}
+
+export type DesignerRole =
+	| "product-strategist"
+	| "ux-architect"
+	| "interaction-designer"
+	| "visual-systems-designer"
+	| "content-designer"
+	| "design-system-engineer"
+	| "accessibility-reviewer"
+	| "responsive-design-reviewer"
+	| "frontend-implementation-designer"
+	| "product-critic"
+
+/**
+ * Internal viewpoints available to the Designer-in-Residence. They are evidence
+ * lenses, not independently acting agents and never vote on a design outcome.
+ */
+export type DesignLens = DesignerRole
+
+export interface DesignIntelligenceNode {
+	id: string
+	type: "screen" | "workflow" | "component" | "pattern" | "user-goal" | "state" | "token"
+	label: string
+	references: string[]
+}
+
+export interface DesignIntelligenceEdge {
+	from: string
+	relation: "belongs-to" | "uses" | "transitions-to" | "governed-by" | "solves" | "has-state" | "emits-event"
+	to: string
+}
+
+export type DesignDebtCategory =
+	| "UX Debt"
+	| "Visual Debt"
+	| "Interaction Debt"
+	| "Accessibility Debt"
+	| "Consistency Debt"
+	| "Information Architecture Debt"
+	| "Pattern Debt"
+
+export interface DesignDebtItem {
+	id: string
+	category?: DesignDebtCategory
+	dimension: ProductProblemDimension
+	target: string
+	description: string
+	severity: "critical" | "high" | "medium" | "low"
+	status: "open" | "addressed" | "needs-follow-up"
+	lastAuditedAt: string
+}
+
+export interface DesignToken {
+	name: string
+	type: "color" | "spacing" | "typography" | "radius" | "elevation" | "motion"
+	value: string
+	semanticMeaning: string
+	sourceFile: string
+}
+
+export interface UXHealthIndex {
+	score: number
+	grade: "A+" | "A" | "B" | "C" | "D" | "F"
+	trend: "improving" | "stable" | "degrading"
+	breakdown: Record<DesignDebtCategory, number>
+	openDebtCount: number
+	addressedDebtCount: number
+	lastCalculatedAt: string
+}
+
+/** Durable, workspace-level mental model maintained by the Designer-in-Residence. */
+export interface DesignIntelligenceGraph {
+	version: 1
+	productSummary: string
+	users: string[]
+	primaryJobs: string[]
+	nodes: DesignIntelligenceNode[]
+	edges: DesignIntelligenceEdge[]
+	knownPatterns: string[]
+	designTokens?: DesignToken[]
+	healthIndex?: UXHealthIndex
+	designDebt: DesignDebtItem[]
+	auditedLenses: DesignLens[]
+	lastAuditedAt: string
+}
+
+export interface DesignHypothesis {
+	id: string
+	findingId: string
+	statement: string
+	evidence: string[]
+	alternatives: string[]
+	confidence: "high" | "medium" | "low"
+}
+
+export interface DesignOption {
+	id: string
+	title: string
+	approach: string
+	pros: string[]
+	cons: string[]
+	recommended: boolean
+}
+
+export interface DesignAuditFinding {
+	id: string
+	lens: DesignLens
+	target: string
+	observation: string
+	userImpact: string
+	evidence: string[]
+	severity: "critical" | "high" | "medium" | "low"
+	status: "open" | "addressed" | "needs-follow-up"
+}
+
+export interface DesignInvestigation {
+	id: string
+	request: string
+	lenses: DesignLens[]
+	findings: DesignAuditFinding[]
+	hypotheses: DesignHypothesis[]
+	options: DesignOption[]
+	summary: string
+	createdAt: string
+}
+
+export interface SpecialistSelection {
+	role: DesignerRole
+	reasons: string[]
+	assignedProblemIds: string[]
+	requiredEvidence: string[]
+	relevantArtifacts: string[]
+	exclusions: string[]
+	priority: "required" | "recommended" | "optional"
+	dependsOnRoles: DesignerRole[]
+}
+
+export interface DesignerContextPackage {
+	role: DesignerRole
+	intent: ProductDesignIntent
+	assignedProblems: ClassifiedProductProblem[]
+	files: Array<{
+		path: string
+		relevance: string
+		access: "read-only" | "proposed-mutation"
+	}>
+	visualEvidence: string[]
+	currentPatterns: string[]
+	constraints: string[]
+	exclusions: string[]
+	preservedStrengths: string[]
+	priorDecisions: string[]
+	requiredOutput: string[]
+}
+
+export interface DesignRefinement {
+	id: string
+	role: DesignerRole
+	problem: {
+		problemId: string
+		target: string
+		observedBehavior: string
+		userImpact: string
+		severity: "critical" | "high" | "medium" | "low"
+		frequency: "constant" | "frequent" | "occasional" | "edge-case"
+	}
+	evidence: Array<{
+		type: "source" | "render" | "workflow" | "test" | "accessibility" | "design-system" | "product-intent"
+		reference: string
+		observation: string
+	}>
+	recommendation: {
+		designStrategy: string
+		proposedChange: string
+		familiarPattern?: string
+		whyPatternFits?: string
+		adaptationNotes: string[]
+		alternativesConsidered: string[]
+		tradeoffs: string[]
+	}
+	implementation: {
+		affectedFiles: string[]
+		affectedComponents: string[]
+		affectedStates: string[]
+		instructions: string[]
+		dependencies: string[]
+		riskLevel: "low" | "medium" | "high"
+	}
+	validation: {
+		acceptanceCriteria: string[]
+		regressionRisks: string[]
+		verificationMethods: string[]
+	}
+	governance: {
+		confidence: "high" | "medium" | "low"
+		scopeStatus: "in-scope" | "borderline" | "out-of-scope"
+		mutationAuthorityRequired: boolean
+		conflictsWith: string[]
+		bftStatus?: "valid" | "out-of-scope" | "malformed"
+		utility?: number
+	}
+}
+
+export interface PatternReference {
+	pattern: string
+	problemSolved: string
+	familiarityReason: string
+	suitability: string
+	adaptationNotes: string[]
+	preservedProductIdentity: string[]
+	risks: string[]
+	rejectionConditions: string[]
+}
+
+export interface DesignDecision {
+	id: string
+	status: "proposed" | "accepted" | "rejected" | "superseded" | "deferred" | "implemented" | "validated"
+	sourceRefinementIds: string[]
+	problemIds: string[]
+	decision: string
+	rationale: string
+	evidence: string[]
+	tradeoffs: string[]
+	affectedAreas: string[]
+	acceptanceCriteria: string[]
+	locked: boolean
+	reopenConditions: string[]
+	utility?: number
+}
+
+/**
+ * The implementation handoff. This keeps the product rationale alongside the
+ * code task without turning it into a detached, exhaustive specification.
+ */
+export interface DesignIntentContract {
+	decisionId: string
+	goal: string
+	mustPreserve: string[]
+	mustImprove: string[]
+	use: string[]
+	avoid: string[]
+	successCriteria: string[]
+	validationPlan: string[]
+}
+
+export interface DesignImplementationPhase {
+	id: string
+	title: string
+	objective: string
+	dependencies: string[]
+	taskIds: string[]
+}
+
+export interface DesignImplementationTask {
+	id: string
+	decisionIds: string[]
+	objective: string
+	affectedFiles: string[]
+	affectedComponents: string[]
+	affectedStates: string[]
+	instructions: string[]
+	dependencies: string[]
+	acceptanceCriteria: string[]
+	validationCommands: string[]
+	mutationBoundary: string[]
+	preservedBehavior: string[]
+	rollbackNotes: string[]
+	status: "pending" | "in-progress" | "completed" | "blocked" | "failed" | "validated"
+}
+
+export type DesignGate =
+	| "product-intent"
+	| "ux-architecture"
+	| "visual-system"
+	| "interaction-state"
+	| "accessibility"
+	| "implementation-fidelity"
+	| "cross-surface-consistency"
+	| "final-product-critique"
+
+export interface DesignValidationPlan {
+	dimensions: DesignValidationDimension[]
+	testSuiteCommands: string[]
+}
+
+export interface ConvergedDesignPlan {
+	intent: ProductDesignIntent
+	problems: ClassifiedProductProblem[]
+	selectedSpecialists: SpecialistSelection[]
+	acceptedDecisionIds: string[]
+	rejectedRefinementIds: string[]
+	deferredRefinementIds: string[]
+	resolvedConflicts: Array<{
+		refinementIds: string[]
+		resolution: string
+		rationale: string
+	}>
+	patternReferences: PatternReference[]
+	implementationPhases: DesignImplementationPhase[]
+	validationPlan: DesignValidationPlan
+	knownLimitations: string[]
+}
+
+export interface DesignRevisionRequest {
+	failedGate: DesignGate
+	failureReasons: string[]
+	evidence: string[]
+	responsibleRoles: DesignerRole[]
+	affectedDecisionIds: string[]
+	lockedDecisionIds: string[]
+	requiredCorrections: string[]
+	requiredEvidence: string[]
+	revisionNumber: number
+	finalAllowedRevision: boolean
+}
+
+export type DesignValidationDimension =
+	| "product"
+	| "ux"
+	| "interaction"
+	| "visual"
+	| "design-system"
+	| "responsive"
+	| "accessibility"
+	| "agentic-control"
+	| "implementation"
+
+export interface DesignValidationResult {
+	dimension: DesignValidationDimension
+	status: "passed" | "failed" | "passed-with-limitations"
+	evidence: string[]
+	failedCriteria: string[]
+	limitations: string[]
+	requiredFollowUp: string[]
+}
+
+export interface ProductCritiqueFinding {
+	id: string
+	decisionIds: string[]
+	observedFailure: string
+	userOrProductImpact: string
+	evidence: string[]
+	correctionRequired: boolean
+	gateToFail?: DesignGate
+	confidence: "high" | "medium" | "low"
+}
+
+export interface DesignGateResult {
+	gate: DesignGate
+	passed: boolean
+	failureReasons: string[]
+	timestamp: string
+}
+
+export interface MoDFailure {
+	stage: MoDStage
+	code: string
+	message: string
+	evidence: string[]
+	recoverable: boolean
+	recommendedAction: string
+}
+
+export interface MotionContract {
+	duration: "100ms" | "200ms" | "300ms"
+	easing: string
+	reducedMotionFallback: string
+	trigger: string
+}
+
+export interface WCAGComplianceRule {
+	criterion: "contrast" | "touch-target" | "focus-visible" | "aria-label" | "keyboard-trap"
+	requirement: string
+	level: "AA" | "AAA"
+}
+
+export interface MoDRunState {
+	runId: string
+	mode: "mixture-of-designers"
+	outcome: MoDOutcome
+	stage: MoDStage
+	intent?: ProductDesignIntent
+	problemClassification?: ProductProblemClassification
+	designIntelligence?: DesignIntelligenceGraph
+	designInvestigations?: DesignInvestigation[]
+	designIntentContracts?: DesignIntentContract[]
+	designDecisionRecords?: any[]
+	designDriftItems?: any[]
+	specialistSelections: SpecialistSelection[]
+	specialistResults: SpecialistResult[]
+	refinements: DesignRefinement[]
+	decisions: DesignDecision[]
+	implementationTasks: DesignImplementationTask[]
+	validationResults: DesignValidationResult[]
+	critiqueFindings: ProductCritiqueFinding[]
+	gateResults: DesignGateResult[]
+	revisions: DesignRevisionRequest[]
+	limitations: string[]
+	failure?: MoDFailure
+	checkpointHashes?: Record<string, string>
+	createdAt: string
+	updatedAt: string
+}
+
+export interface SpecialistResult {
+	role: DesignerRole
+	refinements: DesignRefinement[]
+	durationMs: number
+	success: boolean
+	error?: string
+}
+
+export type MoDFinalStatus = "completed" | "completed-with-limitations" | "failed"
+
+export type MoDTelemetryEvent =
+	| "mod.started"
+	| "mod.intent.completed"
+	| "mod.classification.completed"
+	| "mod.specialists.selected"
+	| "mod.specialist.started"
+	| "mod.specialist.completed"
+	| "mod.specialist.failed"
+	| "mod.recommendations.validated"
+	| "mod.convergence.completed"
+	| "mod.decision.locked"
+	| "mod.decision.reopened"
+	| "mod.gate.passed"
+	| "mod.gate.failed"
+	| "mod.revision.started"
+	| "mod.revision.completed"
+	| "mod.implementation.started"
+	| "mod.implementation.completed"
+	| "mod.task_batch.started"
+	| "mod.task_batch.completed"
+	| "mod.validation.completed"
+	| "mod.critique.completed"
+	| "mod.completed"
+	| "mod.completed_with_limitations"
+	| "mod.failed"

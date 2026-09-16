@@ -5,12 +5,6 @@
  * export manifests, format footprints, and SLA health audits (Phase 99 / ADR-053 / Target #70).
  */
 
-import type {
-  ExportedDocumentResult,
-  SessionArchiveHealthAuditReport,
-  SessionArchiveManifest,
-  SessionArchiveMetricsReport,
-} from "../../core/contracts/session-archive.contracts.js";
 import { BroccoliArchiveSubstrate } from "../../sessions/extensions/archive/broccoli-archive-substrate.js";
 import { DeterministicSessionArchiver } from "../../tooling/extensions/archive/deterministic-session-archiver.js";
 

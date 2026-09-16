@@ -8,12 +8,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
   GatewayActionButton,
-  GatewayBallotOption,
   GatewayInlineBallot,
   GatewayInlineDataTable,
-  GatewayInlineMenuItem,
   GatewayInlineMenuNode,
-  GatewayInlineTab,
   GatewayInlineTabGroup,
   GatewayInlineWizard,
   GatewayInteractiveCard,
@@ -23,7 +20,6 @@ import type {
   GatewayPlatform,
   GatewaySkillConfig,
   GatewayUserRole,
-  GatewayWizardStep,
   SlashCommandRoute,
   WebhookVerificationRequest,
   WebhookVerificationResult,

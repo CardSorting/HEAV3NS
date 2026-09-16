@@ -223,8 +223,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "clipboardBridge",
   "codeExecutionSupervisor",
   "codeExecutionToolSuite",
-  "codexOAuthManager",
-  "codexProviderBridge",
+
   "commandPathResolver",
   "commitGenerator",
   "completionGate",
@@ -441,7 +440,7 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "nousPortalSnapshotManager",
   "nousPortalSupervisor",
   "nousPortalToolSuite",
-  "openRouterEngine",
+
   "osvScannerSnapshotManager",
   "osvScannerSupervisor",
   "osvScannerToolSuite",

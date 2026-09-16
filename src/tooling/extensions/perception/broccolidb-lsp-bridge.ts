@@ -7,7 +7,7 @@
  * manages language server executable maps, and indexes diagnostic notifications. Zero external npm dependencies.
  */
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess } from "node:child_process";
 import * as path from "node:path";
 
 export interface LspLocation {

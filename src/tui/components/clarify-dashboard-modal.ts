@@ -5,14 +5,7 @@
  * pending inquiries, decision trees, resolution metrics, and SLA health audits (Phase 85 / ADR-037).
  */
 
-import type {
-  ClarifyHealthAuditReport,
-  ClarifyInquiry,
-  ClarifyMetricsReport,
-  ClarifyWorkspaceSnapshot,
-} from "../../core/contracts/clarify.contracts.js";
 import { BroccoliClarifySubstrate } from "../../sessions/extensions/clarify/broccoli-clarify-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type ClarifyDashboardViewMode = "inquiries" | "trees" | "metrics" | "health" | "raw";
 

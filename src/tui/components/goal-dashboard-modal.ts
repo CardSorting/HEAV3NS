@@ -14,11 +14,8 @@ import { Text } from "./text.js";
 import { Markdown, type MarkdownTheme } from "./markdown.js";
 import { matchesKey } from "../keys.js";
 import type {
-  GoalCategory,
-  GoalGate,
   GoalMilestone,
   GoalState,
-  GoalStatus,
 } from "../../core/contracts/goal.contracts.js";
 import type { GoalSupervisor } from "../../agents/extensions/goals/goal-supervisor.js";
 

@@ -10,10 +10,7 @@ import type {
   AdversarialFinding,
   AdversarialHealthStatus,
   AdversarialRedTeamVerdict,
-  AdversarialSeverity,
   AdversarialVerdictStatus,
-  CognitiveDecompositionReport,
-  ProvenanceGroundingProof,
 } from "../../../core/contracts/adversarial-scrutiny.contracts.js";
 import type { IBroccoliDatabaseKernel, IDbTable } from "../../../core/contracts/broccolidb.contracts.js";
 

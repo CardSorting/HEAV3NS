@@ -6,7 +6,6 @@
  * while preventing VRAM exhaustion, system swap thrashing, or OOM freezes (Phase 105 / ADR-052).
  */
 
-import * as os from "node:os";
 import type {
   LocalContextTuningProfile,
 } from "../../../core/contracts/local-endpoints.contracts.js";

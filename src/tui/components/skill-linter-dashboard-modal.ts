@@ -5,11 +5,6 @@
  * quality findings, frontmatter compliance, and health metrics (Phase 135 / ADR-111 / Target #75).
  */
 
-import type {
-  SkillLinterHealthAuditReport,
-  SkillLinterMetricsReport,
-  SkillLintReport,
-} from "../../core/contracts/skill-linter.contracts.js";
 import { BroccoliSkillLinterSubstrate } from "../../sessions/extensions/skill_linter/broccoli-skill-linter-substrate.js";
 import { DeterministicSkillLinterEngine } from "../../agents/extensions/skill_linter/deterministic-skill-linter-engine.js";
 

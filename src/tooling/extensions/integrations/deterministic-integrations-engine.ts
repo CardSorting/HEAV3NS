@@ -6,7 +6,6 @@
  */
 
 import type {
-  IntegrationCategory,
   IntegrationProviderType,
   IntegrationRecipe,
   ServiceCatalogEntry,
@@ -15,7 +14,6 @@ import type {
   UnifiedDocument,
   UnifiedIssue,
   WorkflowExecutionResult,
-  WorkflowStep,
 } from "../../../core/contracts/integrations.contracts.js";
 
 export class DeterministicIntegrationsEngine {

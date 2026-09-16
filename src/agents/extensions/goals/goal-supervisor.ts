@@ -20,7 +20,6 @@ import type {
   GoalGroupBy,
   GoalGroupedLane,
   GoalHealthAuditReport,
-  GoalHealthStatus,
   GoalHierarchyReport,
   GoalMilestone,
   GoalMilestoneRollbackResult,

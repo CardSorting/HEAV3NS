@@ -5,11 +5,6 @@
  * Git command safety metrics, and root protection configuration (Phase 138 / ADR-114 / Target #78).
  */
 
-import type {
-  SelfRepoGuardHealthAuditReport,
-  SelfRepoGuardMetricsReport,
-  SelfRepoGuardIncidentRow,
-} from "../../core/contracts/self-repo-guard.contracts.js";
 import { BroccoliSelfRepoGuardSubstrate } from "../../sessions/extensions/self_repo_guard/broccoli-self-repo-guard-substrate.js";
 import { DeterministicSelfRepoGuardEngine } from "../../agents/extensions/self_repo_guard/deterministic-self-repo-guard-engine.js";
 

@@ -1,10 +1,6 @@
 import type {
-  SkillHealthAuditReport,
   SkillMetricsReport,
-  SkillMutationResult,
   SkillNodeManifest,
-  SkillProgressionTrack,
-  SkillEvolutionMilestone,
   SkillStrategyPlan,
   SkillTier,
 } from "../../core/contracts/skills.contracts.js";

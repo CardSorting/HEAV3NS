@@ -1,0 +1,340 @@
+import { getTaskLifecycleAuthority } from "@/core/task/lifecycle/TaskLifecycleFunnel"
+import { Logger } from "@/shared/services/Logger"
+import type { DietCodeDefaultTool } from "@/shared/tools"
+import { DietCodeToolSet } from "../registry/DietCodeToolSet"
+import { type DietCodeToolSpec, resolveInstruction } from "../spec"
+import { STANDARD_PLACEHOLDERS, SystemPromptSection } from "../templates/placeholders"
+import { TemplateEngine } from "../templates/TemplateEngine"
+import type { ComponentRegistry, DietCodeToolSpecParameter, PromptVariant, SystemPromptContext } from "../types"
+
+// Pre-defined mapping of standard placeholders to avoid runtime object creation
+const STANDARD_PLACEHOLDER_KEYS = Object.values(STANDARD_PLACEHOLDERS)
+
+export class PromptBuilder {
+	private templateEngine: TemplateEngine
+
+	constructor(
+		private variant: PromptVariant,
+		private context: SystemPromptContext,
+		private components: ComponentRegistry,
+	) {
+		this.templateEngine = new TemplateEngine()
+	}
+
+	async build(): Promise<string> {
+		const componentSections = await this.buildComponents()
+		const placeholderValues = this.preparePlaceholders(componentSections)
+		let prompt = this.templateEngine.resolve(this.variant.baseTemplate, this.context, placeholderValues)
+
+		if (
+			this.context.modEnabled &&
+			componentSections[STANDARD_PLACEHOLDERS.MOD_DESIGNER_STEERING] &&
+			!prompt.includes("DESIGNER INSTINCTS")
+		) {
+			prompt += `\n\n${componentSections[STANDARD_PLACEHOLDERS.MOD_DESIGNER_STEERING]}`
+		}
+
+		let executionStateHeader = ""
+		if (this.context.mode === "auto") {
+			const workspaceRoots = this.context.workspaceRoots?.map((r) => r.path).join(", ") || this.context.cwd || "unknown"
+			executionStateHeader = [
+				"# EXECUTION STATE",
+				"",
+				"Mode: AUTO (GUIDED SPEC MODE)",
+				`Workspace: ${workspaceRoots}`,
+				`Task: ${this.context.taskId || "unknown"}`,
+				"",
+				"# SYSTEM OVERRIDE: LUMI GUIDED SPEC MODE",
+				"",
+				"## 1. DIRECTIVE",
+				"You are operating in GUIDED SPEC MODE. Your user is a non-technical stakeholder who evaluates software based on visual outcomes, not code architecture. You must shield them from technical complexity, code syntax, and open-ended prompting.",
+				"",
+				"## 2. STRICT OPERATIONAL INVARIANTS",
+				"- ABSOLUTE CODE BAN: Never output code blocks (```jsx, ```py, etc.), file trees, command-line syntax, or git operations.",
+				'- ZERO UNCERTAINTY LANGUAGE: Banned words: "maybe", "possibly", "I think", "confidence score", "should we consider". State every choice authoritatively.',
+				'- NO OPEN-ENDED PROMPTS: Never end a turn with "What do you think?" or "How would you like to handle X?". Always provide 2 structured choices.',
+				'- DEFAULT CHOICE RULE: Always designate Option A as the recommended default so the user can click "Proceed with Defaults" to continue without typing.',
+				"",
+				"## 3. RESPONSE STRUCTURE (STRICT 4-BLOCK LAYOUT)",
+				"",
+				"Every turn MUST be formatted into these exact four visual blocks:",
+				"",
+				"### BLOCK 1: BREADBOARD SPEC (Visual Map)",
+				"Translate the intent into a plain-English surface map:",
+				"- 📍 SCREEN / PLACE: [Name of the screen]",
+				"- 🔘 WHAT YOU CAN DO (AFFORDANCES): [List of actions/buttons]",
+				"- ⚡ WHAT HAPPENS (WIRING): [What occurs when interacted with]",
+				"",
+				"### BLOCK 2: MILESTONE STEPPER",
+				"Render progress timeline explicitly:",
+				"[DONE] Milestone 1: Core Surface & Layout",
+				"[IN PROGRESS] Milestone 2: Interactive Controls & Triggers",
+				"[PENDING] Milestone 3: Polish & Edge Case Armor",
+				"",
+				"### BLOCK 3: DECISION WAYPOINT (Max 2 Choices)",
+				"Present business-logic trade-offs as clear binary choices:",
+				"- Option A (Recommended Default): [Statement of default choice + rationale]",
+				"- Option B (Alternative): [Statement of alternative choice + trade-off]",
+				"",
+				"### BLOCK 4: EXECUTION ACTION",
+				"Provide clear call-to-action (e.g., \"Click 'Proceed with Defaults' below or select an option\").",
+				"",
+				"",
+			].join("\n")
+		} else if (this.context.mode === "act") {
+			const taskState = this.context.taskState
+			const workspaceRoots = this.context.workspaceRoots?.map((r) => r.path).join(", ") || this.context.cwd || "unknown"
+			const lanesTotal = taskState?.swarmRuntime?.lanesTotal || 0
+			const lanesComplete = taskState?.swarmRuntime?.lanesComplete || 0
+
+			// Derive next required action and blockers semantically
+			const activeBlockers: string[] = []
+			const activeLockClaim = taskState?.activeLockClaim
+			const durableClaim = (
+				activeLockClaim && "lockClaim" in activeLockClaim ? activeLockClaim.lockClaim : activeLockClaim
+			) as import("@shared/governance/lockTypes").LockClaim | undefined
+			if (activeLockClaim && !durableClaim?.fencingToken) {
+				activeBlockers.push("Lock claim missing fencing token")
+			}
+			const lanesHardBlocked = taskState?.swarmRuntime?.lanesHardBlocked ?? 0
+			if (lanesHardBlocked > 0) {
+				activeBlockers.push(`${lanesHardBlocked} lane(s) hard-blocked`)
+			}
+
+			let nextAction = "Continue task execution"
+			let completionCondition = "All objectives completed and verified"
+			if (lanesTotal > 0 && lanesComplete < lanesTotal) {
+				nextAction = `Complete remaining ${lanesTotal - lanesComplete} lane(s)`
+				completionCondition = `All ${lanesTotal} lanes completed`
+			}
+			const lifecycleRecord = taskState ? getTaskLifecycleAuthority(taskState).readProjection(taskState) : undefined
+			if (lifecycleRecord?.state === "terminal") {
+				nextAction = "Task is terminal — no further action"
+				completionCondition = "Already terminal"
+			}
+
+			executionStateHeader = [
+				"# EXECUTION STATE",
+				"",
+				`Mode: ACT`,
+				`Workspace: ${workspaceRoots}`,
+				`Task: ${this.context.taskId || "unknown"}`,
+				`Next required action: ${nextAction}`,
+				`Active hard blockers: ${activeBlockers.length > 0 ? activeBlockers.join("; ") : "none"}`,
+				`Lane progress: ${lanesComplete}/${lanesTotal} complete`,
+				`Completion condition: ${completionCondition}`,
+				"",
+				"",
+			].join("\n")
+		}
+
+		return this.postProcess(executionStateHeader + prompt)
+	}
+
+	private async buildComponents(): Promise<Record<string, string>> {
+		const sections: Record<string, string> = {}
+		const { componentOrder } = this.variant
+		const effectiveComponentOrder = [...componentOrder]
+
+		if (this.context.modEnabled && !effectiveComponentOrder.includes(SystemPromptSection.MOD_DESIGNER_STEERING)) {
+			const agentRoleIndex = effectiveComponentOrder.indexOf(SystemPromptSection.AGENT_ROLE)
+			if (agentRoleIndex !== -1) {
+				effectiveComponentOrder.splice(agentRoleIndex + 1, 0, SystemPromptSection.MOD_DESIGNER_STEERING)
+			} else {
+				effectiveComponentOrder.push(SystemPromptSection.MOD_DESIGNER_STEERING)
+			}
+		}
+
+		// Process components sequentially to maintain order
+		for (const componentId of effectiveComponentOrder) {
+			const componentFn = this.components[componentId]
+			if (!componentFn) {
+				Logger.warn(`Warning: Component '${componentId}' not found`)
+				continue
+			}
+
+			try {
+				const result = await componentFn(this.variant, this.context)
+				if (result?.trim()) {
+					sections[componentId] = result
+				}
+			} catch (error) {
+				Logger.warn(`Warning: Failed to build component '${componentId}':`, error)
+			}
+		}
+
+		return sections
+	}
+
+	private preparePlaceholders(componentSections: Record<string, string>): Record<string, unknown> {
+		// Create base placeholders object with optimal capacity
+		const placeholders: Record<string, unknown> = {}
+
+		// Add variant placeholders
+		Object.assign(placeholders, this.variant.placeholders)
+
+		// Add standard system placeholders
+		placeholders[STANDARD_PLACEHOLDERS.CWD] = this.context.cwd || process.cwd()
+		placeholders[STANDARD_PLACEHOLDERS.SUPPORTS_BROWSER] = this.context.supportsBrowserUse || false
+		placeholders[STANDARD_PLACEHOLDERS.MODEL_FAMILY] = this.variant.family
+		placeholders[STANDARD_PLACEHOLDERS.CURRENT_DATE] = new Date().toISOString().split("T")[0]
+
+		// Add all component sections
+		Object.assign(placeholders, componentSections)
+
+		// Map component sections to standard placeholders in a single loop
+		for (const key of STANDARD_PLACEHOLDER_KEYS) {
+			if (!placeholders[key]) {
+				placeholders[key] = componentSections[key] || ""
+			}
+		}
+
+		// Add runtime placeholders with highest priority
+		const runtimePlaceholders = this.context.runtimePlaceholders
+		if (runtimePlaceholders) {
+			Object.assign(placeholders, runtimePlaceholders)
+		}
+		return placeholders
+	}
+
+	private postProcess(prompt: string): string {
+		if (!prompt) {
+			return ""
+		}
+
+		// Combine multiple regex operations for better performance
+		return prompt
+			.replace(/\n\s*\n\s*\n/g, "\n\n") // Remove multiple consecutive empty lines
+			.trim() // Remove leading/trailing whitespace
+			.replace(/====+\s*$/, "") // Remove trailing ==== after trim
+			.replace(/\n====+\s*\n+\s*====+\n/g, "\n====\n") // Remove empty sections between separators
+			.replace(/====\s*\n\s*====\s*\n/g, "====\n") // Remove consecutive empty sections
+			.replace(/^##\s*$[\r\n]*/gm, "") // Remove empty section headers (## with no content)
+			.replace(/\n##\s*$[\r\n]*/gm, "") // Remove empty section headers that appear mid-document
+			.replace(/====+\n(?!\n)([^\n])/g, (match, _nextChar, offset, string) => {
+				// Add extra newline after ====+ if not already followed by a newline
+				// Exception: preserve single newlines when ====+ appears to be part of diff-like content
+				// Look for patterns like "SEARCH\n=======\n" or ";\n=======\n" (diff markers)
+				const beforeContext = string.substring(Math.max(0, offset - 50), offset)
+				const afterContext = string.substring(offset, Math.min(string.length, offset + 50))
+				const isDiffLike = /SEARCH|REPLACE|\+\+\+\+\+\+\+|-------/.test(beforeContext + afterContext)
+				return isDiffLike ? match : match.replace(/\n/, "\n\n")
+			})
+			.replace(/([^\n])\n(?!\n)====+/g, (match, prevChar, offset, string) => {
+				// Add extra newline before ====+ if not already preceded by a newline
+				// Exception: preserve single newlines when ====+ appears to be part of diff-like content
+				const beforeContext = string.substring(Math.max(0, offset - 50), offset)
+				const afterContext = string.substring(offset, Math.min(string.length, offset + 50))
+				const isDiffLike = /SEARCH|REPLACE|\+\+\+\+\+\+\+|-------/.test(beforeContext + afterContext)
+				return isDiffLike ? match : `${prevChar}\n\n${match.substring(1).replace(/\n/, "")}`
+			})
+			.replace(/\n\s*\n\s*\n/g, "\n\n") // Clean up any multiple empty lines created by header removal
+			.trim() // Final trim to remove any whitespace added by regex operations
+	}
+
+	getBuildMetadata(): {
+		variantId: string
+		version: number
+		componentsUsed: string[]
+		placeholdersResolved: string[]
+	} {
+		return {
+			variantId: this.variant.id,
+			version: this.variant.version,
+			componentsUsed: [...this.variant.componentOrder],
+			placeholdersResolved: this.templateEngine.extractPlaceholders(this.variant.baseTemplate),
+		}
+	}
+
+	private static getEnabledTools(variant: PromptVariant, context: SystemPromptContext): DietCodeToolSpec[] {
+		return DietCodeToolSet.getEnabledToolSpecs(variant, context)
+	}
+
+	public static async getToolsPrompts(variant: PromptVariant, context: SystemPromptContext) {
+		const enabledTools = PromptBuilder.getEnabledTools(variant, context)
+
+		const ids = enabledTools.map((tool) => tool.id)
+		return Promise.all(enabledTools.map((tool) => PromptBuilder.tool(tool, ids, context)))
+	}
+
+	public static tool(config: DietCodeToolSpec, registry: DietCodeDefaultTool[], context: SystemPromptContext): string {
+		// Skip tools without parameters or description - those are placeholder tools
+		if (!config.parameters?.length && !config.description?.length) {
+			return ""
+		}
+		const displayName = config.name || config.id
+		const title = `## ${displayName}`
+		const description = [`Description: ${config.description}`]
+
+		if (!config.parameters?.length) {
+			config.parameters = []
+		}
+
+		// Clone parameters to avoid mutating original
+		const params = [...config.parameters]
+
+		// Filter parameters based on dependencies and contextRequirements
+		const filteredParams = params.filter((p) => {
+			// Check dependencies first (existing behavior)
+			if (p.dependencies?.length) {
+				if (!p.dependencies.every((d) => registry.includes(d))) {
+					return false
+				}
+			}
+
+			// Check contextRequirements (new behavior)
+			if (p.contextRequirements) {
+				return p.contextRequirements(context)
+			}
+
+			return true
+		})
+
+		// Collect additional descriptions only from filtered parameters
+		const additionalDesc = filteredParams.map((p) => p.description).filter((desc): desc is string => Boolean(desc))
+		if (additionalDesc.length) {
+			description.push(...additionalDesc)
+		}
+
+		// Build prompt sections efficiently
+		const sections = [
+			title,
+			description.join("\n"),
+			PromptBuilder.buildParametersSection(filteredParams, context),
+			PromptBuilder.buildUsageSection(displayName, filteredParams),
+		]
+
+		return sections.filter(Boolean).join("\n")
+	}
+
+	private static buildParametersSection(params: DietCodeToolSpecParameter[], context: SystemPromptContext): string {
+		if (!params.length) {
+			return "Parameters: None"
+		}
+
+		const paramList = params.map((p) => {
+			const requiredText = p.required ? "required" : "optional"
+			const instruction = resolveInstruction(p.instruction, context)
+			return `- ${p.name}: (${requiredText}) ${instruction}`
+		})
+
+		return ["Parameters:", ...paramList].join("\n")
+	}
+
+	private static buildUsageSection(toolId: string, params: DietCodeToolSpecParameter[]): string {
+		const usageSection = ["Usage:"]
+		const usageTag = `<${toolId}>`
+		const usageEndTag = `</${toolId}>`
+
+		usageSection.push(usageTag)
+
+		// Add parameter usage tags
+		for (const param of params) {
+			const usage = param.usage || ""
+			usageSection.push(`<${param.name}>${usage}</${param.name}>`)
+		}
+
+		usageSection.push(usageEndTag)
+		return usageSection.join("\n")
+	}
+}

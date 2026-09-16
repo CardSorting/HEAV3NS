@@ -5,11 +5,6 @@
  * breakpoints alignment, reasoning sanitizations, and health posture (Phase 93 / ADR-045 / Target #82).
  */
 
-import type {
-  PromptCacheHealthAuditReport,
-  PromptCacheMetricsReport,
-  PromptCacheBreakpointRow,
-} from "../../core/contracts/prompt-cache.contracts.js";
 import { BroccoliPromptCacheSubstrate } from "../../sessions/extensions/prompt/broccoli-prompt-cache-substrate.js";
 import { DeterministicPromptCacher } from "../../tooling/extensions/prompt/deterministic-prompt-cacher.js";
 

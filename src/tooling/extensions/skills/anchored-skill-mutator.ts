@@ -6,8 +6,6 @@ import type {
   SkillMutationPayload,
   SkillMutationResult,
   SkillTreeDag,
-  SkillNodeManifest,
-  SkillSupportFile,
 } from "../../../core/contracts/skills.contracts.js";
 
 export class AnchoredSkillMutator implements IAnchoredSkillMutator {

@@ -6,7 +6,6 @@
  * before files are written to disk.
  */
 
-import * as vm from "node:vm";
 
 export interface SyntaxErrorItem {
   readonly line: number;

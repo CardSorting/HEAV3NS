@@ -8,7 +8,6 @@
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 import type {
-  IntegrationCategory,
   IntegrationProviderType,
   IntegrationsGroupBy,
   IntegrationsSortBy,

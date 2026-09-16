@@ -1,5 +1,4 @@
 import type {
-  CostHealthAuditReport,
   CostMetricsReport,
   TokenUsageLedgerEntry,
 } from "../../core/contracts/cost-governance.contracts.js";

@@ -5,12 +5,6 @@
  * connected provider endpoints, workflow recipes, and SLA health audits (Phase 96 / ADR-126 / Target #72).
  */
 
-import type {
-  IntegrationConnection,
-  IntegrationRecipe,
-  IntegrationsHealthAuditReport,
-  IntegrationsMetricsReport,
-} from "../../core/contracts/integrations.contracts.js";
 import { BroccoliIntegrationsSubstrate } from "../../sessions/extensions/integrations/broccoli-integrations-substrate.js";
 import { DeterministicIntegrationsEngine } from "../../tooling/extensions/integrations/deterministic-integrations-engine.js";
 

@@ -9,10 +9,7 @@
 import type {
   DiscoveredLocalModel,
   LocalEndpointAuditReport,
-  LocalEndpointMetricsReport,
-  LocalHardwareAssessment,
   LocalProviderKind,
-  LocalServerHealthStatus,
   ModelPullProgress,
 } from "../../core/contracts/local-endpoints.contracts.js";
 import { DeterministicLocalEndpointEngine } from "../../tooling/extensions/endpoints/deterministic-local-endpoint-engine.js";

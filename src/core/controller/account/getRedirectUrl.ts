@@ -1,0 +1,11 @@
+import type { IController as Controller } from "@core/controller/types"
+import { EmptyRequest, String } from "@shared/proto/dietcode/common"
+import { HostProvider } from "@/hosts/host-provider"
+
+/**
+ * Constructs and returns a URL that will redirect to the user's IDE.
+ */
+export async function getRedirectUrl(_controller: Controller, _: EmptyRequest): Promise<String> {
+	const url = (await HostProvider.env.getIdeRedirectUri({})).value
+	return { value: url }
+}

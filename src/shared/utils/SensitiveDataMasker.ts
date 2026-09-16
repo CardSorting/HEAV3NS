@@ -1,0 +1,45 @@
+/**
+ * Utility to detect and mask sensitive data (API keys, tokens) in strings.
+ * Use this before logging or displaying potentially sensitive information.
+ */
+export class SensitiveDataMasker {
+	private constructor() {}
+	private static readonly PATTERNS = [
+		// Anthropic: sk-ant-api03-...
+		/sk-ant-api03-[a-zA-Z0-9\-_]{80,}/g,
+		// OpenAI: sk-...
+		/sk-[a-zA-Z0-9]{40,}/g,
+		// Google AI (Gemini): AIza...
+		/AIza[a-zA-Z0-9\-_]{30,}/g,
+		// AWS Access Key ID
+		// GitHub: ghp_...
+		/ghp_[a-zA-Z0-9]{36}/g,
+		// Slack: xoxb-..., xoxp-...
+		/xox[abp]-[a-zA-Z0-9-]{40,}/g,
+		// AWS Secret Access Key: base64-like (approx 40 chars)
+		/(?<![A-Z0-9])[A-Za-z0-9/+=]{40}(?![A-Z0-9])/g,
+		// Azure API Key
+		/[a-f0-9]{32}/g,
+	]
+
+	private static readonly QUICK_CHECK_REGEX = /sk-|AIza|ghp_|xox|[a-f0-9]{32}/
+
+	/**
+	 * Mask sensitive information in a string.
+	 * Replaces detected keys with a masked version (e.g., sk-an...****)
+	 */
+	public static mask(text: string | undefined): string {
+		if (!text) return ""
+		if (!SensitiveDataMasker.QUICK_CHECK_REGEX.test(text)) return text
+
+		let maskedText = text
+		for (const pattern of SensitiveDataMasker.PATTERNS) {
+			maskedText = maskedText.replace(pattern, (match) => {
+				if (match.length <= 8) return "****"
+				return `${match.substring(0, 6)}...${match.substring(match.length - 4)} (masked)`
+			})
+		}
+
+		return maskedText
+	}
+}

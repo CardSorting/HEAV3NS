@@ -5,11 +5,6 @@
  * package malware detections, cache status, and health posture (Phase 128 / ADR-104 / Target #81).
  */
 
-import type {
-  OsvHealthAuditReport,
-  OsvMetricsReport,
-  OsvScanResultRow,
-} from "../../core/contracts/osv-scanner.contracts.js";
 import { BroccoliOsvSubstrate } from "../../sessions/extensions/osv/broccoli-osv-substrate.js";
 import { DeterministicOsvParser } from "../../agents/extensions/osv/deterministic-osv-parser.js";
 

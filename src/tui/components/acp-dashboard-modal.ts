@@ -8,10 +8,6 @@
 
 import type {
   AcpDashboardViewMode,
-  AcpEditApprovalRequest,
-  AcpMultiFileChangeset,
-  AcpRiskAssessment,
-  AcpSessionInfo,
   IBroccoliAcpSubstrate,
   IAcpPermissionGate,
   IAcpSpeculativeChangesetStager,

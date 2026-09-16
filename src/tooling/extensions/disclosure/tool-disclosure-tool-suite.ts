@@ -9,7 +9,6 @@
 
 import type { ToolDefinition } from "../../../core/contracts/tooling.contracts.js";
 import type {
-  DisclosureTier,
   ToolDisclosureGroupBy,
   ToolDisclosureSortBy,
   ToolDisclosureSortDirection,

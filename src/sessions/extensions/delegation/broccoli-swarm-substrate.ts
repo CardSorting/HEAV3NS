@@ -9,18 +9,14 @@ import type {
   SwarmHealthStatus,
   SwarmMetricsReport,
   SwarmMutationUndoRecord,
-  SwarmNotificationEvent,
   SwarmNotificationPreferences,
-  SwarmNotificationRecord,
   SwarmNotificationRow,
   SwarmOutcomeRow,
   SwarmSortBy,
   SwarmSortDirection,
-  SwarmStateSnapshot,
   SwarmTaskManifest,
   SwarmTaskRow,
   SwarmTaskStatus,
-  SwarmWorktreeRow,
 } from "../../../core/contracts/delegation.contracts.js";
 import type { IBroccoliDatabaseKernel, IDbTable } from "../../../core/contracts/broccolidb.contracts.js";
 import { SwarmDesktopNotificationDispatcher } from "../../../tooling/extensions/delegation/swarm-notification-dispatcher.js";

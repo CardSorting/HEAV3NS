@@ -5,11 +5,6 @@
  * blocked metadata/private IP attempts, security config, and health posture (Phase 118 / ADR-094 / Target #87).
  */
 
-import type {
-  UrlSafetyHealthAuditReport,
-  UrlSafetyMetricsReport,
-  UrlSafetyCheckRow,
-} from "../../core/contracts/url-safety.contracts.js";
 import { BroccoliUrlSafetySubstrate } from "../../sessions/extensions/url_safety/broccoli-url-safety-substrate.js";
 import { DeterministicUrlSafety } from "../../agents/extensions/url_safety/deterministic-url-safety.js";
 

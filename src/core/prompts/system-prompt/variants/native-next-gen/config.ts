@@ -1,0 +1,109 @@
+import { isGPT5ModelFamily, isNextGenModelFamily, isNextGenModelProvider } from "@utils/model-utils"
+import { ModelFamily } from "@/shared/prompts"
+import { Logger } from "@/shared/services/Logger"
+import { DietCodeDefaultTool } from "@/shared/tools"
+import { SystemPromptSection } from "../../templates/placeholders"
+import { createVariant } from "../variant-builder"
+import { validateVariant } from "../variant-validator"
+import { TEMPLATE_OVERRIDES } from "./template"
+
+// Type-safe variant configuration using the builder pattern
+export const config = createVariant(ModelFamily.NATIVE_NEXT_GEN)
+	.description("Next gen models with native tool calling")
+	.version(1)
+	.tags("advanced", "production", "native_tools")
+	.labels({
+		stable: 1,
+		production: 1,
+		advanced: 1,
+		use_native_tools: 1,
+	})
+	.matcher((context) => {
+		if (!context.enableNativeToolCalls) {
+			return false
+		}
+		const providerInfo = context.providerInfo
+		if (!isNextGenModelProvider(providerInfo)) {
+			return false
+		}
+		const modelId = providerInfo.model.id.toLowerCase()
+		return !isGPT5ModelFamily(modelId) && isNextGenModelFamily(modelId)
+	})
+	.template(TEMPLATE_OVERRIDES.BASE)
+	.components(
+		SystemPromptSection.AGENT_ROLE,
+		SystemPromptSection.JOY_ZONING,
+		SystemPromptSection.ROADMAP_STEERING,
+		SystemPromptSection.INTEGRITY_WIKI,
+		SystemPromptSection.FORENSIC_TOOLS,
+		SystemPromptSection.TOOL_USE,
+		SystemPromptSection.TODO,
+		SystemPromptSection.ACT_VS_PLAN,
+		SystemPromptSection.TASK_PROGRESS,
+		SystemPromptSection.CAPABILITIES,
+		SystemPromptSection.FEEDBACK,
+		SystemPromptSection.RULES,
+		SystemPromptSection.SYSTEM_INFO,
+		SystemPromptSection.OBJECTIVE,
+		SystemPromptSection.USER_INSTRUCTIONS,
+		SystemPromptSection.SKILLS,
+	)
+	.tools(
+		DietCodeDefaultTool.ASK,
+		DietCodeDefaultTool.BASH,
+		DietCodeDefaultTool.FILE_READ,
+		DietCodeDefaultTool.FILE_NEW,
+		DietCodeDefaultTool.FILE_EDIT,
+		DietCodeDefaultTool.SEARCH,
+		DietCodeDefaultTool.LIST_FILES,
+		DietCodeDefaultTool.LIST_CODE_DEF,
+		DietCodeDefaultTool.BROWSER,
+		DietCodeDefaultTool.WEB_FETCH,
+		DietCodeDefaultTool.WEB_SEARCH,
+		DietCodeDefaultTool.MCP_ACCESS,
+		DietCodeDefaultTool.ATTEMPT,
+		DietCodeDefaultTool.PLAN_MODE,
+		DietCodeDefaultTool.MCP_DOCS,
+		DietCodeDefaultTool.TODO,
+		DietCodeDefaultTool.GENERATE_EXPLANATION,
+		DietCodeDefaultTool.USE_SKILL,
+		DietCodeDefaultTool.PROJECT_MAP,
+		DietCodeDefaultTool.ROADMAP,
+		DietCodeDefaultTool.ROADMAP_CHECKPOINT,
+		DietCodeDefaultTool.USE_SUBAGENTS,
+	)
+	.placeholders({
+		MODEL_FAMILY: ModelFamily.NATIVE_NEXT_GEN,
+	})
+	.config({})
+	// Override the RULES component with custom template
+	.overrideComponent(SystemPromptSection.RULES, {
+		template: TEMPLATE_OVERRIDES.RULES,
+	})
+	.overrideComponent(SystemPromptSection.TOOL_USE, {
+		template: TEMPLATE_OVERRIDES.TOOL_USE,
+	})
+	.overrideComponent(SystemPromptSection.OBJECTIVE, {
+		template: TEMPLATE_OVERRIDES.OBJECTIVE,
+	})
+	.overrideComponent(SystemPromptSection.ACT_VS_PLAN, {
+		template: TEMPLATE_OVERRIDES.ACT_VS_PLAN,
+	})
+	.overrideComponent(SystemPromptSection.FEEDBACK, {
+		template: TEMPLATE_OVERRIDES.FEEDBACK,
+	})
+	.build()
+
+// Compile-time validation
+const validationResult = validateVariant({ ...config, id: ModelFamily.NATIVE_NEXT_GEN }, { strict: true })
+if (!validationResult.isValid) {
+	Logger.error("Native Next Gen variant configuration validation failed:", validationResult.errors)
+	throw new Error(`Invalid Native Next Gen variant configuration: ${validationResult.errors.join(", ")}`)
+}
+
+if (validationResult.warnings.length > 0) {
+	Logger.warn("Native Next Gen variant configuration warnings:", validationResult.warnings)
+}
+
+// Export type information for better IDE support
+export type NativeNextGenVariantConfig = typeof config

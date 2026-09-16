@@ -3,7 +3,7 @@ import { Box } from "./box.js";
 import { SettingsList, type SettingItem, type SettingsListTheme } from "./settings-list.js";
 import { Text } from "./text.js";
 import { VStack } from "./v-stack.js";
-import type { SetupWizard, ProviderAuditStatus } from "../../agents/extensions/setup/setup-wizard.js";
+import type { SetupWizard, } from "../../agents/extensions/setup/setup-wizard.js";
 
 const PROVIDER_SETUP_THEME: SettingsListTheme = {
   label: (text, selected) => (selected ? `\x1b[1;36m${text}\x1b[0m` : text),

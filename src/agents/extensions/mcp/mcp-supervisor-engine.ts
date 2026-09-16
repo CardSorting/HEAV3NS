@@ -8,13 +8,7 @@
 
 import type {
   McpServerConfig,
-  McpServerStatus,
-  McpToolDefinition,
-  McpResourceDefinition,
-  McpPromptDefinition,
   McpToolCallResponse,
-  McpSamplingRequest,
-  McpSamplingResponse,
 } from "../../../core/contracts/mcp-client.contracts.js";
 import { McpTransportCodec } from "../../../tooling/extensions/mcp/mcp-transport-codec.js";
 import { McpSecurityScrubber } from "../../../tooling/extensions/mcp/mcp-security-scrubber.js";

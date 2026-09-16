@@ -1,5 +1,4 @@
 import type { LumiMonolith } from "../../../index.js";
-import type { JsonRpcNotification } from "../../../core/contracts/tooling.contracts.js";
 
 export interface GatewayRequestEnvelope {
   jsonrpc: "2.0";

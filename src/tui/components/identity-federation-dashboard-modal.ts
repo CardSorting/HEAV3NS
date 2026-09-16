@@ -5,12 +5,6 @@
  * pending OAuth2 PKCE device authorizations, tier quotas, and SLA health audits (Phase 98 / ADR-052 / Target #69).
  */
 
-import type {
-  DeviceAuthorizationPending,
-  IdentityFederationHealthAuditReport,
-  IdentityFederationMetricsReport,
-  TokenLeaseRecord,
-} from "../../core/contracts/identity-federation.contracts.js";
 import { BroccoliAuthSubstrate } from "../../sessions/extensions/auth/broccoli-auth-substrate.js";
 import { DeterministicAuthFederator } from "../../tooling/extensions/auth/deterministic-auth-federator.js";
 

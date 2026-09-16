@@ -23,11 +23,8 @@ import { AgentLoopHarness } from "../agents/extensions/execution/agent-loop-harn
 import { ProviderAttributionComposer } from "../agents/extensions/resolution/provider-attribution.js";
 import { HttpDispatcherOverlay } from "../agents/extensions/resolution/http-dispatcher.js";
 import { AuthStorageVault } from "../agents/extensions/resolution/auth-storage-vault.js";
-import { CodexOAuthManager } from "../agents/extensions/resolution/codex-oauth-manager.js";
-import { CodexProviderBridge } from "../agents/extensions/resolution/codex-provider-bridge.js";
-import { OpenRouterProviderEngine } from "../agents/extensions/resolution/openrouter-provider-engine.js";
 import { GalxProviderEngine } from "../agents/extensions/resolution/galx-provider-engine.js";
-import { GalxTransportClient, galxTransportClient } from "../integrations/galx/GalxTransportClient.js";
+import { GalxTransportClient } from "../integrations/galx/GalxTransportClient.js";
 import { SetupWizard } from "../agents/extensions/setup/setup-wizard.js";
 
 import { SessionContext } from "../sessions/base/session-context.js";
@@ -35,7 +32,7 @@ import { PersistentSessionStore } from "../sessions/extensions/persistence/sessi
 import { SessionCompactor } from "../sessions/extensions/compaction/session-compactor.js";
 import { SessionVfs } from "../sessions/extensions/vfs/session-vfs.js";
 import { SessionMemoryStore } from "../sessions/extensions/memory/session-memory-store.js";
-import { ContextStalenessTracker, CognitiveFreshnessGuard } from "../sessions/extensions/memory/context-staleness-tracker.js";
+import { ContextStalenessTracker } from "../sessions/extensions/memory/context-staleness-tracker.js";
 import { StabilityDoctor } from "../sessions/extensions/integrity/stability-doctor.js";
 import { PostmortemDiagnostic } from "../sessions/extensions/integrity/postmortem-diagnostic.js";
 import { SystemHealthAggregator } from "../sessions/extensions/integrity/system-health-aggregator.js";
@@ -125,7 +122,7 @@ import { BroccoliShellEnvironmentResolver } from "../tooling/extensions/permissi
 import { BroccoliCommandDiagnostics } from "../tooling/extensions/permissions/broccolidb-command-diagnostics.js";
 import { BroccoliCommandOutputBuffer } from "../tooling/extensions/telemetry/broccolidb-output-buffer.js";
 
-import { JoyRideHotPathCache, HotPathCommandClassifier } from "../tooling/extensions/cache/joyride-cache.js";
+import { JoyRideHotPathCache } from "../tooling/extensions/cache/joyride-cache.js";
 import { LumiIgnorePolicyController } from "../tooling/extensions/permissions/lumi-ignore-controller.js";
 import { BroccoliCircuitBreaker, TokenBucketRateGovernor } from "../tooling/extensions/policy/broccoli-circuit-breaker.js";
 import { BroccoliStreamingToolExecutor } from "../tooling/extensions/registry/broccolidb-streaming-tool-executor.js";
@@ -149,14 +146,12 @@ import { UrlContentFetcher } from "../tooling/extensions/perception/url-content-
 import { LanguageSyntaxParser } from "../tooling/extensions/perception/language-syntax-parser.js";
 import { RoadmapCompletionGate } from "../tooling/extensions/policy/roadmap-completion-gate.js";
 import { RoadmapCheckpointDigest } from "../tooling/extensions/policy/roadmap-checkpoint-digest.js";
-import { Eyes } from "../tooling/base/eyes.js";
 import { AstPerceptionEyes } from "../tooling/extensions/perception/ast-eyes.js";
 import { NativeClipboardBridge } from "../tooling/extensions/perception/native-clipboard.js";
 import { AnchoredHands } from "../tooling/extensions/hashline/hands.js";
 import { CommandPermissionController } from "../tooling/extensions/permissions/command-permission-controller.js";
 import { ProcessLifecycleManager } from "../tooling/extensions/permissions/process-lifecycle-manager.js";
 import { KeybindingsController } from "../tooling/extensions/permissions/keybindings-controller.js";
-import { ProtocolEars } from "../tooling/extensions/telemetry/ears.js";
 import { ProgressStreamingEars } from "../tooling/extensions/progress/progress-ears.js";
 import { SkillsIngestor } from "../tooling/extensions/registry/skills-ingestor.js";
 import { ValidatingToolRegistry } from "../tooling/extensions/registry/tool-registry.js";
@@ -827,7 +822,6 @@ export class MonolithFactory {
     broccoliOutputBuffer: BroccoliCommandOutputBuffer;
     modelResolver: ModelResolver;
     modelCatalog: ModelCatalog;
-    openRouterEngine: OpenRouterProviderEngine;
     galxEngine: GalxProviderEngine;
     galxTransportClient: GalxTransportClient;
     envKeyResolver: EnvironmentKeyResolver;
@@ -871,8 +865,6 @@ export class MonolithFactory {
     ttsrCoordinator: TTSRCoordinator;
     centennialPassMarker: CentennialPassMarker;
     systemHealthAggregator: SystemHealthAggregator;
-    codexOAuthManager: CodexOAuthManager;
-    codexProviderBridge: CodexProviderBridge;
     setupWizard: SetupWizard;
     slashRouter: AgentSlashRouter;
     mentionResolver: MentionResolver;
@@ -1457,10 +1449,9 @@ export class MonolithFactory {
       config.modelName,
       options.fallbackModels
     );
-    const openRouterEngine = new OpenRouterProviderEngine();
     const galxTransport = new GalxTransportClient();
     const galxEngine = new GalxProviderEngine(undefined, galxTransport);
-    const modelCatalog = new ModelCatalog(undefined, openRouterEngine, galxEngine);
+    const modelCatalog = new ModelCatalog(undefined, galxEngine);
     const envKeyResolver = new EnvironmentKeyResolver();
     const imageModelRegistry = new ImageModelRegistry();
     const proxyGateway = new LlmProxyGateway();
@@ -1508,29 +1499,16 @@ export class MonolithFactory {
     const ttsrCoordinator = new TTSRCoordinator();
     const centennialPassMarker = new CentennialPassMarker();
     const systemHealthAggregator = new SystemHealthAggregator();
-    const codexOAuthManager = new CodexOAuthManager(authStorageVault);
-    codexOAuthManager.loadFromDisk();
-    const codexProviderBridge = new CodexProviderBridge(codexOAuthManager, authStorageVault, envKeyResolver, proxyGateway);
     const setupWizard = new SetupWizard({
       envKeyResolver,
       authStorageVault,
-      codexOAuthManager,
-      codexProviderBridge,
       proxyGateway,
     });
     const savedModel = setupWizard.getSavedModel();
-    const codexDiag = codexOAuthManager.getAuthDiagnostics();
-    const isCodexAuthed = codexDiag.authenticated || (codexDiag.hasValidRefreshToken && !codexDiag.isExpired);
     if (!options.config) {
-      if (savedModel) {
-        (config as { modelName: string }).modelName = savedModel;
-        modelResolver.setActiveModel(savedModel);
-      } else if (isCodexAuthed) {
-        const flagshipModel = "gpt-5.6-terra";
-        (config as { modelName: string }).modelName = flagshipModel;
-        modelResolver.setActiveModel(flagshipModel);
-        setupWizard.setSavedModel(flagshipModel);
-      }
+      const initialModel = savedModel || "gpt-5.6-terra";
+      (config as { modelName: string }).modelName = initialModel;
+      modelResolver.setActiveModel(initialModel);
     }
 
 
@@ -2498,7 +2476,7 @@ export class MonolithFactory {
       sessionVfs,
       sessionMemoryStore,
       slashRouter,
-      codexProviderBridge,
+      galxEngine,
       proxyGateway,
       undefined,
       { modelCatalog, budgetCalculator, tokenTruncator, completionGate }
@@ -2585,7 +2563,6 @@ export class MonolithFactory {
       broccoliOutputBuffer,
       modelResolver,
       modelCatalog,
-      openRouterEngine,
       galxEngine,
       galxTransportClient: galxTransport,
       envKeyResolver,
@@ -2629,8 +2606,6 @@ export class MonolithFactory {
       ttsrCoordinator,
       centennialPassMarker,
       systemHealthAggregator,
-      codexOAuthManager,
-      codexProviderBridge,
       setupWizard,
       slashRouter,
       mentionResolver,

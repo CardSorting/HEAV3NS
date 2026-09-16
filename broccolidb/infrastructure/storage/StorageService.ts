@@ -1,0 +1,322 @@
+// [LAYER: INFRASTRUCTURE]
+// @classification MODERN
+import { promises as fs } from 'node:fs';
+import { basename, join } from 'node:path';
+import { createHash } from 'node:crypto';
+import type { ServiceContext } from '../../core/agent-context/types.js';
+import { LifecycleStateError, StorageIntegrityError } from '../../core/errors.js';
+import { lifecycleHealth, type ServiceHealth } from '../../core/agent-context/service-health.js';
+
+/**
+ * StorageService provides Content-Addressable Storage (CAS) for sovereign swarm memory scaling.
+ * Files are stored as `shards/[h1][h2]/[hash]`, ensuring deduplication and sharded scaling.
+ */
+export class StorageService {
+  private baseDir: string;
+  private lifecycleState: 'new' | 'started' | 'stopped' = 'new';
+  private corruptCount = 0;
+  private migratedPasteCount = 0;
+  private casMemoryCache = new Set<string>();
+
+  constructor(private ctx: ServiceContext) {
+    this.baseDir = join(this.ctx.workspace.workspacePath, '.broccolidb', 'storage');
+  }
+
+  async start(): Promise<void> {
+    if (this.lifecycleState === 'started') return;
+    if (this.lifecycleState === 'stopped') {
+      throw new LifecycleStateError('StorageService cannot be restarted after stop().');
+    }
+    await fs.mkdir(join(this.baseDir, 'blobs'), { recursive: true });
+    await fs.mkdir(join(this.baseDir, 'corrupt'), { recursive: true });
+    this.migratedPasteCount += await this.migrateLegacyPastes();
+    this.lifecycleState = 'started';
+  }
+
+  async stop(): Promise<void> {
+    this.lifecycleState = 'stopped';
+  }
+
+  async flush(): Promise<void> {
+    this.assertOperational('flush');
+  }
+
+  async health(): Promise<ServiceHealth> {
+    return lifecycleHealth('storage', this.lifecycleState, {
+      metrics: {
+        corruptCount: this.corruptCount,
+        migratedPasteCount: this.migratedPasteCount,
+        baseDir: this.baseDir,
+      },
+    });
+  }
+
+  private assertOperational(operation: string): void {
+    if (this.lifecycleState === 'new') {
+      throw new LifecycleStateError(`StorageService.${operation}() called before start().`);
+    }
+    if (this.lifecycleState === 'stopped') {
+      throw new LifecycleStateError(`StorageService.${operation}() called after stop().`);
+    }
+  }
+
+  /**
+   * Writes content to CAS and returns the unique content hash (Blob ID).
+   */
+  async writeBlob(content: Buffer | string): Promise<string> {
+    this.assertOperational('writeBlob');
+    return this.writeBlobInternal(content);
+  }
+
+  private async writeBlobInternal(content: Buffer | string): Promise<string> {
+    const hash = createHash('sha256').update(content).digest('hex');
+    if (this.casMemoryCache.has(hash)) {
+      return hash;
+    }
+
+    const shard = hash.slice(0, 2);
+    const shardDir = join(this.baseDir, 'blobs', shard);
+    const filePath = join(shardDir, hash);
+
+    try {
+      await fs.access(filePath);
+      this.casMemoryCache.add(hash);
+      // Blob exists, deduplication hit.
+      return hash;
+    } catch {
+      // New blob
+    }
+
+    await fs.mkdir(shardDir, { recursive: true });
+    await fs.writeFile(filePath, content);
+    this.casMemoryCache.add(hash);
+    console.log(`[Storage] 📦 CAS Write: ${hash.slice(0, 8)}... (shard: ${shard})`);
+    return hash;
+  }
+
+  /**
+   * Reads content from CAS via its Blob ID.
+   */
+  async readBlob(hash: string): Promise<Buffer | null> {
+    this.assertOperational('readBlob');
+    const shard = hash.slice(0, 2);
+    const filePath = join(this.baseDir, 'blobs', shard, hash);
+    try {
+      const content = await fs.readFile(filePath);
+      const actualHash = createHash('sha256').update(content).digest('hex');
+      if (actualHash !== hash) {
+        await this.quarantineCorruptBlob({
+          expectedHash: hash,
+          actualHash,
+          filePath,
+          reason: 'sha256_mismatch',
+        });
+      }
+      this.casMemoryCache.add(hash);
+      return content;
+    } catch (error: any) {
+      if (error instanceof StorageIntegrityError) throw error;
+      if (error?.code !== 'ENOENT') throw error;
+      return null;
+    }
+  }
+
+  /**
+   * Checks if a blob exists in CAS.
+   */
+  async exists(hash: string): Promise<boolean> {
+    this.assertOperational('exists');
+    if (this.casMemoryCache.has(hash)) return true;
+    const shard = hash.slice(0, 2);
+    const filePath = join(this.baseDir, 'blobs', shard, hash);
+    try {
+      await fs.access(filePath);
+      this.casMemoryCache.add(hash);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Batch checks if multiple blobs exist in CAS in parallel.
+   */
+  async existsMany(hashes: readonly string[]): Promise<Map<string, boolean>> {
+    this.assertOperational('existsMany');
+    const results = new Map<string, boolean>();
+    const missingHashes: string[] = [];
+
+    for (const hash of hashes) {
+      if (this.casMemoryCache.has(hash)) {
+        results.set(hash, true);
+      } else {
+        missingHashes.push(hash);
+      }
+    }
+
+    if (missingHashes.length === 0) {
+      return results;
+    }
+
+    await Promise.all(
+      missingHashes.map(async (hash) => {
+        const shard = hash.slice(0, 2);
+        const filePath = join(this.baseDir, 'blobs', shard, hash);
+        try {
+          await fs.access(filePath);
+          this.casMemoryCache.add(hash);
+          results.set(hash, true);
+        } catch {
+          results.set(hash, false);
+        }
+      })
+    );
+
+    return results;
+  }
+
+  /**
+   * Deletes a blob from CAS.
+   */
+  async deleteBlob(hash: string): Promise<void> {
+    this.assertOperational('deleteBlob');
+    this.casMemoryCache.delete(hash);
+    const shard = hash.slice(0, 2);
+    const filePath = join(this.baseDir, 'blobs', shard, hash);
+    try {
+      await fs.unlink(filePath);
+    } catch {
+      // Ignored
+    }
+  }
+
+  /**
+   * Hashes content and stores it if it doesn't exist.
+   * Returns the content hash (SHA-256).
+   */
+  async storeContent(content: string): Promise<string> {
+    return this.writeBlob(content);
+  }
+
+  /**
+   * Hydrates content from a hash reference.
+   */
+  async hydrateContent(hash: string): Promise<string | null> {
+    const content = await this.readBlob(hash);
+    return content ? content.toString('utf8') : null;
+  }
+
+  /**
+   * Detaches content if it's large and returns a hash reference.
+   */
+  async handleScaling(content: string): Promise<{ content: string; isReference: boolean }> {
+    // Scale if content > 1024 chars (threshold from Level 12 plan)
+    if (content.length > 1024) {
+      const hash = await this.storeContent(content);
+      return { content: `CAS:${hash}`, isReference: true };
+    }
+    return { content, isReference: false };
+  }
+
+  private async quarantineCorruptBlob(params: {
+    expectedHash: string;
+    actualHash: string;
+    filePath: string;
+    reason: string;
+  }): Promise<never> {
+    const corruptDir = join(this.baseDir, 'corrupt');
+    await fs.mkdir(corruptDir, { recursive: true });
+
+    const quarantinedPath = join(
+      corruptDir,
+      `${params.expectedHash}.${Date.now()}.${basename(params.filePath)}.corrupt`
+    );
+    await fs.rename(params.filePath, quarantinedPath);
+
+    const manifestEntry = {
+      timestamp: new Date().toISOString(),
+      reason: params.reason,
+      expectedHash: params.expectedHash,
+      actualHash: params.actualHash,
+      originalPath: params.filePath,
+      quarantinedPath,
+    };
+    await fs.appendFile(join(corruptDir, 'manifest.jsonl'), `${JSON.stringify(manifestEntry)}\n`);
+    this.corruptCount++;
+
+    throw new StorageIntegrityError(
+      `CAS blob integrity check failed for ${params.expectedHash}; quarantined corrupt payload.`
+    );
+  }
+
+  /**
+   * Removes CAS blobs not present in the referenced hash set.
+   */
+  async pruneUnreferencedBlobs(referencedHashes: Set<string>): Promise<number> {
+    this.assertOperational('pruneUnreferencedBlobs');
+    const blobsDir = join(this.baseDir, 'blobs');
+    let pruned = 0;
+
+    let shards: string[];
+    try {
+      shards = await fs.readdir(blobsDir);
+    } catch {
+      return 0;
+    }
+
+    for (const shard of shards) {
+      const shardDir = join(blobsDir, shard);
+      const stats = await fs.stat(shardDir);
+      if (!stats.isDirectory()) continue;
+
+      const files = await fs.readdir(shardDir);
+      for (const file of files) {
+        if (!referencedHashes.has(file)) {
+          await this.deleteBlob(file);
+          pruned++;
+        }
+      }
+    }
+
+    return pruned;
+  }
+
+  private async migrateLegacyPastes(): Promise<number> {
+    const roots = [
+      join(this.ctx.workspace.workspacePath, '.broccolidb', 'pastes'),
+      join(this.ctx.workspace.workspacePath, 'pastes'),
+    ];
+    let migrated = 0;
+
+    for (const root of roots) {
+      migrated += await this.migratePasteDirectory(root);
+    }
+
+    return migrated;
+  }
+
+  private async migratePasteDirectory(root: string): Promise<number> {
+    let entries: string[];
+    try {
+      entries = await fs.readdir(root);
+    } catch {
+      return 0;
+    }
+
+    let migrated = 0;
+    for (const entry of entries) {
+      const entryPath = join(root, entry);
+      const stat = await fs.stat(entryPath);
+      if (stat.isDirectory()) {
+        migrated += await this.migratePasteDirectory(entryPath);
+        continue;
+      }
+
+      const content = await fs.readFile(entryPath);
+      await this.writeBlobInternal(content);
+      await fs.unlink(entryPath);
+      migrated++;
+    }
+    return migrated;
+  }
+}

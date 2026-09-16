@@ -9,14 +9,11 @@
 import type {
   ChannelBindingRule,
   DeliveryReceipt,
-  GatewayBallotOption,
   GatewayChannelSession,
   GatewayHandoverMode,
   GatewayInlineBallot,
   GatewayInlineDataTable,
-  GatewayInlineMenuItem,
   GatewayInlineMenuNode,
-  GatewayInlineTab,
   GatewayInlineTabGroup,
   GatewayInlineWizard,
   GatewayMessage,
@@ -29,7 +26,6 @@ import type {
   GatewaySubstrateSnapshot,
   GatewayThreadTriage,
   GatewayWhisperNote,
-  GatewayWizardStep,
   LinkedPlatformIdentity,
   UnifiedContactProfile,
 } from "../../../core/contracts/gateway.contracts.js";

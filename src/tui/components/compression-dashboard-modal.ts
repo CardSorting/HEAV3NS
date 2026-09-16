@@ -5,14 +5,7 @@
  * trajectory summaries, token budget allocations, and SLA health audits (Phase 86 / ADR-038).
  */
 
-import type {
-  CompressedTurnSummary,
-  CompressionHealthAuditReport,
-  CompressionMetricsReport,
-  CompressionStateSnapshot,
-} from "../../core/contracts/compression.contracts.js";
 import { BroccoliCompressionSubstrate } from "../../sessions/extensions/compaction/broccoli-compression-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type CompressionDashboardViewMode = "summaries" | "budget" | "metrics" | "health" | "raw";
 

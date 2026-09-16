@@ -12,7 +12,6 @@ import {
   OPAQUE_DOCUMENT_EXTENSIONS,
   type DocumentExtractionOptions,
   type DocumentExtractionResult,
-  type DocumentFormat,
   type OpaqueWriteCheckResult,
 } from "../../../core/contracts/doc-extractor.contracts.js";
 

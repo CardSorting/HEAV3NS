@@ -1,6 +1,5 @@
 import type {
   AutomationBlueprint,
-  BlueprintSlot,
   CronJobManifest,
 } from "../../../core/contracts/cron.contracts.js";
 

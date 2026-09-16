@@ -1,0 +1,346 @@
+/* Import external CSS files */
+@import url("../node_modules/@fontsource/azeret-mono/index.css");
+
+/* Tailwind CSS */
+@import "tailwindcss";
+@import "./theme.css";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * The default styles for each defined element.
+ * This ensures all the elements are rendered with the expected styles consistently without affecting by the parent element / host.
+ */
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+		box-sizing: border-box;
+	}
+	body {
+		@apply bg-background text-foreground text-base;
+	}
+	p {
+		@apply my-0 py-0 text-inherit leading-relaxed block;
+		margin-block-start: 1em;
+		margin-block-end: 1em;
+		margin-inline-start: 0px;
+		margin-inline-end: 0px;
+		unicode-bidi: isolate;
+	}
+	span {
+		@apply leading-relaxed;
+		font-size: inherit;
+		color: inherit;
+	}
+	pre {
+		@apply bg-code;
+	}
+	code {
+		@apply bg-code;
+	}
+	h1 {
+		font-size: var(--text-lg);
+		font-weight: var(--font-weight-semibold);
+	}
+	h2 {
+		font-size: var(--text-md);
+		font-weight: var(--font-weight-semibold);
+	}
+	h3 {
+		font-size: var(--text-sm);
+		font-weight: var(--font-weight-semibold);
+	}
+	h4 {
+		font-size: var(--text-base);
+		font-weight: var(--font-weight-bold);
+	}
+	a {
+		@apply text-link hover:text-link-hover;
+		font-size: inherit;
+	}
+	ol {
+		@apply list-decimal pl-3;
+	}
+	ul {
+		@apply list-disc pl-3;
+	}
+	[role="radio"],
+	[role="checkbox"] {
+		margin: calc(var(--design-unit) * 1px) 0;
+	}
+}
+
+/* Mobile Safe Area Utils */
+.safe-area-top {
+	padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.lumi-chat-readable {
+	line-height: 1.65;
+}
+
+.lumi-chat-readable p {
+	line-height: 1.65;
+}
+
+[data-night-desk="true"] {
+	transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-night-desk="true"] footer {
+	opacity: 0.9;
+}
+
+[data-night-desk="true"] .lumi-audit-exhale {
+	opacity: 0.88;
+}
+
+[data-serenity-level="1"] .lumi-serenity-fade {
+	opacity: 0.97;
+}
+
+[data-serenity-level="2"] .lumi-serenity-fade {
+	opacity: 0.94;
+}
+
+[data-serenity-level="3"] .lumi-serenity-fade {
+	opacity: 0.9;
+}
+
+.lumi-serenity-fade {
+	transition: opacity 3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Horizontal chip row — hide scrollbar in narrow sidebars */
+.lumi-scroll-chips {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.lumi-scroll-chips::-webkit-scrollbar {
+	display: none;
+}
+
+/* Native <details> menus — no portal overlays */
+.lumi-details-menu > summary::-webkit-details-marker {
+	display: none;
+}
+.lumi-details-menu > summary::marker {
+	content: "";
+}
+
+/* Native <details> menus — no portal overlays */
+.lumi-inline-disclosure > summary::-webkit-details-marker {
+	display: none;
+}
+.lumi-inline-disclosure > summary::marker {
+	content: "";
+}
+
+.lumi-workshop-haze {
+	background-image: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(122, 126, 184, 0.04), transparent 55%);
+}
+
+.safe-area-left {
+	padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+	padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent text selection on UI elements for a more native feel */
+.no-select {
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* Native-like active states for buttons on mobile */
+@media (hover: none) {
+	.mobile-active-scale:active {
+		transform: scale(0.96);
+		transition: transform 0.1s ease;
+	}
+
+	.lumi-icon-action {
+		width: 36px;
+		height: 36px;
+	}
+}
+
+body {
+	/* Enable smooth scrolling on iOS */
+	-webkit-overflow-scrolling: touch;
+	/* Prevent pull-to-refresh on mobile */
+	overscroll-behavior-y: contain;
+}
+
+:root {
+	--lumi-space-1: 4px;
+	--lumi-space-2: 8px;
+	--lumi-space-3: 12px;
+	--lumi-space-4: 16px;
+	--lumi-space-5: 20px;
+	--lumi-space-6: 24px;
+}
+
+/* ─── Density system ─── */
+/* Comfortable: ≥480px — default desktop-like spacing */
+[data-density="comfortable"] {
+	--lumi-row-px: 16px;
+	--lumi-row-pt: 16px;
+	--lumi-gap: 10px;
+	--lumi-panel-px: 12px;
+	--lumi-panel-py: 12px;
+	--lumi-text-xs: 11px;
+	--lumi-text-xxs: 9px;
+	--lumi-min-target: 36px;
+}
+
+/* Compact: 360–479px — tightened for narrow sidebars */
+[data-density="compact"] {
+	--lumi-row-px: 12px;
+	--lumi-row-pt: 12px;
+	--lumi-gap: 8px;
+	--lumi-panel-px: 10px;
+	--lumi-panel-py: 8px;
+	--lumi-text-xs: 10px;
+	--lumi-text-xxs: 8px;
+	--lumi-min-target: 36px;
+}
+
+/* Ultra-compact: <360px — maximum compression */
+[data-density="ultra-compact"] {
+	--lumi-row-px: 8px;
+	--lumi-row-pt: 8px;
+	--lumi-gap: 6px;
+	--lumi-panel-px: 8px;
+	--lumi-panel-py: 6px;
+	--lumi-text-xs: 9px;
+	--lumi-text-xxs: 8px;
+	--lumi-min-target: 36px;
+}
+
+/* Short-height: execution detail hidden, footer capped */
+[data-short-height="true"] .lumi-execution-detail {
+	display: none;
+}
+
+[data-short-height="true"] footer {
+	max-height: 45vh;
+	overflow-y: auto;
+}
+
+[data-short-height="true"] .chat-input-textarea {
+	max-height: 96px;
+	overflow-y: auto;
+}
+
+/* Legacy: keep hiding model button at very narrow widths */
+[data-density="ultra-compact"] .lumi-composer-model {
+	display: none;
+}
+
+/* Ultra-compact: suppress non-essential micro-animations */
+[data-density="ultra-compact"] .lumi-panel-reveal,
+[data-density="ultra-compact"] .animate-lumi-breathe,
+[data-density="ultra-compact"] .animate-lumi-breathe-slow,
+[data-density="ultra-compact"] .animate-lumi-drift,
+[data-density="ultra-compact"] .animate-lumi-glow-pulse {
+	animation: none;
+	transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto;
+		animation-duration: 0.01ms;
+		animation-iteration-count: 1;
+		transition-duration: 0.01ms;
+	}
+}
+
+/* Premium Styling Utilities */
+@layer components {
+	.glass-panel {
+		@apply backdrop-blur-md border border-white/10 dark:border-white/5 rounded-2xl;
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+	}
+
+	.dark .glass-panel {
+		background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
+	}
+
+	.btn-premium-lumi,
+	.btn-premium-cola {
+		@apply rounded-xl font-medium transition-all duration-300;
+		background: var(--gradient-lumi);
+		box-shadow: var(--shadow-premium);
+		color: var(--color-lumi-warm);
+	}
+
+	.btn-premium-lumi:hover:not(:disabled),
+	.btn-premium-cola:hover:not(:disabled) {
+		@apply -translate-y-0.5;
+		box-shadow: var(--glow-lumi);
+		filter: brightness(1.05);
+	}
+
+	.btn-premium-lumi:active:not(:disabled),
+	.btn-premium-cola:active:not(:disabled) {
+		@apply translate-y-0 scale-98;
+		box-shadow: none;
+	}
+
+	.bg-premium-lumi-glow {
+		background: radial-gradient(circle, rgba(122, 126, 184, 0.22) 0%, transparent 72%);
+	}
+
+	.animate-lumi-breathe {
+		animation: var(--animate-lumi-breathe);
+	}
+
+	.animate-lumi-breathe-slow {
+		animation: var(--animate-lumi-breathe-slow);
+	}
+
+	.animate-lumi-reading-reveal {
+		animation: var(--animate-lumi-reading-reveal);
+	}
+
+	.animate-lumi-drift {
+		animation: var(--animate-lumi-drift);
+	}
+
+	.animate-lumi-glow-pulse {
+		animation: var(--animate-lumi-glow-pulse);
+	}
+
+	.animate-lumi-settle {
+		animation: var(--animate-lumi-settle);
+	}
+
+	.animate-lumi-reveal {
+		animation: var(--animate-lumi-reveal);
+	}
+
+	.animate-lumi-dot-pulse-slow {
+		animation: var(--animate-lumi-dot-pulse-slow);
+	}
+
+	.lumi-panel-reveal {
+		@apply transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)];
+	}
+
+	.aluminum-border {
+		border: 1px solid transparent;
+		background-image: linear-gradient(var(--color-background), var(--color-background)), var(--gradient-silver);
+		background-origin: border-box;
+		background-clip: padding-box, border-box;
+	}
+}

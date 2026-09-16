@@ -5,11 +5,6 @@
  * loaded directories, virtual rules, and health posture (Phase 129 / ADR-105 / Target #84).
  */
 
-import type {
-  SubdirectoryHintsHealthAuditReport,
-  SubdirectoryHintsMetricsReport,
-  DiscoveredSubdirHint,
-} from "../../core/contracts/subdirectory-hints.contracts.js";
 import { BroccoliSubdirHintsSubstrate } from "../../sessions/extensions/subdir_hints/broccoli-subdir-hints-substrate.js";
 import { DeterministicSubdirHintEngine } from "../../agents/extensions/subdir_hints/deterministic-subdir-hint-engine.js";
 

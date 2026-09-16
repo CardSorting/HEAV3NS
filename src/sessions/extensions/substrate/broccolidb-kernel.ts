@@ -19,7 +19,6 @@ import type {
   IBroccoliDatabaseKernel,
   IDbTable,
   TimelineCheckpointRecord,
-  WalFrame,
 } from "../../../core/contracts/broccolidb.contracts.js";
 import { BroccoliCASStorageService } from "./broccolidb-cas.js";
 import { ReentrantAsyncMutex } from "./broccolidb-mutex.js";

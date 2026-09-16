@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package dietcode;
+
+option go_package = "github.com/dietcode/grpc-go/dietcode";
+option java_multiple_files = true;
+option java_package = "bot.dietcode.proto";
+
+message JoyZoningAuditRequest {
+  string path = 1;
+  bool use_cache = 2;
+}
+
+message JoyZoningAuditProgress {
+  int32 processed_files = 1;
+  int32 total_files = 2;
+  string current_file = 3;
+  double percentage = 4;
+}
+
+message JoyZoningViolation {
+  string type = 1;
+  string message = 2;
+  string path = 3;
+  string remediation = 4;
+  string severity = 5; // INFO, WARN, ERROR
+  string risk_level = 6; // LOW, MEDIUM, HIGH
+  string impact_area = 7; // SECURITY, PERFORMANCE, STABILITY, MAINTAINABILITY
+}
+
+message JoyZoningOptimization {
+  string title = 1;
+  string description = 2;
+  string path = 3;
+  string action = 4;
+  double projected_health_gain = 5;
+  string boilerplate = 6; // Suggested code for extraction
+  string impact = 7; // LOW, MEDIUM, HIGH
+  string effort = 8; // LOW, MEDIUM, HIGH
+  string category = 9; // STABILITY, MAINTAINABILITY, PERFORMANCE
+}
+
+message JoyZoningHistoryPoint {
+  string timestamp = 1;
+  double health = 2;
+  double stability = 3;
+  double maintainability = 4;
+}
+
+message JoyZoningAuditResponse {
+  double build_health = 1;
+  int32 total_files = 2;
+  double structural_entropy = 3;
+  repeated JoyZoningViolation violations = 4;
+  repeated JoyZoningOptimization optimizations = 5;
+  string timestamp = 6;
+  double projected_health = 7; // After applying optimizations
+  double integrity_score = 8;
+  JoyZoningAuditProgress progress = 9; // For streaming progress updates
+  double activity_pressure = 10; // Current resource usage/indexing stress (0-1.0)
+  bool drift_detected = 11;
+  int32 drift_count = 12;
+  repeated string structural_sinks = 13;
+  string grade = 14; // A, B, C, D, F
+  string total_technical_debt = 15; // e.g. "2h 15m"
+  int32 stability_score = 16; // 0-100
+  int32 maintainability_score = 17; // 0-100
+  repeated JoyZoningHistoryPoint history = 18;
+  string quality_gate_status = 19; // PASSED, FAILED
+  int32 compliance_score = 20; // 0-100
+  string toxic_module = 21; // Directory with most issues
+  map<string, int32> layer_scores = 22; // Health per layer (Domain, Infrastructure, etc.)
+  repeated JoyZoningOptimization top_recommendations = 23; // "Quick Wins"
+  double health_delta = 24; // Change since last scan
+  int32 violation_delta = 25; // Change in violation count
+  map<string, int32> risk_profile = 26; // Count of files by risk level (LOW, MEDIUM, HIGH)
+}
+
+message JoyZoningRefactorRequest {
+  string action = 1; // e.g. "ALIGN_TAGS", "HEAL_STATELESSNESS", "DECOMPOSE"
+  string path = 2;
+  bool dry_run = 3;
+}
+
+message JoyZoningBatchRefactorRequest {
+  repeated JoyZoningRefactorRequest requests = 1;
+  bool dry_run = 2;
+}
+
+message JoyZoningBatchRefactorResponse {
+  bool success = 1;
+  string message = 2;
+  string task_id = 3;
+  string plan_summary = 4;
+}
+
+message JoyZoningRefactorResponse {
+  bool success = 1;
+  string message = 2;
+  string plan_summary = 3;
+}
+
+service JoyZoningService {
+  // Streams progress updates during the audit, finishing with the full report
+  rpc triggerAudit(JoyZoningAuditRequest) returns (stream JoyZoningAuditResponse);
+  rpc executeRefactor(JoyZoningRefactorRequest) returns (JoyZoningRefactorResponse);
+  rpc executeBatchRefactor(JoyZoningBatchRefactorRequest) returns (JoyZoningBatchRefactorResponse);
+}

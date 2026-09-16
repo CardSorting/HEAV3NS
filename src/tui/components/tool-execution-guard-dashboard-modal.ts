@@ -8,7 +8,6 @@
 import type {
   ToolExecutionGuardHealthAuditReport,
   ToolExecutionGuardMetricsReport,
-  ToolExecutionSegmentRow,
   ToolLoopViolationRow,
 } from "../../core/contracts/tool-execution-segment.contracts.js";
 import { BroccoliExecutionGuardSubstrate } from "../../sessions/extensions/execution_guard/broccoli-execution-guard-substrate.js";

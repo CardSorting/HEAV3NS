@@ -5,15 +5,7 @@
  * Set-of-Marks UI element trees, resolution metrics, and SLA health audits (Phase 88 / ADR-040).
  */
 
-import type {
-  ComputerActionResult,
-  ComputerUseHealthAuditReport,
-  ComputerUseMetricsReport,
-  ComputerWorkspaceSnapshot,
-  UiElement,
-} from "../../core/contracts/computer-use.contracts.js";
 import { BroccoliDisplaySubstrate } from "../../sessions/extensions/computer-use/broccoli-display-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type ComputerUseDashboardViewMode = "actions" | "elements" | "metrics" | "health" | "raw";
 

@@ -10,7 +10,6 @@ import type {
   McpResourceDefinition,
   McpPromptDefinition,
   McpToolCallResponse,
-  McpSamplingRequest,
 } from "../../../core/contracts/mcp-client.contracts.js";
 
 export interface JsonRpcRequest {

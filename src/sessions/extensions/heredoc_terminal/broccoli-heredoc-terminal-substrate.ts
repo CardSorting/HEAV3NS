@@ -15,7 +15,6 @@ import type {
   HeredocTerminalConfig,
   HeredocSanitizationRow,
   HeredocDiagnosticRow,
-  HeredocAuditRow,
   HeredocTerminalHealthStatus,
   HeredocTerminalHealthAuditReport,
   HeredocTerminalMetricsReport,

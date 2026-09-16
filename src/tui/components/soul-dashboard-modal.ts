@@ -1,13 +1,10 @@
 import type {
   SoulArchetype,
-  SoulHealthAuditReport,
   SoulManifest,
   SoulMetricsReport,
-  SoulMutationResult,
   SoulTrait,
 } from "../../core/contracts/soul.contracts.js";
 import { BroccoliSoulSubstrate } from "../../sessions/extensions/soul/broccoli-soul-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type SoulDashboardViewMode = "traits" | "axioms" | "style" | "mutations" | "health" | "metrics";
 

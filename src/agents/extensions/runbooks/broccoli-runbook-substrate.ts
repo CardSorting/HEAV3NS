@@ -10,7 +10,6 @@
 import * as crypto from "node:crypto";
 import type {
   IBroccoliDatabaseKernel,
-  IDbTable,
 } from "../../../core/contracts/broccolidb.contracts.js";
 import type {
   RunbookDynamicCheckRow,

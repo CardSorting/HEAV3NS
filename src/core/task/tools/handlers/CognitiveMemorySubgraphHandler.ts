@@ -1,0 +1,39 @@
+import { DietCodeDefaultTool } from "../../../../shared/tools"
+import { ToolUse } from "../../../assistant-message"
+import { formatResponse } from "../../../prompts/responses"
+import { TaskConfig } from "../types/TaskConfig"
+import { declareNoConsentIntent, IToolHandler } from "../types/ToolContracts"
+
+export class CognitiveMemorySubgraphHandler implements IToolHandler {
+	readonly name = DietCodeDefaultTool.MEM_SUBGRAPH
+
+	getApprovalIntent(block: ToolUse) {
+		return declareNoConsentIntent(block, "Read a cognitive-memory subgraph")
+	}
+
+	getDescription(_block: ToolUse): string {
+		return "[extract knowledge subgraph]"
+	}
+
+	async execute(config: TaskConfig, block: ToolUse): Promise<any> {
+		const { id, rootId, maxDepth } = block.params as { id?: string; rootId?: string; maxDepth?: string }
+		const targetId = id || rootId
+		const depth = Number.parseInt(maxDepth || "2", 10)
+
+		if (!targetId) {
+			return config.callbacks.sayAndCreateMissingParamError(this.name, "id")
+		}
+
+		const kgService = config.services.knowledgeGraphService
+		if (!kgService) {
+			return formatResponse.toolError("Knowledge Graph service is not available.")
+		}
+
+		try {
+			const subgraph = await kgService.extractSubgraph(targetId, depth)
+			return JSON.stringify(subgraph, null, 2)
+		} catch (error) {
+			return formatResponse.toolError(`Failed to extract subgraph: ${error}`)
+		}
+	}
+}

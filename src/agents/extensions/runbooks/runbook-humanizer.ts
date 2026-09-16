@@ -13,7 +13,6 @@ import type {
   RunbookNodeDefinition,
   RunbookRuntimeState,
   RunbookHistoryEvent,
-  CheckExecutionResult,
 } from "../../../core/contracts/runbook.contracts.js";
 
 export interface HumanizedStateInfo {

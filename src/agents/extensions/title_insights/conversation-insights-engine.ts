@@ -7,10 +7,6 @@
 import type { BroccoliTitleInsightsSubstrate } from "../../../sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
 import type {
   ConversationInsightsReport,
-  ToolUsageMetric,
-  SkillUsageMetric,
-  ModelUsageMetric,
-  PlatformUsageMetric,
 } from "../../../core/contracts/title-insights.contracts.js";
 
 export class ConversationInsightsEngine {

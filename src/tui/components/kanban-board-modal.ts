@@ -14,7 +14,6 @@ import { Text } from "./text.js";
 import { Markdown, type MarkdownTheme } from "./markdown.js";
 import { matchesKey } from "../keys.js";
 import type {
-  KanbanBoard,
   KanbanColumn,
   KanbanGroupBy,
   KanbanGroupedSwimlane,

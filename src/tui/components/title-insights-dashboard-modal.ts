@@ -5,13 +5,6 @@
  * cognitive metrics, 7x24 activity heatmaps, and SLA health audits (Target #42 / Phase 109 / ADR-085).
  */
 
-import type {
-  ConversationInsightsReport,
-  SessionTitleRecord,
-  TitleInsightsHealthAuditReport,
-  TitleInsightsMetricsReport,
-  TitleInsightsWorkspaceSnapshot,
-} from "../../core/contracts/title-insights.contracts.js";
 import { BroccoliTitleInsightsSubstrate } from "../../sessions/extensions/title_insights/broccoli-title-insights-substrate.js";
 import { DeterministicTitleGenerator } from "../../agents/extensions/title_insights/deterministic-title-generator.js";
 

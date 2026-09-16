@@ -13,7 +13,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import * as zlib from "node:zlib";
-import type { CasBlobDescriptor, CasStorageStats } from "../../../core/contracts/broccolidb.contracts.js";
+import type { CasStorageStats } from "../../../core/contracts/broccolidb.contracts.js";
 
 const compressBrotli = promisify(zlib.brotliCompress);
 const decompressBrotli = promisify(zlib.brotliDecompress);

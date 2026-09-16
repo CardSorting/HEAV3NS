@@ -7,7 +7,6 @@
  * and enforces Joy-Zoning steering thresholds (maxFunctionLines, maxClassMethods). Zero external npm dependencies.
  */
 
-import * as path from "node:path";
 import { BroccoliJoyZoningEngine, type JoyLayer } from "./broccolidb-joy-zoning.js";
 import { BroccoliIntegrityOptimizer } from "./broccolidb-integrity-optimizer.js";
 

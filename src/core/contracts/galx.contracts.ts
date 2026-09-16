@@ -7,7 +7,7 @@
 
 export const DEFAULT_GALX_BASE_URL = "https://galx.ai/v1";
 export const DEFAULT_GALX_CLEARINGHOUSE_URL = "https://galx.ai";
-export const DEFAULT_GALX_MODEL_ID = "gpt-5.6-sol";
+export const DEFAULT_GALX_MODEL_ID = "gpt-5.6-terra";
 export const DEFAULT_GALX_CLIENT_TAG = "LUMI/12.5.0";
 export const DEFAULT_GALX_CLIENT_ID = "lumi-ide";
 

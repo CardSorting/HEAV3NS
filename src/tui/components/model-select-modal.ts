@@ -4,17 +4,15 @@ import { SelectList, type SelectItem, type SelectListTheme } from "./select-list
 import { VStack } from "./v-stack.js";
 import { Text } from "./text.js";
 import { Markdown, type MarkdownTheme } from "./markdown.js";
-import { matchesKey } from "../keys.js";
 import type { ModelSpecs } from "../../agents/extensions/resolution/model-catalog.js";
 import { LocalHardwareProfiler } from "../../tooling/extensions/endpoints/local-hardware-profiler.js";
-import { filterOpenRouterModelSpecs } from "../../core/contracts/openrouter.contracts.js";
 
 const MODEL_SELECT_THEME: SelectListTheme = {
-  selectedPrefix: (text) => `\x1b[1;35m▶ \x1b[0m`,
+  selectedPrefix: () => "\x1b[1;35m▶ \x1b[0m",
   selectedText: (text) => `\x1b[1;36m${text}\x1b[0m`,
   description: (text) => `\x1b[90m${text}\x1b[0m`,
   scrollInfo: (text) => `\x1b[90m${text}\x1b[0m`,
-  noMatch: (text) => `\x1b[31m  No matching models in active category\x1b[0m`,
+  noMatch: () => "\x1b[31m  No matching models in active category\x1b[0m",
 };
 
 const INSPECTOR_MARKDOWN_THEME: MarkdownTheme = {
@@ -34,10 +32,10 @@ const INSPECTOR_MARKDOWN_THEME: MarkdownTheme = {
   underline: (text) => `\x1b[4m${text}\x1b[0m`,
 };
 
-export type CategoryTab = "all" | "openai-codex" | "galx" | "openrouter";
+export type CategoryTab = "all" | "galx" | "custom";
 
 export class ModelSelectModal implements Component, Focusable {
-  focused: boolean = false;
+  focused = false;
   private readonly container: Box;
   private readonly vstack: VStack;
   private selectList: SelectList;
@@ -111,9 +109,6 @@ export class ModelSelectModal implements Component, Focusable {
     let filtered = this.availableModels;
     if (category === "galx") {
       filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === "galx" || m.modelName.startsWith("galx/"));
-    } else if (category === "openrouter") {
-      const openRouterModels = this.availableModels.filter((m) => m.provider.toLowerCase() === "openrouter");
-      filtered = filterOpenRouterModelSpecs(openRouterModels, "openrouter");
     } else if (category !== "all") {
       filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === category);
     }
@@ -129,7 +124,7 @@ export class ModelSelectModal implements Component, Focusable {
       const isCurrent = m.modelName === this.currentModel ? " [ACTIVE]" : "";
       const isFav = this.favoriteModels.has(m.modelName) ? " [★ FAV]" : "";
       const isLocalTag = this.isLocalSpec(m) ? " [LOCAL]" : "";
-      const isFreeTag = (m.modelName.includes(":free") || (m.inputPricePer1M === 0 && m.outputPricePer1M === 0 && m.provider === "openrouter")) ? " [FREE]" : "";
+      const isFreeTag = (m.modelName.includes(":free") || (m.inputPricePer1M === 0 && m.outputPricePer1M === 0)) ? " [FREE]" : "";
       const ctxKb = Math.round(m.contextWindowTokens / 1000);
       const desc = `[${m.provider.toUpperCase()}] Ctx: ${ctxKb}k | Out: ${m.maxOutputTokens}${isCurrent}${isFav}${isLocalTag}${isFreeTag}`;
       return {
@@ -182,11 +177,10 @@ export class ModelSelectModal implements Component, Focusable {
 
     // Render Category Filter Tabs Header Bar
     const tabAll = this.activeCategory === "all" ? "\x1b[1;36m[1: ALL]\x1b[0m" : "\x1b[90m[1: ALL]\x1b[0m";
-    const tabCodex = this.activeCategory === "openai-codex" ? "\x1b[1;36m[2: CODEX OAUTH]\x1b[0m" : "\x1b[90m[2: CODEX OAUTH]\x1b[0m";
-    const tabGalx = this.activeCategory === "galx" ? "\x1b[1;36m[3: GALX WHOLESALE]\x1b[0m" : "\x1b[90m[3: GALX WHOLESALE]\x1b[0m";
-    const tabRouter = this.activeCategory === "openrouter" ? "\x1b[1;36m[4: OPENROUTER]\x1b[0m" : "\x1b[90m[4: OPENROUTER]\x1b[0m";
+    const tabGalx = this.activeCategory === "galx" ? "\x1b[1;36m[2: GALX WHOLESALE]\x1b[0m" : "\x1b[90m[2: GALX WHOLESALE]\x1b[0m";
+    const tabCustom = this.activeCategory === "custom" ? "\x1b[1;36m[3: LOCAL / CUSTOM]\x1b[0m" : "\x1b[90m[3: LOCAL / CUSTOM]\x1b[0m";
 
-    const tabsHeader = new Text(`${tabAll}  ${tabCodex}  ${tabGalx}  ${tabRouter}`, 0, 0);
+    const tabsHeader = new Text(`${tabAll}  ${tabGalx}  ${tabCustom}`, 0, 0);
     this.vstack.addChild(tabsHeader);
     this.vstack.addChild(this.selectList);
 
@@ -195,7 +189,7 @@ export class ModelSelectModal implements Component, Focusable {
     this.vstack.addChild(inspectorBox);
 
     const footerGuide = new Text(
-      `\x1b[90m[1-4/Tab] Filter  │  [t] Terra  [l] Luna  [s] Sol  │  [f] Toggle Fav  │  [Enter] Select  │  [Esc] Close\x1b[0m`,
+      "\x1b[90m[1-3/Tab] Filter  │  [t] Terra  [l] Luna  [s] Sol  │  [f] Toggle Fav  │  [Enter] Select  │  [Esc] Close\x1b[0m",
       0,
       0
     );
@@ -204,7 +198,7 @@ export class ModelSelectModal implements Component, Focusable {
   }
 
   private buildInspectorText(spec: ModelSpecs | undefined, currentModel: string): string {
-    if (!spec) return `*No model details available.*`;
+    if (!spec) return "*No model details available.*";
     const isActive = spec.modelName === currentModel ? " `[ACTIVE MODEL]`" : "";
     const isFav = this.favoriteModels.has(spec.modelName) ? " `[★ FAVORITE]`" : "";
     const isLocal = this.isLocalSpec(spec);
@@ -212,7 +206,7 @@ export class ModelSelectModal implements Component, Focusable {
     const vision = spec.supportsVision ? "`[YES]`" : "`[NO]`";
     const reasoning = spec.supportsReasoning ? "`[YES]`" : "`[NO]`";
     const ctxKb = Math.round(spec.contextWindowTokens / 1000);
-    const latency = spec.estimatedLatencyMs ?? (isLocal ? 5 : spec.provider === "openai-codex" ? 45 : 120);
+    const latency = spec.estimatedLatencyMs ?? (isLocal ? 5 : 30);
     const inPrice = isLocal || spec.inputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.inputPricePer1M.toFixed(2)}/1M`;
     const outPrice = isLocal || spec.outputPricePer1M === 0 ? "Free / Local Hardware" : `$${spec.outputPricePer1M.toFixed(2)}/1M`;
 
@@ -239,7 +233,7 @@ export class ModelSelectModal implements Component, Focusable {
   }
 
   handleInput(data: string): void {
-    // Instant hotkeys for core Codex models: Terra, Luna, Sol
+    // Instant hotkeys for core GALX models: Terra, Luna, Sol
     if (data === "t" || data === "T") {
       this.onSelectModel("gpt-5.6-terra");
       this.onClose();
@@ -256,7 +250,7 @@ export class ModelSelectModal implements Component, Focusable {
       return;
     }
 
-    // Handle category tab switches via number keys 1-4 or Tab
+    // Handle category tab switches via number keys 1-3 or Tab
     if (data === "1") {
       this.activeCategory = "all";
       this.selectList = this.createSelectListForCategory(this.activeCategory);
@@ -264,29 +258,26 @@ export class ModelSelectModal implements Component, Focusable {
       return;
     }
     if (data === "2") {
-      this.activeCategory = "openai-codex";
-      this.selectList = this.createSelectListForCategory(this.activeCategory);
-      this.renderModal();
-      return;
-    }
-    if (data === "3") {
       this.activeCategory = "galx";
       this.selectList = this.createSelectListForCategory(this.activeCategory);
       this.renderModal();
       return;
     }
-    if (data === "4") {
-      this.activeCategory = "openrouter";
+    if (data === "3") {
+      this.activeCategory = "custom";
       this.selectList = this.createSelectListForCategory(this.activeCategory);
       this.renderModal();
       return;
     }
     if (data === "\t") {
-      const cats: CategoryTab[] = ["all", "openai-codex", "galx", "openrouter"];
+      const cats: CategoryTab[] = ["all", "galx", "custom"];
       const nextIdx = (cats.indexOf(this.activeCategory) + 1) % cats.length;
-      this.activeCategory = cats[nextIdx]!;
-      this.selectList = this.createSelectListForCategory(this.activeCategory);
-      this.renderModal();
+      const nextCat = cats[nextIdx];
+      if (nextCat) {
+        this.activeCategory = nextCat;
+        this.selectList = this.createSelectListForCategory(this.activeCategory);
+        this.renderModal();
+      }
       return;
     }
 

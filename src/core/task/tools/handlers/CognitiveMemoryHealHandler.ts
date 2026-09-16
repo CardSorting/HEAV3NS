@@ -1,0 +1,41 @@
+import type { ToolUse } from "@core/assistant-message"
+import { formatResponse } from "@core/prompts/responses"
+import { DietCodeDefaultTool } from "@/shared/tools"
+import type { TaskConfig } from "../types/TaskConfig"
+import { declareNoConsentIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
+
+export class CognitiveMemoryHealHandler implements IToolHandler {
+	readonly name = DietCodeDefaultTool.MEM_HEAL
+
+	getApprovalIntent(block: ToolUse) {
+		return declareNoConsentIntent(block, `Read a historical recovery candidate for ${block.params.path ?? "a path"}`)
+	}
+
+	getDescription(block: ToolUse): string {
+		return `[${block.name} for '${block.params.path}']`
+	}
+
+	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
+		const path = block.params.path
+
+		if (!path) {
+			return await config.callbacks.sayAndCreateMissingParamError(this.name, "path")
+		}
+
+		try {
+			const recovery = await config.services.knowledgeGraphService.recoverFile(config.taskId, path)
+
+			if (!recovery) {
+				return formatResponse.toolResult(`No historical state found for '${path}'.`)
+			}
+
+			return formatResponse.toolResult(
+				`Historical state recovered for '${path}' from snapshot ${recovery.sourceId}:\n\n` +
+					`\`\`\`\n${recovery.content}\n\`\`\`\n\n` +
+					`You can use 'write_to_file' to restore this content if needed.`,
+			)
+		} catch (error) {
+			return `Error recovering file state: ${(error as Error)?.message}`
+		}
+	}
+}

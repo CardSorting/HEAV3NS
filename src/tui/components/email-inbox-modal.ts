@@ -1,12 +1,9 @@
 import type {
-  EmailDisposition,
   EmailDraft,
-  EmailHealthAuditReport,
   EmailMessage,
   EmailMetricsReport,
 } from "../../core/contracts/email.contracts.js";
 import { BroccoliEmailSubstrate } from "../../sessions/extensions/email/broccoli-email-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type EmailInboxViewMode = "inbox" | "urgent" | "drafts" | "threads" | "health" | "metrics";
 

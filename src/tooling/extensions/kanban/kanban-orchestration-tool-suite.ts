@@ -14,7 +14,6 @@ import type {
   KanbanNotificationTrigger,
   KanbanNotificationUrgency,
   KanbanPriority,
-  KanbanReasoningEffort,
   KanbanRelationType,
   KanbanSortBy,
   KanbanSortDirection,

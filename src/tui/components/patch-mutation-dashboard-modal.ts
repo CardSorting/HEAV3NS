@@ -5,11 +5,6 @@
  * diff previews, transactional status, and mutation health metrics (Phase 77 / ADR-029 / Target #74).
  */
 
-import type {
-  FileMutationEntry,
-  PatchMutationHealthAuditReport,
-  PatchMutationMetricsReport,
-} from "../../core/contracts/patch-mutation.contracts.js";
 import { BroccoliPatchSubstrate } from "../../sessions/extensions/patch/broccoli-patch-substrate.js";
 import { DeterministicPatchEngine } from "../../tooling/extensions/patch/deterministic-patch-engine.js";
 

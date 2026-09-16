@@ -11,13 +11,9 @@ import type { Component, Focusable } from "../tui.js";
 import { Box } from "./box.js";
 import { VStack } from "./v-stack.js";
 import { Text } from "./text.js";
-import { Markdown, type MarkdownTheme } from "./markdown.js";
-import { matchesKey } from "../keys.js";
+import { type MarkdownTheme } from "./markdown.js";
 import type {
-  AutomationBlueprint,
-  CronExecutionRecord,
   CronJobManifest,
-  CronJobStatus,
 } from "../../core/contracts/cron.contracts.js";
 import type { MonolithCronScheduler } from "../../agents/extensions/cron/monolith-cron-scheduler.js";
 import { DeterministicBlueprintCatalog } from "../../tooling/extensions/cron/deterministic-blueprint-catalog.js";

@@ -19,7 +19,6 @@ import type {
   GatewayTypingState,
   GatewayUserRole,
   LinkedPlatformIdentity,
-  UnifiedContactProfile,
 } from "../../../core/contracts/gateway.contracts.js";
 import { GatewaySupervisor } from "../../../agents/extensions/gateway/gateway-supervisor.js";
 import { BroccoliGatewaySubstrate } from "../../../sessions/extensions/gateway/broccoli-gateway-substrate.js";

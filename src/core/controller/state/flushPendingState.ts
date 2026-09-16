@@ -1,0 +1,18 @@
+import type { IController as Controller } from "@core/controller/types"
+import type { EmptyRequest } from "@shared/proto/dietcode/common"
+import { Empty } from "@shared/proto/dietcode/common"
+import { Logger } from "@/shared/services/Logger"
+
+/**
+ * Flush all pending state changes immediately to disk
+ * Bypasses the debounced persistence and forces immediate writes
+ */
+export async function flushPendingState(controller: Controller, _request: EmptyRequest): Promise<Empty> {
+	try {
+		await controller.stateManager.flushPendingState()
+		return Empty.create({})
+	} catch (error) {
+		Logger.error("[flushPendingState] Error flushing pending state:", error)
+		throw error
+	}
+}

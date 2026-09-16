@@ -5,15 +5,7 @@
  * benchmark runs, task queues, pass rates, and SLA health audits (Phase 84 / ADR-036).
  */
 
-import type {
-  BatchHealthAuditReport,
-  BatchMetricsReport,
-  BatchRunState,
-  BatchTaskItem,
-  BatchWorkspaceSnapshot,
-} from "../../core/contracts/batch.contracts.js";
 import { BroccoliBatchSubstrate } from "../../sessions/extensions/batch/broccoli-batch-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type BatchDashboardViewMode = "tasks" | "runs" | "metrics" | "health" | "raw";
 

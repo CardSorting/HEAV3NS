@@ -5,14 +5,7 @@
  * dangerous token allowances, transaction simulations, and SLA health audits (Phase 91/93 / ADR-123 / ADR-043).
  */
 
-import type {
-  WalletHealthAuditReport,
-  WalletMetricsReport,
-  WalletPortfolio,
-  WalletSubstrateSnapshot,
-} from "../../core/contracts/wallet.contracts.js";
 import { BroccoliWalletSubstrate } from "../../sessions/extensions/wallet/broccoli-wallet-substrate.js";
-import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js";
 
 export type WalletDashboardViewMode = "portfolios" | "allowances" | "simulations" | "health" | "raw";
 

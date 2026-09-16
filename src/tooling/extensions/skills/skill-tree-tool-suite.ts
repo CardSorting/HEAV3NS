@@ -9,7 +9,6 @@ import type {
   SkillNodeManifest,
   SkillSortBy,
   SkillSortDirection,
-  SkillStrategyGoal,
   SkillTier,
   SpecializedBranch,
 } from "../../../core/contracts/skills.contracts.js";

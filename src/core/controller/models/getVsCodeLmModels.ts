@@ -1,0 +1,26 @@
+import type { IController as Controller } from "@core/controller/types"
+import { EmptyRequest } from "@shared/proto/dietcode/common"
+import { VsCodeLmModelsArray } from "@shared/proto/dietcode/models"
+import * as vscode from "vscode"
+import { Logger } from "@/shared/services/Logger"
+import { convertVsCodeNativeModelsToProtoModels } from "../../../shared/proto-conversions/models/vscode-lm-models-conversion"
+
+/**
+ * Fetches available models from VS Code LM API
+ * @param controller The controller instance
+ * @param request Empty request
+ * @returns Array of VS Code LM models
+ */
+export async function getVsCodeLmModels(_controller: Controller, _request: EmptyRequest): Promise<VsCodeLmModelsArray> {
+	try {
+		const lm = (vscode as any).lm
+		const models = lm ? await lm.selectChatModels({}) : []
+
+		const protoModels = convertVsCodeNativeModelsToProtoModels(models || [])
+
+		return VsCodeLmModelsArray.create({ models: protoModels })
+	} catch (error) {
+		Logger.error("Error fetching VS Code LM models:", error)
+		return VsCodeLmModelsArray.create({ models: [] })
+	}
+}

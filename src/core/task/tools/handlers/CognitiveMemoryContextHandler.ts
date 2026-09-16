@@ -1,0 +1,42 @@
+import type { ToolUse } from "@core/assistant-message"
+import { formatResponse } from "@core/prompts/responses"
+import { DietCodeDefaultTool } from "@/shared/tools"
+import type { TaskConfig } from "../types/TaskConfig"
+import { declareNoConsentIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
+
+export class CognitiveMemoryContextHandler implements IToolHandler {
+	readonly name = DietCodeDefaultTool.MEM_CONTEXT
+
+	getApprovalIntent(block: ToolUse) {
+		return declareNoConsentIntent(block, `Read cognitive context for ${block.params.path ?? "a path"}`)
+	}
+
+	getDescription(block: ToolUse): string {
+		return `[${block.name} for '${block.params.path}']`
+	}
+
+	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
+		const path = block.params.path
+		const limit = block.params.limit ? Number.parseInt(block.params.limit, 10) : 50
+
+		if (!path) {
+			return await config.callbacks.sayAndCreateMissingParamError(this.name, "path")
+		}
+
+		try {
+			const context = await config.services.knowledgeGraphService.getContextGraph(config.taskId, path, limit)
+
+			if (context.length === 0) {
+				return formatResponse.toolResult(`No semantic correlations found for '${path}'.`)
+			}
+
+			const formatted = context.map((c) => `- ${c.path} (weight: ${c.weight})`).join("\n")
+
+			return formatResponse.toolResult(
+				`Semantic context for '${path}':\n\n${formatted}\n\nThese files are frequently co-modified based on task history.`,
+			)
+		} catch (error) {
+			return `Error analyzing semantic context: ${(error as Error)?.message}`
+		}
+	}
+}

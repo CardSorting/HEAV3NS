@@ -7,7 +7,6 @@
 
 import type {
   AcpDiffCard,
-  AcpFileChange,
   AcpMultiFileChangeset,
   AcpRpcRequest,
   AcpRpcResponse,

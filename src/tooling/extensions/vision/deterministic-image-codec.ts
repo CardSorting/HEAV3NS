@@ -6,8 +6,6 @@
  */
 
 import type {
-  ImageDimensions,
-  ImageFormat,
   ImageMetadata,
 } from "../../../core/contracts/vision.contracts.js";
 

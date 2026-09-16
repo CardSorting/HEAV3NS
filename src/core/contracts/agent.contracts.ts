@@ -30,7 +30,7 @@ export interface ProgressTelemetryMetrics {
 }
 
 export interface EngineProgressMetadata {
-  source?: "codex-sdk" | "openai-api" | "lumi" | string;
+  source?: "galx" | "openai-api" | "lumi" | string;
   /** Distinguishes the one overall turn lifecycle from child activity rows. */
   scope?: "turn" | "activity";
   /** One-based provider attempt number when a turn is retried in place. */

@@ -1,6 +1,5 @@
 import type {
   KnowledgeNode,
-  MemoryHealthAuditReport,
   MemoryMetricsReport,
 } from "../../core/contracts/memory-curator.contracts.js";
 import { BroccoliLearningSubstrate } from "../../sessions/extensions/memory/broccoli-learning-substrate.js";

@@ -1,0 +1,27 @@
+import type { IController as Controller } from "@core/controller/types"
+import type { ToggleToolAutoApproveRequest } from "@shared/proto/dietcode/mcp"
+import { McpServers } from "@shared/proto/dietcode/mcp"
+import { convertMcpServersToProtoMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
+import { Logger } from "@/shared/services/Logger"
+
+/**
+ * Toggles auto-approve setting for MCP server tools
+ * @param controller The controller instance
+ * @param request The toggle tool auto-approve request
+ * @returns Updated list of MCP servers
+ */
+export async function toggleToolAutoApprove(controller: Controller, request: ToggleToolAutoApproveRequest): Promise<McpServers> {
+	try {
+		// Call the RPC variant that returns the servers directly
+		const mcpServers =
+			(await controller.mcpHub?.toggleToolAutoApproveRPC(request.serverName, request.toolNames, request.autoApprove)) || []
+
+		// Convert application types to proto types
+		return McpServers.create({
+			mcpServers: convertMcpServersToProtoMcpServers(mcpServers),
+		})
+	} catch (error) {
+		Logger.error(`Failed to toggle tool auto-approve for ${request.serverName}:`, error)
+		throw error
+	}
+}

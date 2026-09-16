@@ -13,7 +13,6 @@ import type {
 import type {
   AsyncTurnContextDescriptor,
   ContextPropagationConfig,
-  ContextPropagationMetrics,
   ThreadContextMetricsReport,
   ExecutionDispatchEvent,
   SecurityApprovalCallback,

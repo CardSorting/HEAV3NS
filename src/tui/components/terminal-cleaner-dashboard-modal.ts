@@ -5,11 +5,6 @@
  * ANSI stripping metrics, binary file guards, and health telemetry (Phase 136 / ADR-112 / Target #76).
  */
 
-import type {
-  TerminalCleanerHealthAuditReport,
-  TerminalCleanerMetricsReport,
-  TerminalCleanEventRow,
-} from "../../core/contracts/terminal-cleaner.contracts.js";
 import { BroccoliTerminalCleanerSubstrate } from "../../sessions/extensions/terminal_cleaner/broccoli-terminal-cleaner-substrate.js";
 import { DeterministicTerminalCleanerEngine } from "../../agents/extensions/terminal_cleaner/deterministic-terminal-cleaner-engine.js";
 

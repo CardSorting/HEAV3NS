@@ -210,8 +210,8 @@ export class InteractiveModeController {
     const headerBg = (text: string) => `\x1b[48;5;234m${text}\x1b[0m`;
     const headerBox = new Box(1, 0, headerBg);
 
-    const initialIsCodex = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
-    const initialAuthTag = initialIsCodex ? " \x1b[32m[Codex OAuth]\x1b[0m" : "";
+    const isGalx = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
+    const initialAuthTag = isGalx ? " \x1b[32m[GALX AI]\x1b[0m" : "";
     const headerText = new Text(
       `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
         `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${initialAuthTag}  │  ` +
@@ -244,16 +244,12 @@ export class InteractiveModeController {
         `- **[3] Run 100% Offline / Local:** Type \`/model ollama\` with zero setup or accounts.\n\n` +
         `*Press \`?\` or type \`/help\` anytime for keyboard shortcuts.*`;
     } else {
-      const identityStr = who.codexOAuth?.authenticated
-        ? `Signed in as **${who.codexOAuth.email || who.codexOAuth.accountId || "OAuth User"}** *(OpenAI Codex OAuth)*`
-        : who.codexOAuth?.email
-          ? `Signed in as **${who.codexOAuth.email}**`
-          : who.codexOAuth?.accountId
-            ? `Signed in as Account **${who.codexOAuth.accountId}**`
-            : `**${who.configuredProviders.length}** provider(s) active`;
+      const identityStr = who.authenticated
+        ? `Signed in with **${who.configuredProviders.length}** provider(s) active (${who.configuredProviders.map((p) => p.provider).join(", ") || "GALX AI"})`
+        : "**Unauthenticated** *(Offline)*";
 
-      const isCodexEngine = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
-      const engineNote = isCodexEngine ? " *(Codex OAuth Active · 900k ctx)*" : "";
+      const isGalxEngine = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
+      const engineNote = isGalxEngine ? " *(GALX AI Active · 900k ctx)*" : "";
 
       welcomeText =
         `# ✦ LUMI Agent OS\n\n` +
@@ -587,8 +583,8 @@ export class InteractiveModeController {
       const turnCount = monolith.sessionContext.turnCount;
       const memCount = monolith.sessionMemoryStore.listMemories().length;
       const memSuffix = memCount > 0 ? `  │  \x1b[90mMem:\x1b[0m \x1b[36m${memCount}\x1b[0m` : "";
-      const isCodex = monolith.codexProviderBridge?.isCodexProvider(monolith.config.modelName);
-      const authTag = isCodex ? " \x1b[32m[Codex OAuth]\x1b[0m" : "";
+      const isGalx = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
+      const authTag = isGalx ? " \x1b[32m[GALX AI]\x1b[0m" : "";
       headerText.setText(
         `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
           `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${authTag}  │  ` +
@@ -648,14 +644,10 @@ export class InteractiveModeController {
       isLoadingInlineView = true;
       try {
         const galxModels = await monolith.modelCatalog.fetchGalxModels();
-        const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
-        const codexModels = await monolith.modelCatalog.fetchCodexModels();
         const catalogModels = monolith.modelCatalog.getAllModels();
 
         const combined = [
           ...galxModels,
-          ...codexModels,
-          ...openRouterModels,
           ...catalogModels,
         ];
         const modelMap = new Map<string, ModelSpecs>();
@@ -1154,15 +1146,12 @@ export class InteractiveModeController {
           const who = monolith.setupWizard.getWhoAmI(monolith.config.modelName);
           const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
           const lines = [
-            `### ✦ LUMI Active Session & Identity`,
-            who.codexOAuth?.authenticated
-              ? `- **Auth Mode**: \`OpenAI Codex OAuth\` (Signed in as \`${who.codexOAuth.email || "OAuth User"}\`)`
-              : `- **Auth Mode**: \`Unauthenticated / Offline\``,
+            "### ✦ LUMI Active Session & Identity",
+            who.authenticated
+              ? `- **Auth Status**: \`Authenticated\` (${who.configuredProviders.map((p) => p.provider).join(", ") || "GALX AI"})`
+              : "- **Auth Status**: `Unauthenticated / Offline`",
             `- **Active Model**: \`${who.activeModel}\``,
           ];
-          if (who.codexOAuth?.accountId) {
-            lines.push(`- **ChatGPT Account ID**: \`${who.codexOAuth.accountId}\``);
-          }
           if (who.configuredProviders.length > 0) {
             lines.push(`\n**Configured Providers (${who.configuredProviders.length}):**`);
             for (const p of who.configuredProviders) {

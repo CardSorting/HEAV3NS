@@ -1,0 +1,157 @@
+/**
+ * [LAYER: CORE]
+ */
+
+import { Mode } from "@shared/storage/types"
+import { PlanModeEnforcer } from "@/core/policy/PlanModeEnforcer"
+import { ToolUse } from "../assistant-message"
+import { StateManager } from "../storage/StateManager"
+import { FluidPolicyEngine, PolicyResult } from "./FluidPolicyEngine"
+
+/**
+ * UniversalGuard: A unified, singleton authority for all architectural,
+ * concurrency, and stability enforcement. Use this instead of direct
+ * FluidPolicyEngine calls.
+ */
+export class UniversalGuard {
+	public readonly engine: FluidPolicyEngine
+	private readonly planModeEnforcer: PlanModeEnforcer
+	private currentMode: Mode = "act"
+
+	constructor(cwd: string, taskId: string, stateManager: StateManager) {
+		this.engine = new FluidPolicyEngine(cwd, taskId, stateManager)
+		this.planModeEnforcer = new PlanModeEnforcer(cwd)
+	}
+
+	/**
+	 * Sets the current agent mode. This affects enforcement behavior:
+	 * - PLAN mode: enforcement is relaxed (guidance only, no blocking)
+	 * - ACT / AUTO mode: full enforcement with progressive strike tracking
+	 */
+	public setMode(mode: Mode) {
+		this.currentMode = mode
+		this.engine.setMode(mode)
+	}
+
+	public getMode(): Mode {
+		return this.currentMode
+	}
+
+	public resetSystemPressure(): void {
+		this.engine.resetSystemPressure()
+	}
+
+	public getSystemDiagnostics(): string {
+		return this.engine.getSystemDiagnostics()
+	}
+
+	/**
+	 * Triggers environmental validation through the policy engine.
+	 */
+	public async validateEnvironment(): Promise<any> {
+		return await this.engine.validateEnvironment()
+	}
+
+	/**
+	 * Revokes the current environmental lease.
+	 */
+	public revokeLease(): void {
+		this.engine.revokeLease()
+	}
+
+	/**
+	 * Single "Execute" call that performs all pre-flight audits.
+	 */
+	public async guardPreExecution(block: ToolUse): Promise<PolicyResult> {
+		return this.engine.validatePreExecution(block)
+	}
+
+	/**
+	 * Performs all post-execution audits including AST-audit, health-check, and entropy.
+	 */
+	public async guardPostExecution(block: ToolUse, toolOutput: unknown, prevHash?: string): Promise<PolicyResult> {
+		return this.engine.validatePostExecution(block, toolOutput, prevHash)
+	}
+
+	public getForensics(): import("./StabilityForensics").StabilityForensics {
+		return this.engine.getForensics()
+	}
+
+	/**
+	 * Performs STRATEGIC REVIEW workflow check before Plan Mode responses.
+	 * Blocks plan_mode_respond calls if strategic review is missing or incomplete.
+	 */
+	public async enforceStrategicReviewInPlanMode(): Promise<{ allowed: boolean; reason?: string }> {
+		return this.planModeEnforcer.enforceStrategicReview()
+	}
+
+	/**
+	 * Returns the localized layer context for the AI prompt.
+	 */
+	public getLayerContext(filePath: string): string {
+		return this.engine.getFileLayerContext(filePath)
+	}
+
+	/**
+	 * Performs read-time AST auditing.
+	 */
+	public async onRead(
+		filePath: string,
+		content: string,
+		totalReadCount = 0,
+		perFileReadCount = 0,
+		globalFileReadCount = 0,
+	): Promise<string> {
+		return this.engine.onRead(filePath, content, totalReadCount, perFileReadCount, globalFileReadCount)
+	}
+
+	/** Lightweight read path for I/O authority — substrate tracking without advisory header injection. */
+	public onReadIoAuthority(filePath: string, content: string): string {
+		return this.engine.onReadIoAuthority(filePath, content)
+	}
+
+	/**
+	 * Performs the final architectural audit before a database commit.
+	 */
+	public async validateCommit(
+		files: Set<string>,
+		ops: import("../../infrastructure/db/BufferedDbPool").WriteOp[],
+	): Promise<{ success: boolean; errors: string[] }> {
+		return this.engine.validateCommit(files, ops)
+	}
+
+	/**
+	 * Returns the layer classification for a given file path.
+	 * Useful for injecting layer confirmations into tool results.
+	 */
+	public getLayerForPath(filePath: string): string {
+		const { getLayer } = require("@/utils/joy-zoning")
+		return getLayer(filePath)
+	}
+
+	/**
+	 * V110: Substrate Stability Telemetry Proxy.
+	 */
+	/** Warm session spider graph — reuse instead of per-handler loadRegistry rebuilds. */
+	public getSpiderEngine() {
+		return this.engine.getSpiderEngine()
+	}
+
+	public getStabilityTelemetry(filePath: string) {
+		return this.engine.getStabilityTelemetry(filePath)
+	}
+
+	/**
+	 * V225: Sovereign Forensic Gate Proxy.
+	 */
+	public async checkForensicCompliance() {
+		return this.engine.checkForensicCompliance()
+	}
+
+	/**
+	 * V226: Forensic Impact Analysis Proxy.
+	 */
+	public getSessionImpactSummary(): string {
+		return this.engine.getSessionImpactSummary()
+	}
+}

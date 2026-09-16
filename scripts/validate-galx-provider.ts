@@ -7,8 +7,8 @@
  * 2. Broccoli Transport Substrate (Merkle receipt hashing, WAL persistence, envelope crypto)
  * 3. GALX Transport Client (circuit breaker, AIMD governor, signature generation)
  * 4. GalxProviderEngine (model normalization, cost calculation, headers)
- * 5. Model Catalog (only openrouter, codex, galx registered)
- * 6. CodexProviderBridge (auth resolution, attribution headers, endpoint routing)
+ * 5. Model Catalog (only galx & local custom registered)
+ * 6. GALX Clearinghouse Endpoint & Header Resolution
  * 7. EnvironmentKeyResolver (GALX_API_KEY resolution)
  * 8. MonolithFactory & LumiMonolith component wiring
  */
@@ -23,9 +23,7 @@ import {
   GalxTransportClient,
   BroccoliTransportSubstrate,
   ModelCatalog,
-  CodexProviderBridge,
   EnvironmentKeyResolver,
-  MonolithFactory,
   LumiMonolith,
 } from "../src/index.js";
 
@@ -38,7 +36,7 @@ async function runValidation(): Promise<void> {
   console.log("▶ [Test 1] Validating GALX Contracts and Constants...");
   assert.strictEqual(DEFAULT_GALX_BASE_URL, "https://galx.ai/v1");
   assert.strictEqual(DEFAULT_GALX_CLEARINGHOUSE_URL, "https://galx.ai");
-  assert.strictEqual(DEFAULT_GALX_MODEL_ID, "gpt-5.6-sol");
+  assert.strictEqual(DEFAULT_GALX_MODEL_ID, "gpt-5.6-terra");
   assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-sol"]);
   assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-terra"]);
   assert.ok(GALX_DEFAULT_MODELS["gpt-5.6-luna"]);
@@ -129,15 +127,15 @@ async function runValidation(): Promise<void> {
 
   // 5. Model Catalog Provider Scoping Check
   console.log("▶ [Test 5] Validating ModelCatalog Provider Scoping...");
-  const catalog = new ModelCatalog(undefined, undefined, galxEngine);
+  const catalog = new ModelCatalog(undefined, galxEngine);
   const allModels = catalog.getAllModels();
   const registeredProviders = new Set(allModels.map((m) => m.provider));
   console.log("  Active Providers in Catalog:", Array.from(registeredProviders));
   
-  // Verify only allowed providers are in defaults
+  // Verify only allowed providers are in defaults (galx and custom)
   for (const prov of registeredProviders) {
     assert.ok(
-      prov === "openai-codex" || prov === "galx" || prov === "openrouter",
+      prov === "galx" || prov === "custom",
       `Unexpected provider found: ${prov}`
     );
   }
@@ -152,27 +150,16 @@ async function runValidation(): Promise<void> {
   const solInfo = catalog.getModelInfo("galx/gpt-5.6-sol");
   assert.strictEqual(solInfo.provider, "galx");
   assert.strictEqual(solInfo.contextWindowTokens, 900_000);
-  console.log("  ✔ ModelCatalog correctly scopes only openrouter, openai-codex, and galx.\n");
+  console.log("  ✔ ModelCatalog correctly scopes only galx and local custom providers.\n");
 
-  // 6. CodexProviderBridge & Auth Resolution Check
-  console.log("▶ [Test 6] Validating CodexProviderBridge...");
+  // 6. GALX Clearinghouse Endpoint & Header Resolution Check
+  console.log("▶ [Test 6] Validating GALX Clearinghouse Endpoint & Header Resolution...");
   process.env.GALX_API_KEY = "galx_test_mock_token_abc123";
-  const bridge = new CodexProviderBridge();
-  
-  assert.strictEqual(bridge.resolveProviderName("galx/gpt-5.6-sol"), "galx");
-  assert.strictEqual(bridge.resolveProviderName("galx-terra"), "galx");
-  assert.strictEqual(bridge.resolveProviderName("openrouter/anthropic/claude-3.5-sonnet"), "openrouter");
-  assert.strictEqual(bridge.resolveProviderName("gpt-5.6-terra"), "openai-codex");
-
-  assert.strictEqual(bridge.getDefaultEndpointForModel("galx/gpt-5.6-sol"), "https://galx.ai/v1/chat/completions");
-  assert.strictEqual(bridge.getDefaultEndpointForModel("openrouter/auto"), "https://openrouter.ai/api/v1/chat/completions");
-
-  const resolvedAuth = await bridge.resolveProviderAuth("galx/gpt-5.6-sol");
-  assert.strictEqual(resolvedAuth.authType, "api-key");
-  assert.strictEqual(resolvedAuth.headers["Authorization"], "Bearer galx_test_mock_token_abc123");
-  assert.strictEqual(resolvedAuth.headers["X-GALX-Client"], "LUMI/12.5.0");
-  assert.strictEqual(resolvedAuth.headers["X-GALX-Client-ID"], "lumi-ide");
-  console.log("  ✔ CodexProviderBridge resolved GALX authentication, headers, and endpoint.\n");
+  const galxAuthHeaders = galxEngine.buildAttributionHeaders();
+  assert.strictEqual(galxAuthHeaders["X-GALX-Client"], "LUMI/12.5.0");
+  assert.strictEqual(galxAuthHeaders["X-GALX-Client-ID"], "lumi-ide");
+  assert.strictEqual(DEFAULT_GALX_BASE_URL, "https://galx.ai/v1");
+  console.log("  ✔ GALX Wholesale Clearinghouse routing and attribution headers verified.\n");
 
   // 7. EnvironmentKeyResolver Check
   console.log("▶ [Test 7] Validating EnvironmentKeyResolver...");
@@ -186,7 +173,7 @@ async function runValidation(): Promise<void> {
   // 8. Monolith Factory & LumiMonolith Check
   console.log("▶ [Test 8] Validating Monolith Factory & LumiMonolith Integration...");
   const monolith = new LumiMonolith();
-  monolith.setModel("galx/gpt-5.6-sol");
+  monolith.setModel("gpt-5.6-sol");
 
   assert.ok(monolith.galxEngine, "LumiMonolith.galxEngine must be defined");
   assert.ok(monolith.galxTransportClient, "LumiMonolith.galxTransportClient must be defined");
