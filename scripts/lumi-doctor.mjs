@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * LUMI Doctor — health check for native database dependencies.
+ * LUMI Doctor — health check for dependency-free BroccoliDB state storage.
  *
  * Familiar "doctor" pattern (like `brew doctor` / `npm doctor`):
  *   npm run doctor                    # full scan
@@ -44,7 +44,7 @@ function logHeader() {
 	console.log("")
 	console.log("LUMI Doctor")
 	console.log("===========")
-	console.log("Checks that LUMI's local database (SQLite) shipped correctly.")
+	console.log("Checks that LUMI's local BroccoliDB state layer shipped correctly.")
 	if (installOnly) {
 		console.log("(Install-only mode — checking editors on this machine)")
 	}

@@ -9,2446 +9,2199 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import type { CallContext, CallOptions } from "nice-grpc-common";
 
 export interface JoyZoningAuditRequest {
-	path: string;
-	useCache: boolean;
+  path: string;
+  useCache: boolean;
 }
 
 export interface JoyZoningAuditProgress {
-	processedFiles: number;
-	totalFiles: number;
-	currentFile: string;
-	percentage: number;
+  processedFiles: number;
+  totalFiles: number;
+  currentFile: string;
+  percentage: number;
 }
 
 export interface JoyZoningViolation {
-	type: string;
-	message: string;
-	path: string;
-	remediation: string;
-	/** INFO, WARN, ERROR */
-	severity: string;
-	/** LOW, MEDIUM, HIGH */
-	riskLevel: string;
-	/** SECURITY, PERFORMANCE, STABILITY, MAINTAINABILITY */
-	impactArea: string;
+  type: string;
+  message: string;
+  path: string;
+  remediation: string;
+  /** INFO, WARN, ERROR */
+  severity: string;
+  /** LOW, MEDIUM, HIGH */
+  riskLevel: string;
+  /** SECURITY, PERFORMANCE, STABILITY, MAINTAINABILITY */
+  impactArea: string;
 }
 
 export interface JoyZoningOptimization {
-	title: string;
-	description: string;
-	path: string;
-	action: string;
-	projectedHealthGain: number;
-	/** Suggested code for extraction */
-	boilerplate: string;
-	/** LOW, MEDIUM, HIGH */
-	impact: string;
-	/** LOW, MEDIUM, HIGH */
-	effort: string;
-	/** STABILITY, MAINTAINABILITY, PERFORMANCE */
-	category: string;
+  title: string;
+  description: string;
+  path: string;
+  action: string;
+  projectedHealthGain: number;
+  /** Suggested code for extraction */
+  boilerplate: string;
+  /** LOW, MEDIUM, HIGH */
+  impact: string;
+  /** LOW, MEDIUM, HIGH */
+  effort: string;
+  /** STABILITY, MAINTAINABILITY, PERFORMANCE */
+  category: string;
 }
 
 export interface JoyZoningHistoryPoint {
-	timestamp: string;
-	health: number;
-	stability: number;
-	maintainability: number;
+  timestamp: string;
+  health: number;
+  stability: number;
+  maintainability: number;
 }
 
 export interface JoyZoningAuditResponse {
-	buildHealth: number;
-	totalFiles: number;
-	structuralEntropy: number;
-	violations: JoyZoningViolation[];
-	optimizations: JoyZoningOptimization[];
-	timestamp: string;
-	/** After applying optimizations */
-	projectedHealth: number;
-	integrityScore: number;
-	/** For streaming progress updates */
-	progress: JoyZoningAuditProgress | undefined;
-	/** Current resource usage/indexing stress (0-1.0) */
-	activityPressure: number;
-	driftDetected: boolean;
-	driftCount: number;
-	structuralSinks: string[];
-	/** A, B, C, D, F */
-	grade: string;
-	/** e.g. "2h 15m" */
-	totalTechnicalDebt: string;
-	/** 0-100 */
-	stabilityScore: number;
-	/** 0-100 */
-	maintainabilityScore: number;
-	history: JoyZoningHistoryPoint[];
-	/** PASSED, FAILED */
-	qualityGateStatus: string;
-	/** 0-100 */
-	complianceScore: number;
-	/** Directory with most issues */
-	toxicModule: string;
-	/** Health per layer (Domain, Infrastructure, etc.) */
-	layerScores: { [key: string]: number };
-	/** "Quick Wins" */
-	topRecommendations: JoyZoningOptimization[];
-	/** Change since last scan */
-	healthDelta: number;
-	/** Change in violation count */
-	violationDelta: number;
-	/** Count of files by risk level (LOW, MEDIUM, HIGH) */
-	riskProfile: { [key: string]: number };
+  buildHealth: number;
+  totalFiles: number;
+  structuralEntropy: number;
+  violations: JoyZoningViolation[];
+  optimizations: JoyZoningOptimization[];
+  timestamp: string;
+  /** After applying optimizations */
+  projectedHealth: number;
+  integrityScore: number;
+  /** For streaming progress updates */
+  progress:
+    | JoyZoningAuditProgress
+    | undefined;
+  /** Current resource usage/indexing stress (0-1.0) */
+  activityPressure: number;
+  driftDetected: boolean;
+  driftCount: number;
+  structuralSinks: string[];
+  /** A, B, C, D, F */
+  grade: string;
+  /** e.g. "2h 15m" */
+  totalTechnicalDebt: string;
+  /** 0-100 */
+  stabilityScore: number;
+  /** 0-100 */
+  maintainabilityScore: number;
+  history: JoyZoningHistoryPoint[];
+  /** PASSED, FAILED */
+  qualityGateStatus: string;
+  /** 0-100 */
+  complianceScore: number;
+  /** Directory with most issues */
+  toxicModule: string;
+  /** Health per layer (Domain, Infrastructure, etc.) */
+  layerScores: { [key: string]: number };
+  /** "Quick Wins" */
+  topRecommendations: JoyZoningOptimization[];
+  /** Change since last scan */
+  healthDelta: number;
+  /** Change in violation count */
+  violationDelta: number;
+  /** Count of files by risk level (LOW, MEDIUM, HIGH) */
+  riskProfile: { [key: string]: number };
 }
 
 export interface JoyZoningAuditResponse_LayerScoresEntry {
-	key: string;
-	value: number;
+  key: string;
+  value: number;
 }
 
 export interface JoyZoningAuditResponse_RiskProfileEntry {
-	key: string;
-	value: number;
+  key: string;
+  value: number;
 }
 
 export interface JoyZoningRefactorRequest {
-	/** e.g. "ALIGN_TAGS", "HEAL_STATELESSNESS", "DECOMPOSE" */
-	action: string;
-	path: string;
-	dryRun: boolean;
+  /** e.g. "ALIGN_TAGS", "HEAL_STATELESSNESS", "DECOMPOSE" */
+  action: string;
+  path: string;
+  dryRun: boolean;
 }
 
 export interface JoyZoningBatchRefactorRequest {
-	requests: JoyZoningRefactorRequest[];
-	dryRun: boolean;
+  requests: JoyZoningRefactorRequest[];
+  dryRun: boolean;
 }
 
 export interface JoyZoningBatchRefactorResponse {
-	success: boolean;
-	message: string;
-	taskId: string;
-	planSummary: string;
+  success: boolean;
+  message: string;
+  taskId: string;
+  planSummary: string;
 }
 
 export interface JoyZoningRefactorResponse {
-	success: boolean;
-	message: string;
-	planSummary: string;
+  success: boolean;
+  message: string;
+  planSummary: string;
 }
 
 function createBaseJoyZoningAuditRequest(): JoyZoningAuditRequest {
-	return { path: "", useCache: false };
+  return { path: "", useCache: false };
 }
 
 export const JoyZoningAuditRequest: MessageFns<JoyZoningAuditRequest> = {
-	encode(
-		message: JoyZoningAuditRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.path !== "") {
-			writer.uint32(10).string(message.path);
-		}
-		if (message.useCache !== false) {
-			writer.uint32(16).bool(message.useCache);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningAuditRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.path !== "") {
+      writer.uint32(10).string(message.path);
+    }
+    if (message.useCache !== false) {
+      writer.uint32(16).bool(message.useCache);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningAuditRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningAuditRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningAuditRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningAuditRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.useCache = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.useCache = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningAuditRequest {
-		return {
-			path: isSet(object.path) ? globalThis.String(object.path) : "",
-			useCache: isSet(object.useCache)
-				? globalThis.Boolean(object.useCache)
-				: isSet(object.use_cache)
-					? globalThis.Boolean(object.use_cache)
-					: false,
-		};
-	},
+  fromJSON(object: any): JoyZoningAuditRequest {
+    return {
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      useCache: isSet(object.useCache)
+        ? globalThis.Boolean(object.useCache)
+        : isSet(object.use_cache)
+        ? globalThis.Boolean(object.use_cache)
+        : false,
+    };
+  },
 
-	toJSON(message: JoyZoningAuditRequest): unknown {
-		const obj: any = {};
-		if (message.path !== "") {
-			obj.path = message.path;
-		}
-		if (message.useCache !== false) {
-			obj.useCache = message.useCache;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningAuditRequest): unknown {
+    const obj: any = {};
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    if (message.useCache !== false) {
+      obj.useCache = message.useCache;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningAuditRequest>): JoyZoningAuditRequest {
-		return JoyZoningAuditRequest.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningAuditRequest>,
-	): JoyZoningAuditRequest {
-		const message = createBaseJoyZoningAuditRequest();
-		message.path = object.path ?? "";
-		message.useCache = object.useCache ?? false;
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningAuditRequest>): JoyZoningAuditRequest {
+    return JoyZoningAuditRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningAuditRequest>): JoyZoningAuditRequest {
+    const message = createBaseJoyZoningAuditRequest();
+    message.path = object.path ?? "";
+    message.useCache = object.useCache ?? false;
+    return message;
+  },
 };
 
 function createBaseJoyZoningAuditProgress(): JoyZoningAuditProgress {
-	return { processedFiles: 0, totalFiles: 0, currentFile: "", percentage: 0 };
+  return { processedFiles: 0, totalFiles: 0, currentFile: "", percentage: 0 };
 }
 
 export const JoyZoningAuditProgress: MessageFns<JoyZoningAuditProgress> = {
-	encode(
-		message: JoyZoningAuditProgress,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.processedFiles !== 0) {
-			writer.uint32(8).int32(message.processedFiles);
-		}
-		if (message.totalFiles !== 0) {
-			writer.uint32(16).int32(message.totalFiles);
-		}
-		if (message.currentFile !== "") {
-			writer.uint32(26).string(message.currentFile);
-		}
-		if (message.percentage !== 0) {
-			writer.uint32(33).double(message.percentage);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningAuditProgress, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.processedFiles !== 0) {
+      writer.uint32(8).int32(message.processedFiles);
+    }
+    if (message.totalFiles !== 0) {
+      writer.uint32(16).int32(message.totalFiles);
+    }
+    if (message.currentFile !== "") {
+      writer.uint32(26).string(message.currentFile);
+    }
+    if (message.percentage !== 0) {
+      writer.uint32(33).double(message.percentage);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningAuditProgress {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningAuditProgress();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningAuditProgress {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningAuditProgress();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.processedFiles = reader.int32();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.processedFiles = reader.int32();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.totalFiles = reader.int32();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.totalFiles = reader.int32();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.currentFile = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 33) {
-							break;
-						}
+            message.currentFile = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 33) {
+              break;
+            }
 
-						message.percentage = reader.double();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.percentage = reader.double();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningAuditProgress {
-		return {
-			processedFiles: isSet(object.processedFiles)
-				? globalThis.Number(object.processedFiles)
-				: isSet(object.processed_files)
-					? globalThis.Number(object.processed_files)
-					: 0,
-			totalFiles: isSet(object.totalFiles)
-				? globalThis.Number(object.totalFiles)
-				: isSet(object.total_files)
-					? globalThis.Number(object.total_files)
-					: 0,
-			currentFile: isSet(object.currentFile)
-				? globalThis.String(object.currentFile)
-				: isSet(object.current_file)
-					? globalThis.String(object.current_file)
-					: "",
-			percentage: isSet(object.percentage)
-				? globalThis.Number(object.percentage)
-				: 0,
-		};
-	},
+  fromJSON(object: any): JoyZoningAuditProgress {
+    return {
+      processedFiles: isSet(object.processedFiles)
+        ? globalThis.Number(object.processedFiles)
+        : isSet(object.processed_files)
+        ? globalThis.Number(object.processed_files)
+        : 0,
+      totalFiles: isSet(object.totalFiles)
+        ? globalThis.Number(object.totalFiles)
+        : isSet(object.total_files)
+        ? globalThis.Number(object.total_files)
+        : 0,
+      currentFile: isSet(object.currentFile)
+        ? globalThis.String(object.currentFile)
+        : isSet(object.current_file)
+        ? globalThis.String(object.current_file)
+        : "",
+      percentage: isSet(object.percentage) ? globalThis.Number(object.percentage) : 0,
+    };
+  },
 
-	toJSON(message: JoyZoningAuditProgress): unknown {
-		const obj: any = {};
-		if (message.processedFiles !== 0) {
-			obj.processedFiles = Math.round(message.processedFiles);
-		}
-		if (message.totalFiles !== 0) {
-			obj.totalFiles = Math.round(message.totalFiles);
-		}
-		if (message.currentFile !== "") {
-			obj.currentFile = message.currentFile;
-		}
-		if (message.percentage !== 0) {
-			obj.percentage = message.percentage;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningAuditProgress): unknown {
+    const obj: any = {};
+    if (message.processedFiles !== 0) {
+      obj.processedFiles = Math.round(message.processedFiles);
+    }
+    if (message.totalFiles !== 0) {
+      obj.totalFiles = Math.round(message.totalFiles);
+    }
+    if (message.currentFile !== "") {
+      obj.currentFile = message.currentFile;
+    }
+    if (message.percentage !== 0) {
+      obj.percentage = message.percentage;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningAuditProgress>): JoyZoningAuditProgress {
-		return JoyZoningAuditProgress.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningAuditProgress>,
-	): JoyZoningAuditProgress {
-		const message = createBaseJoyZoningAuditProgress();
-		message.processedFiles = object.processedFiles ?? 0;
-		message.totalFiles = object.totalFiles ?? 0;
-		message.currentFile = object.currentFile ?? "";
-		message.percentage = object.percentage ?? 0;
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningAuditProgress>): JoyZoningAuditProgress {
+    return JoyZoningAuditProgress.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningAuditProgress>): JoyZoningAuditProgress {
+    const message = createBaseJoyZoningAuditProgress();
+    message.processedFiles = object.processedFiles ?? 0;
+    message.totalFiles = object.totalFiles ?? 0;
+    message.currentFile = object.currentFile ?? "";
+    message.percentage = object.percentage ?? 0;
+    return message;
+  },
 };
 
 function createBaseJoyZoningViolation(): JoyZoningViolation {
-	return {
-		type: "",
-		message: "",
-		path: "",
-		remediation: "",
-		severity: "",
-		riskLevel: "",
-		impactArea: "",
-	};
+  return { type: "", message: "", path: "", remediation: "", severity: "", riskLevel: "", impactArea: "" };
 }
 
 export const JoyZoningViolation: MessageFns<JoyZoningViolation> = {
-	encode(
-		message: JoyZoningViolation,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.type !== "") {
-			writer.uint32(10).string(message.type);
-		}
-		if (message.message !== "") {
-			writer.uint32(18).string(message.message);
-		}
-		if (message.path !== "") {
-			writer.uint32(26).string(message.path);
-		}
-		if (message.remediation !== "") {
-			writer.uint32(34).string(message.remediation);
-		}
-		if (message.severity !== "") {
-			writer.uint32(42).string(message.severity);
-		}
-		if (message.riskLevel !== "") {
-			writer.uint32(50).string(message.riskLevel);
-		}
-		if (message.impactArea !== "") {
-			writer.uint32(58).string(message.impactArea);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningViolation, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.type !== "") {
+      writer.uint32(10).string(message.type);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.path !== "") {
+      writer.uint32(26).string(message.path);
+    }
+    if (message.remediation !== "") {
+      writer.uint32(34).string(message.remediation);
+    }
+    if (message.severity !== "") {
+      writer.uint32(42).string(message.severity);
+    }
+    if (message.riskLevel !== "") {
+      writer.uint32(50).string(message.riskLevel);
+    }
+    if (message.impactArea !== "") {
+      writer.uint32(58).string(message.impactArea);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningViolation {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningViolation();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningViolation {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningViolation();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.type = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.type = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.message = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.message = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.remediation = reader.string();
-						continue;
-					}
-					case 5: {
-						if (tag !== 42) {
-							break;
-						}
+            message.remediation = reader.string();
+            continue;
+          }
+          case 5: {
+            if (tag !== 42) {
+              break;
+            }
 
-						message.severity = reader.string();
-						continue;
-					}
-					case 6: {
-						if (tag !== 50) {
-							break;
-						}
+            message.severity = reader.string();
+            continue;
+          }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
 
-						message.riskLevel = reader.string();
-						continue;
-					}
-					case 7: {
-						if (tag !== 58) {
-							break;
-						}
+            message.riskLevel = reader.string();
+            continue;
+          }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
 
-						message.impactArea = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.impactArea = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningViolation {
-		return {
-			type: isSet(object.type) ? globalThis.String(object.type) : "",
-			message: isSet(object.message) ? globalThis.String(object.message) : "",
-			path: isSet(object.path) ? globalThis.String(object.path) : "",
-			remediation: isSet(object.remediation)
-				? globalThis.String(object.remediation)
-				: "",
-			severity: isSet(object.severity)
-				? globalThis.String(object.severity)
-				: "",
-			riskLevel: isSet(object.riskLevel)
-				? globalThis.String(object.riskLevel)
-				: isSet(object.risk_level)
-					? globalThis.String(object.risk_level)
-					: "",
-			impactArea: isSet(object.impactArea)
-				? globalThis.String(object.impactArea)
-				: isSet(object.impact_area)
-					? globalThis.String(object.impact_area)
-					: "",
-		};
-	},
+  fromJSON(object: any): JoyZoningViolation {
+    return {
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      remediation: isSet(object.remediation) ? globalThis.String(object.remediation) : "",
+      severity: isSet(object.severity) ? globalThis.String(object.severity) : "",
+      riskLevel: isSet(object.riskLevel)
+        ? globalThis.String(object.riskLevel)
+        : isSet(object.risk_level)
+        ? globalThis.String(object.risk_level)
+        : "",
+      impactArea: isSet(object.impactArea)
+        ? globalThis.String(object.impactArea)
+        : isSet(object.impact_area)
+        ? globalThis.String(object.impact_area)
+        : "",
+    };
+  },
 
-	toJSON(message: JoyZoningViolation): unknown {
-		const obj: any = {};
-		if (message.type !== "") {
-			obj.type = message.type;
-		}
-		if (message.message !== "") {
-			obj.message = message.message;
-		}
-		if (message.path !== "") {
-			obj.path = message.path;
-		}
-		if (message.remediation !== "") {
-			obj.remediation = message.remediation;
-		}
-		if (message.severity !== "") {
-			obj.severity = message.severity;
-		}
-		if (message.riskLevel !== "") {
-			obj.riskLevel = message.riskLevel;
-		}
-		if (message.impactArea !== "") {
-			obj.impactArea = message.impactArea;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningViolation): unknown {
+    const obj: any = {};
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    if (message.remediation !== "") {
+      obj.remediation = message.remediation;
+    }
+    if (message.severity !== "") {
+      obj.severity = message.severity;
+    }
+    if (message.riskLevel !== "") {
+      obj.riskLevel = message.riskLevel;
+    }
+    if (message.impactArea !== "") {
+      obj.impactArea = message.impactArea;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningViolation>): JoyZoningViolation {
-		return JoyZoningViolation.fromPartial(base ?? {});
-	},
-	fromPartial(object: DeepPartial<JoyZoningViolation>): JoyZoningViolation {
-		const message = createBaseJoyZoningViolation();
-		message.type = object.type ?? "";
-		message.message = object.message ?? "";
-		message.path = object.path ?? "";
-		message.remediation = object.remediation ?? "";
-		message.severity = object.severity ?? "";
-		message.riskLevel = object.riskLevel ?? "";
-		message.impactArea = object.impactArea ?? "";
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningViolation>): JoyZoningViolation {
+    return JoyZoningViolation.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningViolation>): JoyZoningViolation {
+    const message = createBaseJoyZoningViolation();
+    message.type = object.type ?? "";
+    message.message = object.message ?? "";
+    message.path = object.path ?? "";
+    message.remediation = object.remediation ?? "";
+    message.severity = object.severity ?? "";
+    message.riskLevel = object.riskLevel ?? "";
+    message.impactArea = object.impactArea ?? "";
+    return message;
+  },
 };
 
 function createBaseJoyZoningOptimization(): JoyZoningOptimization {
-	return {
-		title: "",
-		description: "",
-		path: "",
-		action: "",
-		projectedHealthGain: 0,
-		boilerplate: "",
-		impact: "",
-		effort: "",
-		category: "",
-	};
+  return {
+    title: "",
+    description: "",
+    path: "",
+    action: "",
+    projectedHealthGain: 0,
+    boilerplate: "",
+    impact: "",
+    effort: "",
+    category: "",
+  };
 }
 
 export const JoyZoningOptimization: MessageFns<JoyZoningOptimization> = {
-	encode(
-		message: JoyZoningOptimization,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.title !== "") {
-			writer.uint32(10).string(message.title);
-		}
-		if (message.description !== "") {
-			writer.uint32(18).string(message.description);
-		}
-		if (message.path !== "") {
-			writer.uint32(26).string(message.path);
-		}
-		if (message.action !== "") {
-			writer.uint32(34).string(message.action);
-		}
-		if (message.projectedHealthGain !== 0) {
-			writer.uint32(41).double(message.projectedHealthGain);
-		}
-		if (message.boilerplate !== "") {
-			writer.uint32(50).string(message.boilerplate);
-		}
-		if (message.impact !== "") {
-			writer.uint32(58).string(message.impact);
-		}
-		if (message.effort !== "") {
-			writer.uint32(66).string(message.effort);
-		}
-		if (message.category !== "") {
-			writer.uint32(74).string(message.category);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningOptimization, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.path !== "") {
+      writer.uint32(26).string(message.path);
+    }
+    if (message.action !== "") {
+      writer.uint32(34).string(message.action);
+    }
+    if (message.projectedHealthGain !== 0) {
+      writer.uint32(41).double(message.projectedHealthGain);
+    }
+    if (message.boilerplate !== "") {
+      writer.uint32(50).string(message.boilerplate);
+    }
+    if (message.impact !== "") {
+      writer.uint32(58).string(message.impact);
+    }
+    if (message.effort !== "") {
+      writer.uint32(66).string(message.effort);
+    }
+    if (message.category !== "") {
+      writer.uint32(74).string(message.category);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningOptimization {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningOptimization();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningOptimization {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningOptimization();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.title = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.title = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.description = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.description = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.action = reader.string();
-						continue;
-					}
-					case 5: {
-						if (tag !== 41) {
-							break;
-						}
+            message.action = reader.string();
+            continue;
+          }
+          case 5: {
+            if (tag !== 41) {
+              break;
+            }
 
-						message.projectedHealthGain = reader.double();
-						continue;
-					}
-					case 6: {
-						if (tag !== 50) {
-							break;
-						}
+            message.projectedHealthGain = reader.double();
+            continue;
+          }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
 
-						message.boilerplate = reader.string();
-						continue;
-					}
-					case 7: {
-						if (tag !== 58) {
-							break;
-						}
+            message.boilerplate = reader.string();
+            continue;
+          }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
 
-						message.impact = reader.string();
-						continue;
-					}
-					case 8: {
-						if (tag !== 66) {
-							break;
-						}
+            message.impact = reader.string();
+            continue;
+          }
+          case 8: {
+            if (tag !== 66) {
+              break;
+            }
 
-						message.effort = reader.string();
-						continue;
-					}
-					case 9: {
-						if (tag !== 74) {
-							break;
-						}
+            message.effort = reader.string();
+            continue;
+          }
+          case 9: {
+            if (tag !== 74) {
+              break;
+            }
 
-						message.category = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.category = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningOptimization {
-		return {
-			title: isSet(object.title) ? globalThis.String(object.title) : "",
-			description: isSet(object.description)
-				? globalThis.String(object.description)
-				: "",
-			path: isSet(object.path) ? globalThis.String(object.path) : "",
-			action: isSet(object.action) ? globalThis.String(object.action) : "",
-			projectedHealthGain: isSet(object.projectedHealthGain)
-				? globalThis.Number(object.projectedHealthGain)
-				: isSet(object.projected_health_gain)
-					? globalThis.Number(object.projected_health_gain)
-					: 0,
-			boilerplate: isSet(object.boilerplate)
-				? globalThis.String(object.boilerplate)
-				: "",
-			impact: isSet(object.impact) ? globalThis.String(object.impact) : "",
-			effort: isSet(object.effort) ? globalThis.String(object.effort) : "",
-			category: isSet(object.category)
-				? globalThis.String(object.category)
-				: "",
-		};
-	},
+  fromJSON(object: any): JoyZoningOptimization {
+    return {
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      action: isSet(object.action) ? globalThis.String(object.action) : "",
+      projectedHealthGain: isSet(object.projectedHealthGain)
+        ? globalThis.Number(object.projectedHealthGain)
+        : isSet(object.projected_health_gain)
+        ? globalThis.Number(object.projected_health_gain)
+        : 0,
+      boilerplate: isSet(object.boilerplate) ? globalThis.String(object.boilerplate) : "",
+      impact: isSet(object.impact) ? globalThis.String(object.impact) : "",
+      effort: isSet(object.effort) ? globalThis.String(object.effort) : "",
+      category: isSet(object.category) ? globalThis.String(object.category) : "",
+    };
+  },
 
-	toJSON(message: JoyZoningOptimization): unknown {
-		const obj: any = {};
-		if (message.title !== "") {
-			obj.title = message.title;
-		}
-		if (message.description !== "") {
-			obj.description = message.description;
-		}
-		if (message.path !== "") {
-			obj.path = message.path;
-		}
-		if (message.action !== "") {
-			obj.action = message.action;
-		}
-		if (message.projectedHealthGain !== 0) {
-			obj.projectedHealthGain = message.projectedHealthGain;
-		}
-		if (message.boilerplate !== "") {
-			obj.boilerplate = message.boilerplate;
-		}
-		if (message.impact !== "") {
-			obj.impact = message.impact;
-		}
-		if (message.effort !== "") {
-			obj.effort = message.effort;
-		}
-		if (message.category !== "") {
-			obj.category = message.category;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningOptimization): unknown {
+    const obj: any = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    if (message.action !== "") {
+      obj.action = message.action;
+    }
+    if (message.projectedHealthGain !== 0) {
+      obj.projectedHealthGain = message.projectedHealthGain;
+    }
+    if (message.boilerplate !== "") {
+      obj.boilerplate = message.boilerplate;
+    }
+    if (message.impact !== "") {
+      obj.impact = message.impact;
+    }
+    if (message.effort !== "") {
+      obj.effort = message.effort;
+    }
+    if (message.category !== "") {
+      obj.category = message.category;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningOptimization>): JoyZoningOptimization {
-		return JoyZoningOptimization.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningOptimization>,
-	): JoyZoningOptimization {
-		const message = createBaseJoyZoningOptimization();
-		message.title = object.title ?? "";
-		message.description = object.description ?? "";
-		message.path = object.path ?? "";
-		message.action = object.action ?? "";
-		message.projectedHealthGain = object.projectedHealthGain ?? 0;
-		message.boilerplate = object.boilerplate ?? "";
-		message.impact = object.impact ?? "";
-		message.effort = object.effort ?? "";
-		message.category = object.category ?? "";
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningOptimization>): JoyZoningOptimization {
+    return JoyZoningOptimization.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningOptimization>): JoyZoningOptimization {
+    const message = createBaseJoyZoningOptimization();
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.path = object.path ?? "";
+    message.action = object.action ?? "";
+    message.projectedHealthGain = object.projectedHealthGain ?? 0;
+    message.boilerplate = object.boilerplate ?? "";
+    message.impact = object.impact ?? "";
+    message.effort = object.effort ?? "";
+    message.category = object.category ?? "";
+    return message;
+  },
 };
 
 function createBaseJoyZoningHistoryPoint(): JoyZoningHistoryPoint {
-	return { timestamp: "", health: 0, stability: 0, maintainability: 0 };
+  return { timestamp: "", health: 0, stability: 0, maintainability: 0 };
 }
 
 export const JoyZoningHistoryPoint: MessageFns<JoyZoningHistoryPoint> = {
-	encode(
-		message: JoyZoningHistoryPoint,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.timestamp !== "") {
-			writer.uint32(10).string(message.timestamp);
-		}
-		if (message.health !== 0) {
-			writer.uint32(17).double(message.health);
-		}
-		if (message.stability !== 0) {
-			writer.uint32(25).double(message.stability);
-		}
-		if (message.maintainability !== 0) {
-			writer.uint32(33).double(message.maintainability);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningHistoryPoint, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.timestamp !== "") {
+      writer.uint32(10).string(message.timestamp);
+    }
+    if (message.health !== 0) {
+      writer.uint32(17).double(message.health);
+    }
+    if (message.stability !== 0) {
+      writer.uint32(25).double(message.stability);
+    }
+    if (message.maintainability !== 0) {
+      writer.uint32(33).double(message.maintainability);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningHistoryPoint {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningHistoryPoint();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningHistoryPoint {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningHistoryPoint();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.timestamp = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 17) {
-							break;
-						}
+            message.timestamp = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 17) {
+              break;
+            }
 
-						message.health = reader.double();
-						continue;
-					}
-					case 3: {
-						if (tag !== 25) {
-							break;
-						}
+            message.health = reader.double();
+            continue;
+          }
+          case 3: {
+            if (tag !== 25) {
+              break;
+            }
 
-						message.stability = reader.double();
-						continue;
-					}
-					case 4: {
-						if (tag !== 33) {
-							break;
-						}
+            message.stability = reader.double();
+            continue;
+          }
+          case 4: {
+            if (tag !== 33) {
+              break;
+            }
 
-						message.maintainability = reader.double();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.maintainability = reader.double();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningHistoryPoint {
-		return {
-			timestamp: isSet(object.timestamp)
-				? globalThis.String(object.timestamp)
-				: "",
-			health: isSet(object.health) ? globalThis.Number(object.health) : 0,
-			stability: isSet(object.stability)
-				? globalThis.Number(object.stability)
-				: 0,
-			maintainability: isSet(object.maintainability)
-				? globalThis.Number(object.maintainability)
-				: 0,
-		};
-	},
+  fromJSON(object: any): JoyZoningHistoryPoint {
+    return {
+      timestamp: isSet(object.timestamp) ? globalThis.String(object.timestamp) : "",
+      health: isSet(object.health) ? globalThis.Number(object.health) : 0,
+      stability: isSet(object.stability) ? globalThis.Number(object.stability) : 0,
+      maintainability: isSet(object.maintainability) ? globalThis.Number(object.maintainability) : 0,
+    };
+  },
 
-	toJSON(message: JoyZoningHistoryPoint): unknown {
-		const obj: any = {};
-		if (message.timestamp !== "") {
-			obj.timestamp = message.timestamp;
-		}
-		if (message.health !== 0) {
-			obj.health = message.health;
-		}
-		if (message.stability !== 0) {
-			obj.stability = message.stability;
-		}
-		if (message.maintainability !== 0) {
-			obj.maintainability = message.maintainability;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningHistoryPoint): unknown {
+    const obj: any = {};
+    if (message.timestamp !== "") {
+      obj.timestamp = message.timestamp;
+    }
+    if (message.health !== 0) {
+      obj.health = message.health;
+    }
+    if (message.stability !== 0) {
+      obj.stability = message.stability;
+    }
+    if (message.maintainability !== 0) {
+      obj.maintainability = message.maintainability;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningHistoryPoint>): JoyZoningHistoryPoint {
-		return JoyZoningHistoryPoint.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningHistoryPoint>,
-	): JoyZoningHistoryPoint {
-		const message = createBaseJoyZoningHistoryPoint();
-		message.timestamp = object.timestamp ?? "";
-		message.health = object.health ?? 0;
-		message.stability = object.stability ?? 0;
-		message.maintainability = object.maintainability ?? 0;
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningHistoryPoint>): JoyZoningHistoryPoint {
+    return JoyZoningHistoryPoint.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningHistoryPoint>): JoyZoningHistoryPoint {
+    const message = createBaseJoyZoningHistoryPoint();
+    message.timestamp = object.timestamp ?? "";
+    message.health = object.health ?? 0;
+    message.stability = object.stability ?? 0;
+    message.maintainability = object.maintainability ?? 0;
+    return message;
+  },
 };
 
 function createBaseJoyZoningAuditResponse(): JoyZoningAuditResponse {
-	return {
-		buildHealth: 0,
-		totalFiles: 0,
-		structuralEntropy: 0,
-		violations: [],
-		optimizations: [],
-		timestamp: "",
-		projectedHealth: 0,
-		integrityScore: 0,
-		progress: undefined,
-		activityPressure: 0,
-		driftDetected: false,
-		driftCount: 0,
-		structuralSinks: [],
-		grade: "",
-		totalTechnicalDebt: "",
-		stabilityScore: 0,
-		maintainabilityScore: 0,
-		history: [],
-		qualityGateStatus: "",
-		complianceScore: 0,
-		toxicModule: "",
-		layerScores: {},
-		topRecommendations: [],
-		healthDelta: 0,
-		violationDelta: 0,
-		riskProfile: {},
-	};
+  return {
+    buildHealth: 0,
+    totalFiles: 0,
+    structuralEntropy: 0,
+    violations: [],
+    optimizations: [],
+    timestamp: "",
+    projectedHealth: 0,
+    integrityScore: 0,
+    progress: undefined,
+    activityPressure: 0,
+    driftDetected: false,
+    driftCount: 0,
+    structuralSinks: [],
+    grade: "",
+    totalTechnicalDebt: "",
+    stabilityScore: 0,
+    maintainabilityScore: 0,
+    history: [],
+    qualityGateStatus: "",
+    complianceScore: 0,
+    toxicModule: "",
+    layerScores: {},
+    topRecommendations: [],
+    healthDelta: 0,
+    violationDelta: 0,
+    riskProfile: {},
+  };
 }
 
 export const JoyZoningAuditResponse: MessageFns<JoyZoningAuditResponse> = {
-	encode(
-		message: JoyZoningAuditResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.buildHealth !== 0) {
-			writer.uint32(9).double(message.buildHealth);
-		}
-		if (message.totalFiles !== 0) {
-			writer.uint32(16).int32(message.totalFiles);
-		}
-		if (message.structuralEntropy !== 0) {
-			writer.uint32(25).double(message.structuralEntropy);
-		}
-		for (const v of message.violations) {
-			JoyZoningViolation.encode(v!, writer.uint32(34).fork()).join();
-		}
-		for (const v of message.optimizations) {
-			JoyZoningOptimization.encode(v!, writer.uint32(42).fork()).join();
-		}
-		if (message.timestamp !== "") {
-			writer.uint32(50).string(message.timestamp);
-		}
-		if (message.projectedHealth !== 0) {
-			writer.uint32(57).double(message.projectedHealth);
-		}
-		if (message.integrityScore !== 0) {
-			writer.uint32(65).double(message.integrityScore);
-		}
-		if (message.progress !== undefined) {
-			JoyZoningAuditProgress.encode(
-				message.progress,
-				writer.uint32(74).fork(),
-			).join();
-		}
-		if (message.activityPressure !== 0) {
-			writer.uint32(81).double(message.activityPressure);
-		}
-		if (message.driftDetected !== false) {
-			writer.uint32(88).bool(message.driftDetected);
-		}
-		if (message.driftCount !== 0) {
-			writer.uint32(96).int32(message.driftCount);
-		}
-		for (const v of message.structuralSinks) {
-			writer.uint32(106).string(v!);
-		}
-		if (message.grade !== "") {
-			writer.uint32(114).string(message.grade);
-		}
-		if (message.totalTechnicalDebt !== "") {
-			writer.uint32(122).string(message.totalTechnicalDebt);
-		}
-		if (message.stabilityScore !== 0) {
-			writer.uint32(128).int32(message.stabilityScore);
-		}
-		if (message.maintainabilityScore !== 0) {
-			writer.uint32(136).int32(message.maintainabilityScore);
-		}
-		for (const v of message.history) {
-			JoyZoningHistoryPoint.encode(v!, writer.uint32(146).fork()).join();
-		}
-		if (message.qualityGateStatus !== "") {
-			writer.uint32(154).string(message.qualityGateStatus);
-		}
-		if (message.complianceScore !== 0) {
-			writer.uint32(160).int32(message.complianceScore);
-		}
-		if (message.toxicModule !== "") {
-			writer.uint32(170).string(message.toxicModule);
-		}
-		globalThis.Object.entries(message.layerScores).forEach(
-			([key, value]: [string, number]) => {
-				JoyZoningAuditResponse_LayerScoresEntry.encode(
-					{ key: key as any, value },
-					writer.uint32(178).fork(),
-				).join();
-			},
-		);
-		for (const v of message.topRecommendations) {
-			JoyZoningOptimization.encode(v!, writer.uint32(186).fork()).join();
-		}
-		if (message.healthDelta !== 0) {
-			writer.uint32(193).double(message.healthDelta);
-		}
-		if (message.violationDelta !== 0) {
-			writer.uint32(200).int32(message.violationDelta);
-		}
-		globalThis.Object.entries(message.riskProfile).forEach(
-			([key, value]: [string, number]) => {
-				JoyZoningAuditResponse_RiskProfileEntry.encode(
-					{ key: key as any, value },
-					writer.uint32(210).fork(),
-				).join();
-			},
-		);
-		return writer;
-	},
+  encode(message: JoyZoningAuditResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.buildHealth !== 0) {
+      writer.uint32(9).double(message.buildHealth);
+    }
+    if (message.totalFiles !== 0) {
+      writer.uint32(16).int32(message.totalFiles);
+    }
+    if (message.structuralEntropy !== 0) {
+      writer.uint32(25).double(message.structuralEntropy);
+    }
+    for (const v of message.violations) {
+      JoyZoningViolation.encode(v!, writer.uint32(34).fork()).join();
+    }
+    for (const v of message.optimizations) {
+      JoyZoningOptimization.encode(v!, writer.uint32(42).fork()).join();
+    }
+    if (message.timestamp !== "") {
+      writer.uint32(50).string(message.timestamp);
+    }
+    if (message.projectedHealth !== 0) {
+      writer.uint32(57).double(message.projectedHealth);
+    }
+    if (message.integrityScore !== 0) {
+      writer.uint32(65).double(message.integrityScore);
+    }
+    if (message.progress !== undefined) {
+      JoyZoningAuditProgress.encode(message.progress, writer.uint32(74).fork()).join();
+    }
+    if (message.activityPressure !== 0) {
+      writer.uint32(81).double(message.activityPressure);
+    }
+    if (message.driftDetected !== false) {
+      writer.uint32(88).bool(message.driftDetected);
+    }
+    if (message.driftCount !== 0) {
+      writer.uint32(96).int32(message.driftCount);
+    }
+    for (const v of message.structuralSinks) {
+      writer.uint32(106).string(v!);
+    }
+    if (message.grade !== "") {
+      writer.uint32(114).string(message.grade);
+    }
+    if (message.totalTechnicalDebt !== "") {
+      writer.uint32(122).string(message.totalTechnicalDebt);
+    }
+    if (message.stabilityScore !== 0) {
+      writer.uint32(128).int32(message.stabilityScore);
+    }
+    if (message.maintainabilityScore !== 0) {
+      writer.uint32(136).int32(message.maintainabilityScore);
+    }
+    for (const v of message.history) {
+      JoyZoningHistoryPoint.encode(v!, writer.uint32(146).fork()).join();
+    }
+    if (message.qualityGateStatus !== "") {
+      writer.uint32(154).string(message.qualityGateStatus);
+    }
+    if (message.complianceScore !== 0) {
+      writer.uint32(160).int32(message.complianceScore);
+    }
+    if (message.toxicModule !== "") {
+      writer.uint32(170).string(message.toxicModule);
+    }
+    globalThis.Object.entries(message.layerScores).forEach(([key, value]: [string, number]) => {
+      JoyZoningAuditResponse_LayerScoresEntry.encode({ key: key as any, value }, writer.uint32(178).fork()).join();
+    });
+    for (const v of message.topRecommendations) {
+      JoyZoningOptimization.encode(v!, writer.uint32(186).fork()).join();
+    }
+    if (message.healthDelta !== 0) {
+      writer.uint32(193).double(message.healthDelta);
+    }
+    if (message.violationDelta !== 0) {
+      writer.uint32(200).int32(message.violationDelta);
+    }
+    globalThis.Object.entries(message.riskProfile).forEach(([key, value]: [string, number]) => {
+      JoyZoningAuditResponse_RiskProfileEntry.encode({ key: key as any, value }, writer.uint32(210).fork()).join();
+    });
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningAuditResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningAuditResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 9) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningAuditResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningAuditResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 9) {
+              break;
+            }
 
-						message.buildHealth = reader.double();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.buildHealth = reader.double();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.totalFiles = reader.int32();
-						continue;
-					}
-					case 3: {
-						if (tag !== 25) {
-							break;
-						}
+            message.totalFiles = reader.int32();
+            continue;
+          }
+          case 3: {
+            if (tag !== 25) {
+              break;
+            }
 
-						message.structuralEntropy = reader.double();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.structuralEntropy = reader.double();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.violations.push(
-							JoyZoningViolation.decode(reader, reader.uint32()),
-						);
-						continue;
-					}
-					case 5: {
-						if (tag !== 42) {
-							break;
-						}
+            message.violations.push(JoyZoningViolation.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 5: {
+            if (tag !== 42) {
+              break;
+            }
 
-						message.optimizations.push(
-							JoyZoningOptimization.decode(reader, reader.uint32()),
-						);
-						continue;
-					}
-					case 6: {
-						if (tag !== 50) {
-							break;
-						}
+            message.optimizations.push(JoyZoningOptimization.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
 
-						message.timestamp = reader.string();
-						continue;
-					}
-					case 7: {
-						if (tag !== 57) {
-							break;
-						}
+            message.timestamp = reader.string();
+            continue;
+          }
+          case 7: {
+            if (tag !== 57) {
+              break;
+            }
 
-						message.projectedHealth = reader.double();
-						continue;
-					}
-					case 8: {
-						if (tag !== 65) {
-							break;
-						}
+            message.projectedHealth = reader.double();
+            continue;
+          }
+          case 8: {
+            if (tag !== 65) {
+              break;
+            }
 
-						message.integrityScore = reader.double();
-						continue;
-					}
-					case 9: {
-						if (tag !== 74) {
-							break;
-						}
+            message.integrityScore = reader.double();
+            continue;
+          }
+          case 9: {
+            if (tag !== 74) {
+              break;
+            }
 
-						message.progress = JoyZoningAuditProgress.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 10: {
-						if (tag !== 81) {
-							break;
-						}
+            message.progress = JoyZoningAuditProgress.decode(reader, reader.uint32());
+            continue;
+          }
+          case 10: {
+            if (tag !== 81) {
+              break;
+            }
 
-						message.activityPressure = reader.double();
-						continue;
-					}
-					case 11: {
-						if (tag !== 88) {
-							break;
-						}
+            message.activityPressure = reader.double();
+            continue;
+          }
+          case 11: {
+            if (tag !== 88) {
+              break;
+            }
 
-						message.driftDetected = reader.bool();
-						continue;
-					}
-					case 12: {
-						if (tag !== 96) {
-							break;
-						}
+            message.driftDetected = reader.bool();
+            continue;
+          }
+          case 12: {
+            if (tag !== 96) {
+              break;
+            }
 
-						message.driftCount = reader.int32();
-						continue;
-					}
-					case 13: {
-						if (tag !== 106) {
-							break;
-						}
+            message.driftCount = reader.int32();
+            continue;
+          }
+          case 13: {
+            if (tag !== 106) {
+              break;
+            }
 
-						message.structuralSinks.push(reader.string());
-						continue;
-					}
-					case 14: {
-						if (tag !== 114) {
-							break;
-						}
+            message.structuralSinks.push(reader.string());
+            continue;
+          }
+          case 14: {
+            if (tag !== 114) {
+              break;
+            }
 
-						message.grade = reader.string();
-						continue;
-					}
-					case 15: {
-						if (tag !== 122) {
-							break;
-						}
+            message.grade = reader.string();
+            continue;
+          }
+          case 15: {
+            if (tag !== 122) {
+              break;
+            }
 
-						message.totalTechnicalDebt = reader.string();
-						continue;
-					}
-					case 16: {
-						if (tag !== 128) {
-							break;
-						}
+            message.totalTechnicalDebt = reader.string();
+            continue;
+          }
+          case 16: {
+            if (tag !== 128) {
+              break;
+            }
 
-						message.stabilityScore = reader.int32();
-						continue;
-					}
-					case 17: {
-						if (tag !== 136) {
-							break;
-						}
+            message.stabilityScore = reader.int32();
+            continue;
+          }
+          case 17: {
+            if (tag !== 136) {
+              break;
+            }
 
-						message.maintainabilityScore = reader.int32();
-						continue;
-					}
-					case 18: {
-						if (tag !== 146) {
-							break;
-						}
+            message.maintainabilityScore = reader.int32();
+            continue;
+          }
+          case 18: {
+            if (tag !== 146) {
+              break;
+            }
 
-						message.history.push(
-							JoyZoningHistoryPoint.decode(reader, reader.uint32()),
-						);
-						continue;
-					}
-					case 19: {
-						if (tag !== 154) {
-							break;
-						}
+            message.history.push(JoyZoningHistoryPoint.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 19: {
+            if (tag !== 154) {
+              break;
+            }
 
-						message.qualityGateStatus = reader.string();
-						continue;
-					}
-					case 20: {
-						if (tag !== 160) {
-							break;
-						}
+            message.qualityGateStatus = reader.string();
+            continue;
+          }
+          case 20: {
+            if (tag !== 160) {
+              break;
+            }
 
-						message.complianceScore = reader.int32();
-						continue;
-					}
-					case 21: {
-						if (tag !== 170) {
-							break;
-						}
+            message.complianceScore = reader.int32();
+            continue;
+          }
+          case 21: {
+            if (tag !== 170) {
+              break;
+            }
 
-						message.toxicModule = reader.string();
-						continue;
-					}
-					case 22: {
-						if (tag !== 178) {
-							break;
-						}
+            message.toxicModule = reader.string();
+            continue;
+          }
+          case 22: {
+            if (tag !== 178) {
+              break;
+            }
 
-						const entry22 = JoyZoningAuditResponse_LayerScoresEntry.decode(
-							reader,
-							reader.uint32(),
-						);
-						if (entry22.value !== undefined) {
-							message.layerScores[entry22.key] = entry22.value;
-						}
-						continue;
-					}
-					case 23: {
-						if (tag !== 186) {
-							break;
-						}
+            const entry22 = JoyZoningAuditResponse_LayerScoresEntry.decode(reader, reader.uint32());
+            if (entry22.value !== undefined) {
+              message.layerScores[entry22.key] = entry22.value;
+            }
+            continue;
+          }
+          case 23: {
+            if (tag !== 186) {
+              break;
+            }
 
-						message.topRecommendations.push(
-							JoyZoningOptimization.decode(reader, reader.uint32()),
-						);
-						continue;
-					}
-					case 24: {
-						if (tag !== 193) {
-							break;
-						}
+            message.topRecommendations.push(JoyZoningOptimization.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 24: {
+            if (tag !== 193) {
+              break;
+            }
 
-						message.healthDelta = reader.double();
-						continue;
-					}
-					case 25: {
-						if (tag !== 200) {
-							break;
-						}
+            message.healthDelta = reader.double();
+            continue;
+          }
+          case 25: {
+            if (tag !== 200) {
+              break;
+            }
 
-						message.violationDelta = reader.int32();
-						continue;
-					}
-					case 26: {
-						if (tag !== 210) {
-							break;
-						}
+            message.violationDelta = reader.int32();
+            continue;
+          }
+          case 26: {
+            if (tag !== 210) {
+              break;
+            }
 
-						const entry26 = JoyZoningAuditResponse_RiskProfileEntry.decode(
-							reader,
-							reader.uint32(),
-						);
-						if (entry26.value !== undefined) {
-							message.riskProfile[entry26.key] = entry26.value;
-						}
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            const entry26 = JoyZoningAuditResponse_RiskProfileEntry.decode(reader, reader.uint32());
+            if (entry26.value !== undefined) {
+              message.riskProfile[entry26.key] = entry26.value;
+            }
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningAuditResponse {
-		return {
-			buildHealth: isSet(object.buildHealth)
-				? globalThis.Number(object.buildHealth)
-				: isSet(object.build_health)
-					? globalThis.Number(object.build_health)
-					: 0,
-			totalFiles: isSet(object.totalFiles)
-				? globalThis.Number(object.totalFiles)
-				: isSet(object.total_files)
-					? globalThis.Number(object.total_files)
-					: 0,
-			structuralEntropy: isSet(object.structuralEntropy)
-				? globalThis.Number(object.structuralEntropy)
-				: isSet(object.structural_entropy)
-					? globalThis.Number(object.structural_entropy)
-					: 0,
-			violations: globalThis.Array.isArray(object?.violations)
-				? object.violations.map((e: any) => JoyZoningViolation.fromJSON(e))
-				: [],
-			optimizations: globalThis.Array.isArray(object?.optimizations)
-				? object.optimizations.map((e: any) =>
-						JoyZoningOptimization.fromJSON(e),
-					)
-				: [],
-			timestamp: isSet(object.timestamp)
-				? globalThis.String(object.timestamp)
-				: "",
-			projectedHealth: isSet(object.projectedHealth)
-				? globalThis.Number(object.projectedHealth)
-				: isSet(object.projected_health)
-					? globalThis.Number(object.projected_health)
-					: 0,
-			integrityScore: isSet(object.integrityScore)
-				? globalThis.Number(object.integrityScore)
-				: isSet(object.integrity_score)
-					? globalThis.Number(object.integrity_score)
-					: 0,
-			progress: isSet(object.progress)
-				? JoyZoningAuditProgress.fromJSON(object.progress)
-				: undefined,
-			activityPressure: isSet(object.activityPressure)
-				? globalThis.Number(object.activityPressure)
-				: isSet(object.activity_pressure)
-					? globalThis.Number(object.activity_pressure)
-					: 0,
-			driftDetected: isSet(object.driftDetected)
-				? globalThis.Boolean(object.driftDetected)
-				: isSet(object.drift_detected)
-					? globalThis.Boolean(object.drift_detected)
-					: false,
-			driftCount: isSet(object.driftCount)
-				? globalThis.Number(object.driftCount)
-				: isSet(object.drift_count)
-					? globalThis.Number(object.drift_count)
-					: 0,
-			structuralSinks: globalThis.Array.isArray(object?.structuralSinks)
-				? object.structuralSinks.map((e: any) => globalThis.String(e))
-				: globalThis.Array.isArray(object?.structural_sinks)
-					? object.structural_sinks.map((e: any) => globalThis.String(e))
-					: [],
-			grade: isSet(object.grade) ? globalThis.String(object.grade) : "",
-			totalTechnicalDebt: isSet(object.totalTechnicalDebt)
-				? globalThis.String(object.totalTechnicalDebt)
-				: isSet(object.total_technical_debt)
-					? globalThis.String(object.total_technical_debt)
-					: "",
-			stabilityScore: isSet(object.stabilityScore)
-				? globalThis.Number(object.stabilityScore)
-				: isSet(object.stability_score)
-					? globalThis.Number(object.stability_score)
-					: 0,
-			maintainabilityScore: isSet(object.maintainabilityScore)
-				? globalThis.Number(object.maintainabilityScore)
-				: isSet(object.maintainability_score)
-					? globalThis.Number(object.maintainability_score)
-					: 0,
-			history: globalThis.Array.isArray(object?.history)
-				? object.history.map((e: any) => JoyZoningHistoryPoint.fromJSON(e))
-				: [],
-			qualityGateStatus: isSet(object.qualityGateStatus)
-				? globalThis.String(object.qualityGateStatus)
-				: isSet(object.quality_gate_status)
-					? globalThis.String(object.quality_gate_status)
-					: "",
-			complianceScore: isSet(object.complianceScore)
-				? globalThis.Number(object.complianceScore)
-				: isSet(object.compliance_score)
-					? globalThis.Number(object.compliance_score)
-					: 0,
-			toxicModule: isSet(object.toxicModule)
-				? globalThis.String(object.toxicModule)
-				: isSet(object.toxic_module)
-					? globalThis.String(object.toxic_module)
-					: "",
-			layerScores: isObject(object.layerScores)
-				? (
-						globalThis.Object.entries(object.layerScores) as [string, any][]
-					).reduce(
-						(acc: { [key: string]: number }, [key, value]: [string, any]) => {
-							globalThis.Object.defineProperty(acc, key, {
-								value: globalThis.Number(value),
-								enumerable: true,
-								configurable: true,
-								writable: true,
-							});
-							return acc;
-						},
-						{},
-					)
-				: isObject(object.layer_scores)
-					? (
-							globalThis.Object.entries(object.layer_scores) as [string, any][]
-						).reduce(
-							(acc: { [key: string]: number }, [key, value]: [string, any]) => {
-								globalThis.Object.defineProperty(acc, key, {
-									value: globalThis.Number(value),
-									enumerable: true,
-									configurable: true,
-									writable: true,
-								});
-								return acc;
-							},
-							{},
-						)
-					: {},
-			topRecommendations: globalThis.Array.isArray(object?.topRecommendations)
-				? object.topRecommendations.map((e: any) =>
-						JoyZoningOptimization.fromJSON(e),
-					)
-				: globalThis.Array.isArray(object?.top_recommendations)
-					? object.top_recommendations.map((e: any) =>
-							JoyZoningOptimization.fromJSON(e),
-						)
-					: [],
-			healthDelta: isSet(object.healthDelta)
-				? globalThis.Number(object.healthDelta)
-				: isSet(object.health_delta)
-					? globalThis.Number(object.health_delta)
-					: 0,
-			violationDelta: isSet(object.violationDelta)
-				? globalThis.Number(object.violationDelta)
-				: isSet(object.violation_delta)
-					? globalThis.Number(object.violation_delta)
-					: 0,
-			riskProfile: isObject(object.riskProfile)
-				? (
-						globalThis.Object.entries(object.riskProfile) as [string, any][]
-					).reduce(
-						(acc: { [key: string]: number }, [key, value]: [string, any]) => {
-							globalThis.Object.defineProperty(acc, key, {
-								value: globalThis.Number(value),
-								enumerable: true,
-								configurable: true,
-								writable: true,
-							});
-							return acc;
-						},
-						{},
-					)
-				: isObject(object.risk_profile)
-					? (
-							globalThis.Object.entries(object.risk_profile) as [string, any][]
-						).reduce(
-							(acc: { [key: string]: number }, [key, value]: [string, any]) => {
-								globalThis.Object.defineProperty(acc, key, {
-									value: globalThis.Number(value),
-									enumerable: true,
-									configurable: true,
-									writable: true,
-								});
-								return acc;
-							},
-							{},
-						)
-					: {},
-		};
-	},
+  fromJSON(object: any): JoyZoningAuditResponse {
+    return {
+      buildHealth: isSet(object.buildHealth)
+        ? globalThis.Number(object.buildHealth)
+        : isSet(object.build_health)
+        ? globalThis.Number(object.build_health)
+        : 0,
+      totalFiles: isSet(object.totalFiles)
+        ? globalThis.Number(object.totalFiles)
+        : isSet(object.total_files)
+        ? globalThis.Number(object.total_files)
+        : 0,
+      structuralEntropy: isSet(object.structuralEntropy)
+        ? globalThis.Number(object.structuralEntropy)
+        : isSet(object.structural_entropy)
+        ? globalThis.Number(object.structural_entropy)
+        : 0,
+      violations: globalThis.Array.isArray(object?.violations)
+        ? object.violations.map((e: any) => JoyZoningViolation.fromJSON(e))
+        : [],
+      optimizations: globalThis.Array.isArray(object?.optimizations)
+        ? object.optimizations.map((e: any) => JoyZoningOptimization.fromJSON(e))
+        : [],
+      timestamp: isSet(object.timestamp) ? globalThis.String(object.timestamp) : "",
+      projectedHealth: isSet(object.projectedHealth)
+        ? globalThis.Number(object.projectedHealth)
+        : isSet(object.projected_health)
+        ? globalThis.Number(object.projected_health)
+        : 0,
+      integrityScore: isSet(object.integrityScore)
+        ? globalThis.Number(object.integrityScore)
+        : isSet(object.integrity_score)
+        ? globalThis.Number(object.integrity_score)
+        : 0,
+      progress: isSet(object.progress) ? JoyZoningAuditProgress.fromJSON(object.progress) : undefined,
+      activityPressure: isSet(object.activityPressure)
+        ? globalThis.Number(object.activityPressure)
+        : isSet(object.activity_pressure)
+        ? globalThis.Number(object.activity_pressure)
+        : 0,
+      driftDetected: isSet(object.driftDetected)
+        ? globalThis.Boolean(object.driftDetected)
+        : isSet(object.drift_detected)
+        ? globalThis.Boolean(object.drift_detected)
+        : false,
+      driftCount: isSet(object.driftCount)
+        ? globalThis.Number(object.driftCount)
+        : isSet(object.drift_count)
+        ? globalThis.Number(object.drift_count)
+        : 0,
+      structuralSinks: globalThis.Array.isArray(object?.structuralSinks)
+        ? object.structuralSinks.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.structural_sinks)
+        ? object.structural_sinks.map((e: any) => globalThis.String(e))
+        : [],
+      grade: isSet(object.grade) ? globalThis.String(object.grade) : "",
+      totalTechnicalDebt: isSet(object.totalTechnicalDebt)
+        ? globalThis.String(object.totalTechnicalDebt)
+        : isSet(object.total_technical_debt)
+        ? globalThis.String(object.total_technical_debt)
+        : "",
+      stabilityScore: isSet(object.stabilityScore)
+        ? globalThis.Number(object.stabilityScore)
+        : isSet(object.stability_score)
+        ? globalThis.Number(object.stability_score)
+        : 0,
+      maintainabilityScore: isSet(object.maintainabilityScore)
+        ? globalThis.Number(object.maintainabilityScore)
+        : isSet(object.maintainability_score)
+        ? globalThis.Number(object.maintainability_score)
+        : 0,
+      history: globalThis.Array.isArray(object?.history)
+        ? object.history.map((e: any) => JoyZoningHistoryPoint.fromJSON(e))
+        : [],
+      qualityGateStatus: isSet(object.qualityGateStatus)
+        ? globalThis.String(object.qualityGateStatus)
+        : isSet(object.quality_gate_status)
+        ? globalThis.String(object.quality_gate_status)
+        : "",
+      complianceScore: isSet(object.complianceScore)
+        ? globalThis.Number(object.complianceScore)
+        : isSet(object.compliance_score)
+        ? globalThis.Number(object.compliance_score)
+        : 0,
+      toxicModule: isSet(object.toxicModule)
+        ? globalThis.String(object.toxicModule)
+        : isSet(object.toxic_module)
+        ? globalThis.String(object.toxic_module)
+        : "",
+      layerScores: isObject(object.layerScores)
+        ? (globalThis.Object.entries(object.layerScores) as [string, any][]).reduce(
+          (acc: { [key: string]: number }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.Number(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.layer_scores)
+        ? (globalThis.Object.entries(object.layer_scores) as [string, any][]).reduce(
+          (acc: { [key: string]: number }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.Number(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : {},
+      topRecommendations: globalThis.Array.isArray(object?.topRecommendations)
+        ? object.topRecommendations.map((e: any) => JoyZoningOptimization.fromJSON(e))
+        : globalThis.Array.isArray(object?.top_recommendations)
+        ? object.top_recommendations.map((e: any) => JoyZoningOptimization.fromJSON(e))
+        : [],
+      healthDelta: isSet(object.healthDelta)
+        ? globalThis.Number(object.healthDelta)
+        : isSet(object.health_delta)
+        ? globalThis.Number(object.health_delta)
+        : 0,
+      violationDelta: isSet(object.violationDelta)
+        ? globalThis.Number(object.violationDelta)
+        : isSet(object.violation_delta)
+        ? globalThis.Number(object.violation_delta)
+        : 0,
+      riskProfile: isObject(object.riskProfile)
+        ? (globalThis.Object.entries(object.riskProfile) as [string, any][]).reduce(
+          (acc: { [key: string]: number }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.Number(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.risk_profile)
+        ? (globalThis.Object.entries(object.risk_profile) as [string, any][]).reduce(
+          (acc: { [key: string]: number }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.Number(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
 
-	toJSON(message: JoyZoningAuditResponse): unknown {
-		const obj: any = {};
-		if (message.buildHealth !== 0) {
-			obj.buildHealth = message.buildHealth;
-		}
-		if (message.totalFiles !== 0) {
-			obj.totalFiles = Math.round(message.totalFiles);
-		}
-		if (message.structuralEntropy !== 0) {
-			obj.structuralEntropy = message.structuralEntropy;
-		}
-		if (message.violations?.length) {
-			obj.violations = message.violations.map((e) =>
-				JoyZoningViolation.toJSON(e),
-			);
-		}
-		if (message.optimizations?.length) {
-			obj.optimizations = message.optimizations.map((e) =>
-				JoyZoningOptimization.toJSON(e),
-			);
-		}
-		if (message.timestamp !== "") {
-			obj.timestamp = message.timestamp;
-		}
-		if (message.projectedHealth !== 0) {
-			obj.projectedHealth = message.projectedHealth;
-		}
-		if (message.integrityScore !== 0) {
-			obj.integrityScore = message.integrityScore;
-		}
-		if (message.progress !== undefined) {
-			obj.progress = JoyZoningAuditProgress.toJSON(message.progress);
-		}
-		if (message.activityPressure !== 0) {
-			obj.activityPressure = message.activityPressure;
-		}
-		if (message.driftDetected !== false) {
-			obj.driftDetected = message.driftDetected;
-		}
-		if (message.driftCount !== 0) {
-			obj.driftCount = Math.round(message.driftCount);
-		}
-		if (message.structuralSinks?.length) {
-			obj.structuralSinks = message.structuralSinks;
-		}
-		if (message.grade !== "") {
-			obj.grade = message.grade;
-		}
-		if (message.totalTechnicalDebt !== "") {
-			obj.totalTechnicalDebt = message.totalTechnicalDebt;
-		}
-		if (message.stabilityScore !== 0) {
-			obj.stabilityScore = Math.round(message.stabilityScore);
-		}
-		if (message.maintainabilityScore !== 0) {
-			obj.maintainabilityScore = Math.round(message.maintainabilityScore);
-		}
-		if (message.history?.length) {
-			obj.history = message.history.map((e) => JoyZoningHistoryPoint.toJSON(e));
-		}
-		if (message.qualityGateStatus !== "") {
-			obj.qualityGateStatus = message.qualityGateStatus;
-		}
-		if (message.complianceScore !== 0) {
-			obj.complianceScore = Math.round(message.complianceScore);
-		}
-		if (message.toxicModule !== "") {
-			obj.toxicModule = message.toxicModule;
-		}
-		if (message.layerScores) {
-			const entries = globalThis.Object.entries(message.layerScores) as [
-				string,
-				number,
-			][];
-			if (entries.length > 0) {
-				obj.layerScores = {};
-				entries.forEach(([k, v]) => {
-					obj.layerScores[k] = Math.round(v);
-				});
-			}
-		}
-		if (message.topRecommendations?.length) {
-			obj.topRecommendations = message.topRecommendations.map((e) =>
-				JoyZoningOptimization.toJSON(e),
-			);
-		}
-		if (message.healthDelta !== 0) {
-			obj.healthDelta = message.healthDelta;
-		}
-		if (message.violationDelta !== 0) {
-			obj.violationDelta = Math.round(message.violationDelta);
-		}
-		if (message.riskProfile) {
-			const entries = globalThis.Object.entries(message.riskProfile) as [
-				string,
-				number,
-			][];
-			if (entries.length > 0) {
-				obj.riskProfile = {};
-				entries.forEach(([k, v]) => {
-					obj.riskProfile[k] = Math.round(v);
-				});
-			}
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningAuditResponse): unknown {
+    const obj: any = {};
+    if (message.buildHealth !== 0) {
+      obj.buildHealth = message.buildHealth;
+    }
+    if (message.totalFiles !== 0) {
+      obj.totalFiles = Math.round(message.totalFiles);
+    }
+    if (message.structuralEntropy !== 0) {
+      obj.structuralEntropy = message.structuralEntropy;
+    }
+    if (message.violations?.length) {
+      obj.violations = message.violations.map((e) => JoyZoningViolation.toJSON(e));
+    }
+    if (message.optimizations?.length) {
+      obj.optimizations = message.optimizations.map((e) => JoyZoningOptimization.toJSON(e));
+    }
+    if (message.timestamp !== "") {
+      obj.timestamp = message.timestamp;
+    }
+    if (message.projectedHealth !== 0) {
+      obj.projectedHealth = message.projectedHealth;
+    }
+    if (message.integrityScore !== 0) {
+      obj.integrityScore = message.integrityScore;
+    }
+    if (message.progress !== undefined) {
+      obj.progress = JoyZoningAuditProgress.toJSON(message.progress);
+    }
+    if (message.activityPressure !== 0) {
+      obj.activityPressure = message.activityPressure;
+    }
+    if (message.driftDetected !== false) {
+      obj.driftDetected = message.driftDetected;
+    }
+    if (message.driftCount !== 0) {
+      obj.driftCount = Math.round(message.driftCount);
+    }
+    if (message.structuralSinks?.length) {
+      obj.structuralSinks = message.structuralSinks;
+    }
+    if (message.grade !== "") {
+      obj.grade = message.grade;
+    }
+    if (message.totalTechnicalDebt !== "") {
+      obj.totalTechnicalDebt = message.totalTechnicalDebt;
+    }
+    if (message.stabilityScore !== 0) {
+      obj.stabilityScore = Math.round(message.stabilityScore);
+    }
+    if (message.maintainabilityScore !== 0) {
+      obj.maintainabilityScore = Math.round(message.maintainabilityScore);
+    }
+    if (message.history?.length) {
+      obj.history = message.history.map((e) => JoyZoningHistoryPoint.toJSON(e));
+    }
+    if (message.qualityGateStatus !== "") {
+      obj.qualityGateStatus = message.qualityGateStatus;
+    }
+    if (message.complianceScore !== 0) {
+      obj.complianceScore = Math.round(message.complianceScore);
+    }
+    if (message.toxicModule !== "") {
+      obj.toxicModule = message.toxicModule;
+    }
+    if (message.layerScores) {
+      const entries = globalThis.Object.entries(message.layerScores) as [string, number][];
+      if (entries.length > 0) {
+        obj.layerScores = {};
+        entries.forEach(([k, v]) => {
+          obj.layerScores[k] = Math.round(v);
+        });
+      }
+    }
+    if (message.topRecommendations?.length) {
+      obj.topRecommendations = message.topRecommendations.map((e) => JoyZoningOptimization.toJSON(e));
+    }
+    if (message.healthDelta !== 0) {
+      obj.healthDelta = message.healthDelta;
+    }
+    if (message.violationDelta !== 0) {
+      obj.violationDelta = Math.round(message.violationDelta);
+    }
+    if (message.riskProfile) {
+      const entries = globalThis.Object.entries(message.riskProfile) as [string, number][];
+      if (entries.length > 0) {
+        obj.riskProfile = {};
+        entries.forEach(([k, v]) => {
+          obj.riskProfile[k] = Math.round(v);
+        });
+      }
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<JoyZoningAuditResponse>): JoyZoningAuditResponse {
-		return JoyZoningAuditResponse.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningAuditResponse>,
-	): JoyZoningAuditResponse {
-		const message = createBaseJoyZoningAuditResponse();
-		message.buildHealth = object.buildHealth ?? 0;
-		message.totalFiles = object.totalFiles ?? 0;
-		message.structuralEntropy = object.structuralEntropy ?? 0;
-		message.violations =
-			object.violations?.map((e) => JoyZoningViolation.fromPartial(e)) || [];
-		message.optimizations =
-			object.optimizations?.map((e) => JoyZoningOptimization.fromPartial(e)) ||
-			[];
-		message.timestamp = object.timestamp ?? "";
-		message.projectedHealth = object.projectedHealth ?? 0;
-		message.integrityScore = object.integrityScore ?? 0;
-		message.progress =
-			object.progress !== undefined && object.progress !== null
-				? JoyZoningAuditProgress.fromPartial(object.progress)
-				: undefined;
-		message.activityPressure = object.activityPressure ?? 0;
-		message.driftDetected = object.driftDetected ?? false;
-		message.driftCount = object.driftCount ?? 0;
-		message.structuralSinks = object.structuralSinks?.map((e) => e) || [];
-		message.grade = object.grade ?? "";
-		message.totalTechnicalDebt = object.totalTechnicalDebt ?? "";
-		message.stabilityScore = object.stabilityScore ?? 0;
-		message.maintainabilityScore = object.maintainabilityScore ?? 0;
-		message.history =
-			object.history?.map((e) => JoyZoningHistoryPoint.fromPartial(e)) || [];
-		message.qualityGateStatus = object.qualityGateStatus ?? "";
-		message.complianceScore = object.complianceScore ?? 0;
-		message.toxicModule = object.toxicModule ?? "";
-		message.layerScores = (
-			globalThis.Object.entries(object.layerScores ?? {}) as [string, number][]
-		).reduce(
-			(acc: { [key: string]: number }, [key, value]: [string, number]) => {
-				if (value !== undefined) {
-					acc[key] = globalThis.Number(value);
-				}
-				return acc;
-			},
-			{},
-		);
-		message.topRecommendations =
-			object.topRecommendations?.map((e) =>
-				JoyZoningOptimization.fromPartial(e),
-			) || [];
-		message.healthDelta = object.healthDelta ?? 0;
-		message.violationDelta = object.violationDelta ?? 0;
-		message.riskProfile = (
-			globalThis.Object.entries(object.riskProfile ?? {}) as [string, number][]
-		).reduce(
-			(acc: { [key: string]: number }, [key, value]: [string, number]) => {
-				if (value !== undefined) {
-					acc[key] = globalThis.Number(value);
-				}
-				return acc;
-			},
-			{},
-		);
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningAuditResponse>): JoyZoningAuditResponse {
+    return JoyZoningAuditResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningAuditResponse>): JoyZoningAuditResponse {
+    const message = createBaseJoyZoningAuditResponse();
+    message.buildHealth = object.buildHealth ?? 0;
+    message.totalFiles = object.totalFiles ?? 0;
+    message.structuralEntropy = object.structuralEntropy ?? 0;
+    message.violations = object.violations?.map((e) => JoyZoningViolation.fromPartial(e)) || [];
+    message.optimizations = object.optimizations?.map((e) => JoyZoningOptimization.fromPartial(e)) || [];
+    message.timestamp = object.timestamp ?? "";
+    message.projectedHealth = object.projectedHealth ?? 0;
+    message.integrityScore = object.integrityScore ?? 0;
+    message.progress = (object.progress !== undefined && object.progress !== null)
+      ? JoyZoningAuditProgress.fromPartial(object.progress)
+      : undefined;
+    message.activityPressure = object.activityPressure ?? 0;
+    message.driftDetected = object.driftDetected ?? false;
+    message.driftCount = object.driftCount ?? 0;
+    message.structuralSinks = object.structuralSinks?.map((e) => e) || [];
+    message.grade = object.grade ?? "";
+    message.totalTechnicalDebt = object.totalTechnicalDebt ?? "";
+    message.stabilityScore = object.stabilityScore ?? 0;
+    message.maintainabilityScore = object.maintainabilityScore ?? 0;
+    message.history = object.history?.map((e) => JoyZoningHistoryPoint.fromPartial(e)) || [];
+    message.qualityGateStatus = object.qualityGateStatus ?? "";
+    message.complianceScore = object.complianceScore ?? 0;
+    message.toxicModule = object.toxicModule ?? "";
+    message.layerScores = (globalThis.Object.entries(object.layerScores ?? {}) as [string, number][]).reduce(
+      (acc: { [key: string]: number }, [key, value]: [string, number]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.Number(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.topRecommendations = object.topRecommendations?.map((e) => JoyZoningOptimization.fromPartial(e)) || [];
+    message.healthDelta = object.healthDelta ?? 0;
+    message.violationDelta = object.violationDelta ?? 0;
+    message.riskProfile = (globalThis.Object.entries(object.riskProfile ?? {}) as [string, number][]).reduce(
+      (acc: { [key: string]: number }, [key, value]: [string, number]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.Number(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
 };
 
 function createBaseJoyZoningAuditResponse_LayerScoresEntry(): JoyZoningAuditResponse_LayerScoresEntry {
-	return { key: "", value: 0 };
+  return { key: "", value: 0 };
 }
 
-export const JoyZoningAuditResponse_LayerScoresEntry: MessageFns<JoyZoningAuditResponse_LayerScoresEntry> =
-	{
-		encode(
-			message: JoyZoningAuditResponse_LayerScoresEntry,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.key !== "") {
-				writer.uint32(10).string(message.key);
-			}
-			if (message.value !== 0) {
-				writer.uint32(16).int32(message.value);
-			}
-			return writer;
-		},
+export const JoyZoningAuditResponse_LayerScoresEntry: MessageFns<JoyZoningAuditResponse_LayerScoresEntry> = {
+  encode(message: JoyZoningAuditResponse_LayerScoresEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== 0) {
+      writer.uint32(16).int32(message.value);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): JoyZoningAuditResponse_LayerScoresEntry {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseJoyZoningAuditResponse_LayerScoresEntry();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningAuditResponse_LayerScoresEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningAuditResponse_LayerScoresEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.key = reader.string();
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.value = reader.int32();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.value = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): JoyZoningAuditResponse_LayerScoresEntry {
-			return {
-				key: isSet(object.key) ? globalThis.String(object.key) : "",
-				value: isSet(object.value) ? globalThis.Number(object.value) : 0,
-			};
-		},
+  fromJSON(object: any): JoyZoningAuditResponse_LayerScoresEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.Number(object.value) : 0,
+    };
+  },
 
-		toJSON(message: JoyZoningAuditResponse_LayerScoresEntry): unknown {
-			const obj: any = {};
-			if (message.key !== "") {
-				obj.key = message.key;
-			}
-			if (message.value !== 0) {
-				obj.value = Math.round(message.value);
-			}
-			return obj;
-		},
+  toJSON(message: JoyZoningAuditResponse_LayerScoresEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== 0) {
+      obj.value = Math.round(message.value);
+    }
+    return obj;
+  },
 
-		create(
-			base?: DeepPartial<JoyZoningAuditResponse_LayerScoresEntry>,
-		): JoyZoningAuditResponse_LayerScoresEntry {
-			return JoyZoningAuditResponse_LayerScoresEntry.fromPartial(base ?? {});
-		},
-		fromPartial(
-			object: DeepPartial<JoyZoningAuditResponse_LayerScoresEntry>,
-		): JoyZoningAuditResponse_LayerScoresEntry {
-			const message = createBaseJoyZoningAuditResponse_LayerScoresEntry();
-			message.key = object.key ?? "";
-			message.value = object.value ?? 0;
-			return message;
-		},
-	};
+  create(base?: DeepPartial<JoyZoningAuditResponse_LayerScoresEntry>): JoyZoningAuditResponse_LayerScoresEntry {
+    return JoyZoningAuditResponse_LayerScoresEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningAuditResponse_LayerScoresEntry>): JoyZoningAuditResponse_LayerScoresEntry {
+    const message = createBaseJoyZoningAuditResponse_LayerScoresEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? 0;
+    return message;
+  },
+};
 
 function createBaseJoyZoningAuditResponse_RiskProfileEntry(): JoyZoningAuditResponse_RiskProfileEntry {
-	return { key: "", value: 0 };
+  return { key: "", value: 0 };
 }
 
-export const JoyZoningAuditResponse_RiskProfileEntry: MessageFns<JoyZoningAuditResponse_RiskProfileEntry> =
-	{
-		encode(
-			message: JoyZoningAuditResponse_RiskProfileEntry,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.key !== "") {
-				writer.uint32(10).string(message.key);
-			}
-			if (message.value !== 0) {
-				writer.uint32(16).int32(message.value);
-			}
-			return writer;
-		},
+export const JoyZoningAuditResponse_RiskProfileEntry: MessageFns<JoyZoningAuditResponse_RiskProfileEntry> = {
+  encode(message: JoyZoningAuditResponse_RiskProfileEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== 0) {
+      writer.uint32(16).int32(message.value);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): JoyZoningAuditResponse_RiskProfileEntry {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseJoyZoningAuditResponse_RiskProfileEntry();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningAuditResponse_RiskProfileEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningAuditResponse_RiskProfileEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.key = reader.string();
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.value = reader.int32();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.value = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): JoyZoningAuditResponse_RiskProfileEntry {
-			return {
-				key: isSet(object.key) ? globalThis.String(object.key) : "",
-				value: isSet(object.value) ? globalThis.Number(object.value) : 0,
-			};
-		},
+  fromJSON(object: any): JoyZoningAuditResponse_RiskProfileEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.Number(object.value) : 0,
+    };
+  },
 
-		toJSON(message: JoyZoningAuditResponse_RiskProfileEntry): unknown {
-			const obj: any = {};
-			if (message.key !== "") {
-				obj.key = message.key;
-			}
-			if (message.value !== 0) {
-				obj.value = Math.round(message.value);
-			}
-			return obj;
-		},
+  toJSON(message: JoyZoningAuditResponse_RiskProfileEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== 0) {
+      obj.value = Math.round(message.value);
+    }
+    return obj;
+  },
 
-		create(
-			base?: DeepPartial<JoyZoningAuditResponse_RiskProfileEntry>,
-		): JoyZoningAuditResponse_RiskProfileEntry {
-			return JoyZoningAuditResponse_RiskProfileEntry.fromPartial(base ?? {});
-		},
-		fromPartial(
-			object: DeepPartial<JoyZoningAuditResponse_RiskProfileEntry>,
-		): JoyZoningAuditResponse_RiskProfileEntry {
-			const message = createBaseJoyZoningAuditResponse_RiskProfileEntry();
-			message.key = object.key ?? "";
-			message.value = object.value ?? 0;
-			return message;
-		},
-	};
+  create(base?: DeepPartial<JoyZoningAuditResponse_RiskProfileEntry>): JoyZoningAuditResponse_RiskProfileEntry {
+    return JoyZoningAuditResponse_RiskProfileEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningAuditResponse_RiskProfileEntry>): JoyZoningAuditResponse_RiskProfileEntry {
+    const message = createBaseJoyZoningAuditResponse_RiskProfileEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? 0;
+    return message;
+  },
+};
 
 function createBaseJoyZoningRefactorRequest(): JoyZoningRefactorRequest {
-	return { action: "", path: "", dryRun: false };
+  return { action: "", path: "", dryRun: false };
 }
 
 export const JoyZoningRefactorRequest: MessageFns<JoyZoningRefactorRequest> = {
-	encode(
-		message: JoyZoningRefactorRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.action !== "") {
-			writer.uint32(10).string(message.action);
-		}
-		if (message.path !== "") {
-			writer.uint32(18).string(message.path);
-		}
-		if (message.dryRun !== false) {
-			writer.uint32(24).bool(message.dryRun);
-		}
-		return writer;
-	},
+  encode(message: JoyZoningRefactorRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.action !== "") {
+      writer.uint32(10).string(message.action);
+    }
+    if (message.path !== "") {
+      writer.uint32(18).string(message.path);
+    }
+    if (message.dryRun !== false) {
+      writer.uint32(24).bool(message.dryRun);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): JoyZoningRefactorRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseJoyZoningRefactorRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningRefactorRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningRefactorRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.action = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.action = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.dryRun = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.dryRun = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): JoyZoningRefactorRequest {
-		return {
-			action: isSet(object.action) ? globalThis.String(object.action) : "",
-			path: isSet(object.path) ? globalThis.String(object.path) : "",
-			dryRun: isSet(object.dryRun)
-				? globalThis.Boolean(object.dryRun)
-				: isSet(object.dry_run)
-					? globalThis.Boolean(object.dry_run)
-					: false,
-		};
-	},
+  fromJSON(object: any): JoyZoningRefactorRequest {
+    return {
+      action: isSet(object.action) ? globalThis.String(object.action) : "",
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      dryRun: isSet(object.dryRun)
+        ? globalThis.Boolean(object.dryRun)
+        : isSet(object.dry_run)
+        ? globalThis.Boolean(object.dry_run)
+        : false,
+    };
+  },
 
-	toJSON(message: JoyZoningRefactorRequest): unknown {
-		const obj: any = {};
-		if (message.action !== "") {
-			obj.action = message.action;
-		}
-		if (message.path !== "") {
-			obj.path = message.path;
-		}
-		if (message.dryRun !== false) {
-			obj.dryRun = message.dryRun;
-		}
-		return obj;
-	},
+  toJSON(message: JoyZoningRefactorRequest): unknown {
+    const obj: any = {};
+    if (message.action !== "") {
+      obj.action = message.action;
+    }
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    if (message.dryRun !== false) {
+      obj.dryRun = message.dryRun;
+    }
+    return obj;
+  },
 
-	create(
-		base?: DeepPartial<JoyZoningRefactorRequest>,
-	): JoyZoningRefactorRequest {
-		return JoyZoningRefactorRequest.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<JoyZoningRefactorRequest>,
-	): JoyZoningRefactorRequest {
-		const message = createBaseJoyZoningRefactorRequest();
-		message.action = object.action ?? "";
-		message.path = object.path ?? "";
-		message.dryRun = object.dryRun ?? false;
-		return message;
-	},
+  create(base?: DeepPartial<JoyZoningRefactorRequest>): JoyZoningRefactorRequest {
+    return JoyZoningRefactorRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningRefactorRequest>): JoyZoningRefactorRequest {
+    const message = createBaseJoyZoningRefactorRequest();
+    message.action = object.action ?? "";
+    message.path = object.path ?? "";
+    message.dryRun = object.dryRun ?? false;
+    return message;
+  },
 };
 
 function createBaseJoyZoningBatchRefactorRequest(): JoyZoningBatchRefactorRequest {
-	return { requests: [], dryRun: false };
+  return { requests: [], dryRun: false };
 }
 
-export const JoyZoningBatchRefactorRequest: MessageFns<JoyZoningBatchRefactorRequest> =
-	{
-		encode(
-			message: JoyZoningBatchRefactorRequest,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			for (const v of message.requests) {
-				JoyZoningRefactorRequest.encode(v!, writer.uint32(10).fork()).join();
-			}
-			if (message.dryRun !== false) {
-				writer.uint32(16).bool(message.dryRun);
-			}
-			return writer;
-		},
+export const JoyZoningBatchRefactorRequest: MessageFns<JoyZoningBatchRefactorRequest> = {
+  encode(message: JoyZoningBatchRefactorRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.requests) {
+      JoyZoningRefactorRequest.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.dryRun !== false) {
+      writer.uint32(16).bool(message.dryRun);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): JoyZoningBatchRefactorRequest {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseJoyZoningBatchRefactorRequest();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningBatchRefactorRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningBatchRefactorRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.requests.push(
-								JoyZoningRefactorRequest.decode(reader, reader.uint32()),
-							);
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.requests.push(JoyZoningRefactorRequest.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.dryRun = reader.bool();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.dryRun = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): JoyZoningBatchRefactorRequest {
-			return {
-				requests: globalThis.Array.isArray(object?.requests)
-					? object.requests.map((e: any) =>
-							JoyZoningRefactorRequest.fromJSON(e),
-						)
-					: [],
-				dryRun: isSet(object.dryRun)
-					? globalThis.Boolean(object.dryRun)
-					: isSet(object.dry_run)
-						? globalThis.Boolean(object.dry_run)
-						: false,
-			};
-		},
+  fromJSON(object: any): JoyZoningBatchRefactorRequest {
+    return {
+      requests: globalThis.Array.isArray(object?.requests)
+        ? object.requests.map((e: any) => JoyZoningRefactorRequest.fromJSON(e))
+        : [],
+      dryRun: isSet(object.dryRun)
+        ? globalThis.Boolean(object.dryRun)
+        : isSet(object.dry_run)
+        ? globalThis.Boolean(object.dry_run)
+        : false,
+    };
+  },
 
-		toJSON(message: JoyZoningBatchRefactorRequest): unknown {
-			const obj: any = {};
-			if (message.requests?.length) {
-				obj.requests = message.requests.map((e) =>
-					JoyZoningRefactorRequest.toJSON(e),
-				);
-			}
-			if (message.dryRun !== false) {
-				obj.dryRun = message.dryRun;
-			}
-			return obj;
-		},
+  toJSON(message: JoyZoningBatchRefactorRequest): unknown {
+    const obj: any = {};
+    if (message.requests?.length) {
+      obj.requests = message.requests.map((e) => JoyZoningRefactorRequest.toJSON(e));
+    }
+    if (message.dryRun !== false) {
+      obj.dryRun = message.dryRun;
+    }
+    return obj;
+  },
 
-		create(
-			base?: DeepPartial<JoyZoningBatchRefactorRequest>,
-		): JoyZoningBatchRefactorRequest {
-			return JoyZoningBatchRefactorRequest.fromPartial(base ?? {});
-		},
-		fromPartial(
-			object: DeepPartial<JoyZoningBatchRefactorRequest>,
-		): JoyZoningBatchRefactorRequest {
-			const message = createBaseJoyZoningBatchRefactorRequest();
-			message.requests =
-				object.requests?.map((e) => JoyZoningRefactorRequest.fromPartial(e)) ||
-				[];
-			message.dryRun = object.dryRun ?? false;
-			return message;
-		},
-	};
+  create(base?: DeepPartial<JoyZoningBatchRefactorRequest>): JoyZoningBatchRefactorRequest {
+    return JoyZoningBatchRefactorRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningBatchRefactorRequest>): JoyZoningBatchRefactorRequest {
+    const message = createBaseJoyZoningBatchRefactorRequest();
+    message.requests = object.requests?.map((e) => JoyZoningRefactorRequest.fromPartial(e)) || [];
+    message.dryRun = object.dryRun ?? false;
+    return message;
+  },
+};
 
 function createBaseJoyZoningBatchRefactorResponse(): JoyZoningBatchRefactorResponse {
-	return { success: false, message: "", taskId: "", planSummary: "" };
+  return { success: false, message: "", taskId: "", planSummary: "" };
 }
 
-export const JoyZoningBatchRefactorResponse: MessageFns<JoyZoningBatchRefactorResponse> =
-	{
-		encode(
-			message: JoyZoningBatchRefactorResponse,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.success !== false) {
-				writer.uint32(8).bool(message.success);
-			}
-			if (message.message !== "") {
-				writer.uint32(18).string(message.message);
-			}
-			if (message.taskId !== "") {
-				writer.uint32(26).string(message.taskId);
-			}
-			if (message.planSummary !== "") {
-				writer.uint32(34).string(message.planSummary);
-			}
-			return writer;
-		},
+export const JoyZoningBatchRefactorResponse: MessageFns<JoyZoningBatchRefactorResponse> = {
+  encode(message: JoyZoningBatchRefactorResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.taskId !== "") {
+      writer.uint32(26).string(message.taskId);
+    }
+    if (message.planSummary !== "") {
+      writer.uint32(34).string(message.planSummary);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): JoyZoningBatchRefactorResponse {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseJoyZoningBatchRefactorResponse();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 8) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningBatchRefactorResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningBatchRefactorResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-							message.success = reader.bool();
-							continue;
-						}
-						case 2: {
-							if (tag !== 18) {
-								break;
-							}
+            message.success = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-							message.message = reader.string();
-							continue;
-						}
-						case 3: {
-							if (tag !== 26) {
-								break;
-							}
+            message.message = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-							message.taskId = reader.string();
-							continue;
-						}
-						case 4: {
-							if (tag !== 34) {
-								break;
-							}
+            message.taskId = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-							message.planSummary = reader.string();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.planSummary = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): JoyZoningBatchRefactorResponse {
-			return {
-				success: isSet(object.success)
-					? globalThis.Boolean(object.success)
-					: false,
-				message: isSet(object.message) ? globalThis.String(object.message) : "",
-				taskId: isSet(object.taskId)
-					? globalThis.String(object.taskId)
-					: isSet(object.task_id)
-						? globalThis.String(object.task_id)
-						: "",
-				planSummary: isSet(object.planSummary)
-					? globalThis.String(object.planSummary)
-					: isSet(object.plan_summary)
-						? globalThis.String(object.plan_summary)
-						: "",
-			};
-		},
+  fromJSON(object: any): JoyZoningBatchRefactorResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      taskId: isSet(object.taskId)
+        ? globalThis.String(object.taskId)
+        : isSet(object.task_id)
+        ? globalThis.String(object.task_id)
+        : "",
+      planSummary: isSet(object.planSummary)
+        ? globalThis.String(object.planSummary)
+        : isSet(object.plan_summary)
+        ? globalThis.String(object.plan_summary)
+        : "",
+    };
+  },
 
-		toJSON(message: JoyZoningBatchRefactorResponse): unknown {
-			const obj: any = {};
-			if (message.success !== false) {
-				obj.success = message.success;
-			}
-			if (message.message !== "") {
-				obj.message = message.message;
-			}
-			if (message.taskId !== "") {
-				obj.taskId = message.taskId;
-			}
-			if (message.planSummary !== "") {
-				obj.planSummary = message.planSummary;
-			}
-			return obj;
-		},
+  toJSON(message: JoyZoningBatchRefactorResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.taskId !== "") {
+      obj.taskId = message.taskId;
+    }
+    if (message.planSummary !== "") {
+      obj.planSummary = message.planSummary;
+    }
+    return obj;
+  },
 
-		create(
-			base?: DeepPartial<JoyZoningBatchRefactorResponse>,
-		): JoyZoningBatchRefactorResponse {
-			return JoyZoningBatchRefactorResponse.fromPartial(base ?? {});
-		},
-		fromPartial(
-			object: DeepPartial<JoyZoningBatchRefactorResponse>,
-		): JoyZoningBatchRefactorResponse {
-			const message = createBaseJoyZoningBatchRefactorResponse();
-			message.success = object.success ?? false;
-			message.message = object.message ?? "";
-			message.taskId = object.taskId ?? "";
-			message.planSummary = object.planSummary ?? "";
-			return message;
-		},
-	};
+  create(base?: DeepPartial<JoyZoningBatchRefactorResponse>): JoyZoningBatchRefactorResponse {
+    return JoyZoningBatchRefactorResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningBatchRefactorResponse>): JoyZoningBatchRefactorResponse {
+    const message = createBaseJoyZoningBatchRefactorResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    message.taskId = object.taskId ?? "";
+    message.planSummary = object.planSummary ?? "";
+    return message;
+  },
+};
 
 function createBaseJoyZoningRefactorResponse(): JoyZoningRefactorResponse {
-	return { success: false, message: "", planSummary: "" };
+  return { success: false, message: "", planSummary: "" };
 }
 
-export const JoyZoningRefactorResponse: MessageFns<JoyZoningRefactorResponse> =
-	{
-		encode(
-			message: JoyZoningRefactorResponse,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.success !== false) {
-				writer.uint32(8).bool(message.success);
-			}
-			if (message.message !== "") {
-				writer.uint32(18).string(message.message);
-			}
-			if (message.planSummary !== "") {
-				writer.uint32(26).string(message.planSummary);
-			}
-			return writer;
-		},
+export const JoyZoningRefactorResponse: MessageFns<JoyZoningRefactorResponse> = {
+  encode(message: JoyZoningRefactorResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.planSummary !== "") {
+      writer.uint32(26).string(message.planSummary);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): JoyZoningRefactorResponse {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseJoyZoningRefactorResponse();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 8) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): JoyZoningRefactorResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseJoyZoningRefactorResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-							message.success = reader.bool();
-							continue;
-						}
-						case 2: {
-							if (tag !== 18) {
-								break;
-							}
+            message.success = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-							message.message = reader.string();
-							continue;
-						}
-						case 3: {
-							if (tag !== 26) {
-								break;
-							}
+            message.message = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-							message.planSummary = reader.string();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.planSummary = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): JoyZoningRefactorResponse {
-			return {
-				success: isSet(object.success)
-					? globalThis.Boolean(object.success)
-					: false,
-				message: isSet(object.message) ? globalThis.String(object.message) : "",
-				planSummary: isSet(object.planSummary)
-					? globalThis.String(object.planSummary)
-					: isSet(object.plan_summary)
-						? globalThis.String(object.plan_summary)
-						: "",
-			};
-		},
+  fromJSON(object: any): JoyZoningRefactorResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      planSummary: isSet(object.planSummary)
+        ? globalThis.String(object.planSummary)
+        : isSet(object.plan_summary)
+        ? globalThis.String(object.plan_summary)
+        : "",
+    };
+  },
 
-		toJSON(message: JoyZoningRefactorResponse): unknown {
-			const obj: any = {};
-			if (message.success !== false) {
-				obj.success = message.success;
-			}
-			if (message.message !== "") {
-				obj.message = message.message;
-			}
-			if (message.planSummary !== "") {
-				obj.planSummary = message.planSummary;
-			}
-			return obj;
-		},
+  toJSON(message: JoyZoningRefactorResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.planSummary !== "") {
+      obj.planSummary = message.planSummary;
+    }
+    return obj;
+  },
 
-		create(
-			base?: DeepPartial<JoyZoningRefactorResponse>,
-		): JoyZoningRefactorResponse {
-			return JoyZoningRefactorResponse.fromPartial(base ?? {});
-		},
-		fromPartial(
-			object: DeepPartial<JoyZoningRefactorResponse>,
-		): JoyZoningRefactorResponse {
-			const message = createBaseJoyZoningRefactorResponse();
-			message.success = object.success ?? false;
-			message.message = object.message ?? "";
-			message.planSummary = object.planSummary ?? "";
-			return message;
-		},
-	};
+  create(base?: DeepPartial<JoyZoningRefactorResponse>): JoyZoningRefactorResponse {
+    return JoyZoningRefactorResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JoyZoningRefactorResponse>): JoyZoningRefactorResponse {
+    const message = createBaseJoyZoningRefactorResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    message.planSummary = object.planSummary ?? "";
+    return message;
+  },
+};
 
 export type JoyZoningServiceDefinition = typeof JoyZoningServiceDefinition;
 export const JoyZoningServiceDefinition = {
-	name: "JoyZoningService",
-	fullName: "dietcode.JoyZoningService",
-	methods: {
-		/** Streams progress updates during the audit, finishing with the full report */
-		triggerAudit: {
-			name: "triggerAudit",
-			requestType: JoyZoningAuditRequest as typeof JoyZoningAuditRequest,
-			requestStream: false,
-			responseType: JoyZoningAuditResponse as typeof JoyZoningAuditResponse,
-			responseStream: true,
-			options: {},
-		},
-		executeRefactor: {
-			name: "executeRefactor",
-			requestType: JoyZoningRefactorRequest as typeof JoyZoningRefactorRequest,
-			requestStream: false,
-			responseType:
-				JoyZoningRefactorResponse as typeof JoyZoningRefactorResponse,
-			responseStream: false,
-			options: {},
-		},
-		executeBatchRefactor: {
-			name: "executeBatchRefactor",
-			requestType:
-				JoyZoningBatchRefactorRequest as typeof JoyZoningBatchRefactorRequest,
-			requestStream: false,
-			responseType:
-				JoyZoningBatchRefactorResponse as typeof JoyZoningBatchRefactorResponse,
-			responseStream: false,
-			options: {},
-		},
-	},
+  name: "JoyZoningService",
+  fullName: "dietcode.JoyZoningService",
+  methods: {
+    /** Streams progress updates during the audit, finishing with the full report */
+    triggerAudit: {
+      name: "triggerAudit",
+      requestType: JoyZoningAuditRequest as typeof JoyZoningAuditRequest,
+      requestStream: false,
+      responseType: JoyZoningAuditResponse as typeof JoyZoningAuditResponse,
+      responseStream: true,
+      options: {},
+    },
+    executeRefactor: {
+      name: "executeRefactor",
+      requestType: JoyZoningRefactorRequest as typeof JoyZoningRefactorRequest,
+      requestStream: false,
+      responseType: JoyZoningRefactorResponse as typeof JoyZoningRefactorResponse,
+      responseStream: false,
+      options: {},
+    },
+    executeBatchRefactor: {
+      name: "executeBatchRefactor",
+      requestType: JoyZoningBatchRefactorRequest as typeof JoyZoningBatchRefactorRequest,
+      requestStream: false,
+      responseType: JoyZoningBatchRefactorResponse as typeof JoyZoningBatchRefactorResponse,
+      responseStream: false,
+      options: {},
+    },
+  },
 } as const;
 
 export interface JoyZoningServiceImplementation<CallContextExt = {}> {
-	/** Streams progress updates during the audit, finishing with the full report */
-	triggerAudit(
-		request: JoyZoningAuditRequest,
-		context: CallContext & CallContextExt,
-	): ServerStreamingMethodResult<DeepPartial<JoyZoningAuditResponse>>;
-	executeRefactor(
-		request: JoyZoningRefactorRequest,
-		context: CallContext & CallContextExt,
-	): Promise<DeepPartial<JoyZoningRefactorResponse>>;
-	executeBatchRefactor(
-		request: JoyZoningBatchRefactorRequest,
-		context: CallContext & CallContextExt,
-	): Promise<DeepPartial<JoyZoningBatchRefactorResponse>>;
+  /** Streams progress updates during the audit, finishing with the full report */
+  triggerAudit(
+    request: JoyZoningAuditRequest,
+    context: CallContext & CallContextExt,
+  ): ServerStreamingMethodResult<DeepPartial<JoyZoningAuditResponse>>;
+  executeRefactor(
+    request: JoyZoningRefactorRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<JoyZoningRefactorResponse>>;
+  executeBatchRefactor(
+    request: JoyZoningBatchRefactorRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<JoyZoningBatchRefactorResponse>>;
 }
 
 export interface JoyZoningServiceClient<CallOptionsExt = {}> {
-	/** Streams progress updates during the audit, finishing with the full report */
-	triggerAudit(
-		request: DeepPartial<JoyZoningAuditRequest>,
-		options?: CallOptions & CallOptionsExt,
-	): AsyncIterable<JoyZoningAuditResponse>;
-	executeRefactor(
-		request: DeepPartial<JoyZoningRefactorRequest>,
-		options?: CallOptions & CallOptionsExt,
-	): Promise<JoyZoningRefactorResponse>;
-	executeBatchRefactor(
-		request: DeepPartial<JoyZoningBatchRefactorRequest>,
-		options?: CallOptions & CallOptionsExt,
-	): Promise<JoyZoningBatchRefactorResponse>;
+  /** Streams progress updates during the audit, finishing with the full report */
+  triggerAudit(
+    request: DeepPartial<JoyZoningAuditRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): AsyncIterable<JoyZoningAuditResponse>;
+  executeRefactor(
+    request: DeepPartial<JoyZoningRefactorRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<JoyZoningRefactorResponse>;
+  executeBatchRefactor(
+    request: DeepPartial<JoyZoningBatchRefactorRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<JoyZoningBatchRefactorResponse>;
 }
 
-type Builtin =
-	| Date
-	| Function
-	| Uint8Array
-	| string
-	| number
-	| boolean
-	| undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-	? T
-	: T extends globalThis.Array<infer U>
-		? globalThis.Array<DeepPartial<U>>
-		: T extends ReadonlyArray<infer U>
-			? ReadonlyArray<DeepPartial<U>>
-			: T extends {}
-				? { [K in keyof T]?: DeepPartial<T[K]> }
-				: Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 function isObject(value: any): boolean {
-	return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
-	return value !== null && value !== undefined;
+  return value !== null && value !== undefined;
 }
 
-type ServerStreamingMethodResult<Response> = {
-	[Symbol.asyncIterator](): AsyncIterator<Response, void>;
-};
+type ServerStreamingMethodResult<Response> = { [Symbol.asyncIterator](): AsyncIterator<Response, void> };
 
 interface MessageFns<T> {
-	encode(message: T, writer?: BinaryWriter): BinaryWriter;
-	decode(input: BinaryReader | Uint8Array, length?: number): T;
-	fromJSON(object: any): T;
-	toJSON(message: T): unknown;
-	create(base?: DeepPartial<T>): T;
-	fromPartial(object: DeepPartial<T>): T;
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create(base?: DeepPartial<T>): T;
+  fromPartial(object: DeepPartial<T>): T;
 }

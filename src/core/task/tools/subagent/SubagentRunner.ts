@@ -12,6 +12,7 @@ import { formatResponse } from "@core/prompts/responses"
 import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { SystemPromptContext } from "@core/prompts/system-prompt/types"
 import { StreamResponseHandler } from "@core/task/StreamResponseHandler"
+import { TokenCompressionService } from "@noorm/broccolidb"
 import { ModelInfo } from "@shared/api"
 import { resolveCompletionGateOptions } from "@shared/audit/auditGatePolicyLoader"
 import type { CompletionGateOptions } from "@shared/audit/auditGateReport"
@@ -1642,7 +1643,18 @@ export class SubagentRunner {
 				.getTruncatedMessages(conversation, undefined)
 				.map((message) => message as DietCodeStorageMessage)
 			const requestSystemPrompt = this.contextManager.getSystemPromptForProjection(systemPrompt, requestConversation)
-			const stream = api.createMessage(requestSystemPrompt, requestConversation, nativeTools)
+			const tokenCompressionEnabled =
+				this.baseConfig.services.stateManager.getGlobalSettingsKey("tokenCompressionEnabled") ?? false
+			const tokenCompression = tokenCompressionEnabled
+				? TokenCompressionService.getInstance().compactPrompt({
+						systemPrompt: requestSystemPrompt,
+						messages: requestConversation,
+						requestedModel: modelId,
+					})
+				: undefined
+			const outboundSystemPrompt = tokenCompression?.compactedSystemPrompt ?? requestSystemPrompt
+			const outboundConversation = tokenCompression?.compactedMessages ?? requestConversation
+			const stream = api.createMessage(outboundSystemPrompt, outboundConversation, nativeTools)
 			const iterator = stream[Symbol.asyncIterator]()
 			let emittedChunk = false
 

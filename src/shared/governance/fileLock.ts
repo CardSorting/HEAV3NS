@@ -55,7 +55,7 @@ function validateRecord(value: unknown, expectedResourceKey?: string): string | 
 	if (typeof record.leaseEpoch !== "string" || !/^\d+$/.test(record.leaseEpoch)) {
 		return "missing_or_invalid_leaseEpoch"
 	}
-	if (record.authorityMode !== "sqlite" && record.authorityMode !== "local_test") {
+	if (record.authorityMode !== "broccoli" && record.authorityMode !== "local_test") {
 		return "missing_or_invalid_authorityMode"
 	}
 	if (record.expiresAt !== undefined && !Number.isFinite(record.expiresAt)) return "invalid_expiresAt"
@@ -96,7 +96,7 @@ export async function acquireGovernedFileLock(
 	swarmId = "default",
 	laneId?: string,
 	staleMs = DEFAULT_STALE_MS,
-	authorityMode: CoordinationAuthorityMode = "sqlite",
+	authorityMode: CoordinationAuthorityMode = "broccoli",
 ): Promise<{ ok: true } | { ok: false; reason: "collision" | "stale" | "corrupt" | "authority_mode_mismatch"; error: string }> {
 	const lockPath = governedLockPath(workspace, resourceKey)
 	await fs.mkdir(path.dirname(lockPath), { recursive: true })
@@ -303,7 +303,7 @@ export async function verifyGovernedFileLock(
 	ownerId: string,
 	fencingToken: string,
 	leaseEpoch?: string,
-	authorityMode: CoordinationAuthorityMode = "sqlite",
+	authorityMode: CoordinationAuthorityMode = "broccoli",
 ): Promise<{ valid: boolean; reason?: string }> {
 	const result = await readGovernedFileLock(workspace, resourceKey)
 	if (result.status === "missing") return { valid: false, reason: "orphaned" }

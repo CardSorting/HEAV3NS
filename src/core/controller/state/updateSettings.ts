@@ -182,6 +182,11 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("useAutoCondense", request.useAutoCondense)
 		}
 
+		// Update BroccoliDB token compression setting
+		if (request.tokenCompressionEnabled !== undefined) {
+			controller.stateManager.setGlobalState("tokenCompressionEnabled", request.tokenCompressionEnabled)
+		}
+
 		// Update focus chain settings
 		if (request.focusChainSettings !== undefined) {
 			{

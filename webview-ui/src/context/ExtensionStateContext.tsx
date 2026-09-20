@@ -209,6 +209,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		yoloModeToggled: false,
 		customPrompt: undefined,
 		useAutoCondense: false,
+		tokenCompressionEnabled: false,
 		subagentsEnabled: false,
 		modEnabled: false,
 		modOutcome: "plan-and-implement",

@@ -46,7 +46,7 @@ const WORKSPACE_MANIFESTS = [
 
 const ROOT_CONTINUITY_DOCS = ["AGENT_PLAYBOOK.md", "WIKI.md", "TROUBLESHOOTING.md", "DECISIONS.md", "HANDOFF.md"]
 
-const ARCHITECTURAL_SURFACES = ["src", "webview-ui", "broccolidb", "proto", "docs", ".wiki", ".agents"]
+const ARCHITECTURAL_SURFACES = ["src", "webview-ui", "proto", "docs", ".wiki", ".agents"]
 
 const TOP_LEVEL_IGNORE = new Set([
 	".DS_Store",
@@ -243,20 +243,6 @@ export class WorkspaceIntelligenceEngine {
 				title: "Cross-surface validation risk",
 				summary: "Extension-host and webview changes can require separate validation paths.",
 				evidence: ["src/", "webview-ui/"],
-				confidence: "confirmed",
-				source: "repository",
-				observedAt: input.timestamp,
-				status: "active",
-			})
-		}
-
-		if (sourceSnapshot.architecturalSurfaces.includes("broccolidb/")) {
-			addSignal(categories, {
-				id: "predictive.substrate-boundary-risk",
-				category: "predictive",
-				title: "BroccoliDB boundary risk",
-				summary: "Changes crossing the LUMI session layer and BroccoliDB substrate need explicit boundary checks.",
-				evidence: ["broccolidb/", "src/core/context/KnowledgeGraphService.ts"],
 				confidence: "confirmed",
 				source: "repository",
 				observedAt: input.timestamp,
@@ -729,10 +715,6 @@ function buildHighRiskSurfaces(snapshot: WorkspaceIntelligenceSourceSnapshot, ch
 		if (file.startsWith("src/shared/completion/")) highRisk.add("completion receipt contract")
 		if (file.startsWith("src/core/api/")) highRisk.add("provider dispatch")
 		if (file.startsWith("webview-ui/")) highRisk.add("webview UI")
-		if (file.startsWith("broccolidb/")) highRisk.add("BroccoliDB substrate")
-	}
-	if (snapshot.architecturalSurfaces.includes("broccolidb/")) {
-		highRisk.add("LUMI/BroccoliDB boundary")
 	}
 	return Array.from(highRisk).sort()
 }
@@ -912,24 +894,6 @@ async function buildFacts(
 					runId: input.finalizationRunId,
 					description:
 						"Task modified both the VS Code extension host (src/) and the webview interface (webview-ui/), requiring separate validation pipelines.",
-					timestamp: input.timestamp,
-				},
-			],
-			lifecycle: "active",
-			lastUpdated: input.timestamp,
-		})
-	}
-	if (snapshot.architecturalSurfaces.includes("broccolidb/") && changedFiles.some((f) => f.startsWith("broccolidb/"))) {
-		currentFacts.push({
-			id: `fact-risk-broccolidb-boundary`,
-			type: "risk_area",
-			value: { risk: "BroccoliDB boundary risk (substrate modified)" },
-			confidence: "confirmed",
-			provenance: [
-				{
-					type: "finalization_evidence",
-					runId: input.finalizationRunId,
-					description: "Task modified the BroccoliDB database engine, requiring strict boundary validations.",
 					timestamp: input.timestamp,
 				},
 			],

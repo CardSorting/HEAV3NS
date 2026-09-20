@@ -7,201 +7,185 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { BrowserSettings, Viewport } from "./browser";
+import { Boolean, BooleanRequest, Empty, EmptyRequest, Int64Request, Metadata, StringRequest } from "./common";
 import {
-	Boolean,
-	BooleanRequest,
-	Empty,
-	EmptyRequest,
-	Int64Request,
-	Metadata,
-	StringRequest,
-} from "./common";
-import {
-	ApiProvider,
-	apiProviderFromJSON,
-	apiProviderToJSON,
-	LanguageModelChatSelector,
-	LiteLLMModelInfo,
-	ModelsApiConfiguration,
-	OcaModelInfo,
-	OpenAiCompatibleModelInfo,
-	OpenRouterModelInfo,
+  ApiProvider,
+  apiProviderFromJSON,
+  apiProviderToJSON,
+  LanguageModelChatSelector,
+  LiteLLMModelInfo,
+  ModelsApiConfiguration,
+  OcaModelInfo,
+  OpenAiCompatibleModelInfo,
+  OpenRouterModelInfo,
 } from "./models";
 
 export enum PlanActMode {
-	PLAN = 0,
-	ACT = 1,
-	UNRECOGNIZED = -1,
+  PLAN = 0,
+  ACT = 1,
+  UNRECOGNIZED = -1,
 }
 
 export function planActModeFromJSON(object: any): PlanActMode {
-	switch (object) {
-		case 0:
-		case "PLAN":
-			return PlanActMode.PLAN;
-		case 1:
-		case "ACT":
-			return PlanActMode.ACT;
-		case -1:
-		case "UNRECOGNIZED":
-		default:
-			return PlanActMode.UNRECOGNIZED;
-	}
+  switch (object) {
+    case 0:
+    case "PLAN":
+      return PlanActMode.PLAN;
+    case 1:
+    case "ACT":
+      return PlanActMode.ACT;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return PlanActMode.UNRECOGNIZED;
+  }
 }
 
 export function planActModeToJSON(object: PlanActMode): string {
-	switch (object) {
-		case PlanActMode.PLAN:
-			return "PLAN";
-		case PlanActMode.ACT:
-			return "ACT";
-		case PlanActMode.UNRECOGNIZED:
-		default:
-			return "UNRECOGNIZED";
-	}
+  switch (object) {
+    case PlanActMode.PLAN:
+      return "PLAN";
+    case PlanActMode.ACT:
+      return "ACT";
+    case PlanActMode.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export enum OpenaiReasoningEffort {
-	LOW = 0,
-	MEDIUM = 1,
-	HIGH = 2,
-	UNRECOGNIZED = -1,
+  LOW = 0,
+  MEDIUM = 1,
+  HIGH = 2,
+  UNRECOGNIZED = -1,
 }
 
-export function openaiReasoningEffortFromJSON(
-	object: any,
-): OpenaiReasoningEffort {
-	switch (object) {
-		case 0:
-		case "LOW":
-			return OpenaiReasoningEffort.LOW;
-		case 1:
-		case "MEDIUM":
-			return OpenaiReasoningEffort.MEDIUM;
-		case 2:
-		case "HIGH":
-			return OpenaiReasoningEffort.HIGH;
-		case -1:
-		case "UNRECOGNIZED":
-		default:
-			return OpenaiReasoningEffort.UNRECOGNIZED;
-	}
+export function openaiReasoningEffortFromJSON(object: any): OpenaiReasoningEffort {
+  switch (object) {
+    case 0:
+    case "LOW":
+      return OpenaiReasoningEffort.LOW;
+    case 1:
+    case "MEDIUM":
+      return OpenaiReasoningEffort.MEDIUM;
+    case 2:
+    case "HIGH":
+      return OpenaiReasoningEffort.HIGH;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return OpenaiReasoningEffort.UNRECOGNIZED;
+  }
 }
 
-export function openaiReasoningEffortToJSON(
-	object: OpenaiReasoningEffort,
-): string {
-	switch (object) {
-		case OpenaiReasoningEffort.LOW:
-			return "LOW";
-		case OpenaiReasoningEffort.MEDIUM:
-			return "MEDIUM";
-		case OpenaiReasoningEffort.HIGH:
-			return "HIGH";
-		case OpenaiReasoningEffort.UNRECOGNIZED:
-		default:
-			return "UNRECOGNIZED";
-	}
+export function openaiReasoningEffortToJSON(object: OpenaiReasoningEffort): string {
+  switch (object) {
+    case OpenaiReasoningEffort.LOW:
+      return "LOW";
+    case OpenaiReasoningEffort.MEDIUM:
+      return "MEDIUM";
+    case OpenaiReasoningEffort.HIGH:
+      return "HIGH";
+    case OpenaiReasoningEffort.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export enum McpDisplayMode {
-	RICH = 0,
-	PLAIN = 1,
-	MARKDOWN = 2,
-	UNRECOGNIZED = -1,
+  RICH = 0,
+  PLAIN = 1,
+  MARKDOWN = 2,
+  UNRECOGNIZED = -1,
 }
 
 export function mcpDisplayModeFromJSON(object: any): McpDisplayMode {
-	switch (object) {
-		case 0:
-		case "RICH":
-			return McpDisplayMode.RICH;
-		case 1:
-		case "PLAIN":
-			return McpDisplayMode.PLAIN;
-		case 2:
-		case "MARKDOWN":
-			return McpDisplayMode.MARKDOWN;
-		case -1:
-		case "UNRECOGNIZED":
-		default:
-			return McpDisplayMode.UNRECOGNIZED;
-	}
+  switch (object) {
+    case 0:
+    case "RICH":
+      return McpDisplayMode.RICH;
+    case 1:
+    case "PLAIN":
+      return McpDisplayMode.PLAIN;
+    case 2:
+    case "MARKDOWN":
+      return McpDisplayMode.MARKDOWN;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return McpDisplayMode.UNRECOGNIZED;
+  }
 }
 
 export function mcpDisplayModeToJSON(object: McpDisplayMode): string {
-	switch (object) {
-		case McpDisplayMode.RICH:
-			return "RICH";
-		case McpDisplayMode.PLAIN:
-			return "PLAIN";
-		case McpDisplayMode.MARKDOWN:
-			return "MARKDOWN";
-		case McpDisplayMode.UNRECOGNIZED:
-		default:
-			return "UNRECOGNIZED";
-	}
+  switch (object) {
+    case McpDisplayMode.RICH:
+      return "RICH";
+    case McpDisplayMode.PLAIN:
+      return "PLAIN";
+    case McpDisplayMode.MARKDOWN:
+      return "MARKDOWN";
+    case McpDisplayMode.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export enum TelemetrySettingEnum {
-	UNSET = 0,
-	ENABLED = 1,
-	DISABLED = 2,
-	UNRECOGNIZED = -1,
+  UNSET = 0,
+  ENABLED = 1,
+  DISABLED = 2,
+  UNRECOGNIZED = -1,
 }
 
-export function telemetrySettingEnumFromJSON(
-	object: any,
-): TelemetrySettingEnum {
-	switch (object) {
-		case 0:
-		case "UNSET":
-			return TelemetrySettingEnum.UNSET;
-		case 1:
-		case "ENABLED":
-			return TelemetrySettingEnum.ENABLED;
-		case 2:
-		case "DISABLED":
-			return TelemetrySettingEnum.DISABLED;
-		case -1:
-		case "UNRECOGNIZED":
-		default:
-			return TelemetrySettingEnum.UNRECOGNIZED;
-	}
+export function telemetrySettingEnumFromJSON(object: any): TelemetrySettingEnum {
+  switch (object) {
+    case 0:
+    case "UNSET":
+      return TelemetrySettingEnum.UNSET;
+    case 1:
+    case "ENABLED":
+      return TelemetrySettingEnum.ENABLED;
+    case 2:
+    case "DISABLED":
+      return TelemetrySettingEnum.DISABLED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return TelemetrySettingEnum.UNRECOGNIZED;
+  }
 }
 
-export function telemetrySettingEnumToJSON(
-	object: TelemetrySettingEnum,
-): string {
-	switch (object) {
-		case TelemetrySettingEnum.UNSET:
-			return "UNSET";
-		case TelemetrySettingEnum.ENABLED:
-			return "ENABLED";
-		case TelemetrySettingEnum.DISABLED:
-			return "DISABLED";
-		case TelemetrySettingEnum.UNRECOGNIZED:
-		default:
-			return "UNRECOGNIZED";
-	}
+export function telemetrySettingEnumToJSON(object: TelemetrySettingEnum): string {
+  switch (object) {
+    case TelemetrySettingEnum.UNSET:
+      return "UNSET";
+    case TelemetrySettingEnum.ENABLED:
+      return "ENABLED";
+    case TelemetrySettingEnum.DISABLED:
+      return "DISABLED";
+    case TelemetrySettingEnum.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export interface AutoApprovalActions {
-	readFiles?: boolean | undefined;
-	readFilesExternally?: boolean | undefined;
-	editFiles?: boolean | undefined;
-	editFilesExternally?: boolean | undefined;
-	executeSafeCommands?: boolean | undefined;
-	executeAllCommands?: boolean | undefined;
-	useBrowser?: boolean | undefined;
-	useMcp?: boolean | undefined;
+  readFiles?: boolean | undefined;
+  readFilesExternally?: boolean | undefined;
+  editFiles?: boolean | undefined;
+  editFilesExternally?: boolean | undefined;
+  executeSafeCommands?: boolean | undefined;
+  executeAllCommands?: boolean | undefined;
+  useBrowser?: boolean | undefined;
+  useMcp?: boolean | undefined;
 }
 
 /** Auto approval settings for task execution */
 export interface AutoApprovalSettings {
-	version: number;
-	actions: AutoApprovalActions | undefined;
-	enableNotifications?: boolean | undefined;
+  version: number;
+  actions: AutoApprovalActions | undefined;
+  enableNotifications?: boolean | undefined;
 }
 
 /**
@@ -209,58 +193,58 @@ export interface AutoApprovalSettings {
  * and use the scripts/generate-state-proto.mjs script to regenerate this list.
  */
 export interface Secrets {
-	apiKey?: string | undefined;
-	dietcodeAccountId?: string | undefined;
-	openRouterApiKey?: string | undefined;
-	awsAccessKey?: string | undefined;
-	awsSecretKey?: string | undefined;
-	awsSessionToken?: string | undefined;
-	awsBedrockApiKey?: string | undefined;
-	openAiApiKey?: string | undefined;
-	geminiApiKey?: string | undefined;
-	openAiNativeApiKey?: string | undefined;
-	ollamaApiKey?: string | undefined;
-	deepSeekApiKey?: string | undefined;
-	requestyApiKey?: string | undefined;
-	togetherApiKey?: string | undefined;
-	fireworksApiKey?: string | undefined;
-	qwenApiKey?: string | undefined;
-	doubaoApiKey?: string | undefined;
-	mistralApiKey?: string | undefined;
-	liteLlmApiKey?: string | undefined;
-	authNonce?: string | undefined;
-	asksageApiKey?: string | undefined;
-	xaiApiKey?: string | undefined;
-	moonshotApiKey?: string | undefined;
-	zaiApiKey?: string | undefined;
-	huggingFaceApiKey?: string | undefined;
-	nebiusApiKey?: string | undefined;
-	sambanovaApiKey?: string | undefined;
-	cerebrasApiKey?: string | undefined;
-	sapAiCoreClientId?: string | undefined;
-	sapAiCoreClientSecret?: string | undefined;
-	groqApiKey?: string | undefined;
-	huaweiCloudMaasApiKey?: string | undefined;
-	basetenApiKey?: string | undefined;
-	vercelAiGatewayApiKey?: string | undefined;
-	difyApiKey?: string | undefined;
-	minimaxApiKey?: string | undefined;
-	hicapApiKey?: string | undefined;
-	aihubmixApiKey?: string | undefined;
-	nousResearchApiKey?: string | undefined;
-	remoteLiteLlmApiKey?: string | undefined;
-	ocaApiKey?: string | undefined;
-	ocaRefreshToken?: string | undefined;
-	mcpOAuthSecrets?: string | undefined;
-	dietcodeApiKey?: string | undefined;
-	cloudflareApiToken?: string | undefined;
-	embeddingApiKey?: string | undefined;
-	vertexApiKey?: string | undefined;
-	clineApiKey?: string | undefined;
-	qwenTokenPlanApiKey?: string | undefined;
-	galxApiKey?: string | undefined;
-	openaiCodexOauthCredentials?: string | undefined;
-	xaiOauthCredentials?: string | undefined;
+  apiKey?: string | undefined;
+  dietcodeAccountId?: string | undefined;
+  openRouterApiKey?: string | undefined;
+  awsAccessKey?: string | undefined;
+  awsSecretKey?: string | undefined;
+  awsSessionToken?: string | undefined;
+  awsBedrockApiKey?: string | undefined;
+  openAiApiKey?: string | undefined;
+  geminiApiKey?: string | undefined;
+  openAiNativeApiKey?: string | undefined;
+  ollamaApiKey?: string | undefined;
+  deepSeekApiKey?: string | undefined;
+  requestyApiKey?: string | undefined;
+  togetherApiKey?: string | undefined;
+  fireworksApiKey?: string | undefined;
+  qwenApiKey?: string | undefined;
+  doubaoApiKey?: string | undefined;
+  mistralApiKey?: string | undefined;
+  liteLlmApiKey?: string | undefined;
+  authNonce?: string | undefined;
+  asksageApiKey?: string | undefined;
+  xaiApiKey?: string | undefined;
+  moonshotApiKey?: string | undefined;
+  zaiApiKey?: string | undefined;
+  huggingFaceApiKey?: string | undefined;
+  nebiusApiKey?: string | undefined;
+  sambanovaApiKey?: string | undefined;
+  cerebrasApiKey?: string | undefined;
+  sapAiCoreClientId?: string | undefined;
+  sapAiCoreClientSecret?: string | undefined;
+  groqApiKey?: string | undefined;
+  huaweiCloudMaasApiKey?: string | undefined;
+  basetenApiKey?: string | undefined;
+  vercelAiGatewayApiKey?: string | undefined;
+  difyApiKey?: string | undefined;
+  minimaxApiKey?: string | undefined;
+  hicapApiKey?: string | undefined;
+  aihubmixApiKey?: string | undefined;
+  nousResearchApiKey?: string | undefined;
+  remoteLiteLlmApiKey?: string | undefined;
+  ocaApiKey?: string | undefined;
+  ocaRefreshToken?: string | undefined;
+  mcpOAuthSecrets?: string | undefined;
+  dietcodeApiKey?: string | undefined;
+  cloudflareApiToken?: string | undefined;
+  embeddingApiKey?: string | undefined;
+  vertexApiKey?: string | undefined;
+  clineApiKey?: string | undefined;
+  qwenTokenPlanApiKey?: string | undefined;
+  galxApiKey?: string | undefined;
+  openaiCodexOauthCredentials?: string | undefined;
+  xaiOauthCredentials?: string | undefined;
 }
 
 /**
@@ -269,10309 +253,9436 @@ export interface Secrets {
  * script to regenerate this list.
  */
 export interface Settings {
-	openRouterProviderSorting?: string | undefined;
-	planModeApiModelId?: string | undefined;
-	planModeThinkingBudgetTokens?: number | undefined;
-	planModeReasoningEffort?: string | undefined;
-	planModeOpenRouterModelId?: string | undefined;
-	planModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
-	planModeNousResearchModelId?: string | undefined;
-	actModeApiModelId?: string | undefined;
-	actModeThinkingBudgetTokens?: number | undefined;
-	actModeReasoningEffort?: string | undefined;
-	actModeOpenRouterModelId?: string | undefined;
-	actModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
-	actModeNousResearchModelId?: string | undefined;
-	planModeApiProvider?: ApiProvider | undefined;
-	actModeApiProvider?: ApiProvider | undefined;
-	autoApprovalSettings?: AutoApprovalSettings | undefined;
-	globalWorkflowToggles?: string | undefined;
-	globalSkillsToggles?: string | undefined;
-	browserSettings?: BrowserSettings | undefined;
-	telemetrySetting?: string | undefined;
-	planActSeparateModelsSetting?: boolean | undefined;
-	enableCheckpointsSetting?: boolean | undefined;
-	shellIntegrationTimeout?: number | undefined;
-	defaultTerminalProfile?: string | undefined;
-	terminalOutputLineLimit?: number | undefined;
-	maxConsecutiveMistakes?: number | undefined;
-	strictPlanModeEnabled?: boolean | undefined;
-	yoloModeToggled?: boolean | undefined;
-	useAutoCondense?: boolean | undefined;
-	dietcodeWebToolsEnabled?: boolean | undefined;
-	preferredLanguage?: string | undefined;
-	mode?: PlanActMode | undefined;
-	focusChainSettings?: FocusChainSettings | undefined;
-	customPrompt?: string | undefined;
-	subagentsEnabled?: boolean | undefined;
-	enableParallelToolCalling?: boolean | undefined;
-	backgroundEditEnabled?: boolean | undefined;
-	optOutOfRemoteConfig?: boolean | undefined;
-	openTelemetryEnabled?: boolean | undefined;
-	openTelemetryMetricsExporter?: string | undefined;
-	openTelemetryLogsExporter?: string | undefined;
-	openTelemetryOtlpProtocol?: string | undefined;
-	openTelemetryOtlpEndpoint?: string | undefined;
-	openTelemetryOtlpMetricsProtocol?: string | undefined;
-	openTelemetryOtlpMetricsEndpoint?: string | undefined;
-	openTelemetryOtlpLogsProtocol?: string | undefined;
-	openTelemetryOtlpLogsEndpoint?: string | undefined;
-	openTelemetryMetricExportInterval?: number | undefined;
-	openTelemetryOtlpInsecure?: boolean | undefined;
-	openTelemetryLogBatchSize?: number | undefined;
-	openTelemetryLogBatchTimeout?: number | undefined;
-	openTelemetryLogMaxQueueSize?: number | undefined;
-	worktreesEnabled?: boolean | undefined;
-	doubleCheckCompletionEnabled?: boolean | undefined;
-	cloudflareAccountId?: string | undefined;
-	embeddingProvider?: ApiProvider | undefined;
-	embeddingModelId?: string | undefined;
-	embeddingOpenAiBaseUrl?: string | undefined;
-	maxSwarmDepth?: number | undefined;
-	safeYoloModeToggled?: boolean | undefined;
-	masEnabled?: boolean | undefined;
-	globalDietCodeRulesToggles?: string | undefined;
-	auditCompletionGateEnabled?: boolean | undefined;
-	auditCompletionGateThreshold?: number | undefined;
-	auditCompletionGateCriticalOnly?: boolean | undefined;
-	auditActModeAdvisoryEnabled?: boolean | undefined;
-	auditAdvisoryEscalationEnabled?: boolean | undefined;
-	auditPlanRegressionGateEnabled?: boolean | undefined;
-	auditToolOutputAdvisoryEnabled?: boolean | undefined;
-	auditFileWriteAdvisoryEnabled?: boolean | undefined;
-	auditIntentThresholdAdjustmentsEnabled?: boolean | undefined;
-	auditIntentThresholdOverrides?: string | undefined;
-	auditSarifHookExportEnabled?: boolean | undefined;
-	auditWorkspaceArtifactsEnabled?: boolean | undefined;
-	auditAdvisoryAutoScrollMode?: string | undefined;
-	liteLlmBaseUrl?: string | undefined;
-	liteLlmUsePromptCache?: boolean | undefined;
-	anthropicBaseUrl?: string | undefined;
-	awsRegion?: string | undefined;
-	awsUseCrossRegionInference?: boolean | undefined;
-	awsUseGlobalInference?: boolean | undefined;
-	awsBedrockUsePromptCache?: boolean | undefined;
-	awsAuthentication?: string | undefined;
-	awsUseProfile?: boolean | undefined;
-	awsProfile?: string | undefined;
-	awsBedrockEndpoint?: string | undefined;
-	claudeCodePath?: string | undefined;
-	openAiBaseUrl?: string | undefined;
-	ollamaBaseUrl?: string | undefined;
-	ollamaApiOptionsCtxNum?: string | undefined;
-	lmStudioBaseUrl?: string | undefined;
-	lmStudioMaxTokens?: string | undefined;
-	geminiBaseUrl?: string | undefined;
-	requestyBaseUrl?: string | undefined;
-	fireworksModelMaxCompletionTokens?: number | undefined;
-	fireworksModelMaxTokens?: number | undefined;
-	qwenCodeOauthPath?: string | undefined;
-	azureApiVersion?: string | undefined;
-	azureIdentity?: boolean | undefined;
-	qwenApiLine?: string | undefined;
-	moonshotApiLine?: string | undefined;
-	asksageApiUrl?: string | undefined;
-	requestTimeoutMs?: number | undefined;
-	sapAiResourceGroup?: string | undefined;
-	sapAiCoreTokenUrl?: string | undefined;
-	sapAiCoreBaseUrl?: string | undefined;
-	sapAiCoreUseOrchestrationMode?: boolean | undefined;
-	difyBaseUrl?: string | undefined;
-	zaiApiLine?: string | undefined;
-	ocaBaseUrl?: string | undefined;
-	minimaxApiLine?: string | undefined;
-	ocaMode?: string | undefined;
-	aihubmixBaseUrl?: string | undefined;
-	aihubmixAppCode?: string | undefined;
-	geminiPlanModeThinkingLevel?: string | undefined;
-	planModeVerbosity?: string | undefined;
-	planModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
-	planModeAwsBedrockCustomSelected?: boolean | undefined;
-	planModeAwsBedrockCustomModelBaseId?: string | undefined;
-	planModeDietCodeModelId?: string | undefined;
-	planModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
-	planModeOpenAiModelId?: string | undefined;
-	planModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
-	planModeOllamaModelId?: string | undefined;
-	planModeLmStudioModelId?: string | undefined;
-	planModeLiteLlmModelId?: string | undefined;
-	planModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
-	planModeRequestyModelId?: string | undefined;
-	planModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
-	planModeTogetherModelId?: string | undefined;
-	planModeFireworksModelId?: string | undefined;
-	planModeSapAiCoreModelId?: string | undefined;
-	planModeSapAiCoreDeploymentId?: string | undefined;
-	planModeGroqModelId?: string | undefined;
-	planModeGroqModelInfo?: OpenRouterModelInfo | undefined;
-	planModeBasetenModelId?: string | undefined;
-	planModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
-	planModeHuggingFaceModelId?: string | undefined;
-	planModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
-	planModeHuaweiCloudMaasModelId?: string | undefined;
-	planModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
-	planModeOcaModelId?: string | undefined;
-	planModeOcaModelInfo?: OcaModelInfo | undefined;
-	planModeOcaReasoningEffort?: string | undefined;
-	planModeAihubmixModelId?: string | undefined;
-	planModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
-	planModeHicapModelId?: string | undefined;
-	planModeHicapModelInfo?: OpenRouterModelInfo | undefined;
-	planModeVercelAiGatewayModelId?: string | undefined;
-	planModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
-	geminiActModeThinkingLevel?: string | undefined;
-	actModeVerbosity?: string | undefined;
-	actModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
-	actModeAwsBedrockCustomSelected?: boolean | undefined;
-	actModeAwsBedrockCustomModelBaseId?: string | undefined;
-	actModeDietCodeModelId?: string | undefined;
-	actModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
-	actModeOpenAiModelId?: string | undefined;
-	actModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
-	actModeOllamaModelId?: string | undefined;
-	actModeLmStudioModelId?: string | undefined;
-	actModeLiteLlmModelId?: string | undefined;
-	actModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
-	actModeRequestyModelId?: string | undefined;
-	actModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
-	actModeTogetherModelId?: string | undefined;
-	actModeFireworksModelId?: string | undefined;
-	actModeSapAiCoreModelId?: string | undefined;
-	actModeSapAiCoreDeploymentId?: string | undefined;
-	actModeGroqModelId?: string | undefined;
-	actModeGroqModelInfo?: OpenRouterModelInfo | undefined;
-	actModeBasetenModelId?: string | undefined;
-	actModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
-	actModeHuggingFaceModelId?: string | undefined;
-	actModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
-	actModeHuaweiCloudMaasModelId?: string | undefined;
-	actModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
-	actModeOcaModelId?: string | undefined;
-	actModeOcaModelInfo?: OcaModelInfo | undefined;
-	actModeOcaReasoningEffort?: string | undefined;
-	actModeAihubmixModelId?: string | undefined;
-	actModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
-	actModeHicapModelId?: string | undefined;
-	actModeHicapModelInfo?: OpenRouterModelInfo | undefined;
-	actModeVercelAiGatewayModelId?: string | undefined;
-	actModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
-	hicapModelId?: string | undefined;
-	lmStudioModelId?: string | undefined;
-	planModeClinePassModelId?: string | undefined;
-	planModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
-	actModeClinePassModelId?: string | undefined;
-	actModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
-	modEnabled?: boolean | undefined;
-	modOutcome?: string | undefined;
-	planModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
-	actModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
-	galxBaseUrl?: string | undefined;
-	planModeGalxModelId?: string | undefined;
-	planModeGalxModelInfo?: OpenRouterModelInfo | undefined;
-	actModeGalxModelId?: string | undefined;
-	actModeGalxModelInfo?: OpenRouterModelInfo | undefined;
-	openAiHeaders: { [key: string]: string };
+  openRouterProviderSorting?: string | undefined;
+  planModeApiModelId?: string | undefined;
+  planModeThinkingBudgetTokens?: number | undefined;
+  planModeReasoningEffort?: string | undefined;
+  planModeOpenRouterModelId?: string | undefined;
+  planModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
+  planModeNousResearchModelId?: string | undefined;
+  actModeApiModelId?: string | undefined;
+  actModeThinkingBudgetTokens?: number | undefined;
+  actModeReasoningEffort?: string | undefined;
+  actModeOpenRouterModelId?: string | undefined;
+  actModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
+  actModeNousResearchModelId?: string | undefined;
+  planModeApiProvider?: ApiProvider | undefined;
+  actModeApiProvider?: ApiProvider | undefined;
+  autoApprovalSettings?: AutoApprovalSettings | undefined;
+  globalWorkflowToggles?: string | undefined;
+  globalSkillsToggles?: string | undefined;
+  browserSettings?: BrowserSettings | undefined;
+  telemetrySetting?: string | undefined;
+  planActSeparateModelsSetting?: boolean | undefined;
+  enableCheckpointsSetting?: boolean | undefined;
+  shellIntegrationTimeout?: number | undefined;
+  defaultTerminalProfile?: string | undefined;
+  terminalOutputLineLimit?: number | undefined;
+  maxConsecutiveMistakes?: number | undefined;
+  strictPlanModeEnabled?: boolean | undefined;
+  yoloModeToggled?: boolean | undefined;
+  useAutoCondense?: boolean | undefined;
+  dietcodeWebToolsEnabled?: boolean | undefined;
+  preferredLanguage?: string | undefined;
+  mode?: PlanActMode | undefined;
+  focusChainSettings?: FocusChainSettings | undefined;
+  customPrompt?: string | undefined;
+  subagentsEnabled?: boolean | undefined;
+  enableParallelToolCalling?: boolean | undefined;
+  backgroundEditEnabled?: boolean | undefined;
+  optOutOfRemoteConfig?: boolean | undefined;
+  openTelemetryEnabled?: boolean | undefined;
+  openTelemetryMetricsExporter?: string | undefined;
+  openTelemetryLogsExporter?: string | undefined;
+  openTelemetryOtlpProtocol?: string | undefined;
+  openTelemetryOtlpEndpoint?: string | undefined;
+  openTelemetryOtlpMetricsProtocol?: string | undefined;
+  openTelemetryOtlpMetricsEndpoint?: string | undefined;
+  openTelemetryOtlpLogsProtocol?: string | undefined;
+  openTelemetryOtlpLogsEndpoint?: string | undefined;
+  openTelemetryMetricExportInterval?: number | undefined;
+  openTelemetryOtlpInsecure?: boolean | undefined;
+  openTelemetryLogBatchSize?: number | undefined;
+  openTelemetryLogBatchTimeout?: number | undefined;
+  openTelemetryLogMaxQueueSize?: number | undefined;
+  worktreesEnabled?: boolean | undefined;
+  doubleCheckCompletionEnabled?: boolean | undefined;
+  cloudflareAccountId?: string | undefined;
+  embeddingProvider?: ApiProvider | undefined;
+  embeddingModelId?: string | undefined;
+  embeddingOpenAiBaseUrl?: string | undefined;
+  maxSwarmDepth?: number | undefined;
+  safeYoloModeToggled?: boolean | undefined;
+  masEnabled?: boolean | undefined;
+  globalDietCodeRulesToggles?: string | undefined;
+  auditCompletionGateEnabled?: boolean | undefined;
+  auditCompletionGateThreshold?: number | undefined;
+  auditCompletionGateCriticalOnly?: boolean | undefined;
+  auditActModeAdvisoryEnabled?: boolean | undefined;
+  auditAdvisoryEscalationEnabled?: boolean | undefined;
+  auditPlanRegressionGateEnabled?: boolean | undefined;
+  auditToolOutputAdvisoryEnabled?: boolean | undefined;
+  auditFileWriteAdvisoryEnabled?: boolean | undefined;
+  auditIntentThresholdAdjustmentsEnabled?: boolean | undefined;
+  auditIntentThresholdOverrides?: string | undefined;
+  auditSarifHookExportEnabled?: boolean | undefined;
+  auditWorkspaceArtifactsEnabled?: boolean | undefined;
+  auditAdvisoryAutoScrollMode?: string | undefined;
+  liteLlmBaseUrl?: string | undefined;
+  liteLlmUsePromptCache?: boolean | undefined;
+  anthropicBaseUrl?: string | undefined;
+  awsRegion?: string | undefined;
+  awsUseCrossRegionInference?: boolean | undefined;
+  awsUseGlobalInference?: boolean | undefined;
+  awsBedrockUsePromptCache?: boolean | undefined;
+  awsAuthentication?: string | undefined;
+  awsUseProfile?: boolean | undefined;
+  awsProfile?: string | undefined;
+  awsBedrockEndpoint?: string | undefined;
+  claudeCodePath?: string | undefined;
+  openAiBaseUrl?: string | undefined;
+  ollamaBaseUrl?: string | undefined;
+  ollamaApiOptionsCtxNum?: string | undefined;
+  lmStudioBaseUrl?: string | undefined;
+  lmStudioMaxTokens?: string | undefined;
+  geminiBaseUrl?: string | undefined;
+  requestyBaseUrl?: string | undefined;
+  fireworksModelMaxCompletionTokens?: number | undefined;
+  fireworksModelMaxTokens?: number | undefined;
+  qwenCodeOauthPath?: string | undefined;
+  azureApiVersion?: string | undefined;
+  azureIdentity?: boolean | undefined;
+  qwenApiLine?: string | undefined;
+  moonshotApiLine?: string | undefined;
+  asksageApiUrl?: string | undefined;
+  requestTimeoutMs?: number | undefined;
+  sapAiResourceGroup?: string | undefined;
+  sapAiCoreTokenUrl?: string | undefined;
+  sapAiCoreBaseUrl?: string | undefined;
+  sapAiCoreUseOrchestrationMode?: boolean | undefined;
+  difyBaseUrl?: string | undefined;
+  zaiApiLine?: string | undefined;
+  ocaBaseUrl?: string | undefined;
+  minimaxApiLine?: string | undefined;
+  ocaMode?: string | undefined;
+  aihubmixBaseUrl?: string | undefined;
+  aihubmixAppCode?: string | undefined;
+  geminiPlanModeThinkingLevel?: string | undefined;
+  planModeVerbosity?: string | undefined;
+  planModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
+  planModeAwsBedrockCustomSelected?: boolean | undefined;
+  planModeAwsBedrockCustomModelBaseId?: string | undefined;
+  planModeDietCodeModelId?: string | undefined;
+  planModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
+  planModeOpenAiModelId?: string | undefined;
+  planModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
+  planModeOllamaModelId?: string | undefined;
+  planModeLmStudioModelId?: string | undefined;
+  planModeLiteLlmModelId?: string | undefined;
+  planModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
+  planModeRequestyModelId?: string | undefined;
+  planModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  planModeTogetherModelId?: string | undefined;
+  planModeFireworksModelId?: string | undefined;
+  planModeSapAiCoreModelId?: string | undefined;
+  planModeSapAiCoreDeploymentId?: string | undefined;
+  planModeGroqModelId?: string | undefined;
+  planModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  planModeBasetenModelId?: string | undefined;
+  planModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuggingFaceModelId?: string | undefined;
+  planModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuaweiCloudMaasModelId?: string | undefined;
+  planModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  planModeOcaModelId?: string | undefined;
+  planModeOcaModelInfo?: OcaModelInfo | undefined;
+  planModeOcaReasoningEffort?: string | undefined;
+  planModeAihubmixModelId?: string | undefined;
+  planModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
+  planModeHicapModelId?: string | undefined;
+  planModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  planModeVercelAiGatewayModelId?: string | undefined;
+  planModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  geminiActModeThinkingLevel?: string | undefined;
+  actModeVerbosity?: string | undefined;
+  actModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
+  actModeAwsBedrockCustomSelected?: boolean | undefined;
+  actModeAwsBedrockCustomModelBaseId?: string | undefined;
+  actModeDietCodeModelId?: string | undefined;
+  actModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
+  actModeOpenAiModelId?: string | undefined;
+  actModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
+  actModeOllamaModelId?: string | undefined;
+  actModeLmStudioModelId?: string | undefined;
+  actModeLiteLlmModelId?: string | undefined;
+  actModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
+  actModeRequestyModelId?: string | undefined;
+  actModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  actModeTogetherModelId?: string | undefined;
+  actModeFireworksModelId?: string | undefined;
+  actModeSapAiCoreModelId?: string | undefined;
+  actModeSapAiCoreDeploymentId?: string | undefined;
+  actModeGroqModelId?: string | undefined;
+  actModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  actModeBasetenModelId?: string | undefined;
+  actModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuggingFaceModelId?: string | undefined;
+  actModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuaweiCloudMaasModelId?: string | undefined;
+  actModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  actModeOcaModelId?: string | undefined;
+  actModeOcaModelInfo?: OcaModelInfo | undefined;
+  actModeOcaReasoningEffort?: string | undefined;
+  actModeAihubmixModelId?: string | undefined;
+  actModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
+  actModeHicapModelId?: string | undefined;
+  actModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  actModeVercelAiGatewayModelId?: string | undefined;
+  actModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  hicapModelId?: string | undefined;
+  lmStudioModelId?: string | undefined;
+  planModeClinePassModelId?: string | undefined;
+  planModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
+  actModeClinePassModelId?: string | undefined;
+  actModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
+  modEnabled?: boolean | undefined;
+  modOutcome?: string | undefined;
+  planModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
+  actModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
+  galxBaseUrl?: string | undefined;
+  planModeGalxModelId?: string | undefined;
+  planModeGalxModelInfo?: OpenRouterModelInfo | undefined;
+  actModeGalxModelId?: string | undefined;
+  actModeGalxModelInfo?: OpenRouterModelInfo | undefined;
+  openAiHeaders: { [key: string]: string };
+  tokenCompressionEnabled?: boolean | undefined;
 }
 
 export interface Settings_OpenAiHeadersEntry {
-	key: string;
-	value: string;
+  key: string;
+  value: string;
 }
 
 export interface State {
-	stateJson: string;
+  stateJson: string;
 }
 
 export interface TerminalProfiles {
-	profiles: TerminalProfile[];
+  profiles: TerminalProfile[];
 }
 
 export interface TerminalProfile {
-	id: string;
-	name: string;
-	path?: string | undefined;
-	description?: string | undefined;
+  id: string;
+  name: string;
+  path?: string | undefined;
+  description?: string | undefined;
 }
 
 export interface TerminalProfileUpdateResponse {
-	closedCount: number;
-	busyTerminalsCount: number;
-	hasBusyTerminals: boolean;
+  closedCount: number;
+  busyTerminalsCount: number;
+  hasBusyTerminals: boolean;
 }
 
 export interface TogglePlanActModeRequest {
-	metadata: Metadata | undefined;
-	mode: PlanActMode;
-	chatContent?: ChatContent | undefined;
+  metadata: Metadata | undefined;
+  mode: PlanActMode;
+  chatContent?: ChatContent | undefined;
 }
 
 export interface ChatContent {
-	message?: string | undefined;
-	images: string[];
-	files: string[];
+  message?: string | undefined;
+  images: string[];
+  files: string[];
 }
 
 export interface ResetStateRequest {
-	metadata: Metadata | undefined;
-	global?: boolean | undefined;
+  metadata: Metadata | undefined;
+  global?: boolean | undefined;
 }
 
 export interface AutoApprovalSettingsRequest {
-	metadata: Metadata | undefined;
-	version: number;
-	actions: AutoApprovalActions | undefined;
-	enableNotifications: boolean;
+  metadata: Metadata | undefined;
+  version: number;
+  actions: AutoApprovalActions | undefined;
+  enableNotifications: boolean;
 }
 
 export interface TelemetrySettingRequest {
-	metadata: Metadata | undefined;
-	setting: TelemetrySettingEnum;
+  metadata: Metadata | undefined;
+  setting: TelemetrySettingEnum;
 }
 
 /** Browser settings for UpdateSettingsRequest */
 export interface BrowserSettingsUpdate {
-	viewport?: Viewport | undefined;
-	remoteBrowserHost?: string | undefined;
-	remoteBrowserEnabled?: boolean | undefined;
-	chromeExecutablePath?: string | undefined;
-	disableToolUse?: boolean | undefined;
-	customArgs?: string | undefined;
+  viewport?: Viewport | undefined;
+  remoteBrowserHost?: string | undefined;
+  remoteBrowserEnabled?: boolean | undefined;
+  chromeExecutablePath?: string | undefined;
+  disableToolUse?: boolean | undefined;
+  customArgs?: string | undefined;
 }
 
 export interface UpdateTaskSettingsRequest {
-	metadata: Metadata | undefined;
-	settings?: Settings | undefined;
-	taskId?: string | undefined;
+  metadata: Metadata | undefined;
+  settings?: Settings | undefined;
+  taskId?: string | undefined;
 }
 
 /** Message for updating settings */
 export interface UpdateSettingsRequest {
-	metadata: Metadata | undefined;
-	apiConfiguration?: ModelsApiConfiguration | undefined;
-	telemetrySetting?: string | undefined;
-	planActSeparateModelsSetting?: boolean | undefined;
-	enableCheckpointsSetting?: boolean | undefined;
-	mcpMarketplaceEnabled?: boolean | undefined;
-	shellIntegrationTimeout?: number | undefined;
-	terminalReuseEnabled?: boolean | undefined;
-	mcpResponsesCollapsed?: boolean | undefined;
-	mcpDisplayMode?: McpDisplayMode | undefined;
-	terminalOutputLineLimit?: number | undefined;
-	mode?: PlanActMode | undefined;
-	preferredLanguage?: string | undefined;
-	strictPlanModeEnabled?: boolean | undefined;
-	focusChainSettings?: FocusChainSettings | undefined;
-	useAutoCondense?: boolean | undefined;
-	customPrompt?: string | undefined;
-	browserSettings?: BrowserSettingsUpdate | undefined;
-	defaultTerminalProfile?: string | undefined;
-	yoloModeToggled?: boolean | undefined;
-	multiRootEnabled?: boolean | undefined;
-	vscodeTerminalExecutionMode?: string | undefined;
-	maxConsecutiveMistakes?: number | undefined;
-	subagentsEnabled?: boolean | undefined;
-	subagentTerminalOutputLineLimit?: number | undefined;
-	dietcodeEnv?: string | undefined;
-	nativeToolCallEnabled?: boolean | undefined;
-	/** Field 33 (onboarding_models) removed */
-	dietcodeWebToolsEnabled?: boolean | undefined;
-	enableParallelToolCalling?: boolean | undefined;
-	backgroundEditEnabled?: boolean | undefined;
-	ocaReasoningEffort?: string | undefined;
-	optOutOfRemoteConfig?: boolean | undefined;
-	worktreesEnabled?: boolean | undefined;
-	doubleCheckCompletionEnabled?: boolean | undefined;
-	auditCompletionGateEnabled?: boolean | undefined;
-	auditCompletionGateThreshold?: number | undefined;
-	auditCompletionGateCriticalOnly?: boolean | undefined;
-	auditActModeAdvisoryEnabled?: boolean | undefined;
-	auditAdvisoryEscalationEnabled?: boolean | undefined;
-	auditAdvisoryAutoScrollMode?: string | undefined;
-	auditPlanRegressionGateEnabled?: boolean | undefined;
-	auditToolOutputAdvisoryEnabled?: boolean | undefined;
-	auditFileWriteAdvisoryEnabled?: boolean | undefined;
-	auditIntentThresholdAdjustmentsEnabled?: boolean | undefined;
-	auditIntentThresholdOverrides?: string | undefined;
-	auditSarifHookExportEnabled?: boolean | undefined;
-	auditWorkspaceArtifactsEnabled?: boolean | undefined;
-	modEnabled?: boolean | undefined;
-	modOutcome?: string | undefined;
+  metadata: Metadata | undefined;
+  apiConfiguration?: ModelsApiConfiguration | undefined;
+  telemetrySetting?: string | undefined;
+  planActSeparateModelsSetting?: boolean | undefined;
+  enableCheckpointsSetting?: boolean | undefined;
+  mcpMarketplaceEnabled?: boolean | undefined;
+  shellIntegrationTimeout?: number | undefined;
+  terminalReuseEnabled?: boolean | undefined;
+  mcpResponsesCollapsed?: boolean | undefined;
+  mcpDisplayMode?: McpDisplayMode | undefined;
+  terminalOutputLineLimit?: number | undefined;
+  mode?: PlanActMode | undefined;
+  preferredLanguage?: string | undefined;
+  strictPlanModeEnabled?: boolean | undefined;
+  focusChainSettings?: FocusChainSettings | undefined;
+  useAutoCondense?: boolean | undefined;
+  customPrompt?: string | undefined;
+  browserSettings?: BrowserSettingsUpdate | undefined;
+  defaultTerminalProfile?: string | undefined;
+  yoloModeToggled?: boolean | undefined;
+  multiRootEnabled?: boolean | undefined;
+  vscodeTerminalExecutionMode?: string | undefined;
+  maxConsecutiveMistakes?: number | undefined;
+  subagentsEnabled?: boolean | undefined;
+  subagentTerminalOutputLineLimit?: number | undefined;
+  dietcodeEnv?: string | undefined;
+  nativeToolCallEnabled?:
+    | boolean
+    | undefined;
+  /** Field 33 (onboarding_models) removed */
+  dietcodeWebToolsEnabled?: boolean | undefined;
+  enableParallelToolCalling?: boolean | undefined;
+  backgroundEditEnabled?: boolean | undefined;
+  ocaReasoningEffort?: string | undefined;
+  optOutOfRemoteConfig?: boolean | undefined;
+  worktreesEnabled?: boolean | undefined;
+  doubleCheckCompletionEnabled?: boolean | undefined;
+  auditCompletionGateEnabled?: boolean | undefined;
+  auditCompletionGateThreshold?: number | undefined;
+  auditCompletionGateCriticalOnly?: boolean | undefined;
+  auditActModeAdvisoryEnabled?: boolean | undefined;
+  auditAdvisoryEscalationEnabled?: boolean | undefined;
+  auditAdvisoryAutoScrollMode?: string | undefined;
+  auditPlanRegressionGateEnabled?: boolean | undefined;
+  auditToolOutputAdvisoryEnabled?: boolean | undefined;
+  auditFileWriteAdvisoryEnabled?: boolean | undefined;
+  auditIntentThresholdAdjustmentsEnabled?: boolean | undefined;
+  auditIntentThresholdOverrides?: string | undefined;
+  auditSarifHookExportEnabled?: boolean | undefined;
+  auditWorkspaceArtifactsEnabled?: boolean | undefined;
+  modEnabled?: boolean | undefined;
+  modOutcome?: string | undefined;
+  tokenCompressionEnabled?: boolean | undefined;
 }
 
 export interface UpdateTerminalConnectionTimeoutRequest {
-	timeoutMs?: number | undefined;
+  timeoutMs?: number | undefined;
 }
 
 export interface FocusChainSettings {
-	enabled: boolean;
-	remindDietcodeInterval: number;
+  enabled: boolean;
+  remindDietcodeInterval: number;
 }
 
 export interface UpdateTerminalConnectionTimeoutResponse {
-	timeoutMs?: number | undefined;
+  timeoutMs?: number | undefined;
 }
 
 export interface ProcessInfo {
-	processId: number;
-	version?: string | undefined;
-	uptimeMs?: number | undefined;
+  processId: number;
+  version?: string | undefined;
+  uptimeMs?: number | undefined;
 }
 
 export interface TrackBannerEventRequest {
-	bannerId: string;
-	eventType: string;
+  bannerId: string;
+  eventType: string;
 }
 
 /** Result of a connection test (OTEL, prompt uploading, etc.) */
 export interface TestConnectionResult {
-	success: boolean;
-	message?: string | undefined;
-	error?: string | undefined;
+  success: boolean;
+  message?: string | undefined;
+  error?: string | undefined;
 }
 
 function createBaseAutoApprovalActions(): AutoApprovalActions {
-	return {
-		readFiles: undefined,
-		readFilesExternally: undefined,
-		editFiles: undefined,
-		editFilesExternally: undefined,
-		executeSafeCommands: undefined,
-		executeAllCommands: undefined,
-		useBrowser: undefined,
-		useMcp: undefined,
-	};
+  return {
+    readFiles: undefined,
+    readFilesExternally: undefined,
+    editFiles: undefined,
+    editFilesExternally: undefined,
+    executeSafeCommands: undefined,
+    executeAllCommands: undefined,
+    useBrowser: undefined,
+    useMcp: undefined,
+  };
 }
 
 export const AutoApprovalActions: MessageFns<AutoApprovalActions> = {
-	encode(
-		message: AutoApprovalActions,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.readFiles !== undefined) {
-			writer.uint32(8).bool(message.readFiles);
-		}
-		if (message.readFilesExternally !== undefined) {
-			writer.uint32(16).bool(message.readFilesExternally);
-		}
-		if (message.editFiles !== undefined) {
-			writer.uint32(24).bool(message.editFiles);
-		}
-		if (message.editFilesExternally !== undefined) {
-			writer.uint32(32).bool(message.editFilesExternally);
-		}
-		if (message.executeSafeCommands !== undefined) {
-			writer.uint32(40).bool(message.executeSafeCommands);
-		}
-		if (message.executeAllCommands !== undefined) {
-			writer.uint32(48).bool(message.executeAllCommands);
-		}
-		if (message.useBrowser !== undefined) {
-			writer.uint32(56).bool(message.useBrowser);
-		}
-		if (message.useMcp !== undefined) {
-			writer.uint32(64).bool(message.useMcp);
-		}
-		return writer;
-	},
+  encode(message: AutoApprovalActions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.readFiles !== undefined) {
+      writer.uint32(8).bool(message.readFiles);
+    }
+    if (message.readFilesExternally !== undefined) {
+      writer.uint32(16).bool(message.readFilesExternally);
+    }
+    if (message.editFiles !== undefined) {
+      writer.uint32(24).bool(message.editFiles);
+    }
+    if (message.editFilesExternally !== undefined) {
+      writer.uint32(32).bool(message.editFilesExternally);
+    }
+    if (message.executeSafeCommands !== undefined) {
+      writer.uint32(40).bool(message.executeSafeCommands);
+    }
+    if (message.executeAllCommands !== undefined) {
+      writer.uint32(48).bool(message.executeAllCommands);
+    }
+    if (message.useBrowser !== undefined) {
+      writer.uint32(56).bool(message.useBrowser);
+    }
+    if (message.useMcp !== undefined) {
+      writer.uint32(64).bool(message.useMcp);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): AutoApprovalActions {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseAutoApprovalActions();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): AutoApprovalActions {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseAutoApprovalActions();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.readFiles = reader.bool();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.readFiles = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.readFilesExternally = reader.bool();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.readFilesExternally = reader.bool();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.editFiles = reader.bool();
-						continue;
-					}
-					case 4: {
-						if (tag !== 32) {
-							break;
-						}
+            message.editFiles = reader.bool();
+            continue;
+          }
+          case 4: {
+            if (tag !== 32) {
+              break;
+            }
 
-						message.editFilesExternally = reader.bool();
-						continue;
-					}
-					case 5: {
-						if (tag !== 40) {
-							break;
-						}
+            message.editFilesExternally = reader.bool();
+            continue;
+          }
+          case 5: {
+            if (tag !== 40) {
+              break;
+            }
 
-						message.executeSafeCommands = reader.bool();
-						continue;
-					}
-					case 6: {
-						if (tag !== 48) {
-							break;
-						}
+            message.executeSafeCommands = reader.bool();
+            continue;
+          }
+          case 6: {
+            if (tag !== 48) {
+              break;
+            }
 
-						message.executeAllCommands = reader.bool();
-						continue;
-					}
-					case 7: {
-						if (tag !== 56) {
-							break;
-						}
+            message.executeAllCommands = reader.bool();
+            continue;
+          }
+          case 7: {
+            if (tag !== 56) {
+              break;
+            }
 
-						message.useBrowser = reader.bool();
-						continue;
-					}
-					case 8: {
-						if (tag !== 64) {
-							break;
-						}
+            message.useBrowser = reader.bool();
+            continue;
+          }
+          case 8: {
+            if (tag !== 64) {
+              break;
+            }
 
-						message.useMcp = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.useMcp = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): AutoApprovalActions {
-		return {
-			readFiles: isSet(object.readFiles)
-				? globalThis.Boolean(object.readFiles)
-				: isSet(object.read_files)
-					? globalThis.Boolean(object.read_files)
-					: undefined,
-			readFilesExternally: isSet(object.readFilesExternally)
-				? globalThis.Boolean(object.readFilesExternally)
-				: isSet(object.read_files_externally)
-					? globalThis.Boolean(object.read_files_externally)
-					: undefined,
-			editFiles: isSet(object.editFiles)
-				? globalThis.Boolean(object.editFiles)
-				: isSet(object.edit_files)
-					? globalThis.Boolean(object.edit_files)
-					: undefined,
-			editFilesExternally: isSet(object.editFilesExternally)
-				? globalThis.Boolean(object.editFilesExternally)
-				: isSet(object.edit_files_externally)
-					? globalThis.Boolean(object.edit_files_externally)
-					: undefined,
-			executeSafeCommands: isSet(object.executeSafeCommands)
-				? globalThis.Boolean(object.executeSafeCommands)
-				: isSet(object.execute_safe_commands)
-					? globalThis.Boolean(object.execute_safe_commands)
-					: undefined,
-			executeAllCommands: isSet(object.executeAllCommands)
-				? globalThis.Boolean(object.executeAllCommands)
-				: isSet(object.execute_all_commands)
-					? globalThis.Boolean(object.execute_all_commands)
-					: undefined,
-			useBrowser: isSet(object.useBrowser)
-				? globalThis.Boolean(object.useBrowser)
-				: isSet(object.use_browser)
-					? globalThis.Boolean(object.use_browser)
-					: undefined,
-			useMcp: isSet(object.useMcp)
-				? globalThis.Boolean(object.useMcp)
-				: isSet(object.use_mcp)
-					? globalThis.Boolean(object.use_mcp)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): AutoApprovalActions {
+    return {
+      readFiles: isSet(object.readFiles)
+        ? globalThis.Boolean(object.readFiles)
+        : isSet(object.read_files)
+        ? globalThis.Boolean(object.read_files)
+        : undefined,
+      readFilesExternally: isSet(object.readFilesExternally)
+        ? globalThis.Boolean(object.readFilesExternally)
+        : isSet(object.read_files_externally)
+        ? globalThis.Boolean(object.read_files_externally)
+        : undefined,
+      editFiles: isSet(object.editFiles)
+        ? globalThis.Boolean(object.editFiles)
+        : isSet(object.edit_files)
+        ? globalThis.Boolean(object.edit_files)
+        : undefined,
+      editFilesExternally: isSet(object.editFilesExternally)
+        ? globalThis.Boolean(object.editFilesExternally)
+        : isSet(object.edit_files_externally)
+        ? globalThis.Boolean(object.edit_files_externally)
+        : undefined,
+      executeSafeCommands: isSet(object.executeSafeCommands)
+        ? globalThis.Boolean(object.executeSafeCommands)
+        : isSet(object.execute_safe_commands)
+        ? globalThis.Boolean(object.execute_safe_commands)
+        : undefined,
+      executeAllCommands: isSet(object.executeAllCommands)
+        ? globalThis.Boolean(object.executeAllCommands)
+        : isSet(object.execute_all_commands)
+        ? globalThis.Boolean(object.execute_all_commands)
+        : undefined,
+      useBrowser: isSet(object.useBrowser)
+        ? globalThis.Boolean(object.useBrowser)
+        : isSet(object.use_browser)
+        ? globalThis.Boolean(object.use_browser)
+        : undefined,
+      useMcp: isSet(object.useMcp)
+        ? globalThis.Boolean(object.useMcp)
+        : isSet(object.use_mcp)
+        ? globalThis.Boolean(object.use_mcp)
+        : undefined,
+    };
+  },
 
-	toJSON(message: AutoApprovalActions): unknown {
-		const obj: any = {};
-		if (message.readFiles !== undefined) {
-			obj.readFiles = message.readFiles;
-		}
-		if (message.readFilesExternally !== undefined) {
-			obj.readFilesExternally = message.readFilesExternally;
-		}
-		if (message.editFiles !== undefined) {
-			obj.editFiles = message.editFiles;
-		}
-		if (message.editFilesExternally !== undefined) {
-			obj.editFilesExternally = message.editFilesExternally;
-		}
-		if (message.executeSafeCommands !== undefined) {
-			obj.executeSafeCommands = message.executeSafeCommands;
-		}
-		if (message.executeAllCommands !== undefined) {
-			obj.executeAllCommands = message.executeAllCommands;
-		}
-		if (message.useBrowser !== undefined) {
-			obj.useBrowser = message.useBrowser;
-		}
-		if (message.useMcp !== undefined) {
-			obj.useMcp = message.useMcp;
-		}
-		return obj;
-	},
+  toJSON(message: AutoApprovalActions): unknown {
+    const obj: any = {};
+    if (message.readFiles !== undefined) {
+      obj.readFiles = message.readFiles;
+    }
+    if (message.readFilesExternally !== undefined) {
+      obj.readFilesExternally = message.readFilesExternally;
+    }
+    if (message.editFiles !== undefined) {
+      obj.editFiles = message.editFiles;
+    }
+    if (message.editFilesExternally !== undefined) {
+      obj.editFilesExternally = message.editFilesExternally;
+    }
+    if (message.executeSafeCommands !== undefined) {
+      obj.executeSafeCommands = message.executeSafeCommands;
+    }
+    if (message.executeAllCommands !== undefined) {
+      obj.executeAllCommands = message.executeAllCommands;
+    }
+    if (message.useBrowser !== undefined) {
+      obj.useBrowser = message.useBrowser;
+    }
+    if (message.useMcp !== undefined) {
+      obj.useMcp = message.useMcp;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<AutoApprovalActions>, I>>(
-		base?: I,
-	): AutoApprovalActions {
-		return AutoApprovalActions.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<AutoApprovalActions>, I>>(
-		object: I,
-	): AutoApprovalActions {
-		const message = createBaseAutoApprovalActions();
-		message.readFiles = object.readFiles ?? undefined;
-		message.readFilesExternally = object.readFilesExternally ?? undefined;
-		message.editFiles = object.editFiles ?? undefined;
-		message.editFilesExternally = object.editFilesExternally ?? undefined;
-		message.executeSafeCommands = object.executeSafeCommands ?? undefined;
-		message.executeAllCommands = object.executeAllCommands ?? undefined;
-		message.useBrowser = object.useBrowser ?? undefined;
-		message.useMcp = object.useMcp ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<AutoApprovalActions>, I>>(base?: I): AutoApprovalActions {
+    return AutoApprovalActions.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AutoApprovalActions>, I>>(object: I): AutoApprovalActions {
+    const message = createBaseAutoApprovalActions();
+    message.readFiles = object.readFiles ?? undefined;
+    message.readFilesExternally = object.readFilesExternally ?? undefined;
+    message.editFiles = object.editFiles ?? undefined;
+    message.editFilesExternally = object.editFilesExternally ?? undefined;
+    message.executeSafeCommands = object.executeSafeCommands ?? undefined;
+    message.executeAllCommands = object.executeAllCommands ?? undefined;
+    message.useBrowser = object.useBrowser ?? undefined;
+    message.useMcp = object.useMcp ?? undefined;
+    return message;
+  },
 };
 
 function createBaseAutoApprovalSettings(): AutoApprovalSettings {
-	return { version: 0, actions: undefined, enableNotifications: undefined };
+  return { version: 0, actions: undefined, enableNotifications: undefined };
 }
 
 export const AutoApprovalSettings: MessageFns<AutoApprovalSettings> = {
-	encode(
-		message: AutoApprovalSettings,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.version !== 0) {
-			writer.uint32(8).int32(message.version);
-		}
-		if (message.actions !== undefined) {
-			AutoApprovalActions.encode(
-				message.actions,
-				writer.uint32(18).fork(),
-			).join();
-		}
-		if (message.enableNotifications !== undefined) {
-			writer.uint32(24).bool(message.enableNotifications);
-		}
-		return writer;
-	},
+  encode(message: AutoApprovalSettings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.version !== 0) {
+      writer.uint32(8).int32(message.version);
+    }
+    if (message.actions !== undefined) {
+      AutoApprovalActions.encode(message.actions, writer.uint32(18).fork()).join();
+    }
+    if (message.enableNotifications !== undefined) {
+      writer.uint32(24).bool(message.enableNotifications);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): AutoApprovalSettings {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseAutoApprovalSettings();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): AutoApprovalSettings {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseAutoApprovalSettings();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.version = reader.int32();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.version = reader.int32();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.actions = AutoApprovalActions.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.actions = AutoApprovalActions.decode(reader, reader.uint32());
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.enableNotifications = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.enableNotifications = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): AutoApprovalSettings {
-		return {
-			version: isSet(object.version) ? globalThis.Number(object.version) : 0,
-			actions: isSet(object.actions)
-				? AutoApprovalActions.fromJSON(object.actions)
-				: undefined,
-			enableNotifications: isSet(object.enableNotifications)
-				? globalThis.Boolean(object.enableNotifications)
-				: isSet(object.enable_notifications)
-					? globalThis.Boolean(object.enable_notifications)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): AutoApprovalSettings {
+    return {
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      actions: isSet(object.actions) ? AutoApprovalActions.fromJSON(object.actions) : undefined,
+      enableNotifications: isSet(object.enableNotifications)
+        ? globalThis.Boolean(object.enableNotifications)
+        : isSet(object.enable_notifications)
+        ? globalThis.Boolean(object.enable_notifications)
+        : undefined,
+    };
+  },
 
-	toJSON(message: AutoApprovalSettings): unknown {
-		const obj: any = {};
-		if (message.version !== 0) {
-			obj.version = Math.round(message.version);
-		}
-		if (message.actions !== undefined) {
-			obj.actions = AutoApprovalActions.toJSON(message.actions);
-		}
-		if (message.enableNotifications !== undefined) {
-			obj.enableNotifications = message.enableNotifications;
-		}
-		return obj;
-	},
+  toJSON(message: AutoApprovalSettings): unknown {
+    const obj: any = {};
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.actions !== undefined) {
+      obj.actions = AutoApprovalActions.toJSON(message.actions);
+    }
+    if (message.enableNotifications !== undefined) {
+      obj.enableNotifications = message.enableNotifications;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<AutoApprovalSettings>, I>>(
-		base?: I,
-	): AutoApprovalSettings {
-		return AutoApprovalSettings.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<AutoApprovalSettings>, I>>(
-		object: I,
-	): AutoApprovalSettings {
-		const message = createBaseAutoApprovalSettings();
-		message.version = object.version ?? 0;
-		message.actions =
-			object.actions !== undefined && object.actions !== null
-				? AutoApprovalActions.fromPartial(object.actions)
-				: undefined;
-		message.enableNotifications = object.enableNotifications ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<AutoApprovalSettings>, I>>(base?: I): AutoApprovalSettings {
+    return AutoApprovalSettings.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AutoApprovalSettings>, I>>(object: I): AutoApprovalSettings {
+    const message = createBaseAutoApprovalSettings();
+    message.version = object.version ?? 0;
+    message.actions = (object.actions !== undefined && object.actions !== null)
+      ? AutoApprovalActions.fromPartial(object.actions)
+      : undefined;
+    message.enableNotifications = object.enableNotifications ?? undefined;
+    return message;
+  },
 };
 
 function createBaseSecrets(): Secrets {
-	return {
-		apiKey: undefined,
-		dietcodeAccountId: undefined,
-		openRouterApiKey: undefined,
-		awsAccessKey: undefined,
-		awsSecretKey: undefined,
-		awsSessionToken: undefined,
-		awsBedrockApiKey: undefined,
-		openAiApiKey: undefined,
-		geminiApiKey: undefined,
-		openAiNativeApiKey: undefined,
-		ollamaApiKey: undefined,
-		deepSeekApiKey: undefined,
-		requestyApiKey: undefined,
-		togetherApiKey: undefined,
-		fireworksApiKey: undefined,
-		qwenApiKey: undefined,
-		doubaoApiKey: undefined,
-		mistralApiKey: undefined,
-		liteLlmApiKey: undefined,
-		authNonce: undefined,
-		asksageApiKey: undefined,
-		xaiApiKey: undefined,
-		moonshotApiKey: undefined,
-		zaiApiKey: undefined,
-		huggingFaceApiKey: undefined,
-		nebiusApiKey: undefined,
-		sambanovaApiKey: undefined,
-		cerebrasApiKey: undefined,
-		sapAiCoreClientId: undefined,
-		sapAiCoreClientSecret: undefined,
-		groqApiKey: undefined,
-		huaweiCloudMaasApiKey: undefined,
-		basetenApiKey: undefined,
-		vercelAiGatewayApiKey: undefined,
-		difyApiKey: undefined,
-		minimaxApiKey: undefined,
-		hicapApiKey: undefined,
-		aihubmixApiKey: undefined,
-		nousResearchApiKey: undefined,
-		remoteLiteLlmApiKey: undefined,
-		ocaApiKey: undefined,
-		ocaRefreshToken: undefined,
-		mcpOAuthSecrets: undefined,
-		dietcodeApiKey: undefined,
-		cloudflareApiToken: undefined,
-		embeddingApiKey: undefined,
-		vertexApiKey: undefined,
-		clineApiKey: undefined,
-		qwenTokenPlanApiKey: undefined,
-		galxApiKey: undefined,
-		openaiCodexOauthCredentials: undefined,
-		xaiOauthCredentials: undefined,
-	};
+  return {
+    apiKey: undefined,
+    dietcodeAccountId: undefined,
+    openRouterApiKey: undefined,
+    awsAccessKey: undefined,
+    awsSecretKey: undefined,
+    awsSessionToken: undefined,
+    awsBedrockApiKey: undefined,
+    openAiApiKey: undefined,
+    geminiApiKey: undefined,
+    openAiNativeApiKey: undefined,
+    ollamaApiKey: undefined,
+    deepSeekApiKey: undefined,
+    requestyApiKey: undefined,
+    togetherApiKey: undefined,
+    fireworksApiKey: undefined,
+    qwenApiKey: undefined,
+    doubaoApiKey: undefined,
+    mistralApiKey: undefined,
+    liteLlmApiKey: undefined,
+    authNonce: undefined,
+    asksageApiKey: undefined,
+    xaiApiKey: undefined,
+    moonshotApiKey: undefined,
+    zaiApiKey: undefined,
+    huggingFaceApiKey: undefined,
+    nebiusApiKey: undefined,
+    sambanovaApiKey: undefined,
+    cerebrasApiKey: undefined,
+    sapAiCoreClientId: undefined,
+    sapAiCoreClientSecret: undefined,
+    groqApiKey: undefined,
+    huaweiCloudMaasApiKey: undefined,
+    basetenApiKey: undefined,
+    vercelAiGatewayApiKey: undefined,
+    difyApiKey: undefined,
+    minimaxApiKey: undefined,
+    hicapApiKey: undefined,
+    aihubmixApiKey: undefined,
+    nousResearchApiKey: undefined,
+    remoteLiteLlmApiKey: undefined,
+    ocaApiKey: undefined,
+    ocaRefreshToken: undefined,
+    mcpOAuthSecrets: undefined,
+    dietcodeApiKey: undefined,
+    cloudflareApiToken: undefined,
+    embeddingApiKey: undefined,
+    vertexApiKey: undefined,
+    clineApiKey: undefined,
+    qwenTokenPlanApiKey: undefined,
+    galxApiKey: undefined,
+    openaiCodexOauthCredentials: undefined,
+    xaiOauthCredentials: undefined,
+  };
 }
 
 export const Secrets: MessageFns<Secrets> = {
-	encode(
-		message: Secrets,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.apiKey !== undefined) {
-			writer.uint32(10).string(message.apiKey);
-		}
-		if (message.dietcodeAccountId !== undefined) {
-			writer.uint32(18).string(message.dietcodeAccountId);
-		}
-		if (message.openRouterApiKey !== undefined) {
-			writer.uint32(26).string(message.openRouterApiKey);
-		}
-		if (message.awsAccessKey !== undefined) {
-			writer.uint32(34).string(message.awsAccessKey);
-		}
-		if (message.awsSecretKey !== undefined) {
-			writer.uint32(42).string(message.awsSecretKey);
-		}
-		if (message.awsSessionToken !== undefined) {
-			writer.uint32(50).string(message.awsSessionToken);
-		}
-		if (message.awsBedrockApiKey !== undefined) {
-			writer.uint32(58).string(message.awsBedrockApiKey);
-		}
-		if (message.openAiApiKey !== undefined) {
-			writer.uint32(66).string(message.openAiApiKey);
-		}
-		if (message.geminiApiKey !== undefined) {
-			writer.uint32(74).string(message.geminiApiKey);
-		}
-		if (message.openAiNativeApiKey !== undefined) {
-			writer.uint32(82).string(message.openAiNativeApiKey);
-		}
-		if (message.ollamaApiKey !== undefined) {
-			writer.uint32(90).string(message.ollamaApiKey);
-		}
-		if (message.deepSeekApiKey !== undefined) {
-			writer.uint32(98).string(message.deepSeekApiKey);
-		}
-		if (message.requestyApiKey !== undefined) {
-			writer.uint32(106).string(message.requestyApiKey);
-		}
-		if (message.togetherApiKey !== undefined) {
-			writer.uint32(114).string(message.togetherApiKey);
-		}
-		if (message.fireworksApiKey !== undefined) {
-			writer.uint32(122).string(message.fireworksApiKey);
-		}
-		if (message.qwenApiKey !== undefined) {
-			writer.uint32(130).string(message.qwenApiKey);
-		}
-		if (message.doubaoApiKey !== undefined) {
-			writer.uint32(138).string(message.doubaoApiKey);
-		}
-		if (message.mistralApiKey !== undefined) {
-			writer.uint32(146).string(message.mistralApiKey);
-		}
-		if (message.liteLlmApiKey !== undefined) {
-			writer.uint32(154).string(message.liteLlmApiKey);
-		}
-		if (message.authNonce !== undefined) {
-			writer.uint32(162).string(message.authNonce);
-		}
-		if (message.asksageApiKey !== undefined) {
-			writer.uint32(170).string(message.asksageApiKey);
-		}
-		if (message.xaiApiKey !== undefined) {
-			writer.uint32(178).string(message.xaiApiKey);
-		}
-		if (message.moonshotApiKey !== undefined) {
-			writer.uint32(186).string(message.moonshotApiKey);
-		}
-		if (message.zaiApiKey !== undefined) {
-			writer.uint32(194).string(message.zaiApiKey);
-		}
-		if (message.huggingFaceApiKey !== undefined) {
-			writer.uint32(202).string(message.huggingFaceApiKey);
-		}
-		if (message.nebiusApiKey !== undefined) {
-			writer.uint32(210).string(message.nebiusApiKey);
-		}
-		if (message.sambanovaApiKey !== undefined) {
-			writer.uint32(218).string(message.sambanovaApiKey);
-		}
-		if (message.cerebrasApiKey !== undefined) {
-			writer.uint32(226).string(message.cerebrasApiKey);
-		}
-		if (message.sapAiCoreClientId !== undefined) {
-			writer.uint32(234).string(message.sapAiCoreClientId);
-		}
-		if (message.sapAiCoreClientSecret !== undefined) {
-			writer.uint32(242).string(message.sapAiCoreClientSecret);
-		}
-		if (message.groqApiKey !== undefined) {
-			writer.uint32(250).string(message.groqApiKey);
-		}
-		if (message.huaweiCloudMaasApiKey !== undefined) {
-			writer.uint32(258).string(message.huaweiCloudMaasApiKey);
-		}
-		if (message.basetenApiKey !== undefined) {
-			writer.uint32(266).string(message.basetenApiKey);
-		}
-		if (message.vercelAiGatewayApiKey !== undefined) {
-			writer.uint32(274).string(message.vercelAiGatewayApiKey);
-		}
-		if (message.difyApiKey !== undefined) {
-			writer.uint32(282).string(message.difyApiKey);
-		}
-		if (message.minimaxApiKey !== undefined) {
-			writer.uint32(290).string(message.minimaxApiKey);
-		}
-		if (message.hicapApiKey !== undefined) {
-			writer.uint32(298).string(message.hicapApiKey);
-		}
-		if (message.aihubmixApiKey !== undefined) {
-			writer.uint32(306).string(message.aihubmixApiKey);
-		}
-		if (message.nousResearchApiKey !== undefined) {
-			writer.uint32(314).string(message.nousResearchApiKey);
-		}
-		if (message.remoteLiteLlmApiKey !== undefined) {
-			writer.uint32(322).string(message.remoteLiteLlmApiKey);
-		}
-		if (message.ocaApiKey !== undefined) {
-			writer.uint32(330).string(message.ocaApiKey);
-		}
-		if (message.ocaRefreshToken !== undefined) {
-			writer.uint32(338).string(message.ocaRefreshToken);
-		}
-		if (message.mcpOAuthSecrets !== undefined) {
-			writer.uint32(346).string(message.mcpOAuthSecrets);
-		}
-		if (message.dietcodeApiKey !== undefined) {
-			writer.uint32(354).string(message.dietcodeApiKey);
-		}
-		if (message.cloudflareApiToken !== undefined) {
-			writer.uint32(402).string(message.cloudflareApiToken);
-		}
-		if (message.embeddingApiKey !== undefined) {
-			writer.uint32(426).string(message.embeddingApiKey);
-		}
-		if (message.vertexApiKey !== undefined) {
-			writer.uint32(466).string(message.vertexApiKey);
-		}
-		if (message.clineApiKey !== undefined) {
-			writer.uint32(770).string(message.clineApiKey);
-		}
-		if (message.qwenTokenPlanApiKey !== undefined) {
-			writer.uint32(898).string(message.qwenTokenPlanApiKey);
-		}
-		if (message.galxApiKey !== undefined) {
-			writer.uint32(1018).string(message.galxApiKey);
-		}
-		if (message.openaiCodexOauthCredentials !== undefined) {
-			writer.uint32(1042).string(message.openaiCodexOauthCredentials);
-		}
-		if (message.xaiOauthCredentials !== undefined) {
-			writer.uint32(1050).string(message.xaiOauthCredentials);
-		}
-		return writer;
-	},
+  encode(message: Secrets, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.apiKey !== undefined) {
+      writer.uint32(10).string(message.apiKey);
+    }
+    if (message.dietcodeAccountId !== undefined) {
+      writer.uint32(18).string(message.dietcodeAccountId);
+    }
+    if (message.openRouterApiKey !== undefined) {
+      writer.uint32(26).string(message.openRouterApiKey);
+    }
+    if (message.awsAccessKey !== undefined) {
+      writer.uint32(34).string(message.awsAccessKey);
+    }
+    if (message.awsSecretKey !== undefined) {
+      writer.uint32(42).string(message.awsSecretKey);
+    }
+    if (message.awsSessionToken !== undefined) {
+      writer.uint32(50).string(message.awsSessionToken);
+    }
+    if (message.awsBedrockApiKey !== undefined) {
+      writer.uint32(58).string(message.awsBedrockApiKey);
+    }
+    if (message.openAiApiKey !== undefined) {
+      writer.uint32(66).string(message.openAiApiKey);
+    }
+    if (message.geminiApiKey !== undefined) {
+      writer.uint32(74).string(message.geminiApiKey);
+    }
+    if (message.openAiNativeApiKey !== undefined) {
+      writer.uint32(82).string(message.openAiNativeApiKey);
+    }
+    if (message.ollamaApiKey !== undefined) {
+      writer.uint32(90).string(message.ollamaApiKey);
+    }
+    if (message.deepSeekApiKey !== undefined) {
+      writer.uint32(98).string(message.deepSeekApiKey);
+    }
+    if (message.requestyApiKey !== undefined) {
+      writer.uint32(106).string(message.requestyApiKey);
+    }
+    if (message.togetherApiKey !== undefined) {
+      writer.uint32(114).string(message.togetherApiKey);
+    }
+    if (message.fireworksApiKey !== undefined) {
+      writer.uint32(122).string(message.fireworksApiKey);
+    }
+    if (message.qwenApiKey !== undefined) {
+      writer.uint32(130).string(message.qwenApiKey);
+    }
+    if (message.doubaoApiKey !== undefined) {
+      writer.uint32(138).string(message.doubaoApiKey);
+    }
+    if (message.mistralApiKey !== undefined) {
+      writer.uint32(146).string(message.mistralApiKey);
+    }
+    if (message.liteLlmApiKey !== undefined) {
+      writer.uint32(154).string(message.liteLlmApiKey);
+    }
+    if (message.authNonce !== undefined) {
+      writer.uint32(162).string(message.authNonce);
+    }
+    if (message.asksageApiKey !== undefined) {
+      writer.uint32(170).string(message.asksageApiKey);
+    }
+    if (message.xaiApiKey !== undefined) {
+      writer.uint32(178).string(message.xaiApiKey);
+    }
+    if (message.moonshotApiKey !== undefined) {
+      writer.uint32(186).string(message.moonshotApiKey);
+    }
+    if (message.zaiApiKey !== undefined) {
+      writer.uint32(194).string(message.zaiApiKey);
+    }
+    if (message.huggingFaceApiKey !== undefined) {
+      writer.uint32(202).string(message.huggingFaceApiKey);
+    }
+    if (message.nebiusApiKey !== undefined) {
+      writer.uint32(210).string(message.nebiusApiKey);
+    }
+    if (message.sambanovaApiKey !== undefined) {
+      writer.uint32(218).string(message.sambanovaApiKey);
+    }
+    if (message.cerebrasApiKey !== undefined) {
+      writer.uint32(226).string(message.cerebrasApiKey);
+    }
+    if (message.sapAiCoreClientId !== undefined) {
+      writer.uint32(234).string(message.sapAiCoreClientId);
+    }
+    if (message.sapAiCoreClientSecret !== undefined) {
+      writer.uint32(242).string(message.sapAiCoreClientSecret);
+    }
+    if (message.groqApiKey !== undefined) {
+      writer.uint32(250).string(message.groqApiKey);
+    }
+    if (message.huaweiCloudMaasApiKey !== undefined) {
+      writer.uint32(258).string(message.huaweiCloudMaasApiKey);
+    }
+    if (message.basetenApiKey !== undefined) {
+      writer.uint32(266).string(message.basetenApiKey);
+    }
+    if (message.vercelAiGatewayApiKey !== undefined) {
+      writer.uint32(274).string(message.vercelAiGatewayApiKey);
+    }
+    if (message.difyApiKey !== undefined) {
+      writer.uint32(282).string(message.difyApiKey);
+    }
+    if (message.minimaxApiKey !== undefined) {
+      writer.uint32(290).string(message.minimaxApiKey);
+    }
+    if (message.hicapApiKey !== undefined) {
+      writer.uint32(298).string(message.hicapApiKey);
+    }
+    if (message.aihubmixApiKey !== undefined) {
+      writer.uint32(306).string(message.aihubmixApiKey);
+    }
+    if (message.nousResearchApiKey !== undefined) {
+      writer.uint32(314).string(message.nousResearchApiKey);
+    }
+    if (message.remoteLiteLlmApiKey !== undefined) {
+      writer.uint32(322).string(message.remoteLiteLlmApiKey);
+    }
+    if (message.ocaApiKey !== undefined) {
+      writer.uint32(330).string(message.ocaApiKey);
+    }
+    if (message.ocaRefreshToken !== undefined) {
+      writer.uint32(338).string(message.ocaRefreshToken);
+    }
+    if (message.mcpOAuthSecrets !== undefined) {
+      writer.uint32(346).string(message.mcpOAuthSecrets);
+    }
+    if (message.dietcodeApiKey !== undefined) {
+      writer.uint32(354).string(message.dietcodeApiKey);
+    }
+    if (message.cloudflareApiToken !== undefined) {
+      writer.uint32(402).string(message.cloudflareApiToken);
+    }
+    if (message.embeddingApiKey !== undefined) {
+      writer.uint32(426).string(message.embeddingApiKey);
+    }
+    if (message.vertexApiKey !== undefined) {
+      writer.uint32(466).string(message.vertexApiKey);
+    }
+    if (message.clineApiKey !== undefined) {
+      writer.uint32(770).string(message.clineApiKey);
+    }
+    if (message.qwenTokenPlanApiKey !== undefined) {
+      writer.uint32(898).string(message.qwenTokenPlanApiKey);
+    }
+    if (message.galxApiKey !== undefined) {
+      writer.uint32(1018).string(message.galxApiKey);
+    }
+    if (message.openaiCodexOauthCredentials !== undefined) {
+      writer.uint32(1042).string(message.openaiCodexOauthCredentials);
+    }
+    if (message.xaiOauthCredentials !== undefined) {
+      writer.uint32(1050).string(message.xaiOauthCredentials);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): Secrets {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseSecrets();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): Secrets {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseSecrets();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.apiKey = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.apiKey = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.dietcodeAccountId = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.dietcodeAccountId = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.openRouterApiKey = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.openRouterApiKey = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.awsAccessKey = reader.string();
-						continue;
-					}
-					case 5: {
-						if (tag !== 42) {
-							break;
-						}
+            message.awsAccessKey = reader.string();
+            continue;
+          }
+          case 5: {
+            if (tag !== 42) {
+              break;
+            }
 
-						message.awsSecretKey = reader.string();
-						continue;
-					}
-					case 6: {
-						if (tag !== 50) {
-							break;
-						}
+            message.awsSecretKey = reader.string();
+            continue;
+          }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
 
-						message.awsSessionToken = reader.string();
-						continue;
-					}
-					case 7: {
-						if (tag !== 58) {
-							break;
-						}
+            message.awsSessionToken = reader.string();
+            continue;
+          }
+          case 7: {
+            if (tag !== 58) {
+              break;
+            }
 
-						message.awsBedrockApiKey = reader.string();
-						continue;
-					}
-					case 8: {
-						if (tag !== 66) {
-							break;
-						}
+            message.awsBedrockApiKey = reader.string();
+            continue;
+          }
+          case 8: {
+            if (tag !== 66) {
+              break;
+            }
 
-						message.openAiApiKey = reader.string();
-						continue;
-					}
-					case 9: {
-						if (tag !== 74) {
-							break;
-						}
+            message.openAiApiKey = reader.string();
+            continue;
+          }
+          case 9: {
+            if (tag !== 74) {
+              break;
+            }
 
-						message.geminiApiKey = reader.string();
-						continue;
-					}
-					case 10: {
-						if (tag !== 82) {
-							break;
-						}
+            message.geminiApiKey = reader.string();
+            continue;
+          }
+          case 10: {
+            if (tag !== 82) {
+              break;
+            }
 
-						message.openAiNativeApiKey = reader.string();
-						continue;
-					}
-					case 11: {
-						if (tag !== 90) {
-							break;
-						}
+            message.openAiNativeApiKey = reader.string();
+            continue;
+          }
+          case 11: {
+            if (tag !== 90) {
+              break;
+            }
 
-						message.ollamaApiKey = reader.string();
-						continue;
-					}
-					case 12: {
-						if (tag !== 98) {
-							break;
-						}
+            message.ollamaApiKey = reader.string();
+            continue;
+          }
+          case 12: {
+            if (tag !== 98) {
+              break;
+            }
 
-						message.deepSeekApiKey = reader.string();
-						continue;
-					}
-					case 13: {
-						if (tag !== 106) {
-							break;
-						}
+            message.deepSeekApiKey = reader.string();
+            continue;
+          }
+          case 13: {
+            if (tag !== 106) {
+              break;
+            }
 
-						message.requestyApiKey = reader.string();
-						continue;
-					}
-					case 14: {
-						if (tag !== 114) {
-							break;
-						}
+            message.requestyApiKey = reader.string();
+            continue;
+          }
+          case 14: {
+            if (tag !== 114) {
+              break;
+            }
 
-						message.togetherApiKey = reader.string();
-						continue;
-					}
-					case 15: {
-						if (tag !== 122) {
-							break;
-						}
+            message.togetherApiKey = reader.string();
+            continue;
+          }
+          case 15: {
+            if (tag !== 122) {
+              break;
+            }
 
-						message.fireworksApiKey = reader.string();
-						continue;
-					}
-					case 16: {
-						if (tag !== 130) {
-							break;
-						}
+            message.fireworksApiKey = reader.string();
+            continue;
+          }
+          case 16: {
+            if (tag !== 130) {
+              break;
+            }
 
-						message.qwenApiKey = reader.string();
-						continue;
-					}
-					case 17: {
-						if (tag !== 138) {
-							break;
-						}
+            message.qwenApiKey = reader.string();
+            continue;
+          }
+          case 17: {
+            if (tag !== 138) {
+              break;
+            }
 
-						message.doubaoApiKey = reader.string();
-						continue;
-					}
-					case 18: {
-						if (tag !== 146) {
-							break;
-						}
+            message.doubaoApiKey = reader.string();
+            continue;
+          }
+          case 18: {
+            if (tag !== 146) {
+              break;
+            }
 
-						message.mistralApiKey = reader.string();
-						continue;
-					}
-					case 19: {
-						if (tag !== 154) {
-							break;
-						}
+            message.mistralApiKey = reader.string();
+            continue;
+          }
+          case 19: {
+            if (tag !== 154) {
+              break;
+            }
 
-						message.liteLlmApiKey = reader.string();
-						continue;
-					}
-					case 20: {
-						if (tag !== 162) {
-							break;
-						}
+            message.liteLlmApiKey = reader.string();
+            continue;
+          }
+          case 20: {
+            if (tag !== 162) {
+              break;
+            }
 
-						message.authNonce = reader.string();
-						continue;
-					}
-					case 21: {
-						if (tag !== 170) {
-							break;
-						}
+            message.authNonce = reader.string();
+            continue;
+          }
+          case 21: {
+            if (tag !== 170) {
+              break;
+            }
 
-						message.asksageApiKey = reader.string();
-						continue;
-					}
-					case 22: {
-						if (tag !== 178) {
-							break;
-						}
+            message.asksageApiKey = reader.string();
+            continue;
+          }
+          case 22: {
+            if (tag !== 178) {
+              break;
+            }
 
-						message.xaiApiKey = reader.string();
-						continue;
-					}
-					case 23: {
-						if (tag !== 186) {
-							break;
-						}
+            message.xaiApiKey = reader.string();
+            continue;
+          }
+          case 23: {
+            if (tag !== 186) {
+              break;
+            }
 
-						message.moonshotApiKey = reader.string();
-						continue;
-					}
-					case 24: {
-						if (tag !== 194) {
-							break;
-						}
+            message.moonshotApiKey = reader.string();
+            continue;
+          }
+          case 24: {
+            if (tag !== 194) {
+              break;
+            }
 
-						message.zaiApiKey = reader.string();
-						continue;
-					}
-					case 25: {
-						if (tag !== 202) {
-							break;
-						}
+            message.zaiApiKey = reader.string();
+            continue;
+          }
+          case 25: {
+            if (tag !== 202) {
+              break;
+            }
 
-						message.huggingFaceApiKey = reader.string();
-						continue;
-					}
-					case 26: {
-						if (tag !== 210) {
-							break;
-						}
+            message.huggingFaceApiKey = reader.string();
+            continue;
+          }
+          case 26: {
+            if (tag !== 210) {
+              break;
+            }
 
-						message.nebiusApiKey = reader.string();
-						continue;
-					}
-					case 27: {
-						if (tag !== 218) {
-							break;
-						}
+            message.nebiusApiKey = reader.string();
+            continue;
+          }
+          case 27: {
+            if (tag !== 218) {
+              break;
+            }
 
-						message.sambanovaApiKey = reader.string();
-						continue;
-					}
-					case 28: {
-						if (tag !== 226) {
-							break;
-						}
+            message.sambanovaApiKey = reader.string();
+            continue;
+          }
+          case 28: {
+            if (tag !== 226) {
+              break;
+            }
 
-						message.cerebrasApiKey = reader.string();
-						continue;
-					}
-					case 29: {
-						if (tag !== 234) {
-							break;
-						}
+            message.cerebrasApiKey = reader.string();
+            continue;
+          }
+          case 29: {
+            if (tag !== 234) {
+              break;
+            }
 
-						message.sapAiCoreClientId = reader.string();
-						continue;
-					}
-					case 30: {
-						if (tag !== 242) {
-							break;
-						}
+            message.sapAiCoreClientId = reader.string();
+            continue;
+          }
+          case 30: {
+            if (tag !== 242) {
+              break;
+            }
 
-						message.sapAiCoreClientSecret = reader.string();
-						continue;
-					}
-					case 31: {
-						if (tag !== 250) {
-							break;
-						}
+            message.sapAiCoreClientSecret = reader.string();
+            continue;
+          }
+          case 31: {
+            if (tag !== 250) {
+              break;
+            }
 
-						message.groqApiKey = reader.string();
-						continue;
-					}
-					case 32: {
-						if (tag !== 258) {
-							break;
-						}
+            message.groqApiKey = reader.string();
+            continue;
+          }
+          case 32: {
+            if (tag !== 258) {
+              break;
+            }
 
-						message.huaweiCloudMaasApiKey = reader.string();
-						continue;
-					}
-					case 33: {
-						if (tag !== 266) {
-							break;
-						}
+            message.huaweiCloudMaasApiKey = reader.string();
+            continue;
+          }
+          case 33: {
+            if (tag !== 266) {
+              break;
+            }
 
-						message.basetenApiKey = reader.string();
-						continue;
-					}
-					case 34: {
-						if (tag !== 274) {
-							break;
-						}
+            message.basetenApiKey = reader.string();
+            continue;
+          }
+          case 34: {
+            if (tag !== 274) {
+              break;
+            }
 
-						message.vercelAiGatewayApiKey = reader.string();
-						continue;
-					}
-					case 35: {
-						if (tag !== 282) {
-							break;
-						}
+            message.vercelAiGatewayApiKey = reader.string();
+            continue;
+          }
+          case 35: {
+            if (tag !== 282) {
+              break;
+            }
 
-						message.difyApiKey = reader.string();
-						continue;
-					}
-					case 36: {
-						if (tag !== 290) {
-							break;
-						}
+            message.difyApiKey = reader.string();
+            continue;
+          }
+          case 36: {
+            if (tag !== 290) {
+              break;
+            }
 
-						message.minimaxApiKey = reader.string();
-						continue;
-					}
-					case 37: {
-						if (tag !== 298) {
-							break;
-						}
+            message.minimaxApiKey = reader.string();
+            continue;
+          }
+          case 37: {
+            if (tag !== 298) {
+              break;
+            }
 
-						message.hicapApiKey = reader.string();
-						continue;
-					}
-					case 38: {
-						if (tag !== 306) {
-							break;
-						}
+            message.hicapApiKey = reader.string();
+            continue;
+          }
+          case 38: {
+            if (tag !== 306) {
+              break;
+            }
 
-						message.aihubmixApiKey = reader.string();
-						continue;
-					}
-					case 39: {
-						if (tag !== 314) {
-							break;
-						}
+            message.aihubmixApiKey = reader.string();
+            continue;
+          }
+          case 39: {
+            if (tag !== 314) {
+              break;
+            }
 
-						message.nousResearchApiKey = reader.string();
-						continue;
-					}
-					case 40: {
-						if (tag !== 322) {
-							break;
-						}
+            message.nousResearchApiKey = reader.string();
+            continue;
+          }
+          case 40: {
+            if (tag !== 322) {
+              break;
+            }
 
-						message.remoteLiteLlmApiKey = reader.string();
-						continue;
-					}
-					case 41: {
-						if (tag !== 330) {
-							break;
-						}
+            message.remoteLiteLlmApiKey = reader.string();
+            continue;
+          }
+          case 41: {
+            if (tag !== 330) {
+              break;
+            }
 
-						message.ocaApiKey = reader.string();
-						continue;
-					}
-					case 42: {
-						if (tag !== 338) {
-							break;
-						}
+            message.ocaApiKey = reader.string();
+            continue;
+          }
+          case 42: {
+            if (tag !== 338) {
+              break;
+            }
 
-						message.ocaRefreshToken = reader.string();
-						continue;
-					}
-					case 43: {
-						if (tag !== 346) {
-							break;
-						}
+            message.ocaRefreshToken = reader.string();
+            continue;
+          }
+          case 43: {
+            if (tag !== 346) {
+              break;
+            }
 
-						message.mcpOAuthSecrets = reader.string();
-						continue;
-					}
-					case 44: {
-						if (tag !== 354) {
-							break;
-						}
+            message.mcpOAuthSecrets = reader.string();
+            continue;
+          }
+          case 44: {
+            if (tag !== 354) {
+              break;
+            }
 
-						message.dietcodeApiKey = reader.string();
-						continue;
-					}
-					case 50: {
-						if (tag !== 402) {
-							break;
-						}
+            message.dietcodeApiKey = reader.string();
+            continue;
+          }
+          case 50: {
+            if (tag !== 402) {
+              break;
+            }
 
-						message.cloudflareApiToken = reader.string();
-						continue;
-					}
-					case 53: {
-						if (tag !== 426) {
-							break;
-						}
+            message.cloudflareApiToken = reader.string();
+            continue;
+          }
+          case 53: {
+            if (tag !== 426) {
+              break;
+            }
 
-						message.embeddingApiKey = reader.string();
-						continue;
-					}
-					case 58: {
-						if (tag !== 466) {
-							break;
-						}
+            message.embeddingApiKey = reader.string();
+            continue;
+          }
+          case 58: {
+            if (tag !== 466) {
+              break;
+            }
 
-						message.vertexApiKey = reader.string();
-						continue;
-					}
-					case 96: {
-						if (tag !== 770) {
-							break;
-						}
+            message.vertexApiKey = reader.string();
+            continue;
+          }
+          case 96: {
+            if (tag !== 770) {
+              break;
+            }
 
-						message.clineApiKey = reader.string();
-						continue;
-					}
-					case 112: {
-						if (tag !== 898) {
-							break;
-						}
+            message.clineApiKey = reader.string();
+            continue;
+          }
+          case 112: {
+            if (tag !== 898) {
+              break;
+            }
 
-						message.qwenTokenPlanApiKey = reader.string();
-						continue;
-					}
-					case 127: {
-						if (tag !== 1018) {
-							break;
-						}
+            message.qwenTokenPlanApiKey = reader.string();
+            continue;
+          }
+          case 127: {
+            if (tag !== 1018) {
+              break;
+            }
 
-						message.galxApiKey = reader.string();
-						continue;
-					}
-					case 130: {
-						if (tag !== 1042) {
-							break;
-						}
+            message.galxApiKey = reader.string();
+            continue;
+          }
+          case 130: {
+            if (tag !== 1042) {
+              break;
+            }
 
-						message.openaiCodexOauthCredentials = reader.string();
-						continue;
-					}
-					case 131: {
-						if (tag !== 1050) {
-							break;
-						}
+            message.openaiCodexOauthCredentials = reader.string();
+            continue;
+          }
+          case 131: {
+            if (tag !== 1050) {
+              break;
+            }
 
-						message.xaiOauthCredentials = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.xaiOauthCredentials = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): Secrets {
-		return {
-			apiKey: isSet(object.apiKey)
-				? globalThis.String(object.apiKey)
-				: isSet(object.api_key)
-					? globalThis.String(object.api_key)
-					: undefined,
-			dietcodeAccountId: isSet(object.dietcodeAccountId)
-				? globalThis.String(object.dietcodeAccountId)
-				: isSet(object.dietcode_account_id)
-					? globalThis.String(object.dietcode_account_id)
-					: undefined,
-			openRouterApiKey: isSet(object.openRouterApiKey)
-				? globalThis.String(object.openRouterApiKey)
-				: isSet(object.open_router_api_key)
-					? globalThis.String(object.open_router_api_key)
-					: undefined,
-			awsAccessKey: isSet(object.awsAccessKey)
-				? globalThis.String(object.awsAccessKey)
-				: isSet(object.aws_access_key)
-					? globalThis.String(object.aws_access_key)
-					: undefined,
-			awsSecretKey: isSet(object.awsSecretKey)
-				? globalThis.String(object.awsSecretKey)
-				: isSet(object.aws_secret_key)
-					? globalThis.String(object.aws_secret_key)
-					: undefined,
-			awsSessionToken: isSet(object.awsSessionToken)
-				? globalThis.String(object.awsSessionToken)
-				: isSet(object.aws_session_token)
-					? globalThis.String(object.aws_session_token)
-					: undefined,
-			awsBedrockApiKey: isSet(object.awsBedrockApiKey)
-				? globalThis.String(object.awsBedrockApiKey)
-				: isSet(object.aws_bedrock_api_key)
-					? globalThis.String(object.aws_bedrock_api_key)
-					: undefined,
-			openAiApiKey: isSet(object.openAiApiKey)
-				? globalThis.String(object.openAiApiKey)
-				: isSet(object.open_ai_api_key)
-					? globalThis.String(object.open_ai_api_key)
-					: undefined,
-			geminiApiKey: isSet(object.geminiApiKey)
-				? globalThis.String(object.geminiApiKey)
-				: isSet(object.gemini_api_key)
-					? globalThis.String(object.gemini_api_key)
-					: undefined,
-			openAiNativeApiKey: isSet(object.openAiNativeApiKey)
-				? globalThis.String(object.openAiNativeApiKey)
-				: isSet(object.open_ai_native_api_key)
-					? globalThis.String(object.open_ai_native_api_key)
-					: undefined,
-			ollamaApiKey: isSet(object.ollamaApiKey)
-				? globalThis.String(object.ollamaApiKey)
-				: isSet(object.ollama_api_key)
-					? globalThis.String(object.ollama_api_key)
-					: undefined,
-			deepSeekApiKey: isSet(object.deepSeekApiKey)
-				? globalThis.String(object.deepSeekApiKey)
-				: isSet(object.deep_seek_api_key)
-					? globalThis.String(object.deep_seek_api_key)
-					: undefined,
-			requestyApiKey: isSet(object.requestyApiKey)
-				? globalThis.String(object.requestyApiKey)
-				: isSet(object.requesty_api_key)
-					? globalThis.String(object.requesty_api_key)
-					: undefined,
-			togetherApiKey: isSet(object.togetherApiKey)
-				? globalThis.String(object.togetherApiKey)
-				: isSet(object.together_api_key)
-					? globalThis.String(object.together_api_key)
-					: undefined,
-			fireworksApiKey: isSet(object.fireworksApiKey)
-				? globalThis.String(object.fireworksApiKey)
-				: isSet(object.fireworks_api_key)
-					? globalThis.String(object.fireworks_api_key)
-					: undefined,
-			qwenApiKey: isSet(object.qwenApiKey)
-				? globalThis.String(object.qwenApiKey)
-				: isSet(object.qwen_api_key)
-					? globalThis.String(object.qwen_api_key)
-					: undefined,
-			doubaoApiKey: isSet(object.doubaoApiKey)
-				? globalThis.String(object.doubaoApiKey)
-				: isSet(object.doubao_api_key)
-					? globalThis.String(object.doubao_api_key)
-					: undefined,
-			mistralApiKey: isSet(object.mistralApiKey)
-				? globalThis.String(object.mistralApiKey)
-				: isSet(object.mistral_api_key)
-					? globalThis.String(object.mistral_api_key)
-					: undefined,
-			liteLlmApiKey: isSet(object.liteLlmApiKey)
-				? globalThis.String(object.liteLlmApiKey)
-				: isSet(object.lite_llm_api_key)
-					? globalThis.String(object.lite_llm_api_key)
-					: undefined,
-			authNonce: isSet(object.authNonce)
-				? globalThis.String(object.authNonce)
-				: isSet(object.auth_nonce)
-					? globalThis.String(object.auth_nonce)
-					: undefined,
-			asksageApiKey: isSet(object.asksageApiKey)
-				? globalThis.String(object.asksageApiKey)
-				: isSet(object.asksage_api_key)
-					? globalThis.String(object.asksage_api_key)
-					: undefined,
-			xaiApiKey: isSet(object.xaiApiKey)
-				? globalThis.String(object.xaiApiKey)
-				: isSet(object.xai_api_key)
-					? globalThis.String(object.xai_api_key)
-					: undefined,
-			moonshotApiKey: isSet(object.moonshotApiKey)
-				? globalThis.String(object.moonshotApiKey)
-				: isSet(object.moonshot_api_key)
-					? globalThis.String(object.moonshot_api_key)
-					: undefined,
-			zaiApiKey: isSet(object.zaiApiKey)
-				? globalThis.String(object.zaiApiKey)
-				: isSet(object.zai_api_key)
-					? globalThis.String(object.zai_api_key)
-					: undefined,
-			huggingFaceApiKey: isSet(object.huggingFaceApiKey)
-				? globalThis.String(object.huggingFaceApiKey)
-				: isSet(object.hugging_face_api_key)
-					? globalThis.String(object.hugging_face_api_key)
-					: undefined,
-			nebiusApiKey: isSet(object.nebiusApiKey)
-				? globalThis.String(object.nebiusApiKey)
-				: isSet(object.nebius_api_key)
-					? globalThis.String(object.nebius_api_key)
-					: undefined,
-			sambanovaApiKey: isSet(object.sambanovaApiKey)
-				? globalThis.String(object.sambanovaApiKey)
-				: isSet(object.sambanova_api_key)
-					? globalThis.String(object.sambanova_api_key)
-					: undefined,
-			cerebrasApiKey: isSet(object.cerebrasApiKey)
-				? globalThis.String(object.cerebrasApiKey)
-				: isSet(object.cerebras_api_key)
-					? globalThis.String(object.cerebras_api_key)
-					: undefined,
-			sapAiCoreClientId: isSet(object.sapAiCoreClientId)
-				? globalThis.String(object.sapAiCoreClientId)
-				: isSet(object.sap_ai_core_client_id)
-					? globalThis.String(object.sap_ai_core_client_id)
-					: undefined,
-			sapAiCoreClientSecret: isSet(object.sapAiCoreClientSecret)
-				? globalThis.String(object.sapAiCoreClientSecret)
-				: isSet(object.sap_ai_core_client_secret)
-					? globalThis.String(object.sap_ai_core_client_secret)
-					: undefined,
-			groqApiKey: isSet(object.groqApiKey)
-				? globalThis.String(object.groqApiKey)
-				: isSet(object.groq_api_key)
-					? globalThis.String(object.groq_api_key)
-					: undefined,
-			huaweiCloudMaasApiKey: isSet(object.huaweiCloudMaasApiKey)
-				? globalThis.String(object.huaweiCloudMaasApiKey)
-				: isSet(object.huawei_cloud_maas_api_key)
-					? globalThis.String(object.huawei_cloud_maas_api_key)
-					: undefined,
-			basetenApiKey: isSet(object.basetenApiKey)
-				? globalThis.String(object.basetenApiKey)
-				: isSet(object.baseten_api_key)
-					? globalThis.String(object.baseten_api_key)
-					: undefined,
-			vercelAiGatewayApiKey: isSet(object.vercelAiGatewayApiKey)
-				? globalThis.String(object.vercelAiGatewayApiKey)
-				: isSet(object.vercel_ai_gateway_api_key)
-					? globalThis.String(object.vercel_ai_gateway_api_key)
-					: undefined,
-			difyApiKey: isSet(object.difyApiKey)
-				? globalThis.String(object.difyApiKey)
-				: isSet(object.dify_api_key)
-					? globalThis.String(object.dify_api_key)
-					: undefined,
-			minimaxApiKey: isSet(object.minimaxApiKey)
-				? globalThis.String(object.minimaxApiKey)
-				: isSet(object.minimax_api_key)
-					? globalThis.String(object.minimax_api_key)
-					: undefined,
-			hicapApiKey: isSet(object.hicapApiKey)
-				? globalThis.String(object.hicapApiKey)
-				: isSet(object.hicap_api_key)
-					? globalThis.String(object.hicap_api_key)
-					: undefined,
-			aihubmixApiKey: isSet(object.aihubmixApiKey)
-				? globalThis.String(object.aihubmixApiKey)
-				: isSet(object.aihubmix_api_key)
-					? globalThis.String(object.aihubmix_api_key)
-					: undefined,
-			nousResearchApiKey: isSet(object.nousResearchApiKey)
-				? globalThis.String(object.nousResearchApiKey)
-				: isSet(object.nous_research_api_key)
-					? globalThis.String(object.nous_research_api_key)
-					: undefined,
-			remoteLiteLlmApiKey: isSet(object.remoteLiteLlmApiKey)
-				? globalThis.String(object.remoteLiteLlmApiKey)
-				: isSet(object.remote_lite_llm_api_key)
-					? globalThis.String(object.remote_lite_llm_api_key)
-					: undefined,
-			ocaApiKey: isSet(object.ocaApiKey)
-				? globalThis.String(object.ocaApiKey)
-				: isSet(object.oca_api_key)
-					? globalThis.String(object.oca_api_key)
-					: undefined,
-			ocaRefreshToken: isSet(object.ocaRefreshToken)
-				? globalThis.String(object.ocaRefreshToken)
-				: isSet(object.oca_refresh_token)
-					? globalThis.String(object.oca_refresh_token)
-					: undefined,
-			mcpOAuthSecrets: isSet(object.mcpOAuthSecrets)
-				? globalThis.String(object.mcpOAuthSecrets)
-				: isSet(object.mcp_o_auth_secrets)
-					? globalThis.String(object.mcp_o_auth_secrets)
-					: undefined,
-			dietcodeApiKey: isSet(object.dietcodeApiKey)
-				? globalThis.String(object.dietcodeApiKey)
-				: isSet(object.dietcode_api_key)
-					? globalThis.String(object.dietcode_api_key)
-					: undefined,
-			cloudflareApiToken: isSet(object.cloudflareApiToken)
-				? globalThis.String(object.cloudflareApiToken)
-				: isSet(object.cloudflare_api_token)
-					? globalThis.String(object.cloudflare_api_token)
-					: undefined,
-			embeddingApiKey: isSet(object.embeddingApiKey)
-				? globalThis.String(object.embeddingApiKey)
-				: isSet(object.embedding_api_key)
-					? globalThis.String(object.embedding_api_key)
-					: undefined,
-			vertexApiKey: isSet(object.vertexApiKey)
-				? globalThis.String(object.vertexApiKey)
-				: isSet(object.vertex_api_key)
-					? globalThis.String(object.vertex_api_key)
-					: undefined,
-			clineApiKey: isSet(object.clineApiKey)
-				? globalThis.String(object.clineApiKey)
-				: isSet(object.cline_api_key)
-					? globalThis.String(object.cline_api_key)
-					: undefined,
-			qwenTokenPlanApiKey: isSet(object.qwenTokenPlanApiKey)
-				? globalThis.String(object.qwenTokenPlanApiKey)
-				: isSet(object.qwen_token_plan_api_key)
-					? globalThis.String(object.qwen_token_plan_api_key)
-					: undefined,
-			galxApiKey: isSet(object.galxApiKey)
-				? globalThis.String(object.galxApiKey)
-				: isSet(object.galx_api_key)
-					? globalThis.String(object.galx_api_key)
-					: undefined,
-			openaiCodexOauthCredentials: isSet(object.openaiCodexOauthCredentials)
-				? globalThis.String(object.openaiCodexOauthCredentials)
-				: isSet(object.openai_codex_oauth_credentials)
-					? globalThis.String(object.openai_codex_oauth_credentials)
-					: undefined,
-			xaiOauthCredentials: isSet(object.xaiOauthCredentials)
-				? globalThis.String(object.xaiOauthCredentials)
-				: isSet(object.xai_oauth_credentials)
-					? globalThis.String(object.xai_oauth_credentials)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): Secrets {
+    return {
+      apiKey: isSet(object.apiKey)
+        ? globalThis.String(object.apiKey)
+        : isSet(object.api_key)
+        ? globalThis.String(object.api_key)
+        : undefined,
+      dietcodeAccountId: isSet(object.dietcodeAccountId)
+        ? globalThis.String(object.dietcodeAccountId)
+        : isSet(object.dietcode_account_id)
+        ? globalThis.String(object.dietcode_account_id)
+        : undefined,
+      openRouterApiKey: isSet(object.openRouterApiKey)
+        ? globalThis.String(object.openRouterApiKey)
+        : isSet(object.open_router_api_key)
+        ? globalThis.String(object.open_router_api_key)
+        : undefined,
+      awsAccessKey: isSet(object.awsAccessKey)
+        ? globalThis.String(object.awsAccessKey)
+        : isSet(object.aws_access_key)
+        ? globalThis.String(object.aws_access_key)
+        : undefined,
+      awsSecretKey: isSet(object.awsSecretKey)
+        ? globalThis.String(object.awsSecretKey)
+        : isSet(object.aws_secret_key)
+        ? globalThis.String(object.aws_secret_key)
+        : undefined,
+      awsSessionToken: isSet(object.awsSessionToken)
+        ? globalThis.String(object.awsSessionToken)
+        : isSet(object.aws_session_token)
+        ? globalThis.String(object.aws_session_token)
+        : undefined,
+      awsBedrockApiKey: isSet(object.awsBedrockApiKey)
+        ? globalThis.String(object.awsBedrockApiKey)
+        : isSet(object.aws_bedrock_api_key)
+        ? globalThis.String(object.aws_bedrock_api_key)
+        : undefined,
+      openAiApiKey: isSet(object.openAiApiKey)
+        ? globalThis.String(object.openAiApiKey)
+        : isSet(object.open_ai_api_key)
+        ? globalThis.String(object.open_ai_api_key)
+        : undefined,
+      geminiApiKey: isSet(object.geminiApiKey)
+        ? globalThis.String(object.geminiApiKey)
+        : isSet(object.gemini_api_key)
+        ? globalThis.String(object.gemini_api_key)
+        : undefined,
+      openAiNativeApiKey: isSet(object.openAiNativeApiKey)
+        ? globalThis.String(object.openAiNativeApiKey)
+        : isSet(object.open_ai_native_api_key)
+        ? globalThis.String(object.open_ai_native_api_key)
+        : undefined,
+      ollamaApiKey: isSet(object.ollamaApiKey)
+        ? globalThis.String(object.ollamaApiKey)
+        : isSet(object.ollama_api_key)
+        ? globalThis.String(object.ollama_api_key)
+        : undefined,
+      deepSeekApiKey: isSet(object.deepSeekApiKey)
+        ? globalThis.String(object.deepSeekApiKey)
+        : isSet(object.deep_seek_api_key)
+        ? globalThis.String(object.deep_seek_api_key)
+        : undefined,
+      requestyApiKey: isSet(object.requestyApiKey)
+        ? globalThis.String(object.requestyApiKey)
+        : isSet(object.requesty_api_key)
+        ? globalThis.String(object.requesty_api_key)
+        : undefined,
+      togetherApiKey: isSet(object.togetherApiKey)
+        ? globalThis.String(object.togetherApiKey)
+        : isSet(object.together_api_key)
+        ? globalThis.String(object.together_api_key)
+        : undefined,
+      fireworksApiKey: isSet(object.fireworksApiKey)
+        ? globalThis.String(object.fireworksApiKey)
+        : isSet(object.fireworks_api_key)
+        ? globalThis.String(object.fireworks_api_key)
+        : undefined,
+      qwenApiKey: isSet(object.qwenApiKey)
+        ? globalThis.String(object.qwenApiKey)
+        : isSet(object.qwen_api_key)
+        ? globalThis.String(object.qwen_api_key)
+        : undefined,
+      doubaoApiKey: isSet(object.doubaoApiKey)
+        ? globalThis.String(object.doubaoApiKey)
+        : isSet(object.doubao_api_key)
+        ? globalThis.String(object.doubao_api_key)
+        : undefined,
+      mistralApiKey: isSet(object.mistralApiKey)
+        ? globalThis.String(object.mistralApiKey)
+        : isSet(object.mistral_api_key)
+        ? globalThis.String(object.mistral_api_key)
+        : undefined,
+      liteLlmApiKey: isSet(object.liteLlmApiKey)
+        ? globalThis.String(object.liteLlmApiKey)
+        : isSet(object.lite_llm_api_key)
+        ? globalThis.String(object.lite_llm_api_key)
+        : undefined,
+      authNonce: isSet(object.authNonce)
+        ? globalThis.String(object.authNonce)
+        : isSet(object.auth_nonce)
+        ? globalThis.String(object.auth_nonce)
+        : undefined,
+      asksageApiKey: isSet(object.asksageApiKey)
+        ? globalThis.String(object.asksageApiKey)
+        : isSet(object.asksage_api_key)
+        ? globalThis.String(object.asksage_api_key)
+        : undefined,
+      xaiApiKey: isSet(object.xaiApiKey)
+        ? globalThis.String(object.xaiApiKey)
+        : isSet(object.xai_api_key)
+        ? globalThis.String(object.xai_api_key)
+        : undefined,
+      moonshotApiKey: isSet(object.moonshotApiKey)
+        ? globalThis.String(object.moonshotApiKey)
+        : isSet(object.moonshot_api_key)
+        ? globalThis.String(object.moonshot_api_key)
+        : undefined,
+      zaiApiKey: isSet(object.zaiApiKey)
+        ? globalThis.String(object.zaiApiKey)
+        : isSet(object.zai_api_key)
+        ? globalThis.String(object.zai_api_key)
+        : undefined,
+      huggingFaceApiKey: isSet(object.huggingFaceApiKey)
+        ? globalThis.String(object.huggingFaceApiKey)
+        : isSet(object.hugging_face_api_key)
+        ? globalThis.String(object.hugging_face_api_key)
+        : undefined,
+      nebiusApiKey: isSet(object.nebiusApiKey)
+        ? globalThis.String(object.nebiusApiKey)
+        : isSet(object.nebius_api_key)
+        ? globalThis.String(object.nebius_api_key)
+        : undefined,
+      sambanovaApiKey: isSet(object.sambanovaApiKey)
+        ? globalThis.String(object.sambanovaApiKey)
+        : isSet(object.sambanova_api_key)
+        ? globalThis.String(object.sambanova_api_key)
+        : undefined,
+      cerebrasApiKey: isSet(object.cerebrasApiKey)
+        ? globalThis.String(object.cerebrasApiKey)
+        : isSet(object.cerebras_api_key)
+        ? globalThis.String(object.cerebras_api_key)
+        : undefined,
+      sapAiCoreClientId: isSet(object.sapAiCoreClientId)
+        ? globalThis.String(object.sapAiCoreClientId)
+        : isSet(object.sap_ai_core_client_id)
+        ? globalThis.String(object.sap_ai_core_client_id)
+        : undefined,
+      sapAiCoreClientSecret: isSet(object.sapAiCoreClientSecret)
+        ? globalThis.String(object.sapAiCoreClientSecret)
+        : isSet(object.sap_ai_core_client_secret)
+        ? globalThis.String(object.sap_ai_core_client_secret)
+        : undefined,
+      groqApiKey: isSet(object.groqApiKey)
+        ? globalThis.String(object.groqApiKey)
+        : isSet(object.groq_api_key)
+        ? globalThis.String(object.groq_api_key)
+        : undefined,
+      huaweiCloudMaasApiKey: isSet(object.huaweiCloudMaasApiKey)
+        ? globalThis.String(object.huaweiCloudMaasApiKey)
+        : isSet(object.huawei_cloud_maas_api_key)
+        ? globalThis.String(object.huawei_cloud_maas_api_key)
+        : undefined,
+      basetenApiKey: isSet(object.basetenApiKey)
+        ? globalThis.String(object.basetenApiKey)
+        : isSet(object.baseten_api_key)
+        ? globalThis.String(object.baseten_api_key)
+        : undefined,
+      vercelAiGatewayApiKey: isSet(object.vercelAiGatewayApiKey)
+        ? globalThis.String(object.vercelAiGatewayApiKey)
+        : isSet(object.vercel_ai_gateway_api_key)
+        ? globalThis.String(object.vercel_ai_gateway_api_key)
+        : undefined,
+      difyApiKey: isSet(object.difyApiKey)
+        ? globalThis.String(object.difyApiKey)
+        : isSet(object.dify_api_key)
+        ? globalThis.String(object.dify_api_key)
+        : undefined,
+      minimaxApiKey: isSet(object.minimaxApiKey)
+        ? globalThis.String(object.minimaxApiKey)
+        : isSet(object.minimax_api_key)
+        ? globalThis.String(object.minimax_api_key)
+        : undefined,
+      hicapApiKey: isSet(object.hicapApiKey)
+        ? globalThis.String(object.hicapApiKey)
+        : isSet(object.hicap_api_key)
+        ? globalThis.String(object.hicap_api_key)
+        : undefined,
+      aihubmixApiKey: isSet(object.aihubmixApiKey)
+        ? globalThis.String(object.aihubmixApiKey)
+        : isSet(object.aihubmix_api_key)
+        ? globalThis.String(object.aihubmix_api_key)
+        : undefined,
+      nousResearchApiKey: isSet(object.nousResearchApiKey)
+        ? globalThis.String(object.nousResearchApiKey)
+        : isSet(object.nous_research_api_key)
+        ? globalThis.String(object.nous_research_api_key)
+        : undefined,
+      remoteLiteLlmApiKey: isSet(object.remoteLiteLlmApiKey)
+        ? globalThis.String(object.remoteLiteLlmApiKey)
+        : isSet(object.remote_lite_llm_api_key)
+        ? globalThis.String(object.remote_lite_llm_api_key)
+        : undefined,
+      ocaApiKey: isSet(object.ocaApiKey)
+        ? globalThis.String(object.ocaApiKey)
+        : isSet(object.oca_api_key)
+        ? globalThis.String(object.oca_api_key)
+        : undefined,
+      ocaRefreshToken: isSet(object.ocaRefreshToken)
+        ? globalThis.String(object.ocaRefreshToken)
+        : isSet(object.oca_refresh_token)
+        ? globalThis.String(object.oca_refresh_token)
+        : undefined,
+      mcpOAuthSecrets: isSet(object.mcpOAuthSecrets)
+        ? globalThis.String(object.mcpOAuthSecrets)
+        : isSet(object.mcp_o_auth_secrets)
+        ? globalThis.String(object.mcp_o_auth_secrets)
+        : undefined,
+      dietcodeApiKey: isSet(object.dietcodeApiKey)
+        ? globalThis.String(object.dietcodeApiKey)
+        : isSet(object.dietcode_api_key)
+        ? globalThis.String(object.dietcode_api_key)
+        : undefined,
+      cloudflareApiToken: isSet(object.cloudflareApiToken)
+        ? globalThis.String(object.cloudflareApiToken)
+        : isSet(object.cloudflare_api_token)
+        ? globalThis.String(object.cloudflare_api_token)
+        : undefined,
+      embeddingApiKey: isSet(object.embeddingApiKey)
+        ? globalThis.String(object.embeddingApiKey)
+        : isSet(object.embedding_api_key)
+        ? globalThis.String(object.embedding_api_key)
+        : undefined,
+      vertexApiKey: isSet(object.vertexApiKey)
+        ? globalThis.String(object.vertexApiKey)
+        : isSet(object.vertex_api_key)
+        ? globalThis.String(object.vertex_api_key)
+        : undefined,
+      clineApiKey: isSet(object.clineApiKey)
+        ? globalThis.String(object.clineApiKey)
+        : isSet(object.cline_api_key)
+        ? globalThis.String(object.cline_api_key)
+        : undefined,
+      qwenTokenPlanApiKey: isSet(object.qwenTokenPlanApiKey)
+        ? globalThis.String(object.qwenTokenPlanApiKey)
+        : isSet(object.qwen_token_plan_api_key)
+        ? globalThis.String(object.qwen_token_plan_api_key)
+        : undefined,
+      galxApiKey: isSet(object.galxApiKey)
+        ? globalThis.String(object.galxApiKey)
+        : isSet(object.galx_api_key)
+        ? globalThis.String(object.galx_api_key)
+        : undefined,
+      openaiCodexOauthCredentials: isSet(object.openaiCodexOauthCredentials)
+        ? globalThis.String(object.openaiCodexOauthCredentials)
+        : isSet(object.openai_codex_oauth_credentials)
+        ? globalThis.String(object.openai_codex_oauth_credentials)
+        : undefined,
+      xaiOauthCredentials: isSet(object.xaiOauthCredentials)
+        ? globalThis.String(object.xaiOauthCredentials)
+        : isSet(object.xai_oauth_credentials)
+        ? globalThis.String(object.xai_oauth_credentials)
+        : undefined,
+    };
+  },
 
-	toJSON(message: Secrets): unknown {
-		const obj: any = {};
-		if (message.apiKey !== undefined) {
-			obj.apiKey = message.apiKey;
-		}
-		if (message.dietcodeAccountId !== undefined) {
-			obj.dietcodeAccountId = message.dietcodeAccountId;
-		}
-		if (message.openRouterApiKey !== undefined) {
-			obj.openRouterApiKey = message.openRouterApiKey;
-		}
-		if (message.awsAccessKey !== undefined) {
-			obj.awsAccessKey = message.awsAccessKey;
-		}
-		if (message.awsSecretKey !== undefined) {
-			obj.awsSecretKey = message.awsSecretKey;
-		}
-		if (message.awsSessionToken !== undefined) {
-			obj.awsSessionToken = message.awsSessionToken;
-		}
-		if (message.awsBedrockApiKey !== undefined) {
-			obj.awsBedrockApiKey = message.awsBedrockApiKey;
-		}
-		if (message.openAiApiKey !== undefined) {
-			obj.openAiApiKey = message.openAiApiKey;
-		}
-		if (message.geminiApiKey !== undefined) {
-			obj.geminiApiKey = message.geminiApiKey;
-		}
-		if (message.openAiNativeApiKey !== undefined) {
-			obj.openAiNativeApiKey = message.openAiNativeApiKey;
-		}
-		if (message.ollamaApiKey !== undefined) {
-			obj.ollamaApiKey = message.ollamaApiKey;
-		}
-		if (message.deepSeekApiKey !== undefined) {
-			obj.deepSeekApiKey = message.deepSeekApiKey;
-		}
-		if (message.requestyApiKey !== undefined) {
-			obj.requestyApiKey = message.requestyApiKey;
-		}
-		if (message.togetherApiKey !== undefined) {
-			obj.togetherApiKey = message.togetherApiKey;
-		}
-		if (message.fireworksApiKey !== undefined) {
-			obj.fireworksApiKey = message.fireworksApiKey;
-		}
-		if (message.qwenApiKey !== undefined) {
-			obj.qwenApiKey = message.qwenApiKey;
-		}
-		if (message.doubaoApiKey !== undefined) {
-			obj.doubaoApiKey = message.doubaoApiKey;
-		}
-		if (message.mistralApiKey !== undefined) {
-			obj.mistralApiKey = message.mistralApiKey;
-		}
-		if (message.liteLlmApiKey !== undefined) {
-			obj.liteLlmApiKey = message.liteLlmApiKey;
-		}
-		if (message.authNonce !== undefined) {
-			obj.authNonce = message.authNonce;
-		}
-		if (message.asksageApiKey !== undefined) {
-			obj.asksageApiKey = message.asksageApiKey;
-		}
-		if (message.xaiApiKey !== undefined) {
-			obj.xaiApiKey = message.xaiApiKey;
-		}
-		if (message.moonshotApiKey !== undefined) {
-			obj.moonshotApiKey = message.moonshotApiKey;
-		}
-		if (message.zaiApiKey !== undefined) {
-			obj.zaiApiKey = message.zaiApiKey;
-		}
-		if (message.huggingFaceApiKey !== undefined) {
-			obj.huggingFaceApiKey = message.huggingFaceApiKey;
-		}
-		if (message.nebiusApiKey !== undefined) {
-			obj.nebiusApiKey = message.nebiusApiKey;
-		}
-		if (message.sambanovaApiKey !== undefined) {
-			obj.sambanovaApiKey = message.sambanovaApiKey;
-		}
-		if (message.cerebrasApiKey !== undefined) {
-			obj.cerebrasApiKey = message.cerebrasApiKey;
-		}
-		if (message.sapAiCoreClientId !== undefined) {
-			obj.sapAiCoreClientId = message.sapAiCoreClientId;
-		}
-		if (message.sapAiCoreClientSecret !== undefined) {
-			obj.sapAiCoreClientSecret = message.sapAiCoreClientSecret;
-		}
-		if (message.groqApiKey !== undefined) {
-			obj.groqApiKey = message.groqApiKey;
-		}
-		if (message.huaweiCloudMaasApiKey !== undefined) {
-			obj.huaweiCloudMaasApiKey = message.huaweiCloudMaasApiKey;
-		}
-		if (message.basetenApiKey !== undefined) {
-			obj.basetenApiKey = message.basetenApiKey;
-		}
-		if (message.vercelAiGatewayApiKey !== undefined) {
-			obj.vercelAiGatewayApiKey = message.vercelAiGatewayApiKey;
-		}
-		if (message.difyApiKey !== undefined) {
-			obj.difyApiKey = message.difyApiKey;
-		}
-		if (message.minimaxApiKey !== undefined) {
-			obj.minimaxApiKey = message.minimaxApiKey;
-		}
-		if (message.hicapApiKey !== undefined) {
-			obj.hicapApiKey = message.hicapApiKey;
-		}
-		if (message.aihubmixApiKey !== undefined) {
-			obj.aihubmixApiKey = message.aihubmixApiKey;
-		}
-		if (message.nousResearchApiKey !== undefined) {
-			obj.nousResearchApiKey = message.nousResearchApiKey;
-		}
-		if (message.remoteLiteLlmApiKey !== undefined) {
-			obj.remoteLiteLlmApiKey = message.remoteLiteLlmApiKey;
-		}
-		if (message.ocaApiKey !== undefined) {
-			obj.ocaApiKey = message.ocaApiKey;
-		}
-		if (message.ocaRefreshToken !== undefined) {
-			obj.ocaRefreshToken = message.ocaRefreshToken;
-		}
-		if (message.mcpOAuthSecrets !== undefined) {
-			obj.mcpOAuthSecrets = message.mcpOAuthSecrets;
-		}
-		if (message.dietcodeApiKey !== undefined) {
-			obj.dietcodeApiKey = message.dietcodeApiKey;
-		}
-		if (message.cloudflareApiToken !== undefined) {
-			obj.cloudflareApiToken = message.cloudflareApiToken;
-		}
-		if (message.embeddingApiKey !== undefined) {
-			obj.embeddingApiKey = message.embeddingApiKey;
-		}
-		if (message.vertexApiKey !== undefined) {
-			obj.vertexApiKey = message.vertexApiKey;
-		}
-		if (message.clineApiKey !== undefined) {
-			obj.clineApiKey = message.clineApiKey;
-		}
-		if (message.qwenTokenPlanApiKey !== undefined) {
-			obj.qwenTokenPlanApiKey = message.qwenTokenPlanApiKey;
-		}
-		if (message.galxApiKey !== undefined) {
-			obj.galxApiKey = message.galxApiKey;
-		}
-		if (message.openaiCodexOauthCredentials !== undefined) {
-			obj.openaiCodexOauthCredentials = message.openaiCodexOauthCredentials;
-		}
-		if (message.xaiOauthCredentials !== undefined) {
-			obj.xaiOauthCredentials = message.xaiOauthCredentials;
-		}
-		return obj;
-	},
+  toJSON(message: Secrets): unknown {
+    const obj: any = {};
+    if (message.apiKey !== undefined) {
+      obj.apiKey = message.apiKey;
+    }
+    if (message.dietcodeAccountId !== undefined) {
+      obj.dietcodeAccountId = message.dietcodeAccountId;
+    }
+    if (message.openRouterApiKey !== undefined) {
+      obj.openRouterApiKey = message.openRouterApiKey;
+    }
+    if (message.awsAccessKey !== undefined) {
+      obj.awsAccessKey = message.awsAccessKey;
+    }
+    if (message.awsSecretKey !== undefined) {
+      obj.awsSecretKey = message.awsSecretKey;
+    }
+    if (message.awsSessionToken !== undefined) {
+      obj.awsSessionToken = message.awsSessionToken;
+    }
+    if (message.awsBedrockApiKey !== undefined) {
+      obj.awsBedrockApiKey = message.awsBedrockApiKey;
+    }
+    if (message.openAiApiKey !== undefined) {
+      obj.openAiApiKey = message.openAiApiKey;
+    }
+    if (message.geminiApiKey !== undefined) {
+      obj.geminiApiKey = message.geminiApiKey;
+    }
+    if (message.openAiNativeApiKey !== undefined) {
+      obj.openAiNativeApiKey = message.openAiNativeApiKey;
+    }
+    if (message.ollamaApiKey !== undefined) {
+      obj.ollamaApiKey = message.ollamaApiKey;
+    }
+    if (message.deepSeekApiKey !== undefined) {
+      obj.deepSeekApiKey = message.deepSeekApiKey;
+    }
+    if (message.requestyApiKey !== undefined) {
+      obj.requestyApiKey = message.requestyApiKey;
+    }
+    if (message.togetherApiKey !== undefined) {
+      obj.togetherApiKey = message.togetherApiKey;
+    }
+    if (message.fireworksApiKey !== undefined) {
+      obj.fireworksApiKey = message.fireworksApiKey;
+    }
+    if (message.qwenApiKey !== undefined) {
+      obj.qwenApiKey = message.qwenApiKey;
+    }
+    if (message.doubaoApiKey !== undefined) {
+      obj.doubaoApiKey = message.doubaoApiKey;
+    }
+    if (message.mistralApiKey !== undefined) {
+      obj.mistralApiKey = message.mistralApiKey;
+    }
+    if (message.liteLlmApiKey !== undefined) {
+      obj.liteLlmApiKey = message.liteLlmApiKey;
+    }
+    if (message.authNonce !== undefined) {
+      obj.authNonce = message.authNonce;
+    }
+    if (message.asksageApiKey !== undefined) {
+      obj.asksageApiKey = message.asksageApiKey;
+    }
+    if (message.xaiApiKey !== undefined) {
+      obj.xaiApiKey = message.xaiApiKey;
+    }
+    if (message.moonshotApiKey !== undefined) {
+      obj.moonshotApiKey = message.moonshotApiKey;
+    }
+    if (message.zaiApiKey !== undefined) {
+      obj.zaiApiKey = message.zaiApiKey;
+    }
+    if (message.huggingFaceApiKey !== undefined) {
+      obj.huggingFaceApiKey = message.huggingFaceApiKey;
+    }
+    if (message.nebiusApiKey !== undefined) {
+      obj.nebiusApiKey = message.nebiusApiKey;
+    }
+    if (message.sambanovaApiKey !== undefined) {
+      obj.sambanovaApiKey = message.sambanovaApiKey;
+    }
+    if (message.cerebrasApiKey !== undefined) {
+      obj.cerebrasApiKey = message.cerebrasApiKey;
+    }
+    if (message.sapAiCoreClientId !== undefined) {
+      obj.sapAiCoreClientId = message.sapAiCoreClientId;
+    }
+    if (message.sapAiCoreClientSecret !== undefined) {
+      obj.sapAiCoreClientSecret = message.sapAiCoreClientSecret;
+    }
+    if (message.groqApiKey !== undefined) {
+      obj.groqApiKey = message.groqApiKey;
+    }
+    if (message.huaweiCloudMaasApiKey !== undefined) {
+      obj.huaweiCloudMaasApiKey = message.huaweiCloudMaasApiKey;
+    }
+    if (message.basetenApiKey !== undefined) {
+      obj.basetenApiKey = message.basetenApiKey;
+    }
+    if (message.vercelAiGatewayApiKey !== undefined) {
+      obj.vercelAiGatewayApiKey = message.vercelAiGatewayApiKey;
+    }
+    if (message.difyApiKey !== undefined) {
+      obj.difyApiKey = message.difyApiKey;
+    }
+    if (message.minimaxApiKey !== undefined) {
+      obj.minimaxApiKey = message.minimaxApiKey;
+    }
+    if (message.hicapApiKey !== undefined) {
+      obj.hicapApiKey = message.hicapApiKey;
+    }
+    if (message.aihubmixApiKey !== undefined) {
+      obj.aihubmixApiKey = message.aihubmixApiKey;
+    }
+    if (message.nousResearchApiKey !== undefined) {
+      obj.nousResearchApiKey = message.nousResearchApiKey;
+    }
+    if (message.remoteLiteLlmApiKey !== undefined) {
+      obj.remoteLiteLlmApiKey = message.remoteLiteLlmApiKey;
+    }
+    if (message.ocaApiKey !== undefined) {
+      obj.ocaApiKey = message.ocaApiKey;
+    }
+    if (message.ocaRefreshToken !== undefined) {
+      obj.ocaRefreshToken = message.ocaRefreshToken;
+    }
+    if (message.mcpOAuthSecrets !== undefined) {
+      obj.mcpOAuthSecrets = message.mcpOAuthSecrets;
+    }
+    if (message.dietcodeApiKey !== undefined) {
+      obj.dietcodeApiKey = message.dietcodeApiKey;
+    }
+    if (message.cloudflareApiToken !== undefined) {
+      obj.cloudflareApiToken = message.cloudflareApiToken;
+    }
+    if (message.embeddingApiKey !== undefined) {
+      obj.embeddingApiKey = message.embeddingApiKey;
+    }
+    if (message.vertexApiKey !== undefined) {
+      obj.vertexApiKey = message.vertexApiKey;
+    }
+    if (message.clineApiKey !== undefined) {
+      obj.clineApiKey = message.clineApiKey;
+    }
+    if (message.qwenTokenPlanApiKey !== undefined) {
+      obj.qwenTokenPlanApiKey = message.qwenTokenPlanApiKey;
+    }
+    if (message.galxApiKey !== undefined) {
+      obj.galxApiKey = message.galxApiKey;
+    }
+    if (message.openaiCodexOauthCredentials !== undefined) {
+      obj.openaiCodexOauthCredentials = message.openaiCodexOauthCredentials;
+    }
+    if (message.xaiOauthCredentials !== undefined) {
+      obj.xaiOauthCredentials = message.xaiOauthCredentials;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<Secrets>, I>>(base?: I): Secrets {
-		return Secrets.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<Secrets>, I>>(object: I): Secrets {
-		const message = createBaseSecrets();
-		message.apiKey = object.apiKey ?? undefined;
-		message.dietcodeAccountId = object.dietcodeAccountId ?? undefined;
-		message.openRouterApiKey = object.openRouterApiKey ?? undefined;
-		message.awsAccessKey = object.awsAccessKey ?? undefined;
-		message.awsSecretKey = object.awsSecretKey ?? undefined;
-		message.awsSessionToken = object.awsSessionToken ?? undefined;
-		message.awsBedrockApiKey = object.awsBedrockApiKey ?? undefined;
-		message.openAiApiKey = object.openAiApiKey ?? undefined;
-		message.geminiApiKey = object.geminiApiKey ?? undefined;
-		message.openAiNativeApiKey = object.openAiNativeApiKey ?? undefined;
-		message.ollamaApiKey = object.ollamaApiKey ?? undefined;
-		message.deepSeekApiKey = object.deepSeekApiKey ?? undefined;
-		message.requestyApiKey = object.requestyApiKey ?? undefined;
-		message.togetherApiKey = object.togetherApiKey ?? undefined;
-		message.fireworksApiKey = object.fireworksApiKey ?? undefined;
-		message.qwenApiKey = object.qwenApiKey ?? undefined;
-		message.doubaoApiKey = object.doubaoApiKey ?? undefined;
-		message.mistralApiKey = object.mistralApiKey ?? undefined;
-		message.liteLlmApiKey = object.liteLlmApiKey ?? undefined;
-		message.authNonce = object.authNonce ?? undefined;
-		message.asksageApiKey = object.asksageApiKey ?? undefined;
-		message.xaiApiKey = object.xaiApiKey ?? undefined;
-		message.moonshotApiKey = object.moonshotApiKey ?? undefined;
-		message.zaiApiKey = object.zaiApiKey ?? undefined;
-		message.huggingFaceApiKey = object.huggingFaceApiKey ?? undefined;
-		message.nebiusApiKey = object.nebiusApiKey ?? undefined;
-		message.sambanovaApiKey = object.sambanovaApiKey ?? undefined;
-		message.cerebrasApiKey = object.cerebrasApiKey ?? undefined;
-		message.sapAiCoreClientId = object.sapAiCoreClientId ?? undefined;
-		message.sapAiCoreClientSecret = object.sapAiCoreClientSecret ?? undefined;
-		message.groqApiKey = object.groqApiKey ?? undefined;
-		message.huaweiCloudMaasApiKey = object.huaweiCloudMaasApiKey ?? undefined;
-		message.basetenApiKey = object.basetenApiKey ?? undefined;
-		message.vercelAiGatewayApiKey = object.vercelAiGatewayApiKey ?? undefined;
-		message.difyApiKey = object.difyApiKey ?? undefined;
-		message.minimaxApiKey = object.minimaxApiKey ?? undefined;
-		message.hicapApiKey = object.hicapApiKey ?? undefined;
-		message.aihubmixApiKey = object.aihubmixApiKey ?? undefined;
-		message.nousResearchApiKey = object.nousResearchApiKey ?? undefined;
-		message.remoteLiteLlmApiKey = object.remoteLiteLlmApiKey ?? undefined;
-		message.ocaApiKey = object.ocaApiKey ?? undefined;
-		message.ocaRefreshToken = object.ocaRefreshToken ?? undefined;
-		message.mcpOAuthSecrets = object.mcpOAuthSecrets ?? undefined;
-		message.dietcodeApiKey = object.dietcodeApiKey ?? undefined;
-		message.cloudflareApiToken = object.cloudflareApiToken ?? undefined;
-		message.embeddingApiKey = object.embeddingApiKey ?? undefined;
-		message.vertexApiKey = object.vertexApiKey ?? undefined;
-		message.clineApiKey = object.clineApiKey ?? undefined;
-		message.qwenTokenPlanApiKey = object.qwenTokenPlanApiKey ?? undefined;
-		message.galxApiKey = object.galxApiKey ?? undefined;
-		message.openaiCodexOauthCredentials =
-			object.openaiCodexOauthCredentials ?? undefined;
-		message.xaiOauthCredentials = object.xaiOauthCredentials ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<Secrets>, I>>(base?: I): Secrets {
+    return Secrets.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Secrets>, I>>(object: I): Secrets {
+    const message = createBaseSecrets();
+    message.apiKey = object.apiKey ?? undefined;
+    message.dietcodeAccountId = object.dietcodeAccountId ?? undefined;
+    message.openRouterApiKey = object.openRouterApiKey ?? undefined;
+    message.awsAccessKey = object.awsAccessKey ?? undefined;
+    message.awsSecretKey = object.awsSecretKey ?? undefined;
+    message.awsSessionToken = object.awsSessionToken ?? undefined;
+    message.awsBedrockApiKey = object.awsBedrockApiKey ?? undefined;
+    message.openAiApiKey = object.openAiApiKey ?? undefined;
+    message.geminiApiKey = object.geminiApiKey ?? undefined;
+    message.openAiNativeApiKey = object.openAiNativeApiKey ?? undefined;
+    message.ollamaApiKey = object.ollamaApiKey ?? undefined;
+    message.deepSeekApiKey = object.deepSeekApiKey ?? undefined;
+    message.requestyApiKey = object.requestyApiKey ?? undefined;
+    message.togetherApiKey = object.togetherApiKey ?? undefined;
+    message.fireworksApiKey = object.fireworksApiKey ?? undefined;
+    message.qwenApiKey = object.qwenApiKey ?? undefined;
+    message.doubaoApiKey = object.doubaoApiKey ?? undefined;
+    message.mistralApiKey = object.mistralApiKey ?? undefined;
+    message.liteLlmApiKey = object.liteLlmApiKey ?? undefined;
+    message.authNonce = object.authNonce ?? undefined;
+    message.asksageApiKey = object.asksageApiKey ?? undefined;
+    message.xaiApiKey = object.xaiApiKey ?? undefined;
+    message.moonshotApiKey = object.moonshotApiKey ?? undefined;
+    message.zaiApiKey = object.zaiApiKey ?? undefined;
+    message.huggingFaceApiKey = object.huggingFaceApiKey ?? undefined;
+    message.nebiusApiKey = object.nebiusApiKey ?? undefined;
+    message.sambanovaApiKey = object.sambanovaApiKey ?? undefined;
+    message.cerebrasApiKey = object.cerebrasApiKey ?? undefined;
+    message.sapAiCoreClientId = object.sapAiCoreClientId ?? undefined;
+    message.sapAiCoreClientSecret = object.sapAiCoreClientSecret ?? undefined;
+    message.groqApiKey = object.groqApiKey ?? undefined;
+    message.huaweiCloudMaasApiKey = object.huaweiCloudMaasApiKey ?? undefined;
+    message.basetenApiKey = object.basetenApiKey ?? undefined;
+    message.vercelAiGatewayApiKey = object.vercelAiGatewayApiKey ?? undefined;
+    message.difyApiKey = object.difyApiKey ?? undefined;
+    message.minimaxApiKey = object.minimaxApiKey ?? undefined;
+    message.hicapApiKey = object.hicapApiKey ?? undefined;
+    message.aihubmixApiKey = object.aihubmixApiKey ?? undefined;
+    message.nousResearchApiKey = object.nousResearchApiKey ?? undefined;
+    message.remoteLiteLlmApiKey = object.remoteLiteLlmApiKey ?? undefined;
+    message.ocaApiKey = object.ocaApiKey ?? undefined;
+    message.ocaRefreshToken = object.ocaRefreshToken ?? undefined;
+    message.mcpOAuthSecrets = object.mcpOAuthSecrets ?? undefined;
+    message.dietcodeApiKey = object.dietcodeApiKey ?? undefined;
+    message.cloudflareApiToken = object.cloudflareApiToken ?? undefined;
+    message.embeddingApiKey = object.embeddingApiKey ?? undefined;
+    message.vertexApiKey = object.vertexApiKey ?? undefined;
+    message.clineApiKey = object.clineApiKey ?? undefined;
+    message.qwenTokenPlanApiKey = object.qwenTokenPlanApiKey ?? undefined;
+    message.galxApiKey = object.galxApiKey ?? undefined;
+    message.openaiCodexOauthCredentials = object.openaiCodexOauthCredentials ?? undefined;
+    message.xaiOauthCredentials = object.xaiOauthCredentials ?? undefined;
+    return message;
+  },
 };
 
 function createBaseSettings(): Settings {
-	return {
-		openRouterProviderSorting: undefined,
-		planModeApiModelId: undefined,
-		planModeThinkingBudgetTokens: undefined,
-		planModeReasoningEffort: undefined,
-		planModeOpenRouterModelId: undefined,
-		planModeOpenRouterModelInfo: undefined,
-		planModeNousResearchModelId: undefined,
-		actModeApiModelId: undefined,
-		actModeThinkingBudgetTokens: undefined,
-		actModeReasoningEffort: undefined,
-		actModeOpenRouterModelId: undefined,
-		actModeOpenRouterModelInfo: undefined,
-		actModeNousResearchModelId: undefined,
-		planModeApiProvider: undefined,
-		actModeApiProvider: undefined,
-		autoApprovalSettings: undefined,
-		globalWorkflowToggles: undefined,
-		globalSkillsToggles: undefined,
-		browserSettings: undefined,
-		telemetrySetting: undefined,
-		planActSeparateModelsSetting: undefined,
-		enableCheckpointsSetting: undefined,
-		shellIntegrationTimeout: undefined,
-		defaultTerminalProfile: undefined,
-		terminalOutputLineLimit: undefined,
-		maxConsecutiveMistakes: undefined,
-		strictPlanModeEnabled: undefined,
-		yoloModeToggled: undefined,
-		useAutoCondense: undefined,
-		dietcodeWebToolsEnabled: undefined,
-		preferredLanguage: undefined,
-		mode: undefined,
-		focusChainSettings: undefined,
-		customPrompt: undefined,
-		subagentsEnabled: undefined,
-		enableParallelToolCalling: undefined,
-		backgroundEditEnabled: undefined,
-		optOutOfRemoteConfig: undefined,
-		openTelemetryEnabled: undefined,
-		openTelemetryMetricsExporter: undefined,
-		openTelemetryLogsExporter: undefined,
-		openTelemetryOtlpProtocol: undefined,
-		openTelemetryOtlpEndpoint: undefined,
-		openTelemetryOtlpMetricsProtocol: undefined,
-		openTelemetryOtlpMetricsEndpoint: undefined,
-		openTelemetryOtlpLogsProtocol: undefined,
-		openTelemetryOtlpLogsEndpoint: undefined,
-		openTelemetryMetricExportInterval: undefined,
-		openTelemetryOtlpInsecure: undefined,
-		openTelemetryLogBatchSize: undefined,
-		openTelemetryLogBatchTimeout: undefined,
-		openTelemetryLogMaxQueueSize: undefined,
-		worktreesEnabled: undefined,
-		doubleCheckCompletionEnabled: undefined,
-		cloudflareAccountId: undefined,
-		embeddingProvider: undefined,
-		embeddingModelId: undefined,
-		embeddingOpenAiBaseUrl: undefined,
-		maxSwarmDepth: undefined,
-		safeYoloModeToggled: undefined,
-		masEnabled: undefined,
-		globalDietCodeRulesToggles: undefined,
-		auditCompletionGateEnabled: undefined,
-		auditCompletionGateThreshold: undefined,
-		auditCompletionGateCriticalOnly: undefined,
-		auditActModeAdvisoryEnabled: undefined,
-		auditAdvisoryEscalationEnabled: undefined,
-		auditPlanRegressionGateEnabled: undefined,
-		auditToolOutputAdvisoryEnabled: undefined,
-		auditFileWriteAdvisoryEnabled: undefined,
-		auditIntentThresholdAdjustmentsEnabled: undefined,
-		auditIntentThresholdOverrides: undefined,
-		auditSarifHookExportEnabled: undefined,
-		auditWorkspaceArtifactsEnabled: undefined,
-		auditAdvisoryAutoScrollMode: undefined,
-		liteLlmBaseUrl: undefined,
-		liteLlmUsePromptCache: undefined,
-		anthropicBaseUrl: undefined,
-		awsRegion: undefined,
-		awsUseCrossRegionInference: undefined,
-		awsUseGlobalInference: undefined,
-		awsBedrockUsePromptCache: undefined,
-		awsAuthentication: undefined,
-		awsUseProfile: undefined,
-		awsProfile: undefined,
-		awsBedrockEndpoint: undefined,
-		claudeCodePath: undefined,
-		openAiBaseUrl: undefined,
-		ollamaBaseUrl: undefined,
-		ollamaApiOptionsCtxNum: undefined,
-		lmStudioBaseUrl: undefined,
-		lmStudioMaxTokens: undefined,
-		geminiBaseUrl: undefined,
-		requestyBaseUrl: undefined,
-		fireworksModelMaxCompletionTokens: undefined,
-		fireworksModelMaxTokens: undefined,
-		qwenCodeOauthPath: undefined,
-		azureApiVersion: undefined,
-		azureIdentity: undefined,
-		qwenApiLine: undefined,
-		moonshotApiLine: undefined,
-		asksageApiUrl: undefined,
-		requestTimeoutMs: undefined,
-		sapAiResourceGroup: undefined,
-		sapAiCoreTokenUrl: undefined,
-		sapAiCoreBaseUrl: undefined,
-		sapAiCoreUseOrchestrationMode: undefined,
-		difyBaseUrl: undefined,
-		zaiApiLine: undefined,
-		ocaBaseUrl: undefined,
-		minimaxApiLine: undefined,
-		ocaMode: undefined,
-		aihubmixBaseUrl: undefined,
-		aihubmixAppCode: undefined,
-		geminiPlanModeThinkingLevel: undefined,
-		planModeVerbosity: undefined,
-		planModeVsCodeLmModelSelector: undefined,
-		planModeAwsBedrockCustomSelected: undefined,
-		planModeAwsBedrockCustomModelBaseId: undefined,
-		planModeDietCodeModelId: undefined,
-		planModeDietCodeModelInfo: undefined,
-		planModeOpenAiModelId: undefined,
-		planModeOpenAiModelInfo: undefined,
-		planModeOllamaModelId: undefined,
-		planModeLmStudioModelId: undefined,
-		planModeLiteLlmModelId: undefined,
-		planModeLiteLlmModelInfo: undefined,
-		planModeRequestyModelId: undefined,
-		planModeRequestyModelInfo: undefined,
-		planModeTogetherModelId: undefined,
-		planModeFireworksModelId: undefined,
-		planModeSapAiCoreModelId: undefined,
-		planModeSapAiCoreDeploymentId: undefined,
-		planModeGroqModelId: undefined,
-		planModeGroqModelInfo: undefined,
-		planModeBasetenModelId: undefined,
-		planModeBasetenModelInfo: undefined,
-		planModeHuggingFaceModelId: undefined,
-		planModeHuggingFaceModelInfo: undefined,
-		planModeHuaweiCloudMaasModelId: undefined,
-		planModeHuaweiCloudMaasModelInfo: undefined,
-		planModeOcaModelId: undefined,
-		planModeOcaModelInfo: undefined,
-		planModeOcaReasoningEffort: undefined,
-		planModeAihubmixModelId: undefined,
-		planModeAihubmixModelInfo: undefined,
-		planModeHicapModelId: undefined,
-		planModeHicapModelInfo: undefined,
-		planModeVercelAiGatewayModelId: undefined,
-		planModeVercelAiGatewayModelInfo: undefined,
-		geminiActModeThinkingLevel: undefined,
-		actModeVerbosity: undefined,
-		actModeVsCodeLmModelSelector: undefined,
-		actModeAwsBedrockCustomSelected: undefined,
-		actModeAwsBedrockCustomModelBaseId: undefined,
-		actModeDietCodeModelId: undefined,
-		actModeDietCodeModelInfo: undefined,
-		actModeOpenAiModelId: undefined,
-		actModeOpenAiModelInfo: undefined,
-		actModeOllamaModelId: undefined,
-		actModeLmStudioModelId: undefined,
-		actModeLiteLlmModelId: undefined,
-		actModeLiteLlmModelInfo: undefined,
-		actModeRequestyModelId: undefined,
-		actModeRequestyModelInfo: undefined,
-		actModeTogetherModelId: undefined,
-		actModeFireworksModelId: undefined,
-		actModeSapAiCoreModelId: undefined,
-		actModeSapAiCoreDeploymentId: undefined,
-		actModeGroqModelId: undefined,
-		actModeGroqModelInfo: undefined,
-		actModeBasetenModelId: undefined,
-		actModeBasetenModelInfo: undefined,
-		actModeHuggingFaceModelId: undefined,
-		actModeHuggingFaceModelInfo: undefined,
-		actModeHuaweiCloudMaasModelId: undefined,
-		actModeHuaweiCloudMaasModelInfo: undefined,
-		actModeOcaModelId: undefined,
-		actModeOcaModelInfo: undefined,
-		actModeOcaReasoningEffort: undefined,
-		actModeAihubmixModelId: undefined,
-		actModeAihubmixModelInfo: undefined,
-		actModeHicapModelId: undefined,
-		actModeHicapModelInfo: undefined,
-		actModeVercelAiGatewayModelId: undefined,
-		actModeVercelAiGatewayModelInfo: undefined,
-		hicapModelId: undefined,
-		lmStudioModelId: undefined,
-		planModeClinePassModelId: undefined,
-		planModeClinePassModelInfo: undefined,
-		actModeClinePassModelId: undefined,
-		actModeClinePassModelInfo: undefined,
-		modEnabled: undefined,
-		modOutcome: undefined,
-		planModeNousResearchModelInfo: undefined,
-		actModeNousResearchModelInfo: undefined,
-		galxBaseUrl: undefined,
-		planModeGalxModelId: undefined,
-		planModeGalxModelInfo: undefined,
-		actModeGalxModelId: undefined,
-		actModeGalxModelInfo: undefined,
-		openAiHeaders: {},
-	};
+  return {
+    openRouterProviderSorting: undefined,
+    planModeApiModelId: undefined,
+    planModeThinkingBudgetTokens: undefined,
+    planModeReasoningEffort: undefined,
+    planModeOpenRouterModelId: undefined,
+    planModeOpenRouterModelInfo: undefined,
+    planModeNousResearchModelId: undefined,
+    actModeApiModelId: undefined,
+    actModeThinkingBudgetTokens: undefined,
+    actModeReasoningEffort: undefined,
+    actModeOpenRouterModelId: undefined,
+    actModeOpenRouterModelInfo: undefined,
+    actModeNousResearchModelId: undefined,
+    planModeApiProvider: undefined,
+    actModeApiProvider: undefined,
+    autoApprovalSettings: undefined,
+    globalWorkflowToggles: undefined,
+    globalSkillsToggles: undefined,
+    browserSettings: undefined,
+    telemetrySetting: undefined,
+    planActSeparateModelsSetting: undefined,
+    enableCheckpointsSetting: undefined,
+    shellIntegrationTimeout: undefined,
+    defaultTerminalProfile: undefined,
+    terminalOutputLineLimit: undefined,
+    maxConsecutiveMistakes: undefined,
+    strictPlanModeEnabled: undefined,
+    yoloModeToggled: undefined,
+    useAutoCondense: undefined,
+    dietcodeWebToolsEnabled: undefined,
+    preferredLanguage: undefined,
+    mode: undefined,
+    focusChainSettings: undefined,
+    customPrompt: undefined,
+    subagentsEnabled: undefined,
+    enableParallelToolCalling: undefined,
+    backgroundEditEnabled: undefined,
+    optOutOfRemoteConfig: undefined,
+    openTelemetryEnabled: undefined,
+    openTelemetryMetricsExporter: undefined,
+    openTelemetryLogsExporter: undefined,
+    openTelemetryOtlpProtocol: undefined,
+    openTelemetryOtlpEndpoint: undefined,
+    openTelemetryOtlpMetricsProtocol: undefined,
+    openTelemetryOtlpMetricsEndpoint: undefined,
+    openTelemetryOtlpLogsProtocol: undefined,
+    openTelemetryOtlpLogsEndpoint: undefined,
+    openTelemetryMetricExportInterval: undefined,
+    openTelemetryOtlpInsecure: undefined,
+    openTelemetryLogBatchSize: undefined,
+    openTelemetryLogBatchTimeout: undefined,
+    openTelemetryLogMaxQueueSize: undefined,
+    worktreesEnabled: undefined,
+    doubleCheckCompletionEnabled: undefined,
+    cloudflareAccountId: undefined,
+    embeddingProvider: undefined,
+    embeddingModelId: undefined,
+    embeddingOpenAiBaseUrl: undefined,
+    maxSwarmDepth: undefined,
+    safeYoloModeToggled: undefined,
+    masEnabled: undefined,
+    globalDietCodeRulesToggles: undefined,
+    auditCompletionGateEnabled: undefined,
+    auditCompletionGateThreshold: undefined,
+    auditCompletionGateCriticalOnly: undefined,
+    auditActModeAdvisoryEnabled: undefined,
+    auditAdvisoryEscalationEnabled: undefined,
+    auditPlanRegressionGateEnabled: undefined,
+    auditToolOutputAdvisoryEnabled: undefined,
+    auditFileWriteAdvisoryEnabled: undefined,
+    auditIntentThresholdAdjustmentsEnabled: undefined,
+    auditIntentThresholdOverrides: undefined,
+    auditSarifHookExportEnabled: undefined,
+    auditWorkspaceArtifactsEnabled: undefined,
+    auditAdvisoryAutoScrollMode: undefined,
+    liteLlmBaseUrl: undefined,
+    liteLlmUsePromptCache: undefined,
+    anthropicBaseUrl: undefined,
+    awsRegion: undefined,
+    awsUseCrossRegionInference: undefined,
+    awsUseGlobalInference: undefined,
+    awsBedrockUsePromptCache: undefined,
+    awsAuthentication: undefined,
+    awsUseProfile: undefined,
+    awsProfile: undefined,
+    awsBedrockEndpoint: undefined,
+    claudeCodePath: undefined,
+    openAiBaseUrl: undefined,
+    ollamaBaseUrl: undefined,
+    ollamaApiOptionsCtxNum: undefined,
+    lmStudioBaseUrl: undefined,
+    lmStudioMaxTokens: undefined,
+    geminiBaseUrl: undefined,
+    requestyBaseUrl: undefined,
+    fireworksModelMaxCompletionTokens: undefined,
+    fireworksModelMaxTokens: undefined,
+    qwenCodeOauthPath: undefined,
+    azureApiVersion: undefined,
+    azureIdentity: undefined,
+    qwenApiLine: undefined,
+    moonshotApiLine: undefined,
+    asksageApiUrl: undefined,
+    requestTimeoutMs: undefined,
+    sapAiResourceGroup: undefined,
+    sapAiCoreTokenUrl: undefined,
+    sapAiCoreBaseUrl: undefined,
+    sapAiCoreUseOrchestrationMode: undefined,
+    difyBaseUrl: undefined,
+    zaiApiLine: undefined,
+    ocaBaseUrl: undefined,
+    minimaxApiLine: undefined,
+    ocaMode: undefined,
+    aihubmixBaseUrl: undefined,
+    aihubmixAppCode: undefined,
+    geminiPlanModeThinkingLevel: undefined,
+    planModeVerbosity: undefined,
+    planModeVsCodeLmModelSelector: undefined,
+    planModeAwsBedrockCustomSelected: undefined,
+    planModeAwsBedrockCustomModelBaseId: undefined,
+    planModeDietCodeModelId: undefined,
+    planModeDietCodeModelInfo: undefined,
+    planModeOpenAiModelId: undefined,
+    planModeOpenAiModelInfo: undefined,
+    planModeOllamaModelId: undefined,
+    planModeLmStudioModelId: undefined,
+    planModeLiteLlmModelId: undefined,
+    planModeLiteLlmModelInfo: undefined,
+    planModeRequestyModelId: undefined,
+    planModeRequestyModelInfo: undefined,
+    planModeTogetherModelId: undefined,
+    planModeFireworksModelId: undefined,
+    planModeSapAiCoreModelId: undefined,
+    planModeSapAiCoreDeploymentId: undefined,
+    planModeGroqModelId: undefined,
+    planModeGroqModelInfo: undefined,
+    planModeBasetenModelId: undefined,
+    planModeBasetenModelInfo: undefined,
+    planModeHuggingFaceModelId: undefined,
+    planModeHuggingFaceModelInfo: undefined,
+    planModeHuaweiCloudMaasModelId: undefined,
+    planModeHuaweiCloudMaasModelInfo: undefined,
+    planModeOcaModelId: undefined,
+    planModeOcaModelInfo: undefined,
+    planModeOcaReasoningEffort: undefined,
+    planModeAihubmixModelId: undefined,
+    planModeAihubmixModelInfo: undefined,
+    planModeHicapModelId: undefined,
+    planModeHicapModelInfo: undefined,
+    planModeVercelAiGatewayModelId: undefined,
+    planModeVercelAiGatewayModelInfo: undefined,
+    geminiActModeThinkingLevel: undefined,
+    actModeVerbosity: undefined,
+    actModeVsCodeLmModelSelector: undefined,
+    actModeAwsBedrockCustomSelected: undefined,
+    actModeAwsBedrockCustomModelBaseId: undefined,
+    actModeDietCodeModelId: undefined,
+    actModeDietCodeModelInfo: undefined,
+    actModeOpenAiModelId: undefined,
+    actModeOpenAiModelInfo: undefined,
+    actModeOllamaModelId: undefined,
+    actModeLmStudioModelId: undefined,
+    actModeLiteLlmModelId: undefined,
+    actModeLiteLlmModelInfo: undefined,
+    actModeRequestyModelId: undefined,
+    actModeRequestyModelInfo: undefined,
+    actModeTogetherModelId: undefined,
+    actModeFireworksModelId: undefined,
+    actModeSapAiCoreModelId: undefined,
+    actModeSapAiCoreDeploymentId: undefined,
+    actModeGroqModelId: undefined,
+    actModeGroqModelInfo: undefined,
+    actModeBasetenModelId: undefined,
+    actModeBasetenModelInfo: undefined,
+    actModeHuggingFaceModelId: undefined,
+    actModeHuggingFaceModelInfo: undefined,
+    actModeHuaweiCloudMaasModelId: undefined,
+    actModeHuaweiCloudMaasModelInfo: undefined,
+    actModeOcaModelId: undefined,
+    actModeOcaModelInfo: undefined,
+    actModeOcaReasoningEffort: undefined,
+    actModeAihubmixModelId: undefined,
+    actModeAihubmixModelInfo: undefined,
+    actModeHicapModelId: undefined,
+    actModeHicapModelInfo: undefined,
+    actModeVercelAiGatewayModelId: undefined,
+    actModeVercelAiGatewayModelInfo: undefined,
+    hicapModelId: undefined,
+    lmStudioModelId: undefined,
+    planModeClinePassModelId: undefined,
+    planModeClinePassModelInfo: undefined,
+    actModeClinePassModelId: undefined,
+    actModeClinePassModelInfo: undefined,
+    modEnabled: undefined,
+    modOutcome: undefined,
+    planModeNousResearchModelInfo: undefined,
+    actModeNousResearchModelInfo: undefined,
+    galxBaseUrl: undefined,
+    planModeGalxModelId: undefined,
+    planModeGalxModelInfo: undefined,
+    actModeGalxModelId: undefined,
+    actModeGalxModelInfo: undefined,
+    openAiHeaders: {},
+    tokenCompressionEnabled: undefined,
+  };
 }
 
 export const Settings: MessageFns<Settings> = {
-	encode(
-		message: Settings,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.openRouterProviderSorting !== undefined) {
-			writer.uint32(42).string(message.openRouterProviderSorting);
-		}
-		if (message.planModeApiModelId !== undefined) {
-			writer.uint32(354).string(message.planModeApiModelId);
-		}
-		if (message.planModeThinkingBudgetTokens !== undefined) {
-			writer.uint32(360).int64(message.planModeThinkingBudgetTokens);
-		}
-		if (message.planModeReasoningEffort !== undefined) {
-			writer.uint32(378).string(message.planModeReasoningEffort);
-		}
-		if (message.planModeOpenRouterModelId !== undefined) {
-			writer.uint32(418).string(message.planModeOpenRouterModelId);
-		}
-		if (message.planModeOpenRouterModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeOpenRouterModelInfo,
-				writer.uint32(426).fork(),
-			).join();
-		}
-		if (message.planModeNousResearchModelId !== undefined) {
-			writer.uint32(650).string(message.planModeNousResearchModelId);
-		}
-		if (message.actModeApiModelId !== undefined) {
-			writer.uint32(674).string(message.actModeApiModelId);
-		}
-		if (message.actModeThinkingBudgetTokens !== undefined) {
-			writer.uint32(680).int64(message.actModeThinkingBudgetTokens);
-		}
-		if (message.actModeReasoningEffort !== undefined) {
-			writer.uint32(698).string(message.actModeReasoningEffort);
-		}
-		if (message.actModeOpenRouterModelId !== undefined) {
-			writer.uint32(738).string(message.actModeOpenRouterModelId);
-		}
-		if (message.actModeOpenRouterModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeOpenRouterModelInfo,
-				writer.uint32(746).fork(),
-			).join();
-		}
-		if (message.actModeNousResearchModelId !== undefined) {
-			writer.uint32(970).string(message.actModeNousResearchModelId);
-		}
-		if (message.planModeApiProvider !== undefined) {
-			writer.uint32(992).int32(message.planModeApiProvider);
-		}
-		if (message.actModeApiProvider !== undefined) {
-			writer.uint32(1000).int32(message.actModeApiProvider);
-		}
-		if (message.autoApprovalSettings !== undefined) {
-			AutoApprovalSettings.encode(
-				message.autoApprovalSettings,
-				writer.uint32(1026).fork(),
-			).join();
-		}
-		if (message.globalWorkflowToggles !== undefined) {
-			writer.uint32(1042).string(message.globalWorkflowToggles);
-		}
-		if (message.globalSkillsToggles !== undefined) {
-			writer.uint32(1050).string(message.globalSkillsToggles);
-		}
-		if (message.browserSettings !== undefined) {
-			BrowserSettings.encode(
-				message.browserSettings,
-				writer.uint32(1058).fork(),
-			).join();
-		}
-		if (message.telemetrySetting !== undefined) {
-			writer.uint32(1066).string(message.telemetrySetting);
-		}
-		if (message.planActSeparateModelsSetting !== undefined) {
-			writer.uint32(1072).bool(message.planActSeparateModelsSetting);
-		}
-		if (message.enableCheckpointsSetting !== undefined) {
-			writer.uint32(1080).bool(message.enableCheckpointsSetting);
-		}
-		if (message.shellIntegrationTimeout !== undefined) {
-			writer.uint32(1088).int32(message.shellIntegrationTimeout);
-		}
-		if (message.defaultTerminalProfile !== undefined) {
-			writer.uint32(1098).string(message.defaultTerminalProfile);
-		}
-		if (message.terminalOutputLineLimit !== undefined) {
-			writer.uint32(1104).int32(message.terminalOutputLineLimit);
-		}
-		if (message.maxConsecutiveMistakes !== undefined) {
-			writer.uint32(1112).int32(message.maxConsecutiveMistakes);
-		}
-		if (message.strictPlanModeEnabled !== undefined) {
-			writer.uint32(1128).bool(message.strictPlanModeEnabled);
-		}
-		if (message.yoloModeToggled !== undefined) {
-			writer.uint32(1136).bool(message.yoloModeToggled);
-		}
-		if (message.useAutoCondense !== undefined) {
-			writer.uint32(1144).bool(message.useAutoCondense);
-		}
-		if (message.dietcodeWebToolsEnabled !== undefined) {
-			writer.uint32(1152).bool(message.dietcodeWebToolsEnabled);
-		}
-		if (message.preferredLanguage !== undefined) {
-			writer.uint32(1162).string(message.preferredLanguage);
-		}
-		if (message.mode !== undefined) {
-			writer.uint32(1176).int32(message.mode);
-		}
-		if (message.focusChainSettings !== undefined) {
-			FocusChainSettings.encode(
-				message.focusChainSettings,
-				writer.uint32(1194).fork(),
-			).join();
-		}
-		if (message.customPrompt !== undefined) {
-			writer.uint32(1202).string(message.customPrompt);
-		}
-		if (message.subagentsEnabled !== undefined) {
-			writer.uint32(1224).bool(message.subagentsEnabled);
-		}
-		if (message.enableParallelToolCalling !== undefined) {
-			writer.uint32(1232).bool(message.enableParallelToolCalling);
-		}
-		if (message.backgroundEditEnabled !== undefined) {
-			writer.uint32(1240).bool(message.backgroundEditEnabled);
-		}
-		if (message.optOutOfRemoteConfig !== undefined) {
-			writer.uint32(1256).bool(message.optOutOfRemoteConfig);
-		}
-		if (message.openTelemetryEnabled !== undefined) {
-			writer.uint32(1264).bool(message.openTelemetryEnabled);
-		}
-		if (message.openTelemetryMetricsExporter !== undefined) {
-			writer.uint32(1274).string(message.openTelemetryMetricsExporter);
-		}
-		if (message.openTelemetryLogsExporter !== undefined) {
-			writer.uint32(1282).string(message.openTelemetryLogsExporter);
-		}
-		if (message.openTelemetryOtlpProtocol !== undefined) {
-			writer.uint32(1290).string(message.openTelemetryOtlpProtocol);
-		}
-		if (message.openTelemetryOtlpEndpoint !== undefined) {
-			writer.uint32(1298).string(message.openTelemetryOtlpEndpoint);
-		}
-		if (message.openTelemetryOtlpMetricsProtocol !== undefined) {
-			writer.uint32(1306).string(message.openTelemetryOtlpMetricsProtocol);
-		}
-		if (message.openTelemetryOtlpMetricsEndpoint !== undefined) {
-			writer.uint32(1314).string(message.openTelemetryOtlpMetricsEndpoint);
-		}
-		if (message.openTelemetryOtlpLogsProtocol !== undefined) {
-			writer.uint32(1322).string(message.openTelemetryOtlpLogsProtocol);
-		}
-		if (message.openTelemetryOtlpLogsEndpoint !== undefined) {
-			writer.uint32(1330).string(message.openTelemetryOtlpLogsEndpoint);
-		}
-		if (message.openTelemetryMetricExportInterval !== undefined) {
-			writer.uint32(1336).int32(message.openTelemetryMetricExportInterval);
-		}
-		if (message.openTelemetryOtlpInsecure !== undefined) {
-			writer.uint32(1344).bool(message.openTelemetryOtlpInsecure);
-		}
-		if (message.openTelemetryLogBatchSize !== undefined) {
-			writer.uint32(1352).int32(message.openTelemetryLogBatchSize);
-		}
-		if (message.openTelemetryLogBatchTimeout !== undefined) {
-			writer.uint32(1360).int32(message.openTelemetryLogBatchTimeout);
-		}
-		if (message.openTelemetryLogMaxQueueSize !== undefined) {
-			writer.uint32(1368).int32(message.openTelemetryLogMaxQueueSize);
-		}
-		if (message.worktreesEnabled !== undefined) {
-			writer.uint32(1376).bool(message.worktreesEnabled);
-		}
-		if (message.doubleCheckCompletionEnabled !== undefined) {
-			writer.uint32(1408).bool(message.doubleCheckCompletionEnabled);
-		}
-		if (message.cloudflareAccountId !== undefined) {
-			writer.uint32(1466).string(message.cloudflareAccountId);
-		}
-		if (message.embeddingProvider !== undefined) {
-			writer.uint32(1488).int32(message.embeddingProvider);
-		}
-		if (message.embeddingModelId !== undefined) {
-			writer.uint32(1498).string(message.embeddingModelId);
-		}
-		if (message.embeddingOpenAiBaseUrl !== undefined) {
-			writer.uint32(1506).string(message.embeddingOpenAiBaseUrl);
-		}
-		if (message.maxSwarmDepth !== undefined) {
-			writer.uint32(1536).int32(message.maxSwarmDepth);
-		}
-		if (message.safeYoloModeToggled !== undefined) {
-			writer.uint32(1568).bool(message.safeYoloModeToggled);
-		}
-		if (message.masEnabled !== undefined) {
-			writer.uint32(1584).bool(message.masEnabled);
-		}
-		if (message.globalDietCodeRulesToggles !== undefined) {
-			writer.uint32(1602).string(message.globalDietCodeRulesToggles);
-		}
-		if (message.auditCompletionGateEnabled !== undefined) {
-			writer.uint32(1616).bool(message.auditCompletionGateEnabled);
-		}
-		if (message.auditCompletionGateThreshold !== undefined) {
-			writer.uint32(1632).int32(message.auditCompletionGateThreshold);
-		}
-		if (message.auditCompletionGateCriticalOnly !== undefined) {
-			writer.uint32(1648).bool(message.auditCompletionGateCriticalOnly);
-		}
-		if (message.auditActModeAdvisoryEnabled !== undefined) {
-			writer.uint32(1656).bool(message.auditActModeAdvisoryEnabled);
-		}
-		if (message.auditAdvisoryEscalationEnabled !== undefined) {
-			writer.uint32(1672).bool(message.auditAdvisoryEscalationEnabled);
-		}
-		if (message.auditPlanRegressionGateEnabled !== undefined) {
-			writer.uint32(1680).bool(message.auditPlanRegressionGateEnabled);
-		}
-		if (message.auditToolOutputAdvisoryEnabled !== undefined) {
-			writer.uint32(1688).bool(message.auditToolOutputAdvisoryEnabled);
-		}
-		if (message.auditFileWriteAdvisoryEnabled !== undefined) {
-			writer.uint32(1704).bool(message.auditFileWriteAdvisoryEnabled);
-		}
-		if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
-			writer.uint32(1720).bool(message.auditIntentThresholdAdjustmentsEnabled);
-		}
-		if (message.auditIntentThresholdOverrides !== undefined) {
-			writer.uint32(1738).string(message.auditIntentThresholdOverrides);
-		}
-		if (message.auditSarifHookExportEnabled !== undefined) {
-			writer.uint32(1752).bool(message.auditSarifHookExportEnabled);
-		}
-		if (message.auditWorkspaceArtifactsEnabled !== undefined) {
-			writer.uint32(1760).bool(message.auditWorkspaceArtifactsEnabled);
-		}
-		if (message.auditAdvisoryAutoScrollMode !== undefined) {
-			writer.uint32(1778).string(message.auditAdvisoryAutoScrollMode);
-		}
-		if (message.liteLlmBaseUrl !== undefined) {
-			writer.uint32(1786).string(message.liteLlmBaseUrl);
-		}
-		if (message.liteLlmUsePromptCache !== undefined) {
-			writer.uint32(1792).bool(message.liteLlmUsePromptCache);
-		}
-		if (message.anthropicBaseUrl !== undefined) {
-			writer.uint32(1810).string(message.anthropicBaseUrl);
-		}
-		if (message.awsRegion !== undefined) {
-			writer.uint32(1818).string(message.awsRegion);
-		}
-		if (message.awsUseCrossRegionInference !== undefined) {
-			writer.uint32(1824).bool(message.awsUseCrossRegionInference);
-		}
-		if (message.awsUseGlobalInference !== undefined) {
-			writer.uint32(1832).bool(message.awsUseGlobalInference);
-		}
-		if (message.awsBedrockUsePromptCache !== undefined) {
-			writer.uint32(1840).bool(message.awsBedrockUsePromptCache);
-		}
-		if (message.awsAuthentication !== undefined) {
-			writer.uint32(1850).string(message.awsAuthentication);
-		}
-		if (message.awsUseProfile !== undefined) {
-			writer.uint32(1856).bool(message.awsUseProfile);
-		}
-		if (message.awsProfile !== undefined) {
-			writer.uint32(1866).string(message.awsProfile);
-		}
-		if (message.awsBedrockEndpoint !== undefined) {
-			writer.uint32(1874).string(message.awsBedrockEndpoint);
-		}
-		if (message.claudeCodePath !== undefined) {
-			writer.uint32(1882).string(message.claudeCodePath);
-		}
-		if (message.openAiBaseUrl !== undefined) {
-			writer.uint32(1890).string(message.openAiBaseUrl);
-		}
-		if (message.ollamaBaseUrl !== undefined) {
-			writer.uint32(1898).string(message.ollamaBaseUrl);
-		}
-		if (message.ollamaApiOptionsCtxNum !== undefined) {
-			writer.uint32(1906).string(message.ollamaApiOptionsCtxNum);
-		}
-		if (message.lmStudioBaseUrl !== undefined) {
-			writer.uint32(1914).string(message.lmStudioBaseUrl);
-		}
-		if (message.lmStudioMaxTokens !== undefined) {
-			writer.uint32(1922).string(message.lmStudioMaxTokens);
-		}
-		if (message.geminiBaseUrl !== undefined) {
-			writer.uint32(1930).string(message.geminiBaseUrl);
-		}
-		if (message.requestyBaseUrl !== undefined) {
-			writer.uint32(1938).string(message.requestyBaseUrl);
-		}
-		if (message.fireworksModelMaxCompletionTokens !== undefined) {
-			writer.uint32(1944).int32(message.fireworksModelMaxCompletionTokens);
-		}
-		if (message.fireworksModelMaxTokens !== undefined) {
-			writer.uint32(1952).int32(message.fireworksModelMaxTokens);
-		}
-		if (message.qwenCodeOauthPath !== undefined) {
-			writer.uint32(1962).string(message.qwenCodeOauthPath);
-		}
-		if (message.azureApiVersion !== undefined) {
-			writer.uint32(1970).string(message.azureApiVersion);
-		}
-		if (message.azureIdentity !== undefined) {
-			writer.uint32(1976).bool(message.azureIdentity);
-		}
-		if (message.qwenApiLine !== undefined) {
-			writer.uint32(1986).string(message.qwenApiLine);
-		}
-		if (message.moonshotApiLine !== undefined) {
-			writer.uint32(1994).string(message.moonshotApiLine);
-		}
-		if (message.asksageApiUrl !== undefined) {
-			writer.uint32(2002).string(message.asksageApiUrl);
-		}
-		if (message.requestTimeoutMs !== undefined) {
-			writer.uint32(2008).int32(message.requestTimeoutMs);
-		}
-		if (message.sapAiResourceGroup !== undefined) {
-			writer.uint32(2018).string(message.sapAiResourceGroup);
-		}
-		if (message.sapAiCoreTokenUrl !== undefined) {
-			writer.uint32(2026).string(message.sapAiCoreTokenUrl);
-		}
-		if (message.sapAiCoreBaseUrl !== undefined) {
-			writer.uint32(2034).string(message.sapAiCoreBaseUrl);
-		}
-		if (message.sapAiCoreUseOrchestrationMode !== undefined) {
-			writer.uint32(2040).bool(message.sapAiCoreUseOrchestrationMode);
-		}
-		if (message.difyBaseUrl !== undefined) {
-			writer.uint32(2050).string(message.difyBaseUrl);
-		}
-		if (message.zaiApiLine !== undefined) {
-			writer.uint32(2058).string(message.zaiApiLine);
-		}
-		if (message.ocaBaseUrl !== undefined) {
-			writer.uint32(2066).string(message.ocaBaseUrl);
-		}
-		if (message.minimaxApiLine !== undefined) {
-			writer.uint32(2074).string(message.minimaxApiLine);
-		}
-		if (message.ocaMode !== undefined) {
-			writer.uint32(2082).string(message.ocaMode);
-		}
-		if (message.aihubmixBaseUrl !== undefined) {
-			writer.uint32(2090).string(message.aihubmixBaseUrl);
-		}
-		if (message.aihubmixAppCode !== undefined) {
-			writer.uint32(2098).string(message.aihubmixAppCode);
-		}
-		if (message.geminiPlanModeThinkingLevel !== undefined) {
-			writer.uint32(2106).string(message.geminiPlanModeThinkingLevel);
-		}
-		if (message.planModeVerbosity !== undefined) {
-			writer.uint32(2114).string(message.planModeVerbosity);
-		}
-		if (message.planModeVsCodeLmModelSelector !== undefined) {
-			LanguageModelChatSelector.encode(
-				message.planModeVsCodeLmModelSelector,
-				writer.uint32(2122).fork(),
-			).join();
-		}
-		if (message.planModeAwsBedrockCustomSelected !== undefined) {
-			writer.uint32(2128).bool(message.planModeAwsBedrockCustomSelected);
-		}
-		if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
-			writer.uint32(2138).string(message.planModeAwsBedrockCustomModelBaseId);
-		}
-		if (message.planModeDietCodeModelId !== undefined) {
-			writer.uint32(2146).string(message.planModeDietCodeModelId);
-		}
-		if (message.planModeDietCodeModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeDietCodeModelInfo,
-				writer.uint32(2154).fork(),
-			).join();
-		}
-		if (message.planModeOpenAiModelId !== undefined) {
-			writer.uint32(2162).string(message.planModeOpenAiModelId);
-		}
-		if (message.planModeOpenAiModelInfo !== undefined) {
-			OpenAiCompatibleModelInfo.encode(
-				message.planModeOpenAiModelInfo,
-				writer.uint32(2170).fork(),
-			).join();
-		}
-		if (message.planModeOllamaModelId !== undefined) {
-			writer.uint32(2178).string(message.planModeOllamaModelId);
-		}
-		if (message.planModeLmStudioModelId !== undefined) {
-			writer.uint32(2186).string(message.planModeLmStudioModelId);
-		}
-		if (message.planModeLiteLlmModelId !== undefined) {
-			writer.uint32(2194).string(message.planModeLiteLlmModelId);
-		}
-		if (message.planModeLiteLlmModelInfo !== undefined) {
-			LiteLLMModelInfo.encode(
-				message.planModeLiteLlmModelInfo,
-				writer.uint32(2202).fork(),
-			).join();
-		}
-		if (message.planModeRequestyModelId !== undefined) {
-			writer.uint32(2210).string(message.planModeRequestyModelId);
-		}
-		if (message.planModeRequestyModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeRequestyModelInfo,
-				writer.uint32(2218).fork(),
-			).join();
-		}
-		if (message.planModeTogetherModelId !== undefined) {
-			writer.uint32(2226).string(message.planModeTogetherModelId);
-		}
-		if (message.planModeFireworksModelId !== undefined) {
-			writer.uint32(2234).string(message.planModeFireworksModelId);
-		}
-		if (message.planModeSapAiCoreModelId !== undefined) {
-			writer.uint32(2242).string(message.planModeSapAiCoreModelId);
-		}
-		if (message.planModeSapAiCoreDeploymentId !== undefined) {
-			writer.uint32(2250).string(message.planModeSapAiCoreDeploymentId);
-		}
-		if (message.planModeGroqModelId !== undefined) {
-			writer.uint32(2258).string(message.planModeGroqModelId);
-		}
-		if (message.planModeGroqModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeGroqModelInfo,
-				writer.uint32(2266).fork(),
-			).join();
-		}
-		if (message.planModeBasetenModelId !== undefined) {
-			writer.uint32(2274).string(message.planModeBasetenModelId);
-		}
-		if (message.planModeBasetenModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeBasetenModelInfo,
-				writer.uint32(2282).fork(),
-			).join();
-		}
-		if (message.planModeHuggingFaceModelId !== undefined) {
-			writer.uint32(2290).string(message.planModeHuggingFaceModelId);
-		}
-		if (message.planModeHuggingFaceModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeHuggingFaceModelInfo,
-				writer.uint32(2298).fork(),
-			).join();
-		}
-		if (message.planModeHuaweiCloudMaasModelId !== undefined) {
-			writer.uint32(2306).string(message.planModeHuaweiCloudMaasModelId);
-		}
-		if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeHuaweiCloudMaasModelInfo,
-				writer.uint32(2314).fork(),
-			).join();
-		}
-		if (message.planModeOcaModelId !== undefined) {
-			writer.uint32(2322).string(message.planModeOcaModelId);
-		}
-		if (message.planModeOcaModelInfo !== undefined) {
-			OcaModelInfo.encode(
-				message.planModeOcaModelInfo,
-				writer.uint32(2330).fork(),
-			).join();
-		}
-		if (message.planModeOcaReasoningEffort !== undefined) {
-			writer.uint32(2338).string(message.planModeOcaReasoningEffort);
-		}
-		if (message.planModeAihubmixModelId !== undefined) {
-			writer.uint32(2346).string(message.planModeAihubmixModelId);
-		}
-		if (message.planModeAihubmixModelInfo !== undefined) {
-			OpenAiCompatibleModelInfo.encode(
-				message.planModeAihubmixModelInfo,
-				writer.uint32(2354).fork(),
-			).join();
-		}
-		if (message.planModeHicapModelId !== undefined) {
-			writer.uint32(2362).string(message.planModeHicapModelId);
-		}
-		if (message.planModeHicapModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeHicapModelInfo,
-				writer.uint32(2370).fork(),
-			).join();
-		}
-		if (message.planModeVercelAiGatewayModelId !== undefined) {
-			writer.uint32(2378).string(message.planModeVercelAiGatewayModelId);
-		}
-		if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeVercelAiGatewayModelInfo,
-				writer.uint32(2386).fork(),
-			).join();
-		}
-		if (message.geminiActModeThinkingLevel !== undefined) {
-			writer.uint32(2394).string(message.geminiActModeThinkingLevel);
-		}
-		if (message.actModeVerbosity !== undefined) {
-			writer.uint32(2402).string(message.actModeVerbosity);
-		}
-		if (message.actModeVsCodeLmModelSelector !== undefined) {
-			LanguageModelChatSelector.encode(
-				message.actModeVsCodeLmModelSelector,
-				writer.uint32(2410).fork(),
-			).join();
-		}
-		if (message.actModeAwsBedrockCustomSelected !== undefined) {
-			writer.uint32(2416).bool(message.actModeAwsBedrockCustomSelected);
-		}
-		if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
-			writer.uint32(2426).string(message.actModeAwsBedrockCustomModelBaseId);
-		}
-		if (message.actModeDietCodeModelId !== undefined) {
-			writer.uint32(2434).string(message.actModeDietCodeModelId);
-		}
-		if (message.actModeDietCodeModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeDietCodeModelInfo,
-				writer.uint32(2442).fork(),
-			).join();
-		}
-		if (message.actModeOpenAiModelId !== undefined) {
-			writer.uint32(2450).string(message.actModeOpenAiModelId);
-		}
-		if (message.actModeOpenAiModelInfo !== undefined) {
-			OpenAiCompatibleModelInfo.encode(
-				message.actModeOpenAiModelInfo,
-				writer.uint32(2458).fork(),
-			).join();
-		}
-		if (message.actModeOllamaModelId !== undefined) {
-			writer.uint32(2466).string(message.actModeOllamaModelId);
-		}
-		if (message.actModeLmStudioModelId !== undefined) {
-			writer.uint32(2474).string(message.actModeLmStudioModelId);
-		}
-		if (message.actModeLiteLlmModelId !== undefined) {
-			writer.uint32(2482).string(message.actModeLiteLlmModelId);
-		}
-		if (message.actModeLiteLlmModelInfo !== undefined) {
-			LiteLLMModelInfo.encode(
-				message.actModeLiteLlmModelInfo,
-				writer.uint32(2490).fork(),
-			).join();
-		}
-		if (message.actModeRequestyModelId !== undefined) {
-			writer.uint32(2498).string(message.actModeRequestyModelId);
-		}
-		if (message.actModeRequestyModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeRequestyModelInfo,
-				writer.uint32(2506).fork(),
-			).join();
-		}
-		if (message.actModeTogetherModelId !== undefined) {
-			writer.uint32(2514).string(message.actModeTogetherModelId);
-		}
-		if (message.actModeFireworksModelId !== undefined) {
-			writer.uint32(2522).string(message.actModeFireworksModelId);
-		}
-		if (message.actModeSapAiCoreModelId !== undefined) {
-			writer.uint32(2530).string(message.actModeSapAiCoreModelId);
-		}
-		if (message.actModeSapAiCoreDeploymentId !== undefined) {
-			writer.uint32(2538).string(message.actModeSapAiCoreDeploymentId);
-		}
-		if (message.actModeGroqModelId !== undefined) {
-			writer.uint32(2546).string(message.actModeGroqModelId);
-		}
-		if (message.actModeGroqModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeGroqModelInfo,
-				writer.uint32(2554).fork(),
-			).join();
-		}
-		if (message.actModeBasetenModelId !== undefined) {
-			writer.uint32(2562).string(message.actModeBasetenModelId);
-		}
-		if (message.actModeBasetenModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeBasetenModelInfo,
-				writer.uint32(2570).fork(),
-			).join();
-		}
-		if (message.actModeHuggingFaceModelId !== undefined) {
-			writer.uint32(2578).string(message.actModeHuggingFaceModelId);
-		}
-		if (message.actModeHuggingFaceModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeHuggingFaceModelInfo,
-				writer.uint32(2586).fork(),
-			).join();
-		}
-		if (message.actModeHuaweiCloudMaasModelId !== undefined) {
-			writer.uint32(2594).string(message.actModeHuaweiCloudMaasModelId);
-		}
-		if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeHuaweiCloudMaasModelInfo,
-				writer.uint32(2602).fork(),
-			).join();
-		}
-		if (message.actModeOcaModelId !== undefined) {
-			writer.uint32(2610).string(message.actModeOcaModelId);
-		}
-		if (message.actModeOcaModelInfo !== undefined) {
-			OcaModelInfo.encode(
-				message.actModeOcaModelInfo,
-				writer.uint32(2618).fork(),
-			).join();
-		}
-		if (message.actModeOcaReasoningEffort !== undefined) {
-			writer.uint32(2626).string(message.actModeOcaReasoningEffort);
-		}
-		if (message.actModeAihubmixModelId !== undefined) {
-			writer.uint32(2634).string(message.actModeAihubmixModelId);
-		}
-		if (message.actModeAihubmixModelInfo !== undefined) {
-			OpenAiCompatibleModelInfo.encode(
-				message.actModeAihubmixModelInfo,
-				writer.uint32(2642).fork(),
-			).join();
-		}
-		if (message.actModeHicapModelId !== undefined) {
-			writer.uint32(2650).string(message.actModeHicapModelId);
-		}
-		if (message.actModeHicapModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeHicapModelInfo,
-				writer.uint32(2658).fork(),
-			).join();
-		}
-		if (message.actModeVercelAiGatewayModelId !== undefined) {
-			writer.uint32(2666).string(message.actModeVercelAiGatewayModelId);
-		}
-		if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeVercelAiGatewayModelInfo,
-				writer.uint32(2674).fork(),
-			).join();
-		}
-		if (message.hicapModelId !== undefined) {
-			writer.uint32(2682).string(message.hicapModelId);
-		}
-		if (message.lmStudioModelId !== undefined) {
-			writer.uint32(2690).string(message.lmStudioModelId);
-		}
-		if (message.planModeClinePassModelId !== undefined) {
-			writer.uint32(2706).string(message.planModeClinePassModelId);
-		}
-		if (message.planModeClinePassModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeClinePassModelInfo,
-				writer.uint32(2714).fork(),
-			).join();
-		}
-		if (message.actModeClinePassModelId !== undefined) {
-			writer.uint32(2722).string(message.actModeClinePassModelId);
-		}
-		if (message.actModeClinePassModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeClinePassModelInfo,
-				writer.uint32(2730).fork(),
-			).join();
-		}
-		if (message.modEnabled !== undefined) {
-			writer.uint32(2744).bool(message.modEnabled);
-		}
-		if (message.modOutcome !== undefined) {
-			writer.uint32(2754).string(message.modOutcome);
-		}
-		if (message.planModeNousResearchModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeNousResearchModelInfo,
-				writer.uint32(2770).fork(),
-			).join();
-		}
-		if (message.actModeNousResearchModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeNousResearchModelInfo,
-				writer.uint32(2778).fork(),
-			).join();
-		}
-		if (message.galxBaseUrl !== undefined) {
-			writer.uint32(2794).string(message.galxBaseUrl);
-		}
-		if (message.planModeGalxModelId !== undefined) {
-			writer.uint32(2802).string(message.planModeGalxModelId);
-		}
-		if (message.planModeGalxModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.planModeGalxModelInfo,
-				writer.uint32(2810).fork(),
-			).join();
-		}
-		if (message.actModeGalxModelId !== undefined) {
-			writer.uint32(2818).string(message.actModeGalxModelId);
-		}
-		if (message.actModeGalxModelInfo !== undefined) {
-			OpenRouterModelInfo.encode(
-				message.actModeGalxModelInfo,
-				writer.uint32(2826).fork(),
-			).join();
-		}
-		globalThis.Object.entries(message.openAiHeaders).forEach(
-			([key, value]: [string, string]) => {
-				Settings_OpenAiHeadersEntry.encode(
-					{ key: key as any, value },
-					writer.uint32(2834).fork(),
-				).join();
-			},
-		);
-		return writer;
-	},
-
-	decode(input: BinaryReader | Uint8Array, length?: number): Settings {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseSettings();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 5: {
-						if (tag !== 42) {
-							break;
-						}
-
-						message.openRouterProviderSorting = reader.string();
-						continue;
-					}
-					case 44: {
-						if (tag !== 354) {
-							break;
-						}
-
-						message.planModeApiModelId = reader.string();
-						continue;
-					}
-					case 45: {
-						if (tag !== 360) {
-							break;
-						}
-
-						message.planModeThinkingBudgetTokens = longToNumber(reader.int64());
-						continue;
-					}
-					case 47: {
-						if (tag !== 378) {
-							break;
-						}
-
-						message.planModeReasoningEffort = reader.string();
-						continue;
-					}
-					case 52: {
-						if (tag !== 418) {
-							break;
-						}
-
-						message.planModeOpenRouterModelId = reader.string();
-						continue;
-					}
-					case 53: {
-						if (tag !== 426) {
-							break;
-						}
-
-						message.planModeOpenRouterModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 81: {
-						if (tag !== 650) {
-							break;
-						}
-
-						message.planModeNousResearchModelId = reader.string();
-						continue;
-					}
-					case 84: {
-						if (tag !== 674) {
-							break;
-						}
-
-						message.actModeApiModelId = reader.string();
-						continue;
-					}
-					case 85: {
-						if (tag !== 680) {
-							break;
-						}
-
-						message.actModeThinkingBudgetTokens = longToNumber(reader.int64());
-						continue;
-					}
-					case 87: {
-						if (tag !== 698) {
-							break;
-						}
-
-						message.actModeReasoningEffort = reader.string();
-						continue;
-					}
-					case 92: {
-						if (tag !== 738) {
-							break;
-						}
-
-						message.actModeOpenRouterModelId = reader.string();
-						continue;
-					}
-					case 93: {
-						if (tag !== 746) {
-							break;
-						}
-
-						message.actModeOpenRouterModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 121: {
-						if (tag !== 970) {
-							break;
-						}
-
-						message.actModeNousResearchModelId = reader.string();
-						continue;
-					}
-					case 124: {
-						if (tag !== 992) {
-							break;
-						}
-
-						message.planModeApiProvider = reader.int32() as any;
-						continue;
-					}
-					case 125: {
-						if (tag !== 1000) {
-							break;
-						}
-
-						message.actModeApiProvider = reader.int32() as any;
-						continue;
-					}
-					case 128: {
-						if (tag !== 1026) {
-							break;
-						}
-
-						message.autoApprovalSettings = AutoApprovalSettings.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 130: {
-						if (tag !== 1042) {
-							break;
-						}
-
-						message.globalWorkflowToggles = reader.string();
-						continue;
-					}
-					case 131: {
-						if (tag !== 1050) {
-							break;
-						}
-
-						message.globalSkillsToggles = reader.string();
-						continue;
-					}
-					case 132: {
-						if (tag !== 1058) {
-							break;
-						}
-
-						message.browserSettings = BrowserSettings.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 133: {
-						if (tag !== 1066) {
-							break;
-						}
-
-						message.telemetrySetting = reader.string();
-						continue;
-					}
-					case 134: {
-						if (tag !== 1072) {
-							break;
-						}
-
-						message.planActSeparateModelsSetting = reader.bool();
-						continue;
-					}
-					case 135: {
-						if (tag !== 1080) {
-							break;
-						}
-
-						message.enableCheckpointsSetting = reader.bool();
-						continue;
-					}
-					case 136: {
-						if (tag !== 1088) {
-							break;
-						}
-
-						message.shellIntegrationTimeout = reader.int32();
-						continue;
-					}
-					case 137: {
-						if (tag !== 1098) {
-							break;
-						}
-
-						message.defaultTerminalProfile = reader.string();
-						continue;
-					}
-					case 138: {
-						if (tag !== 1104) {
-							break;
-						}
-
-						message.terminalOutputLineLimit = reader.int32();
-						continue;
-					}
-					case 139: {
-						if (tag !== 1112) {
-							break;
-						}
-
-						message.maxConsecutiveMistakes = reader.int32();
-						continue;
-					}
-					case 141: {
-						if (tag !== 1128) {
-							break;
-						}
-
-						message.strictPlanModeEnabled = reader.bool();
-						continue;
-					}
-					case 142: {
-						if (tag !== 1136) {
-							break;
-						}
-
-						message.yoloModeToggled = reader.bool();
-						continue;
-					}
-					case 143: {
-						if (tag !== 1144) {
-							break;
-						}
-
-						message.useAutoCondense = reader.bool();
-						continue;
-					}
-					case 144: {
-						if (tag !== 1152) {
-							break;
-						}
-
-						message.dietcodeWebToolsEnabled = reader.bool();
-						continue;
-					}
-					case 145: {
-						if (tag !== 1162) {
-							break;
-						}
-
-						message.preferredLanguage = reader.string();
-						continue;
-					}
-					case 147: {
-						if (tag !== 1176) {
-							break;
-						}
-
-						message.mode = reader.int32() as any;
-						continue;
-					}
-					case 149: {
-						if (tag !== 1194) {
-							break;
-						}
-
-						message.focusChainSettings = FocusChainSettings.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 150: {
-						if (tag !== 1202) {
-							break;
-						}
-
-						message.customPrompt = reader.string();
-						continue;
-					}
-					case 153: {
-						if (tag !== 1224) {
-							break;
-						}
-
-						message.subagentsEnabled = reader.bool();
-						continue;
-					}
-					case 154: {
-						if (tag !== 1232) {
-							break;
-						}
-
-						message.enableParallelToolCalling = reader.bool();
-						continue;
-					}
-					case 155: {
-						if (tag !== 1240) {
-							break;
-						}
-
-						message.backgroundEditEnabled = reader.bool();
-						continue;
-					}
-					case 157: {
-						if (tag !== 1256) {
-							break;
-						}
-
-						message.optOutOfRemoteConfig = reader.bool();
-						continue;
-					}
-					case 158: {
-						if (tag !== 1264) {
-							break;
-						}
-
-						message.openTelemetryEnabled = reader.bool();
-						continue;
-					}
-					case 159: {
-						if (tag !== 1274) {
-							break;
-						}
-
-						message.openTelemetryMetricsExporter = reader.string();
-						continue;
-					}
-					case 160: {
-						if (tag !== 1282) {
-							break;
-						}
-
-						message.openTelemetryLogsExporter = reader.string();
-						continue;
-					}
-					case 161: {
-						if (tag !== 1290) {
-							break;
-						}
-
-						message.openTelemetryOtlpProtocol = reader.string();
-						continue;
-					}
-					case 162: {
-						if (tag !== 1298) {
-							break;
-						}
-
-						message.openTelemetryOtlpEndpoint = reader.string();
-						continue;
-					}
-					case 163: {
-						if (tag !== 1306) {
-							break;
-						}
-
-						message.openTelemetryOtlpMetricsProtocol = reader.string();
-						continue;
-					}
-					case 164: {
-						if (tag !== 1314) {
-							break;
-						}
-
-						message.openTelemetryOtlpMetricsEndpoint = reader.string();
-						continue;
-					}
-					case 165: {
-						if (tag !== 1322) {
-							break;
-						}
-
-						message.openTelemetryOtlpLogsProtocol = reader.string();
-						continue;
-					}
-					case 166: {
-						if (tag !== 1330) {
-							break;
-						}
-
-						message.openTelemetryOtlpLogsEndpoint = reader.string();
-						continue;
-					}
-					case 167: {
-						if (tag !== 1336) {
-							break;
-						}
-
-						message.openTelemetryMetricExportInterval = reader.int32();
-						continue;
-					}
-					case 168: {
-						if (tag !== 1344) {
-							break;
-						}
-
-						message.openTelemetryOtlpInsecure = reader.bool();
-						continue;
-					}
-					case 169: {
-						if (tag !== 1352) {
-							break;
-						}
-
-						message.openTelemetryLogBatchSize = reader.int32();
-						continue;
-					}
-					case 170: {
-						if (tag !== 1360) {
-							break;
-						}
-
-						message.openTelemetryLogBatchTimeout = reader.int32();
-						continue;
-					}
-					case 171: {
-						if (tag !== 1368) {
-							break;
-						}
-
-						message.openTelemetryLogMaxQueueSize = reader.int32();
-						continue;
-					}
-					case 172: {
-						if (tag !== 1376) {
-							break;
-						}
-
-						message.worktreesEnabled = reader.bool();
-						continue;
-					}
-					case 176: {
-						if (tag !== 1408) {
-							break;
-						}
-
-						message.doubleCheckCompletionEnabled = reader.bool();
-						continue;
-					}
-					case 183: {
-						if (tag !== 1466) {
-							break;
-						}
-
-						message.cloudflareAccountId = reader.string();
-						continue;
-					}
-					case 186: {
-						if (tag !== 1488) {
-							break;
-						}
-
-						message.embeddingProvider = reader.int32() as any;
-						continue;
-					}
-					case 187: {
-						if (tag !== 1498) {
-							break;
-						}
-
-						message.embeddingModelId = reader.string();
-						continue;
-					}
-					case 188: {
-						if (tag !== 1506) {
-							break;
-						}
-
-						message.embeddingOpenAiBaseUrl = reader.string();
-						continue;
-					}
-					case 192: {
-						if (tag !== 1536) {
-							break;
-						}
-
-						message.maxSwarmDepth = reader.int32();
-						continue;
-					}
-					case 196: {
-						if (tag !== 1568) {
-							break;
-						}
-
-						message.safeYoloModeToggled = reader.bool();
-						continue;
-					}
-					case 198: {
-						if (tag !== 1584) {
-							break;
-						}
-
-						message.masEnabled = reader.bool();
-						continue;
-					}
-					case 200: {
-						if (tag !== 1602) {
-							break;
-						}
-
-						message.globalDietCodeRulesToggles = reader.string();
-						continue;
-					}
-					case 202: {
-						if (tag !== 1616) {
-							break;
-						}
-
-						message.auditCompletionGateEnabled = reader.bool();
-						continue;
-					}
-					case 204: {
-						if (tag !== 1632) {
-							break;
-						}
-
-						message.auditCompletionGateThreshold = reader.int32();
-						continue;
-					}
-					case 206: {
-						if (tag !== 1648) {
-							break;
-						}
-
-						message.auditCompletionGateCriticalOnly = reader.bool();
-						continue;
-					}
-					case 207: {
-						if (tag !== 1656) {
-							break;
-						}
-
-						message.auditActModeAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 209: {
-						if (tag !== 1672) {
-							break;
-						}
-
-						message.auditAdvisoryEscalationEnabled = reader.bool();
-						continue;
-					}
-					case 210: {
-						if (tag !== 1680) {
-							break;
-						}
-
-						message.auditPlanRegressionGateEnabled = reader.bool();
-						continue;
-					}
-					case 211: {
-						if (tag !== 1688) {
-							break;
-						}
-
-						message.auditToolOutputAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 213: {
-						if (tag !== 1704) {
-							break;
-						}
-
-						message.auditFileWriteAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 215: {
-						if (tag !== 1720) {
-							break;
-						}
-
-						message.auditIntentThresholdAdjustmentsEnabled = reader.bool();
-						continue;
-					}
-					case 217: {
-						if (tag !== 1738) {
-							break;
-						}
-
-						message.auditIntentThresholdOverrides = reader.string();
-						continue;
-					}
-					case 219: {
-						if (tag !== 1752) {
-							break;
-						}
-
-						message.auditSarifHookExportEnabled = reader.bool();
-						continue;
-					}
-					case 220: {
-						if (tag !== 1760) {
-							break;
-						}
-
-						message.auditWorkspaceArtifactsEnabled = reader.bool();
-						continue;
-					}
-					case 222: {
-						if (tag !== 1778) {
-							break;
-						}
-
-						message.auditAdvisoryAutoScrollMode = reader.string();
-						continue;
-					}
-					case 223: {
-						if (tag !== 1786) {
-							break;
-						}
-
-						message.liteLlmBaseUrl = reader.string();
-						continue;
-					}
-					case 224: {
-						if (tag !== 1792) {
-							break;
-						}
-
-						message.liteLlmUsePromptCache = reader.bool();
-						continue;
-					}
-					case 226: {
-						if (tag !== 1810) {
-							break;
-						}
-
-						message.anthropicBaseUrl = reader.string();
-						continue;
-					}
-					case 227: {
-						if (tag !== 1818) {
-							break;
-						}
-
-						message.awsRegion = reader.string();
-						continue;
-					}
-					case 228: {
-						if (tag !== 1824) {
-							break;
-						}
-
-						message.awsUseCrossRegionInference = reader.bool();
-						continue;
-					}
-					case 229: {
-						if (tag !== 1832) {
-							break;
-						}
-
-						message.awsUseGlobalInference = reader.bool();
-						continue;
-					}
-					case 230: {
-						if (tag !== 1840) {
-							break;
-						}
-
-						message.awsBedrockUsePromptCache = reader.bool();
-						continue;
-					}
-					case 231: {
-						if (tag !== 1850) {
-							break;
-						}
-
-						message.awsAuthentication = reader.string();
-						continue;
-					}
-					case 232: {
-						if (tag !== 1856) {
-							break;
-						}
-
-						message.awsUseProfile = reader.bool();
-						continue;
-					}
-					case 233: {
-						if (tag !== 1866) {
-							break;
-						}
-
-						message.awsProfile = reader.string();
-						continue;
-					}
-					case 234: {
-						if (tag !== 1874) {
-							break;
-						}
-
-						message.awsBedrockEndpoint = reader.string();
-						continue;
-					}
-					case 235: {
-						if (tag !== 1882) {
-							break;
-						}
-
-						message.claudeCodePath = reader.string();
-						continue;
-					}
-					case 236: {
-						if (tag !== 1890) {
-							break;
-						}
-
-						message.openAiBaseUrl = reader.string();
-						continue;
-					}
-					case 237: {
-						if (tag !== 1898) {
-							break;
-						}
-
-						message.ollamaBaseUrl = reader.string();
-						continue;
-					}
-					case 238: {
-						if (tag !== 1906) {
-							break;
-						}
-
-						message.ollamaApiOptionsCtxNum = reader.string();
-						continue;
-					}
-					case 239: {
-						if (tag !== 1914) {
-							break;
-						}
-
-						message.lmStudioBaseUrl = reader.string();
-						continue;
-					}
-					case 240: {
-						if (tag !== 1922) {
-							break;
-						}
-
-						message.lmStudioMaxTokens = reader.string();
-						continue;
-					}
-					case 241: {
-						if (tag !== 1930) {
-							break;
-						}
-
-						message.geminiBaseUrl = reader.string();
-						continue;
-					}
-					case 242: {
-						if (tag !== 1938) {
-							break;
-						}
-
-						message.requestyBaseUrl = reader.string();
-						continue;
-					}
-					case 243: {
-						if (tag !== 1944) {
-							break;
-						}
-
-						message.fireworksModelMaxCompletionTokens = reader.int32();
-						continue;
-					}
-					case 244: {
-						if (tag !== 1952) {
-							break;
-						}
-
-						message.fireworksModelMaxTokens = reader.int32();
-						continue;
-					}
-					case 245: {
-						if (tag !== 1962) {
-							break;
-						}
-
-						message.qwenCodeOauthPath = reader.string();
-						continue;
-					}
-					case 246: {
-						if (tag !== 1970) {
-							break;
-						}
-
-						message.azureApiVersion = reader.string();
-						continue;
-					}
-					case 247: {
-						if (tag !== 1976) {
-							break;
-						}
-
-						message.azureIdentity = reader.bool();
-						continue;
-					}
-					case 248: {
-						if (tag !== 1986) {
-							break;
-						}
-
-						message.qwenApiLine = reader.string();
-						continue;
-					}
-					case 249: {
-						if (tag !== 1994) {
-							break;
-						}
-
-						message.moonshotApiLine = reader.string();
-						continue;
-					}
-					case 250: {
-						if (tag !== 2002) {
-							break;
-						}
-
-						message.asksageApiUrl = reader.string();
-						continue;
-					}
-					case 251: {
-						if (tag !== 2008) {
-							break;
-						}
-
-						message.requestTimeoutMs = reader.int32();
-						continue;
-					}
-					case 252: {
-						if (tag !== 2018) {
-							break;
-						}
-
-						message.sapAiResourceGroup = reader.string();
-						continue;
-					}
-					case 253: {
-						if (tag !== 2026) {
-							break;
-						}
-
-						message.sapAiCoreTokenUrl = reader.string();
-						continue;
-					}
-					case 254: {
-						if (tag !== 2034) {
-							break;
-						}
-
-						message.sapAiCoreBaseUrl = reader.string();
-						continue;
-					}
-					case 255: {
-						if (tag !== 2040) {
-							break;
-						}
-
-						message.sapAiCoreUseOrchestrationMode = reader.bool();
-						continue;
-					}
-					case 256: {
-						if (tag !== 2050) {
-							break;
-						}
-
-						message.difyBaseUrl = reader.string();
-						continue;
-					}
-					case 257: {
-						if (tag !== 2058) {
-							break;
-						}
-
-						message.zaiApiLine = reader.string();
-						continue;
-					}
-					case 258: {
-						if (tag !== 2066) {
-							break;
-						}
-
-						message.ocaBaseUrl = reader.string();
-						continue;
-					}
-					case 259: {
-						if (tag !== 2074) {
-							break;
-						}
-
-						message.minimaxApiLine = reader.string();
-						continue;
-					}
-					case 260: {
-						if (tag !== 2082) {
-							break;
-						}
-
-						message.ocaMode = reader.string();
-						continue;
-					}
-					case 261: {
-						if (tag !== 2090) {
-							break;
-						}
-
-						message.aihubmixBaseUrl = reader.string();
-						continue;
-					}
-					case 262: {
-						if (tag !== 2098) {
-							break;
-						}
-
-						message.aihubmixAppCode = reader.string();
-						continue;
-					}
-					case 263: {
-						if (tag !== 2106) {
-							break;
-						}
-
-						message.geminiPlanModeThinkingLevel = reader.string();
-						continue;
-					}
-					case 264: {
-						if (tag !== 2114) {
-							break;
-						}
-
-						message.planModeVerbosity = reader.string();
-						continue;
-					}
-					case 265: {
-						if (tag !== 2122) {
-							break;
-						}
-
-						message.planModeVsCodeLmModelSelector =
-							LanguageModelChatSelector.decode(reader, reader.uint32());
-						continue;
-					}
-					case 266: {
-						if (tag !== 2128) {
-							break;
-						}
-
-						message.planModeAwsBedrockCustomSelected = reader.bool();
-						continue;
-					}
-					case 267: {
-						if (tag !== 2138) {
-							break;
-						}
-
-						message.planModeAwsBedrockCustomModelBaseId = reader.string();
-						continue;
-					}
-					case 268: {
-						if (tag !== 2146) {
-							break;
-						}
-
-						message.planModeDietCodeModelId = reader.string();
-						continue;
-					}
-					case 269: {
-						if (tag !== 2154) {
-							break;
-						}
-
-						message.planModeDietCodeModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 270: {
-						if (tag !== 2162) {
-							break;
-						}
-
-						message.planModeOpenAiModelId = reader.string();
-						continue;
-					}
-					case 271: {
-						if (tag !== 2170) {
-							break;
-						}
-
-						message.planModeOpenAiModelInfo = OpenAiCompatibleModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 272: {
-						if (tag !== 2178) {
-							break;
-						}
-
-						message.planModeOllamaModelId = reader.string();
-						continue;
-					}
-					case 273: {
-						if (tag !== 2186) {
-							break;
-						}
-
-						message.planModeLmStudioModelId = reader.string();
-						continue;
-					}
-					case 274: {
-						if (tag !== 2194) {
-							break;
-						}
-
-						message.planModeLiteLlmModelId = reader.string();
-						continue;
-					}
-					case 275: {
-						if (tag !== 2202) {
-							break;
-						}
-
-						message.planModeLiteLlmModelInfo = LiteLLMModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 276: {
-						if (tag !== 2210) {
-							break;
-						}
-
-						message.planModeRequestyModelId = reader.string();
-						continue;
-					}
-					case 277: {
-						if (tag !== 2218) {
-							break;
-						}
-
-						message.planModeRequestyModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 278: {
-						if (tag !== 2226) {
-							break;
-						}
-
-						message.planModeTogetherModelId = reader.string();
-						continue;
-					}
-					case 279: {
-						if (tag !== 2234) {
-							break;
-						}
-
-						message.planModeFireworksModelId = reader.string();
-						continue;
-					}
-					case 280: {
-						if (tag !== 2242) {
-							break;
-						}
-
-						message.planModeSapAiCoreModelId = reader.string();
-						continue;
-					}
-					case 281: {
-						if (tag !== 2250) {
-							break;
-						}
-
-						message.planModeSapAiCoreDeploymentId = reader.string();
-						continue;
-					}
-					case 282: {
-						if (tag !== 2258) {
-							break;
-						}
-
-						message.planModeGroqModelId = reader.string();
-						continue;
-					}
-					case 283: {
-						if (tag !== 2266) {
-							break;
-						}
-
-						message.planModeGroqModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 284: {
-						if (tag !== 2274) {
-							break;
-						}
-
-						message.planModeBasetenModelId = reader.string();
-						continue;
-					}
-					case 285: {
-						if (tag !== 2282) {
-							break;
-						}
-
-						message.planModeBasetenModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 286: {
-						if (tag !== 2290) {
-							break;
-						}
-
-						message.planModeHuggingFaceModelId = reader.string();
-						continue;
-					}
-					case 287: {
-						if (tag !== 2298) {
-							break;
-						}
-
-						message.planModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 288: {
-						if (tag !== 2306) {
-							break;
-						}
-
-						message.planModeHuaweiCloudMaasModelId = reader.string();
-						continue;
-					}
-					case 289: {
-						if (tag !== 2314) {
-							break;
-						}
-
-						message.planModeHuaweiCloudMaasModelInfo =
-							OpenRouterModelInfo.decode(reader, reader.uint32());
-						continue;
-					}
-					case 290: {
-						if (tag !== 2322) {
-							break;
-						}
-
-						message.planModeOcaModelId = reader.string();
-						continue;
-					}
-					case 291: {
-						if (tag !== 2330) {
-							break;
-						}
-
-						message.planModeOcaModelInfo = OcaModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 292: {
-						if (tag !== 2338) {
-							break;
-						}
-
-						message.planModeOcaReasoningEffort = reader.string();
-						continue;
-					}
-					case 293: {
-						if (tag !== 2346) {
-							break;
-						}
-
-						message.planModeAihubmixModelId = reader.string();
-						continue;
-					}
-					case 294: {
-						if (tag !== 2354) {
-							break;
-						}
-
-						message.planModeAihubmixModelInfo =
-							OpenAiCompatibleModelInfo.decode(reader, reader.uint32());
-						continue;
-					}
-					case 295: {
-						if (tag !== 2362) {
-							break;
-						}
-
-						message.planModeHicapModelId = reader.string();
-						continue;
-					}
-					case 296: {
-						if (tag !== 2370) {
-							break;
-						}
-
-						message.planModeHicapModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 297: {
-						if (tag !== 2378) {
-							break;
-						}
-
-						message.planModeVercelAiGatewayModelId = reader.string();
-						continue;
-					}
-					case 298: {
-						if (tag !== 2386) {
-							break;
-						}
-
-						message.planModeVercelAiGatewayModelInfo =
-							OpenRouterModelInfo.decode(reader, reader.uint32());
-						continue;
-					}
-					case 299: {
-						if (tag !== 2394) {
-							break;
-						}
-
-						message.geminiActModeThinkingLevel = reader.string();
-						continue;
-					}
-					case 300: {
-						if (tag !== 2402) {
-							break;
-						}
-
-						message.actModeVerbosity = reader.string();
-						continue;
-					}
-					case 301: {
-						if (tag !== 2410) {
-							break;
-						}
-
-						message.actModeVsCodeLmModelSelector =
-							LanguageModelChatSelector.decode(reader, reader.uint32());
-						continue;
-					}
-					case 302: {
-						if (tag !== 2416) {
-							break;
-						}
-
-						message.actModeAwsBedrockCustomSelected = reader.bool();
-						continue;
-					}
-					case 303: {
-						if (tag !== 2426) {
-							break;
-						}
-
-						message.actModeAwsBedrockCustomModelBaseId = reader.string();
-						continue;
-					}
-					case 304: {
-						if (tag !== 2434) {
-							break;
-						}
-
-						message.actModeDietCodeModelId = reader.string();
-						continue;
-					}
-					case 305: {
-						if (tag !== 2442) {
-							break;
-						}
-
-						message.actModeDietCodeModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 306: {
-						if (tag !== 2450) {
-							break;
-						}
-
-						message.actModeOpenAiModelId = reader.string();
-						continue;
-					}
-					case 307: {
-						if (tag !== 2458) {
-							break;
-						}
-
-						message.actModeOpenAiModelInfo = OpenAiCompatibleModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 308: {
-						if (tag !== 2466) {
-							break;
-						}
-
-						message.actModeOllamaModelId = reader.string();
-						continue;
-					}
-					case 309: {
-						if (tag !== 2474) {
-							break;
-						}
-
-						message.actModeLmStudioModelId = reader.string();
-						continue;
-					}
-					case 310: {
-						if (tag !== 2482) {
-							break;
-						}
-
-						message.actModeLiteLlmModelId = reader.string();
-						continue;
-					}
-					case 311: {
-						if (tag !== 2490) {
-							break;
-						}
-
-						message.actModeLiteLlmModelInfo = LiteLLMModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 312: {
-						if (tag !== 2498) {
-							break;
-						}
-
-						message.actModeRequestyModelId = reader.string();
-						continue;
-					}
-					case 313: {
-						if (tag !== 2506) {
-							break;
-						}
-
-						message.actModeRequestyModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 314: {
-						if (tag !== 2514) {
-							break;
-						}
-
-						message.actModeTogetherModelId = reader.string();
-						continue;
-					}
-					case 315: {
-						if (tag !== 2522) {
-							break;
-						}
-
-						message.actModeFireworksModelId = reader.string();
-						continue;
-					}
-					case 316: {
-						if (tag !== 2530) {
-							break;
-						}
-
-						message.actModeSapAiCoreModelId = reader.string();
-						continue;
-					}
-					case 317: {
-						if (tag !== 2538) {
-							break;
-						}
-
-						message.actModeSapAiCoreDeploymentId = reader.string();
-						continue;
-					}
-					case 318: {
-						if (tag !== 2546) {
-							break;
-						}
-
-						message.actModeGroqModelId = reader.string();
-						continue;
-					}
-					case 319: {
-						if (tag !== 2554) {
-							break;
-						}
-
-						message.actModeGroqModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 320: {
-						if (tag !== 2562) {
-							break;
-						}
-
-						message.actModeBasetenModelId = reader.string();
-						continue;
-					}
-					case 321: {
-						if (tag !== 2570) {
-							break;
-						}
-
-						message.actModeBasetenModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 322: {
-						if (tag !== 2578) {
-							break;
-						}
-
-						message.actModeHuggingFaceModelId = reader.string();
-						continue;
-					}
-					case 323: {
-						if (tag !== 2586) {
-							break;
-						}
-
-						message.actModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 324: {
-						if (tag !== 2594) {
-							break;
-						}
-
-						message.actModeHuaweiCloudMaasModelId = reader.string();
-						continue;
-					}
-					case 325: {
-						if (tag !== 2602) {
-							break;
-						}
-
-						message.actModeHuaweiCloudMaasModelInfo =
-							OpenRouterModelInfo.decode(reader, reader.uint32());
-						continue;
-					}
-					case 326: {
-						if (tag !== 2610) {
-							break;
-						}
-
-						message.actModeOcaModelId = reader.string();
-						continue;
-					}
-					case 327: {
-						if (tag !== 2618) {
-							break;
-						}
-
-						message.actModeOcaModelInfo = OcaModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 328: {
-						if (tag !== 2626) {
-							break;
-						}
-
-						message.actModeOcaReasoningEffort = reader.string();
-						continue;
-					}
-					case 329: {
-						if (tag !== 2634) {
-							break;
-						}
-
-						message.actModeAihubmixModelId = reader.string();
-						continue;
-					}
-					case 330: {
-						if (tag !== 2642) {
-							break;
-						}
-
-						message.actModeAihubmixModelInfo = OpenAiCompatibleModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 331: {
-						if (tag !== 2650) {
-							break;
-						}
-
-						message.actModeHicapModelId = reader.string();
-						continue;
-					}
-					case 332: {
-						if (tag !== 2658) {
-							break;
-						}
-
-						message.actModeHicapModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 333: {
-						if (tag !== 2666) {
-							break;
-						}
-
-						message.actModeVercelAiGatewayModelId = reader.string();
-						continue;
-					}
-					case 334: {
-						if (tag !== 2674) {
-							break;
-						}
-
-						message.actModeVercelAiGatewayModelInfo =
-							OpenRouterModelInfo.decode(reader, reader.uint32());
-						continue;
-					}
-					case 335: {
-						if (tag !== 2682) {
-							break;
-						}
-
-						message.hicapModelId = reader.string();
-						continue;
-					}
-					case 336: {
-						if (tag !== 2690) {
-							break;
-						}
-
-						message.lmStudioModelId = reader.string();
-						continue;
-					}
-					case 338: {
-						if (tag !== 2706) {
-							break;
-						}
-
-						message.planModeClinePassModelId = reader.string();
-						continue;
-					}
-					case 339: {
-						if (tag !== 2714) {
-							break;
-						}
-
-						message.planModeClinePassModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 340: {
-						if (tag !== 2722) {
-							break;
-						}
-
-						message.actModeClinePassModelId = reader.string();
-						continue;
-					}
-					case 341: {
-						if (tag !== 2730) {
-							break;
-						}
-
-						message.actModeClinePassModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 343: {
-						if (tag !== 2744) {
-							break;
-						}
-
-						message.modEnabled = reader.bool();
-						continue;
-					}
-					case 344: {
-						if (tag !== 2754) {
-							break;
-						}
-
-						message.modOutcome = reader.string();
-						continue;
-					}
-					case 346: {
-						if (tag !== 2770) {
-							break;
-						}
-
-						message.planModeNousResearchModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 347: {
-						if (tag !== 2778) {
-							break;
-						}
-
-						message.actModeNousResearchModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 349: {
-						if (tag !== 2794) {
-							break;
-						}
-
-						message.galxBaseUrl = reader.string();
-						continue;
-					}
-					case 350: {
-						if (tag !== 2802) {
-							break;
-						}
-
-						message.planModeGalxModelId = reader.string();
-						continue;
-					}
-					case 351: {
-						if (tag !== 2810) {
-							break;
-						}
-
-						message.planModeGalxModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 352: {
-						if (tag !== 2818) {
-							break;
-						}
-
-						message.actModeGalxModelId = reader.string();
-						continue;
-					}
-					case 353: {
-						if (tag !== 2826) {
-							break;
-						}
-
-						message.actModeGalxModelInfo = OpenRouterModelInfo.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 354: {
-						if (tag !== 2834) {
-							break;
-						}
-
-						const entry354 = Settings_OpenAiHeadersEntry.decode(
-							reader,
-							reader.uint32(),
-						);
-						if (entry354.value !== undefined) {
-							message.openAiHeaders[entry354.key] = entry354.value;
-						}
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
-
-	fromJSON(object: any): Settings {
-		return {
-			openRouterProviderSorting: isSet(object.openRouterProviderSorting)
-				? globalThis.String(object.openRouterProviderSorting)
-				: isSet(object.open_router_provider_sorting)
-					? globalThis.String(object.open_router_provider_sorting)
-					: undefined,
-			planModeApiModelId: isSet(object.planModeApiModelId)
-				? globalThis.String(object.planModeApiModelId)
-				: isSet(object.plan_mode_api_model_id)
-					? globalThis.String(object.plan_mode_api_model_id)
-					: undefined,
-			planModeThinkingBudgetTokens: isSet(object.planModeThinkingBudgetTokens)
-				? globalThis.Number(object.planModeThinkingBudgetTokens)
-				: isSet(object.plan_mode_thinking_budget_tokens)
-					? globalThis.Number(object.plan_mode_thinking_budget_tokens)
-					: undefined,
-			planModeReasoningEffort: isSet(object.planModeReasoningEffort)
-				? globalThis.String(object.planModeReasoningEffort)
-				: isSet(object.plan_mode_reasoning_effort)
-					? globalThis.String(object.plan_mode_reasoning_effort)
-					: undefined,
-			planModeOpenRouterModelId: isSet(object.planModeOpenRouterModelId)
-				? globalThis.String(object.planModeOpenRouterModelId)
-				: isSet(object.plan_mode_open_router_model_id)
-					? globalThis.String(object.plan_mode_open_router_model_id)
-					: undefined,
-			planModeOpenRouterModelInfo: isSet(object.planModeOpenRouterModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeOpenRouterModelInfo)
-				: isSet(object.plan_mode_open_router_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.plan_mode_open_router_model_info,
-						)
-					: undefined,
-			planModeNousResearchModelId: isSet(object.planModeNousResearchModelId)
-				? globalThis.String(object.planModeNousResearchModelId)
-				: isSet(object.plan_mode_nous_research_model_id)
-					? globalThis.String(object.plan_mode_nous_research_model_id)
-					: undefined,
-			actModeApiModelId: isSet(object.actModeApiModelId)
-				? globalThis.String(object.actModeApiModelId)
-				: isSet(object.act_mode_api_model_id)
-					? globalThis.String(object.act_mode_api_model_id)
-					: undefined,
-			actModeThinkingBudgetTokens: isSet(object.actModeThinkingBudgetTokens)
-				? globalThis.Number(object.actModeThinkingBudgetTokens)
-				: isSet(object.act_mode_thinking_budget_tokens)
-					? globalThis.Number(object.act_mode_thinking_budget_tokens)
-					: undefined,
-			actModeReasoningEffort: isSet(object.actModeReasoningEffort)
-				? globalThis.String(object.actModeReasoningEffort)
-				: isSet(object.act_mode_reasoning_effort)
-					? globalThis.String(object.act_mode_reasoning_effort)
-					: undefined,
-			actModeOpenRouterModelId: isSet(object.actModeOpenRouterModelId)
-				? globalThis.String(object.actModeOpenRouterModelId)
-				: isSet(object.act_mode_open_router_model_id)
-					? globalThis.String(object.act_mode_open_router_model_id)
-					: undefined,
-			actModeOpenRouterModelInfo: isSet(object.actModeOpenRouterModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeOpenRouterModelInfo)
-				: isSet(object.act_mode_open_router_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_open_router_model_info)
-					: undefined,
-			actModeNousResearchModelId: isSet(object.actModeNousResearchModelId)
-				? globalThis.String(object.actModeNousResearchModelId)
-				: isSet(object.act_mode_nous_research_model_id)
-					? globalThis.String(object.act_mode_nous_research_model_id)
-					: undefined,
-			planModeApiProvider: isSet(object.planModeApiProvider)
-				? apiProviderFromJSON(object.planModeApiProvider)
-				: isSet(object.plan_mode_api_provider)
-					? apiProviderFromJSON(object.plan_mode_api_provider)
-					: undefined,
-			actModeApiProvider: isSet(object.actModeApiProvider)
-				? apiProviderFromJSON(object.actModeApiProvider)
-				: isSet(object.act_mode_api_provider)
-					? apiProviderFromJSON(object.act_mode_api_provider)
-					: undefined,
-			autoApprovalSettings: isSet(object.autoApprovalSettings)
-				? AutoApprovalSettings.fromJSON(object.autoApprovalSettings)
-				: isSet(object.auto_approval_settings)
-					? AutoApprovalSettings.fromJSON(object.auto_approval_settings)
-					: undefined,
-			globalWorkflowToggles: isSet(object.globalWorkflowToggles)
-				? globalThis.String(object.globalWorkflowToggles)
-				: isSet(object.global_workflow_toggles)
-					? globalThis.String(object.global_workflow_toggles)
-					: undefined,
-			globalSkillsToggles: isSet(object.globalSkillsToggles)
-				? globalThis.String(object.globalSkillsToggles)
-				: isSet(object.global_skills_toggles)
-					? globalThis.String(object.global_skills_toggles)
-					: undefined,
-			browserSettings: isSet(object.browserSettings)
-				? BrowserSettings.fromJSON(object.browserSettings)
-				: isSet(object.browser_settings)
-					? BrowserSettings.fromJSON(object.browser_settings)
-					: undefined,
-			telemetrySetting: isSet(object.telemetrySetting)
-				? globalThis.String(object.telemetrySetting)
-				: isSet(object.telemetry_setting)
-					? globalThis.String(object.telemetry_setting)
-					: undefined,
-			planActSeparateModelsSetting: isSet(object.planActSeparateModelsSetting)
-				? globalThis.Boolean(object.planActSeparateModelsSetting)
-				: isSet(object.plan_act_separate_models_setting)
-					? globalThis.Boolean(object.plan_act_separate_models_setting)
-					: undefined,
-			enableCheckpointsSetting: isSet(object.enableCheckpointsSetting)
-				? globalThis.Boolean(object.enableCheckpointsSetting)
-				: isSet(object.enable_checkpoints_setting)
-					? globalThis.Boolean(object.enable_checkpoints_setting)
-					: undefined,
-			shellIntegrationTimeout: isSet(object.shellIntegrationTimeout)
-				? globalThis.Number(object.shellIntegrationTimeout)
-				: isSet(object.shell_integration_timeout)
-					? globalThis.Number(object.shell_integration_timeout)
-					: undefined,
-			defaultTerminalProfile: isSet(object.defaultTerminalProfile)
-				? globalThis.String(object.defaultTerminalProfile)
-				: isSet(object.default_terminal_profile)
-					? globalThis.String(object.default_terminal_profile)
-					: undefined,
-			terminalOutputLineLimit: isSet(object.terminalOutputLineLimit)
-				? globalThis.Number(object.terminalOutputLineLimit)
-				: isSet(object.terminal_output_line_limit)
-					? globalThis.Number(object.terminal_output_line_limit)
-					: undefined,
-			maxConsecutiveMistakes: isSet(object.maxConsecutiveMistakes)
-				? globalThis.Number(object.maxConsecutiveMistakes)
-				: isSet(object.max_consecutive_mistakes)
-					? globalThis.Number(object.max_consecutive_mistakes)
-					: undefined,
-			strictPlanModeEnabled: isSet(object.strictPlanModeEnabled)
-				? globalThis.Boolean(object.strictPlanModeEnabled)
-				: isSet(object.strict_plan_mode_enabled)
-					? globalThis.Boolean(object.strict_plan_mode_enabled)
-					: undefined,
-			yoloModeToggled: isSet(object.yoloModeToggled)
-				? globalThis.Boolean(object.yoloModeToggled)
-				: isSet(object.yolo_mode_toggled)
-					? globalThis.Boolean(object.yolo_mode_toggled)
-					: undefined,
-			useAutoCondense: isSet(object.useAutoCondense)
-				? globalThis.Boolean(object.useAutoCondense)
-				: isSet(object.use_auto_condense)
-					? globalThis.Boolean(object.use_auto_condense)
-					: undefined,
-			dietcodeWebToolsEnabled: isSet(object.dietcodeWebToolsEnabled)
-				? globalThis.Boolean(object.dietcodeWebToolsEnabled)
-				: isSet(object.dietcode_web_tools_enabled)
-					? globalThis.Boolean(object.dietcode_web_tools_enabled)
-					: undefined,
-			preferredLanguage: isSet(object.preferredLanguage)
-				? globalThis.String(object.preferredLanguage)
-				: isSet(object.preferred_language)
-					? globalThis.String(object.preferred_language)
-					: undefined,
-			mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : undefined,
-			focusChainSettings: isSet(object.focusChainSettings)
-				? FocusChainSettings.fromJSON(object.focusChainSettings)
-				: isSet(object.focus_chain_settings)
-					? FocusChainSettings.fromJSON(object.focus_chain_settings)
-					: undefined,
-			customPrompt: isSet(object.customPrompt)
-				? globalThis.String(object.customPrompt)
-				: isSet(object.custom_prompt)
-					? globalThis.String(object.custom_prompt)
-					: undefined,
-			subagentsEnabled: isSet(object.subagentsEnabled)
-				? globalThis.Boolean(object.subagentsEnabled)
-				: isSet(object.subagents_enabled)
-					? globalThis.Boolean(object.subagents_enabled)
-					: undefined,
-			enableParallelToolCalling: isSet(object.enableParallelToolCalling)
-				? globalThis.Boolean(object.enableParallelToolCalling)
-				: isSet(object.enable_parallel_tool_calling)
-					? globalThis.Boolean(object.enable_parallel_tool_calling)
-					: undefined,
-			backgroundEditEnabled: isSet(object.backgroundEditEnabled)
-				? globalThis.Boolean(object.backgroundEditEnabled)
-				: isSet(object.background_edit_enabled)
-					? globalThis.Boolean(object.background_edit_enabled)
-					: undefined,
-			optOutOfRemoteConfig: isSet(object.optOutOfRemoteConfig)
-				? globalThis.Boolean(object.optOutOfRemoteConfig)
-				: isSet(object.opt_out_of_remote_config)
-					? globalThis.Boolean(object.opt_out_of_remote_config)
-					: undefined,
-			openTelemetryEnabled: isSet(object.openTelemetryEnabled)
-				? globalThis.Boolean(object.openTelemetryEnabled)
-				: isSet(object.open_telemetry_enabled)
-					? globalThis.Boolean(object.open_telemetry_enabled)
-					: undefined,
-			openTelemetryMetricsExporter: isSet(object.openTelemetryMetricsExporter)
-				? globalThis.String(object.openTelemetryMetricsExporter)
-				: isSet(object.open_telemetry_metrics_exporter)
-					? globalThis.String(object.open_telemetry_metrics_exporter)
-					: undefined,
-			openTelemetryLogsExporter: isSet(object.openTelemetryLogsExporter)
-				? globalThis.String(object.openTelemetryLogsExporter)
-				: isSet(object.open_telemetry_logs_exporter)
-					? globalThis.String(object.open_telemetry_logs_exporter)
-					: undefined,
-			openTelemetryOtlpProtocol: isSet(object.openTelemetryOtlpProtocol)
-				? globalThis.String(object.openTelemetryOtlpProtocol)
-				: isSet(object.open_telemetry_otlp_protocol)
-					? globalThis.String(object.open_telemetry_otlp_protocol)
-					: undefined,
-			openTelemetryOtlpEndpoint: isSet(object.openTelemetryOtlpEndpoint)
-				? globalThis.String(object.openTelemetryOtlpEndpoint)
-				: isSet(object.open_telemetry_otlp_endpoint)
-					? globalThis.String(object.open_telemetry_otlp_endpoint)
-					: undefined,
-			openTelemetryOtlpMetricsProtocol: isSet(
-				object.openTelemetryOtlpMetricsProtocol,
-			)
-				? globalThis.String(object.openTelemetryOtlpMetricsProtocol)
-				: isSet(object.open_telemetry_otlp_metrics_protocol)
-					? globalThis.String(object.open_telemetry_otlp_metrics_protocol)
-					: undefined,
-			openTelemetryOtlpMetricsEndpoint: isSet(
-				object.openTelemetryOtlpMetricsEndpoint,
-			)
-				? globalThis.String(object.openTelemetryOtlpMetricsEndpoint)
-				: isSet(object.open_telemetry_otlp_metrics_endpoint)
-					? globalThis.String(object.open_telemetry_otlp_metrics_endpoint)
-					: undefined,
-			openTelemetryOtlpLogsProtocol: isSet(object.openTelemetryOtlpLogsProtocol)
-				? globalThis.String(object.openTelemetryOtlpLogsProtocol)
-				: isSet(object.open_telemetry_otlp_logs_protocol)
-					? globalThis.String(object.open_telemetry_otlp_logs_protocol)
-					: undefined,
-			openTelemetryOtlpLogsEndpoint: isSet(object.openTelemetryOtlpLogsEndpoint)
-				? globalThis.String(object.openTelemetryOtlpLogsEndpoint)
-				: isSet(object.open_telemetry_otlp_logs_endpoint)
-					? globalThis.String(object.open_telemetry_otlp_logs_endpoint)
-					: undefined,
-			openTelemetryMetricExportInterval: isSet(
-				object.openTelemetryMetricExportInterval,
-			)
-				? globalThis.Number(object.openTelemetryMetricExportInterval)
-				: isSet(object.open_telemetry_metric_export_interval)
-					? globalThis.Number(object.open_telemetry_metric_export_interval)
-					: undefined,
-			openTelemetryOtlpInsecure: isSet(object.openTelemetryOtlpInsecure)
-				? globalThis.Boolean(object.openTelemetryOtlpInsecure)
-				: isSet(object.open_telemetry_otlp_insecure)
-					? globalThis.Boolean(object.open_telemetry_otlp_insecure)
-					: undefined,
-			openTelemetryLogBatchSize: isSet(object.openTelemetryLogBatchSize)
-				? globalThis.Number(object.openTelemetryLogBatchSize)
-				: isSet(object.open_telemetry_log_batch_size)
-					? globalThis.Number(object.open_telemetry_log_batch_size)
-					: undefined,
-			openTelemetryLogBatchTimeout: isSet(object.openTelemetryLogBatchTimeout)
-				? globalThis.Number(object.openTelemetryLogBatchTimeout)
-				: isSet(object.open_telemetry_log_batch_timeout)
-					? globalThis.Number(object.open_telemetry_log_batch_timeout)
-					: undefined,
-			openTelemetryLogMaxQueueSize: isSet(object.openTelemetryLogMaxQueueSize)
-				? globalThis.Number(object.openTelemetryLogMaxQueueSize)
-				: isSet(object.open_telemetry_log_max_queue_size)
-					? globalThis.Number(object.open_telemetry_log_max_queue_size)
-					: undefined,
-			worktreesEnabled: isSet(object.worktreesEnabled)
-				? globalThis.Boolean(object.worktreesEnabled)
-				: isSet(object.worktrees_enabled)
-					? globalThis.Boolean(object.worktrees_enabled)
-					: undefined,
-			doubleCheckCompletionEnabled: isSet(object.doubleCheckCompletionEnabled)
-				? globalThis.Boolean(object.doubleCheckCompletionEnabled)
-				: isSet(object.double_check_completion_enabled)
-					? globalThis.Boolean(object.double_check_completion_enabled)
-					: undefined,
-			cloudflareAccountId: isSet(object.cloudflareAccountId)
-				? globalThis.String(object.cloudflareAccountId)
-				: isSet(object.cloudflare_account_id)
-					? globalThis.String(object.cloudflare_account_id)
-					: undefined,
-			embeddingProvider: isSet(object.embeddingProvider)
-				? apiProviderFromJSON(object.embeddingProvider)
-				: isSet(object.embedding_provider)
-					? apiProviderFromJSON(object.embedding_provider)
-					: undefined,
-			embeddingModelId: isSet(object.embeddingModelId)
-				? globalThis.String(object.embeddingModelId)
-				: isSet(object.embedding_model_id)
-					? globalThis.String(object.embedding_model_id)
-					: undefined,
-			embeddingOpenAiBaseUrl: isSet(object.embeddingOpenAiBaseUrl)
-				? globalThis.String(object.embeddingOpenAiBaseUrl)
-				: isSet(object.embedding_open_ai_base_url)
-					? globalThis.String(object.embedding_open_ai_base_url)
-					: undefined,
-			maxSwarmDepth: isSet(object.maxSwarmDepth)
-				? globalThis.Number(object.maxSwarmDepth)
-				: isSet(object.max_swarm_depth)
-					? globalThis.Number(object.max_swarm_depth)
-					: undefined,
-			safeYoloModeToggled: isSet(object.safeYoloModeToggled)
-				? globalThis.Boolean(object.safeYoloModeToggled)
-				: isSet(object.safe_yolo_mode_toggled)
-					? globalThis.Boolean(object.safe_yolo_mode_toggled)
-					: undefined,
-			masEnabled: isSet(object.masEnabled)
-				? globalThis.Boolean(object.masEnabled)
-				: isSet(object.mas_enabled)
-					? globalThis.Boolean(object.mas_enabled)
-					: undefined,
-			globalDietCodeRulesToggles: isSet(object.globalDietCodeRulesToggles)
-				? globalThis.String(object.globalDietCodeRulesToggles)
-				: isSet(object.global_diet_code_rules_toggles)
-					? globalThis.String(object.global_diet_code_rules_toggles)
-					: undefined,
-			auditCompletionGateEnabled: isSet(object.auditCompletionGateEnabled)
-				? globalThis.Boolean(object.auditCompletionGateEnabled)
-				: isSet(object.audit_completion_gate_enabled)
-					? globalThis.Boolean(object.audit_completion_gate_enabled)
-					: undefined,
-			auditCompletionGateThreshold: isSet(object.auditCompletionGateThreshold)
-				? globalThis.Number(object.auditCompletionGateThreshold)
-				: isSet(object.audit_completion_gate_threshold)
-					? globalThis.Number(object.audit_completion_gate_threshold)
-					: undefined,
-			auditCompletionGateCriticalOnly: isSet(
-				object.auditCompletionGateCriticalOnly,
-			)
-				? globalThis.Boolean(object.auditCompletionGateCriticalOnly)
-				: isSet(object.audit_completion_gate_critical_only)
-					? globalThis.Boolean(object.audit_completion_gate_critical_only)
-					: undefined,
-			auditActModeAdvisoryEnabled: isSet(object.auditActModeAdvisoryEnabled)
-				? globalThis.Boolean(object.auditActModeAdvisoryEnabled)
-				: isSet(object.audit_act_mode_advisory_enabled)
-					? globalThis.Boolean(object.audit_act_mode_advisory_enabled)
-					: undefined,
-			auditAdvisoryEscalationEnabled: isSet(
-				object.auditAdvisoryEscalationEnabled,
-			)
-				? globalThis.Boolean(object.auditAdvisoryEscalationEnabled)
-				: isSet(object.audit_advisory_escalation_enabled)
-					? globalThis.Boolean(object.audit_advisory_escalation_enabled)
-					: undefined,
-			auditPlanRegressionGateEnabled: isSet(
-				object.auditPlanRegressionGateEnabled,
-			)
-				? globalThis.Boolean(object.auditPlanRegressionGateEnabled)
-				: isSet(object.audit_plan_regression_gate_enabled)
-					? globalThis.Boolean(object.audit_plan_regression_gate_enabled)
-					: undefined,
-			auditToolOutputAdvisoryEnabled: isSet(
-				object.auditToolOutputAdvisoryEnabled,
-			)
-				? globalThis.Boolean(object.auditToolOutputAdvisoryEnabled)
-				: isSet(object.audit_tool_output_advisory_enabled)
-					? globalThis.Boolean(object.audit_tool_output_advisory_enabled)
-					: undefined,
-			auditFileWriteAdvisoryEnabled: isSet(object.auditFileWriteAdvisoryEnabled)
-				? globalThis.Boolean(object.auditFileWriteAdvisoryEnabled)
-				: isSet(object.audit_file_write_advisory_enabled)
-					? globalThis.Boolean(object.audit_file_write_advisory_enabled)
-					: undefined,
-			auditIntentThresholdAdjustmentsEnabled: isSet(
-				object.auditIntentThresholdAdjustmentsEnabled,
-			)
-				? globalThis.Boolean(object.auditIntentThresholdAdjustmentsEnabled)
-				: isSet(object.audit_intent_threshold_adjustments_enabled)
-					? globalThis.Boolean(
-							object.audit_intent_threshold_adjustments_enabled,
-						)
-					: undefined,
-			auditIntentThresholdOverrides: isSet(object.auditIntentThresholdOverrides)
-				? globalThis.String(object.auditIntentThresholdOverrides)
-				: isSet(object.audit_intent_threshold_overrides)
-					? globalThis.String(object.audit_intent_threshold_overrides)
-					: undefined,
-			auditSarifHookExportEnabled: isSet(object.auditSarifHookExportEnabled)
-				? globalThis.Boolean(object.auditSarifHookExportEnabled)
-				: isSet(object.audit_sarif_hook_export_enabled)
-					? globalThis.Boolean(object.audit_sarif_hook_export_enabled)
-					: undefined,
-			auditWorkspaceArtifactsEnabled: isSet(
-				object.auditWorkspaceArtifactsEnabled,
-			)
-				? globalThis.Boolean(object.auditWorkspaceArtifactsEnabled)
-				: isSet(object.audit_workspace_artifacts_enabled)
-					? globalThis.Boolean(object.audit_workspace_artifacts_enabled)
-					: undefined,
-			auditAdvisoryAutoScrollMode: isSet(object.auditAdvisoryAutoScrollMode)
-				? globalThis.String(object.auditAdvisoryAutoScrollMode)
-				: isSet(object.audit_advisory_auto_scroll_mode)
-					? globalThis.String(object.audit_advisory_auto_scroll_mode)
-					: undefined,
-			liteLlmBaseUrl: isSet(object.liteLlmBaseUrl)
-				? globalThis.String(object.liteLlmBaseUrl)
-				: isSet(object.lite_llm_base_url)
-					? globalThis.String(object.lite_llm_base_url)
-					: undefined,
-			liteLlmUsePromptCache: isSet(object.liteLlmUsePromptCache)
-				? globalThis.Boolean(object.liteLlmUsePromptCache)
-				: isSet(object.lite_llm_use_prompt_cache)
-					? globalThis.Boolean(object.lite_llm_use_prompt_cache)
-					: undefined,
-			anthropicBaseUrl: isSet(object.anthropicBaseUrl)
-				? globalThis.String(object.anthropicBaseUrl)
-				: isSet(object.anthropic_base_url)
-					? globalThis.String(object.anthropic_base_url)
-					: undefined,
-			awsRegion: isSet(object.awsRegion)
-				? globalThis.String(object.awsRegion)
-				: isSet(object.aws_region)
-					? globalThis.String(object.aws_region)
-					: undefined,
-			awsUseCrossRegionInference: isSet(object.awsUseCrossRegionInference)
-				? globalThis.Boolean(object.awsUseCrossRegionInference)
-				: isSet(object.aws_use_cross_region_inference)
-					? globalThis.Boolean(object.aws_use_cross_region_inference)
-					: undefined,
-			awsUseGlobalInference: isSet(object.awsUseGlobalInference)
-				? globalThis.Boolean(object.awsUseGlobalInference)
-				: isSet(object.aws_use_global_inference)
-					? globalThis.Boolean(object.aws_use_global_inference)
-					: undefined,
-			awsBedrockUsePromptCache: isSet(object.awsBedrockUsePromptCache)
-				? globalThis.Boolean(object.awsBedrockUsePromptCache)
-				: isSet(object.aws_bedrock_use_prompt_cache)
-					? globalThis.Boolean(object.aws_bedrock_use_prompt_cache)
-					: undefined,
-			awsAuthentication: isSet(object.awsAuthentication)
-				? globalThis.String(object.awsAuthentication)
-				: isSet(object.aws_authentication)
-					? globalThis.String(object.aws_authentication)
-					: undefined,
-			awsUseProfile: isSet(object.awsUseProfile)
-				? globalThis.Boolean(object.awsUseProfile)
-				: isSet(object.aws_use_profile)
-					? globalThis.Boolean(object.aws_use_profile)
-					: undefined,
-			awsProfile: isSet(object.awsProfile)
-				? globalThis.String(object.awsProfile)
-				: isSet(object.aws_profile)
-					? globalThis.String(object.aws_profile)
-					: undefined,
-			awsBedrockEndpoint: isSet(object.awsBedrockEndpoint)
-				? globalThis.String(object.awsBedrockEndpoint)
-				: isSet(object.aws_bedrock_endpoint)
-					? globalThis.String(object.aws_bedrock_endpoint)
-					: undefined,
-			claudeCodePath: isSet(object.claudeCodePath)
-				? globalThis.String(object.claudeCodePath)
-				: isSet(object.claude_code_path)
-					? globalThis.String(object.claude_code_path)
-					: undefined,
-			openAiBaseUrl: isSet(object.openAiBaseUrl)
-				? globalThis.String(object.openAiBaseUrl)
-				: isSet(object.open_ai_base_url)
-					? globalThis.String(object.open_ai_base_url)
-					: undefined,
-			ollamaBaseUrl: isSet(object.ollamaBaseUrl)
-				? globalThis.String(object.ollamaBaseUrl)
-				: isSet(object.ollama_base_url)
-					? globalThis.String(object.ollama_base_url)
-					: undefined,
-			ollamaApiOptionsCtxNum: isSet(object.ollamaApiOptionsCtxNum)
-				? globalThis.String(object.ollamaApiOptionsCtxNum)
-				: isSet(object.ollama_api_options_ctx_num)
-					? globalThis.String(object.ollama_api_options_ctx_num)
-					: undefined,
-			lmStudioBaseUrl: isSet(object.lmStudioBaseUrl)
-				? globalThis.String(object.lmStudioBaseUrl)
-				: isSet(object.lm_studio_base_url)
-					? globalThis.String(object.lm_studio_base_url)
-					: undefined,
-			lmStudioMaxTokens: isSet(object.lmStudioMaxTokens)
-				? globalThis.String(object.lmStudioMaxTokens)
-				: isSet(object.lm_studio_max_tokens)
-					? globalThis.String(object.lm_studio_max_tokens)
-					: undefined,
-			geminiBaseUrl: isSet(object.geminiBaseUrl)
-				? globalThis.String(object.geminiBaseUrl)
-				: isSet(object.gemini_base_url)
-					? globalThis.String(object.gemini_base_url)
-					: undefined,
-			requestyBaseUrl: isSet(object.requestyBaseUrl)
-				? globalThis.String(object.requestyBaseUrl)
-				: isSet(object.requesty_base_url)
-					? globalThis.String(object.requesty_base_url)
-					: undefined,
-			fireworksModelMaxCompletionTokens: isSet(
-				object.fireworksModelMaxCompletionTokens,
-			)
-				? globalThis.Number(object.fireworksModelMaxCompletionTokens)
-				: isSet(object.fireworks_model_max_completion_tokens)
-					? globalThis.Number(object.fireworks_model_max_completion_tokens)
-					: undefined,
-			fireworksModelMaxTokens: isSet(object.fireworksModelMaxTokens)
-				? globalThis.Number(object.fireworksModelMaxTokens)
-				: isSet(object.fireworks_model_max_tokens)
-					? globalThis.Number(object.fireworks_model_max_tokens)
-					: undefined,
-			qwenCodeOauthPath: isSet(object.qwenCodeOauthPath)
-				? globalThis.String(object.qwenCodeOauthPath)
-				: isSet(object.qwen_code_oauth_path)
-					? globalThis.String(object.qwen_code_oauth_path)
-					: undefined,
-			azureApiVersion: isSet(object.azureApiVersion)
-				? globalThis.String(object.azureApiVersion)
-				: isSet(object.azure_api_version)
-					? globalThis.String(object.azure_api_version)
-					: undefined,
-			azureIdentity: isSet(object.azureIdentity)
-				? globalThis.Boolean(object.azureIdentity)
-				: isSet(object.azure_identity)
-					? globalThis.Boolean(object.azure_identity)
-					: undefined,
-			qwenApiLine: isSet(object.qwenApiLine)
-				? globalThis.String(object.qwenApiLine)
-				: isSet(object.qwen_api_line)
-					? globalThis.String(object.qwen_api_line)
-					: undefined,
-			moonshotApiLine: isSet(object.moonshotApiLine)
-				? globalThis.String(object.moonshotApiLine)
-				: isSet(object.moonshot_api_line)
-					? globalThis.String(object.moonshot_api_line)
-					: undefined,
-			asksageApiUrl: isSet(object.asksageApiUrl)
-				? globalThis.String(object.asksageApiUrl)
-				: isSet(object.asksage_api_url)
-					? globalThis.String(object.asksage_api_url)
-					: undefined,
-			requestTimeoutMs: isSet(object.requestTimeoutMs)
-				? globalThis.Number(object.requestTimeoutMs)
-				: isSet(object.request_timeout_ms)
-					? globalThis.Number(object.request_timeout_ms)
-					: undefined,
-			sapAiResourceGroup: isSet(object.sapAiResourceGroup)
-				? globalThis.String(object.sapAiResourceGroup)
-				: isSet(object.sap_ai_resource_group)
-					? globalThis.String(object.sap_ai_resource_group)
-					: undefined,
-			sapAiCoreTokenUrl: isSet(object.sapAiCoreTokenUrl)
-				? globalThis.String(object.sapAiCoreTokenUrl)
-				: isSet(object.sap_ai_core_token_url)
-					? globalThis.String(object.sap_ai_core_token_url)
-					: undefined,
-			sapAiCoreBaseUrl: isSet(object.sapAiCoreBaseUrl)
-				? globalThis.String(object.sapAiCoreBaseUrl)
-				: isSet(object.sap_ai_core_base_url)
-					? globalThis.String(object.sap_ai_core_base_url)
-					: undefined,
-			sapAiCoreUseOrchestrationMode: isSet(object.sapAiCoreUseOrchestrationMode)
-				? globalThis.Boolean(object.sapAiCoreUseOrchestrationMode)
-				: isSet(object.sap_ai_core_use_orchestration_mode)
-					? globalThis.Boolean(object.sap_ai_core_use_orchestration_mode)
-					: undefined,
-			difyBaseUrl: isSet(object.difyBaseUrl)
-				? globalThis.String(object.difyBaseUrl)
-				: isSet(object.dify_base_url)
-					? globalThis.String(object.dify_base_url)
-					: undefined,
-			zaiApiLine: isSet(object.zaiApiLine)
-				? globalThis.String(object.zaiApiLine)
-				: isSet(object.zai_api_line)
-					? globalThis.String(object.zai_api_line)
-					: undefined,
-			ocaBaseUrl: isSet(object.ocaBaseUrl)
-				? globalThis.String(object.ocaBaseUrl)
-				: isSet(object.oca_base_url)
-					? globalThis.String(object.oca_base_url)
-					: undefined,
-			minimaxApiLine: isSet(object.minimaxApiLine)
-				? globalThis.String(object.minimaxApiLine)
-				: isSet(object.minimax_api_line)
-					? globalThis.String(object.minimax_api_line)
-					: undefined,
-			ocaMode: isSet(object.ocaMode)
-				? globalThis.String(object.ocaMode)
-				: isSet(object.oca_mode)
-					? globalThis.String(object.oca_mode)
-					: undefined,
-			aihubmixBaseUrl: isSet(object.aihubmixBaseUrl)
-				? globalThis.String(object.aihubmixBaseUrl)
-				: isSet(object.aihubmix_base_url)
-					? globalThis.String(object.aihubmix_base_url)
-					: undefined,
-			aihubmixAppCode: isSet(object.aihubmixAppCode)
-				? globalThis.String(object.aihubmixAppCode)
-				: isSet(object.aihubmix_app_code)
-					? globalThis.String(object.aihubmix_app_code)
-					: undefined,
-			geminiPlanModeThinkingLevel: isSet(object.geminiPlanModeThinkingLevel)
-				? globalThis.String(object.geminiPlanModeThinkingLevel)
-				: isSet(object.gemini_plan_mode_thinking_level)
-					? globalThis.String(object.gemini_plan_mode_thinking_level)
-					: undefined,
-			planModeVerbosity: isSet(object.planModeVerbosity)
-				? globalThis.String(object.planModeVerbosity)
-				: isSet(object.plan_mode_verbosity)
-					? globalThis.String(object.plan_mode_verbosity)
-					: undefined,
-			planModeVsCodeLmModelSelector: isSet(object.planModeVsCodeLmModelSelector)
-				? LanguageModelChatSelector.fromJSON(
-						object.planModeVsCodeLmModelSelector,
-					)
-				: isSet(object.plan_mode_vs_code_lm_model_selector)
-					? LanguageModelChatSelector.fromJSON(
-							object.plan_mode_vs_code_lm_model_selector,
-						)
-					: undefined,
-			planModeAwsBedrockCustomSelected: isSet(
-				object.planModeAwsBedrockCustomSelected,
-			)
-				? globalThis.Boolean(object.planModeAwsBedrockCustomSelected)
-				: isSet(object.plan_mode_aws_bedrock_custom_selected)
-					? globalThis.Boolean(object.plan_mode_aws_bedrock_custom_selected)
-					: undefined,
-			planModeAwsBedrockCustomModelBaseId: isSet(
-				object.planModeAwsBedrockCustomModelBaseId,
-			)
-				? globalThis.String(object.planModeAwsBedrockCustomModelBaseId)
-				: isSet(object.plan_mode_aws_bedrock_custom_model_base_id)
-					? globalThis.String(object.plan_mode_aws_bedrock_custom_model_base_id)
-					: undefined,
-			planModeDietCodeModelId: isSet(object.planModeDietCodeModelId)
-				? globalThis.String(object.planModeDietCodeModelId)
-				: isSet(object.plan_mode_diet_code_model_id)
-					? globalThis.String(object.plan_mode_diet_code_model_id)
-					: undefined,
-			planModeDietCodeModelInfo: isSet(object.planModeDietCodeModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeDietCodeModelInfo)
-				: isSet(object.plan_mode_diet_code_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_diet_code_model_info)
-					: undefined,
-			planModeOpenAiModelId: isSet(object.planModeOpenAiModelId)
-				? globalThis.String(object.planModeOpenAiModelId)
-				: isSet(object.plan_mode_open_ai_model_id)
-					? globalThis.String(object.plan_mode_open_ai_model_id)
-					: undefined,
-			planModeOpenAiModelInfo: isSet(object.planModeOpenAiModelInfo)
-				? OpenAiCompatibleModelInfo.fromJSON(object.planModeOpenAiModelInfo)
-				: isSet(object.plan_mode_open_ai_model_info)
-					? OpenAiCompatibleModelInfo.fromJSON(
-							object.plan_mode_open_ai_model_info,
-						)
-					: undefined,
-			planModeOllamaModelId: isSet(object.planModeOllamaModelId)
-				? globalThis.String(object.planModeOllamaModelId)
-				: isSet(object.plan_mode_ollama_model_id)
-					? globalThis.String(object.plan_mode_ollama_model_id)
-					: undefined,
-			planModeLmStudioModelId: isSet(object.planModeLmStudioModelId)
-				? globalThis.String(object.planModeLmStudioModelId)
-				: isSet(object.plan_mode_lm_studio_model_id)
-					? globalThis.String(object.plan_mode_lm_studio_model_id)
-					: undefined,
-			planModeLiteLlmModelId: isSet(object.planModeLiteLlmModelId)
-				? globalThis.String(object.planModeLiteLlmModelId)
-				: isSet(object.plan_mode_lite_llm_model_id)
-					? globalThis.String(object.plan_mode_lite_llm_model_id)
-					: undefined,
-			planModeLiteLlmModelInfo: isSet(object.planModeLiteLlmModelInfo)
-				? LiteLLMModelInfo.fromJSON(object.planModeLiteLlmModelInfo)
-				: isSet(object.plan_mode_lite_llm_model_info)
-					? LiteLLMModelInfo.fromJSON(object.plan_mode_lite_llm_model_info)
-					: undefined,
-			planModeRequestyModelId: isSet(object.planModeRequestyModelId)
-				? globalThis.String(object.planModeRequestyModelId)
-				: isSet(object.plan_mode_requesty_model_id)
-					? globalThis.String(object.plan_mode_requesty_model_id)
-					: undefined,
-			planModeRequestyModelInfo: isSet(object.planModeRequestyModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeRequestyModelInfo)
-				: isSet(object.plan_mode_requesty_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_requesty_model_info)
-					: undefined,
-			planModeTogetherModelId: isSet(object.planModeTogetherModelId)
-				? globalThis.String(object.planModeTogetherModelId)
-				: isSet(object.plan_mode_together_model_id)
-					? globalThis.String(object.plan_mode_together_model_id)
-					: undefined,
-			planModeFireworksModelId: isSet(object.planModeFireworksModelId)
-				? globalThis.String(object.planModeFireworksModelId)
-				: isSet(object.plan_mode_fireworks_model_id)
-					? globalThis.String(object.plan_mode_fireworks_model_id)
-					: undefined,
-			planModeSapAiCoreModelId: isSet(object.planModeSapAiCoreModelId)
-				? globalThis.String(object.planModeSapAiCoreModelId)
-				: isSet(object.plan_mode_sap_ai_core_model_id)
-					? globalThis.String(object.plan_mode_sap_ai_core_model_id)
-					: undefined,
-			planModeSapAiCoreDeploymentId: isSet(object.planModeSapAiCoreDeploymentId)
-				? globalThis.String(object.planModeSapAiCoreDeploymentId)
-				: isSet(object.plan_mode_sap_ai_core_deployment_id)
-					? globalThis.String(object.plan_mode_sap_ai_core_deployment_id)
-					: undefined,
-			planModeGroqModelId: isSet(object.planModeGroqModelId)
-				? globalThis.String(object.planModeGroqModelId)
-				: isSet(object.plan_mode_groq_model_id)
-					? globalThis.String(object.plan_mode_groq_model_id)
-					: undefined,
-			planModeGroqModelInfo: isSet(object.planModeGroqModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeGroqModelInfo)
-				: isSet(object.plan_mode_groq_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_groq_model_info)
-					: undefined,
-			planModeBasetenModelId: isSet(object.planModeBasetenModelId)
-				? globalThis.String(object.planModeBasetenModelId)
-				: isSet(object.plan_mode_baseten_model_id)
-					? globalThis.String(object.plan_mode_baseten_model_id)
-					: undefined,
-			planModeBasetenModelInfo: isSet(object.planModeBasetenModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeBasetenModelInfo)
-				: isSet(object.plan_mode_baseten_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_baseten_model_info)
-					: undefined,
-			planModeHuggingFaceModelId: isSet(object.planModeHuggingFaceModelId)
-				? globalThis.String(object.planModeHuggingFaceModelId)
-				: isSet(object.plan_mode_hugging_face_model_id)
-					? globalThis.String(object.plan_mode_hugging_face_model_id)
-					: undefined,
-			planModeHuggingFaceModelInfo: isSet(object.planModeHuggingFaceModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
-				: isSet(object.plan_mode_hugging_face_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.plan_mode_hugging_face_model_info,
-						)
-					: undefined,
-			planModeHuaweiCloudMaasModelId: isSet(
-				object.planModeHuaweiCloudMaasModelId,
-			)
-				? globalThis.String(object.planModeHuaweiCloudMaasModelId)
-				: isSet(object.plan_mode_huawei_cloud_maas_model_id)
-					? globalThis.String(object.plan_mode_huawei_cloud_maas_model_id)
-					: undefined,
-			planModeHuaweiCloudMaasModelInfo: isSet(
-				object.planModeHuaweiCloudMaasModelInfo,
-			)
-				? OpenRouterModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
-				: isSet(object.plan_mode_huawei_cloud_maas_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.plan_mode_huawei_cloud_maas_model_info,
-						)
-					: undefined,
-			planModeOcaModelId: isSet(object.planModeOcaModelId)
-				? globalThis.String(object.planModeOcaModelId)
-				: isSet(object.plan_mode_oca_model_id)
-					? globalThis.String(object.plan_mode_oca_model_id)
-					: undefined,
-			planModeOcaModelInfo: isSet(object.planModeOcaModelInfo)
-				? OcaModelInfo.fromJSON(object.planModeOcaModelInfo)
-				: isSet(object.plan_mode_oca_model_info)
-					? OcaModelInfo.fromJSON(object.plan_mode_oca_model_info)
-					: undefined,
-			planModeOcaReasoningEffort: isSet(object.planModeOcaReasoningEffort)
-				? globalThis.String(object.planModeOcaReasoningEffort)
-				: isSet(object.plan_mode_oca_reasoning_effort)
-					? globalThis.String(object.plan_mode_oca_reasoning_effort)
-					: undefined,
-			planModeAihubmixModelId: isSet(object.planModeAihubmixModelId)
-				? globalThis.String(object.planModeAihubmixModelId)
-				: isSet(object.plan_mode_aihubmix_model_id)
-					? globalThis.String(object.plan_mode_aihubmix_model_id)
-					: undefined,
-			planModeAihubmixModelInfo: isSet(object.planModeAihubmixModelInfo)
-				? OpenAiCompatibleModelInfo.fromJSON(object.planModeAihubmixModelInfo)
-				: isSet(object.plan_mode_aihubmix_model_info)
-					? OpenAiCompatibleModelInfo.fromJSON(
-							object.plan_mode_aihubmix_model_info,
-						)
-					: undefined,
-			planModeHicapModelId: isSet(object.planModeHicapModelId)
-				? globalThis.String(object.planModeHicapModelId)
-				: isSet(object.plan_mode_hicap_model_id)
-					? globalThis.String(object.plan_mode_hicap_model_id)
-					: undefined,
-			planModeHicapModelInfo: isSet(object.planModeHicapModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeHicapModelInfo)
-				: isSet(object.plan_mode_hicap_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_hicap_model_info)
-					: undefined,
-			planModeVercelAiGatewayModelId: isSet(
-				object.planModeVercelAiGatewayModelId,
-			)
-				? globalThis.String(object.planModeVercelAiGatewayModelId)
-				: isSet(object.plan_mode_vercel_ai_gateway_model_id)
-					? globalThis.String(object.plan_mode_vercel_ai_gateway_model_id)
-					: undefined,
-			planModeVercelAiGatewayModelInfo: isSet(
-				object.planModeVercelAiGatewayModelInfo,
-			)
-				? OpenRouterModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
-				: isSet(object.plan_mode_vercel_ai_gateway_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.plan_mode_vercel_ai_gateway_model_info,
-						)
-					: undefined,
-			geminiActModeThinkingLevel: isSet(object.geminiActModeThinkingLevel)
-				? globalThis.String(object.geminiActModeThinkingLevel)
-				: isSet(object.gemini_act_mode_thinking_level)
-					? globalThis.String(object.gemini_act_mode_thinking_level)
-					: undefined,
-			actModeVerbosity: isSet(object.actModeVerbosity)
-				? globalThis.String(object.actModeVerbosity)
-				: isSet(object.act_mode_verbosity)
-					? globalThis.String(object.act_mode_verbosity)
-					: undefined,
-			actModeVsCodeLmModelSelector: isSet(object.actModeVsCodeLmModelSelector)
-				? LanguageModelChatSelector.fromJSON(
-						object.actModeVsCodeLmModelSelector,
-					)
-				: isSet(object.act_mode_vs_code_lm_model_selector)
-					? LanguageModelChatSelector.fromJSON(
-							object.act_mode_vs_code_lm_model_selector,
-						)
-					: undefined,
-			actModeAwsBedrockCustomSelected: isSet(
-				object.actModeAwsBedrockCustomSelected,
-			)
-				? globalThis.Boolean(object.actModeAwsBedrockCustomSelected)
-				: isSet(object.act_mode_aws_bedrock_custom_selected)
-					? globalThis.Boolean(object.act_mode_aws_bedrock_custom_selected)
-					: undefined,
-			actModeAwsBedrockCustomModelBaseId: isSet(
-				object.actModeAwsBedrockCustomModelBaseId,
-			)
-				? globalThis.String(object.actModeAwsBedrockCustomModelBaseId)
-				: isSet(object.act_mode_aws_bedrock_custom_model_base_id)
-					? globalThis.String(object.act_mode_aws_bedrock_custom_model_base_id)
-					: undefined,
-			actModeDietCodeModelId: isSet(object.actModeDietCodeModelId)
-				? globalThis.String(object.actModeDietCodeModelId)
-				: isSet(object.act_mode_diet_code_model_id)
-					? globalThis.String(object.act_mode_diet_code_model_id)
-					: undefined,
-			actModeDietCodeModelInfo: isSet(object.actModeDietCodeModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeDietCodeModelInfo)
-				: isSet(object.act_mode_diet_code_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_diet_code_model_info)
-					: undefined,
-			actModeOpenAiModelId: isSet(object.actModeOpenAiModelId)
-				? globalThis.String(object.actModeOpenAiModelId)
-				: isSet(object.act_mode_open_ai_model_id)
-					? globalThis.String(object.act_mode_open_ai_model_id)
-					: undefined,
-			actModeOpenAiModelInfo: isSet(object.actModeOpenAiModelInfo)
-				? OpenAiCompatibleModelInfo.fromJSON(object.actModeOpenAiModelInfo)
-				: isSet(object.act_mode_open_ai_model_info)
-					? OpenAiCompatibleModelInfo.fromJSON(
-							object.act_mode_open_ai_model_info,
-						)
-					: undefined,
-			actModeOllamaModelId: isSet(object.actModeOllamaModelId)
-				? globalThis.String(object.actModeOllamaModelId)
-				: isSet(object.act_mode_ollama_model_id)
-					? globalThis.String(object.act_mode_ollama_model_id)
-					: undefined,
-			actModeLmStudioModelId: isSet(object.actModeLmStudioModelId)
-				? globalThis.String(object.actModeLmStudioModelId)
-				: isSet(object.act_mode_lm_studio_model_id)
-					? globalThis.String(object.act_mode_lm_studio_model_id)
-					: undefined,
-			actModeLiteLlmModelId: isSet(object.actModeLiteLlmModelId)
-				? globalThis.String(object.actModeLiteLlmModelId)
-				: isSet(object.act_mode_lite_llm_model_id)
-					? globalThis.String(object.act_mode_lite_llm_model_id)
-					: undefined,
-			actModeLiteLlmModelInfo: isSet(object.actModeLiteLlmModelInfo)
-				? LiteLLMModelInfo.fromJSON(object.actModeLiteLlmModelInfo)
-				: isSet(object.act_mode_lite_llm_model_info)
-					? LiteLLMModelInfo.fromJSON(object.act_mode_lite_llm_model_info)
-					: undefined,
-			actModeRequestyModelId: isSet(object.actModeRequestyModelId)
-				? globalThis.String(object.actModeRequestyModelId)
-				: isSet(object.act_mode_requesty_model_id)
-					? globalThis.String(object.act_mode_requesty_model_id)
-					: undefined,
-			actModeRequestyModelInfo: isSet(object.actModeRequestyModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeRequestyModelInfo)
-				: isSet(object.act_mode_requesty_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_requesty_model_info)
-					: undefined,
-			actModeTogetherModelId: isSet(object.actModeTogetherModelId)
-				? globalThis.String(object.actModeTogetherModelId)
-				: isSet(object.act_mode_together_model_id)
-					? globalThis.String(object.act_mode_together_model_id)
-					: undefined,
-			actModeFireworksModelId: isSet(object.actModeFireworksModelId)
-				? globalThis.String(object.actModeFireworksModelId)
-				: isSet(object.act_mode_fireworks_model_id)
-					? globalThis.String(object.act_mode_fireworks_model_id)
-					: undefined,
-			actModeSapAiCoreModelId: isSet(object.actModeSapAiCoreModelId)
-				? globalThis.String(object.actModeSapAiCoreModelId)
-				: isSet(object.act_mode_sap_ai_core_model_id)
-					? globalThis.String(object.act_mode_sap_ai_core_model_id)
-					: undefined,
-			actModeSapAiCoreDeploymentId: isSet(object.actModeSapAiCoreDeploymentId)
-				? globalThis.String(object.actModeSapAiCoreDeploymentId)
-				: isSet(object.act_mode_sap_ai_core_deployment_id)
-					? globalThis.String(object.act_mode_sap_ai_core_deployment_id)
-					: undefined,
-			actModeGroqModelId: isSet(object.actModeGroqModelId)
-				? globalThis.String(object.actModeGroqModelId)
-				: isSet(object.act_mode_groq_model_id)
-					? globalThis.String(object.act_mode_groq_model_id)
-					: undefined,
-			actModeGroqModelInfo: isSet(object.actModeGroqModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeGroqModelInfo)
-				: isSet(object.act_mode_groq_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_groq_model_info)
-					: undefined,
-			actModeBasetenModelId: isSet(object.actModeBasetenModelId)
-				? globalThis.String(object.actModeBasetenModelId)
-				: isSet(object.act_mode_baseten_model_id)
-					? globalThis.String(object.act_mode_baseten_model_id)
-					: undefined,
-			actModeBasetenModelInfo: isSet(object.actModeBasetenModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeBasetenModelInfo)
-				: isSet(object.act_mode_baseten_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_baseten_model_info)
-					: undefined,
-			actModeHuggingFaceModelId: isSet(object.actModeHuggingFaceModelId)
-				? globalThis.String(object.actModeHuggingFaceModelId)
-				: isSet(object.act_mode_hugging_face_model_id)
-					? globalThis.String(object.act_mode_hugging_face_model_id)
-					: undefined,
-			actModeHuggingFaceModelInfo: isSet(object.actModeHuggingFaceModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
-				: isSet(object.act_mode_hugging_face_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.act_mode_hugging_face_model_info,
-						)
-					: undefined,
-			actModeHuaweiCloudMaasModelId: isSet(object.actModeHuaweiCloudMaasModelId)
-				? globalThis.String(object.actModeHuaweiCloudMaasModelId)
-				: isSet(object.act_mode_huawei_cloud_maas_model_id)
-					? globalThis.String(object.act_mode_huawei_cloud_maas_model_id)
-					: undefined,
-			actModeHuaweiCloudMaasModelInfo: isSet(
-				object.actModeHuaweiCloudMaasModelInfo,
-			)
-				? OpenRouterModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
-				: isSet(object.act_mode_huawei_cloud_maas_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.act_mode_huawei_cloud_maas_model_info,
-						)
-					: undefined,
-			actModeOcaModelId: isSet(object.actModeOcaModelId)
-				? globalThis.String(object.actModeOcaModelId)
-				: isSet(object.act_mode_oca_model_id)
-					? globalThis.String(object.act_mode_oca_model_id)
-					: undefined,
-			actModeOcaModelInfo: isSet(object.actModeOcaModelInfo)
-				? OcaModelInfo.fromJSON(object.actModeOcaModelInfo)
-				: isSet(object.act_mode_oca_model_info)
-					? OcaModelInfo.fromJSON(object.act_mode_oca_model_info)
-					: undefined,
-			actModeOcaReasoningEffort: isSet(object.actModeOcaReasoningEffort)
-				? globalThis.String(object.actModeOcaReasoningEffort)
-				: isSet(object.act_mode_oca_reasoning_effort)
-					? globalThis.String(object.act_mode_oca_reasoning_effort)
-					: undefined,
-			actModeAihubmixModelId: isSet(object.actModeAihubmixModelId)
-				? globalThis.String(object.actModeAihubmixModelId)
-				: isSet(object.act_mode_aihubmix_model_id)
-					? globalThis.String(object.act_mode_aihubmix_model_id)
-					: undefined,
-			actModeAihubmixModelInfo: isSet(object.actModeAihubmixModelInfo)
-				? OpenAiCompatibleModelInfo.fromJSON(object.actModeAihubmixModelInfo)
-				: isSet(object.act_mode_aihubmix_model_info)
-					? OpenAiCompatibleModelInfo.fromJSON(
-							object.act_mode_aihubmix_model_info,
-						)
-					: undefined,
-			actModeHicapModelId: isSet(object.actModeHicapModelId)
-				? globalThis.String(object.actModeHicapModelId)
-				: isSet(object.act_mode_hicap_model_id)
-					? globalThis.String(object.act_mode_hicap_model_id)
-					: undefined,
-			actModeHicapModelInfo: isSet(object.actModeHicapModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeHicapModelInfo)
-				: isSet(object.act_mode_hicap_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_hicap_model_info)
-					: undefined,
-			actModeVercelAiGatewayModelId: isSet(object.actModeVercelAiGatewayModelId)
-				? globalThis.String(object.actModeVercelAiGatewayModelId)
-				: isSet(object.act_mode_vercel_ai_gateway_model_id)
-					? globalThis.String(object.act_mode_vercel_ai_gateway_model_id)
-					: undefined,
-			actModeVercelAiGatewayModelInfo: isSet(
-				object.actModeVercelAiGatewayModelInfo,
-			)
-				? OpenRouterModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
-				: isSet(object.act_mode_vercel_ai_gateway_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.act_mode_vercel_ai_gateway_model_info,
-						)
-					: undefined,
-			hicapModelId: isSet(object.hicapModelId)
-				? globalThis.String(object.hicapModelId)
-				: isSet(object.hicap_model_id)
-					? globalThis.String(object.hicap_model_id)
-					: undefined,
-			lmStudioModelId: isSet(object.lmStudioModelId)
-				? globalThis.String(object.lmStudioModelId)
-				: isSet(object.lm_studio_model_id)
-					? globalThis.String(object.lm_studio_model_id)
-					: undefined,
-			planModeClinePassModelId: isSet(object.planModeClinePassModelId)
-				? globalThis.String(object.planModeClinePassModelId)
-				: isSet(object.plan_mode_cline_pass_model_id)
-					? globalThis.String(object.plan_mode_cline_pass_model_id)
-					: undefined,
-			planModeClinePassModelInfo: isSet(object.planModeClinePassModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeClinePassModelInfo)
-				: isSet(object.plan_mode_cline_pass_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
-					: undefined,
-			actModeClinePassModelId: isSet(object.actModeClinePassModelId)
-				? globalThis.String(object.actModeClinePassModelId)
-				: isSet(object.act_mode_cline_pass_model_id)
-					? globalThis.String(object.act_mode_cline_pass_model_id)
-					: undefined,
-			actModeClinePassModelInfo: isSet(object.actModeClinePassModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeClinePassModelInfo)
-				: isSet(object.act_mode_cline_pass_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
-					: undefined,
-			modEnabled: isSet(object.modEnabled)
-				? globalThis.Boolean(object.modEnabled)
-				: isSet(object.mod_enabled)
-					? globalThis.Boolean(object.mod_enabled)
-					: undefined,
-			modOutcome: isSet(object.modOutcome)
-				? globalThis.String(object.modOutcome)
-				: isSet(object.mod_outcome)
-					? globalThis.String(object.mod_outcome)
-					: undefined,
-			planModeNousResearchModelInfo: isSet(object.planModeNousResearchModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeNousResearchModelInfo)
-				: isSet(object.plan_mode_nous_research_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.plan_mode_nous_research_model_info,
-						)
-					: undefined,
-			actModeNousResearchModelInfo: isSet(object.actModeNousResearchModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeNousResearchModelInfo)
-				: isSet(object.act_mode_nous_research_model_info)
-					? OpenRouterModelInfo.fromJSON(
-							object.act_mode_nous_research_model_info,
-						)
-					: undefined,
-			galxBaseUrl: isSet(object.galxBaseUrl)
-				? globalThis.String(object.galxBaseUrl)
-				: isSet(object.galx_base_url)
-					? globalThis.String(object.galx_base_url)
-					: undefined,
-			planModeGalxModelId: isSet(object.planModeGalxModelId)
-				? globalThis.String(object.planModeGalxModelId)
-				: isSet(object.plan_mode_galx_model_id)
-					? globalThis.String(object.plan_mode_galx_model_id)
-					: undefined,
-			planModeGalxModelInfo: isSet(object.planModeGalxModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.planModeGalxModelInfo)
-				: isSet(object.plan_mode_galx_model_info)
-					? OpenRouterModelInfo.fromJSON(object.plan_mode_galx_model_info)
-					: undefined,
-			actModeGalxModelId: isSet(object.actModeGalxModelId)
-				? globalThis.String(object.actModeGalxModelId)
-				: isSet(object.act_mode_galx_model_id)
-					? globalThis.String(object.act_mode_galx_model_id)
-					: undefined,
-			actModeGalxModelInfo: isSet(object.actModeGalxModelInfo)
-				? OpenRouterModelInfo.fromJSON(object.actModeGalxModelInfo)
-				: isSet(object.act_mode_galx_model_info)
-					? OpenRouterModelInfo.fromJSON(object.act_mode_galx_model_info)
-					: undefined,
-			openAiHeaders: isObject(object.openAiHeaders)
-				? (
-						globalThis.Object.entries(object.openAiHeaders) as [string, any][]
-					).reduce(
-						(acc: { [key: string]: string }, [key, value]: [string, any]) => {
-							globalThis.Object.defineProperty(acc, key, {
-								value: globalThis.String(value),
-								enumerable: true,
-								configurable: true,
-								writable: true,
-							});
-							return acc;
-						},
-						{},
-					)
-				: isObject(object.open_ai_headers)
-					? (
-							globalThis.Object.entries(object.open_ai_headers) as [
-								string,
-								any,
-							][]
-						).reduce(
-							(acc: { [key: string]: string }, [key, value]: [string, any]) => {
-								globalThis.Object.defineProperty(acc, key, {
-									value: globalThis.String(value),
-									enumerable: true,
-									configurable: true,
-									writable: true,
-								});
-								return acc;
-							},
-							{},
-						)
-					: {},
-		};
-	},
-
-	toJSON(message: Settings): unknown {
-		const obj: any = {};
-		if (message.openRouterProviderSorting !== undefined) {
-			obj.openRouterProviderSorting = message.openRouterProviderSorting;
-		}
-		if (message.planModeApiModelId !== undefined) {
-			obj.planModeApiModelId = message.planModeApiModelId;
-		}
-		if (message.planModeThinkingBudgetTokens !== undefined) {
-			obj.planModeThinkingBudgetTokens = Math.round(
-				message.planModeThinkingBudgetTokens,
-			);
-		}
-		if (message.planModeReasoningEffort !== undefined) {
-			obj.planModeReasoningEffort = message.planModeReasoningEffort;
-		}
-		if (message.planModeOpenRouterModelId !== undefined) {
-			obj.planModeOpenRouterModelId = message.planModeOpenRouterModelId;
-		}
-		if (message.planModeOpenRouterModelInfo !== undefined) {
-			obj.planModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeOpenRouterModelInfo,
-			);
-		}
-		if (message.planModeNousResearchModelId !== undefined) {
-			obj.planModeNousResearchModelId = message.planModeNousResearchModelId;
-		}
-		if (message.actModeApiModelId !== undefined) {
-			obj.actModeApiModelId = message.actModeApiModelId;
-		}
-		if (message.actModeThinkingBudgetTokens !== undefined) {
-			obj.actModeThinkingBudgetTokens = Math.round(
-				message.actModeThinkingBudgetTokens,
-			);
-		}
-		if (message.actModeReasoningEffort !== undefined) {
-			obj.actModeReasoningEffort = message.actModeReasoningEffort;
-		}
-		if (message.actModeOpenRouterModelId !== undefined) {
-			obj.actModeOpenRouterModelId = message.actModeOpenRouterModelId;
-		}
-		if (message.actModeOpenRouterModelInfo !== undefined) {
-			obj.actModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeOpenRouterModelInfo,
-			);
-		}
-		if (message.actModeNousResearchModelId !== undefined) {
-			obj.actModeNousResearchModelId = message.actModeNousResearchModelId;
-		}
-		if (message.planModeApiProvider !== undefined) {
-			obj.planModeApiProvider = apiProviderToJSON(message.planModeApiProvider);
-		}
-		if (message.actModeApiProvider !== undefined) {
-			obj.actModeApiProvider = apiProviderToJSON(message.actModeApiProvider);
-		}
-		if (message.autoApprovalSettings !== undefined) {
-			obj.autoApprovalSettings = AutoApprovalSettings.toJSON(
-				message.autoApprovalSettings,
-			);
-		}
-		if (message.globalWorkflowToggles !== undefined) {
-			obj.globalWorkflowToggles = message.globalWorkflowToggles;
-		}
-		if (message.globalSkillsToggles !== undefined) {
-			obj.globalSkillsToggles = message.globalSkillsToggles;
-		}
-		if (message.browserSettings !== undefined) {
-			obj.browserSettings = BrowserSettings.toJSON(message.browserSettings);
-		}
-		if (message.telemetrySetting !== undefined) {
-			obj.telemetrySetting = message.telemetrySetting;
-		}
-		if (message.planActSeparateModelsSetting !== undefined) {
-			obj.planActSeparateModelsSetting = message.planActSeparateModelsSetting;
-		}
-		if (message.enableCheckpointsSetting !== undefined) {
-			obj.enableCheckpointsSetting = message.enableCheckpointsSetting;
-		}
-		if (message.shellIntegrationTimeout !== undefined) {
-			obj.shellIntegrationTimeout = Math.round(message.shellIntegrationTimeout);
-		}
-		if (message.defaultTerminalProfile !== undefined) {
-			obj.defaultTerminalProfile = message.defaultTerminalProfile;
-		}
-		if (message.terminalOutputLineLimit !== undefined) {
-			obj.terminalOutputLineLimit = Math.round(message.terminalOutputLineLimit);
-		}
-		if (message.maxConsecutiveMistakes !== undefined) {
-			obj.maxConsecutiveMistakes = Math.round(message.maxConsecutiveMistakes);
-		}
-		if (message.strictPlanModeEnabled !== undefined) {
-			obj.strictPlanModeEnabled = message.strictPlanModeEnabled;
-		}
-		if (message.yoloModeToggled !== undefined) {
-			obj.yoloModeToggled = message.yoloModeToggled;
-		}
-		if (message.useAutoCondense !== undefined) {
-			obj.useAutoCondense = message.useAutoCondense;
-		}
-		if (message.dietcodeWebToolsEnabled !== undefined) {
-			obj.dietcodeWebToolsEnabled = message.dietcodeWebToolsEnabled;
-		}
-		if (message.preferredLanguage !== undefined) {
-			obj.preferredLanguage = message.preferredLanguage;
-		}
-		if (message.mode !== undefined) {
-			obj.mode = planActModeToJSON(message.mode);
-		}
-		if (message.focusChainSettings !== undefined) {
-			obj.focusChainSettings = FocusChainSettings.toJSON(
-				message.focusChainSettings,
-			);
-		}
-		if (message.customPrompt !== undefined) {
-			obj.customPrompt = message.customPrompt;
-		}
-		if (message.subagentsEnabled !== undefined) {
-			obj.subagentsEnabled = message.subagentsEnabled;
-		}
-		if (message.enableParallelToolCalling !== undefined) {
-			obj.enableParallelToolCalling = message.enableParallelToolCalling;
-		}
-		if (message.backgroundEditEnabled !== undefined) {
-			obj.backgroundEditEnabled = message.backgroundEditEnabled;
-		}
-		if (message.optOutOfRemoteConfig !== undefined) {
-			obj.optOutOfRemoteConfig = message.optOutOfRemoteConfig;
-		}
-		if (message.openTelemetryEnabled !== undefined) {
-			obj.openTelemetryEnabled = message.openTelemetryEnabled;
-		}
-		if (message.openTelemetryMetricsExporter !== undefined) {
-			obj.openTelemetryMetricsExporter = message.openTelemetryMetricsExporter;
-		}
-		if (message.openTelemetryLogsExporter !== undefined) {
-			obj.openTelemetryLogsExporter = message.openTelemetryLogsExporter;
-		}
-		if (message.openTelemetryOtlpProtocol !== undefined) {
-			obj.openTelemetryOtlpProtocol = message.openTelemetryOtlpProtocol;
-		}
-		if (message.openTelemetryOtlpEndpoint !== undefined) {
-			obj.openTelemetryOtlpEndpoint = message.openTelemetryOtlpEndpoint;
-		}
-		if (message.openTelemetryOtlpMetricsProtocol !== undefined) {
-			obj.openTelemetryOtlpMetricsProtocol =
-				message.openTelemetryOtlpMetricsProtocol;
-		}
-		if (message.openTelemetryOtlpMetricsEndpoint !== undefined) {
-			obj.openTelemetryOtlpMetricsEndpoint =
-				message.openTelemetryOtlpMetricsEndpoint;
-		}
-		if (message.openTelemetryOtlpLogsProtocol !== undefined) {
-			obj.openTelemetryOtlpLogsProtocol = message.openTelemetryOtlpLogsProtocol;
-		}
-		if (message.openTelemetryOtlpLogsEndpoint !== undefined) {
-			obj.openTelemetryOtlpLogsEndpoint = message.openTelemetryOtlpLogsEndpoint;
-		}
-		if (message.openTelemetryMetricExportInterval !== undefined) {
-			obj.openTelemetryMetricExportInterval = Math.round(
-				message.openTelemetryMetricExportInterval,
-			);
-		}
-		if (message.openTelemetryOtlpInsecure !== undefined) {
-			obj.openTelemetryOtlpInsecure = message.openTelemetryOtlpInsecure;
-		}
-		if (message.openTelemetryLogBatchSize !== undefined) {
-			obj.openTelemetryLogBatchSize = Math.round(
-				message.openTelemetryLogBatchSize,
-			);
-		}
-		if (message.openTelemetryLogBatchTimeout !== undefined) {
-			obj.openTelemetryLogBatchTimeout = Math.round(
-				message.openTelemetryLogBatchTimeout,
-			);
-		}
-		if (message.openTelemetryLogMaxQueueSize !== undefined) {
-			obj.openTelemetryLogMaxQueueSize = Math.round(
-				message.openTelemetryLogMaxQueueSize,
-			);
-		}
-		if (message.worktreesEnabled !== undefined) {
-			obj.worktreesEnabled = message.worktreesEnabled;
-		}
-		if (message.doubleCheckCompletionEnabled !== undefined) {
-			obj.doubleCheckCompletionEnabled = message.doubleCheckCompletionEnabled;
-		}
-		if (message.cloudflareAccountId !== undefined) {
-			obj.cloudflareAccountId = message.cloudflareAccountId;
-		}
-		if (message.embeddingProvider !== undefined) {
-			obj.embeddingProvider = apiProviderToJSON(message.embeddingProvider);
-		}
-		if (message.embeddingModelId !== undefined) {
-			obj.embeddingModelId = message.embeddingModelId;
-		}
-		if (message.embeddingOpenAiBaseUrl !== undefined) {
-			obj.embeddingOpenAiBaseUrl = message.embeddingOpenAiBaseUrl;
-		}
-		if (message.maxSwarmDepth !== undefined) {
-			obj.maxSwarmDepth = Math.round(message.maxSwarmDepth);
-		}
-		if (message.safeYoloModeToggled !== undefined) {
-			obj.safeYoloModeToggled = message.safeYoloModeToggled;
-		}
-		if (message.masEnabled !== undefined) {
-			obj.masEnabled = message.masEnabled;
-		}
-		if (message.globalDietCodeRulesToggles !== undefined) {
-			obj.globalDietCodeRulesToggles = message.globalDietCodeRulesToggles;
-		}
-		if (message.auditCompletionGateEnabled !== undefined) {
-			obj.auditCompletionGateEnabled = message.auditCompletionGateEnabled;
-		}
-		if (message.auditCompletionGateThreshold !== undefined) {
-			obj.auditCompletionGateThreshold = Math.round(
-				message.auditCompletionGateThreshold,
-			);
-		}
-		if (message.auditCompletionGateCriticalOnly !== undefined) {
-			obj.auditCompletionGateCriticalOnly =
-				message.auditCompletionGateCriticalOnly;
-		}
-		if (message.auditActModeAdvisoryEnabled !== undefined) {
-			obj.auditActModeAdvisoryEnabled = message.auditActModeAdvisoryEnabled;
-		}
-		if (message.auditAdvisoryEscalationEnabled !== undefined) {
-			obj.auditAdvisoryEscalationEnabled =
-				message.auditAdvisoryEscalationEnabled;
-		}
-		if (message.auditPlanRegressionGateEnabled !== undefined) {
-			obj.auditPlanRegressionGateEnabled =
-				message.auditPlanRegressionGateEnabled;
-		}
-		if (message.auditToolOutputAdvisoryEnabled !== undefined) {
-			obj.auditToolOutputAdvisoryEnabled =
-				message.auditToolOutputAdvisoryEnabled;
-		}
-		if (message.auditFileWriteAdvisoryEnabled !== undefined) {
-			obj.auditFileWriteAdvisoryEnabled = message.auditFileWriteAdvisoryEnabled;
-		}
-		if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
-			obj.auditIntentThresholdAdjustmentsEnabled =
-				message.auditIntentThresholdAdjustmentsEnabled;
-		}
-		if (message.auditIntentThresholdOverrides !== undefined) {
-			obj.auditIntentThresholdOverrides = message.auditIntentThresholdOverrides;
-		}
-		if (message.auditSarifHookExportEnabled !== undefined) {
-			obj.auditSarifHookExportEnabled = message.auditSarifHookExportEnabled;
-		}
-		if (message.auditWorkspaceArtifactsEnabled !== undefined) {
-			obj.auditWorkspaceArtifactsEnabled =
-				message.auditWorkspaceArtifactsEnabled;
-		}
-		if (message.auditAdvisoryAutoScrollMode !== undefined) {
-			obj.auditAdvisoryAutoScrollMode = message.auditAdvisoryAutoScrollMode;
-		}
-		if (message.liteLlmBaseUrl !== undefined) {
-			obj.liteLlmBaseUrl = message.liteLlmBaseUrl;
-		}
-		if (message.liteLlmUsePromptCache !== undefined) {
-			obj.liteLlmUsePromptCache = message.liteLlmUsePromptCache;
-		}
-		if (message.anthropicBaseUrl !== undefined) {
-			obj.anthropicBaseUrl = message.anthropicBaseUrl;
-		}
-		if (message.awsRegion !== undefined) {
-			obj.awsRegion = message.awsRegion;
-		}
-		if (message.awsUseCrossRegionInference !== undefined) {
-			obj.awsUseCrossRegionInference = message.awsUseCrossRegionInference;
-		}
-		if (message.awsUseGlobalInference !== undefined) {
-			obj.awsUseGlobalInference = message.awsUseGlobalInference;
-		}
-		if (message.awsBedrockUsePromptCache !== undefined) {
-			obj.awsBedrockUsePromptCache = message.awsBedrockUsePromptCache;
-		}
-		if (message.awsAuthentication !== undefined) {
-			obj.awsAuthentication = message.awsAuthentication;
-		}
-		if (message.awsUseProfile !== undefined) {
-			obj.awsUseProfile = message.awsUseProfile;
-		}
-		if (message.awsProfile !== undefined) {
-			obj.awsProfile = message.awsProfile;
-		}
-		if (message.awsBedrockEndpoint !== undefined) {
-			obj.awsBedrockEndpoint = message.awsBedrockEndpoint;
-		}
-		if (message.claudeCodePath !== undefined) {
-			obj.claudeCodePath = message.claudeCodePath;
-		}
-		if (message.openAiBaseUrl !== undefined) {
-			obj.openAiBaseUrl = message.openAiBaseUrl;
-		}
-		if (message.ollamaBaseUrl !== undefined) {
-			obj.ollamaBaseUrl = message.ollamaBaseUrl;
-		}
-		if (message.ollamaApiOptionsCtxNum !== undefined) {
-			obj.ollamaApiOptionsCtxNum = message.ollamaApiOptionsCtxNum;
-		}
-		if (message.lmStudioBaseUrl !== undefined) {
-			obj.lmStudioBaseUrl = message.lmStudioBaseUrl;
-		}
-		if (message.lmStudioMaxTokens !== undefined) {
-			obj.lmStudioMaxTokens = message.lmStudioMaxTokens;
-		}
-		if (message.geminiBaseUrl !== undefined) {
-			obj.geminiBaseUrl = message.geminiBaseUrl;
-		}
-		if (message.requestyBaseUrl !== undefined) {
-			obj.requestyBaseUrl = message.requestyBaseUrl;
-		}
-		if (message.fireworksModelMaxCompletionTokens !== undefined) {
-			obj.fireworksModelMaxCompletionTokens = Math.round(
-				message.fireworksModelMaxCompletionTokens,
-			);
-		}
-		if (message.fireworksModelMaxTokens !== undefined) {
-			obj.fireworksModelMaxTokens = Math.round(message.fireworksModelMaxTokens);
-		}
-		if (message.qwenCodeOauthPath !== undefined) {
-			obj.qwenCodeOauthPath = message.qwenCodeOauthPath;
-		}
-		if (message.azureApiVersion !== undefined) {
-			obj.azureApiVersion = message.azureApiVersion;
-		}
-		if (message.azureIdentity !== undefined) {
-			obj.azureIdentity = message.azureIdentity;
-		}
-		if (message.qwenApiLine !== undefined) {
-			obj.qwenApiLine = message.qwenApiLine;
-		}
-		if (message.moonshotApiLine !== undefined) {
-			obj.moonshotApiLine = message.moonshotApiLine;
-		}
-		if (message.asksageApiUrl !== undefined) {
-			obj.asksageApiUrl = message.asksageApiUrl;
-		}
-		if (message.requestTimeoutMs !== undefined) {
-			obj.requestTimeoutMs = Math.round(message.requestTimeoutMs);
-		}
-		if (message.sapAiResourceGroup !== undefined) {
-			obj.sapAiResourceGroup = message.sapAiResourceGroup;
-		}
-		if (message.sapAiCoreTokenUrl !== undefined) {
-			obj.sapAiCoreTokenUrl = message.sapAiCoreTokenUrl;
-		}
-		if (message.sapAiCoreBaseUrl !== undefined) {
-			obj.sapAiCoreBaseUrl = message.sapAiCoreBaseUrl;
-		}
-		if (message.sapAiCoreUseOrchestrationMode !== undefined) {
-			obj.sapAiCoreUseOrchestrationMode = message.sapAiCoreUseOrchestrationMode;
-		}
-		if (message.difyBaseUrl !== undefined) {
-			obj.difyBaseUrl = message.difyBaseUrl;
-		}
-		if (message.zaiApiLine !== undefined) {
-			obj.zaiApiLine = message.zaiApiLine;
-		}
-		if (message.ocaBaseUrl !== undefined) {
-			obj.ocaBaseUrl = message.ocaBaseUrl;
-		}
-		if (message.minimaxApiLine !== undefined) {
-			obj.minimaxApiLine = message.minimaxApiLine;
-		}
-		if (message.ocaMode !== undefined) {
-			obj.ocaMode = message.ocaMode;
-		}
-		if (message.aihubmixBaseUrl !== undefined) {
-			obj.aihubmixBaseUrl = message.aihubmixBaseUrl;
-		}
-		if (message.aihubmixAppCode !== undefined) {
-			obj.aihubmixAppCode = message.aihubmixAppCode;
-		}
-		if (message.geminiPlanModeThinkingLevel !== undefined) {
-			obj.geminiPlanModeThinkingLevel = message.geminiPlanModeThinkingLevel;
-		}
-		if (message.planModeVerbosity !== undefined) {
-			obj.planModeVerbosity = message.planModeVerbosity;
-		}
-		if (message.planModeVsCodeLmModelSelector !== undefined) {
-			obj.planModeVsCodeLmModelSelector = LanguageModelChatSelector.toJSON(
-				message.planModeVsCodeLmModelSelector,
-			);
-		}
-		if (message.planModeAwsBedrockCustomSelected !== undefined) {
-			obj.planModeAwsBedrockCustomSelected =
-				message.planModeAwsBedrockCustomSelected;
-		}
-		if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
-			obj.planModeAwsBedrockCustomModelBaseId =
-				message.planModeAwsBedrockCustomModelBaseId;
-		}
-		if (message.planModeDietCodeModelId !== undefined) {
-			obj.planModeDietCodeModelId = message.planModeDietCodeModelId;
-		}
-		if (message.planModeDietCodeModelInfo !== undefined) {
-			obj.planModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeDietCodeModelInfo,
-			);
-		}
-		if (message.planModeOpenAiModelId !== undefined) {
-			obj.planModeOpenAiModelId = message.planModeOpenAiModelId;
-		}
-		if (message.planModeOpenAiModelInfo !== undefined) {
-			obj.planModeOpenAiModelInfo = OpenAiCompatibleModelInfo.toJSON(
-				message.planModeOpenAiModelInfo,
-			);
-		}
-		if (message.planModeOllamaModelId !== undefined) {
-			obj.planModeOllamaModelId = message.planModeOllamaModelId;
-		}
-		if (message.planModeLmStudioModelId !== undefined) {
-			obj.planModeLmStudioModelId = message.planModeLmStudioModelId;
-		}
-		if (message.planModeLiteLlmModelId !== undefined) {
-			obj.planModeLiteLlmModelId = message.planModeLiteLlmModelId;
-		}
-		if (message.planModeLiteLlmModelInfo !== undefined) {
-			obj.planModeLiteLlmModelInfo = LiteLLMModelInfo.toJSON(
-				message.planModeLiteLlmModelInfo,
-			);
-		}
-		if (message.planModeRequestyModelId !== undefined) {
-			obj.planModeRequestyModelId = message.planModeRequestyModelId;
-		}
-		if (message.planModeRequestyModelInfo !== undefined) {
-			obj.planModeRequestyModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeRequestyModelInfo,
-			);
-		}
-		if (message.planModeTogetherModelId !== undefined) {
-			obj.planModeTogetherModelId = message.planModeTogetherModelId;
-		}
-		if (message.planModeFireworksModelId !== undefined) {
-			obj.planModeFireworksModelId = message.planModeFireworksModelId;
-		}
-		if (message.planModeSapAiCoreModelId !== undefined) {
-			obj.planModeSapAiCoreModelId = message.planModeSapAiCoreModelId;
-		}
-		if (message.planModeSapAiCoreDeploymentId !== undefined) {
-			obj.planModeSapAiCoreDeploymentId = message.planModeSapAiCoreDeploymentId;
-		}
-		if (message.planModeGroqModelId !== undefined) {
-			obj.planModeGroqModelId = message.planModeGroqModelId;
-		}
-		if (message.planModeGroqModelInfo !== undefined) {
-			obj.planModeGroqModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeGroqModelInfo,
-			);
-		}
-		if (message.planModeBasetenModelId !== undefined) {
-			obj.planModeBasetenModelId = message.planModeBasetenModelId;
-		}
-		if (message.planModeBasetenModelInfo !== undefined) {
-			obj.planModeBasetenModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeBasetenModelInfo,
-			);
-		}
-		if (message.planModeHuggingFaceModelId !== undefined) {
-			obj.planModeHuggingFaceModelId = message.planModeHuggingFaceModelId;
-		}
-		if (message.planModeHuggingFaceModelInfo !== undefined) {
-			obj.planModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeHuggingFaceModelInfo,
-			);
-		}
-		if (message.planModeHuaweiCloudMaasModelId !== undefined) {
-			obj.planModeHuaweiCloudMaasModelId =
-				message.planModeHuaweiCloudMaasModelId;
-		}
-		if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-			obj.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeHuaweiCloudMaasModelInfo,
-			);
-		}
-		if (message.planModeOcaModelId !== undefined) {
-			obj.planModeOcaModelId = message.planModeOcaModelId;
-		}
-		if (message.planModeOcaModelInfo !== undefined) {
-			obj.planModeOcaModelInfo = OcaModelInfo.toJSON(
-				message.planModeOcaModelInfo,
-			);
-		}
-		if (message.planModeOcaReasoningEffort !== undefined) {
-			obj.planModeOcaReasoningEffort = message.planModeOcaReasoningEffort;
-		}
-		if (message.planModeAihubmixModelId !== undefined) {
-			obj.planModeAihubmixModelId = message.planModeAihubmixModelId;
-		}
-		if (message.planModeAihubmixModelInfo !== undefined) {
-			obj.planModeAihubmixModelInfo = OpenAiCompatibleModelInfo.toJSON(
-				message.planModeAihubmixModelInfo,
-			);
-		}
-		if (message.planModeHicapModelId !== undefined) {
-			obj.planModeHicapModelId = message.planModeHicapModelId;
-		}
-		if (message.planModeHicapModelInfo !== undefined) {
-			obj.planModeHicapModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeHicapModelInfo,
-			);
-		}
-		if (message.planModeVercelAiGatewayModelId !== undefined) {
-			obj.planModeVercelAiGatewayModelId =
-				message.planModeVercelAiGatewayModelId;
-		}
-		if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-			obj.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeVercelAiGatewayModelInfo,
-			);
-		}
-		if (message.geminiActModeThinkingLevel !== undefined) {
-			obj.geminiActModeThinkingLevel = message.geminiActModeThinkingLevel;
-		}
-		if (message.actModeVerbosity !== undefined) {
-			obj.actModeVerbosity = message.actModeVerbosity;
-		}
-		if (message.actModeVsCodeLmModelSelector !== undefined) {
-			obj.actModeVsCodeLmModelSelector = LanguageModelChatSelector.toJSON(
-				message.actModeVsCodeLmModelSelector,
-			);
-		}
-		if (message.actModeAwsBedrockCustomSelected !== undefined) {
-			obj.actModeAwsBedrockCustomSelected =
-				message.actModeAwsBedrockCustomSelected;
-		}
-		if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
-			obj.actModeAwsBedrockCustomModelBaseId =
-				message.actModeAwsBedrockCustomModelBaseId;
-		}
-		if (message.actModeDietCodeModelId !== undefined) {
-			obj.actModeDietCodeModelId = message.actModeDietCodeModelId;
-		}
-		if (message.actModeDietCodeModelInfo !== undefined) {
-			obj.actModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeDietCodeModelInfo,
-			);
-		}
-		if (message.actModeOpenAiModelId !== undefined) {
-			obj.actModeOpenAiModelId = message.actModeOpenAiModelId;
-		}
-		if (message.actModeOpenAiModelInfo !== undefined) {
-			obj.actModeOpenAiModelInfo = OpenAiCompatibleModelInfo.toJSON(
-				message.actModeOpenAiModelInfo,
-			);
-		}
-		if (message.actModeOllamaModelId !== undefined) {
-			obj.actModeOllamaModelId = message.actModeOllamaModelId;
-		}
-		if (message.actModeLmStudioModelId !== undefined) {
-			obj.actModeLmStudioModelId = message.actModeLmStudioModelId;
-		}
-		if (message.actModeLiteLlmModelId !== undefined) {
-			obj.actModeLiteLlmModelId = message.actModeLiteLlmModelId;
-		}
-		if (message.actModeLiteLlmModelInfo !== undefined) {
-			obj.actModeLiteLlmModelInfo = LiteLLMModelInfo.toJSON(
-				message.actModeLiteLlmModelInfo,
-			);
-		}
-		if (message.actModeRequestyModelId !== undefined) {
-			obj.actModeRequestyModelId = message.actModeRequestyModelId;
-		}
-		if (message.actModeRequestyModelInfo !== undefined) {
-			obj.actModeRequestyModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeRequestyModelInfo,
-			);
-		}
-		if (message.actModeTogetherModelId !== undefined) {
-			obj.actModeTogetherModelId = message.actModeTogetherModelId;
-		}
-		if (message.actModeFireworksModelId !== undefined) {
-			obj.actModeFireworksModelId = message.actModeFireworksModelId;
-		}
-		if (message.actModeSapAiCoreModelId !== undefined) {
-			obj.actModeSapAiCoreModelId = message.actModeSapAiCoreModelId;
-		}
-		if (message.actModeSapAiCoreDeploymentId !== undefined) {
-			obj.actModeSapAiCoreDeploymentId = message.actModeSapAiCoreDeploymentId;
-		}
-		if (message.actModeGroqModelId !== undefined) {
-			obj.actModeGroqModelId = message.actModeGroqModelId;
-		}
-		if (message.actModeGroqModelInfo !== undefined) {
-			obj.actModeGroqModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeGroqModelInfo,
-			);
-		}
-		if (message.actModeBasetenModelId !== undefined) {
-			obj.actModeBasetenModelId = message.actModeBasetenModelId;
-		}
-		if (message.actModeBasetenModelInfo !== undefined) {
-			obj.actModeBasetenModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeBasetenModelInfo,
-			);
-		}
-		if (message.actModeHuggingFaceModelId !== undefined) {
-			obj.actModeHuggingFaceModelId = message.actModeHuggingFaceModelId;
-		}
-		if (message.actModeHuggingFaceModelInfo !== undefined) {
-			obj.actModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeHuggingFaceModelInfo,
-			);
-		}
-		if (message.actModeHuaweiCloudMaasModelId !== undefined) {
-			obj.actModeHuaweiCloudMaasModelId = message.actModeHuaweiCloudMaasModelId;
-		}
-		if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-			obj.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeHuaweiCloudMaasModelInfo,
-			);
-		}
-		if (message.actModeOcaModelId !== undefined) {
-			obj.actModeOcaModelId = message.actModeOcaModelId;
-		}
-		if (message.actModeOcaModelInfo !== undefined) {
-			obj.actModeOcaModelInfo = OcaModelInfo.toJSON(
-				message.actModeOcaModelInfo,
-			);
-		}
-		if (message.actModeOcaReasoningEffort !== undefined) {
-			obj.actModeOcaReasoningEffort = message.actModeOcaReasoningEffort;
-		}
-		if (message.actModeAihubmixModelId !== undefined) {
-			obj.actModeAihubmixModelId = message.actModeAihubmixModelId;
-		}
-		if (message.actModeAihubmixModelInfo !== undefined) {
-			obj.actModeAihubmixModelInfo = OpenAiCompatibleModelInfo.toJSON(
-				message.actModeAihubmixModelInfo,
-			);
-		}
-		if (message.actModeHicapModelId !== undefined) {
-			obj.actModeHicapModelId = message.actModeHicapModelId;
-		}
-		if (message.actModeHicapModelInfo !== undefined) {
-			obj.actModeHicapModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeHicapModelInfo,
-			);
-		}
-		if (message.actModeVercelAiGatewayModelId !== undefined) {
-			obj.actModeVercelAiGatewayModelId = message.actModeVercelAiGatewayModelId;
-		}
-		if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-			obj.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeVercelAiGatewayModelInfo,
-			);
-		}
-		if (message.hicapModelId !== undefined) {
-			obj.hicapModelId = message.hicapModelId;
-		}
-		if (message.lmStudioModelId !== undefined) {
-			obj.lmStudioModelId = message.lmStudioModelId;
-		}
-		if (message.planModeClinePassModelId !== undefined) {
-			obj.planModeClinePassModelId = message.planModeClinePassModelId;
-		}
-		if (message.planModeClinePassModelInfo !== undefined) {
-			obj.planModeClinePassModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeClinePassModelInfo,
-			);
-		}
-		if (message.actModeClinePassModelId !== undefined) {
-			obj.actModeClinePassModelId = message.actModeClinePassModelId;
-		}
-		if (message.actModeClinePassModelInfo !== undefined) {
-			obj.actModeClinePassModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeClinePassModelInfo,
-			);
-		}
-		if (message.modEnabled !== undefined) {
-			obj.modEnabled = message.modEnabled;
-		}
-		if (message.modOutcome !== undefined) {
-			obj.modOutcome = message.modOutcome;
-		}
-		if (message.planModeNousResearchModelInfo !== undefined) {
-			obj.planModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeNousResearchModelInfo,
-			);
-		}
-		if (message.actModeNousResearchModelInfo !== undefined) {
-			obj.actModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeNousResearchModelInfo,
-			);
-		}
-		if (message.galxBaseUrl !== undefined) {
-			obj.galxBaseUrl = message.galxBaseUrl;
-		}
-		if (message.planModeGalxModelId !== undefined) {
-			obj.planModeGalxModelId = message.planModeGalxModelId;
-		}
-		if (message.planModeGalxModelInfo !== undefined) {
-			obj.planModeGalxModelInfo = OpenRouterModelInfo.toJSON(
-				message.planModeGalxModelInfo,
-			);
-		}
-		if (message.actModeGalxModelId !== undefined) {
-			obj.actModeGalxModelId = message.actModeGalxModelId;
-		}
-		if (message.actModeGalxModelInfo !== undefined) {
-			obj.actModeGalxModelInfo = OpenRouterModelInfo.toJSON(
-				message.actModeGalxModelInfo,
-			);
-		}
-		if (message.openAiHeaders) {
-			const entries = globalThis.Object.entries(message.openAiHeaders) as [
-				string,
-				string,
-			][];
-			if (entries.length > 0) {
-				obj.openAiHeaders = {};
-				entries.forEach(([k, v]) => {
-					obj.openAiHeaders[k] = v;
-				});
-			}
-		}
-		return obj;
-	},
-
-	create<I extends Exact<DeepPartial<Settings>, I>>(base?: I): Settings {
-		return Settings.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<Settings>, I>>(object: I): Settings {
-		const message = createBaseSettings();
-		message.openRouterProviderSorting =
-			object.openRouterProviderSorting ?? undefined;
-		message.planModeApiModelId = object.planModeApiModelId ?? undefined;
-		message.planModeThinkingBudgetTokens =
-			object.planModeThinkingBudgetTokens ?? undefined;
-		message.planModeReasoningEffort =
-			object.planModeReasoningEffort ?? undefined;
-		message.planModeOpenRouterModelId =
-			object.planModeOpenRouterModelId ?? undefined;
-		message.planModeOpenRouterModelInfo =
-			object.planModeOpenRouterModelInfo !== undefined &&
-			object.planModeOpenRouterModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeOpenRouterModelInfo)
-				: undefined;
-		message.planModeNousResearchModelId =
-			object.planModeNousResearchModelId ?? undefined;
-		message.actModeApiModelId = object.actModeApiModelId ?? undefined;
-		message.actModeThinkingBudgetTokens =
-			object.actModeThinkingBudgetTokens ?? undefined;
-		message.actModeReasoningEffort = object.actModeReasoningEffort ?? undefined;
-		message.actModeOpenRouterModelId =
-			object.actModeOpenRouterModelId ?? undefined;
-		message.actModeOpenRouterModelInfo =
-			object.actModeOpenRouterModelInfo !== undefined &&
-			object.actModeOpenRouterModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeOpenRouterModelInfo)
-				: undefined;
-		message.actModeNousResearchModelId =
-			object.actModeNousResearchModelId ?? undefined;
-		message.planModeApiProvider = object.planModeApiProvider ?? undefined;
-		message.actModeApiProvider = object.actModeApiProvider ?? undefined;
-		message.autoApprovalSettings =
-			object.autoApprovalSettings !== undefined &&
-			object.autoApprovalSettings !== null
-				? AutoApprovalSettings.fromPartial(object.autoApprovalSettings)
-				: undefined;
-		message.globalWorkflowToggles = object.globalWorkflowToggles ?? undefined;
-		message.globalSkillsToggles = object.globalSkillsToggles ?? undefined;
-		message.browserSettings =
-			object.browserSettings !== undefined && object.browserSettings !== null
-				? BrowserSettings.fromPartial(object.browserSettings)
-				: undefined;
-		message.telemetrySetting = object.telemetrySetting ?? undefined;
-		message.planActSeparateModelsSetting =
-			object.planActSeparateModelsSetting ?? undefined;
-		message.enableCheckpointsSetting =
-			object.enableCheckpointsSetting ?? undefined;
-		message.shellIntegrationTimeout =
-			object.shellIntegrationTimeout ?? undefined;
-		message.defaultTerminalProfile = object.defaultTerminalProfile ?? undefined;
-		message.terminalOutputLineLimit =
-			object.terminalOutputLineLimit ?? undefined;
-		message.maxConsecutiveMistakes = object.maxConsecutiveMistakes ?? undefined;
-		message.strictPlanModeEnabled = object.strictPlanModeEnabled ?? undefined;
-		message.yoloModeToggled = object.yoloModeToggled ?? undefined;
-		message.useAutoCondense = object.useAutoCondense ?? undefined;
-		message.dietcodeWebToolsEnabled =
-			object.dietcodeWebToolsEnabled ?? undefined;
-		message.preferredLanguage = object.preferredLanguage ?? undefined;
-		message.mode = object.mode ?? undefined;
-		message.focusChainSettings =
-			object.focusChainSettings !== undefined &&
-			object.focusChainSettings !== null
-				? FocusChainSettings.fromPartial(object.focusChainSettings)
-				: undefined;
-		message.customPrompt = object.customPrompt ?? undefined;
-		message.subagentsEnabled = object.subagentsEnabled ?? undefined;
-		message.enableParallelToolCalling =
-			object.enableParallelToolCalling ?? undefined;
-		message.backgroundEditEnabled = object.backgroundEditEnabled ?? undefined;
-		message.optOutOfRemoteConfig = object.optOutOfRemoteConfig ?? undefined;
-		message.openTelemetryEnabled = object.openTelemetryEnabled ?? undefined;
-		message.openTelemetryMetricsExporter =
-			object.openTelemetryMetricsExporter ?? undefined;
-		message.openTelemetryLogsExporter =
-			object.openTelemetryLogsExporter ?? undefined;
-		message.openTelemetryOtlpProtocol =
-			object.openTelemetryOtlpProtocol ?? undefined;
-		message.openTelemetryOtlpEndpoint =
-			object.openTelemetryOtlpEndpoint ?? undefined;
-		message.openTelemetryOtlpMetricsProtocol =
-			object.openTelemetryOtlpMetricsProtocol ?? undefined;
-		message.openTelemetryOtlpMetricsEndpoint =
-			object.openTelemetryOtlpMetricsEndpoint ?? undefined;
-		message.openTelemetryOtlpLogsProtocol =
-			object.openTelemetryOtlpLogsProtocol ?? undefined;
-		message.openTelemetryOtlpLogsEndpoint =
-			object.openTelemetryOtlpLogsEndpoint ?? undefined;
-		message.openTelemetryMetricExportInterval =
-			object.openTelemetryMetricExportInterval ?? undefined;
-		message.openTelemetryOtlpInsecure =
-			object.openTelemetryOtlpInsecure ?? undefined;
-		message.openTelemetryLogBatchSize =
-			object.openTelemetryLogBatchSize ?? undefined;
-		message.openTelemetryLogBatchTimeout =
-			object.openTelemetryLogBatchTimeout ?? undefined;
-		message.openTelemetryLogMaxQueueSize =
-			object.openTelemetryLogMaxQueueSize ?? undefined;
-		message.worktreesEnabled = object.worktreesEnabled ?? undefined;
-		message.doubleCheckCompletionEnabled =
-			object.doubleCheckCompletionEnabled ?? undefined;
-		message.cloudflareAccountId = object.cloudflareAccountId ?? undefined;
-		message.embeddingProvider = object.embeddingProvider ?? undefined;
-		message.embeddingModelId = object.embeddingModelId ?? undefined;
-		message.embeddingOpenAiBaseUrl = object.embeddingOpenAiBaseUrl ?? undefined;
-		message.maxSwarmDepth = object.maxSwarmDepth ?? undefined;
-		message.safeYoloModeToggled = object.safeYoloModeToggled ?? undefined;
-		message.masEnabled = object.masEnabled ?? undefined;
-		message.globalDietCodeRulesToggles =
-			object.globalDietCodeRulesToggles ?? undefined;
-		message.auditCompletionGateEnabled =
-			object.auditCompletionGateEnabled ?? undefined;
-		message.auditCompletionGateThreshold =
-			object.auditCompletionGateThreshold ?? undefined;
-		message.auditCompletionGateCriticalOnly =
-			object.auditCompletionGateCriticalOnly ?? undefined;
-		message.auditActModeAdvisoryEnabled =
-			object.auditActModeAdvisoryEnabled ?? undefined;
-		message.auditAdvisoryEscalationEnabled =
-			object.auditAdvisoryEscalationEnabled ?? undefined;
-		message.auditPlanRegressionGateEnabled =
-			object.auditPlanRegressionGateEnabled ?? undefined;
-		message.auditToolOutputAdvisoryEnabled =
-			object.auditToolOutputAdvisoryEnabled ?? undefined;
-		message.auditFileWriteAdvisoryEnabled =
-			object.auditFileWriteAdvisoryEnabled ?? undefined;
-		message.auditIntentThresholdAdjustmentsEnabled =
-			object.auditIntentThresholdAdjustmentsEnabled ?? undefined;
-		message.auditIntentThresholdOverrides =
-			object.auditIntentThresholdOverrides ?? undefined;
-		message.auditSarifHookExportEnabled =
-			object.auditSarifHookExportEnabled ?? undefined;
-		message.auditWorkspaceArtifactsEnabled =
-			object.auditWorkspaceArtifactsEnabled ?? undefined;
-		message.auditAdvisoryAutoScrollMode =
-			object.auditAdvisoryAutoScrollMode ?? undefined;
-		message.liteLlmBaseUrl = object.liteLlmBaseUrl ?? undefined;
-		message.liteLlmUsePromptCache = object.liteLlmUsePromptCache ?? undefined;
-		message.anthropicBaseUrl = object.anthropicBaseUrl ?? undefined;
-		message.awsRegion = object.awsRegion ?? undefined;
-		message.awsUseCrossRegionInference =
-			object.awsUseCrossRegionInference ?? undefined;
-		message.awsUseGlobalInference = object.awsUseGlobalInference ?? undefined;
-		message.awsBedrockUsePromptCache =
-			object.awsBedrockUsePromptCache ?? undefined;
-		message.awsAuthentication = object.awsAuthentication ?? undefined;
-		message.awsUseProfile = object.awsUseProfile ?? undefined;
-		message.awsProfile = object.awsProfile ?? undefined;
-		message.awsBedrockEndpoint = object.awsBedrockEndpoint ?? undefined;
-		message.claudeCodePath = object.claudeCodePath ?? undefined;
-		message.openAiBaseUrl = object.openAiBaseUrl ?? undefined;
-		message.ollamaBaseUrl = object.ollamaBaseUrl ?? undefined;
-		message.ollamaApiOptionsCtxNum = object.ollamaApiOptionsCtxNum ?? undefined;
-		message.lmStudioBaseUrl = object.lmStudioBaseUrl ?? undefined;
-		message.lmStudioMaxTokens = object.lmStudioMaxTokens ?? undefined;
-		message.geminiBaseUrl = object.geminiBaseUrl ?? undefined;
-		message.requestyBaseUrl = object.requestyBaseUrl ?? undefined;
-		message.fireworksModelMaxCompletionTokens =
-			object.fireworksModelMaxCompletionTokens ?? undefined;
-		message.fireworksModelMaxTokens =
-			object.fireworksModelMaxTokens ?? undefined;
-		message.qwenCodeOauthPath = object.qwenCodeOauthPath ?? undefined;
-		message.azureApiVersion = object.azureApiVersion ?? undefined;
-		message.azureIdentity = object.azureIdentity ?? undefined;
-		message.qwenApiLine = object.qwenApiLine ?? undefined;
-		message.moonshotApiLine = object.moonshotApiLine ?? undefined;
-		message.asksageApiUrl = object.asksageApiUrl ?? undefined;
-		message.requestTimeoutMs = object.requestTimeoutMs ?? undefined;
-		message.sapAiResourceGroup = object.sapAiResourceGroup ?? undefined;
-		message.sapAiCoreTokenUrl = object.sapAiCoreTokenUrl ?? undefined;
-		message.sapAiCoreBaseUrl = object.sapAiCoreBaseUrl ?? undefined;
-		message.sapAiCoreUseOrchestrationMode =
-			object.sapAiCoreUseOrchestrationMode ?? undefined;
-		message.difyBaseUrl = object.difyBaseUrl ?? undefined;
-		message.zaiApiLine = object.zaiApiLine ?? undefined;
-		message.ocaBaseUrl = object.ocaBaseUrl ?? undefined;
-		message.minimaxApiLine = object.minimaxApiLine ?? undefined;
-		message.ocaMode = object.ocaMode ?? undefined;
-		message.aihubmixBaseUrl = object.aihubmixBaseUrl ?? undefined;
-		message.aihubmixAppCode = object.aihubmixAppCode ?? undefined;
-		message.geminiPlanModeThinkingLevel =
-			object.geminiPlanModeThinkingLevel ?? undefined;
-		message.planModeVerbosity = object.planModeVerbosity ?? undefined;
-		message.planModeVsCodeLmModelSelector =
-			object.planModeVsCodeLmModelSelector !== undefined &&
-			object.planModeVsCodeLmModelSelector !== null
-				? LanguageModelChatSelector.fromPartial(
-						object.planModeVsCodeLmModelSelector,
-					)
-				: undefined;
-		message.planModeAwsBedrockCustomSelected =
-			object.planModeAwsBedrockCustomSelected ?? undefined;
-		message.planModeAwsBedrockCustomModelBaseId =
-			object.planModeAwsBedrockCustomModelBaseId ?? undefined;
-		message.planModeDietCodeModelId =
-			object.planModeDietCodeModelId ?? undefined;
-		message.planModeDietCodeModelInfo =
-			object.planModeDietCodeModelInfo !== undefined &&
-			object.planModeDietCodeModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeDietCodeModelInfo)
-				: undefined;
-		message.planModeOpenAiModelId = object.planModeOpenAiModelId ?? undefined;
-		message.planModeOpenAiModelInfo =
-			object.planModeOpenAiModelInfo !== undefined &&
-			object.planModeOpenAiModelInfo !== null
-				? OpenAiCompatibleModelInfo.fromPartial(object.planModeOpenAiModelInfo)
-				: undefined;
-		message.planModeOllamaModelId = object.planModeOllamaModelId ?? undefined;
-		message.planModeLmStudioModelId =
-			object.planModeLmStudioModelId ?? undefined;
-		message.planModeLiteLlmModelId = object.planModeLiteLlmModelId ?? undefined;
-		message.planModeLiteLlmModelInfo =
-			object.planModeLiteLlmModelInfo !== undefined &&
-			object.planModeLiteLlmModelInfo !== null
-				? LiteLLMModelInfo.fromPartial(object.planModeLiteLlmModelInfo)
-				: undefined;
-		message.planModeRequestyModelId =
-			object.planModeRequestyModelId ?? undefined;
-		message.planModeRequestyModelInfo =
-			object.planModeRequestyModelInfo !== undefined &&
-			object.planModeRequestyModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeRequestyModelInfo)
-				: undefined;
-		message.planModeTogetherModelId =
-			object.planModeTogetherModelId ?? undefined;
-		message.planModeFireworksModelId =
-			object.planModeFireworksModelId ?? undefined;
-		message.planModeSapAiCoreModelId =
-			object.planModeSapAiCoreModelId ?? undefined;
-		message.planModeSapAiCoreDeploymentId =
-			object.planModeSapAiCoreDeploymentId ?? undefined;
-		message.planModeGroqModelId = object.planModeGroqModelId ?? undefined;
-		message.planModeGroqModelInfo =
-			object.planModeGroqModelInfo !== undefined &&
-			object.planModeGroqModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeGroqModelInfo)
-				: undefined;
-		message.planModeBasetenModelId = object.planModeBasetenModelId ?? undefined;
-		message.planModeBasetenModelInfo =
-			object.planModeBasetenModelInfo !== undefined &&
-			object.planModeBasetenModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeBasetenModelInfo)
-				: undefined;
-		message.planModeHuggingFaceModelId =
-			object.planModeHuggingFaceModelId ?? undefined;
-		message.planModeHuggingFaceModelInfo =
-			object.planModeHuggingFaceModelInfo !== undefined &&
-			object.planModeHuggingFaceModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
-				: undefined;
-		message.planModeHuaweiCloudMaasModelId =
-			object.planModeHuaweiCloudMaasModelId ?? undefined;
-		message.planModeHuaweiCloudMaasModelInfo =
-			object.planModeHuaweiCloudMaasModelInfo !== undefined &&
-			object.planModeHuaweiCloudMaasModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(
-						object.planModeHuaweiCloudMaasModelInfo,
-					)
-				: undefined;
-		message.planModeOcaModelId = object.planModeOcaModelId ?? undefined;
-		message.planModeOcaModelInfo =
-			object.planModeOcaModelInfo !== undefined &&
-			object.planModeOcaModelInfo !== null
-				? OcaModelInfo.fromPartial(object.planModeOcaModelInfo)
-				: undefined;
-		message.planModeOcaReasoningEffort =
-			object.planModeOcaReasoningEffort ?? undefined;
-		message.planModeAihubmixModelId =
-			object.planModeAihubmixModelId ?? undefined;
-		message.planModeAihubmixModelInfo =
-			object.planModeAihubmixModelInfo !== undefined &&
-			object.planModeAihubmixModelInfo !== null
-				? OpenAiCompatibleModelInfo.fromPartial(
-						object.planModeAihubmixModelInfo,
-					)
-				: undefined;
-		message.planModeHicapModelId = object.planModeHicapModelId ?? undefined;
-		message.planModeHicapModelInfo =
-			object.planModeHicapModelInfo !== undefined &&
-			object.planModeHicapModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeHicapModelInfo)
-				: undefined;
-		message.planModeVercelAiGatewayModelId =
-			object.planModeVercelAiGatewayModelId ?? undefined;
-		message.planModeVercelAiGatewayModelInfo =
-			object.planModeVercelAiGatewayModelInfo !== undefined &&
-			object.planModeVercelAiGatewayModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(
-						object.planModeVercelAiGatewayModelInfo,
-					)
-				: undefined;
-		message.geminiActModeThinkingLevel =
-			object.geminiActModeThinkingLevel ?? undefined;
-		message.actModeVerbosity = object.actModeVerbosity ?? undefined;
-		message.actModeVsCodeLmModelSelector =
-			object.actModeVsCodeLmModelSelector !== undefined &&
-			object.actModeVsCodeLmModelSelector !== null
-				? LanguageModelChatSelector.fromPartial(
-						object.actModeVsCodeLmModelSelector,
-					)
-				: undefined;
-		message.actModeAwsBedrockCustomSelected =
-			object.actModeAwsBedrockCustomSelected ?? undefined;
-		message.actModeAwsBedrockCustomModelBaseId =
-			object.actModeAwsBedrockCustomModelBaseId ?? undefined;
-		message.actModeDietCodeModelId = object.actModeDietCodeModelId ?? undefined;
-		message.actModeDietCodeModelInfo =
-			object.actModeDietCodeModelInfo !== undefined &&
-			object.actModeDietCodeModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeDietCodeModelInfo)
-				: undefined;
-		message.actModeOpenAiModelId = object.actModeOpenAiModelId ?? undefined;
-		message.actModeOpenAiModelInfo =
-			object.actModeOpenAiModelInfo !== undefined &&
-			object.actModeOpenAiModelInfo !== null
-				? OpenAiCompatibleModelInfo.fromPartial(object.actModeOpenAiModelInfo)
-				: undefined;
-		message.actModeOllamaModelId = object.actModeOllamaModelId ?? undefined;
-		message.actModeLmStudioModelId = object.actModeLmStudioModelId ?? undefined;
-		message.actModeLiteLlmModelId = object.actModeLiteLlmModelId ?? undefined;
-		message.actModeLiteLlmModelInfo =
-			object.actModeLiteLlmModelInfo !== undefined &&
-			object.actModeLiteLlmModelInfo !== null
-				? LiteLLMModelInfo.fromPartial(object.actModeLiteLlmModelInfo)
-				: undefined;
-		message.actModeRequestyModelId = object.actModeRequestyModelId ?? undefined;
-		message.actModeRequestyModelInfo =
-			object.actModeRequestyModelInfo !== undefined &&
-			object.actModeRequestyModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeRequestyModelInfo)
-				: undefined;
-		message.actModeTogetherModelId = object.actModeTogetherModelId ?? undefined;
-		message.actModeFireworksModelId =
-			object.actModeFireworksModelId ?? undefined;
-		message.actModeSapAiCoreModelId =
-			object.actModeSapAiCoreModelId ?? undefined;
-		message.actModeSapAiCoreDeploymentId =
-			object.actModeSapAiCoreDeploymentId ?? undefined;
-		message.actModeGroqModelId = object.actModeGroqModelId ?? undefined;
-		message.actModeGroqModelInfo =
-			object.actModeGroqModelInfo !== undefined &&
-			object.actModeGroqModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeGroqModelInfo)
-				: undefined;
-		message.actModeBasetenModelId = object.actModeBasetenModelId ?? undefined;
-		message.actModeBasetenModelInfo =
-			object.actModeBasetenModelInfo !== undefined &&
-			object.actModeBasetenModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeBasetenModelInfo)
-				: undefined;
-		message.actModeHuggingFaceModelId =
-			object.actModeHuggingFaceModelId ?? undefined;
-		message.actModeHuggingFaceModelInfo =
-			object.actModeHuggingFaceModelInfo !== undefined &&
-			object.actModeHuggingFaceModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
-				: undefined;
-		message.actModeHuaweiCloudMaasModelId =
-			object.actModeHuaweiCloudMaasModelId ?? undefined;
-		message.actModeHuaweiCloudMaasModelInfo =
-			object.actModeHuaweiCloudMaasModelInfo !== undefined &&
-			object.actModeHuaweiCloudMaasModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(
-						object.actModeHuaweiCloudMaasModelInfo,
-					)
-				: undefined;
-		message.actModeOcaModelId = object.actModeOcaModelId ?? undefined;
-		message.actModeOcaModelInfo =
-			object.actModeOcaModelInfo !== undefined &&
-			object.actModeOcaModelInfo !== null
-				? OcaModelInfo.fromPartial(object.actModeOcaModelInfo)
-				: undefined;
-		message.actModeOcaReasoningEffort =
-			object.actModeOcaReasoningEffort ?? undefined;
-		message.actModeAihubmixModelId = object.actModeAihubmixModelId ?? undefined;
-		message.actModeAihubmixModelInfo =
-			object.actModeAihubmixModelInfo !== undefined &&
-			object.actModeAihubmixModelInfo !== null
-				? OpenAiCompatibleModelInfo.fromPartial(object.actModeAihubmixModelInfo)
-				: undefined;
-		message.actModeHicapModelId = object.actModeHicapModelId ?? undefined;
-		message.actModeHicapModelInfo =
-			object.actModeHicapModelInfo !== undefined &&
-			object.actModeHicapModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeHicapModelInfo)
-				: undefined;
-		message.actModeVercelAiGatewayModelId =
-			object.actModeVercelAiGatewayModelId ?? undefined;
-		message.actModeVercelAiGatewayModelInfo =
-			object.actModeVercelAiGatewayModelInfo !== undefined &&
-			object.actModeVercelAiGatewayModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(
-						object.actModeVercelAiGatewayModelInfo,
-					)
-				: undefined;
-		message.hicapModelId = object.hicapModelId ?? undefined;
-		message.lmStudioModelId = object.lmStudioModelId ?? undefined;
-		message.planModeClinePassModelId =
-			object.planModeClinePassModelId ?? undefined;
-		message.planModeClinePassModelInfo =
-			object.planModeClinePassModelInfo !== undefined &&
-			object.planModeClinePassModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeClinePassModelInfo)
-				: undefined;
-		message.actModeClinePassModelId =
-			object.actModeClinePassModelId ?? undefined;
-		message.actModeClinePassModelInfo =
-			object.actModeClinePassModelInfo !== undefined &&
-			object.actModeClinePassModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeClinePassModelInfo)
-				: undefined;
-		message.modEnabled = object.modEnabled ?? undefined;
-		message.modOutcome = object.modOutcome ?? undefined;
-		message.planModeNousResearchModelInfo =
-			object.planModeNousResearchModelInfo !== undefined &&
-			object.planModeNousResearchModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeNousResearchModelInfo)
-				: undefined;
-		message.actModeNousResearchModelInfo =
-			object.actModeNousResearchModelInfo !== undefined &&
-			object.actModeNousResearchModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeNousResearchModelInfo)
-				: undefined;
-		message.galxBaseUrl = object.galxBaseUrl ?? undefined;
-		message.planModeGalxModelId = object.planModeGalxModelId ?? undefined;
-		message.planModeGalxModelInfo =
-			object.planModeGalxModelInfo !== undefined &&
-			object.planModeGalxModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.planModeGalxModelInfo)
-				: undefined;
-		message.actModeGalxModelId = object.actModeGalxModelId ?? undefined;
-		message.actModeGalxModelInfo =
-			object.actModeGalxModelInfo !== undefined &&
-			object.actModeGalxModelInfo !== null
-				? OpenRouterModelInfo.fromPartial(object.actModeGalxModelInfo)
-				: undefined;
-		message.openAiHeaders = (
-			globalThis.Object.entries(object.openAiHeaders ?? {}) as [
-				string,
-				string,
-			][]
-		).reduce(
-			(acc: { [key: string]: string }, [key, value]: [string, string]) => {
-				if (value !== undefined) {
-					acc[key] = globalThis.String(value);
-				}
-				return acc;
-			},
-			{},
-		);
-		return message;
-	},
+  encode(message: Settings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.openRouterProviderSorting !== undefined) {
+      writer.uint32(42).string(message.openRouterProviderSorting);
+    }
+    if (message.planModeApiModelId !== undefined) {
+      writer.uint32(354).string(message.planModeApiModelId);
+    }
+    if (message.planModeThinkingBudgetTokens !== undefined) {
+      writer.uint32(360).int64(message.planModeThinkingBudgetTokens);
+    }
+    if (message.planModeReasoningEffort !== undefined) {
+      writer.uint32(378).string(message.planModeReasoningEffort);
+    }
+    if (message.planModeOpenRouterModelId !== undefined) {
+      writer.uint32(418).string(message.planModeOpenRouterModelId);
+    }
+    if (message.planModeOpenRouterModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeOpenRouterModelInfo, writer.uint32(426).fork()).join();
+    }
+    if (message.planModeNousResearchModelId !== undefined) {
+      writer.uint32(650).string(message.planModeNousResearchModelId);
+    }
+    if (message.actModeApiModelId !== undefined) {
+      writer.uint32(674).string(message.actModeApiModelId);
+    }
+    if (message.actModeThinkingBudgetTokens !== undefined) {
+      writer.uint32(680).int64(message.actModeThinkingBudgetTokens);
+    }
+    if (message.actModeReasoningEffort !== undefined) {
+      writer.uint32(698).string(message.actModeReasoningEffort);
+    }
+    if (message.actModeOpenRouterModelId !== undefined) {
+      writer.uint32(738).string(message.actModeOpenRouterModelId);
+    }
+    if (message.actModeOpenRouterModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeOpenRouterModelInfo, writer.uint32(746).fork()).join();
+    }
+    if (message.actModeNousResearchModelId !== undefined) {
+      writer.uint32(970).string(message.actModeNousResearchModelId);
+    }
+    if (message.planModeApiProvider !== undefined) {
+      writer.uint32(992).int32(message.planModeApiProvider);
+    }
+    if (message.actModeApiProvider !== undefined) {
+      writer.uint32(1000).int32(message.actModeApiProvider);
+    }
+    if (message.autoApprovalSettings !== undefined) {
+      AutoApprovalSettings.encode(message.autoApprovalSettings, writer.uint32(1026).fork()).join();
+    }
+    if (message.globalWorkflowToggles !== undefined) {
+      writer.uint32(1042).string(message.globalWorkflowToggles);
+    }
+    if (message.globalSkillsToggles !== undefined) {
+      writer.uint32(1050).string(message.globalSkillsToggles);
+    }
+    if (message.browserSettings !== undefined) {
+      BrowserSettings.encode(message.browserSettings, writer.uint32(1058).fork()).join();
+    }
+    if (message.telemetrySetting !== undefined) {
+      writer.uint32(1066).string(message.telemetrySetting);
+    }
+    if (message.planActSeparateModelsSetting !== undefined) {
+      writer.uint32(1072).bool(message.planActSeparateModelsSetting);
+    }
+    if (message.enableCheckpointsSetting !== undefined) {
+      writer.uint32(1080).bool(message.enableCheckpointsSetting);
+    }
+    if (message.shellIntegrationTimeout !== undefined) {
+      writer.uint32(1088).int32(message.shellIntegrationTimeout);
+    }
+    if (message.defaultTerminalProfile !== undefined) {
+      writer.uint32(1098).string(message.defaultTerminalProfile);
+    }
+    if (message.terminalOutputLineLimit !== undefined) {
+      writer.uint32(1104).int32(message.terminalOutputLineLimit);
+    }
+    if (message.maxConsecutiveMistakes !== undefined) {
+      writer.uint32(1112).int32(message.maxConsecutiveMistakes);
+    }
+    if (message.strictPlanModeEnabled !== undefined) {
+      writer.uint32(1128).bool(message.strictPlanModeEnabled);
+    }
+    if (message.yoloModeToggled !== undefined) {
+      writer.uint32(1136).bool(message.yoloModeToggled);
+    }
+    if (message.useAutoCondense !== undefined) {
+      writer.uint32(1144).bool(message.useAutoCondense);
+    }
+    if (message.dietcodeWebToolsEnabled !== undefined) {
+      writer.uint32(1152).bool(message.dietcodeWebToolsEnabled);
+    }
+    if (message.preferredLanguage !== undefined) {
+      writer.uint32(1162).string(message.preferredLanguage);
+    }
+    if (message.mode !== undefined) {
+      writer.uint32(1176).int32(message.mode);
+    }
+    if (message.focusChainSettings !== undefined) {
+      FocusChainSettings.encode(message.focusChainSettings, writer.uint32(1194).fork()).join();
+    }
+    if (message.customPrompt !== undefined) {
+      writer.uint32(1202).string(message.customPrompt);
+    }
+    if (message.subagentsEnabled !== undefined) {
+      writer.uint32(1224).bool(message.subagentsEnabled);
+    }
+    if (message.enableParallelToolCalling !== undefined) {
+      writer.uint32(1232).bool(message.enableParallelToolCalling);
+    }
+    if (message.backgroundEditEnabled !== undefined) {
+      writer.uint32(1240).bool(message.backgroundEditEnabled);
+    }
+    if (message.optOutOfRemoteConfig !== undefined) {
+      writer.uint32(1256).bool(message.optOutOfRemoteConfig);
+    }
+    if (message.openTelemetryEnabled !== undefined) {
+      writer.uint32(1264).bool(message.openTelemetryEnabled);
+    }
+    if (message.openTelemetryMetricsExporter !== undefined) {
+      writer.uint32(1274).string(message.openTelemetryMetricsExporter);
+    }
+    if (message.openTelemetryLogsExporter !== undefined) {
+      writer.uint32(1282).string(message.openTelemetryLogsExporter);
+    }
+    if (message.openTelemetryOtlpProtocol !== undefined) {
+      writer.uint32(1290).string(message.openTelemetryOtlpProtocol);
+    }
+    if (message.openTelemetryOtlpEndpoint !== undefined) {
+      writer.uint32(1298).string(message.openTelemetryOtlpEndpoint);
+    }
+    if (message.openTelemetryOtlpMetricsProtocol !== undefined) {
+      writer.uint32(1306).string(message.openTelemetryOtlpMetricsProtocol);
+    }
+    if (message.openTelemetryOtlpMetricsEndpoint !== undefined) {
+      writer.uint32(1314).string(message.openTelemetryOtlpMetricsEndpoint);
+    }
+    if (message.openTelemetryOtlpLogsProtocol !== undefined) {
+      writer.uint32(1322).string(message.openTelemetryOtlpLogsProtocol);
+    }
+    if (message.openTelemetryOtlpLogsEndpoint !== undefined) {
+      writer.uint32(1330).string(message.openTelemetryOtlpLogsEndpoint);
+    }
+    if (message.openTelemetryMetricExportInterval !== undefined) {
+      writer.uint32(1336).int32(message.openTelemetryMetricExportInterval);
+    }
+    if (message.openTelemetryOtlpInsecure !== undefined) {
+      writer.uint32(1344).bool(message.openTelemetryOtlpInsecure);
+    }
+    if (message.openTelemetryLogBatchSize !== undefined) {
+      writer.uint32(1352).int32(message.openTelemetryLogBatchSize);
+    }
+    if (message.openTelemetryLogBatchTimeout !== undefined) {
+      writer.uint32(1360).int32(message.openTelemetryLogBatchTimeout);
+    }
+    if (message.openTelemetryLogMaxQueueSize !== undefined) {
+      writer.uint32(1368).int32(message.openTelemetryLogMaxQueueSize);
+    }
+    if (message.worktreesEnabled !== undefined) {
+      writer.uint32(1376).bool(message.worktreesEnabled);
+    }
+    if (message.doubleCheckCompletionEnabled !== undefined) {
+      writer.uint32(1408).bool(message.doubleCheckCompletionEnabled);
+    }
+    if (message.cloudflareAccountId !== undefined) {
+      writer.uint32(1466).string(message.cloudflareAccountId);
+    }
+    if (message.embeddingProvider !== undefined) {
+      writer.uint32(1488).int32(message.embeddingProvider);
+    }
+    if (message.embeddingModelId !== undefined) {
+      writer.uint32(1498).string(message.embeddingModelId);
+    }
+    if (message.embeddingOpenAiBaseUrl !== undefined) {
+      writer.uint32(1506).string(message.embeddingOpenAiBaseUrl);
+    }
+    if (message.maxSwarmDepth !== undefined) {
+      writer.uint32(1536).int32(message.maxSwarmDepth);
+    }
+    if (message.safeYoloModeToggled !== undefined) {
+      writer.uint32(1568).bool(message.safeYoloModeToggled);
+    }
+    if (message.masEnabled !== undefined) {
+      writer.uint32(1584).bool(message.masEnabled);
+    }
+    if (message.globalDietCodeRulesToggles !== undefined) {
+      writer.uint32(1602).string(message.globalDietCodeRulesToggles);
+    }
+    if (message.auditCompletionGateEnabled !== undefined) {
+      writer.uint32(1616).bool(message.auditCompletionGateEnabled);
+    }
+    if (message.auditCompletionGateThreshold !== undefined) {
+      writer.uint32(1632).int32(message.auditCompletionGateThreshold);
+    }
+    if (message.auditCompletionGateCriticalOnly !== undefined) {
+      writer.uint32(1648).bool(message.auditCompletionGateCriticalOnly);
+    }
+    if (message.auditActModeAdvisoryEnabled !== undefined) {
+      writer.uint32(1656).bool(message.auditActModeAdvisoryEnabled);
+    }
+    if (message.auditAdvisoryEscalationEnabled !== undefined) {
+      writer.uint32(1672).bool(message.auditAdvisoryEscalationEnabled);
+    }
+    if (message.auditPlanRegressionGateEnabled !== undefined) {
+      writer.uint32(1680).bool(message.auditPlanRegressionGateEnabled);
+    }
+    if (message.auditToolOutputAdvisoryEnabled !== undefined) {
+      writer.uint32(1688).bool(message.auditToolOutputAdvisoryEnabled);
+    }
+    if (message.auditFileWriteAdvisoryEnabled !== undefined) {
+      writer.uint32(1704).bool(message.auditFileWriteAdvisoryEnabled);
+    }
+    if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
+      writer.uint32(1720).bool(message.auditIntentThresholdAdjustmentsEnabled);
+    }
+    if (message.auditIntentThresholdOverrides !== undefined) {
+      writer.uint32(1738).string(message.auditIntentThresholdOverrides);
+    }
+    if (message.auditSarifHookExportEnabled !== undefined) {
+      writer.uint32(1752).bool(message.auditSarifHookExportEnabled);
+    }
+    if (message.auditWorkspaceArtifactsEnabled !== undefined) {
+      writer.uint32(1760).bool(message.auditWorkspaceArtifactsEnabled);
+    }
+    if (message.auditAdvisoryAutoScrollMode !== undefined) {
+      writer.uint32(1778).string(message.auditAdvisoryAutoScrollMode);
+    }
+    if (message.liteLlmBaseUrl !== undefined) {
+      writer.uint32(1786).string(message.liteLlmBaseUrl);
+    }
+    if (message.liteLlmUsePromptCache !== undefined) {
+      writer.uint32(1792).bool(message.liteLlmUsePromptCache);
+    }
+    if (message.anthropicBaseUrl !== undefined) {
+      writer.uint32(1810).string(message.anthropicBaseUrl);
+    }
+    if (message.awsRegion !== undefined) {
+      writer.uint32(1818).string(message.awsRegion);
+    }
+    if (message.awsUseCrossRegionInference !== undefined) {
+      writer.uint32(1824).bool(message.awsUseCrossRegionInference);
+    }
+    if (message.awsUseGlobalInference !== undefined) {
+      writer.uint32(1832).bool(message.awsUseGlobalInference);
+    }
+    if (message.awsBedrockUsePromptCache !== undefined) {
+      writer.uint32(1840).bool(message.awsBedrockUsePromptCache);
+    }
+    if (message.awsAuthentication !== undefined) {
+      writer.uint32(1850).string(message.awsAuthentication);
+    }
+    if (message.awsUseProfile !== undefined) {
+      writer.uint32(1856).bool(message.awsUseProfile);
+    }
+    if (message.awsProfile !== undefined) {
+      writer.uint32(1866).string(message.awsProfile);
+    }
+    if (message.awsBedrockEndpoint !== undefined) {
+      writer.uint32(1874).string(message.awsBedrockEndpoint);
+    }
+    if (message.claudeCodePath !== undefined) {
+      writer.uint32(1882).string(message.claudeCodePath);
+    }
+    if (message.openAiBaseUrl !== undefined) {
+      writer.uint32(1890).string(message.openAiBaseUrl);
+    }
+    if (message.ollamaBaseUrl !== undefined) {
+      writer.uint32(1898).string(message.ollamaBaseUrl);
+    }
+    if (message.ollamaApiOptionsCtxNum !== undefined) {
+      writer.uint32(1906).string(message.ollamaApiOptionsCtxNum);
+    }
+    if (message.lmStudioBaseUrl !== undefined) {
+      writer.uint32(1914).string(message.lmStudioBaseUrl);
+    }
+    if (message.lmStudioMaxTokens !== undefined) {
+      writer.uint32(1922).string(message.lmStudioMaxTokens);
+    }
+    if (message.geminiBaseUrl !== undefined) {
+      writer.uint32(1930).string(message.geminiBaseUrl);
+    }
+    if (message.requestyBaseUrl !== undefined) {
+      writer.uint32(1938).string(message.requestyBaseUrl);
+    }
+    if (message.fireworksModelMaxCompletionTokens !== undefined) {
+      writer.uint32(1944).int32(message.fireworksModelMaxCompletionTokens);
+    }
+    if (message.fireworksModelMaxTokens !== undefined) {
+      writer.uint32(1952).int32(message.fireworksModelMaxTokens);
+    }
+    if (message.qwenCodeOauthPath !== undefined) {
+      writer.uint32(1962).string(message.qwenCodeOauthPath);
+    }
+    if (message.azureApiVersion !== undefined) {
+      writer.uint32(1970).string(message.azureApiVersion);
+    }
+    if (message.azureIdentity !== undefined) {
+      writer.uint32(1976).bool(message.azureIdentity);
+    }
+    if (message.qwenApiLine !== undefined) {
+      writer.uint32(1986).string(message.qwenApiLine);
+    }
+    if (message.moonshotApiLine !== undefined) {
+      writer.uint32(1994).string(message.moonshotApiLine);
+    }
+    if (message.asksageApiUrl !== undefined) {
+      writer.uint32(2002).string(message.asksageApiUrl);
+    }
+    if (message.requestTimeoutMs !== undefined) {
+      writer.uint32(2008).int32(message.requestTimeoutMs);
+    }
+    if (message.sapAiResourceGroup !== undefined) {
+      writer.uint32(2018).string(message.sapAiResourceGroup);
+    }
+    if (message.sapAiCoreTokenUrl !== undefined) {
+      writer.uint32(2026).string(message.sapAiCoreTokenUrl);
+    }
+    if (message.sapAiCoreBaseUrl !== undefined) {
+      writer.uint32(2034).string(message.sapAiCoreBaseUrl);
+    }
+    if (message.sapAiCoreUseOrchestrationMode !== undefined) {
+      writer.uint32(2040).bool(message.sapAiCoreUseOrchestrationMode);
+    }
+    if (message.difyBaseUrl !== undefined) {
+      writer.uint32(2050).string(message.difyBaseUrl);
+    }
+    if (message.zaiApiLine !== undefined) {
+      writer.uint32(2058).string(message.zaiApiLine);
+    }
+    if (message.ocaBaseUrl !== undefined) {
+      writer.uint32(2066).string(message.ocaBaseUrl);
+    }
+    if (message.minimaxApiLine !== undefined) {
+      writer.uint32(2074).string(message.minimaxApiLine);
+    }
+    if (message.ocaMode !== undefined) {
+      writer.uint32(2082).string(message.ocaMode);
+    }
+    if (message.aihubmixBaseUrl !== undefined) {
+      writer.uint32(2090).string(message.aihubmixBaseUrl);
+    }
+    if (message.aihubmixAppCode !== undefined) {
+      writer.uint32(2098).string(message.aihubmixAppCode);
+    }
+    if (message.geminiPlanModeThinkingLevel !== undefined) {
+      writer.uint32(2106).string(message.geminiPlanModeThinkingLevel);
+    }
+    if (message.planModeVerbosity !== undefined) {
+      writer.uint32(2114).string(message.planModeVerbosity);
+    }
+    if (message.planModeVsCodeLmModelSelector !== undefined) {
+      LanguageModelChatSelector.encode(message.planModeVsCodeLmModelSelector, writer.uint32(2122).fork()).join();
+    }
+    if (message.planModeAwsBedrockCustomSelected !== undefined) {
+      writer.uint32(2128).bool(message.planModeAwsBedrockCustomSelected);
+    }
+    if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
+      writer.uint32(2138).string(message.planModeAwsBedrockCustomModelBaseId);
+    }
+    if (message.planModeDietCodeModelId !== undefined) {
+      writer.uint32(2146).string(message.planModeDietCodeModelId);
+    }
+    if (message.planModeDietCodeModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeDietCodeModelInfo, writer.uint32(2154).fork()).join();
+    }
+    if (message.planModeOpenAiModelId !== undefined) {
+      writer.uint32(2162).string(message.planModeOpenAiModelId);
+    }
+    if (message.planModeOpenAiModelInfo !== undefined) {
+      OpenAiCompatibleModelInfo.encode(message.planModeOpenAiModelInfo, writer.uint32(2170).fork()).join();
+    }
+    if (message.planModeOllamaModelId !== undefined) {
+      writer.uint32(2178).string(message.planModeOllamaModelId);
+    }
+    if (message.planModeLmStudioModelId !== undefined) {
+      writer.uint32(2186).string(message.planModeLmStudioModelId);
+    }
+    if (message.planModeLiteLlmModelId !== undefined) {
+      writer.uint32(2194).string(message.planModeLiteLlmModelId);
+    }
+    if (message.planModeLiteLlmModelInfo !== undefined) {
+      LiteLLMModelInfo.encode(message.planModeLiteLlmModelInfo, writer.uint32(2202).fork()).join();
+    }
+    if (message.planModeRequestyModelId !== undefined) {
+      writer.uint32(2210).string(message.planModeRequestyModelId);
+    }
+    if (message.planModeRequestyModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(2218).fork()).join();
+    }
+    if (message.planModeTogetherModelId !== undefined) {
+      writer.uint32(2226).string(message.planModeTogetherModelId);
+    }
+    if (message.planModeFireworksModelId !== undefined) {
+      writer.uint32(2234).string(message.planModeFireworksModelId);
+    }
+    if (message.planModeSapAiCoreModelId !== undefined) {
+      writer.uint32(2242).string(message.planModeSapAiCoreModelId);
+    }
+    if (message.planModeSapAiCoreDeploymentId !== undefined) {
+      writer.uint32(2250).string(message.planModeSapAiCoreDeploymentId);
+    }
+    if (message.planModeGroqModelId !== undefined) {
+      writer.uint32(2258).string(message.planModeGroqModelId);
+    }
+    if (message.planModeGroqModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(2266).fork()).join();
+    }
+    if (message.planModeBasetenModelId !== undefined) {
+      writer.uint32(2274).string(message.planModeBasetenModelId);
+    }
+    if (message.planModeBasetenModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(2282).fork()).join();
+    }
+    if (message.planModeHuggingFaceModelId !== undefined) {
+      writer.uint32(2290).string(message.planModeHuggingFaceModelId);
+    }
+    if (message.planModeHuggingFaceModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(2298).fork()).join();
+    }
+    if (message.planModeHuaweiCloudMaasModelId !== undefined) {
+      writer.uint32(2306).string(message.planModeHuaweiCloudMaasModelId);
+    }
+    if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(2314).fork()).join();
+    }
+    if (message.planModeOcaModelId !== undefined) {
+      writer.uint32(2322).string(message.planModeOcaModelId);
+    }
+    if (message.planModeOcaModelInfo !== undefined) {
+      OcaModelInfo.encode(message.planModeOcaModelInfo, writer.uint32(2330).fork()).join();
+    }
+    if (message.planModeOcaReasoningEffort !== undefined) {
+      writer.uint32(2338).string(message.planModeOcaReasoningEffort);
+    }
+    if (message.planModeAihubmixModelId !== undefined) {
+      writer.uint32(2346).string(message.planModeAihubmixModelId);
+    }
+    if (message.planModeAihubmixModelInfo !== undefined) {
+      OpenAiCompatibleModelInfo.encode(message.planModeAihubmixModelInfo, writer.uint32(2354).fork()).join();
+    }
+    if (message.planModeHicapModelId !== undefined) {
+      writer.uint32(2362).string(message.planModeHicapModelId);
+    }
+    if (message.planModeHicapModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeHicapModelInfo, writer.uint32(2370).fork()).join();
+    }
+    if (message.planModeVercelAiGatewayModelId !== undefined) {
+      writer.uint32(2378).string(message.planModeVercelAiGatewayModelId);
+    }
+    if (message.planModeVercelAiGatewayModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(2386).fork()).join();
+    }
+    if (message.geminiActModeThinkingLevel !== undefined) {
+      writer.uint32(2394).string(message.geminiActModeThinkingLevel);
+    }
+    if (message.actModeVerbosity !== undefined) {
+      writer.uint32(2402).string(message.actModeVerbosity);
+    }
+    if (message.actModeVsCodeLmModelSelector !== undefined) {
+      LanguageModelChatSelector.encode(message.actModeVsCodeLmModelSelector, writer.uint32(2410).fork()).join();
+    }
+    if (message.actModeAwsBedrockCustomSelected !== undefined) {
+      writer.uint32(2416).bool(message.actModeAwsBedrockCustomSelected);
+    }
+    if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
+      writer.uint32(2426).string(message.actModeAwsBedrockCustomModelBaseId);
+    }
+    if (message.actModeDietCodeModelId !== undefined) {
+      writer.uint32(2434).string(message.actModeDietCodeModelId);
+    }
+    if (message.actModeDietCodeModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeDietCodeModelInfo, writer.uint32(2442).fork()).join();
+    }
+    if (message.actModeOpenAiModelId !== undefined) {
+      writer.uint32(2450).string(message.actModeOpenAiModelId);
+    }
+    if (message.actModeOpenAiModelInfo !== undefined) {
+      OpenAiCompatibleModelInfo.encode(message.actModeOpenAiModelInfo, writer.uint32(2458).fork()).join();
+    }
+    if (message.actModeOllamaModelId !== undefined) {
+      writer.uint32(2466).string(message.actModeOllamaModelId);
+    }
+    if (message.actModeLmStudioModelId !== undefined) {
+      writer.uint32(2474).string(message.actModeLmStudioModelId);
+    }
+    if (message.actModeLiteLlmModelId !== undefined) {
+      writer.uint32(2482).string(message.actModeLiteLlmModelId);
+    }
+    if (message.actModeLiteLlmModelInfo !== undefined) {
+      LiteLLMModelInfo.encode(message.actModeLiteLlmModelInfo, writer.uint32(2490).fork()).join();
+    }
+    if (message.actModeRequestyModelId !== undefined) {
+      writer.uint32(2498).string(message.actModeRequestyModelId);
+    }
+    if (message.actModeRequestyModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(2506).fork()).join();
+    }
+    if (message.actModeTogetherModelId !== undefined) {
+      writer.uint32(2514).string(message.actModeTogetherModelId);
+    }
+    if (message.actModeFireworksModelId !== undefined) {
+      writer.uint32(2522).string(message.actModeFireworksModelId);
+    }
+    if (message.actModeSapAiCoreModelId !== undefined) {
+      writer.uint32(2530).string(message.actModeSapAiCoreModelId);
+    }
+    if (message.actModeSapAiCoreDeploymentId !== undefined) {
+      writer.uint32(2538).string(message.actModeSapAiCoreDeploymentId);
+    }
+    if (message.actModeGroqModelId !== undefined) {
+      writer.uint32(2546).string(message.actModeGroqModelId);
+    }
+    if (message.actModeGroqModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(2554).fork()).join();
+    }
+    if (message.actModeBasetenModelId !== undefined) {
+      writer.uint32(2562).string(message.actModeBasetenModelId);
+    }
+    if (message.actModeBasetenModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(2570).fork()).join();
+    }
+    if (message.actModeHuggingFaceModelId !== undefined) {
+      writer.uint32(2578).string(message.actModeHuggingFaceModelId);
+    }
+    if (message.actModeHuggingFaceModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(2586).fork()).join();
+    }
+    if (message.actModeHuaweiCloudMaasModelId !== undefined) {
+      writer.uint32(2594).string(message.actModeHuaweiCloudMaasModelId);
+    }
+    if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(2602).fork()).join();
+    }
+    if (message.actModeOcaModelId !== undefined) {
+      writer.uint32(2610).string(message.actModeOcaModelId);
+    }
+    if (message.actModeOcaModelInfo !== undefined) {
+      OcaModelInfo.encode(message.actModeOcaModelInfo, writer.uint32(2618).fork()).join();
+    }
+    if (message.actModeOcaReasoningEffort !== undefined) {
+      writer.uint32(2626).string(message.actModeOcaReasoningEffort);
+    }
+    if (message.actModeAihubmixModelId !== undefined) {
+      writer.uint32(2634).string(message.actModeAihubmixModelId);
+    }
+    if (message.actModeAihubmixModelInfo !== undefined) {
+      OpenAiCompatibleModelInfo.encode(message.actModeAihubmixModelInfo, writer.uint32(2642).fork()).join();
+    }
+    if (message.actModeHicapModelId !== undefined) {
+      writer.uint32(2650).string(message.actModeHicapModelId);
+    }
+    if (message.actModeHicapModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeHicapModelInfo, writer.uint32(2658).fork()).join();
+    }
+    if (message.actModeVercelAiGatewayModelId !== undefined) {
+      writer.uint32(2666).string(message.actModeVercelAiGatewayModelId);
+    }
+    if (message.actModeVercelAiGatewayModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(2674).fork()).join();
+    }
+    if (message.hicapModelId !== undefined) {
+      writer.uint32(2682).string(message.hicapModelId);
+    }
+    if (message.lmStudioModelId !== undefined) {
+      writer.uint32(2690).string(message.lmStudioModelId);
+    }
+    if (message.planModeClinePassModelId !== undefined) {
+      writer.uint32(2706).string(message.planModeClinePassModelId);
+    }
+    if (message.planModeClinePassModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(2714).fork()).join();
+    }
+    if (message.actModeClinePassModelId !== undefined) {
+      writer.uint32(2722).string(message.actModeClinePassModelId);
+    }
+    if (message.actModeClinePassModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(2730).fork()).join();
+    }
+    if (message.modEnabled !== undefined) {
+      writer.uint32(2744).bool(message.modEnabled);
+    }
+    if (message.modOutcome !== undefined) {
+      writer.uint32(2754).string(message.modOutcome);
+    }
+    if (message.planModeNousResearchModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeNousResearchModelInfo, writer.uint32(2770).fork()).join();
+    }
+    if (message.actModeNousResearchModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(2778).fork()).join();
+    }
+    if (message.galxBaseUrl !== undefined) {
+      writer.uint32(2794).string(message.galxBaseUrl);
+    }
+    if (message.planModeGalxModelId !== undefined) {
+      writer.uint32(2802).string(message.planModeGalxModelId);
+    }
+    if (message.planModeGalxModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.planModeGalxModelInfo, writer.uint32(2810).fork()).join();
+    }
+    if (message.actModeGalxModelId !== undefined) {
+      writer.uint32(2818).string(message.actModeGalxModelId);
+    }
+    if (message.actModeGalxModelInfo !== undefined) {
+      OpenRouterModelInfo.encode(message.actModeGalxModelInfo, writer.uint32(2826).fork()).join();
+    }
+    globalThis.Object.entries(message.openAiHeaders).forEach(([key, value]: [string, string]) => {
+      Settings_OpenAiHeadersEntry.encode({ key: key as any, value }, writer.uint32(2834).fork()).join();
+    });
+    if (message.tokenCompressionEnabled !== undefined) {
+      writer.uint32(2840).bool(message.tokenCompressionEnabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Settings {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseSettings();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 5: {
+            if (tag !== 42) {
+              break;
+            }
+
+            message.openRouterProviderSorting = reader.string();
+            continue;
+          }
+          case 44: {
+            if (tag !== 354) {
+              break;
+            }
+
+            message.planModeApiModelId = reader.string();
+            continue;
+          }
+          case 45: {
+            if (tag !== 360) {
+              break;
+            }
+
+            message.planModeThinkingBudgetTokens = longToNumber(reader.int64());
+            continue;
+          }
+          case 47: {
+            if (tag !== 378) {
+              break;
+            }
+
+            message.planModeReasoningEffort = reader.string();
+            continue;
+          }
+          case 52: {
+            if (tag !== 418) {
+              break;
+            }
+
+            message.planModeOpenRouterModelId = reader.string();
+            continue;
+          }
+          case 53: {
+            if (tag !== 426) {
+              break;
+            }
+
+            message.planModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 81: {
+            if (tag !== 650) {
+              break;
+            }
+
+            message.planModeNousResearchModelId = reader.string();
+            continue;
+          }
+          case 84: {
+            if (tag !== 674) {
+              break;
+            }
+
+            message.actModeApiModelId = reader.string();
+            continue;
+          }
+          case 85: {
+            if (tag !== 680) {
+              break;
+            }
+
+            message.actModeThinkingBudgetTokens = longToNumber(reader.int64());
+            continue;
+          }
+          case 87: {
+            if (tag !== 698) {
+              break;
+            }
+
+            message.actModeReasoningEffort = reader.string();
+            continue;
+          }
+          case 92: {
+            if (tag !== 738) {
+              break;
+            }
+
+            message.actModeOpenRouterModelId = reader.string();
+            continue;
+          }
+          case 93: {
+            if (tag !== 746) {
+              break;
+            }
+
+            message.actModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 121: {
+            if (tag !== 970) {
+              break;
+            }
+
+            message.actModeNousResearchModelId = reader.string();
+            continue;
+          }
+          case 124: {
+            if (tag !== 992) {
+              break;
+            }
+
+            message.planModeApiProvider = reader.int32() as any;
+            continue;
+          }
+          case 125: {
+            if (tag !== 1000) {
+              break;
+            }
+
+            message.actModeApiProvider = reader.int32() as any;
+            continue;
+          }
+          case 128: {
+            if (tag !== 1026) {
+              break;
+            }
+
+            message.autoApprovalSettings = AutoApprovalSettings.decode(reader, reader.uint32());
+            continue;
+          }
+          case 130: {
+            if (tag !== 1042) {
+              break;
+            }
+
+            message.globalWorkflowToggles = reader.string();
+            continue;
+          }
+          case 131: {
+            if (tag !== 1050) {
+              break;
+            }
+
+            message.globalSkillsToggles = reader.string();
+            continue;
+          }
+          case 132: {
+            if (tag !== 1058) {
+              break;
+            }
+
+            message.browserSettings = BrowserSettings.decode(reader, reader.uint32());
+            continue;
+          }
+          case 133: {
+            if (tag !== 1066) {
+              break;
+            }
+
+            message.telemetrySetting = reader.string();
+            continue;
+          }
+          case 134: {
+            if (tag !== 1072) {
+              break;
+            }
+
+            message.planActSeparateModelsSetting = reader.bool();
+            continue;
+          }
+          case 135: {
+            if (tag !== 1080) {
+              break;
+            }
+
+            message.enableCheckpointsSetting = reader.bool();
+            continue;
+          }
+          case 136: {
+            if (tag !== 1088) {
+              break;
+            }
+
+            message.shellIntegrationTimeout = reader.int32();
+            continue;
+          }
+          case 137: {
+            if (tag !== 1098) {
+              break;
+            }
+
+            message.defaultTerminalProfile = reader.string();
+            continue;
+          }
+          case 138: {
+            if (tag !== 1104) {
+              break;
+            }
+
+            message.terminalOutputLineLimit = reader.int32();
+            continue;
+          }
+          case 139: {
+            if (tag !== 1112) {
+              break;
+            }
+
+            message.maxConsecutiveMistakes = reader.int32();
+            continue;
+          }
+          case 141: {
+            if (tag !== 1128) {
+              break;
+            }
+
+            message.strictPlanModeEnabled = reader.bool();
+            continue;
+          }
+          case 142: {
+            if (tag !== 1136) {
+              break;
+            }
+
+            message.yoloModeToggled = reader.bool();
+            continue;
+          }
+          case 143: {
+            if (tag !== 1144) {
+              break;
+            }
+
+            message.useAutoCondense = reader.bool();
+            continue;
+          }
+          case 144: {
+            if (tag !== 1152) {
+              break;
+            }
+
+            message.dietcodeWebToolsEnabled = reader.bool();
+            continue;
+          }
+          case 145: {
+            if (tag !== 1162) {
+              break;
+            }
+
+            message.preferredLanguage = reader.string();
+            continue;
+          }
+          case 147: {
+            if (tag !== 1176) {
+              break;
+            }
+
+            message.mode = reader.int32() as any;
+            continue;
+          }
+          case 149: {
+            if (tag !== 1194) {
+              break;
+            }
+
+            message.focusChainSettings = FocusChainSettings.decode(reader, reader.uint32());
+            continue;
+          }
+          case 150: {
+            if (tag !== 1202) {
+              break;
+            }
+
+            message.customPrompt = reader.string();
+            continue;
+          }
+          case 153: {
+            if (tag !== 1224) {
+              break;
+            }
+
+            message.subagentsEnabled = reader.bool();
+            continue;
+          }
+          case 154: {
+            if (tag !== 1232) {
+              break;
+            }
+
+            message.enableParallelToolCalling = reader.bool();
+            continue;
+          }
+          case 155: {
+            if (tag !== 1240) {
+              break;
+            }
+
+            message.backgroundEditEnabled = reader.bool();
+            continue;
+          }
+          case 157: {
+            if (tag !== 1256) {
+              break;
+            }
+
+            message.optOutOfRemoteConfig = reader.bool();
+            continue;
+          }
+          case 158: {
+            if (tag !== 1264) {
+              break;
+            }
+
+            message.openTelemetryEnabled = reader.bool();
+            continue;
+          }
+          case 159: {
+            if (tag !== 1274) {
+              break;
+            }
+
+            message.openTelemetryMetricsExporter = reader.string();
+            continue;
+          }
+          case 160: {
+            if (tag !== 1282) {
+              break;
+            }
+
+            message.openTelemetryLogsExporter = reader.string();
+            continue;
+          }
+          case 161: {
+            if (tag !== 1290) {
+              break;
+            }
+
+            message.openTelemetryOtlpProtocol = reader.string();
+            continue;
+          }
+          case 162: {
+            if (tag !== 1298) {
+              break;
+            }
+
+            message.openTelemetryOtlpEndpoint = reader.string();
+            continue;
+          }
+          case 163: {
+            if (tag !== 1306) {
+              break;
+            }
+
+            message.openTelemetryOtlpMetricsProtocol = reader.string();
+            continue;
+          }
+          case 164: {
+            if (tag !== 1314) {
+              break;
+            }
+
+            message.openTelemetryOtlpMetricsEndpoint = reader.string();
+            continue;
+          }
+          case 165: {
+            if (tag !== 1322) {
+              break;
+            }
+
+            message.openTelemetryOtlpLogsProtocol = reader.string();
+            continue;
+          }
+          case 166: {
+            if (tag !== 1330) {
+              break;
+            }
+
+            message.openTelemetryOtlpLogsEndpoint = reader.string();
+            continue;
+          }
+          case 167: {
+            if (tag !== 1336) {
+              break;
+            }
+
+            message.openTelemetryMetricExportInterval = reader.int32();
+            continue;
+          }
+          case 168: {
+            if (tag !== 1344) {
+              break;
+            }
+
+            message.openTelemetryOtlpInsecure = reader.bool();
+            continue;
+          }
+          case 169: {
+            if (tag !== 1352) {
+              break;
+            }
+
+            message.openTelemetryLogBatchSize = reader.int32();
+            continue;
+          }
+          case 170: {
+            if (tag !== 1360) {
+              break;
+            }
+
+            message.openTelemetryLogBatchTimeout = reader.int32();
+            continue;
+          }
+          case 171: {
+            if (tag !== 1368) {
+              break;
+            }
+
+            message.openTelemetryLogMaxQueueSize = reader.int32();
+            continue;
+          }
+          case 172: {
+            if (tag !== 1376) {
+              break;
+            }
+
+            message.worktreesEnabled = reader.bool();
+            continue;
+          }
+          case 176: {
+            if (tag !== 1408) {
+              break;
+            }
+
+            message.doubleCheckCompletionEnabled = reader.bool();
+            continue;
+          }
+          case 183: {
+            if (tag !== 1466) {
+              break;
+            }
+
+            message.cloudflareAccountId = reader.string();
+            continue;
+          }
+          case 186: {
+            if (tag !== 1488) {
+              break;
+            }
+
+            message.embeddingProvider = reader.int32() as any;
+            continue;
+          }
+          case 187: {
+            if (tag !== 1498) {
+              break;
+            }
+
+            message.embeddingModelId = reader.string();
+            continue;
+          }
+          case 188: {
+            if (tag !== 1506) {
+              break;
+            }
+
+            message.embeddingOpenAiBaseUrl = reader.string();
+            continue;
+          }
+          case 192: {
+            if (tag !== 1536) {
+              break;
+            }
+
+            message.maxSwarmDepth = reader.int32();
+            continue;
+          }
+          case 196: {
+            if (tag !== 1568) {
+              break;
+            }
+
+            message.safeYoloModeToggled = reader.bool();
+            continue;
+          }
+          case 198: {
+            if (tag !== 1584) {
+              break;
+            }
+
+            message.masEnabled = reader.bool();
+            continue;
+          }
+          case 200: {
+            if (tag !== 1602) {
+              break;
+            }
+
+            message.globalDietCodeRulesToggles = reader.string();
+            continue;
+          }
+          case 202: {
+            if (tag !== 1616) {
+              break;
+            }
+
+            message.auditCompletionGateEnabled = reader.bool();
+            continue;
+          }
+          case 204: {
+            if (tag !== 1632) {
+              break;
+            }
+
+            message.auditCompletionGateThreshold = reader.int32();
+            continue;
+          }
+          case 206: {
+            if (tag !== 1648) {
+              break;
+            }
+
+            message.auditCompletionGateCriticalOnly = reader.bool();
+            continue;
+          }
+          case 207: {
+            if (tag !== 1656) {
+              break;
+            }
+
+            message.auditActModeAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 209: {
+            if (tag !== 1672) {
+              break;
+            }
+
+            message.auditAdvisoryEscalationEnabled = reader.bool();
+            continue;
+          }
+          case 210: {
+            if (tag !== 1680) {
+              break;
+            }
+
+            message.auditPlanRegressionGateEnabled = reader.bool();
+            continue;
+          }
+          case 211: {
+            if (tag !== 1688) {
+              break;
+            }
+
+            message.auditToolOutputAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 213: {
+            if (tag !== 1704) {
+              break;
+            }
+
+            message.auditFileWriteAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 215: {
+            if (tag !== 1720) {
+              break;
+            }
+
+            message.auditIntentThresholdAdjustmentsEnabled = reader.bool();
+            continue;
+          }
+          case 217: {
+            if (tag !== 1738) {
+              break;
+            }
+
+            message.auditIntentThresholdOverrides = reader.string();
+            continue;
+          }
+          case 219: {
+            if (tag !== 1752) {
+              break;
+            }
+
+            message.auditSarifHookExportEnabled = reader.bool();
+            continue;
+          }
+          case 220: {
+            if (tag !== 1760) {
+              break;
+            }
+
+            message.auditWorkspaceArtifactsEnabled = reader.bool();
+            continue;
+          }
+          case 222: {
+            if (tag !== 1778) {
+              break;
+            }
+
+            message.auditAdvisoryAutoScrollMode = reader.string();
+            continue;
+          }
+          case 223: {
+            if (tag !== 1786) {
+              break;
+            }
+
+            message.liteLlmBaseUrl = reader.string();
+            continue;
+          }
+          case 224: {
+            if (tag !== 1792) {
+              break;
+            }
+
+            message.liteLlmUsePromptCache = reader.bool();
+            continue;
+          }
+          case 226: {
+            if (tag !== 1810) {
+              break;
+            }
+
+            message.anthropicBaseUrl = reader.string();
+            continue;
+          }
+          case 227: {
+            if (tag !== 1818) {
+              break;
+            }
+
+            message.awsRegion = reader.string();
+            continue;
+          }
+          case 228: {
+            if (tag !== 1824) {
+              break;
+            }
+
+            message.awsUseCrossRegionInference = reader.bool();
+            continue;
+          }
+          case 229: {
+            if (tag !== 1832) {
+              break;
+            }
+
+            message.awsUseGlobalInference = reader.bool();
+            continue;
+          }
+          case 230: {
+            if (tag !== 1840) {
+              break;
+            }
+
+            message.awsBedrockUsePromptCache = reader.bool();
+            continue;
+          }
+          case 231: {
+            if (tag !== 1850) {
+              break;
+            }
+
+            message.awsAuthentication = reader.string();
+            continue;
+          }
+          case 232: {
+            if (tag !== 1856) {
+              break;
+            }
+
+            message.awsUseProfile = reader.bool();
+            continue;
+          }
+          case 233: {
+            if (tag !== 1866) {
+              break;
+            }
+
+            message.awsProfile = reader.string();
+            continue;
+          }
+          case 234: {
+            if (tag !== 1874) {
+              break;
+            }
+
+            message.awsBedrockEndpoint = reader.string();
+            continue;
+          }
+          case 235: {
+            if (tag !== 1882) {
+              break;
+            }
+
+            message.claudeCodePath = reader.string();
+            continue;
+          }
+          case 236: {
+            if (tag !== 1890) {
+              break;
+            }
+
+            message.openAiBaseUrl = reader.string();
+            continue;
+          }
+          case 237: {
+            if (tag !== 1898) {
+              break;
+            }
+
+            message.ollamaBaseUrl = reader.string();
+            continue;
+          }
+          case 238: {
+            if (tag !== 1906) {
+              break;
+            }
+
+            message.ollamaApiOptionsCtxNum = reader.string();
+            continue;
+          }
+          case 239: {
+            if (tag !== 1914) {
+              break;
+            }
+
+            message.lmStudioBaseUrl = reader.string();
+            continue;
+          }
+          case 240: {
+            if (tag !== 1922) {
+              break;
+            }
+
+            message.lmStudioMaxTokens = reader.string();
+            continue;
+          }
+          case 241: {
+            if (tag !== 1930) {
+              break;
+            }
+
+            message.geminiBaseUrl = reader.string();
+            continue;
+          }
+          case 242: {
+            if (tag !== 1938) {
+              break;
+            }
+
+            message.requestyBaseUrl = reader.string();
+            continue;
+          }
+          case 243: {
+            if (tag !== 1944) {
+              break;
+            }
+
+            message.fireworksModelMaxCompletionTokens = reader.int32();
+            continue;
+          }
+          case 244: {
+            if (tag !== 1952) {
+              break;
+            }
+
+            message.fireworksModelMaxTokens = reader.int32();
+            continue;
+          }
+          case 245: {
+            if (tag !== 1962) {
+              break;
+            }
+
+            message.qwenCodeOauthPath = reader.string();
+            continue;
+          }
+          case 246: {
+            if (tag !== 1970) {
+              break;
+            }
+
+            message.azureApiVersion = reader.string();
+            continue;
+          }
+          case 247: {
+            if (tag !== 1976) {
+              break;
+            }
+
+            message.azureIdentity = reader.bool();
+            continue;
+          }
+          case 248: {
+            if (tag !== 1986) {
+              break;
+            }
+
+            message.qwenApiLine = reader.string();
+            continue;
+          }
+          case 249: {
+            if (tag !== 1994) {
+              break;
+            }
+
+            message.moonshotApiLine = reader.string();
+            continue;
+          }
+          case 250: {
+            if (tag !== 2002) {
+              break;
+            }
+
+            message.asksageApiUrl = reader.string();
+            continue;
+          }
+          case 251: {
+            if (tag !== 2008) {
+              break;
+            }
+
+            message.requestTimeoutMs = reader.int32();
+            continue;
+          }
+          case 252: {
+            if (tag !== 2018) {
+              break;
+            }
+
+            message.sapAiResourceGroup = reader.string();
+            continue;
+          }
+          case 253: {
+            if (tag !== 2026) {
+              break;
+            }
+
+            message.sapAiCoreTokenUrl = reader.string();
+            continue;
+          }
+          case 254: {
+            if (tag !== 2034) {
+              break;
+            }
+
+            message.sapAiCoreBaseUrl = reader.string();
+            continue;
+          }
+          case 255: {
+            if (tag !== 2040) {
+              break;
+            }
+
+            message.sapAiCoreUseOrchestrationMode = reader.bool();
+            continue;
+          }
+          case 256: {
+            if (tag !== 2050) {
+              break;
+            }
+
+            message.difyBaseUrl = reader.string();
+            continue;
+          }
+          case 257: {
+            if (tag !== 2058) {
+              break;
+            }
+
+            message.zaiApiLine = reader.string();
+            continue;
+          }
+          case 258: {
+            if (tag !== 2066) {
+              break;
+            }
+
+            message.ocaBaseUrl = reader.string();
+            continue;
+          }
+          case 259: {
+            if (tag !== 2074) {
+              break;
+            }
+
+            message.minimaxApiLine = reader.string();
+            continue;
+          }
+          case 260: {
+            if (tag !== 2082) {
+              break;
+            }
+
+            message.ocaMode = reader.string();
+            continue;
+          }
+          case 261: {
+            if (tag !== 2090) {
+              break;
+            }
+
+            message.aihubmixBaseUrl = reader.string();
+            continue;
+          }
+          case 262: {
+            if (tag !== 2098) {
+              break;
+            }
+
+            message.aihubmixAppCode = reader.string();
+            continue;
+          }
+          case 263: {
+            if (tag !== 2106) {
+              break;
+            }
+
+            message.geminiPlanModeThinkingLevel = reader.string();
+            continue;
+          }
+          case 264: {
+            if (tag !== 2114) {
+              break;
+            }
+
+            message.planModeVerbosity = reader.string();
+            continue;
+          }
+          case 265: {
+            if (tag !== 2122) {
+              break;
+            }
+
+            message.planModeVsCodeLmModelSelector = LanguageModelChatSelector.decode(reader, reader.uint32());
+            continue;
+          }
+          case 266: {
+            if (tag !== 2128) {
+              break;
+            }
+
+            message.planModeAwsBedrockCustomSelected = reader.bool();
+            continue;
+          }
+          case 267: {
+            if (tag !== 2138) {
+              break;
+            }
+
+            message.planModeAwsBedrockCustomModelBaseId = reader.string();
+            continue;
+          }
+          case 268: {
+            if (tag !== 2146) {
+              break;
+            }
+
+            message.planModeDietCodeModelId = reader.string();
+            continue;
+          }
+          case 269: {
+            if (tag !== 2154) {
+              break;
+            }
+
+            message.planModeDietCodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 270: {
+            if (tag !== 2162) {
+              break;
+            }
+
+            message.planModeOpenAiModelId = reader.string();
+            continue;
+          }
+          case 271: {
+            if (tag !== 2170) {
+              break;
+            }
+
+            message.planModeOpenAiModelInfo = OpenAiCompatibleModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 272: {
+            if (tag !== 2178) {
+              break;
+            }
+
+            message.planModeOllamaModelId = reader.string();
+            continue;
+          }
+          case 273: {
+            if (tag !== 2186) {
+              break;
+            }
+
+            message.planModeLmStudioModelId = reader.string();
+            continue;
+          }
+          case 274: {
+            if (tag !== 2194) {
+              break;
+            }
+
+            message.planModeLiteLlmModelId = reader.string();
+            continue;
+          }
+          case 275: {
+            if (tag !== 2202) {
+              break;
+            }
+
+            message.planModeLiteLlmModelInfo = LiteLLMModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 276: {
+            if (tag !== 2210) {
+              break;
+            }
+
+            message.planModeRequestyModelId = reader.string();
+            continue;
+          }
+          case 277: {
+            if (tag !== 2218) {
+              break;
+            }
+
+            message.planModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 278: {
+            if (tag !== 2226) {
+              break;
+            }
+
+            message.planModeTogetherModelId = reader.string();
+            continue;
+          }
+          case 279: {
+            if (tag !== 2234) {
+              break;
+            }
+
+            message.planModeFireworksModelId = reader.string();
+            continue;
+          }
+          case 280: {
+            if (tag !== 2242) {
+              break;
+            }
+
+            message.planModeSapAiCoreModelId = reader.string();
+            continue;
+          }
+          case 281: {
+            if (tag !== 2250) {
+              break;
+            }
+
+            message.planModeSapAiCoreDeploymentId = reader.string();
+            continue;
+          }
+          case 282: {
+            if (tag !== 2258) {
+              break;
+            }
+
+            message.planModeGroqModelId = reader.string();
+            continue;
+          }
+          case 283: {
+            if (tag !== 2266) {
+              break;
+            }
+
+            message.planModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 284: {
+            if (tag !== 2274) {
+              break;
+            }
+
+            message.planModeBasetenModelId = reader.string();
+            continue;
+          }
+          case 285: {
+            if (tag !== 2282) {
+              break;
+            }
+
+            message.planModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 286: {
+            if (tag !== 2290) {
+              break;
+            }
+
+            message.planModeHuggingFaceModelId = reader.string();
+            continue;
+          }
+          case 287: {
+            if (tag !== 2298) {
+              break;
+            }
+
+            message.planModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 288: {
+            if (tag !== 2306) {
+              break;
+            }
+
+            message.planModeHuaweiCloudMaasModelId = reader.string();
+            continue;
+          }
+          case 289: {
+            if (tag !== 2314) {
+              break;
+            }
+
+            message.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 290: {
+            if (tag !== 2322) {
+              break;
+            }
+
+            message.planModeOcaModelId = reader.string();
+            continue;
+          }
+          case 291: {
+            if (tag !== 2330) {
+              break;
+            }
+
+            message.planModeOcaModelInfo = OcaModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 292: {
+            if (tag !== 2338) {
+              break;
+            }
+
+            message.planModeOcaReasoningEffort = reader.string();
+            continue;
+          }
+          case 293: {
+            if (tag !== 2346) {
+              break;
+            }
+
+            message.planModeAihubmixModelId = reader.string();
+            continue;
+          }
+          case 294: {
+            if (tag !== 2354) {
+              break;
+            }
+
+            message.planModeAihubmixModelInfo = OpenAiCompatibleModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 295: {
+            if (tag !== 2362) {
+              break;
+            }
+
+            message.planModeHicapModelId = reader.string();
+            continue;
+          }
+          case 296: {
+            if (tag !== 2370) {
+              break;
+            }
+
+            message.planModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 297: {
+            if (tag !== 2378) {
+              break;
+            }
+
+            message.planModeVercelAiGatewayModelId = reader.string();
+            continue;
+          }
+          case 298: {
+            if (tag !== 2386) {
+              break;
+            }
+
+            message.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 299: {
+            if (tag !== 2394) {
+              break;
+            }
+
+            message.geminiActModeThinkingLevel = reader.string();
+            continue;
+          }
+          case 300: {
+            if (tag !== 2402) {
+              break;
+            }
+
+            message.actModeVerbosity = reader.string();
+            continue;
+          }
+          case 301: {
+            if (tag !== 2410) {
+              break;
+            }
+
+            message.actModeVsCodeLmModelSelector = LanguageModelChatSelector.decode(reader, reader.uint32());
+            continue;
+          }
+          case 302: {
+            if (tag !== 2416) {
+              break;
+            }
+
+            message.actModeAwsBedrockCustomSelected = reader.bool();
+            continue;
+          }
+          case 303: {
+            if (tag !== 2426) {
+              break;
+            }
+
+            message.actModeAwsBedrockCustomModelBaseId = reader.string();
+            continue;
+          }
+          case 304: {
+            if (tag !== 2434) {
+              break;
+            }
+
+            message.actModeDietCodeModelId = reader.string();
+            continue;
+          }
+          case 305: {
+            if (tag !== 2442) {
+              break;
+            }
+
+            message.actModeDietCodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 306: {
+            if (tag !== 2450) {
+              break;
+            }
+
+            message.actModeOpenAiModelId = reader.string();
+            continue;
+          }
+          case 307: {
+            if (tag !== 2458) {
+              break;
+            }
+
+            message.actModeOpenAiModelInfo = OpenAiCompatibleModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 308: {
+            if (tag !== 2466) {
+              break;
+            }
+
+            message.actModeOllamaModelId = reader.string();
+            continue;
+          }
+          case 309: {
+            if (tag !== 2474) {
+              break;
+            }
+
+            message.actModeLmStudioModelId = reader.string();
+            continue;
+          }
+          case 310: {
+            if (tag !== 2482) {
+              break;
+            }
+
+            message.actModeLiteLlmModelId = reader.string();
+            continue;
+          }
+          case 311: {
+            if (tag !== 2490) {
+              break;
+            }
+
+            message.actModeLiteLlmModelInfo = LiteLLMModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 312: {
+            if (tag !== 2498) {
+              break;
+            }
+
+            message.actModeRequestyModelId = reader.string();
+            continue;
+          }
+          case 313: {
+            if (tag !== 2506) {
+              break;
+            }
+
+            message.actModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 314: {
+            if (tag !== 2514) {
+              break;
+            }
+
+            message.actModeTogetherModelId = reader.string();
+            continue;
+          }
+          case 315: {
+            if (tag !== 2522) {
+              break;
+            }
+
+            message.actModeFireworksModelId = reader.string();
+            continue;
+          }
+          case 316: {
+            if (tag !== 2530) {
+              break;
+            }
+
+            message.actModeSapAiCoreModelId = reader.string();
+            continue;
+          }
+          case 317: {
+            if (tag !== 2538) {
+              break;
+            }
+
+            message.actModeSapAiCoreDeploymentId = reader.string();
+            continue;
+          }
+          case 318: {
+            if (tag !== 2546) {
+              break;
+            }
+
+            message.actModeGroqModelId = reader.string();
+            continue;
+          }
+          case 319: {
+            if (tag !== 2554) {
+              break;
+            }
+
+            message.actModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 320: {
+            if (tag !== 2562) {
+              break;
+            }
+
+            message.actModeBasetenModelId = reader.string();
+            continue;
+          }
+          case 321: {
+            if (tag !== 2570) {
+              break;
+            }
+
+            message.actModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 322: {
+            if (tag !== 2578) {
+              break;
+            }
+
+            message.actModeHuggingFaceModelId = reader.string();
+            continue;
+          }
+          case 323: {
+            if (tag !== 2586) {
+              break;
+            }
+
+            message.actModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 324: {
+            if (tag !== 2594) {
+              break;
+            }
+
+            message.actModeHuaweiCloudMaasModelId = reader.string();
+            continue;
+          }
+          case 325: {
+            if (tag !== 2602) {
+              break;
+            }
+
+            message.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 326: {
+            if (tag !== 2610) {
+              break;
+            }
+
+            message.actModeOcaModelId = reader.string();
+            continue;
+          }
+          case 327: {
+            if (tag !== 2618) {
+              break;
+            }
+
+            message.actModeOcaModelInfo = OcaModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 328: {
+            if (tag !== 2626) {
+              break;
+            }
+
+            message.actModeOcaReasoningEffort = reader.string();
+            continue;
+          }
+          case 329: {
+            if (tag !== 2634) {
+              break;
+            }
+
+            message.actModeAihubmixModelId = reader.string();
+            continue;
+          }
+          case 330: {
+            if (tag !== 2642) {
+              break;
+            }
+
+            message.actModeAihubmixModelInfo = OpenAiCompatibleModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 331: {
+            if (tag !== 2650) {
+              break;
+            }
+
+            message.actModeHicapModelId = reader.string();
+            continue;
+          }
+          case 332: {
+            if (tag !== 2658) {
+              break;
+            }
+
+            message.actModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 333: {
+            if (tag !== 2666) {
+              break;
+            }
+
+            message.actModeVercelAiGatewayModelId = reader.string();
+            continue;
+          }
+          case 334: {
+            if (tag !== 2674) {
+              break;
+            }
+
+            message.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 335: {
+            if (tag !== 2682) {
+              break;
+            }
+
+            message.hicapModelId = reader.string();
+            continue;
+          }
+          case 336: {
+            if (tag !== 2690) {
+              break;
+            }
+
+            message.lmStudioModelId = reader.string();
+            continue;
+          }
+          case 338: {
+            if (tag !== 2706) {
+              break;
+            }
+
+            message.planModeClinePassModelId = reader.string();
+            continue;
+          }
+          case 339: {
+            if (tag !== 2714) {
+              break;
+            }
+
+            message.planModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 340: {
+            if (tag !== 2722) {
+              break;
+            }
+
+            message.actModeClinePassModelId = reader.string();
+            continue;
+          }
+          case 341: {
+            if (tag !== 2730) {
+              break;
+            }
+
+            message.actModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 343: {
+            if (tag !== 2744) {
+              break;
+            }
+
+            message.modEnabled = reader.bool();
+            continue;
+          }
+          case 344: {
+            if (tag !== 2754) {
+              break;
+            }
+
+            message.modOutcome = reader.string();
+            continue;
+          }
+          case 346: {
+            if (tag !== 2770) {
+              break;
+            }
+
+            message.planModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 347: {
+            if (tag !== 2778) {
+              break;
+            }
+
+            message.actModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 349: {
+            if (tag !== 2794) {
+              break;
+            }
+
+            message.galxBaseUrl = reader.string();
+            continue;
+          }
+          case 350: {
+            if (tag !== 2802) {
+              break;
+            }
+
+            message.planModeGalxModelId = reader.string();
+            continue;
+          }
+          case 351: {
+            if (tag !== 2810) {
+              break;
+            }
+
+            message.planModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 352: {
+            if (tag !== 2818) {
+              break;
+            }
+
+            message.actModeGalxModelId = reader.string();
+            continue;
+          }
+          case 353: {
+            if (tag !== 2826) {
+              break;
+            }
+
+            message.actModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            continue;
+          }
+          case 354: {
+            if (tag !== 2834) {
+              break;
+            }
+
+            const entry354 = Settings_OpenAiHeadersEntry.decode(reader, reader.uint32());
+            if (entry354.value !== undefined) {
+              message.openAiHeaders[entry354.key] = entry354.value;
+            }
+            continue;
+          }
+          case 355: {
+            if (tag !== 2840) {
+              break;
+            }
+
+            message.tokenCompressionEnabled = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
+
+  fromJSON(object: any): Settings {
+    return {
+      openRouterProviderSorting: isSet(object.openRouterProviderSorting)
+        ? globalThis.String(object.openRouterProviderSorting)
+        : isSet(object.open_router_provider_sorting)
+        ? globalThis.String(object.open_router_provider_sorting)
+        : undefined,
+      planModeApiModelId: isSet(object.planModeApiModelId)
+        ? globalThis.String(object.planModeApiModelId)
+        : isSet(object.plan_mode_api_model_id)
+        ? globalThis.String(object.plan_mode_api_model_id)
+        : undefined,
+      planModeThinkingBudgetTokens: isSet(object.planModeThinkingBudgetTokens)
+        ? globalThis.Number(object.planModeThinkingBudgetTokens)
+        : isSet(object.plan_mode_thinking_budget_tokens)
+        ? globalThis.Number(object.plan_mode_thinking_budget_tokens)
+        : undefined,
+      planModeReasoningEffort: isSet(object.planModeReasoningEffort)
+        ? globalThis.String(object.planModeReasoningEffort)
+        : isSet(object.plan_mode_reasoning_effort)
+        ? globalThis.String(object.plan_mode_reasoning_effort)
+        : undefined,
+      planModeOpenRouterModelId: isSet(object.planModeOpenRouterModelId)
+        ? globalThis.String(object.planModeOpenRouterModelId)
+        : isSet(object.plan_mode_open_router_model_id)
+        ? globalThis.String(object.plan_mode_open_router_model_id)
+        : undefined,
+      planModeOpenRouterModelInfo: isSet(object.planModeOpenRouterModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeOpenRouterModelInfo)
+        : isSet(object.plan_mode_open_router_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_open_router_model_info)
+        : undefined,
+      planModeNousResearchModelId: isSet(object.planModeNousResearchModelId)
+        ? globalThis.String(object.planModeNousResearchModelId)
+        : isSet(object.plan_mode_nous_research_model_id)
+        ? globalThis.String(object.plan_mode_nous_research_model_id)
+        : undefined,
+      actModeApiModelId: isSet(object.actModeApiModelId)
+        ? globalThis.String(object.actModeApiModelId)
+        : isSet(object.act_mode_api_model_id)
+        ? globalThis.String(object.act_mode_api_model_id)
+        : undefined,
+      actModeThinkingBudgetTokens: isSet(object.actModeThinkingBudgetTokens)
+        ? globalThis.Number(object.actModeThinkingBudgetTokens)
+        : isSet(object.act_mode_thinking_budget_tokens)
+        ? globalThis.Number(object.act_mode_thinking_budget_tokens)
+        : undefined,
+      actModeReasoningEffort: isSet(object.actModeReasoningEffort)
+        ? globalThis.String(object.actModeReasoningEffort)
+        : isSet(object.act_mode_reasoning_effort)
+        ? globalThis.String(object.act_mode_reasoning_effort)
+        : undefined,
+      actModeOpenRouterModelId: isSet(object.actModeOpenRouterModelId)
+        ? globalThis.String(object.actModeOpenRouterModelId)
+        : isSet(object.act_mode_open_router_model_id)
+        ? globalThis.String(object.act_mode_open_router_model_id)
+        : undefined,
+      actModeOpenRouterModelInfo: isSet(object.actModeOpenRouterModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeOpenRouterModelInfo)
+        : isSet(object.act_mode_open_router_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_open_router_model_info)
+        : undefined,
+      actModeNousResearchModelId: isSet(object.actModeNousResearchModelId)
+        ? globalThis.String(object.actModeNousResearchModelId)
+        : isSet(object.act_mode_nous_research_model_id)
+        ? globalThis.String(object.act_mode_nous_research_model_id)
+        : undefined,
+      planModeApiProvider: isSet(object.planModeApiProvider)
+        ? apiProviderFromJSON(object.planModeApiProvider)
+        : isSet(object.plan_mode_api_provider)
+        ? apiProviderFromJSON(object.plan_mode_api_provider)
+        : undefined,
+      actModeApiProvider: isSet(object.actModeApiProvider)
+        ? apiProviderFromJSON(object.actModeApiProvider)
+        : isSet(object.act_mode_api_provider)
+        ? apiProviderFromJSON(object.act_mode_api_provider)
+        : undefined,
+      autoApprovalSettings: isSet(object.autoApprovalSettings)
+        ? AutoApprovalSettings.fromJSON(object.autoApprovalSettings)
+        : isSet(object.auto_approval_settings)
+        ? AutoApprovalSettings.fromJSON(object.auto_approval_settings)
+        : undefined,
+      globalWorkflowToggles: isSet(object.globalWorkflowToggles)
+        ? globalThis.String(object.globalWorkflowToggles)
+        : isSet(object.global_workflow_toggles)
+        ? globalThis.String(object.global_workflow_toggles)
+        : undefined,
+      globalSkillsToggles: isSet(object.globalSkillsToggles)
+        ? globalThis.String(object.globalSkillsToggles)
+        : isSet(object.global_skills_toggles)
+        ? globalThis.String(object.global_skills_toggles)
+        : undefined,
+      browserSettings: isSet(object.browserSettings)
+        ? BrowserSettings.fromJSON(object.browserSettings)
+        : isSet(object.browser_settings)
+        ? BrowserSettings.fromJSON(object.browser_settings)
+        : undefined,
+      telemetrySetting: isSet(object.telemetrySetting)
+        ? globalThis.String(object.telemetrySetting)
+        : isSet(object.telemetry_setting)
+        ? globalThis.String(object.telemetry_setting)
+        : undefined,
+      planActSeparateModelsSetting: isSet(object.planActSeparateModelsSetting)
+        ? globalThis.Boolean(object.planActSeparateModelsSetting)
+        : isSet(object.plan_act_separate_models_setting)
+        ? globalThis.Boolean(object.plan_act_separate_models_setting)
+        : undefined,
+      enableCheckpointsSetting: isSet(object.enableCheckpointsSetting)
+        ? globalThis.Boolean(object.enableCheckpointsSetting)
+        : isSet(object.enable_checkpoints_setting)
+        ? globalThis.Boolean(object.enable_checkpoints_setting)
+        : undefined,
+      shellIntegrationTimeout: isSet(object.shellIntegrationTimeout)
+        ? globalThis.Number(object.shellIntegrationTimeout)
+        : isSet(object.shell_integration_timeout)
+        ? globalThis.Number(object.shell_integration_timeout)
+        : undefined,
+      defaultTerminalProfile: isSet(object.defaultTerminalProfile)
+        ? globalThis.String(object.defaultTerminalProfile)
+        : isSet(object.default_terminal_profile)
+        ? globalThis.String(object.default_terminal_profile)
+        : undefined,
+      terminalOutputLineLimit: isSet(object.terminalOutputLineLimit)
+        ? globalThis.Number(object.terminalOutputLineLimit)
+        : isSet(object.terminal_output_line_limit)
+        ? globalThis.Number(object.terminal_output_line_limit)
+        : undefined,
+      maxConsecutiveMistakes: isSet(object.maxConsecutiveMistakes)
+        ? globalThis.Number(object.maxConsecutiveMistakes)
+        : isSet(object.max_consecutive_mistakes)
+        ? globalThis.Number(object.max_consecutive_mistakes)
+        : undefined,
+      strictPlanModeEnabled: isSet(object.strictPlanModeEnabled)
+        ? globalThis.Boolean(object.strictPlanModeEnabled)
+        : isSet(object.strict_plan_mode_enabled)
+        ? globalThis.Boolean(object.strict_plan_mode_enabled)
+        : undefined,
+      yoloModeToggled: isSet(object.yoloModeToggled)
+        ? globalThis.Boolean(object.yoloModeToggled)
+        : isSet(object.yolo_mode_toggled)
+        ? globalThis.Boolean(object.yolo_mode_toggled)
+        : undefined,
+      useAutoCondense: isSet(object.useAutoCondense)
+        ? globalThis.Boolean(object.useAutoCondense)
+        : isSet(object.use_auto_condense)
+        ? globalThis.Boolean(object.use_auto_condense)
+        : undefined,
+      dietcodeWebToolsEnabled: isSet(object.dietcodeWebToolsEnabled)
+        ? globalThis.Boolean(object.dietcodeWebToolsEnabled)
+        : isSet(object.dietcode_web_tools_enabled)
+        ? globalThis.Boolean(object.dietcode_web_tools_enabled)
+        : undefined,
+      preferredLanguage: isSet(object.preferredLanguage)
+        ? globalThis.String(object.preferredLanguage)
+        : isSet(object.preferred_language)
+        ? globalThis.String(object.preferred_language)
+        : undefined,
+      mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : undefined,
+      focusChainSettings: isSet(object.focusChainSettings)
+        ? FocusChainSettings.fromJSON(object.focusChainSettings)
+        : isSet(object.focus_chain_settings)
+        ? FocusChainSettings.fromJSON(object.focus_chain_settings)
+        : undefined,
+      customPrompt: isSet(object.customPrompt)
+        ? globalThis.String(object.customPrompt)
+        : isSet(object.custom_prompt)
+        ? globalThis.String(object.custom_prompt)
+        : undefined,
+      subagentsEnabled: isSet(object.subagentsEnabled)
+        ? globalThis.Boolean(object.subagentsEnabled)
+        : isSet(object.subagents_enabled)
+        ? globalThis.Boolean(object.subagents_enabled)
+        : undefined,
+      enableParallelToolCalling: isSet(object.enableParallelToolCalling)
+        ? globalThis.Boolean(object.enableParallelToolCalling)
+        : isSet(object.enable_parallel_tool_calling)
+        ? globalThis.Boolean(object.enable_parallel_tool_calling)
+        : undefined,
+      backgroundEditEnabled: isSet(object.backgroundEditEnabled)
+        ? globalThis.Boolean(object.backgroundEditEnabled)
+        : isSet(object.background_edit_enabled)
+        ? globalThis.Boolean(object.background_edit_enabled)
+        : undefined,
+      optOutOfRemoteConfig: isSet(object.optOutOfRemoteConfig)
+        ? globalThis.Boolean(object.optOutOfRemoteConfig)
+        : isSet(object.opt_out_of_remote_config)
+        ? globalThis.Boolean(object.opt_out_of_remote_config)
+        : undefined,
+      openTelemetryEnabled: isSet(object.openTelemetryEnabled)
+        ? globalThis.Boolean(object.openTelemetryEnabled)
+        : isSet(object.open_telemetry_enabled)
+        ? globalThis.Boolean(object.open_telemetry_enabled)
+        : undefined,
+      openTelemetryMetricsExporter: isSet(object.openTelemetryMetricsExporter)
+        ? globalThis.String(object.openTelemetryMetricsExporter)
+        : isSet(object.open_telemetry_metrics_exporter)
+        ? globalThis.String(object.open_telemetry_metrics_exporter)
+        : undefined,
+      openTelemetryLogsExporter: isSet(object.openTelemetryLogsExporter)
+        ? globalThis.String(object.openTelemetryLogsExporter)
+        : isSet(object.open_telemetry_logs_exporter)
+        ? globalThis.String(object.open_telemetry_logs_exporter)
+        : undefined,
+      openTelemetryOtlpProtocol: isSet(object.openTelemetryOtlpProtocol)
+        ? globalThis.String(object.openTelemetryOtlpProtocol)
+        : isSet(object.open_telemetry_otlp_protocol)
+        ? globalThis.String(object.open_telemetry_otlp_protocol)
+        : undefined,
+      openTelemetryOtlpEndpoint: isSet(object.openTelemetryOtlpEndpoint)
+        ? globalThis.String(object.openTelemetryOtlpEndpoint)
+        : isSet(object.open_telemetry_otlp_endpoint)
+        ? globalThis.String(object.open_telemetry_otlp_endpoint)
+        : undefined,
+      openTelemetryOtlpMetricsProtocol: isSet(object.openTelemetryOtlpMetricsProtocol)
+        ? globalThis.String(object.openTelemetryOtlpMetricsProtocol)
+        : isSet(object.open_telemetry_otlp_metrics_protocol)
+        ? globalThis.String(object.open_telemetry_otlp_metrics_protocol)
+        : undefined,
+      openTelemetryOtlpMetricsEndpoint: isSet(object.openTelemetryOtlpMetricsEndpoint)
+        ? globalThis.String(object.openTelemetryOtlpMetricsEndpoint)
+        : isSet(object.open_telemetry_otlp_metrics_endpoint)
+        ? globalThis.String(object.open_telemetry_otlp_metrics_endpoint)
+        : undefined,
+      openTelemetryOtlpLogsProtocol: isSet(object.openTelemetryOtlpLogsProtocol)
+        ? globalThis.String(object.openTelemetryOtlpLogsProtocol)
+        : isSet(object.open_telemetry_otlp_logs_protocol)
+        ? globalThis.String(object.open_telemetry_otlp_logs_protocol)
+        : undefined,
+      openTelemetryOtlpLogsEndpoint: isSet(object.openTelemetryOtlpLogsEndpoint)
+        ? globalThis.String(object.openTelemetryOtlpLogsEndpoint)
+        : isSet(object.open_telemetry_otlp_logs_endpoint)
+        ? globalThis.String(object.open_telemetry_otlp_logs_endpoint)
+        : undefined,
+      openTelemetryMetricExportInterval: isSet(object.openTelemetryMetricExportInterval)
+        ? globalThis.Number(object.openTelemetryMetricExportInterval)
+        : isSet(object.open_telemetry_metric_export_interval)
+        ? globalThis.Number(object.open_telemetry_metric_export_interval)
+        : undefined,
+      openTelemetryOtlpInsecure: isSet(object.openTelemetryOtlpInsecure)
+        ? globalThis.Boolean(object.openTelemetryOtlpInsecure)
+        : isSet(object.open_telemetry_otlp_insecure)
+        ? globalThis.Boolean(object.open_telemetry_otlp_insecure)
+        : undefined,
+      openTelemetryLogBatchSize: isSet(object.openTelemetryLogBatchSize)
+        ? globalThis.Number(object.openTelemetryLogBatchSize)
+        : isSet(object.open_telemetry_log_batch_size)
+        ? globalThis.Number(object.open_telemetry_log_batch_size)
+        : undefined,
+      openTelemetryLogBatchTimeout: isSet(object.openTelemetryLogBatchTimeout)
+        ? globalThis.Number(object.openTelemetryLogBatchTimeout)
+        : isSet(object.open_telemetry_log_batch_timeout)
+        ? globalThis.Number(object.open_telemetry_log_batch_timeout)
+        : undefined,
+      openTelemetryLogMaxQueueSize: isSet(object.openTelemetryLogMaxQueueSize)
+        ? globalThis.Number(object.openTelemetryLogMaxQueueSize)
+        : isSet(object.open_telemetry_log_max_queue_size)
+        ? globalThis.Number(object.open_telemetry_log_max_queue_size)
+        : undefined,
+      worktreesEnabled: isSet(object.worktreesEnabled)
+        ? globalThis.Boolean(object.worktreesEnabled)
+        : isSet(object.worktrees_enabled)
+        ? globalThis.Boolean(object.worktrees_enabled)
+        : undefined,
+      doubleCheckCompletionEnabled: isSet(object.doubleCheckCompletionEnabled)
+        ? globalThis.Boolean(object.doubleCheckCompletionEnabled)
+        : isSet(object.double_check_completion_enabled)
+        ? globalThis.Boolean(object.double_check_completion_enabled)
+        : undefined,
+      cloudflareAccountId: isSet(object.cloudflareAccountId)
+        ? globalThis.String(object.cloudflareAccountId)
+        : isSet(object.cloudflare_account_id)
+        ? globalThis.String(object.cloudflare_account_id)
+        : undefined,
+      embeddingProvider: isSet(object.embeddingProvider)
+        ? apiProviderFromJSON(object.embeddingProvider)
+        : isSet(object.embedding_provider)
+        ? apiProviderFromJSON(object.embedding_provider)
+        : undefined,
+      embeddingModelId: isSet(object.embeddingModelId)
+        ? globalThis.String(object.embeddingModelId)
+        : isSet(object.embedding_model_id)
+        ? globalThis.String(object.embedding_model_id)
+        : undefined,
+      embeddingOpenAiBaseUrl: isSet(object.embeddingOpenAiBaseUrl)
+        ? globalThis.String(object.embeddingOpenAiBaseUrl)
+        : isSet(object.embedding_open_ai_base_url)
+        ? globalThis.String(object.embedding_open_ai_base_url)
+        : undefined,
+      maxSwarmDepth: isSet(object.maxSwarmDepth)
+        ? globalThis.Number(object.maxSwarmDepth)
+        : isSet(object.max_swarm_depth)
+        ? globalThis.Number(object.max_swarm_depth)
+        : undefined,
+      safeYoloModeToggled: isSet(object.safeYoloModeToggled)
+        ? globalThis.Boolean(object.safeYoloModeToggled)
+        : isSet(object.safe_yolo_mode_toggled)
+        ? globalThis.Boolean(object.safe_yolo_mode_toggled)
+        : undefined,
+      masEnabled: isSet(object.masEnabled)
+        ? globalThis.Boolean(object.masEnabled)
+        : isSet(object.mas_enabled)
+        ? globalThis.Boolean(object.mas_enabled)
+        : undefined,
+      globalDietCodeRulesToggles: isSet(object.globalDietCodeRulesToggles)
+        ? globalThis.String(object.globalDietCodeRulesToggles)
+        : isSet(object.global_diet_code_rules_toggles)
+        ? globalThis.String(object.global_diet_code_rules_toggles)
+        : undefined,
+      auditCompletionGateEnabled: isSet(object.auditCompletionGateEnabled)
+        ? globalThis.Boolean(object.auditCompletionGateEnabled)
+        : isSet(object.audit_completion_gate_enabled)
+        ? globalThis.Boolean(object.audit_completion_gate_enabled)
+        : undefined,
+      auditCompletionGateThreshold: isSet(object.auditCompletionGateThreshold)
+        ? globalThis.Number(object.auditCompletionGateThreshold)
+        : isSet(object.audit_completion_gate_threshold)
+        ? globalThis.Number(object.audit_completion_gate_threshold)
+        : undefined,
+      auditCompletionGateCriticalOnly: isSet(object.auditCompletionGateCriticalOnly)
+        ? globalThis.Boolean(object.auditCompletionGateCriticalOnly)
+        : isSet(object.audit_completion_gate_critical_only)
+        ? globalThis.Boolean(object.audit_completion_gate_critical_only)
+        : undefined,
+      auditActModeAdvisoryEnabled: isSet(object.auditActModeAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditActModeAdvisoryEnabled)
+        : isSet(object.audit_act_mode_advisory_enabled)
+        ? globalThis.Boolean(object.audit_act_mode_advisory_enabled)
+        : undefined,
+      auditAdvisoryEscalationEnabled: isSet(object.auditAdvisoryEscalationEnabled)
+        ? globalThis.Boolean(object.auditAdvisoryEscalationEnabled)
+        : isSet(object.audit_advisory_escalation_enabled)
+        ? globalThis.Boolean(object.audit_advisory_escalation_enabled)
+        : undefined,
+      auditPlanRegressionGateEnabled: isSet(object.auditPlanRegressionGateEnabled)
+        ? globalThis.Boolean(object.auditPlanRegressionGateEnabled)
+        : isSet(object.audit_plan_regression_gate_enabled)
+        ? globalThis.Boolean(object.audit_plan_regression_gate_enabled)
+        : undefined,
+      auditToolOutputAdvisoryEnabled: isSet(object.auditToolOutputAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditToolOutputAdvisoryEnabled)
+        : isSet(object.audit_tool_output_advisory_enabled)
+        ? globalThis.Boolean(object.audit_tool_output_advisory_enabled)
+        : undefined,
+      auditFileWriteAdvisoryEnabled: isSet(object.auditFileWriteAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditFileWriteAdvisoryEnabled)
+        : isSet(object.audit_file_write_advisory_enabled)
+        ? globalThis.Boolean(object.audit_file_write_advisory_enabled)
+        : undefined,
+      auditIntentThresholdAdjustmentsEnabled: isSet(object.auditIntentThresholdAdjustmentsEnabled)
+        ? globalThis.Boolean(object.auditIntentThresholdAdjustmentsEnabled)
+        : isSet(object.audit_intent_threshold_adjustments_enabled)
+        ? globalThis.Boolean(object.audit_intent_threshold_adjustments_enabled)
+        : undefined,
+      auditIntentThresholdOverrides: isSet(object.auditIntentThresholdOverrides)
+        ? globalThis.String(object.auditIntentThresholdOverrides)
+        : isSet(object.audit_intent_threshold_overrides)
+        ? globalThis.String(object.audit_intent_threshold_overrides)
+        : undefined,
+      auditSarifHookExportEnabled: isSet(object.auditSarifHookExportEnabled)
+        ? globalThis.Boolean(object.auditSarifHookExportEnabled)
+        : isSet(object.audit_sarif_hook_export_enabled)
+        ? globalThis.Boolean(object.audit_sarif_hook_export_enabled)
+        : undefined,
+      auditWorkspaceArtifactsEnabled: isSet(object.auditWorkspaceArtifactsEnabled)
+        ? globalThis.Boolean(object.auditWorkspaceArtifactsEnabled)
+        : isSet(object.audit_workspace_artifacts_enabled)
+        ? globalThis.Boolean(object.audit_workspace_artifacts_enabled)
+        : undefined,
+      auditAdvisoryAutoScrollMode: isSet(object.auditAdvisoryAutoScrollMode)
+        ? globalThis.String(object.auditAdvisoryAutoScrollMode)
+        : isSet(object.audit_advisory_auto_scroll_mode)
+        ? globalThis.String(object.audit_advisory_auto_scroll_mode)
+        : undefined,
+      liteLlmBaseUrl: isSet(object.liteLlmBaseUrl)
+        ? globalThis.String(object.liteLlmBaseUrl)
+        : isSet(object.lite_llm_base_url)
+        ? globalThis.String(object.lite_llm_base_url)
+        : undefined,
+      liteLlmUsePromptCache: isSet(object.liteLlmUsePromptCache)
+        ? globalThis.Boolean(object.liteLlmUsePromptCache)
+        : isSet(object.lite_llm_use_prompt_cache)
+        ? globalThis.Boolean(object.lite_llm_use_prompt_cache)
+        : undefined,
+      anthropicBaseUrl: isSet(object.anthropicBaseUrl)
+        ? globalThis.String(object.anthropicBaseUrl)
+        : isSet(object.anthropic_base_url)
+        ? globalThis.String(object.anthropic_base_url)
+        : undefined,
+      awsRegion: isSet(object.awsRegion)
+        ? globalThis.String(object.awsRegion)
+        : isSet(object.aws_region)
+        ? globalThis.String(object.aws_region)
+        : undefined,
+      awsUseCrossRegionInference: isSet(object.awsUseCrossRegionInference)
+        ? globalThis.Boolean(object.awsUseCrossRegionInference)
+        : isSet(object.aws_use_cross_region_inference)
+        ? globalThis.Boolean(object.aws_use_cross_region_inference)
+        : undefined,
+      awsUseGlobalInference: isSet(object.awsUseGlobalInference)
+        ? globalThis.Boolean(object.awsUseGlobalInference)
+        : isSet(object.aws_use_global_inference)
+        ? globalThis.Boolean(object.aws_use_global_inference)
+        : undefined,
+      awsBedrockUsePromptCache: isSet(object.awsBedrockUsePromptCache)
+        ? globalThis.Boolean(object.awsBedrockUsePromptCache)
+        : isSet(object.aws_bedrock_use_prompt_cache)
+        ? globalThis.Boolean(object.aws_bedrock_use_prompt_cache)
+        : undefined,
+      awsAuthentication: isSet(object.awsAuthentication)
+        ? globalThis.String(object.awsAuthentication)
+        : isSet(object.aws_authentication)
+        ? globalThis.String(object.aws_authentication)
+        : undefined,
+      awsUseProfile: isSet(object.awsUseProfile)
+        ? globalThis.Boolean(object.awsUseProfile)
+        : isSet(object.aws_use_profile)
+        ? globalThis.Boolean(object.aws_use_profile)
+        : undefined,
+      awsProfile: isSet(object.awsProfile)
+        ? globalThis.String(object.awsProfile)
+        : isSet(object.aws_profile)
+        ? globalThis.String(object.aws_profile)
+        : undefined,
+      awsBedrockEndpoint: isSet(object.awsBedrockEndpoint)
+        ? globalThis.String(object.awsBedrockEndpoint)
+        : isSet(object.aws_bedrock_endpoint)
+        ? globalThis.String(object.aws_bedrock_endpoint)
+        : undefined,
+      claudeCodePath: isSet(object.claudeCodePath)
+        ? globalThis.String(object.claudeCodePath)
+        : isSet(object.claude_code_path)
+        ? globalThis.String(object.claude_code_path)
+        : undefined,
+      openAiBaseUrl: isSet(object.openAiBaseUrl)
+        ? globalThis.String(object.openAiBaseUrl)
+        : isSet(object.open_ai_base_url)
+        ? globalThis.String(object.open_ai_base_url)
+        : undefined,
+      ollamaBaseUrl: isSet(object.ollamaBaseUrl)
+        ? globalThis.String(object.ollamaBaseUrl)
+        : isSet(object.ollama_base_url)
+        ? globalThis.String(object.ollama_base_url)
+        : undefined,
+      ollamaApiOptionsCtxNum: isSet(object.ollamaApiOptionsCtxNum)
+        ? globalThis.String(object.ollamaApiOptionsCtxNum)
+        : isSet(object.ollama_api_options_ctx_num)
+        ? globalThis.String(object.ollama_api_options_ctx_num)
+        : undefined,
+      lmStudioBaseUrl: isSet(object.lmStudioBaseUrl)
+        ? globalThis.String(object.lmStudioBaseUrl)
+        : isSet(object.lm_studio_base_url)
+        ? globalThis.String(object.lm_studio_base_url)
+        : undefined,
+      lmStudioMaxTokens: isSet(object.lmStudioMaxTokens)
+        ? globalThis.String(object.lmStudioMaxTokens)
+        : isSet(object.lm_studio_max_tokens)
+        ? globalThis.String(object.lm_studio_max_tokens)
+        : undefined,
+      geminiBaseUrl: isSet(object.geminiBaseUrl)
+        ? globalThis.String(object.geminiBaseUrl)
+        : isSet(object.gemini_base_url)
+        ? globalThis.String(object.gemini_base_url)
+        : undefined,
+      requestyBaseUrl: isSet(object.requestyBaseUrl)
+        ? globalThis.String(object.requestyBaseUrl)
+        : isSet(object.requesty_base_url)
+        ? globalThis.String(object.requesty_base_url)
+        : undefined,
+      fireworksModelMaxCompletionTokens: isSet(object.fireworksModelMaxCompletionTokens)
+        ? globalThis.Number(object.fireworksModelMaxCompletionTokens)
+        : isSet(object.fireworks_model_max_completion_tokens)
+        ? globalThis.Number(object.fireworks_model_max_completion_tokens)
+        : undefined,
+      fireworksModelMaxTokens: isSet(object.fireworksModelMaxTokens)
+        ? globalThis.Number(object.fireworksModelMaxTokens)
+        : isSet(object.fireworks_model_max_tokens)
+        ? globalThis.Number(object.fireworks_model_max_tokens)
+        : undefined,
+      qwenCodeOauthPath: isSet(object.qwenCodeOauthPath)
+        ? globalThis.String(object.qwenCodeOauthPath)
+        : isSet(object.qwen_code_oauth_path)
+        ? globalThis.String(object.qwen_code_oauth_path)
+        : undefined,
+      azureApiVersion: isSet(object.azureApiVersion)
+        ? globalThis.String(object.azureApiVersion)
+        : isSet(object.azure_api_version)
+        ? globalThis.String(object.azure_api_version)
+        : undefined,
+      azureIdentity: isSet(object.azureIdentity)
+        ? globalThis.Boolean(object.azureIdentity)
+        : isSet(object.azure_identity)
+        ? globalThis.Boolean(object.azure_identity)
+        : undefined,
+      qwenApiLine: isSet(object.qwenApiLine)
+        ? globalThis.String(object.qwenApiLine)
+        : isSet(object.qwen_api_line)
+        ? globalThis.String(object.qwen_api_line)
+        : undefined,
+      moonshotApiLine: isSet(object.moonshotApiLine)
+        ? globalThis.String(object.moonshotApiLine)
+        : isSet(object.moonshot_api_line)
+        ? globalThis.String(object.moonshot_api_line)
+        : undefined,
+      asksageApiUrl: isSet(object.asksageApiUrl)
+        ? globalThis.String(object.asksageApiUrl)
+        : isSet(object.asksage_api_url)
+        ? globalThis.String(object.asksage_api_url)
+        : undefined,
+      requestTimeoutMs: isSet(object.requestTimeoutMs)
+        ? globalThis.Number(object.requestTimeoutMs)
+        : isSet(object.request_timeout_ms)
+        ? globalThis.Number(object.request_timeout_ms)
+        : undefined,
+      sapAiResourceGroup: isSet(object.sapAiResourceGroup)
+        ? globalThis.String(object.sapAiResourceGroup)
+        : isSet(object.sap_ai_resource_group)
+        ? globalThis.String(object.sap_ai_resource_group)
+        : undefined,
+      sapAiCoreTokenUrl: isSet(object.sapAiCoreTokenUrl)
+        ? globalThis.String(object.sapAiCoreTokenUrl)
+        : isSet(object.sap_ai_core_token_url)
+        ? globalThis.String(object.sap_ai_core_token_url)
+        : undefined,
+      sapAiCoreBaseUrl: isSet(object.sapAiCoreBaseUrl)
+        ? globalThis.String(object.sapAiCoreBaseUrl)
+        : isSet(object.sap_ai_core_base_url)
+        ? globalThis.String(object.sap_ai_core_base_url)
+        : undefined,
+      sapAiCoreUseOrchestrationMode: isSet(object.sapAiCoreUseOrchestrationMode)
+        ? globalThis.Boolean(object.sapAiCoreUseOrchestrationMode)
+        : isSet(object.sap_ai_core_use_orchestration_mode)
+        ? globalThis.Boolean(object.sap_ai_core_use_orchestration_mode)
+        : undefined,
+      difyBaseUrl: isSet(object.difyBaseUrl)
+        ? globalThis.String(object.difyBaseUrl)
+        : isSet(object.dify_base_url)
+        ? globalThis.String(object.dify_base_url)
+        : undefined,
+      zaiApiLine: isSet(object.zaiApiLine)
+        ? globalThis.String(object.zaiApiLine)
+        : isSet(object.zai_api_line)
+        ? globalThis.String(object.zai_api_line)
+        : undefined,
+      ocaBaseUrl: isSet(object.ocaBaseUrl)
+        ? globalThis.String(object.ocaBaseUrl)
+        : isSet(object.oca_base_url)
+        ? globalThis.String(object.oca_base_url)
+        : undefined,
+      minimaxApiLine: isSet(object.minimaxApiLine)
+        ? globalThis.String(object.minimaxApiLine)
+        : isSet(object.minimax_api_line)
+        ? globalThis.String(object.minimax_api_line)
+        : undefined,
+      ocaMode: isSet(object.ocaMode)
+        ? globalThis.String(object.ocaMode)
+        : isSet(object.oca_mode)
+        ? globalThis.String(object.oca_mode)
+        : undefined,
+      aihubmixBaseUrl: isSet(object.aihubmixBaseUrl)
+        ? globalThis.String(object.aihubmixBaseUrl)
+        : isSet(object.aihubmix_base_url)
+        ? globalThis.String(object.aihubmix_base_url)
+        : undefined,
+      aihubmixAppCode: isSet(object.aihubmixAppCode)
+        ? globalThis.String(object.aihubmixAppCode)
+        : isSet(object.aihubmix_app_code)
+        ? globalThis.String(object.aihubmix_app_code)
+        : undefined,
+      geminiPlanModeThinkingLevel: isSet(object.geminiPlanModeThinkingLevel)
+        ? globalThis.String(object.geminiPlanModeThinkingLevel)
+        : isSet(object.gemini_plan_mode_thinking_level)
+        ? globalThis.String(object.gemini_plan_mode_thinking_level)
+        : undefined,
+      planModeVerbosity: isSet(object.planModeVerbosity)
+        ? globalThis.String(object.planModeVerbosity)
+        : isSet(object.plan_mode_verbosity)
+        ? globalThis.String(object.plan_mode_verbosity)
+        : undefined,
+      planModeVsCodeLmModelSelector: isSet(object.planModeVsCodeLmModelSelector)
+        ? LanguageModelChatSelector.fromJSON(object.planModeVsCodeLmModelSelector)
+        : isSet(object.plan_mode_vs_code_lm_model_selector)
+        ? LanguageModelChatSelector.fromJSON(object.plan_mode_vs_code_lm_model_selector)
+        : undefined,
+      planModeAwsBedrockCustomSelected: isSet(object.planModeAwsBedrockCustomSelected)
+        ? globalThis.Boolean(object.planModeAwsBedrockCustomSelected)
+        : isSet(object.plan_mode_aws_bedrock_custom_selected)
+        ? globalThis.Boolean(object.plan_mode_aws_bedrock_custom_selected)
+        : undefined,
+      planModeAwsBedrockCustomModelBaseId: isSet(object.planModeAwsBedrockCustomModelBaseId)
+        ? globalThis.String(object.planModeAwsBedrockCustomModelBaseId)
+        : isSet(object.plan_mode_aws_bedrock_custom_model_base_id)
+        ? globalThis.String(object.plan_mode_aws_bedrock_custom_model_base_id)
+        : undefined,
+      planModeDietCodeModelId: isSet(object.planModeDietCodeModelId)
+        ? globalThis.String(object.planModeDietCodeModelId)
+        : isSet(object.plan_mode_diet_code_model_id)
+        ? globalThis.String(object.plan_mode_diet_code_model_id)
+        : undefined,
+      planModeDietCodeModelInfo: isSet(object.planModeDietCodeModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeDietCodeModelInfo)
+        : isSet(object.plan_mode_diet_code_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_diet_code_model_info)
+        : undefined,
+      planModeOpenAiModelId: isSet(object.planModeOpenAiModelId)
+        ? globalThis.String(object.planModeOpenAiModelId)
+        : isSet(object.plan_mode_open_ai_model_id)
+        ? globalThis.String(object.plan_mode_open_ai_model_id)
+        : undefined,
+      planModeOpenAiModelInfo: isSet(object.planModeOpenAiModelInfo)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.planModeOpenAiModelInfo)
+        : isSet(object.plan_mode_open_ai_model_info)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.plan_mode_open_ai_model_info)
+        : undefined,
+      planModeOllamaModelId: isSet(object.planModeOllamaModelId)
+        ? globalThis.String(object.planModeOllamaModelId)
+        : isSet(object.plan_mode_ollama_model_id)
+        ? globalThis.String(object.plan_mode_ollama_model_id)
+        : undefined,
+      planModeLmStudioModelId: isSet(object.planModeLmStudioModelId)
+        ? globalThis.String(object.planModeLmStudioModelId)
+        : isSet(object.plan_mode_lm_studio_model_id)
+        ? globalThis.String(object.plan_mode_lm_studio_model_id)
+        : undefined,
+      planModeLiteLlmModelId: isSet(object.planModeLiteLlmModelId)
+        ? globalThis.String(object.planModeLiteLlmModelId)
+        : isSet(object.plan_mode_lite_llm_model_id)
+        ? globalThis.String(object.plan_mode_lite_llm_model_id)
+        : undefined,
+      planModeLiteLlmModelInfo: isSet(object.planModeLiteLlmModelInfo)
+        ? LiteLLMModelInfo.fromJSON(object.planModeLiteLlmModelInfo)
+        : isSet(object.plan_mode_lite_llm_model_info)
+        ? LiteLLMModelInfo.fromJSON(object.plan_mode_lite_llm_model_info)
+        : undefined,
+      planModeRequestyModelId: isSet(object.planModeRequestyModelId)
+        ? globalThis.String(object.planModeRequestyModelId)
+        : isSet(object.plan_mode_requesty_model_id)
+        ? globalThis.String(object.plan_mode_requesty_model_id)
+        : undefined,
+      planModeRequestyModelInfo: isSet(object.planModeRequestyModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeRequestyModelInfo)
+        : isSet(object.plan_mode_requesty_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_requesty_model_info)
+        : undefined,
+      planModeTogetherModelId: isSet(object.planModeTogetherModelId)
+        ? globalThis.String(object.planModeTogetherModelId)
+        : isSet(object.plan_mode_together_model_id)
+        ? globalThis.String(object.plan_mode_together_model_id)
+        : undefined,
+      planModeFireworksModelId: isSet(object.planModeFireworksModelId)
+        ? globalThis.String(object.planModeFireworksModelId)
+        : isSet(object.plan_mode_fireworks_model_id)
+        ? globalThis.String(object.plan_mode_fireworks_model_id)
+        : undefined,
+      planModeSapAiCoreModelId: isSet(object.planModeSapAiCoreModelId)
+        ? globalThis.String(object.planModeSapAiCoreModelId)
+        : isSet(object.plan_mode_sap_ai_core_model_id)
+        ? globalThis.String(object.plan_mode_sap_ai_core_model_id)
+        : undefined,
+      planModeSapAiCoreDeploymentId: isSet(object.planModeSapAiCoreDeploymentId)
+        ? globalThis.String(object.planModeSapAiCoreDeploymentId)
+        : isSet(object.plan_mode_sap_ai_core_deployment_id)
+        ? globalThis.String(object.plan_mode_sap_ai_core_deployment_id)
+        : undefined,
+      planModeGroqModelId: isSet(object.planModeGroqModelId)
+        ? globalThis.String(object.planModeGroqModelId)
+        : isSet(object.plan_mode_groq_model_id)
+        ? globalThis.String(object.plan_mode_groq_model_id)
+        : undefined,
+      planModeGroqModelInfo: isSet(object.planModeGroqModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeGroqModelInfo)
+        : isSet(object.plan_mode_groq_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_groq_model_info)
+        : undefined,
+      planModeBasetenModelId: isSet(object.planModeBasetenModelId)
+        ? globalThis.String(object.planModeBasetenModelId)
+        : isSet(object.plan_mode_baseten_model_id)
+        ? globalThis.String(object.plan_mode_baseten_model_id)
+        : undefined,
+      planModeBasetenModelInfo: isSet(object.planModeBasetenModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeBasetenModelInfo)
+        : isSet(object.plan_mode_baseten_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_baseten_model_info)
+        : undefined,
+      planModeHuggingFaceModelId: isSet(object.planModeHuggingFaceModelId)
+        ? globalThis.String(object.planModeHuggingFaceModelId)
+        : isSet(object.plan_mode_hugging_face_model_id)
+        ? globalThis.String(object.plan_mode_hugging_face_model_id)
+        : undefined,
+      planModeHuggingFaceModelInfo: isSet(object.planModeHuggingFaceModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
+        : isSet(object.plan_mode_hugging_face_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
+        : undefined,
+      planModeHuaweiCloudMaasModelId: isSet(object.planModeHuaweiCloudMaasModelId)
+        ? globalThis.String(object.planModeHuaweiCloudMaasModelId)
+        : isSet(object.plan_mode_huawei_cloud_maas_model_id)
+        ? globalThis.String(object.plan_mode_huawei_cloud_maas_model_id)
+        : undefined,
+      planModeHuaweiCloudMaasModelInfo: isSet(object.planModeHuaweiCloudMaasModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
+        : isSet(object.plan_mode_huawei_cloud_maas_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
+        : undefined,
+      planModeOcaModelId: isSet(object.planModeOcaModelId)
+        ? globalThis.String(object.planModeOcaModelId)
+        : isSet(object.plan_mode_oca_model_id)
+        ? globalThis.String(object.plan_mode_oca_model_id)
+        : undefined,
+      planModeOcaModelInfo: isSet(object.planModeOcaModelInfo)
+        ? OcaModelInfo.fromJSON(object.planModeOcaModelInfo)
+        : isSet(object.plan_mode_oca_model_info)
+        ? OcaModelInfo.fromJSON(object.plan_mode_oca_model_info)
+        : undefined,
+      planModeOcaReasoningEffort: isSet(object.planModeOcaReasoningEffort)
+        ? globalThis.String(object.planModeOcaReasoningEffort)
+        : isSet(object.plan_mode_oca_reasoning_effort)
+        ? globalThis.String(object.plan_mode_oca_reasoning_effort)
+        : undefined,
+      planModeAihubmixModelId: isSet(object.planModeAihubmixModelId)
+        ? globalThis.String(object.planModeAihubmixModelId)
+        : isSet(object.plan_mode_aihubmix_model_id)
+        ? globalThis.String(object.plan_mode_aihubmix_model_id)
+        : undefined,
+      planModeAihubmixModelInfo: isSet(object.planModeAihubmixModelInfo)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.planModeAihubmixModelInfo)
+        : isSet(object.plan_mode_aihubmix_model_info)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.plan_mode_aihubmix_model_info)
+        : undefined,
+      planModeHicapModelId: isSet(object.planModeHicapModelId)
+        ? globalThis.String(object.planModeHicapModelId)
+        : isSet(object.plan_mode_hicap_model_id)
+        ? globalThis.String(object.plan_mode_hicap_model_id)
+        : undefined,
+      planModeHicapModelInfo: isSet(object.planModeHicapModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeHicapModelInfo)
+        : isSet(object.plan_mode_hicap_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hicap_model_info)
+        : undefined,
+      planModeVercelAiGatewayModelId: isSet(object.planModeVercelAiGatewayModelId)
+        ? globalThis.String(object.planModeVercelAiGatewayModelId)
+        : isSet(object.plan_mode_vercel_ai_gateway_model_id)
+        ? globalThis.String(object.plan_mode_vercel_ai_gateway_model_id)
+        : undefined,
+      planModeVercelAiGatewayModelInfo: isSet(object.planModeVercelAiGatewayModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
+        : isSet(object.plan_mode_vercel_ai_gateway_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
+        : undefined,
+      geminiActModeThinkingLevel: isSet(object.geminiActModeThinkingLevel)
+        ? globalThis.String(object.geminiActModeThinkingLevel)
+        : isSet(object.gemini_act_mode_thinking_level)
+        ? globalThis.String(object.gemini_act_mode_thinking_level)
+        : undefined,
+      actModeVerbosity: isSet(object.actModeVerbosity)
+        ? globalThis.String(object.actModeVerbosity)
+        : isSet(object.act_mode_verbosity)
+        ? globalThis.String(object.act_mode_verbosity)
+        : undefined,
+      actModeVsCodeLmModelSelector: isSet(object.actModeVsCodeLmModelSelector)
+        ? LanguageModelChatSelector.fromJSON(object.actModeVsCodeLmModelSelector)
+        : isSet(object.act_mode_vs_code_lm_model_selector)
+        ? LanguageModelChatSelector.fromJSON(object.act_mode_vs_code_lm_model_selector)
+        : undefined,
+      actModeAwsBedrockCustomSelected: isSet(object.actModeAwsBedrockCustomSelected)
+        ? globalThis.Boolean(object.actModeAwsBedrockCustomSelected)
+        : isSet(object.act_mode_aws_bedrock_custom_selected)
+        ? globalThis.Boolean(object.act_mode_aws_bedrock_custom_selected)
+        : undefined,
+      actModeAwsBedrockCustomModelBaseId: isSet(object.actModeAwsBedrockCustomModelBaseId)
+        ? globalThis.String(object.actModeAwsBedrockCustomModelBaseId)
+        : isSet(object.act_mode_aws_bedrock_custom_model_base_id)
+        ? globalThis.String(object.act_mode_aws_bedrock_custom_model_base_id)
+        : undefined,
+      actModeDietCodeModelId: isSet(object.actModeDietCodeModelId)
+        ? globalThis.String(object.actModeDietCodeModelId)
+        : isSet(object.act_mode_diet_code_model_id)
+        ? globalThis.String(object.act_mode_diet_code_model_id)
+        : undefined,
+      actModeDietCodeModelInfo: isSet(object.actModeDietCodeModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeDietCodeModelInfo)
+        : isSet(object.act_mode_diet_code_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_diet_code_model_info)
+        : undefined,
+      actModeOpenAiModelId: isSet(object.actModeOpenAiModelId)
+        ? globalThis.String(object.actModeOpenAiModelId)
+        : isSet(object.act_mode_open_ai_model_id)
+        ? globalThis.String(object.act_mode_open_ai_model_id)
+        : undefined,
+      actModeOpenAiModelInfo: isSet(object.actModeOpenAiModelInfo)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.actModeOpenAiModelInfo)
+        : isSet(object.act_mode_open_ai_model_info)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.act_mode_open_ai_model_info)
+        : undefined,
+      actModeOllamaModelId: isSet(object.actModeOllamaModelId)
+        ? globalThis.String(object.actModeOllamaModelId)
+        : isSet(object.act_mode_ollama_model_id)
+        ? globalThis.String(object.act_mode_ollama_model_id)
+        : undefined,
+      actModeLmStudioModelId: isSet(object.actModeLmStudioModelId)
+        ? globalThis.String(object.actModeLmStudioModelId)
+        : isSet(object.act_mode_lm_studio_model_id)
+        ? globalThis.String(object.act_mode_lm_studio_model_id)
+        : undefined,
+      actModeLiteLlmModelId: isSet(object.actModeLiteLlmModelId)
+        ? globalThis.String(object.actModeLiteLlmModelId)
+        : isSet(object.act_mode_lite_llm_model_id)
+        ? globalThis.String(object.act_mode_lite_llm_model_id)
+        : undefined,
+      actModeLiteLlmModelInfo: isSet(object.actModeLiteLlmModelInfo)
+        ? LiteLLMModelInfo.fromJSON(object.actModeLiteLlmModelInfo)
+        : isSet(object.act_mode_lite_llm_model_info)
+        ? LiteLLMModelInfo.fromJSON(object.act_mode_lite_llm_model_info)
+        : undefined,
+      actModeRequestyModelId: isSet(object.actModeRequestyModelId)
+        ? globalThis.String(object.actModeRequestyModelId)
+        : isSet(object.act_mode_requesty_model_id)
+        ? globalThis.String(object.act_mode_requesty_model_id)
+        : undefined,
+      actModeRequestyModelInfo: isSet(object.actModeRequestyModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeRequestyModelInfo)
+        : isSet(object.act_mode_requesty_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_requesty_model_info)
+        : undefined,
+      actModeTogetherModelId: isSet(object.actModeTogetherModelId)
+        ? globalThis.String(object.actModeTogetherModelId)
+        : isSet(object.act_mode_together_model_id)
+        ? globalThis.String(object.act_mode_together_model_id)
+        : undefined,
+      actModeFireworksModelId: isSet(object.actModeFireworksModelId)
+        ? globalThis.String(object.actModeFireworksModelId)
+        : isSet(object.act_mode_fireworks_model_id)
+        ? globalThis.String(object.act_mode_fireworks_model_id)
+        : undefined,
+      actModeSapAiCoreModelId: isSet(object.actModeSapAiCoreModelId)
+        ? globalThis.String(object.actModeSapAiCoreModelId)
+        : isSet(object.act_mode_sap_ai_core_model_id)
+        ? globalThis.String(object.act_mode_sap_ai_core_model_id)
+        : undefined,
+      actModeSapAiCoreDeploymentId: isSet(object.actModeSapAiCoreDeploymentId)
+        ? globalThis.String(object.actModeSapAiCoreDeploymentId)
+        : isSet(object.act_mode_sap_ai_core_deployment_id)
+        ? globalThis.String(object.act_mode_sap_ai_core_deployment_id)
+        : undefined,
+      actModeGroqModelId: isSet(object.actModeGroqModelId)
+        ? globalThis.String(object.actModeGroqModelId)
+        : isSet(object.act_mode_groq_model_id)
+        ? globalThis.String(object.act_mode_groq_model_id)
+        : undefined,
+      actModeGroqModelInfo: isSet(object.actModeGroqModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeGroqModelInfo)
+        : isSet(object.act_mode_groq_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_groq_model_info)
+        : undefined,
+      actModeBasetenModelId: isSet(object.actModeBasetenModelId)
+        ? globalThis.String(object.actModeBasetenModelId)
+        : isSet(object.act_mode_baseten_model_id)
+        ? globalThis.String(object.act_mode_baseten_model_id)
+        : undefined,
+      actModeBasetenModelInfo: isSet(object.actModeBasetenModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeBasetenModelInfo)
+        : isSet(object.act_mode_baseten_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_baseten_model_info)
+        : undefined,
+      actModeHuggingFaceModelId: isSet(object.actModeHuggingFaceModelId)
+        ? globalThis.String(object.actModeHuggingFaceModelId)
+        : isSet(object.act_mode_hugging_face_model_id)
+        ? globalThis.String(object.act_mode_hugging_face_model_id)
+        : undefined,
+      actModeHuggingFaceModelInfo: isSet(object.actModeHuggingFaceModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
+        : isSet(object.act_mode_hugging_face_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
+        : undefined,
+      actModeHuaweiCloudMaasModelId: isSet(object.actModeHuaweiCloudMaasModelId)
+        ? globalThis.String(object.actModeHuaweiCloudMaasModelId)
+        : isSet(object.act_mode_huawei_cloud_maas_model_id)
+        ? globalThis.String(object.act_mode_huawei_cloud_maas_model_id)
+        : undefined,
+      actModeHuaweiCloudMaasModelInfo: isSet(object.actModeHuaweiCloudMaasModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
+        : isSet(object.act_mode_huawei_cloud_maas_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
+        : undefined,
+      actModeOcaModelId: isSet(object.actModeOcaModelId)
+        ? globalThis.String(object.actModeOcaModelId)
+        : isSet(object.act_mode_oca_model_id)
+        ? globalThis.String(object.act_mode_oca_model_id)
+        : undefined,
+      actModeOcaModelInfo: isSet(object.actModeOcaModelInfo)
+        ? OcaModelInfo.fromJSON(object.actModeOcaModelInfo)
+        : isSet(object.act_mode_oca_model_info)
+        ? OcaModelInfo.fromJSON(object.act_mode_oca_model_info)
+        : undefined,
+      actModeOcaReasoningEffort: isSet(object.actModeOcaReasoningEffort)
+        ? globalThis.String(object.actModeOcaReasoningEffort)
+        : isSet(object.act_mode_oca_reasoning_effort)
+        ? globalThis.String(object.act_mode_oca_reasoning_effort)
+        : undefined,
+      actModeAihubmixModelId: isSet(object.actModeAihubmixModelId)
+        ? globalThis.String(object.actModeAihubmixModelId)
+        : isSet(object.act_mode_aihubmix_model_id)
+        ? globalThis.String(object.act_mode_aihubmix_model_id)
+        : undefined,
+      actModeAihubmixModelInfo: isSet(object.actModeAihubmixModelInfo)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.actModeAihubmixModelInfo)
+        : isSet(object.act_mode_aihubmix_model_info)
+        ? OpenAiCompatibleModelInfo.fromJSON(object.act_mode_aihubmix_model_info)
+        : undefined,
+      actModeHicapModelId: isSet(object.actModeHicapModelId)
+        ? globalThis.String(object.actModeHicapModelId)
+        : isSet(object.act_mode_hicap_model_id)
+        ? globalThis.String(object.act_mode_hicap_model_id)
+        : undefined,
+      actModeHicapModelInfo: isSet(object.actModeHicapModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeHicapModelInfo)
+        : isSet(object.act_mode_hicap_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_hicap_model_info)
+        : undefined,
+      actModeVercelAiGatewayModelId: isSet(object.actModeVercelAiGatewayModelId)
+        ? globalThis.String(object.actModeVercelAiGatewayModelId)
+        : isSet(object.act_mode_vercel_ai_gateway_model_id)
+        ? globalThis.String(object.act_mode_vercel_ai_gateway_model_id)
+        : undefined,
+      actModeVercelAiGatewayModelInfo: isSet(object.actModeVercelAiGatewayModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
+        : isSet(object.act_mode_vercel_ai_gateway_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
+        : undefined,
+      hicapModelId: isSet(object.hicapModelId)
+        ? globalThis.String(object.hicapModelId)
+        : isSet(object.hicap_model_id)
+        ? globalThis.String(object.hicap_model_id)
+        : undefined,
+      lmStudioModelId: isSet(object.lmStudioModelId)
+        ? globalThis.String(object.lmStudioModelId)
+        : isSet(object.lm_studio_model_id)
+        ? globalThis.String(object.lm_studio_model_id)
+        : undefined,
+      planModeClinePassModelId: isSet(object.planModeClinePassModelId)
+        ? globalThis.String(object.planModeClinePassModelId)
+        : isSet(object.plan_mode_cline_pass_model_id)
+        ? globalThis.String(object.plan_mode_cline_pass_model_id)
+        : undefined,
+      planModeClinePassModelInfo: isSet(object.planModeClinePassModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeClinePassModelInfo)
+        : isSet(object.plan_mode_cline_pass_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
+        : undefined,
+      actModeClinePassModelId: isSet(object.actModeClinePassModelId)
+        ? globalThis.String(object.actModeClinePassModelId)
+        : isSet(object.act_mode_cline_pass_model_id)
+        ? globalThis.String(object.act_mode_cline_pass_model_id)
+        : undefined,
+      actModeClinePassModelInfo: isSet(object.actModeClinePassModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeClinePassModelInfo)
+        : isSet(object.act_mode_cline_pass_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
+        : undefined,
+      modEnabled: isSet(object.modEnabled)
+        ? globalThis.Boolean(object.modEnabled)
+        : isSet(object.mod_enabled)
+        ? globalThis.Boolean(object.mod_enabled)
+        : undefined,
+      modOutcome: isSet(object.modOutcome)
+        ? globalThis.String(object.modOutcome)
+        : isSet(object.mod_outcome)
+        ? globalThis.String(object.mod_outcome)
+        : undefined,
+      planModeNousResearchModelInfo: isSet(object.planModeNousResearchModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeNousResearchModelInfo)
+        : isSet(object.plan_mode_nous_research_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_nous_research_model_info)
+        : undefined,
+      actModeNousResearchModelInfo: isSet(object.actModeNousResearchModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeNousResearchModelInfo)
+        : isSet(object.act_mode_nous_research_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_nous_research_model_info)
+        : undefined,
+      galxBaseUrl: isSet(object.galxBaseUrl)
+        ? globalThis.String(object.galxBaseUrl)
+        : isSet(object.galx_base_url)
+        ? globalThis.String(object.galx_base_url)
+        : undefined,
+      planModeGalxModelId: isSet(object.planModeGalxModelId)
+        ? globalThis.String(object.planModeGalxModelId)
+        : isSet(object.plan_mode_galx_model_id)
+        ? globalThis.String(object.plan_mode_galx_model_id)
+        : undefined,
+      planModeGalxModelInfo: isSet(object.planModeGalxModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.planModeGalxModelInfo)
+        : isSet(object.plan_mode_galx_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.plan_mode_galx_model_info)
+        : undefined,
+      actModeGalxModelId: isSet(object.actModeGalxModelId)
+        ? globalThis.String(object.actModeGalxModelId)
+        : isSet(object.act_mode_galx_model_id)
+        ? globalThis.String(object.act_mode_galx_model_id)
+        : undefined,
+      actModeGalxModelInfo: isSet(object.actModeGalxModelInfo)
+        ? OpenRouterModelInfo.fromJSON(object.actModeGalxModelInfo)
+        : isSet(object.act_mode_galx_model_info)
+        ? OpenRouterModelInfo.fromJSON(object.act_mode_galx_model_info)
+        : undefined,
+      openAiHeaders: isObject(object.openAiHeaders)
+        ? (globalThis.Object.entries(object.openAiHeaders) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.String(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.open_ai_headers)
+        ? (globalThis.Object.entries(object.open_ai_headers) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: globalThis.String(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : {},
+      tokenCompressionEnabled: isSet(object.tokenCompressionEnabled)
+        ? globalThis.Boolean(object.tokenCompressionEnabled)
+        : isSet(object.token_compression_enabled)
+        ? globalThis.Boolean(object.token_compression_enabled)
+        : undefined,
+    };
+  },
+
+  toJSON(message: Settings): unknown {
+    const obj: any = {};
+    if (message.openRouterProviderSorting !== undefined) {
+      obj.openRouterProviderSorting = message.openRouterProviderSorting;
+    }
+    if (message.planModeApiModelId !== undefined) {
+      obj.planModeApiModelId = message.planModeApiModelId;
+    }
+    if (message.planModeThinkingBudgetTokens !== undefined) {
+      obj.planModeThinkingBudgetTokens = Math.round(message.planModeThinkingBudgetTokens);
+    }
+    if (message.planModeReasoningEffort !== undefined) {
+      obj.planModeReasoningEffort = message.planModeReasoningEffort;
+    }
+    if (message.planModeOpenRouterModelId !== undefined) {
+      obj.planModeOpenRouterModelId = message.planModeOpenRouterModelId;
+    }
+    if (message.planModeOpenRouterModelInfo !== undefined) {
+      obj.planModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.planModeOpenRouterModelInfo);
+    }
+    if (message.planModeNousResearchModelId !== undefined) {
+      obj.planModeNousResearchModelId = message.planModeNousResearchModelId;
+    }
+    if (message.actModeApiModelId !== undefined) {
+      obj.actModeApiModelId = message.actModeApiModelId;
+    }
+    if (message.actModeThinkingBudgetTokens !== undefined) {
+      obj.actModeThinkingBudgetTokens = Math.round(message.actModeThinkingBudgetTokens);
+    }
+    if (message.actModeReasoningEffort !== undefined) {
+      obj.actModeReasoningEffort = message.actModeReasoningEffort;
+    }
+    if (message.actModeOpenRouterModelId !== undefined) {
+      obj.actModeOpenRouterModelId = message.actModeOpenRouterModelId;
+    }
+    if (message.actModeOpenRouterModelInfo !== undefined) {
+      obj.actModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.actModeOpenRouterModelInfo);
+    }
+    if (message.actModeNousResearchModelId !== undefined) {
+      obj.actModeNousResearchModelId = message.actModeNousResearchModelId;
+    }
+    if (message.planModeApiProvider !== undefined) {
+      obj.planModeApiProvider = apiProviderToJSON(message.planModeApiProvider);
+    }
+    if (message.actModeApiProvider !== undefined) {
+      obj.actModeApiProvider = apiProviderToJSON(message.actModeApiProvider);
+    }
+    if (message.autoApprovalSettings !== undefined) {
+      obj.autoApprovalSettings = AutoApprovalSettings.toJSON(message.autoApprovalSettings);
+    }
+    if (message.globalWorkflowToggles !== undefined) {
+      obj.globalWorkflowToggles = message.globalWorkflowToggles;
+    }
+    if (message.globalSkillsToggles !== undefined) {
+      obj.globalSkillsToggles = message.globalSkillsToggles;
+    }
+    if (message.browserSettings !== undefined) {
+      obj.browserSettings = BrowserSettings.toJSON(message.browserSettings);
+    }
+    if (message.telemetrySetting !== undefined) {
+      obj.telemetrySetting = message.telemetrySetting;
+    }
+    if (message.planActSeparateModelsSetting !== undefined) {
+      obj.planActSeparateModelsSetting = message.planActSeparateModelsSetting;
+    }
+    if (message.enableCheckpointsSetting !== undefined) {
+      obj.enableCheckpointsSetting = message.enableCheckpointsSetting;
+    }
+    if (message.shellIntegrationTimeout !== undefined) {
+      obj.shellIntegrationTimeout = Math.round(message.shellIntegrationTimeout);
+    }
+    if (message.defaultTerminalProfile !== undefined) {
+      obj.defaultTerminalProfile = message.defaultTerminalProfile;
+    }
+    if (message.terminalOutputLineLimit !== undefined) {
+      obj.terminalOutputLineLimit = Math.round(message.terminalOutputLineLimit);
+    }
+    if (message.maxConsecutiveMistakes !== undefined) {
+      obj.maxConsecutiveMistakes = Math.round(message.maxConsecutiveMistakes);
+    }
+    if (message.strictPlanModeEnabled !== undefined) {
+      obj.strictPlanModeEnabled = message.strictPlanModeEnabled;
+    }
+    if (message.yoloModeToggled !== undefined) {
+      obj.yoloModeToggled = message.yoloModeToggled;
+    }
+    if (message.useAutoCondense !== undefined) {
+      obj.useAutoCondense = message.useAutoCondense;
+    }
+    if (message.dietcodeWebToolsEnabled !== undefined) {
+      obj.dietcodeWebToolsEnabled = message.dietcodeWebToolsEnabled;
+    }
+    if (message.preferredLanguage !== undefined) {
+      obj.preferredLanguage = message.preferredLanguage;
+    }
+    if (message.mode !== undefined) {
+      obj.mode = planActModeToJSON(message.mode);
+    }
+    if (message.focusChainSettings !== undefined) {
+      obj.focusChainSettings = FocusChainSettings.toJSON(message.focusChainSettings);
+    }
+    if (message.customPrompt !== undefined) {
+      obj.customPrompt = message.customPrompt;
+    }
+    if (message.subagentsEnabled !== undefined) {
+      obj.subagentsEnabled = message.subagentsEnabled;
+    }
+    if (message.enableParallelToolCalling !== undefined) {
+      obj.enableParallelToolCalling = message.enableParallelToolCalling;
+    }
+    if (message.backgroundEditEnabled !== undefined) {
+      obj.backgroundEditEnabled = message.backgroundEditEnabled;
+    }
+    if (message.optOutOfRemoteConfig !== undefined) {
+      obj.optOutOfRemoteConfig = message.optOutOfRemoteConfig;
+    }
+    if (message.openTelemetryEnabled !== undefined) {
+      obj.openTelemetryEnabled = message.openTelemetryEnabled;
+    }
+    if (message.openTelemetryMetricsExporter !== undefined) {
+      obj.openTelemetryMetricsExporter = message.openTelemetryMetricsExporter;
+    }
+    if (message.openTelemetryLogsExporter !== undefined) {
+      obj.openTelemetryLogsExporter = message.openTelemetryLogsExporter;
+    }
+    if (message.openTelemetryOtlpProtocol !== undefined) {
+      obj.openTelemetryOtlpProtocol = message.openTelemetryOtlpProtocol;
+    }
+    if (message.openTelemetryOtlpEndpoint !== undefined) {
+      obj.openTelemetryOtlpEndpoint = message.openTelemetryOtlpEndpoint;
+    }
+    if (message.openTelemetryOtlpMetricsProtocol !== undefined) {
+      obj.openTelemetryOtlpMetricsProtocol = message.openTelemetryOtlpMetricsProtocol;
+    }
+    if (message.openTelemetryOtlpMetricsEndpoint !== undefined) {
+      obj.openTelemetryOtlpMetricsEndpoint = message.openTelemetryOtlpMetricsEndpoint;
+    }
+    if (message.openTelemetryOtlpLogsProtocol !== undefined) {
+      obj.openTelemetryOtlpLogsProtocol = message.openTelemetryOtlpLogsProtocol;
+    }
+    if (message.openTelemetryOtlpLogsEndpoint !== undefined) {
+      obj.openTelemetryOtlpLogsEndpoint = message.openTelemetryOtlpLogsEndpoint;
+    }
+    if (message.openTelemetryMetricExportInterval !== undefined) {
+      obj.openTelemetryMetricExportInterval = Math.round(message.openTelemetryMetricExportInterval);
+    }
+    if (message.openTelemetryOtlpInsecure !== undefined) {
+      obj.openTelemetryOtlpInsecure = message.openTelemetryOtlpInsecure;
+    }
+    if (message.openTelemetryLogBatchSize !== undefined) {
+      obj.openTelemetryLogBatchSize = Math.round(message.openTelemetryLogBatchSize);
+    }
+    if (message.openTelemetryLogBatchTimeout !== undefined) {
+      obj.openTelemetryLogBatchTimeout = Math.round(message.openTelemetryLogBatchTimeout);
+    }
+    if (message.openTelemetryLogMaxQueueSize !== undefined) {
+      obj.openTelemetryLogMaxQueueSize = Math.round(message.openTelemetryLogMaxQueueSize);
+    }
+    if (message.worktreesEnabled !== undefined) {
+      obj.worktreesEnabled = message.worktreesEnabled;
+    }
+    if (message.doubleCheckCompletionEnabled !== undefined) {
+      obj.doubleCheckCompletionEnabled = message.doubleCheckCompletionEnabled;
+    }
+    if (message.cloudflareAccountId !== undefined) {
+      obj.cloudflareAccountId = message.cloudflareAccountId;
+    }
+    if (message.embeddingProvider !== undefined) {
+      obj.embeddingProvider = apiProviderToJSON(message.embeddingProvider);
+    }
+    if (message.embeddingModelId !== undefined) {
+      obj.embeddingModelId = message.embeddingModelId;
+    }
+    if (message.embeddingOpenAiBaseUrl !== undefined) {
+      obj.embeddingOpenAiBaseUrl = message.embeddingOpenAiBaseUrl;
+    }
+    if (message.maxSwarmDepth !== undefined) {
+      obj.maxSwarmDepth = Math.round(message.maxSwarmDepth);
+    }
+    if (message.safeYoloModeToggled !== undefined) {
+      obj.safeYoloModeToggled = message.safeYoloModeToggled;
+    }
+    if (message.masEnabled !== undefined) {
+      obj.masEnabled = message.masEnabled;
+    }
+    if (message.globalDietCodeRulesToggles !== undefined) {
+      obj.globalDietCodeRulesToggles = message.globalDietCodeRulesToggles;
+    }
+    if (message.auditCompletionGateEnabled !== undefined) {
+      obj.auditCompletionGateEnabled = message.auditCompletionGateEnabled;
+    }
+    if (message.auditCompletionGateThreshold !== undefined) {
+      obj.auditCompletionGateThreshold = Math.round(message.auditCompletionGateThreshold);
+    }
+    if (message.auditCompletionGateCriticalOnly !== undefined) {
+      obj.auditCompletionGateCriticalOnly = message.auditCompletionGateCriticalOnly;
+    }
+    if (message.auditActModeAdvisoryEnabled !== undefined) {
+      obj.auditActModeAdvisoryEnabled = message.auditActModeAdvisoryEnabled;
+    }
+    if (message.auditAdvisoryEscalationEnabled !== undefined) {
+      obj.auditAdvisoryEscalationEnabled = message.auditAdvisoryEscalationEnabled;
+    }
+    if (message.auditPlanRegressionGateEnabled !== undefined) {
+      obj.auditPlanRegressionGateEnabled = message.auditPlanRegressionGateEnabled;
+    }
+    if (message.auditToolOutputAdvisoryEnabled !== undefined) {
+      obj.auditToolOutputAdvisoryEnabled = message.auditToolOutputAdvisoryEnabled;
+    }
+    if (message.auditFileWriteAdvisoryEnabled !== undefined) {
+      obj.auditFileWriteAdvisoryEnabled = message.auditFileWriteAdvisoryEnabled;
+    }
+    if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
+      obj.auditIntentThresholdAdjustmentsEnabled = message.auditIntentThresholdAdjustmentsEnabled;
+    }
+    if (message.auditIntentThresholdOverrides !== undefined) {
+      obj.auditIntentThresholdOverrides = message.auditIntentThresholdOverrides;
+    }
+    if (message.auditSarifHookExportEnabled !== undefined) {
+      obj.auditSarifHookExportEnabled = message.auditSarifHookExportEnabled;
+    }
+    if (message.auditWorkspaceArtifactsEnabled !== undefined) {
+      obj.auditWorkspaceArtifactsEnabled = message.auditWorkspaceArtifactsEnabled;
+    }
+    if (message.auditAdvisoryAutoScrollMode !== undefined) {
+      obj.auditAdvisoryAutoScrollMode = message.auditAdvisoryAutoScrollMode;
+    }
+    if (message.liteLlmBaseUrl !== undefined) {
+      obj.liteLlmBaseUrl = message.liteLlmBaseUrl;
+    }
+    if (message.liteLlmUsePromptCache !== undefined) {
+      obj.liteLlmUsePromptCache = message.liteLlmUsePromptCache;
+    }
+    if (message.anthropicBaseUrl !== undefined) {
+      obj.anthropicBaseUrl = message.anthropicBaseUrl;
+    }
+    if (message.awsRegion !== undefined) {
+      obj.awsRegion = message.awsRegion;
+    }
+    if (message.awsUseCrossRegionInference !== undefined) {
+      obj.awsUseCrossRegionInference = message.awsUseCrossRegionInference;
+    }
+    if (message.awsUseGlobalInference !== undefined) {
+      obj.awsUseGlobalInference = message.awsUseGlobalInference;
+    }
+    if (message.awsBedrockUsePromptCache !== undefined) {
+      obj.awsBedrockUsePromptCache = message.awsBedrockUsePromptCache;
+    }
+    if (message.awsAuthentication !== undefined) {
+      obj.awsAuthentication = message.awsAuthentication;
+    }
+    if (message.awsUseProfile !== undefined) {
+      obj.awsUseProfile = message.awsUseProfile;
+    }
+    if (message.awsProfile !== undefined) {
+      obj.awsProfile = message.awsProfile;
+    }
+    if (message.awsBedrockEndpoint !== undefined) {
+      obj.awsBedrockEndpoint = message.awsBedrockEndpoint;
+    }
+    if (message.claudeCodePath !== undefined) {
+      obj.claudeCodePath = message.claudeCodePath;
+    }
+    if (message.openAiBaseUrl !== undefined) {
+      obj.openAiBaseUrl = message.openAiBaseUrl;
+    }
+    if (message.ollamaBaseUrl !== undefined) {
+      obj.ollamaBaseUrl = message.ollamaBaseUrl;
+    }
+    if (message.ollamaApiOptionsCtxNum !== undefined) {
+      obj.ollamaApiOptionsCtxNum = message.ollamaApiOptionsCtxNum;
+    }
+    if (message.lmStudioBaseUrl !== undefined) {
+      obj.lmStudioBaseUrl = message.lmStudioBaseUrl;
+    }
+    if (message.lmStudioMaxTokens !== undefined) {
+      obj.lmStudioMaxTokens = message.lmStudioMaxTokens;
+    }
+    if (message.geminiBaseUrl !== undefined) {
+      obj.geminiBaseUrl = message.geminiBaseUrl;
+    }
+    if (message.requestyBaseUrl !== undefined) {
+      obj.requestyBaseUrl = message.requestyBaseUrl;
+    }
+    if (message.fireworksModelMaxCompletionTokens !== undefined) {
+      obj.fireworksModelMaxCompletionTokens = Math.round(message.fireworksModelMaxCompletionTokens);
+    }
+    if (message.fireworksModelMaxTokens !== undefined) {
+      obj.fireworksModelMaxTokens = Math.round(message.fireworksModelMaxTokens);
+    }
+    if (message.qwenCodeOauthPath !== undefined) {
+      obj.qwenCodeOauthPath = message.qwenCodeOauthPath;
+    }
+    if (message.azureApiVersion !== undefined) {
+      obj.azureApiVersion = message.azureApiVersion;
+    }
+    if (message.azureIdentity !== undefined) {
+      obj.azureIdentity = message.azureIdentity;
+    }
+    if (message.qwenApiLine !== undefined) {
+      obj.qwenApiLine = message.qwenApiLine;
+    }
+    if (message.moonshotApiLine !== undefined) {
+      obj.moonshotApiLine = message.moonshotApiLine;
+    }
+    if (message.asksageApiUrl !== undefined) {
+      obj.asksageApiUrl = message.asksageApiUrl;
+    }
+    if (message.requestTimeoutMs !== undefined) {
+      obj.requestTimeoutMs = Math.round(message.requestTimeoutMs);
+    }
+    if (message.sapAiResourceGroup !== undefined) {
+      obj.sapAiResourceGroup = message.sapAiResourceGroup;
+    }
+    if (message.sapAiCoreTokenUrl !== undefined) {
+      obj.sapAiCoreTokenUrl = message.sapAiCoreTokenUrl;
+    }
+    if (message.sapAiCoreBaseUrl !== undefined) {
+      obj.sapAiCoreBaseUrl = message.sapAiCoreBaseUrl;
+    }
+    if (message.sapAiCoreUseOrchestrationMode !== undefined) {
+      obj.sapAiCoreUseOrchestrationMode = message.sapAiCoreUseOrchestrationMode;
+    }
+    if (message.difyBaseUrl !== undefined) {
+      obj.difyBaseUrl = message.difyBaseUrl;
+    }
+    if (message.zaiApiLine !== undefined) {
+      obj.zaiApiLine = message.zaiApiLine;
+    }
+    if (message.ocaBaseUrl !== undefined) {
+      obj.ocaBaseUrl = message.ocaBaseUrl;
+    }
+    if (message.minimaxApiLine !== undefined) {
+      obj.minimaxApiLine = message.minimaxApiLine;
+    }
+    if (message.ocaMode !== undefined) {
+      obj.ocaMode = message.ocaMode;
+    }
+    if (message.aihubmixBaseUrl !== undefined) {
+      obj.aihubmixBaseUrl = message.aihubmixBaseUrl;
+    }
+    if (message.aihubmixAppCode !== undefined) {
+      obj.aihubmixAppCode = message.aihubmixAppCode;
+    }
+    if (message.geminiPlanModeThinkingLevel !== undefined) {
+      obj.geminiPlanModeThinkingLevel = message.geminiPlanModeThinkingLevel;
+    }
+    if (message.planModeVerbosity !== undefined) {
+      obj.planModeVerbosity = message.planModeVerbosity;
+    }
+    if (message.planModeVsCodeLmModelSelector !== undefined) {
+      obj.planModeVsCodeLmModelSelector = LanguageModelChatSelector.toJSON(message.planModeVsCodeLmModelSelector);
+    }
+    if (message.planModeAwsBedrockCustomSelected !== undefined) {
+      obj.planModeAwsBedrockCustomSelected = message.planModeAwsBedrockCustomSelected;
+    }
+    if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
+      obj.planModeAwsBedrockCustomModelBaseId = message.planModeAwsBedrockCustomModelBaseId;
+    }
+    if (message.planModeDietCodeModelId !== undefined) {
+      obj.planModeDietCodeModelId = message.planModeDietCodeModelId;
+    }
+    if (message.planModeDietCodeModelInfo !== undefined) {
+      obj.planModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(message.planModeDietCodeModelInfo);
+    }
+    if (message.planModeOpenAiModelId !== undefined) {
+      obj.planModeOpenAiModelId = message.planModeOpenAiModelId;
+    }
+    if (message.planModeOpenAiModelInfo !== undefined) {
+      obj.planModeOpenAiModelInfo = OpenAiCompatibleModelInfo.toJSON(message.planModeOpenAiModelInfo);
+    }
+    if (message.planModeOllamaModelId !== undefined) {
+      obj.planModeOllamaModelId = message.planModeOllamaModelId;
+    }
+    if (message.planModeLmStudioModelId !== undefined) {
+      obj.planModeLmStudioModelId = message.planModeLmStudioModelId;
+    }
+    if (message.planModeLiteLlmModelId !== undefined) {
+      obj.planModeLiteLlmModelId = message.planModeLiteLlmModelId;
+    }
+    if (message.planModeLiteLlmModelInfo !== undefined) {
+      obj.planModeLiteLlmModelInfo = LiteLLMModelInfo.toJSON(message.planModeLiteLlmModelInfo);
+    }
+    if (message.planModeRequestyModelId !== undefined) {
+      obj.planModeRequestyModelId = message.planModeRequestyModelId;
+    }
+    if (message.planModeRequestyModelInfo !== undefined) {
+      obj.planModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.planModeRequestyModelInfo);
+    }
+    if (message.planModeTogetherModelId !== undefined) {
+      obj.planModeTogetherModelId = message.planModeTogetherModelId;
+    }
+    if (message.planModeFireworksModelId !== undefined) {
+      obj.planModeFireworksModelId = message.planModeFireworksModelId;
+    }
+    if (message.planModeSapAiCoreModelId !== undefined) {
+      obj.planModeSapAiCoreModelId = message.planModeSapAiCoreModelId;
+    }
+    if (message.planModeSapAiCoreDeploymentId !== undefined) {
+      obj.planModeSapAiCoreDeploymentId = message.planModeSapAiCoreDeploymentId;
+    }
+    if (message.planModeGroqModelId !== undefined) {
+      obj.planModeGroqModelId = message.planModeGroqModelId;
+    }
+    if (message.planModeGroqModelInfo !== undefined) {
+      obj.planModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.planModeGroqModelInfo);
+    }
+    if (message.planModeBasetenModelId !== undefined) {
+      obj.planModeBasetenModelId = message.planModeBasetenModelId;
+    }
+    if (message.planModeBasetenModelInfo !== undefined) {
+      obj.planModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.planModeBasetenModelInfo);
+    }
+    if (message.planModeHuggingFaceModelId !== undefined) {
+      obj.planModeHuggingFaceModelId = message.planModeHuggingFaceModelId;
+    }
+    if (message.planModeHuggingFaceModelInfo !== undefined) {
+      obj.planModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
+    }
+    if (message.planModeHuaweiCloudMaasModelId !== undefined) {
+      obj.planModeHuaweiCloudMaasModelId = message.planModeHuaweiCloudMaasModelId;
+    }
+    if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
+      obj.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
+    }
+    if (message.planModeOcaModelId !== undefined) {
+      obj.planModeOcaModelId = message.planModeOcaModelId;
+    }
+    if (message.planModeOcaModelInfo !== undefined) {
+      obj.planModeOcaModelInfo = OcaModelInfo.toJSON(message.planModeOcaModelInfo);
+    }
+    if (message.planModeOcaReasoningEffort !== undefined) {
+      obj.planModeOcaReasoningEffort = message.planModeOcaReasoningEffort;
+    }
+    if (message.planModeAihubmixModelId !== undefined) {
+      obj.planModeAihubmixModelId = message.planModeAihubmixModelId;
+    }
+    if (message.planModeAihubmixModelInfo !== undefined) {
+      obj.planModeAihubmixModelInfo = OpenAiCompatibleModelInfo.toJSON(message.planModeAihubmixModelInfo);
+    }
+    if (message.planModeHicapModelId !== undefined) {
+      obj.planModeHicapModelId = message.planModeHicapModelId;
+    }
+    if (message.planModeHicapModelInfo !== undefined) {
+      obj.planModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.planModeHicapModelInfo);
+    }
+    if (message.planModeVercelAiGatewayModelId !== undefined) {
+      obj.planModeVercelAiGatewayModelId = message.planModeVercelAiGatewayModelId;
+    }
+    if (message.planModeVercelAiGatewayModelInfo !== undefined) {
+      obj.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
+    }
+    if (message.geminiActModeThinkingLevel !== undefined) {
+      obj.geminiActModeThinkingLevel = message.geminiActModeThinkingLevel;
+    }
+    if (message.actModeVerbosity !== undefined) {
+      obj.actModeVerbosity = message.actModeVerbosity;
+    }
+    if (message.actModeVsCodeLmModelSelector !== undefined) {
+      obj.actModeVsCodeLmModelSelector = LanguageModelChatSelector.toJSON(message.actModeVsCodeLmModelSelector);
+    }
+    if (message.actModeAwsBedrockCustomSelected !== undefined) {
+      obj.actModeAwsBedrockCustomSelected = message.actModeAwsBedrockCustomSelected;
+    }
+    if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
+      obj.actModeAwsBedrockCustomModelBaseId = message.actModeAwsBedrockCustomModelBaseId;
+    }
+    if (message.actModeDietCodeModelId !== undefined) {
+      obj.actModeDietCodeModelId = message.actModeDietCodeModelId;
+    }
+    if (message.actModeDietCodeModelInfo !== undefined) {
+      obj.actModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(message.actModeDietCodeModelInfo);
+    }
+    if (message.actModeOpenAiModelId !== undefined) {
+      obj.actModeOpenAiModelId = message.actModeOpenAiModelId;
+    }
+    if (message.actModeOpenAiModelInfo !== undefined) {
+      obj.actModeOpenAiModelInfo = OpenAiCompatibleModelInfo.toJSON(message.actModeOpenAiModelInfo);
+    }
+    if (message.actModeOllamaModelId !== undefined) {
+      obj.actModeOllamaModelId = message.actModeOllamaModelId;
+    }
+    if (message.actModeLmStudioModelId !== undefined) {
+      obj.actModeLmStudioModelId = message.actModeLmStudioModelId;
+    }
+    if (message.actModeLiteLlmModelId !== undefined) {
+      obj.actModeLiteLlmModelId = message.actModeLiteLlmModelId;
+    }
+    if (message.actModeLiteLlmModelInfo !== undefined) {
+      obj.actModeLiteLlmModelInfo = LiteLLMModelInfo.toJSON(message.actModeLiteLlmModelInfo);
+    }
+    if (message.actModeRequestyModelId !== undefined) {
+      obj.actModeRequestyModelId = message.actModeRequestyModelId;
+    }
+    if (message.actModeRequestyModelInfo !== undefined) {
+      obj.actModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.actModeRequestyModelInfo);
+    }
+    if (message.actModeTogetherModelId !== undefined) {
+      obj.actModeTogetherModelId = message.actModeTogetherModelId;
+    }
+    if (message.actModeFireworksModelId !== undefined) {
+      obj.actModeFireworksModelId = message.actModeFireworksModelId;
+    }
+    if (message.actModeSapAiCoreModelId !== undefined) {
+      obj.actModeSapAiCoreModelId = message.actModeSapAiCoreModelId;
+    }
+    if (message.actModeSapAiCoreDeploymentId !== undefined) {
+      obj.actModeSapAiCoreDeploymentId = message.actModeSapAiCoreDeploymentId;
+    }
+    if (message.actModeGroqModelId !== undefined) {
+      obj.actModeGroqModelId = message.actModeGroqModelId;
+    }
+    if (message.actModeGroqModelInfo !== undefined) {
+      obj.actModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.actModeGroqModelInfo);
+    }
+    if (message.actModeBasetenModelId !== undefined) {
+      obj.actModeBasetenModelId = message.actModeBasetenModelId;
+    }
+    if (message.actModeBasetenModelInfo !== undefined) {
+      obj.actModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.actModeBasetenModelInfo);
+    }
+    if (message.actModeHuggingFaceModelId !== undefined) {
+      obj.actModeHuggingFaceModelId = message.actModeHuggingFaceModelId;
+    }
+    if (message.actModeHuggingFaceModelInfo !== undefined) {
+      obj.actModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
+    }
+    if (message.actModeHuaweiCloudMaasModelId !== undefined) {
+      obj.actModeHuaweiCloudMaasModelId = message.actModeHuaweiCloudMaasModelId;
+    }
+    if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
+      obj.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
+    }
+    if (message.actModeOcaModelId !== undefined) {
+      obj.actModeOcaModelId = message.actModeOcaModelId;
+    }
+    if (message.actModeOcaModelInfo !== undefined) {
+      obj.actModeOcaModelInfo = OcaModelInfo.toJSON(message.actModeOcaModelInfo);
+    }
+    if (message.actModeOcaReasoningEffort !== undefined) {
+      obj.actModeOcaReasoningEffort = message.actModeOcaReasoningEffort;
+    }
+    if (message.actModeAihubmixModelId !== undefined) {
+      obj.actModeAihubmixModelId = message.actModeAihubmixModelId;
+    }
+    if (message.actModeAihubmixModelInfo !== undefined) {
+      obj.actModeAihubmixModelInfo = OpenAiCompatibleModelInfo.toJSON(message.actModeAihubmixModelInfo);
+    }
+    if (message.actModeHicapModelId !== undefined) {
+      obj.actModeHicapModelId = message.actModeHicapModelId;
+    }
+    if (message.actModeHicapModelInfo !== undefined) {
+      obj.actModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.actModeHicapModelInfo);
+    }
+    if (message.actModeVercelAiGatewayModelId !== undefined) {
+      obj.actModeVercelAiGatewayModelId = message.actModeVercelAiGatewayModelId;
+    }
+    if (message.actModeVercelAiGatewayModelInfo !== undefined) {
+      obj.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
+    }
+    if (message.hicapModelId !== undefined) {
+      obj.hicapModelId = message.hicapModelId;
+    }
+    if (message.lmStudioModelId !== undefined) {
+      obj.lmStudioModelId = message.lmStudioModelId;
+    }
+    if (message.planModeClinePassModelId !== undefined) {
+      obj.planModeClinePassModelId = message.planModeClinePassModelId;
+    }
+    if (message.planModeClinePassModelInfo !== undefined) {
+      obj.planModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.planModeClinePassModelInfo);
+    }
+    if (message.actModeClinePassModelId !== undefined) {
+      obj.actModeClinePassModelId = message.actModeClinePassModelId;
+    }
+    if (message.actModeClinePassModelInfo !== undefined) {
+      obj.actModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.actModeClinePassModelInfo);
+    }
+    if (message.modEnabled !== undefined) {
+      obj.modEnabled = message.modEnabled;
+    }
+    if (message.modOutcome !== undefined) {
+      obj.modOutcome = message.modOutcome;
+    }
+    if (message.planModeNousResearchModelInfo !== undefined) {
+      obj.planModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.planModeNousResearchModelInfo);
+    }
+    if (message.actModeNousResearchModelInfo !== undefined) {
+      obj.actModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.actModeNousResearchModelInfo);
+    }
+    if (message.galxBaseUrl !== undefined) {
+      obj.galxBaseUrl = message.galxBaseUrl;
+    }
+    if (message.planModeGalxModelId !== undefined) {
+      obj.planModeGalxModelId = message.planModeGalxModelId;
+    }
+    if (message.planModeGalxModelInfo !== undefined) {
+      obj.planModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.planModeGalxModelInfo);
+    }
+    if (message.actModeGalxModelId !== undefined) {
+      obj.actModeGalxModelId = message.actModeGalxModelId;
+    }
+    if (message.actModeGalxModelInfo !== undefined) {
+      obj.actModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.actModeGalxModelInfo);
+    }
+    if (message.openAiHeaders) {
+      const entries = globalThis.Object.entries(message.openAiHeaders) as [string, string][];
+      if (entries.length > 0) {
+        obj.openAiHeaders = {};
+        entries.forEach(([k, v]) => {
+          obj.openAiHeaders[k] = v;
+        });
+      }
+    }
+    if (message.tokenCompressionEnabled !== undefined) {
+      obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Settings>, I>>(base?: I): Settings {
+    return Settings.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Settings>, I>>(object: I): Settings {
+    const message = createBaseSettings();
+    message.openRouterProviderSorting = object.openRouterProviderSorting ?? undefined;
+    message.planModeApiModelId = object.planModeApiModelId ?? undefined;
+    message.planModeThinkingBudgetTokens = object.planModeThinkingBudgetTokens ?? undefined;
+    message.planModeReasoningEffort = object.planModeReasoningEffort ?? undefined;
+    message.planModeOpenRouterModelId = object.planModeOpenRouterModelId ?? undefined;
+    message.planModeOpenRouterModelInfo =
+      (object.planModeOpenRouterModelInfo !== undefined && object.planModeOpenRouterModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeOpenRouterModelInfo)
+        : undefined;
+    message.planModeNousResearchModelId = object.planModeNousResearchModelId ?? undefined;
+    message.actModeApiModelId = object.actModeApiModelId ?? undefined;
+    message.actModeThinkingBudgetTokens = object.actModeThinkingBudgetTokens ?? undefined;
+    message.actModeReasoningEffort = object.actModeReasoningEffort ?? undefined;
+    message.actModeOpenRouterModelId = object.actModeOpenRouterModelId ?? undefined;
+    message.actModeOpenRouterModelInfo =
+      (object.actModeOpenRouterModelInfo !== undefined && object.actModeOpenRouterModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeOpenRouterModelInfo)
+        : undefined;
+    message.actModeNousResearchModelId = object.actModeNousResearchModelId ?? undefined;
+    message.planModeApiProvider = object.planModeApiProvider ?? undefined;
+    message.actModeApiProvider = object.actModeApiProvider ?? undefined;
+    message.autoApprovalSettings = (object.autoApprovalSettings !== undefined && object.autoApprovalSettings !== null)
+      ? AutoApprovalSettings.fromPartial(object.autoApprovalSettings)
+      : undefined;
+    message.globalWorkflowToggles = object.globalWorkflowToggles ?? undefined;
+    message.globalSkillsToggles = object.globalSkillsToggles ?? undefined;
+    message.browserSettings = (object.browserSettings !== undefined && object.browserSettings !== null)
+      ? BrowserSettings.fromPartial(object.browserSettings)
+      : undefined;
+    message.telemetrySetting = object.telemetrySetting ?? undefined;
+    message.planActSeparateModelsSetting = object.planActSeparateModelsSetting ?? undefined;
+    message.enableCheckpointsSetting = object.enableCheckpointsSetting ?? undefined;
+    message.shellIntegrationTimeout = object.shellIntegrationTimeout ?? undefined;
+    message.defaultTerminalProfile = object.defaultTerminalProfile ?? undefined;
+    message.terminalOutputLineLimit = object.terminalOutputLineLimit ?? undefined;
+    message.maxConsecutiveMistakes = object.maxConsecutiveMistakes ?? undefined;
+    message.strictPlanModeEnabled = object.strictPlanModeEnabled ?? undefined;
+    message.yoloModeToggled = object.yoloModeToggled ?? undefined;
+    message.useAutoCondense = object.useAutoCondense ?? undefined;
+    message.dietcodeWebToolsEnabled = object.dietcodeWebToolsEnabled ?? undefined;
+    message.preferredLanguage = object.preferredLanguage ?? undefined;
+    message.mode = object.mode ?? undefined;
+    message.focusChainSettings = (object.focusChainSettings !== undefined && object.focusChainSettings !== null)
+      ? FocusChainSettings.fromPartial(object.focusChainSettings)
+      : undefined;
+    message.customPrompt = object.customPrompt ?? undefined;
+    message.subagentsEnabled = object.subagentsEnabled ?? undefined;
+    message.enableParallelToolCalling = object.enableParallelToolCalling ?? undefined;
+    message.backgroundEditEnabled = object.backgroundEditEnabled ?? undefined;
+    message.optOutOfRemoteConfig = object.optOutOfRemoteConfig ?? undefined;
+    message.openTelemetryEnabled = object.openTelemetryEnabled ?? undefined;
+    message.openTelemetryMetricsExporter = object.openTelemetryMetricsExporter ?? undefined;
+    message.openTelemetryLogsExporter = object.openTelemetryLogsExporter ?? undefined;
+    message.openTelemetryOtlpProtocol = object.openTelemetryOtlpProtocol ?? undefined;
+    message.openTelemetryOtlpEndpoint = object.openTelemetryOtlpEndpoint ?? undefined;
+    message.openTelemetryOtlpMetricsProtocol = object.openTelemetryOtlpMetricsProtocol ?? undefined;
+    message.openTelemetryOtlpMetricsEndpoint = object.openTelemetryOtlpMetricsEndpoint ?? undefined;
+    message.openTelemetryOtlpLogsProtocol = object.openTelemetryOtlpLogsProtocol ?? undefined;
+    message.openTelemetryOtlpLogsEndpoint = object.openTelemetryOtlpLogsEndpoint ?? undefined;
+    message.openTelemetryMetricExportInterval = object.openTelemetryMetricExportInterval ?? undefined;
+    message.openTelemetryOtlpInsecure = object.openTelemetryOtlpInsecure ?? undefined;
+    message.openTelemetryLogBatchSize = object.openTelemetryLogBatchSize ?? undefined;
+    message.openTelemetryLogBatchTimeout = object.openTelemetryLogBatchTimeout ?? undefined;
+    message.openTelemetryLogMaxQueueSize = object.openTelemetryLogMaxQueueSize ?? undefined;
+    message.worktreesEnabled = object.worktreesEnabled ?? undefined;
+    message.doubleCheckCompletionEnabled = object.doubleCheckCompletionEnabled ?? undefined;
+    message.cloudflareAccountId = object.cloudflareAccountId ?? undefined;
+    message.embeddingProvider = object.embeddingProvider ?? undefined;
+    message.embeddingModelId = object.embeddingModelId ?? undefined;
+    message.embeddingOpenAiBaseUrl = object.embeddingOpenAiBaseUrl ?? undefined;
+    message.maxSwarmDepth = object.maxSwarmDepth ?? undefined;
+    message.safeYoloModeToggled = object.safeYoloModeToggled ?? undefined;
+    message.masEnabled = object.masEnabled ?? undefined;
+    message.globalDietCodeRulesToggles = object.globalDietCodeRulesToggles ?? undefined;
+    message.auditCompletionGateEnabled = object.auditCompletionGateEnabled ?? undefined;
+    message.auditCompletionGateThreshold = object.auditCompletionGateThreshold ?? undefined;
+    message.auditCompletionGateCriticalOnly = object.auditCompletionGateCriticalOnly ?? undefined;
+    message.auditActModeAdvisoryEnabled = object.auditActModeAdvisoryEnabled ?? undefined;
+    message.auditAdvisoryEscalationEnabled = object.auditAdvisoryEscalationEnabled ?? undefined;
+    message.auditPlanRegressionGateEnabled = object.auditPlanRegressionGateEnabled ?? undefined;
+    message.auditToolOutputAdvisoryEnabled = object.auditToolOutputAdvisoryEnabled ?? undefined;
+    message.auditFileWriteAdvisoryEnabled = object.auditFileWriteAdvisoryEnabled ?? undefined;
+    message.auditIntentThresholdAdjustmentsEnabled = object.auditIntentThresholdAdjustmentsEnabled ?? undefined;
+    message.auditIntentThresholdOverrides = object.auditIntentThresholdOverrides ?? undefined;
+    message.auditSarifHookExportEnabled = object.auditSarifHookExportEnabled ?? undefined;
+    message.auditWorkspaceArtifactsEnabled = object.auditWorkspaceArtifactsEnabled ?? undefined;
+    message.auditAdvisoryAutoScrollMode = object.auditAdvisoryAutoScrollMode ?? undefined;
+    message.liteLlmBaseUrl = object.liteLlmBaseUrl ?? undefined;
+    message.liteLlmUsePromptCache = object.liteLlmUsePromptCache ?? undefined;
+    message.anthropicBaseUrl = object.anthropicBaseUrl ?? undefined;
+    message.awsRegion = object.awsRegion ?? undefined;
+    message.awsUseCrossRegionInference = object.awsUseCrossRegionInference ?? undefined;
+    message.awsUseGlobalInference = object.awsUseGlobalInference ?? undefined;
+    message.awsBedrockUsePromptCache = object.awsBedrockUsePromptCache ?? undefined;
+    message.awsAuthentication = object.awsAuthentication ?? undefined;
+    message.awsUseProfile = object.awsUseProfile ?? undefined;
+    message.awsProfile = object.awsProfile ?? undefined;
+    message.awsBedrockEndpoint = object.awsBedrockEndpoint ?? undefined;
+    message.claudeCodePath = object.claudeCodePath ?? undefined;
+    message.openAiBaseUrl = object.openAiBaseUrl ?? undefined;
+    message.ollamaBaseUrl = object.ollamaBaseUrl ?? undefined;
+    message.ollamaApiOptionsCtxNum = object.ollamaApiOptionsCtxNum ?? undefined;
+    message.lmStudioBaseUrl = object.lmStudioBaseUrl ?? undefined;
+    message.lmStudioMaxTokens = object.lmStudioMaxTokens ?? undefined;
+    message.geminiBaseUrl = object.geminiBaseUrl ?? undefined;
+    message.requestyBaseUrl = object.requestyBaseUrl ?? undefined;
+    message.fireworksModelMaxCompletionTokens = object.fireworksModelMaxCompletionTokens ?? undefined;
+    message.fireworksModelMaxTokens = object.fireworksModelMaxTokens ?? undefined;
+    message.qwenCodeOauthPath = object.qwenCodeOauthPath ?? undefined;
+    message.azureApiVersion = object.azureApiVersion ?? undefined;
+    message.azureIdentity = object.azureIdentity ?? undefined;
+    message.qwenApiLine = object.qwenApiLine ?? undefined;
+    message.moonshotApiLine = object.moonshotApiLine ?? undefined;
+    message.asksageApiUrl = object.asksageApiUrl ?? undefined;
+    message.requestTimeoutMs = object.requestTimeoutMs ?? undefined;
+    message.sapAiResourceGroup = object.sapAiResourceGroup ?? undefined;
+    message.sapAiCoreTokenUrl = object.sapAiCoreTokenUrl ?? undefined;
+    message.sapAiCoreBaseUrl = object.sapAiCoreBaseUrl ?? undefined;
+    message.sapAiCoreUseOrchestrationMode = object.sapAiCoreUseOrchestrationMode ?? undefined;
+    message.difyBaseUrl = object.difyBaseUrl ?? undefined;
+    message.zaiApiLine = object.zaiApiLine ?? undefined;
+    message.ocaBaseUrl = object.ocaBaseUrl ?? undefined;
+    message.minimaxApiLine = object.minimaxApiLine ?? undefined;
+    message.ocaMode = object.ocaMode ?? undefined;
+    message.aihubmixBaseUrl = object.aihubmixBaseUrl ?? undefined;
+    message.aihubmixAppCode = object.aihubmixAppCode ?? undefined;
+    message.geminiPlanModeThinkingLevel = object.geminiPlanModeThinkingLevel ?? undefined;
+    message.planModeVerbosity = object.planModeVerbosity ?? undefined;
+    message.planModeVsCodeLmModelSelector =
+      (object.planModeVsCodeLmModelSelector !== undefined && object.planModeVsCodeLmModelSelector !== null)
+        ? LanguageModelChatSelector.fromPartial(object.planModeVsCodeLmModelSelector)
+        : undefined;
+    message.planModeAwsBedrockCustomSelected = object.planModeAwsBedrockCustomSelected ?? undefined;
+    message.planModeAwsBedrockCustomModelBaseId = object.planModeAwsBedrockCustomModelBaseId ?? undefined;
+    message.planModeDietCodeModelId = object.planModeDietCodeModelId ?? undefined;
+    message.planModeDietCodeModelInfo =
+      (object.planModeDietCodeModelInfo !== undefined && object.planModeDietCodeModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeDietCodeModelInfo)
+        : undefined;
+    message.planModeOpenAiModelId = object.planModeOpenAiModelId ?? undefined;
+    message.planModeOpenAiModelInfo =
+      (object.planModeOpenAiModelInfo !== undefined && object.planModeOpenAiModelInfo !== null)
+        ? OpenAiCompatibleModelInfo.fromPartial(object.planModeOpenAiModelInfo)
+        : undefined;
+    message.planModeOllamaModelId = object.planModeOllamaModelId ?? undefined;
+    message.planModeLmStudioModelId = object.planModeLmStudioModelId ?? undefined;
+    message.planModeLiteLlmModelId = object.planModeLiteLlmModelId ?? undefined;
+    message.planModeLiteLlmModelInfo =
+      (object.planModeLiteLlmModelInfo !== undefined && object.planModeLiteLlmModelInfo !== null)
+        ? LiteLLMModelInfo.fromPartial(object.planModeLiteLlmModelInfo)
+        : undefined;
+    message.planModeRequestyModelId = object.planModeRequestyModelId ?? undefined;
+    message.planModeRequestyModelInfo =
+      (object.planModeRequestyModelInfo !== undefined && object.planModeRequestyModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeRequestyModelInfo)
+        : undefined;
+    message.planModeTogetherModelId = object.planModeTogetherModelId ?? undefined;
+    message.planModeFireworksModelId = object.planModeFireworksModelId ?? undefined;
+    message.planModeSapAiCoreModelId = object.planModeSapAiCoreModelId ?? undefined;
+    message.planModeSapAiCoreDeploymentId = object.planModeSapAiCoreDeploymentId ?? undefined;
+    message.planModeGroqModelId = object.planModeGroqModelId ?? undefined;
+    message.planModeGroqModelInfo =
+      (object.planModeGroqModelInfo !== undefined && object.planModeGroqModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeGroqModelInfo)
+        : undefined;
+    message.planModeBasetenModelId = object.planModeBasetenModelId ?? undefined;
+    message.planModeBasetenModelInfo =
+      (object.planModeBasetenModelInfo !== undefined && object.planModeBasetenModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeBasetenModelInfo)
+        : undefined;
+    message.planModeHuggingFaceModelId = object.planModeHuggingFaceModelId ?? undefined;
+    message.planModeHuggingFaceModelInfo =
+      (object.planModeHuggingFaceModelInfo !== undefined && object.planModeHuggingFaceModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
+        : undefined;
+    message.planModeHuaweiCloudMaasModelId = object.planModeHuaweiCloudMaasModelId ?? undefined;
+    message.planModeHuaweiCloudMaasModelInfo =
+      (object.planModeHuaweiCloudMaasModelInfo !== undefined && object.planModeHuaweiCloudMaasModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
+        : undefined;
+    message.planModeOcaModelId = object.planModeOcaModelId ?? undefined;
+    message.planModeOcaModelInfo = (object.planModeOcaModelInfo !== undefined && object.planModeOcaModelInfo !== null)
+      ? OcaModelInfo.fromPartial(object.planModeOcaModelInfo)
+      : undefined;
+    message.planModeOcaReasoningEffort = object.planModeOcaReasoningEffort ?? undefined;
+    message.planModeAihubmixModelId = object.planModeAihubmixModelId ?? undefined;
+    message.planModeAihubmixModelInfo =
+      (object.planModeAihubmixModelInfo !== undefined && object.planModeAihubmixModelInfo !== null)
+        ? OpenAiCompatibleModelInfo.fromPartial(object.planModeAihubmixModelInfo)
+        : undefined;
+    message.planModeHicapModelId = object.planModeHicapModelId ?? undefined;
+    message.planModeHicapModelInfo =
+      (object.planModeHicapModelInfo !== undefined && object.planModeHicapModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeHicapModelInfo)
+        : undefined;
+    message.planModeVercelAiGatewayModelId = object.planModeVercelAiGatewayModelId ?? undefined;
+    message.planModeVercelAiGatewayModelInfo =
+      (object.planModeVercelAiGatewayModelInfo !== undefined && object.planModeVercelAiGatewayModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
+        : undefined;
+    message.geminiActModeThinkingLevel = object.geminiActModeThinkingLevel ?? undefined;
+    message.actModeVerbosity = object.actModeVerbosity ?? undefined;
+    message.actModeVsCodeLmModelSelector =
+      (object.actModeVsCodeLmModelSelector !== undefined && object.actModeVsCodeLmModelSelector !== null)
+        ? LanguageModelChatSelector.fromPartial(object.actModeVsCodeLmModelSelector)
+        : undefined;
+    message.actModeAwsBedrockCustomSelected = object.actModeAwsBedrockCustomSelected ?? undefined;
+    message.actModeAwsBedrockCustomModelBaseId = object.actModeAwsBedrockCustomModelBaseId ?? undefined;
+    message.actModeDietCodeModelId = object.actModeDietCodeModelId ?? undefined;
+    message.actModeDietCodeModelInfo =
+      (object.actModeDietCodeModelInfo !== undefined && object.actModeDietCodeModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeDietCodeModelInfo)
+        : undefined;
+    message.actModeOpenAiModelId = object.actModeOpenAiModelId ?? undefined;
+    message.actModeOpenAiModelInfo =
+      (object.actModeOpenAiModelInfo !== undefined && object.actModeOpenAiModelInfo !== null)
+        ? OpenAiCompatibleModelInfo.fromPartial(object.actModeOpenAiModelInfo)
+        : undefined;
+    message.actModeOllamaModelId = object.actModeOllamaModelId ?? undefined;
+    message.actModeLmStudioModelId = object.actModeLmStudioModelId ?? undefined;
+    message.actModeLiteLlmModelId = object.actModeLiteLlmModelId ?? undefined;
+    message.actModeLiteLlmModelInfo =
+      (object.actModeLiteLlmModelInfo !== undefined && object.actModeLiteLlmModelInfo !== null)
+        ? LiteLLMModelInfo.fromPartial(object.actModeLiteLlmModelInfo)
+        : undefined;
+    message.actModeRequestyModelId = object.actModeRequestyModelId ?? undefined;
+    message.actModeRequestyModelInfo =
+      (object.actModeRequestyModelInfo !== undefined && object.actModeRequestyModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeRequestyModelInfo)
+        : undefined;
+    message.actModeTogetherModelId = object.actModeTogetherModelId ?? undefined;
+    message.actModeFireworksModelId = object.actModeFireworksModelId ?? undefined;
+    message.actModeSapAiCoreModelId = object.actModeSapAiCoreModelId ?? undefined;
+    message.actModeSapAiCoreDeploymentId = object.actModeSapAiCoreDeploymentId ?? undefined;
+    message.actModeGroqModelId = object.actModeGroqModelId ?? undefined;
+    message.actModeGroqModelInfo = (object.actModeGroqModelInfo !== undefined && object.actModeGroqModelInfo !== null)
+      ? OpenRouterModelInfo.fromPartial(object.actModeGroqModelInfo)
+      : undefined;
+    message.actModeBasetenModelId = object.actModeBasetenModelId ?? undefined;
+    message.actModeBasetenModelInfo =
+      (object.actModeBasetenModelInfo !== undefined && object.actModeBasetenModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeBasetenModelInfo)
+        : undefined;
+    message.actModeHuggingFaceModelId = object.actModeHuggingFaceModelId ?? undefined;
+    message.actModeHuggingFaceModelInfo =
+      (object.actModeHuggingFaceModelInfo !== undefined && object.actModeHuggingFaceModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
+        : undefined;
+    message.actModeHuaweiCloudMaasModelId = object.actModeHuaweiCloudMaasModelId ?? undefined;
+    message.actModeHuaweiCloudMaasModelInfo =
+      (object.actModeHuaweiCloudMaasModelInfo !== undefined && object.actModeHuaweiCloudMaasModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
+        : undefined;
+    message.actModeOcaModelId = object.actModeOcaModelId ?? undefined;
+    message.actModeOcaModelInfo = (object.actModeOcaModelInfo !== undefined && object.actModeOcaModelInfo !== null)
+      ? OcaModelInfo.fromPartial(object.actModeOcaModelInfo)
+      : undefined;
+    message.actModeOcaReasoningEffort = object.actModeOcaReasoningEffort ?? undefined;
+    message.actModeAihubmixModelId = object.actModeAihubmixModelId ?? undefined;
+    message.actModeAihubmixModelInfo =
+      (object.actModeAihubmixModelInfo !== undefined && object.actModeAihubmixModelInfo !== null)
+        ? OpenAiCompatibleModelInfo.fromPartial(object.actModeAihubmixModelInfo)
+        : undefined;
+    message.actModeHicapModelId = object.actModeHicapModelId ?? undefined;
+    message.actModeHicapModelInfo =
+      (object.actModeHicapModelInfo !== undefined && object.actModeHicapModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeHicapModelInfo)
+        : undefined;
+    message.actModeVercelAiGatewayModelId = object.actModeVercelAiGatewayModelId ?? undefined;
+    message.actModeVercelAiGatewayModelInfo =
+      (object.actModeVercelAiGatewayModelInfo !== undefined && object.actModeVercelAiGatewayModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
+        : undefined;
+    message.hicapModelId = object.hicapModelId ?? undefined;
+    message.lmStudioModelId = object.lmStudioModelId ?? undefined;
+    message.planModeClinePassModelId = object.planModeClinePassModelId ?? undefined;
+    message.planModeClinePassModelInfo =
+      (object.planModeClinePassModelInfo !== undefined && object.planModeClinePassModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeClinePassModelInfo)
+        : undefined;
+    message.actModeClinePassModelId = object.actModeClinePassModelId ?? undefined;
+    message.actModeClinePassModelInfo =
+      (object.actModeClinePassModelInfo !== undefined && object.actModeClinePassModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeClinePassModelInfo)
+        : undefined;
+    message.modEnabled = object.modEnabled ?? undefined;
+    message.modOutcome = object.modOutcome ?? undefined;
+    message.planModeNousResearchModelInfo =
+      (object.planModeNousResearchModelInfo !== undefined && object.planModeNousResearchModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeNousResearchModelInfo)
+        : undefined;
+    message.actModeNousResearchModelInfo =
+      (object.actModeNousResearchModelInfo !== undefined && object.actModeNousResearchModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.actModeNousResearchModelInfo)
+        : undefined;
+    message.galxBaseUrl = object.galxBaseUrl ?? undefined;
+    message.planModeGalxModelId = object.planModeGalxModelId ?? undefined;
+    message.planModeGalxModelInfo =
+      (object.planModeGalxModelInfo !== undefined && object.planModeGalxModelInfo !== null)
+        ? OpenRouterModelInfo.fromPartial(object.planModeGalxModelInfo)
+        : undefined;
+    message.actModeGalxModelId = object.actModeGalxModelId ?? undefined;
+    message.actModeGalxModelInfo = (object.actModeGalxModelInfo !== undefined && object.actModeGalxModelInfo !== null)
+      ? OpenRouterModelInfo.fromPartial(object.actModeGalxModelInfo)
+      : undefined;
+    message.openAiHeaders = (globalThis.Object.entries(object.openAiHeaders ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
+    return message;
+  },
 };
 
 function createBaseSettings_OpenAiHeadersEntry(): Settings_OpenAiHeadersEntry {
-	return { key: "", value: "" };
+  return { key: "", value: "" };
 }
 
-export const Settings_OpenAiHeadersEntry: MessageFns<Settings_OpenAiHeadersEntry> =
-	{
-		encode(
-			message: Settings_OpenAiHeadersEntry,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.key !== "") {
-				writer.uint32(10).string(message.key);
-			}
-			if (message.value !== "") {
-				writer.uint32(18).string(message.value);
-			}
-			return writer;
-		},
+export const Settings_OpenAiHeadersEntry: MessageFns<Settings_OpenAiHeadersEntry> = {
+  encode(message: Settings_OpenAiHeadersEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): Settings_OpenAiHeadersEntry {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseSettings_OpenAiHeadersEntry();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): Settings_OpenAiHeadersEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseSettings_OpenAiHeadersEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.key = reader.string();
-							continue;
-						}
-						case 2: {
-							if (tag !== 18) {
-								break;
-							}
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-							message.value = reader.string();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.value = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): Settings_OpenAiHeadersEntry {
-			return {
-				key: isSet(object.key) ? globalThis.String(object.key) : "",
-				value: isSet(object.value) ? globalThis.String(object.value) : "",
-			};
-		},
+  fromJSON(object: any): Settings_OpenAiHeadersEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
 
-		toJSON(message: Settings_OpenAiHeadersEntry): unknown {
-			const obj: any = {};
-			if (message.key !== "") {
-				obj.key = message.key;
-			}
-			if (message.value !== "") {
-				obj.value = message.value;
-			}
-			return obj;
-		},
+  toJSON(message: Settings_OpenAiHeadersEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<Settings_OpenAiHeadersEntry>, I>>(
-			base?: I,
-		): Settings_OpenAiHeadersEntry {
-			return Settings_OpenAiHeadersEntry.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<Settings_OpenAiHeadersEntry>, I>>(
-			object: I,
-		): Settings_OpenAiHeadersEntry {
-			const message = createBaseSettings_OpenAiHeadersEntry();
-			message.key = object.key ?? "";
-			message.value = object.value ?? "";
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<Settings_OpenAiHeadersEntry>, I>>(base?: I): Settings_OpenAiHeadersEntry {
+    return Settings_OpenAiHeadersEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Settings_OpenAiHeadersEntry>, I>>(object: I): Settings_OpenAiHeadersEntry {
+    const message = createBaseSettings_OpenAiHeadersEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
 
 function createBaseState(): State {
-	return { stateJson: "" };
+  return { stateJson: "" };
 }
 
 export const State: MessageFns<State> = {
-	encode(
-		message: State,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.stateJson !== "") {
-			writer.uint32(10).string(message.stateJson);
-		}
-		return writer;
-	},
+  encode(message: State, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.stateJson !== "") {
+      writer.uint32(10).string(message.stateJson);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): State {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseState();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): State {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseState();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.stateJson = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.stateJson = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): State {
-		return {
-			stateJson: isSet(object.stateJson)
-				? globalThis.String(object.stateJson)
-				: isSet(object.state_json)
-					? globalThis.String(object.state_json)
-					: "",
-		};
-	},
+  fromJSON(object: any): State {
+    return {
+      stateJson: isSet(object.stateJson)
+        ? globalThis.String(object.stateJson)
+        : isSet(object.state_json)
+        ? globalThis.String(object.state_json)
+        : "",
+    };
+  },
 
-	toJSON(message: State): unknown {
-		const obj: any = {};
-		if (message.stateJson !== "") {
-			obj.stateJson = message.stateJson;
-		}
-		return obj;
-	},
+  toJSON(message: State): unknown {
+    const obj: any = {};
+    if (message.stateJson !== "") {
+      obj.stateJson = message.stateJson;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<State>, I>>(base?: I): State {
-		return State.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<State>, I>>(object: I): State {
-		const message = createBaseState();
-		message.stateJson = object.stateJson ?? "";
-		return message;
-	},
+  create<I extends Exact<DeepPartial<State>, I>>(base?: I): State {
+    return State.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<State>, I>>(object: I): State {
+    const message = createBaseState();
+    message.stateJson = object.stateJson ?? "";
+    return message;
+  },
 };
 
 function createBaseTerminalProfiles(): TerminalProfiles {
-	return { profiles: [] };
+  return { profiles: [] };
 }
 
 export const TerminalProfiles: MessageFns<TerminalProfiles> = {
-	encode(
-		message: TerminalProfiles,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.profiles) {
-			TerminalProfile.encode(v!, writer.uint32(10).fork()).join();
-		}
-		return writer;
-	},
+  encode(message: TerminalProfiles, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.profiles) {
+      TerminalProfile.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): TerminalProfiles {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTerminalProfiles();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TerminalProfiles {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTerminalProfiles();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.profiles.push(
-							TerminalProfile.decode(reader, reader.uint32()),
-						);
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.profiles.push(TerminalProfile.decode(reader, reader.uint32()));
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TerminalProfiles {
-		return {
-			profiles: globalThis.Array.isArray(object?.profiles)
-				? object.profiles.map((e: any) => TerminalProfile.fromJSON(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): TerminalProfiles {
+    return {
+      profiles: globalThis.Array.isArray(object?.profiles)
+        ? object.profiles.map((e: any) => TerminalProfile.fromJSON(e))
+        : [],
+    };
+  },
 
-	toJSON(message: TerminalProfiles): unknown {
-		const obj: any = {};
-		if (message.profiles?.length) {
-			obj.profiles = message.profiles.map((e) => TerminalProfile.toJSON(e));
-		}
-		return obj;
-	},
+  toJSON(message: TerminalProfiles): unknown {
+    const obj: any = {};
+    if (message.profiles?.length) {
+      obj.profiles = message.profiles.map((e) => TerminalProfile.toJSON(e));
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TerminalProfiles>, I>>(
-		base?: I,
-	): TerminalProfiles {
-		return TerminalProfiles.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TerminalProfiles>, I>>(
-		object: I,
-	): TerminalProfiles {
-		const message = createBaseTerminalProfiles();
-		message.profiles =
-			object.profiles?.map((e) => TerminalProfile.fromPartial(e)) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TerminalProfiles>, I>>(base?: I): TerminalProfiles {
+    return TerminalProfiles.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TerminalProfiles>, I>>(object: I): TerminalProfiles {
+    const message = createBaseTerminalProfiles();
+    message.profiles = object.profiles?.map((e) => TerminalProfile.fromPartial(e)) || [];
+    return message;
+  },
 };
 
 function createBaseTerminalProfile(): TerminalProfile {
-	return { id: "", name: "", path: undefined, description: undefined };
+  return { id: "", name: "", path: undefined, description: undefined };
 }
 
 export const TerminalProfile: MessageFns<TerminalProfile> = {
-	encode(
-		message: TerminalProfile,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.id !== "") {
-			writer.uint32(10).string(message.id);
-		}
-		if (message.name !== "") {
-			writer.uint32(18).string(message.name);
-		}
-		if (message.path !== undefined) {
-			writer.uint32(26).string(message.path);
-		}
-		if (message.description !== undefined) {
-			writer.uint32(34).string(message.description);
-		}
-		return writer;
-	},
+  encode(message: TerminalProfile, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.path !== undefined) {
+      writer.uint32(26).string(message.path);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(34).string(message.description);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): TerminalProfile {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTerminalProfile();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TerminalProfile {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTerminalProfile();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.id = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.id = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.name = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.name = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.description = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.description = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TerminalProfile {
-		return {
-			id: isSet(object.id) ? globalThis.String(object.id) : "",
-			name: isSet(object.name) ? globalThis.String(object.name) : "",
-			path: isSet(object.path) ? globalThis.String(object.path) : undefined,
-			description: isSet(object.description)
-				? globalThis.String(object.description)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): TerminalProfile {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      path: isSet(object.path) ? globalThis.String(object.path) : undefined,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+    };
+  },
 
-	toJSON(message: TerminalProfile): unknown {
-		const obj: any = {};
-		if (message.id !== "") {
-			obj.id = message.id;
-		}
-		if (message.name !== "") {
-			obj.name = message.name;
-		}
-		if (message.path !== undefined) {
-			obj.path = message.path;
-		}
-		if (message.description !== undefined) {
-			obj.description = message.description;
-		}
-		return obj;
-	},
+  toJSON(message: TerminalProfile): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.path !== undefined) {
+      obj.path = message.path;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TerminalProfile>, I>>(
-		base?: I,
-	): TerminalProfile {
-		return TerminalProfile.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TerminalProfile>, I>>(
-		object: I,
-	): TerminalProfile {
-		const message = createBaseTerminalProfile();
-		message.id = object.id ?? "";
-		message.name = object.name ?? "";
-		message.path = object.path ?? undefined;
-		message.description = object.description ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TerminalProfile>, I>>(base?: I): TerminalProfile {
+    return TerminalProfile.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TerminalProfile>, I>>(object: I): TerminalProfile {
+    const message = createBaseTerminalProfile();
+    message.id = object.id ?? "";
+    message.name = object.name ?? "";
+    message.path = object.path ?? undefined;
+    message.description = object.description ?? undefined;
+    return message;
+  },
 };
 
 function createBaseTerminalProfileUpdateResponse(): TerminalProfileUpdateResponse {
-	return { closedCount: 0, busyTerminalsCount: 0, hasBusyTerminals: false };
+  return { closedCount: 0, busyTerminalsCount: 0, hasBusyTerminals: false };
 }
 
-export const TerminalProfileUpdateResponse: MessageFns<TerminalProfileUpdateResponse> =
-	{
-		encode(
-			message: TerminalProfileUpdateResponse,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.closedCount !== 0) {
-				writer.uint32(8).int32(message.closedCount);
-			}
-			if (message.busyTerminalsCount !== 0) {
-				writer.uint32(16).int32(message.busyTerminalsCount);
-			}
-			if (message.hasBusyTerminals !== false) {
-				writer.uint32(24).bool(message.hasBusyTerminals);
-			}
-			return writer;
-		},
+export const TerminalProfileUpdateResponse: MessageFns<TerminalProfileUpdateResponse> = {
+  encode(message: TerminalProfileUpdateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.closedCount !== 0) {
+      writer.uint32(8).int32(message.closedCount);
+    }
+    if (message.busyTerminalsCount !== 0) {
+      writer.uint32(16).int32(message.busyTerminalsCount);
+    }
+    if (message.hasBusyTerminals !== false) {
+      writer.uint32(24).bool(message.hasBusyTerminals);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): TerminalProfileUpdateResponse {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseTerminalProfileUpdateResponse();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 8) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): TerminalProfileUpdateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTerminalProfileUpdateResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-							message.closedCount = reader.int32();
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.closedCount = reader.int32();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.busyTerminalsCount = reader.int32();
-							continue;
-						}
-						case 3: {
-							if (tag !== 24) {
-								break;
-							}
+            message.busyTerminalsCount = reader.int32();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-							message.hasBusyTerminals = reader.bool();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.hasBusyTerminals = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): TerminalProfileUpdateResponse {
-			return {
-				closedCount: isSet(object.closedCount)
-					? globalThis.Number(object.closedCount)
-					: isSet(object.closed_count)
-						? globalThis.Number(object.closed_count)
-						: 0,
-				busyTerminalsCount: isSet(object.busyTerminalsCount)
-					? globalThis.Number(object.busyTerminalsCount)
-					: isSet(object.busy_terminals_count)
-						? globalThis.Number(object.busy_terminals_count)
-						: 0,
-				hasBusyTerminals: isSet(object.hasBusyTerminals)
-					? globalThis.Boolean(object.hasBusyTerminals)
-					: isSet(object.has_busy_terminals)
-						? globalThis.Boolean(object.has_busy_terminals)
-						: false,
-			};
-		},
+  fromJSON(object: any): TerminalProfileUpdateResponse {
+    return {
+      closedCount: isSet(object.closedCount)
+        ? globalThis.Number(object.closedCount)
+        : isSet(object.closed_count)
+        ? globalThis.Number(object.closed_count)
+        : 0,
+      busyTerminalsCount: isSet(object.busyTerminalsCount)
+        ? globalThis.Number(object.busyTerminalsCount)
+        : isSet(object.busy_terminals_count)
+        ? globalThis.Number(object.busy_terminals_count)
+        : 0,
+      hasBusyTerminals: isSet(object.hasBusyTerminals)
+        ? globalThis.Boolean(object.hasBusyTerminals)
+        : isSet(object.has_busy_terminals)
+        ? globalThis.Boolean(object.has_busy_terminals)
+        : false,
+    };
+  },
 
-		toJSON(message: TerminalProfileUpdateResponse): unknown {
-			const obj: any = {};
-			if (message.closedCount !== 0) {
-				obj.closedCount = Math.round(message.closedCount);
-			}
-			if (message.busyTerminalsCount !== 0) {
-				obj.busyTerminalsCount = Math.round(message.busyTerminalsCount);
-			}
-			if (message.hasBusyTerminals !== false) {
-				obj.hasBusyTerminals = message.hasBusyTerminals;
-			}
-			return obj;
-		},
+  toJSON(message: TerminalProfileUpdateResponse): unknown {
+    const obj: any = {};
+    if (message.closedCount !== 0) {
+      obj.closedCount = Math.round(message.closedCount);
+    }
+    if (message.busyTerminalsCount !== 0) {
+      obj.busyTerminalsCount = Math.round(message.busyTerminalsCount);
+    }
+    if (message.hasBusyTerminals !== false) {
+      obj.hasBusyTerminals = message.hasBusyTerminals;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<TerminalProfileUpdateResponse>, I>>(
-			base?: I,
-		): TerminalProfileUpdateResponse {
-			return TerminalProfileUpdateResponse.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<TerminalProfileUpdateResponse>, I>>(
-			object: I,
-		): TerminalProfileUpdateResponse {
-			const message = createBaseTerminalProfileUpdateResponse();
-			message.closedCount = object.closedCount ?? 0;
-			message.busyTerminalsCount = object.busyTerminalsCount ?? 0;
-			message.hasBusyTerminals = object.hasBusyTerminals ?? false;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<TerminalProfileUpdateResponse>, I>>(base?: I): TerminalProfileUpdateResponse {
+    return TerminalProfileUpdateResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TerminalProfileUpdateResponse>, I>>(
+    object: I,
+  ): TerminalProfileUpdateResponse {
+    const message = createBaseTerminalProfileUpdateResponse();
+    message.closedCount = object.closedCount ?? 0;
+    message.busyTerminalsCount = object.busyTerminalsCount ?? 0;
+    message.hasBusyTerminals = object.hasBusyTerminals ?? false;
+    return message;
+  },
+};
 
 function createBaseTogglePlanActModeRequest(): TogglePlanActModeRequest {
-	return { metadata: undefined, mode: 0, chatContent: undefined };
+  return { metadata: undefined, mode: 0, chatContent: undefined };
 }
 
 export const TogglePlanActModeRequest: MessageFns<TogglePlanActModeRequest> = {
-	encode(
-		message: TogglePlanActModeRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.metadata !== undefined) {
-			Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-		}
-		if (message.mode !== 0) {
-			writer.uint32(16).int32(message.mode);
-		}
-		if (message.chatContent !== undefined) {
-			ChatContent.encode(message.chatContent, writer.uint32(26).fork()).join();
-		}
-		return writer;
-	},
+  encode(message: TogglePlanActModeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.mode !== 0) {
+      writer.uint32(16).int32(message.mode);
+    }
+    if (message.chatContent !== undefined) {
+      ChatContent.encode(message.chatContent, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): TogglePlanActModeRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTogglePlanActModeRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TogglePlanActModeRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTogglePlanActModeRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.metadata = Metadata.decode(reader, reader.uint32());
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.mode = reader.int32() as any;
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.mode = reader.int32() as any;
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.chatContent = ChatContent.decode(reader, reader.uint32());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.chatContent = ChatContent.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TogglePlanActModeRequest {
-		return {
-			metadata: isSet(object.metadata)
-				? Metadata.fromJSON(object.metadata)
-				: undefined,
-			mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : 0,
-			chatContent: isSet(object.chatContent)
-				? ChatContent.fromJSON(object.chatContent)
-				: isSet(object.chat_content)
-					? ChatContent.fromJSON(object.chat_content)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): TogglePlanActModeRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : 0,
+      chatContent: isSet(object.chatContent)
+        ? ChatContent.fromJSON(object.chatContent)
+        : isSet(object.chat_content)
+        ? ChatContent.fromJSON(object.chat_content)
+        : undefined,
+    };
+  },
 
-	toJSON(message: TogglePlanActModeRequest): unknown {
-		const obj: any = {};
-		if (message.metadata !== undefined) {
-			obj.metadata = Metadata.toJSON(message.metadata);
-		}
-		if (message.mode !== 0) {
-			obj.mode = planActModeToJSON(message.mode);
-		}
-		if (message.chatContent !== undefined) {
-			obj.chatContent = ChatContent.toJSON(message.chatContent);
-		}
-		return obj;
-	},
+  toJSON(message: TogglePlanActModeRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.mode !== 0) {
+      obj.mode = planActModeToJSON(message.mode);
+    }
+    if (message.chatContent !== undefined) {
+      obj.chatContent = ChatContent.toJSON(message.chatContent);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TogglePlanActModeRequest>, I>>(
-		base?: I,
-	): TogglePlanActModeRequest {
-		return TogglePlanActModeRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TogglePlanActModeRequest>, I>>(
-		object: I,
-	): TogglePlanActModeRequest {
-		const message = createBaseTogglePlanActModeRequest();
-		message.metadata =
-			object.metadata !== undefined && object.metadata !== null
-				? Metadata.fromPartial(object.metadata)
-				: undefined;
-		message.mode = object.mode ?? 0;
-		message.chatContent =
-			object.chatContent !== undefined && object.chatContent !== null
-				? ChatContent.fromPartial(object.chatContent)
-				: undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TogglePlanActModeRequest>, I>>(base?: I): TogglePlanActModeRequest {
+    return TogglePlanActModeRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TogglePlanActModeRequest>, I>>(object: I): TogglePlanActModeRequest {
+    const message = createBaseTogglePlanActModeRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.mode = object.mode ?? 0;
+    message.chatContent = (object.chatContent !== undefined && object.chatContent !== null)
+      ? ChatContent.fromPartial(object.chatContent)
+      : undefined;
+    return message;
+  },
 };
 
 function createBaseChatContent(): ChatContent {
-	return { message: undefined, images: [], files: [] };
+  return { message: undefined, images: [], files: [] };
 }
 
 export const ChatContent: MessageFns<ChatContent> = {
-	encode(
-		message: ChatContent,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.message !== undefined) {
-			writer.uint32(10).string(message.message);
-		}
-		for (const v of message.images) {
-			writer.uint32(18).string(v!);
-		}
-		for (const v of message.files) {
-			writer.uint32(26).string(v!);
-		}
-		return writer;
-	},
+  encode(message: ChatContent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.message !== undefined) {
+      writer.uint32(10).string(message.message);
+    }
+    for (const v of message.images) {
+      writer.uint32(18).string(v!);
+    }
+    for (const v of message.files) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): ChatContent {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseChatContent();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ChatContent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseChatContent();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.message = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.message = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.images.push(reader.string());
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.images.push(reader.string());
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.files.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.files.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ChatContent {
-		return {
-			message: isSet(object.message)
-				? globalThis.String(object.message)
-				: undefined,
-			images: globalThis.Array.isArray(object?.images)
-				? object.images.map((e: any) => globalThis.String(e))
-				: [],
-			files: globalThis.Array.isArray(object?.files)
-				? object.files.map((e: any) => globalThis.String(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): ChatContent {
+    return {
+      message: isSet(object.message) ? globalThis.String(object.message) : undefined,
+      images: globalThis.Array.isArray(object?.images) ? object.images.map((e: any) => globalThis.String(e)) : [],
+      files: globalThis.Array.isArray(object?.files) ? object.files.map((e: any) => globalThis.String(e)) : [],
+    };
+  },
 
-	toJSON(message: ChatContent): unknown {
-		const obj: any = {};
-		if (message.message !== undefined) {
-			obj.message = message.message;
-		}
-		if (message.images?.length) {
-			obj.images = message.images;
-		}
-		if (message.files?.length) {
-			obj.files = message.files;
-		}
-		return obj;
-	},
+  toJSON(message: ChatContent): unknown {
+    const obj: any = {};
+    if (message.message !== undefined) {
+      obj.message = message.message;
+    }
+    if (message.images?.length) {
+      obj.images = message.images;
+    }
+    if (message.files?.length) {
+      obj.files = message.files;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ChatContent>, I>>(base?: I): ChatContent {
-		return ChatContent.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ChatContent>, I>>(
-		object: I,
-	): ChatContent {
-		const message = createBaseChatContent();
-		message.message = object.message ?? undefined;
-		message.images = object.images?.map((e) => e) || [];
-		message.files = object.files?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ChatContent>, I>>(base?: I): ChatContent {
+    return ChatContent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ChatContent>, I>>(object: I): ChatContent {
+    const message = createBaseChatContent();
+    message.message = object.message ?? undefined;
+    message.images = object.images?.map((e) => e) || [];
+    message.files = object.files?.map((e) => e) || [];
+    return message;
+  },
 };
 
 function createBaseResetStateRequest(): ResetStateRequest {
-	return { metadata: undefined, global: undefined };
+  return { metadata: undefined, global: undefined };
 }
 
 export const ResetStateRequest: MessageFns<ResetStateRequest> = {
-	encode(
-		message: ResetStateRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.metadata !== undefined) {
-			Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-		}
-		if (message.global !== undefined) {
-			writer.uint32(16).bool(message.global);
-		}
-		return writer;
-	},
+  encode(message: ResetStateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.global !== undefined) {
+      writer.uint32(16).bool(message.global);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): ResetStateRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseResetStateRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ResetStateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseResetStateRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.metadata = Metadata.decode(reader, reader.uint32());
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.global = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.global = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ResetStateRequest {
-		return {
-			metadata: isSet(object.metadata)
-				? Metadata.fromJSON(object.metadata)
-				: undefined,
-			global: isSet(object.global)
-				? globalThis.Boolean(object.global)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ResetStateRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      global: isSet(object.global) ? globalThis.Boolean(object.global) : undefined,
+    };
+  },
 
-	toJSON(message: ResetStateRequest): unknown {
-		const obj: any = {};
-		if (message.metadata !== undefined) {
-			obj.metadata = Metadata.toJSON(message.metadata);
-		}
-		if (message.global !== undefined) {
-			obj.global = message.global;
-		}
-		return obj;
-	},
+  toJSON(message: ResetStateRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.global !== undefined) {
+      obj.global = message.global;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ResetStateRequest>, I>>(
-		base?: I,
-	): ResetStateRequest {
-		return ResetStateRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ResetStateRequest>, I>>(
-		object: I,
-	): ResetStateRequest {
-		const message = createBaseResetStateRequest();
-		message.metadata =
-			object.metadata !== undefined && object.metadata !== null
-				? Metadata.fromPartial(object.metadata)
-				: undefined;
-		message.global = object.global ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ResetStateRequest>, I>>(base?: I): ResetStateRequest {
+    return ResetStateRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResetStateRequest>, I>>(object: I): ResetStateRequest {
+    const message = createBaseResetStateRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.global = object.global ?? undefined;
+    return message;
+  },
 };
 
 function createBaseAutoApprovalSettingsRequest(): AutoApprovalSettingsRequest {
-	return {
-		metadata: undefined,
-		version: 0,
-		actions: undefined,
-		enableNotifications: false,
-	};
+  return { metadata: undefined, version: 0, actions: undefined, enableNotifications: false };
 }
 
-export const AutoApprovalSettingsRequest: MessageFns<AutoApprovalSettingsRequest> =
-	{
-		encode(
-			message: AutoApprovalSettingsRequest,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.metadata !== undefined) {
-				Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-			}
-			if (message.version !== 0) {
-				writer.uint32(16).int32(message.version);
-			}
-			if (message.actions !== undefined) {
-				AutoApprovalActions.encode(
-					message.actions,
-					writer.uint32(26).fork(),
-				).join();
-			}
-			if (message.enableNotifications !== false) {
-				writer.uint32(32).bool(message.enableNotifications);
-			}
-			return writer;
-		},
+export const AutoApprovalSettingsRequest: MessageFns<AutoApprovalSettingsRequest> = {
+  encode(message: AutoApprovalSettingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.version !== 0) {
+      writer.uint32(16).int32(message.version);
+    }
+    if (message.actions !== undefined) {
+      AutoApprovalActions.encode(message.actions, writer.uint32(26).fork()).join();
+    }
+    if (message.enableNotifications !== false) {
+      writer.uint32(32).bool(message.enableNotifications);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): AutoApprovalSettingsRequest {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseAutoApprovalSettingsRequest();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): AutoApprovalSettingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseAutoApprovalSettingsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.metadata = Metadata.decode(reader, reader.uint32());
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.version = reader.int32();
-							continue;
-						}
-						case 3: {
-							if (tag !== 26) {
-								break;
-							}
+            message.version = reader.int32();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-							message.actions = AutoApprovalActions.decode(
-								reader,
-								reader.uint32(),
-							);
-							continue;
-						}
-						case 4: {
-							if (tag !== 32) {
-								break;
-							}
+            message.actions = AutoApprovalActions.decode(reader, reader.uint32());
+            continue;
+          }
+          case 4: {
+            if (tag !== 32) {
+              break;
+            }
 
-							message.enableNotifications = reader.bool();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.enableNotifications = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): AutoApprovalSettingsRequest {
-			return {
-				metadata: isSet(object.metadata)
-					? Metadata.fromJSON(object.metadata)
-					: undefined,
-				version: isSet(object.version) ? globalThis.Number(object.version) : 0,
-				actions: isSet(object.actions)
-					? AutoApprovalActions.fromJSON(object.actions)
-					: undefined,
-				enableNotifications: isSet(object.enableNotifications)
-					? globalThis.Boolean(object.enableNotifications)
-					: isSet(object.enable_notifications)
-						? globalThis.Boolean(object.enable_notifications)
-						: false,
-			};
-		},
+  fromJSON(object: any): AutoApprovalSettingsRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      actions: isSet(object.actions) ? AutoApprovalActions.fromJSON(object.actions) : undefined,
+      enableNotifications: isSet(object.enableNotifications)
+        ? globalThis.Boolean(object.enableNotifications)
+        : isSet(object.enable_notifications)
+        ? globalThis.Boolean(object.enable_notifications)
+        : false,
+    };
+  },
 
-		toJSON(message: AutoApprovalSettingsRequest): unknown {
-			const obj: any = {};
-			if (message.metadata !== undefined) {
-				obj.metadata = Metadata.toJSON(message.metadata);
-			}
-			if (message.version !== 0) {
-				obj.version = Math.round(message.version);
-			}
-			if (message.actions !== undefined) {
-				obj.actions = AutoApprovalActions.toJSON(message.actions);
-			}
-			if (message.enableNotifications !== false) {
-				obj.enableNotifications = message.enableNotifications;
-			}
-			return obj;
-		},
+  toJSON(message: AutoApprovalSettingsRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.actions !== undefined) {
+      obj.actions = AutoApprovalActions.toJSON(message.actions);
+    }
+    if (message.enableNotifications !== false) {
+      obj.enableNotifications = message.enableNotifications;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<AutoApprovalSettingsRequest>, I>>(
-			base?: I,
-		): AutoApprovalSettingsRequest {
-			return AutoApprovalSettingsRequest.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<AutoApprovalSettingsRequest>, I>>(
-			object: I,
-		): AutoApprovalSettingsRequest {
-			const message = createBaseAutoApprovalSettingsRequest();
-			message.metadata =
-				object.metadata !== undefined && object.metadata !== null
-					? Metadata.fromPartial(object.metadata)
-					: undefined;
-			message.version = object.version ?? 0;
-			message.actions =
-				object.actions !== undefined && object.actions !== null
-					? AutoApprovalActions.fromPartial(object.actions)
-					: undefined;
-			message.enableNotifications = object.enableNotifications ?? false;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<AutoApprovalSettingsRequest>, I>>(base?: I): AutoApprovalSettingsRequest {
+    return AutoApprovalSettingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AutoApprovalSettingsRequest>, I>>(object: I): AutoApprovalSettingsRequest {
+    const message = createBaseAutoApprovalSettingsRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.version = object.version ?? 0;
+    message.actions = (object.actions !== undefined && object.actions !== null)
+      ? AutoApprovalActions.fromPartial(object.actions)
+      : undefined;
+    message.enableNotifications = object.enableNotifications ?? false;
+    return message;
+  },
+};
 
 function createBaseTelemetrySettingRequest(): TelemetrySettingRequest {
-	return { metadata: undefined, setting: 0 };
+  return { metadata: undefined, setting: 0 };
 }
 
 export const TelemetrySettingRequest: MessageFns<TelemetrySettingRequest> = {
-	encode(
-		message: TelemetrySettingRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.metadata !== undefined) {
-			Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-		}
-		if (message.setting !== 0) {
-			writer.uint32(16).int32(message.setting);
-		}
-		return writer;
-	},
+  encode(message: TelemetrySettingRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.setting !== 0) {
+      writer.uint32(16).int32(message.setting);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): TelemetrySettingRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTelemetrySettingRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TelemetrySettingRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTelemetrySettingRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.metadata = Metadata.decode(reader, reader.uint32());
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.setting = reader.int32() as any;
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.setting = reader.int32() as any;
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TelemetrySettingRequest {
-		return {
-			metadata: isSet(object.metadata)
-				? Metadata.fromJSON(object.metadata)
-				: undefined,
-			setting: isSet(object.setting)
-				? telemetrySettingEnumFromJSON(object.setting)
-				: 0,
-		};
-	},
+  fromJSON(object: any): TelemetrySettingRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      setting: isSet(object.setting) ? telemetrySettingEnumFromJSON(object.setting) : 0,
+    };
+  },
 
-	toJSON(message: TelemetrySettingRequest): unknown {
-		const obj: any = {};
-		if (message.metadata !== undefined) {
-			obj.metadata = Metadata.toJSON(message.metadata);
-		}
-		if (message.setting !== 0) {
-			obj.setting = telemetrySettingEnumToJSON(message.setting);
-		}
-		return obj;
-	},
+  toJSON(message: TelemetrySettingRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.setting !== 0) {
+      obj.setting = telemetrySettingEnumToJSON(message.setting);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TelemetrySettingRequest>, I>>(
-		base?: I,
-	): TelemetrySettingRequest {
-		return TelemetrySettingRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TelemetrySettingRequest>, I>>(
-		object: I,
-	): TelemetrySettingRequest {
-		const message = createBaseTelemetrySettingRequest();
-		message.metadata =
-			object.metadata !== undefined && object.metadata !== null
-				? Metadata.fromPartial(object.metadata)
-				: undefined;
-		message.setting = object.setting ?? 0;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TelemetrySettingRequest>, I>>(base?: I): TelemetrySettingRequest {
+    return TelemetrySettingRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TelemetrySettingRequest>, I>>(object: I): TelemetrySettingRequest {
+    const message = createBaseTelemetrySettingRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.setting = object.setting ?? 0;
+    return message;
+  },
 };
 
 function createBaseBrowserSettingsUpdate(): BrowserSettingsUpdate {
-	return {
-		viewport: undefined,
-		remoteBrowserHost: undefined,
-		remoteBrowserEnabled: undefined,
-		chromeExecutablePath: undefined,
-		disableToolUse: undefined,
-		customArgs: undefined,
-	};
+  return {
+    viewport: undefined,
+    remoteBrowserHost: undefined,
+    remoteBrowserEnabled: undefined,
+    chromeExecutablePath: undefined,
+    disableToolUse: undefined,
+    customArgs: undefined,
+  };
 }
 
 export const BrowserSettingsUpdate: MessageFns<BrowserSettingsUpdate> = {
-	encode(
-		message: BrowserSettingsUpdate,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.viewport !== undefined) {
-			Viewport.encode(message.viewport, writer.uint32(10).fork()).join();
-		}
-		if (message.remoteBrowserHost !== undefined) {
-			writer.uint32(18).string(message.remoteBrowserHost);
-		}
-		if (message.remoteBrowserEnabled !== undefined) {
-			writer.uint32(24).bool(message.remoteBrowserEnabled);
-		}
-		if (message.chromeExecutablePath !== undefined) {
-			writer.uint32(34).string(message.chromeExecutablePath);
-		}
-		if (message.disableToolUse !== undefined) {
-			writer.uint32(40).bool(message.disableToolUse);
-		}
-		if (message.customArgs !== undefined) {
-			writer.uint32(50).string(message.customArgs);
-		}
-		return writer;
-	},
+  encode(message: BrowserSettingsUpdate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.viewport !== undefined) {
+      Viewport.encode(message.viewport, writer.uint32(10).fork()).join();
+    }
+    if (message.remoteBrowserHost !== undefined) {
+      writer.uint32(18).string(message.remoteBrowserHost);
+    }
+    if (message.remoteBrowserEnabled !== undefined) {
+      writer.uint32(24).bool(message.remoteBrowserEnabled);
+    }
+    if (message.chromeExecutablePath !== undefined) {
+      writer.uint32(34).string(message.chromeExecutablePath);
+    }
+    if (message.disableToolUse !== undefined) {
+      writer.uint32(40).bool(message.disableToolUse);
+    }
+    if (message.customArgs !== undefined) {
+      writer.uint32(50).string(message.customArgs);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): BrowserSettingsUpdate {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseBrowserSettingsUpdate();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): BrowserSettingsUpdate {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseBrowserSettingsUpdate();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.viewport = Viewport.decode(reader, reader.uint32());
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.viewport = Viewport.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.remoteBrowserHost = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.remoteBrowserHost = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.remoteBrowserEnabled = reader.bool();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.remoteBrowserEnabled = reader.bool();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.chromeExecutablePath = reader.string();
-						continue;
-					}
-					case 5: {
-						if (tag !== 40) {
-							break;
-						}
+            message.chromeExecutablePath = reader.string();
+            continue;
+          }
+          case 5: {
+            if (tag !== 40) {
+              break;
+            }
 
-						message.disableToolUse = reader.bool();
-						continue;
-					}
-					case 6: {
-						if (tag !== 50) {
-							break;
-						}
+            message.disableToolUse = reader.bool();
+            continue;
+          }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
 
-						message.customArgs = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.customArgs = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): BrowserSettingsUpdate {
-		return {
-			viewport: isSet(object.viewport)
-				? Viewport.fromJSON(object.viewport)
-				: undefined,
-			remoteBrowserHost: isSet(object.remoteBrowserHost)
-				? globalThis.String(object.remoteBrowserHost)
-				: isSet(object.remote_browser_host)
-					? globalThis.String(object.remote_browser_host)
-					: undefined,
-			remoteBrowserEnabled: isSet(object.remoteBrowserEnabled)
-				? globalThis.Boolean(object.remoteBrowserEnabled)
-				: isSet(object.remote_browser_enabled)
-					? globalThis.Boolean(object.remote_browser_enabled)
-					: undefined,
-			chromeExecutablePath: isSet(object.chromeExecutablePath)
-				? globalThis.String(object.chromeExecutablePath)
-				: isSet(object.chrome_executable_path)
-					? globalThis.String(object.chrome_executable_path)
-					: undefined,
-			disableToolUse: isSet(object.disableToolUse)
-				? globalThis.Boolean(object.disableToolUse)
-				: isSet(object.disable_tool_use)
-					? globalThis.Boolean(object.disable_tool_use)
-					: undefined,
-			customArgs: isSet(object.customArgs)
-				? globalThis.String(object.customArgs)
-				: isSet(object.custom_args)
-					? globalThis.String(object.custom_args)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): BrowserSettingsUpdate {
+    return {
+      viewport: isSet(object.viewport) ? Viewport.fromJSON(object.viewport) : undefined,
+      remoteBrowserHost: isSet(object.remoteBrowserHost)
+        ? globalThis.String(object.remoteBrowserHost)
+        : isSet(object.remote_browser_host)
+        ? globalThis.String(object.remote_browser_host)
+        : undefined,
+      remoteBrowserEnabled: isSet(object.remoteBrowserEnabled)
+        ? globalThis.Boolean(object.remoteBrowserEnabled)
+        : isSet(object.remote_browser_enabled)
+        ? globalThis.Boolean(object.remote_browser_enabled)
+        : undefined,
+      chromeExecutablePath: isSet(object.chromeExecutablePath)
+        ? globalThis.String(object.chromeExecutablePath)
+        : isSet(object.chrome_executable_path)
+        ? globalThis.String(object.chrome_executable_path)
+        : undefined,
+      disableToolUse: isSet(object.disableToolUse)
+        ? globalThis.Boolean(object.disableToolUse)
+        : isSet(object.disable_tool_use)
+        ? globalThis.Boolean(object.disable_tool_use)
+        : undefined,
+      customArgs: isSet(object.customArgs)
+        ? globalThis.String(object.customArgs)
+        : isSet(object.custom_args)
+        ? globalThis.String(object.custom_args)
+        : undefined,
+    };
+  },
 
-	toJSON(message: BrowserSettingsUpdate): unknown {
-		const obj: any = {};
-		if (message.viewport !== undefined) {
-			obj.viewport = Viewport.toJSON(message.viewport);
-		}
-		if (message.remoteBrowserHost !== undefined) {
-			obj.remoteBrowserHost = message.remoteBrowserHost;
-		}
-		if (message.remoteBrowserEnabled !== undefined) {
-			obj.remoteBrowserEnabled = message.remoteBrowserEnabled;
-		}
-		if (message.chromeExecutablePath !== undefined) {
-			obj.chromeExecutablePath = message.chromeExecutablePath;
-		}
-		if (message.disableToolUse !== undefined) {
-			obj.disableToolUse = message.disableToolUse;
-		}
-		if (message.customArgs !== undefined) {
-			obj.customArgs = message.customArgs;
-		}
-		return obj;
-	},
+  toJSON(message: BrowserSettingsUpdate): unknown {
+    const obj: any = {};
+    if (message.viewport !== undefined) {
+      obj.viewport = Viewport.toJSON(message.viewport);
+    }
+    if (message.remoteBrowserHost !== undefined) {
+      obj.remoteBrowserHost = message.remoteBrowserHost;
+    }
+    if (message.remoteBrowserEnabled !== undefined) {
+      obj.remoteBrowserEnabled = message.remoteBrowserEnabled;
+    }
+    if (message.chromeExecutablePath !== undefined) {
+      obj.chromeExecutablePath = message.chromeExecutablePath;
+    }
+    if (message.disableToolUse !== undefined) {
+      obj.disableToolUse = message.disableToolUse;
+    }
+    if (message.customArgs !== undefined) {
+      obj.customArgs = message.customArgs;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<BrowserSettingsUpdate>, I>>(
-		base?: I,
-	): BrowserSettingsUpdate {
-		return BrowserSettingsUpdate.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<BrowserSettingsUpdate>, I>>(
-		object: I,
-	): BrowserSettingsUpdate {
-		const message = createBaseBrowserSettingsUpdate();
-		message.viewport =
-			object.viewport !== undefined && object.viewport !== null
-				? Viewport.fromPartial(object.viewport)
-				: undefined;
-		message.remoteBrowserHost = object.remoteBrowserHost ?? undefined;
-		message.remoteBrowserEnabled = object.remoteBrowserEnabled ?? undefined;
-		message.chromeExecutablePath = object.chromeExecutablePath ?? undefined;
-		message.disableToolUse = object.disableToolUse ?? undefined;
-		message.customArgs = object.customArgs ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<BrowserSettingsUpdate>, I>>(base?: I): BrowserSettingsUpdate {
+    return BrowserSettingsUpdate.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<BrowserSettingsUpdate>, I>>(object: I): BrowserSettingsUpdate {
+    const message = createBaseBrowserSettingsUpdate();
+    message.viewport = (object.viewport !== undefined && object.viewport !== null)
+      ? Viewport.fromPartial(object.viewport)
+      : undefined;
+    message.remoteBrowserHost = object.remoteBrowserHost ?? undefined;
+    message.remoteBrowserEnabled = object.remoteBrowserEnabled ?? undefined;
+    message.chromeExecutablePath = object.chromeExecutablePath ?? undefined;
+    message.disableToolUse = object.disableToolUse ?? undefined;
+    message.customArgs = object.customArgs ?? undefined;
+    return message;
+  },
 };
 
 function createBaseUpdateTaskSettingsRequest(): UpdateTaskSettingsRequest {
-	return { metadata: undefined, settings: undefined, taskId: undefined };
+  return { metadata: undefined, settings: undefined, taskId: undefined };
 }
 
-export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> =
-	{
-		encode(
-			message: UpdateTaskSettingsRequest,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.metadata !== undefined) {
-				Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-			}
-			if (message.settings !== undefined) {
-				Settings.encode(message.settings, writer.uint32(18).fork()).join();
-			}
-			if (message.taskId !== undefined) {
-				writer.uint32(26).string(message.taskId);
-			}
-			return writer;
-		},
+export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = {
+  encode(message: UpdateTaskSettingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.settings !== undefined) {
+      Settings.encode(message.settings, writer.uint32(18).fork()).join();
+    }
+    if (message.taskId !== undefined) {
+      writer.uint32(26).string(message.taskId);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): UpdateTaskSettingsRequest {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseUpdateTaskSettingsRequest();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateTaskSettingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseUpdateTaskSettingsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.metadata = Metadata.decode(reader, reader.uint32());
-							continue;
-						}
-						case 2: {
-							if (tag !== 18) {
-								break;
-							}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-							message.settings = Settings.decode(reader, reader.uint32());
-							continue;
-						}
-						case 3: {
-							if (tag !== 26) {
-								break;
-							}
+            message.settings = Settings.decode(reader, reader.uint32());
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-							message.taskId = reader.string();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.taskId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): UpdateTaskSettingsRequest {
-			return {
-				metadata: isSet(object.metadata)
-					? Metadata.fromJSON(object.metadata)
-					: undefined,
-				settings: isSet(object.settings)
-					? Settings.fromJSON(object.settings)
-					: undefined,
-				taskId: isSet(object.taskId)
-					? globalThis.String(object.taskId)
-					: isSet(object.task_id)
-						? globalThis.String(object.task_id)
-						: undefined,
-			};
-		},
+  fromJSON(object: any): UpdateTaskSettingsRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      settings: isSet(object.settings) ? Settings.fromJSON(object.settings) : undefined,
+      taskId: isSet(object.taskId)
+        ? globalThis.String(object.taskId)
+        : isSet(object.task_id)
+        ? globalThis.String(object.task_id)
+        : undefined,
+    };
+  },
 
-		toJSON(message: UpdateTaskSettingsRequest): unknown {
-			const obj: any = {};
-			if (message.metadata !== undefined) {
-				obj.metadata = Metadata.toJSON(message.metadata);
-			}
-			if (message.settings !== undefined) {
-				obj.settings = Settings.toJSON(message.settings);
-			}
-			if (message.taskId !== undefined) {
-				obj.taskId = message.taskId;
-			}
-			return obj;
-		},
+  toJSON(message: UpdateTaskSettingsRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.settings !== undefined) {
+      obj.settings = Settings.toJSON(message.settings);
+    }
+    if (message.taskId !== undefined) {
+      obj.taskId = message.taskId;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<UpdateTaskSettingsRequest>, I>>(
-			base?: I,
-		): UpdateTaskSettingsRequest {
-			return UpdateTaskSettingsRequest.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<UpdateTaskSettingsRequest>, I>>(
-			object: I,
-		): UpdateTaskSettingsRequest {
-			const message = createBaseUpdateTaskSettingsRequest();
-			message.metadata =
-				object.metadata !== undefined && object.metadata !== null
-					? Metadata.fromPartial(object.metadata)
-					: undefined;
-			message.settings =
-				object.settings !== undefined && object.settings !== null
-					? Settings.fromPartial(object.settings)
-					: undefined;
-			message.taskId = object.taskId ?? undefined;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<UpdateTaskSettingsRequest>, I>>(base?: I): UpdateTaskSettingsRequest {
+    return UpdateTaskSettingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateTaskSettingsRequest>, I>>(object: I): UpdateTaskSettingsRequest {
+    const message = createBaseUpdateTaskSettingsRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.settings = (object.settings !== undefined && object.settings !== null)
+      ? Settings.fromPartial(object.settings)
+      : undefined;
+    message.taskId = object.taskId ?? undefined;
+    return message;
+  },
+};
 
 function createBaseUpdateSettingsRequest(): UpdateSettingsRequest {
-	return {
-		metadata: undefined,
-		apiConfiguration: undefined,
-		telemetrySetting: undefined,
-		planActSeparateModelsSetting: undefined,
-		enableCheckpointsSetting: undefined,
-		mcpMarketplaceEnabled: undefined,
-		shellIntegrationTimeout: undefined,
-		terminalReuseEnabled: undefined,
-		mcpResponsesCollapsed: undefined,
-		mcpDisplayMode: undefined,
-		terminalOutputLineLimit: undefined,
-		mode: undefined,
-		preferredLanguage: undefined,
-		strictPlanModeEnabled: undefined,
-		focusChainSettings: undefined,
-		useAutoCondense: undefined,
-		customPrompt: undefined,
-		browserSettings: undefined,
-		defaultTerminalProfile: undefined,
-		yoloModeToggled: undefined,
-		multiRootEnabled: undefined,
-		vscodeTerminalExecutionMode: undefined,
-		maxConsecutiveMistakes: undefined,
-		subagentsEnabled: undefined,
-		subagentTerminalOutputLineLimit: undefined,
-		dietcodeEnv: undefined,
-		nativeToolCallEnabled: undefined,
-		dietcodeWebToolsEnabled: undefined,
-		enableParallelToolCalling: undefined,
-		backgroundEditEnabled: undefined,
-		ocaReasoningEffort: undefined,
-		optOutOfRemoteConfig: undefined,
-		worktreesEnabled: undefined,
-		doubleCheckCompletionEnabled: undefined,
-		auditCompletionGateEnabled: undefined,
-		auditCompletionGateThreshold: undefined,
-		auditCompletionGateCriticalOnly: undefined,
-		auditActModeAdvisoryEnabled: undefined,
-		auditAdvisoryEscalationEnabled: undefined,
-		auditAdvisoryAutoScrollMode: undefined,
-		auditPlanRegressionGateEnabled: undefined,
-		auditToolOutputAdvisoryEnabled: undefined,
-		auditFileWriteAdvisoryEnabled: undefined,
-		auditIntentThresholdAdjustmentsEnabled: undefined,
-		auditIntentThresholdOverrides: undefined,
-		auditSarifHookExportEnabled: undefined,
-		auditWorkspaceArtifactsEnabled: undefined,
-		modEnabled: undefined,
-		modOutcome: undefined,
-	};
+  return {
+    metadata: undefined,
+    apiConfiguration: undefined,
+    telemetrySetting: undefined,
+    planActSeparateModelsSetting: undefined,
+    enableCheckpointsSetting: undefined,
+    mcpMarketplaceEnabled: undefined,
+    shellIntegrationTimeout: undefined,
+    terminalReuseEnabled: undefined,
+    mcpResponsesCollapsed: undefined,
+    mcpDisplayMode: undefined,
+    terminalOutputLineLimit: undefined,
+    mode: undefined,
+    preferredLanguage: undefined,
+    strictPlanModeEnabled: undefined,
+    focusChainSettings: undefined,
+    useAutoCondense: undefined,
+    customPrompt: undefined,
+    browserSettings: undefined,
+    defaultTerminalProfile: undefined,
+    yoloModeToggled: undefined,
+    multiRootEnabled: undefined,
+    vscodeTerminalExecutionMode: undefined,
+    maxConsecutiveMistakes: undefined,
+    subagentsEnabled: undefined,
+    subagentTerminalOutputLineLimit: undefined,
+    dietcodeEnv: undefined,
+    nativeToolCallEnabled: undefined,
+    dietcodeWebToolsEnabled: undefined,
+    enableParallelToolCalling: undefined,
+    backgroundEditEnabled: undefined,
+    ocaReasoningEffort: undefined,
+    optOutOfRemoteConfig: undefined,
+    worktreesEnabled: undefined,
+    doubleCheckCompletionEnabled: undefined,
+    auditCompletionGateEnabled: undefined,
+    auditCompletionGateThreshold: undefined,
+    auditCompletionGateCriticalOnly: undefined,
+    auditActModeAdvisoryEnabled: undefined,
+    auditAdvisoryEscalationEnabled: undefined,
+    auditAdvisoryAutoScrollMode: undefined,
+    auditPlanRegressionGateEnabled: undefined,
+    auditToolOutputAdvisoryEnabled: undefined,
+    auditFileWriteAdvisoryEnabled: undefined,
+    auditIntentThresholdAdjustmentsEnabled: undefined,
+    auditIntentThresholdOverrides: undefined,
+    auditSarifHookExportEnabled: undefined,
+    auditWorkspaceArtifactsEnabled: undefined,
+    modEnabled: undefined,
+    modOutcome: undefined,
+    tokenCompressionEnabled: undefined,
+  };
 }
 
 export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
-	encode(
-		message: UpdateSettingsRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.metadata !== undefined) {
-			Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
-		}
-		if (message.apiConfiguration !== undefined) {
-			ModelsApiConfiguration.encode(
-				message.apiConfiguration,
-				writer.uint32(18).fork(),
-			).join();
-		}
-		if (message.telemetrySetting !== undefined) {
-			writer.uint32(26).string(message.telemetrySetting);
-		}
-		if (message.planActSeparateModelsSetting !== undefined) {
-			writer.uint32(32).bool(message.planActSeparateModelsSetting);
-		}
-		if (message.enableCheckpointsSetting !== undefined) {
-			writer.uint32(40).bool(message.enableCheckpointsSetting);
-		}
-		if (message.mcpMarketplaceEnabled !== undefined) {
-			writer.uint32(48).bool(message.mcpMarketplaceEnabled);
-		}
-		if (message.shellIntegrationTimeout !== undefined) {
-			writer.uint32(64).int32(message.shellIntegrationTimeout);
-		}
-		if (message.terminalReuseEnabled !== undefined) {
-			writer.uint32(72).bool(message.terminalReuseEnabled);
-		}
-		if (message.mcpResponsesCollapsed !== undefined) {
-			writer.uint32(80).bool(message.mcpResponsesCollapsed);
-		}
-		if (message.mcpDisplayMode !== undefined) {
-			writer.uint32(88).int32(message.mcpDisplayMode);
-		}
-		if (message.terminalOutputLineLimit !== undefined) {
-			writer.uint32(96).int32(message.terminalOutputLineLimit);
-		}
-		if (message.mode !== undefined) {
-			writer.uint32(104).int32(message.mode);
-		}
-		if (message.preferredLanguage !== undefined) {
-			writer.uint32(114).string(message.preferredLanguage);
-		}
-		if (message.strictPlanModeEnabled !== undefined) {
-			writer.uint32(128).bool(message.strictPlanModeEnabled);
-		}
-		if (message.focusChainSettings !== undefined) {
-			FocusChainSettings.encode(
-				message.focusChainSettings,
-				writer.uint32(138).fork(),
-			).join();
-		}
-		if (message.useAutoCondense !== undefined) {
-			writer.uint32(144).bool(message.useAutoCondense);
-		}
-		if (message.customPrompt !== undefined) {
-			writer.uint32(154).string(message.customPrompt);
-		}
-		if (message.browserSettings !== undefined) {
-			BrowserSettingsUpdate.encode(
-				message.browserSettings,
-				writer.uint32(162).fork(),
-			).join();
-		}
-		if (message.defaultTerminalProfile !== undefined) {
-			writer.uint32(170).string(message.defaultTerminalProfile);
-		}
-		if (message.yoloModeToggled !== undefined) {
-			writer.uint32(176).bool(message.yoloModeToggled);
-		}
-		if (message.multiRootEnabled !== undefined) {
-			writer.uint32(200).bool(message.multiRootEnabled);
-		}
-		if (message.vscodeTerminalExecutionMode !== undefined) {
-			writer.uint32(218).string(message.vscodeTerminalExecutionMode);
-		}
-		if (message.maxConsecutiveMistakes !== undefined) {
-			writer.uint32(224).int32(message.maxConsecutiveMistakes);
-		}
-		if (message.subagentsEnabled !== undefined) {
-			writer.uint32(232).bool(message.subagentsEnabled);
-		}
-		if (message.subagentTerminalOutputLineLimit !== undefined) {
-			writer.uint32(240).int32(message.subagentTerminalOutputLineLimit);
-		}
-		if (message.dietcodeEnv !== undefined) {
-			writer.uint32(250).string(message.dietcodeEnv);
-		}
-		if (message.nativeToolCallEnabled !== undefined) {
-			writer.uint32(256).bool(message.nativeToolCallEnabled);
-		}
-		if (message.dietcodeWebToolsEnabled !== undefined) {
-			writer.uint32(272).bool(message.dietcodeWebToolsEnabled);
-		}
-		if (message.enableParallelToolCalling !== undefined) {
-			writer.uint32(280).bool(message.enableParallelToolCalling);
-		}
-		if (message.backgroundEditEnabled !== undefined) {
-			writer.uint32(288).bool(message.backgroundEditEnabled);
-		}
-		if (message.ocaReasoningEffort !== undefined) {
-			writer.uint32(298).string(message.ocaReasoningEffort);
-		}
-		if (message.optOutOfRemoteConfig !== undefined) {
-			writer.uint32(312).bool(message.optOutOfRemoteConfig);
-		}
-		if (message.worktreesEnabled !== undefined) {
-			writer.uint32(320).bool(message.worktreesEnabled);
-		}
-		if (message.doubleCheckCompletionEnabled !== undefined) {
-			writer.uint32(328).bool(message.doubleCheckCompletionEnabled);
-		}
-		if (message.auditCompletionGateEnabled !== undefined) {
-			writer.uint32(336).bool(message.auditCompletionGateEnabled);
-		}
-		if (message.auditCompletionGateThreshold !== undefined) {
-			writer.uint32(344).int32(message.auditCompletionGateThreshold);
-		}
-		if (message.auditCompletionGateCriticalOnly !== undefined) {
-			writer.uint32(352).bool(message.auditCompletionGateCriticalOnly);
-		}
-		if (message.auditActModeAdvisoryEnabled !== undefined) {
-			writer.uint32(360).bool(message.auditActModeAdvisoryEnabled);
-		}
-		if (message.auditAdvisoryEscalationEnabled !== undefined) {
-			writer.uint32(368).bool(message.auditAdvisoryEscalationEnabled);
-		}
-		if (message.auditAdvisoryAutoScrollMode !== undefined) {
-			writer.uint32(378).string(message.auditAdvisoryAutoScrollMode);
-		}
-		if (message.auditPlanRegressionGateEnabled !== undefined) {
-			writer.uint32(384).bool(message.auditPlanRegressionGateEnabled);
-		}
-		if (message.auditToolOutputAdvisoryEnabled !== undefined) {
-			writer.uint32(392).bool(message.auditToolOutputAdvisoryEnabled);
-		}
-		if (message.auditFileWriteAdvisoryEnabled !== undefined) {
-			writer.uint32(400).bool(message.auditFileWriteAdvisoryEnabled);
-		}
-		if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
-			writer.uint32(408).bool(message.auditIntentThresholdAdjustmentsEnabled);
-		}
-		if (message.auditIntentThresholdOverrides !== undefined) {
-			writer.uint32(418).string(message.auditIntentThresholdOverrides);
-		}
-		if (message.auditSarifHookExportEnabled !== undefined) {
-			writer.uint32(424).bool(message.auditSarifHookExportEnabled);
-		}
-		if (message.auditWorkspaceArtifactsEnabled !== undefined) {
-			writer.uint32(432).bool(message.auditWorkspaceArtifactsEnabled);
-		}
-		if (message.modEnabled !== undefined) {
-			writer.uint32(440).bool(message.modEnabled);
-		}
-		if (message.modOutcome !== undefined) {
-			writer.uint32(450).string(message.modOutcome);
-		}
-		return writer;
-	},
+  encode(message: UpdateSettingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.apiConfiguration !== undefined) {
+      ModelsApiConfiguration.encode(message.apiConfiguration, writer.uint32(18).fork()).join();
+    }
+    if (message.telemetrySetting !== undefined) {
+      writer.uint32(26).string(message.telemetrySetting);
+    }
+    if (message.planActSeparateModelsSetting !== undefined) {
+      writer.uint32(32).bool(message.planActSeparateModelsSetting);
+    }
+    if (message.enableCheckpointsSetting !== undefined) {
+      writer.uint32(40).bool(message.enableCheckpointsSetting);
+    }
+    if (message.mcpMarketplaceEnabled !== undefined) {
+      writer.uint32(48).bool(message.mcpMarketplaceEnabled);
+    }
+    if (message.shellIntegrationTimeout !== undefined) {
+      writer.uint32(64).int32(message.shellIntegrationTimeout);
+    }
+    if (message.terminalReuseEnabled !== undefined) {
+      writer.uint32(72).bool(message.terminalReuseEnabled);
+    }
+    if (message.mcpResponsesCollapsed !== undefined) {
+      writer.uint32(80).bool(message.mcpResponsesCollapsed);
+    }
+    if (message.mcpDisplayMode !== undefined) {
+      writer.uint32(88).int32(message.mcpDisplayMode);
+    }
+    if (message.terminalOutputLineLimit !== undefined) {
+      writer.uint32(96).int32(message.terminalOutputLineLimit);
+    }
+    if (message.mode !== undefined) {
+      writer.uint32(104).int32(message.mode);
+    }
+    if (message.preferredLanguage !== undefined) {
+      writer.uint32(114).string(message.preferredLanguage);
+    }
+    if (message.strictPlanModeEnabled !== undefined) {
+      writer.uint32(128).bool(message.strictPlanModeEnabled);
+    }
+    if (message.focusChainSettings !== undefined) {
+      FocusChainSettings.encode(message.focusChainSettings, writer.uint32(138).fork()).join();
+    }
+    if (message.useAutoCondense !== undefined) {
+      writer.uint32(144).bool(message.useAutoCondense);
+    }
+    if (message.customPrompt !== undefined) {
+      writer.uint32(154).string(message.customPrompt);
+    }
+    if (message.browserSettings !== undefined) {
+      BrowserSettingsUpdate.encode(message.browserSettings, writer.uint32(162).fork()).join();
+    }
+    if (message.defaultTerminalProfile !== undefined) {
+      writer.uint32(170).string(message.defaultTerminalProfile);
+    }
+    if (message.yoloModeToggled !== undefined) {
+      writer.uint32(176).bool(message.yoloModeToggled);
+    }
+    if (message.multiRootEnabled !== undefined) {
+      writer.uint32(200).bool(message.multiRootEnabled);
+    }
+    if (message.vscodeTerminalExecutionMode !== undefined) {
+      writer.uint32(218).string(message.vscodeTerminalExecutionMode);
+    }
+    if (message.maxConsecutiveMistakes !== undefined) {
+      writer.uint32(224).int32(message.maxConsecutiveMistakes);
+    }
+    if (message.subagentsEnabled !== undefined) {
+      writer.uint32(232).bool(message.subagentsEnabled);
+    }
+    if (message.subagentTerminalOutputLineLimit !== undefined) {
+      writer.uint32(240).int32(message.subagentTerminalOutputLineLimit);
+    }
+    if (message.dietcodeEnv !== undefined) {
+      writer.uint32(250).string(message.dietcodeEnv);
+    }
+    if (message.nativeToolCallEnabled !== undefined) {
+      writer.uint32(256).bool(message.nativeToolCallEnabled);
+    }
+    if (message.dietcodeWebToolsEnabled !== undefined) {
+      writer.uint32(272).bool(message.dietcodeWebToolsEnabled);
+    }
+    if (message.enableParallelToolCalling !== undefined) {
+      writer.uint32(280).bool(message.enableParallelToolCalling);
+    }
+    if (message.backgroundEditEnabled !== undefined) {
+      writer.uint32(288).bool(message.backgroundEditEnabled);
+    }
+    if (message.ocaReasoningEffort !== undefined) {
+      writer.uint32(298).string(message.ocaReasoningEffort);
+    }
+    if (message.optOutOfRemoteConfig !== undefined) {
+      writer.uint32(312).bool(message.optOutOfRemoteConfig);
+    }
+    if (message.worktreesEnabled !== undefined) {
+      writer.uint32(320).bool(message.worktreesEnabled);
+    }
+    if (message.doubleCheckCompletionEnabled !== undefined) {
+      writer.uint32(328).bool(message.doubleCheckCompletionEnabled);
+    }
+    if (message.auditCompletionGateEnabled !== undefined) {
+      writer.uint32(336).bool(message.auditCompletionGateEnabled);
+    }
+    if (message.auditCompletionGateThreshold !== undefined) {
+      writer.uint32(344).int32(message.auditCompletionGateThreshold);
+    }
+    if (message.auditCompletionGateCriticalOnly !== undefined) {
+      writer.uint32(352).bool(message.auditCompletionGateCriticalOnly);
+    }
+    if (message.auditActModeAdvisoryEnabled !== undefined) {
+      writer.uint32(360).bool(message.auditActModeAdvisoryEnabled);
+    }
+    if (message.auditAdvisoryEscalationEnabled !== undefined) {
+      writer.uint32(368).bool(message.auditAdvisoryEscalationEnabled);
+    }
+    if (message.auditAdvisoryAutoScrollMode !== undefined) {
+      writer.uint32(378).string(message.auditAdvisoryAutoScrollMode);
+    }
+    if (message.auditPlanRegressionGateEnabled !== undefined) {
+      writer.uint32(384).bool(message.auditPlanRegressionGateEnabled);
+    }
+    if (message.auditToolOutputAdvisoryEnabled !== undefined) {
+      writer.uint32(392).bool(message.auditToolOutputAdvisoryEnabled);
+    }
+    if (message.auditFileWriteAdvisoryEnabled !== undefined) {
+      writer.uint32(400).bool(message.auditFileWriteAdvisoryEnabled);
+    }
+    if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
+      writer.uint32(408).bool(message.auditIntentThresholdAdjustmentsEnabled);
+    }
+    if (message.auditIntentThresholdOverrides !== undefined) {
+      writer.uint32(418).string(message.auditIntentThresholdOverrides);
+    }
+    if (message.auditSarifHookExportEnabled !== undefined) {
+      writer.uint32(424).bool(message.auditSarifHookExportEnabled);
+    }
+    if (message.auditWorkspaceArtifactsEnabled !== undefined) {
+      writer.uint32(432).bool(message.auditWorkspaceArtifactsEnabled);
+    }
+    if (message.modEnabled !== undefined) {
+      writer.uint32(440).bool(message.modEnabled);
+    }
+    if (message.modOutcome !== undefined) {
+      writer.uint32(450).string(message.modOutcome);
+    }
+    if (message.tokenCompressionEnabled !== undefined) {
+      writer.uint32(456).bool(message.tokenCompressionEnabled);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): UpdateSettingsRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseUpdateSettingsRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateSettingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseUpdateSettingsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.metadata = Metadata.decode(reader, reader.uint32());
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.metadata = Metadata.decode(reader, reader.uint32());
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.apiConfiguration = ModelsApiConfiguration.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.apiConfiguration = ModelsApiConfiguration.decode(reader, reader.uint32());
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.telemetrySetting = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 32) {
-							break;
-						}
+            message.telemetrySetting = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 32) {
+              break;
+            }
 
-						message.planActSeparateModelsSetting = reader.bool();
-						continue;
-					}
-					case 5: {
-						if (tag !== 40) {
-							break;
-						}
+            message.planActSeparateModelsSetting = reader.bool();
+            continue;
+          }
+          case 5: {
+            if (tag !== 40) {
+              break;
+            }
 
-						message.enableCheckpointsSetting = reader.bool();
-						continue;
-					}
-					case 6: {
-						if (tag !== 48) {
-							break;
-						}
+            message.enableCheckpointsSetting = reader.bool();
+            continue;
+          }
+          case 6: {
+            if (tag !== 48) {
+              break;
+            }
 
-						message.mcpMarketplaceEnabled = reader.bool();
-						continue;
-					}
-					case 8: {
-						if (tag !== 64) {
-							break;
-						}
+            message.mcpMarketplaceEnabled = reader.bool();
+            continue;
+          }
+          case 8: {
+            if (tag !== 64) {
+              break;
+            }
 
-						message.shellIntegrationTimeout = reader.int32();
-						continue;
-					}
-					case 9: {
-						if (tag !== 72) {
-							break;
-						}
+            message.shellIntegrationTimeout = reader.int32();
+            continue;
+          }
+          case 9: {
+            if (tag !== 72) {
+              break;
+            }
 
-						message.terminalReuseEnabled = reader.bool();
-						continue;
-					}
-					case 10: {
-						if (tag !== 80) {
-							break;
-						}
+            message.terminalReuseEnabled = reader.bool();
+            continue;
+          }
+          case 10: {
+            if (tag !== 80) {
+              break;
+            }
 
-						message.mcpResponsesCollapsed = reader.bool();
-						continue;
-					}
-					case 11: {
-						if (tag !== 88) {
-							break;
-						}
+            message.mcpResponsesCollapsed = reader.bool();
+            continue;
+          }
+          case 11: {
+            if (tag !== 88) {
+              break;
+            }
 
-						message.mcpDisplayMode = reader.int32() as any;
-						continue;
-					}
-					case 12: {
-						if (tag !== 96) {
-							break;
-						}
+            message.mcpDisplayMode = reader.int32() as any;
+            continue;
+          }
+          case 12: {
+            if (tag !== 96) {
+              break;
+            }
 
-						message.terminalOutputLineLimit = reader.int32();
-						continue;
-					}
-					case 13: {
-						if (tag !== 104) {
-							break;
-						}
+            message.terminalOutputLineLimit = reader.int32();
+            continue;
+          }
+          case 13: {
+            if (tag !== 104) {
+              break;
+            }
 
-						message.mode = reader.int32() as any;
-						continue;
-					}
-					case 14: {
-						if (tag !== 114) {
-							break;
-						}
+            message.mode = reader.int32() as any;
+            continue;
+          }
+          case 14: {
+            if (tag !== 114) {
+              break;
+            }
 
-						message.preferredLanguage = reader.string();
-						continue;
-					}
-					case 16: {
-						if (tag !== 128) {
-							break;
-						}
+            message.preferredLanguage = reader.string();
+            continue;
+          }
+          case 16: {
+            if (tag !== 128) {
+              break;
+            }
 
-						message.strictPlanModeEnabled = reader.bool();
-						continue;
-					}
-					case 17: {
-						if (tag !== 138) {
-							break;
-						}
+            message.strictPlanModeEnabled = reader.bool();
+            continue;
+          }
+          case 17: {
+            if (tag !== 138) {
+              break;
+            }
 
-						message.focusChainSettings = FocusChainSettings.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 18: {
-						if (tag !== 144) {
-							break;
-						}
+            message.focusChainSettings = FocusChainSettings.decode(reader, reader.uint32());
+            continue;
+          }
+          case 18: {
+            if (tag !== 144) {
+              break;
+            }
 
-						message.useAutoCondense = reader.bool();
-						continue;
-					}
-					case 19: {
-						if (tag !== 154) {
-							break;
-						}
+            message.useAutoCondense = reader.bool();
+            continue;
+          }
+          case 19: {
+            if (tag !== 154) {
+              break;
+            }
 
-						message.customPrompt = reader.string();
-						continue;
-					}
-					case 20: {
-						if (tag !== 162) {
-							break;
-						}
+            message.customPrompt = reader.string();
+            continue;
+          }
+          case 20: {
+            if (tag !== 162) {
+              break;
+            }
 
-						message.browserSettings = BrowserSettingsUpdate.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-					case 21: {
-						if (tag !== 170) {
-							break;
-						}
+            message.browserSettings = BrowserSettingsUpdate.decode(reader, reader.uint32());
+            continue;
+          }
+          case 21: {
+            if (tag !== 170) {
+              break;
+            }
 
-						message.defaultTerminalProfile = reader.string();
-						continue;
-					}
-					case 22: {
-						if (tag !== 176) {
-							break;
-						}
+            message.defaultTerminalProfile = reader.string();
+            continue;
+          }
+          case 22: {
+            if (tag !== 176) {
+              break;
+            }
 
-						message.yoloModeToggled = reader.bool();
-						continue;
-					}
-					case 25: {
-						if (tag !== 200) {
-							break;
-						}
+            message.yoloModeToggled = reader.bool();
+            continue;
+          }
+          case 25: {
+            if (tag !== 200) {
+              break;
+            }
 
-						message.multiRootEnabled = reader.bool();
-						continue;
-					}
-					case 27: {
-						if (tag !== 218) {
-							break;
-						}
+            message.multiRootEnabled = reader.bool();
+            continue;
+          }
+          case 27: {
+            if (tag !== 218) {
+              break;
+            }
 
-						message.vscodeTerminalExecutionMode = reader.string();
-						continue;
-					}
-					case 28: {
-						if (tag !== 224) {
-							break;
-						}
+            message.vscodeTerminalExecutionMode = reader.string();
+            continue;
+          }
+          case 28: {
+            if (tag !== 224) {
+              break;
+            }
 
-						message.maxConsecutiveMistakes = reader.int32();
-						continue;
-					}
-					case 29: {
-						if (tag !== 232) {
-							break;
-						}
+            message.maxConsecutiveMistakes = reader.int32();
+            continue;
+          }
+          case 29: {
+            if (tag !== 232) {
+              break;
+            }
 
-						message.subagentsEnabled = reader.bool();
-						continue;
-					}
-					case 30: {
-						if (tag !== 240) {
-							break;
-						}
+            message.subagentsEnabled = reader.bool();
+            continue;
+          }
+          case 30: {
+            if (tag !== 240) {
+              break;
+            }
 
-						message.subagentTerminalOutputLineLimit = reader.int32();
-						continue;
-					}
-					case 31: {
-						if (tag !== 250) {
-							break;
-						}
+            message.subagentTerminalOutputLineLimit = reader.int32();
+            continue;
+          }
+          case 31: {
+            if (tag !== 250) {
+              break;
+            }
 
-						message.dietcodeEnv = reader.string();
-						continue;
-					}
-					case 32: {
-						if (tag !== 256) {
-							break;
-						}
+            message.dietcodeEnv = reader.string();
+            continue;
+          }
+          case 32: {
+            if (tag !== 256) {
+              break;
+            }
 
-						message.nativeToolCallEnabled = reader.bool();
-						continue;
-					}
-					case 34: {
-						if (tag !== 272) {
-							break;
-						}
+            message.nativeToolCallEnabled = reader.bool();
+            continue;
+          }
+          case 34: {
+            if (tag !== 272) {
+              break;
+            }
 
-						message.dietcodeWebToolsEnabled = reader.bool();
-						continue;
-					}
-					case 35: {
-						if (tag !== 280) {
-							break;
-						}
+            message.dietcodeWebToolsEnabled = reader.bool();
+            continue;
+          }
+          case 35: {
+            if (tag !== 280) {
+              break;
+            }
 
-						message.enableParallelToolCalling = reader.bool();
-						continue;
-					}
-					case 36: {
-						if (tag !== 288) {
-							break;
-						}
+            message.enableParallelToolCalling = reader.bool();
+            continue;
+          }
+          case 36: {
+            if (tag !== 288) {
+              break;
+            }
 
-						message.backgroundEditEnabled = reader.bool();
-						continue;
-					}
-					case 37: {
-						if (tag !== 298) {
-							break;
-						}
+            message.backgroundEditEnabled = reader.bool();
+            continue;
+          }
+          case 37: {
+            if (tag !== 298) {
+              break;
+            }
 
-						message.ocaReasoningEffort = reader.string();
-						continue;
-					}
-					case 39: {
-						if (tag !== 312) {
-							break;
-						}
+            message.ocaReasoningEffort = reader.string();
+            continue;
+          }
+          case 39: {
+            if (tag !== 312) {
+              break;
+            }
 
-						message.optOutOfRemoteConfig = reader.bool();
-						continue;
-					}
-					case 40: {
-						if (tag !== 320) {
-							break;
-						}
+            message.optOutOfRemoteConfig = reader.bool();
+            continue;
+          }
+          case 40: {
+            if (tag !== 320) {
+              break;
+            }
 
-						message.worktreesEnabled = reader.bool();
-						continue;
-					}
-					case 41: {
-						if (tag !== 328) {
-							break;
-						}
+            message.worktreesEnabled = reader.bool();
+            continue;
+          }
+          case 41: {
+            if (tag !== 328) {
+              break;
+            }
 
-						message.doubleCheckCompletionEnabled = reader.bool();
-						continue;
-					}
-					case 42: {
-						if (tag !== 336) {
-							break;
-						}
+            message.doubleCheckCompletionEnabled = reader.bool();
+            continue;
+          }
+          case 42: {
+            if (tag !== 336) {
+              break;
+            }
 
-						message.auditCompletionGateEnabled = reader.bool();
-						continue;
-					}
-					case 43: {
-						if (tag !== 344) {
-							break;
-						}
+            message.auditCompletionGateEnabled = reader.bool();
+            continue;
+          }
+          case 43: {
+            if (tag !== 344) {
+              break;
+            }
 
-						message.auditCompletionGateThreshold = reader.int32();
-						continue;
-					}
-					case 44: {
-						if (tag !== 352) {
-							break;
-						}
+            message.auditCompletionGateThreshold = reader.int32();
+            continue;
+          }
+          case 44: {
+            if (tag !== 352) {
+              break;
+            }
 
-						message.auditCompletionGateCriticalOnly = reader.bool();
-						continue;
-					}
-					case 45: {
-						if (tag !== 360) {
-							break;
-						}
+            message.auditCompletionGateCriticalOnly = reader.bool();
+            continue;
+          }
+          case 45: {
+            if (tag !== 360) {
+              break;
+            }
 
-						message.auditActModeAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 46: {
-						if (tag !== 368) {
-							break;
-						}
+            message.auditActModeAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 46: {
+            if (tag !== 368) {
+              break;
+            }
 
-						message.auditAdvisoryEscalationEnabled = reader.bool();
-						continue;
-					}
-					case 47: {
-						if (tag !== 378) {
-							break;
-						}
+            message.auditAdvisoryEscalationEnabled = reader.bool();
+            continue;
+          }
+          case 47: {
+            if (tag !== 378) {
+              break;
+            }
 
-						message.auditAdvisoryAutoScrollMode = reader.string();
-						continue;
-					}
-					case 48: {
-						if (tag !== 384) {
-							break;
-						}
+            message.auditAdvisoryAutoScrollMode = reader.string();
+            continue;
+          }
+          case 48: {
+            if (tag !== 384) {
+              break;
+            }
 
-						message.auditPlanRegressionGateEnabled = reader.bool();
-						continue;
-					}
-					case 49: {
-						if (tag !== 392) {
-							break;
-						}
+            message.auditPlanRegressionGateEnabled = reader.bool();
+            continue;
+          }
+          case 49: {
+            if (tag !== 392) {
+              break;
+            }
 
-						message.auditToolOutputAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 50: {
-						if (tag !== 400) {
-							break;
-						}
+            message.auditToolOutputAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 50: {
+            if (tag !== 400) {
+              break;
+            }
 
-						message.auditFileWriteAdvisoryEnabled = reader.bool();
-						continue;
-					}
-					case 51: {
-						if (tag !== 408) {
-							break;
-						}
+            message.auditFileWriteAdvisoryEnabled = reader.bool();
+            continue;
+          }
+          case 51: {
+            if (tag !== 408) {
+              break;
+            }
 
-						message.auditIntentThresholdAdjustmentsEnabled = reader.bool();
-						continue;
-					}
-					case 52: {
-						if (tag !== 418) {
-							break;
-						}
+            message.auditIntentThresholdAdjustmentsEnabled = reader.bool();
+            continue;
+          }
+          case 52: {
+            if (tag !== 418) {
+              break;
+            }
 
-						message.auditIntentThresholdOverrides = reader.string();
-						continue;
-					}
-					case 53: {
-						if (tag !== 424) {
-							break;
-						}
+            message.auditIntentThresholdOverrides = reader.string();
+            continue;
+          }
+          case 53: {
+            if (tag !== 424) {
+              break;
+            }
 
-						message.auditSarifHookExportEnabled = reader.bool();
-						continue;
-					}
-					case 54: {
-						if (tag !== 432) {
-							break;
-						}
+            message.auditSarifHookExportEnabled = reader.bool();
+            continue;
+          }
+          case 54: {
+            if (tag !== 432) {
+              break;
+            }
 
-						message.auditWorkspaceArtifactsEnabled = reader.bool();
-						continue;
-					}
-					case 55: {
-						if (tag !== 440) {
-							break;
-						}
+            message.auditWorkspaceArtifactsEnabled = reader.bool();
+            continue;
+          }
+          case 55: {
+            if (tag !== 440) {
+              break;
+            }
 
-						message.modEnabled = reader.bool();
-						continue;
-					}
-					case 56: {
-						if (tag !== 450) {
-							break;
-						}
+            message.modEnabled = reader.bool();
+            continue;
+          }
+          case 56: {
+            if (tag !== 450) {
+              break;
+            }
 
-						message.modOutcome = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.modOutcome = reader.string();
+            continue;
+          }
+          case 57: {
+            if (tag !== 456) {
+              break;
+            }
 
-	fromJSON(object: any): UpdateSettingsRequest {
-		return {
-			metadata: isSet(object.metadata)
-				? Metadata.fromJSON(object.metadata)
-				: undefined,
-			apiConfiguration: isSet(object.apiConfiguration)
-				? ModelsApiConfiguration.fromJSON(object.apiConfiguration)
-				: isSet(object.api_configuration)
-					? ModelsApiConfiguration.fromJSON(object.api_configuration)
-					: undefined,
-			telemetrySetting: isSet(object.telemetrySetting)
-				? globalThis.String(object.telemetrySetting)
-				: isSet(object.telemetry_setting)
-					? globalThis.String(object.telemetry_setting)
-					: undefined,
-			planActSeparateModelsSetting: isSet(object.planActSeparateModelsSetting)
-				? globalThis.Boolean(object.planActSeparateModelsSetting)
-				: isSet(object.plan_act_separate_models_setting)
-					? globalThis.Boolean(object.plan_act_separate_models_setting)
-					: undefined,
-			enableCheckpointsSetting: isSet(object.enableCheckpointsSetting)
-				? globalThis.Boolean(object.enableCheckpointsSetting)
-				: isSet(object.enable_checkpoints_setting)
-					? globalThis.Boolean(object.enable_checkpoints_setting)
-					: undefined,
-			mcpMarketplaceEnabled: isSet(object.mcpMarketplaceEnabled)
-				? globalThis.Boolean(object.mcpMarketplaceEnabled)
-				: isSet(object.mcp_marketplace_enabled)
-					? globalThis.Boolean(object.mcp_marketplace_enabled)
-					: undefined,
-			shellIntegrationTimeout: isSet(object.shellIntegrationTimeout)
-				? globalThis.Number(object.shellIntegrationTimeout)
-				: isSet(object.shell_integration_timeout)
-					? globalThis.Number(object.shell_integration_timeout)
-					: undefined,
-			terminalReuseEnabled: isSet(object.terminalReuseEnabled)
-				? globalThis.Boolean(object.terminalReuseEnabled)
-				: isSet(object.terminal_reuse_enabled)
-					? globalThis.Boolean(object.terminal_reuse_enabled)
-					: undefined,
-			mcpResponsesCollapsed: isSet(object.mcpResponsesCollapsed)
-				? globalThis.Boolean(object.mcpResponsesCollapsed)
-				: isSet(object.mcp_responses_collapsed)
-					? globalThis.Boolean(object.mcp_responses_collapsed)
-					: undefined,
-			mcpDisplayMode: isSet(object.mcpDisplayMode)
-				? mcpDisplayModeFromJSON(object.mcpDisplayMode)
-				: isSet(object.mcp_display_mode)
-					? mcpDisplayModeFromJSON(object.mcp_display_mode)
-					: undefined,
-			terminalOutputLineLimit: isSet(object.terminalOutputLineLimit)
-				? globalThis.Number(object.terminalOutputLineLimit)
-				: isSet(object.terminal_output_line_limit)
-					? globalThis.Number(object.terminal_output_line_limit)
-					: undefined,
-			mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : undefined,
-			preferredLanguage: isSet(object.preferredLanguage)
-				? globalThis.String(object.preferredLanguage)
-				: isSet(object.preferred_language)
-					? globalThis.String(object.preferred_language)
-					: undefined,
-			strictPlanModeEnabled: isSet(object.strictPlanModeEnabled)
-				? globalThis.Boolean(object.strictPlanModeEnabled)
-				: isSet(object.strict_plan_mode_enabled)
-					? globalThis.Boolean(object.strict_plan_mode_enabled)
-					: undefined,
-			focusChainSettings: isSet(object.focusChainSettings)
-				? FocusChainSettings.fromJSON(object.focusChainSettings)
-				: isSet(object.focus_chain_settings)
-					? FocusChainSettings.fromJSON(object.focus_chain_settings)
-					: undefined,
-			useAutoCondense: isSet(object.useAutoCondense)
-				? globalThis.Boolean(object.useAutoCondense)
-				: isSet(object.use_auto_condense)
-					? globalThis.Boolean(object.use_auto_condense)
-					: undefined,
-			customPrompt: isSet(object.customPrompt)
-				? globalThis.String(object.customPrompt)
-				: isSet(object.custom_prompt)
-					? globalThis.String(object.custom_prompt)
-					: undefined,
-			browserSettings: isSet(object.browserSettings)
-				? BrowserSettingsUpdate.fromJSON(object.browserSettings)
-				: isSet(object.browser_settings)
-					? BrowserSettingsUpdate.fromJSON(object.browser_settings)
-					: undefined,
-			defaultTerminalProfile: isSet(object.defaultTerminalProfile)
-				? globalThis.String(object.defaultTerminalProfile)
-				: isSet(object.default_terminal_profile)
-					? globalThis.String(object.default_terminal_profile)
-					: undefined,
-			yoloModeToggled: isSet(object.yoloModeToggled)
-				? globalThis.Boolean(object.yoloModeToggled)
-				: isSet(object.yolo_mode_toggled)
-					? globalThis.Boolean(object.yolo_mode_toggled)
-					: undefined,
-			multiRootEnabled: isSet(object.multiRootEnabled)
-				? globalThis.Boolean(object.multiRootEnabled)
-				: isSet(object.multi_root_enabled)
-					? globalThis.Boolean(object.multi_root_enabled)
-					: undefined,
-			vscodeTerminalExecutionMode: isSet(object.vscodeTerminalExecutionMode)
-				? globalThis.String(object.vscodeTerminalExecutionMode)
-				: isSet(object.vscode_terminal_execution_mode)
-					? globalThis.String(object.vscode_terminal_execution_mode)
-					: undefined,
-			maxConsecutiveMistakes: isSet(object.maxConsecutiveMistakes)
-				? globalThis.Number(object.maxConsecutiveMistakes)
-				: isSet(object.max_consecutive_mistakes)
-					? globalThis.Number(object.max_consecutive_mistakes)
-					: undefined,
-			subagentsEnabled: isSet(object.subagentsEnabled)
-				? globalThis.Boolean(object.subagentsEnabled)
-				: isSet(object.subagents_enabled)
-					? globalThis.Boolean(object.subagents_enabled)
-					: undefined,
-			subagentTerminalOutputLineLimit: isSet(
-				object.subagentTerminalOutputLineLimit,
-			)
-				? globalThis.Number(object.subagentTerminalOutputLineLimit)
-				: isSet(object.subagent_terminal_output_line_limit)
-					? globalThis.Number(object.subagent_terminal_output_line_limit)
-					: undefined,
-			dietcodeEnv: isSet(object.dietcodeEnv)
-				? globalThis.String(object.dietcodeEnv)
-				: isSet(object.dietcode_env)
-					? globalThis.String(object.dietcode_env)
-					: undefined,
-			nativeToolCallEnabled: isSet(object.nativeToolCallEnabled)
-				? globalThis.Boolean(object.nativeToolCallEnabled)
-				: isSet(object.native_tool_call_enabled)
-					? globalThis.Boolean(object.native_tool_call_enabled)
-					: undefined,
-			dietcodeWebToolsEnabled: isSet(object.dietcodeWebToolsEnabled)
-				? globalThis.Boolean(object.dietcodeWebToolsEnabled)
-				: isSet(object.dietcode_web_tools_enabled)
-					? globalThis.Boolean(object.dietcode_web_tools_enabled)
-					: undefined,
-			enableParallelToolCalling: isSet(object.enableParallelToolCalling)
-				? globalThis.Boolean(object.enableParallelToolCalling)
-				: isSet(object.enable_parallel_tool_calling)
-					? globalThis.Boolean(object.enable_parallel_tool_calling)
-					: undefined,
-			backgroundEditEnabled: isSet(object.backgroundEditEnabled)
-				? globalThis.Boolean(object.backgroundEditEnabled)
-				: isSet(object.background_edit_enabled)
-					? globalThis.Boolean(object.background_edit_enabled)
-					: undefined,
-			ocaReasoningEffort: isSet(object.ocaReasoningEffort)
-				? globalThis.String(object.ocaReasoningEffort)
-				: isSet(object.oca_reasoning_effort)
-					? globalThis.String(object.oca_reasoning_effort)
-					: undefined,
-			optOutOfRemoteConfig: isSet(object.optOutOfRemoteConfig)
-				? globalThis.Boolean(object.optOutOfRemoteConfig)
-				: isSet(object.opt_out_of_remote_config)
-					? globalThis.Boolean(object.opt_out_of_remote_config)
-					: undefined,
-			worktreesEnabled: isSet(object.worktreesEnabled)
-				? globalThis.Boolean(object.worktreesEnabled)
-				: isSet(object.worktrees_enabled)
-					? globalThis.Boolean(object.worktrees_enabled)
-					: undefined,
-			doubleCheckCompletionEnabled: isSet(object.doubleCheckCompletionEnabled)
-				? globalThis.Boolean(object.doubleCheckCompletionEnabled)
-				: isSet(object.double_check_completion_enabled)
-					? globalThis.Boolean(object.double_check_completion_enabled)
-					: undefined,
-			auditCompletionGateEnabled: isSet(object.auditCompletionGateEnabled)
-				? globalThis.Boolean(object.auditCompletionGateEnabled)
-				: isSet(object.audit_completion_gate_enabled)
-					? globalThis.Boolean(object.audit_completion_gate_enabled)
-					: undefined,
-			auditCompletionGateThreshold: isSet(object.auditCompletionGateThreshold)
-				? globalThis.Number(object.auditCompletionGateThreshold)
-				: isSet(object.audit_completion_gate_threshold)
-					? globalThis.Number(object.audit_completion_gate_threshold)
-					: undefined,
-			auditCompletionGateCriticalOnly: isSet(
-				object.auditCompletionGateCriticalOnly,
-			)
-				? globalThis.Boolean(object.auditCompletionGateCriticalOnly)
-				: isSet(object.audit_completion_gate_critical_only)
-					? globalThis.Boolean(object.audit_completion_gate_critical_only)
-					: undefined,
-			auditActModeAdvisoryEnabled: isSet(object.auditActModeAdvisoryEnabled)
-				? globalThis.Boolean(object.auditActModeAdvisoryEnabled)
-				: isSet(object.audit_act_mode_advisory_enabled)
-					? globalThis.Boolean(object.audit_act_mode_advisory_enabled)
-					: undefined,
-			auditAdvisoryEscalationEnabled: isSet(
-				object.auditAdvisoryEscalationEnabled,
-			)
-				? globalThis.Boolean(object.auditAdvisoryEscalationEnabled)
-				: isSet(object.audit_advisory_escalation_enabled)
-					? globalThis.Boolean(object.audit_advisory_escalation_enabled)
-					: undefined,
-			auditAdvisoryAutoScrollMode: isSet(object.auditAdvisoryAutoScrollMode)
-				? globalThis.String(object.auditAdvisoryAutoScrollMode)
-				: isSet(object.audit_advisory_auto_scroll_mode)
-					? globalThis.String(object.audit_advisory_auto_scroll_mode)
-					: undefined,
-			auditPlanRegressionGateEnabled: isSet(
-				object.auditPlanRegressionGateEnabled,
-			)
-				? globalThis.Boolean(object.auditPlanRegressionGateEnabled)
-				: isSet(object.audit_plan_regression_gate_enabled)
-					? globalThis.Boolean(object.audit_plan_regression_gate_enabled)
-					: undefined,
-			auditToolOutputAdvisoryEnabled: isSet(
-				object.auditToolOutputAdvisoryEnabled,
-			)
-				? globalThis.Boolean(object.auditToolOutputAdvisoryEnabled)
-				: isSet(object.audit_tool_output_advisory_enabled)
-					? globalThis.Boolean(object.audit_tool_output_advisory_enabled)
-					: undefined,
-			auditFileWriteAdvisoryEnabled: isSet(object.auditFileWriteAdvisoryEnabled)
-				? globalThis.Boolean(object.auditFileWriteAdvisoryEnabled)
-				: isSet(object.audit_file_write_advisory_enabled)
-					? globalThis.Boolean(object.audit_file_write_advisory_enabled)
-					: undefined,
-			auditIntentThresholdAdjustmentsEnabled: isSet(
-				object.auditIntentThresholdAdjustmentsEnabled,
-			)
-				? globalThis.Boolean(object.auditIntentThresholdAdjustmentsEnabled)
-				: isSet(object.audit_intent_threshold_adjustments_enabled)
-					? globalThis.Boolean(
-							object.audit_intent_threshold_adjustments_enabled,
-						)
-					: undefined,
-			auditIntentThresholdOverrides: isSet(object.auditIntentThresholdOverrides)
-				? globalThis.String(object.auditIntentThresholdOverrides)
-				: isSet(object.audit_intent_threshold_overrides)
-					? globalThis.String(object.audit_intent_threshold_overrides)
-					: undefined,
-			auditSarifHookExportEnabled: isSet(object.auditSarifHookExportEnabled)
-				? globalThis.Boolean(object.auditSarifHookExportEnabled)
-				: isSet(object.audit_sarif_hook_export_enabled)
-					? globalThis.Boolean(object.audit_sarif_hook_export_enabled)
-					: undefined,
-			auditWorkspaceArtifactsEnabled: isSet(
-				object.auditWorkspaceArtifactsEnabled,
-			)
-				? globalThis.Boolean(object.auditWorkspaceArtifactsEnabled)
-				: isSet(object.audit_workspace_artifacts_enabled)
-					? globalThis.Boolean(object.audit_workspace_artifacts_enabled)
-					: undefined,
-			modEnabled: isSet(object.modEnabled)
-				? globalThis.Boolean(object.modEnabled)
-				: isSet(object.mod_enabled)
-					? globalThis.Boolean(object.mod_enabled)
-					: undefined,
-			modOutcome: isSet(object.modOutcome)
-				? globalThis.String(object.modOutcome)
-				: isSet(object.mod_outcome)
-					? globalThis.String(object.mod_outcome)
-					: undefined,
-		};
-	},
+            message.tokenCompressionEnabled = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	toJSON(message: UpdateSettingsRequest): unknown {
-		const obj: any = {};
-		if (message.metadata !== undefined) {
-			obj.metadata = Metadata.toJSON(message.metadata);
-		}
-		if (message.apiConfiguration !== undefined) {
-			obj.apiConfiguration = ModelsApiConfiguration.toJSON(
-				message.apiConfiguration,
-			);
-		}
-		if (message.telemetrySetting !== undefined) {
-			obj.telemetrySetting = message.telemetrySetting;
-		}
-		if (message.planActSeparateModelsSetting !== undefined) {
-			obj.planActSeparateModelsSetting = message.planActSeparateModelsSetting;
-		}
-		if (message.enableCheckpointsSetting !== undefined) {
-			obj.enableCheckpointsSetting = message.enableCheckpointsSetting;
-		}
-		if (message.mcpMarketplaceEnabled !== undefined) {
-			obj.mcpMarketplaceEnabled = message.mcpMarketplaceEnabled;
-		}
-		if (message.shellIntegrationTimeout !== undefined) {
-			obj.shellIntegrationTimeout = Math.round(message.shellIntegrationTimeout);
-		}
-		if (message.terminalReuseEnabled !== undefined) {
-			obj.terminalReuseEnabled = message.terminalReuseEnabled;
-		}
-		if (message.mcpResponsesCollapsed !== undefined) {
-			obj.mcpResponsesCollapsed = message.mcpResponsesCollapsed;
-		}
-		if (message.mcpDisplayMode !== undefined) {
-			obj.mcpDisplayMode = mcpDisplayModeToJSON(message.mcpDisplayMode);
-		}
-		if (message.terminalOutputLineLimit !== undefined) {
-			obj.terminalOutputLineLimit = Math.round(message.terminalOutputLineLimit);
-		}
-		if (message.mode !== undefined) {
-			obj.mode = planActModeToJSON(message.mode);
-		}
-		if (message.preferredLanguage !== undefined) {
-			obj.preferredLanguage = message.preferredLanguage;
-		}
-		if (message.strictPlanModeEnabled !== undefined) {
-			obj.strictPlanModeEnabled = message.strictPlanModeEnabled;
-		}
-		if (message.focusChainSettings !== undefined) {
-			obj.focusChainSettings = FocusChainSettings.toJSON(
-				message.focusChainSettings,
-			);
-		}
-		if (message.useAutoCondense !== undefined) {
-			obj.useAutoCondense = message.useAutoCondense;
-		}
-		if (message.customPrompt !== undefined) {
-			obj.customPrompt = message.customPrompt;
-		}
-		if (message.browserSettings !== undefined) {
-			obj.browserSettings = BrowserSettingsUpdate.toJSON(
-				message.browserSettings,
-			);
-		}
-		if (message.defaultTerminalProfile !== undefined) {
-			obj.defaultTerminalProfile = message.defaultTerminalProfile;
-		}
-		if (message.yoloModeToggled !== undefined) {
-			obj.yoloModeToggled = message.yoloModeToggled;
-		}
-		if (message.multiRootEnabled !== undefined) {
-			obj.multiRootEnabled = message.multiRootEnabled;
-		}
-		if (message.vscodeTerminalExecutionMode !== undefined) {
-			obj.vscodeTerminalExecutionMode = message.vscodeTerminalExecutionMode;
-		}
-		if (message.maxConsecutiveMistakes !== undefined) {
-			obj.maxConsecutiveMistakes = Math.round(message.maxConsecutiveMistakes);
-		}
-		if (message.subagentsEnabled !== undefined) {
-			obj.subagentsEnabled = message.subagentsEnabled;
-		}
-		if (message.subagentTerminalOutputLineLimit !== undefined) {
-			obj.subagentTerminalOutputLineLimit = Math.round(
-				message.subagentTerminalOutputLineLimit,
-			);
-		}
-		if (message.dietcodeEnv !== undefined) {
-			obj.dietcodeEnv = message.dietcodeEnv;
-		}
-		if (message.nativeToolCallEnabled !== undefined) {
-			obj.nativeToolCallEnabled = message.nativeToolCallEnabled;
-		}
-		if (message.dietcodeWebToolsEnabled !== undefined) {
-			obj.dietcodeWebToolsEnabled = message.dietcodeWebToolsEnabled;
-		}
-		if (message.enableParallelToolCalling !== undefined) {
-			obj.enableParallelToolCalling = message.enableParallelToolCalling;
-		}
-		if (message.backgroundEditEnabled !== undefined) {
-			obj.backgroundEditEnabled = message.backgroundEditEnabled;
-		}
-		if (message.ocaReasoningEffort !== undefined) {
-			obj.ocaReasoningEffort = message.ocaReasoningEffort;
-		}
-		if (message.optOutOfRemoteConfig !== undefined) {
-			obj.optOutOfRemoteConfig = message.optOutOfRemoteConfig;
-		}
-		if (message.worktreesEnabled !== undefined) {
-			obj.worktreesEnabled = message.worktreesEnabled;
-		}
-		if (message.doubleCheckCompletionEnabled !== undefined) {
-			obj.doubleCheckCompletionEnabled = message.doubleCheckCompletionEnabled;
-		}
-		if (message.auditCompletionGateEnabled !== undefined) {
-			obj.auditCompletionGateEnabled = message.auditCompletionGateEnabled;
-		}
-		if (message.auditCompletionGateThreshold !== undefined) {
-			obj.auditCompletionGateThreshold = Math.round(
-				message.auditCompletionGateThreshold,
-			);
-		}
-		if (message.auditCompletionGateCriticalOnly !== undefined) {
-			obj.auditCompletionGateCriticalOnly =
-				message.auditCompletionGateCriticalOnly;
-		}
-		if (message.auditActModeAdvisoryEnabled !== undefined) {
-			obj.auditActModeAdvisoryEnabled = message.auditActModeAdvisoryEnabled;
-		}
-		if (message.auditAdvisoryEscalationEnabled !== undefined) {
-			obj.auditAdvisoryEscalationEnabled =
-				message.auditAdvisoryEscalationEnabled;
-		}
-		if (message.auditAdvisoryAutoScrollMode !== undefined) {
-			obj.auditAdvisoryAutoScrollMode = message.auditAdvisoryAutoScrollMode;
-		}
-		if (message.auditPlanRegressionGateEnabled !== undefined) {
-			obj.auditPlanRegressionGateEnabled =
-				message.auditPlanRegressionGateEnabled;
-		}
-		if (message.auditToolOutputAdvisoryEnabled !== undefined) {
-			obj.auditToolOutputAdvisoryEnabled =
-				message.auditToolOutputAdvisoryEnabled;
-		}
-		if (message.auditFileWriteAdvisoryEnabled !== undefined) {
-			obj.auditFileWriteAdvisoryEnabled = message.auditFileWriteAdvisoryEnabled;
-		}
-		if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
-			obj.auditIntentThresholdAdjustmentsEnabled =
-				message.auditIntentThresholdAdjustmentsEnabled;
-		}
-		if (message.auditIntentThresholdOverrides !== undefined) {
-			obj.auditIntentThresholdOverrides = message.auditIntentThresholdOverrides;
-		}
-		if (message.auditSarifHookExportEnabled !== undefined) {
-			obj.auditSarifHookExportEnabled = message.auditSarifHookExportEnabled;
-		}
-		if (message.auditWorkspaceArtifactsEnabled !== undefined) {
-			obj.auditWorkspaceArtifactsEnabled =
-				message.auditWorkspaceArtifactsEnabled;
-		}
-		if (message.modEnabled !== undefined) {
-			obj.modEnabled = message.modEnabled;
-		}
-		if (message.modOutcome !== undefined) {
-			obj.modOutcome = message.modOutcome;
-		}
-		return obj;
-	},
+  fromJSON(object: any): UpdateSettingsRequest {
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      apiConfiguration: isSet(object.apiConfiguration)
+        ? ModelsApiConfiguration.fromJSON(object.apiConfiguration)
+        : isSet(object.api_configuration)
+        ? ModelsApiConfiguration.fromJSON(object.api_configuration)
+        : undefined,
+      telemetrySetting: isSet(object.telemetrySetting)
+        ? globalThis.String(object.telemetrySetting)
+        : isSet(object.telemetry_setting)
+        ? globalThis.String(object.telemetry_setting)
+        : undefined,
+      planActSeparateModelsSetting: isSet(object.planActSeparateModelsSetting)
+        ? globalThis.Boolean(object.planActSeparateModelsSetting)
+        : isSet(object.plan_act_separate_models_setting)
+        ? globalThis.Boolean(object.plan_act_separate_models_setting)
+        : undefined,
+      enableCheckpointsSetting: isSet(object.enableCheckpointsSetting)
+        ? globalThis.Boolean(object.enableCheckpointsSetting)
+        : isSet(object.enable_checkpoints_setting)
+        ? globalThis.Boolean(object.enable_checkpoints_setting)
+        : undefined,
+      mcpMarketplaceEnabled: isSet(object.mcpMarketplaceEnabled)
+        ? globalThis.Boolean(object.mcpMarketplaceEnabled)
+        : isSet(object.mcp_marketplace_enabled)
+        ? globalThis.Boolean(object.mcp_marketplace_enabled)
+        : undefined,
+      shellIntegrationTimeout: isSet(object.shellIntegrationTimeout)
+        ? globalThis.Number(object.shellIntegrationTimeout)
+        : isSet(object.shell_integration_timeout)
+        ? globalThis.Number(object.shell_integration_timeout)
+        : undefined,
+      terminalReuseEnabled: isSet(object.terminalReuseEnabled)
+        ? globalThis.Boolean(object.terminalReuseEnabled)
+        : isSet(object.terminal_reuse_enabled)
+        ? globalThis.Boolean(object.terminal_reuse_enabled)
+        : undefined,
+      mcpResponsesCollapsed: isSet(object.mcpResponsesCollapsed)
+        ? globalThis.Boolean(object.mcpResponsesCollapsed)
+        : isSet(object.mcp_responses_collapsed)
+        ? globalThis.Boolean(object.mcp_responses_collapsed)
+        : undefined,
+      mcpDisplayMode: isSet(object.mcpDisplayMode)
+        ? mcpDisplayModeFromJSON(object.mcpDisplayMode)
+        : isSet(object.mcp_display_mode)
+        ? mcpDisplayModeFromJSON(object.mcp_display_mode)
+        : undefined,
+      terminalOutputLineLimit: isSet(object.terminalOutputLineLimit)
+        ? globalThis.Number(object.terminalOutputLineLimit)
+        : isSet(object.terminal_output_line_limit)
+        ? globalThis.Number(object.terminal_output_line_limit)
+        : undefined,
+      mode: isSet(object.mode) ? planActModeFromJSON(object.mode) : undefined,
+      preferredLanguage: isSet(object.preferredLanguage)
+        ? globalThis.String(object.preferredLanguage)
+        : isSet(object.preferred_language)
+        ? globalThis.String(object.preferred_language)
+        : undefined,
+      strictPlanModeEnabled: isSet(object.strictPlanModeEnabled)
+        ? globalThis.Boolean(object.strictPlanModeEnabled)
+        : isSet(object.strict_plan_mode_enabled)
+        ? globalThis.Boolean(object.strict_plan_mode_enabled)
+        : undefined,
+      focusChainSettings: isSet(object.focusChainSettings)
+        ? FocusChainSettings.fromJSON(object.focusChainSettings)
+        : isSet(object.focus_chain_settings)
+        ? FocusChainSettings.fromJSON(object.focus_chain_settings)
+        : undefined,
+      useAutoCondense: isSet(object.useAutoCondense)
+        ? globalThis.Boolean(object.useAutoCondense)
+        : isSet(object.use_auto_condense)
+        ? globalThis.Boolean(object.use_auto_condense)
+        : undefined,
+      customPrompt: isSet(object.customPrompt)
+        ? globalThis.String(object.customPrompt)
+        : isSet(object.custom_prompt)
+        ? globalThis.String(object.custom_prompt)
+        : undefined,
+      browserSettings: isSet(object.browserSettings)
+        ? BrowserSettingsUpdate.fromJSON(object.browserSettings)
+        : isSet(object.browser_settings)
+        ? BrowserSettingsUpdate.fromJSON(object.browser_settings)
+        : undefined,
+      defaultTerminalProfile: isSet(object.defaultTerminalProfile)
+        ? globalThis.String(object.defaultTerminalProfile)
+        : isSet(object.default_terminal_profile)
+        ? globalThis.String(object.default_terminal_profile)
+        : undefined,
+      yoloModeToggled: isSet(object.yoloModeToggled)
+        ? globalThis.Boolean(object.yoloModeToggled)
+        : isSet(object.yolo_mode_toggled)
+        ? globalThis.Boolean(object.yolo_mode_toggled)
+        : undefined,
+      multiRootEnabled: isSet(object.multiRootEnabled)
+        ? globalThis.Boolean(object.multiRootEnabled)
+        : isSet(object.multi_root_enabled)
+        ? globalThis.Boolean(object.multi_root_enabled)
+        : undefined,
+      vscodeTerminalExecutionMode: isSet(object.vscodeTerminalExecutionMode)
+        ? globalThis.String(object.vscodeTerminalExecutionMode)
+        : isSet(object.vscode_terminal_execution_mode)
+        ? globalThis.String(object.vscode_terminal_execution_mode)
+        : undefined,
+      maxConsecutiveMistakes: isSet(object.maxConsecutiveMistakes)
+        ? globalThis.Number(object.maxConsecutiveMistakes)
+        : isSet(object.max_consecutive_mistakes)
+        ? globalThis.Number(object.max_consecutive_mistakes)
+        : undefined,
+      subagentsEnabled: isSet(object.subagentsEnabled)
+        ? globalThis.Boolean(object.subagentsEnabled)
+        : isSet(object.subagents_enabled)
+        ? globalThis.Boolean(object.subagents_enabled)
+        : undefined,
+      subagentTerminalOutputLineLimit: isSet(object.subagentTerminalOutputLineLimit)
+        ? globalThis.Number(object.subagentTerminalOutputLineLimit)
+        : isSet(object.subagent_terminal_output_line_limit)
+        ? globalThis.Number(object.subagent_terminal_output_line_limit)
+        : undefined,
+      dietcodeEnv: isSet(object.dietcodeEnv)
+        ? globalThis.String(object.dietcodeEnv)
+        : isSet(object.dietcode_env)
+        ? globalThis.String(object.dietcode_env)
+        : undefined,
+      nativeToolCallEnabled: isSet(object.nativeToolCallEnabled)
+        ? globalThis.Boolean(object.nativeToolCallEnabled)
+        : isSet(object.native_tool_call_enabled)
+        ? globalThis.Boolean(object.native_tool_call_enabled)
+        : undefined,
+      dietcodeWebToolsEnabled: isSet(object.dietcodeWebToolsEnabled)
+        ? globalThis.Boolean(object.dietcodeWebToolsEnabled)
+        : isSet(object.dietcode_web_tools_enabled)
+        ? globalThis.Boolean(object.dietcode_web_tools_enabled)
+        : undefined,
+      enableParallelToolCalling: isSet(object.enableParallelToolCalling)
+        ? globalThis.Boolean(object.enableParallelToolCalling)
+        : isSet(object.enable_parallel_tool_calling)
+        ? globalThis.Boolean(object.enable_parallel_tool_calling)
+        : undefined,
+      backgroundEditEnabled: isSet(object.backgroundEditEnabled)
+        ? globalThis.Boolean(object.backgroundEditEnabled)
+        : isSet(object.background_edit_enabled)
+        ? globalThis.Boolean(object.background_edit_enabled)
+        : undefined,
+      ocaReasoningEffort: isSet(object.ocaReasoningEffort)
+        ? globalThis.String(object.ocaReasoningEffort)
+        : isSet(object.oca_reasoning_effort)
+        ? globalThis.String(object.oca_reasoning_effort)
+        : undefined,
+      optOutOfRemoteConfig: isSet(object.optOutOfRemoteConfig)
+        ? globalThis.Boolean(object.optOutOfRemoteConfig)
+        : isSet(object.opt_out_of_remote_config)
+        ? globalThis.Boolean(object.opt_out_of_remote_config)
+        : undefined,
+      worktreesEnabled: isSet(object.worktreesEnabled)
+        ? globalThis.Boolean(object.worktreesEnabled)
+        : isSet(object.worktrees_enabled)
+        ? globalThis.Boolean(object.worktrees_enabled)
+        : undefined,
+      doubleCheckCompletionEnabled: isSet(object.doubleCheckCompletionEnabled)
+        ? globalThis.Boolean(object.doubleCheckCompletionEnabled)
+        : isSet(object.double_check_completion_enabled)
+        ? globalThis.Boolean(object.double_check_completion_enabled)
+        : undefined,
+      auditCompletionGateEnabled: isSet(object.auditCompletionGateEnabled)
+        ? globalThis.Boolean(object.auditCompletionGateEnabled)
+        : isSet(object.audit_completion_gate_enabled)
+        ? globalThis.Boolean(object.audit_completion_gate_enabled)
+        : undefined,
+      auditCompletionGateThreshold: isSet(object.auditCompletionGateThreshold)
+        ? globalThis.Number(object.auditCompletionGateThreshold)
+        : isSet(object.audit_completion_gate_threshold)
+        ? globalThis.Number(object.audit_completion_gate_threshold)
+        : undefined,
+      auditCompletionGateCriticalOnly: isSet(object.auditCompletionGateCriticalOnly)
+        ? globalThis.Boolean(object.auditCompletionGateCriticalOnly)
+        : isSet(object.audit_completion_gate_critical_only)
+        ? globalThis.Boolean(object.audit_completion_gate_critical_only)
+        : undefined,
+      auditActModeAdvisoryEnabled: isSet(object.auditActModeAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditActModeAdvisoryEnabled)
+        : isSet(object.audit_act_mode_advisory_enabled)
+        ? globalThis.Boolean(object.audit_act_mode_advisory_enabled)
+        : undefined,
+      auditAdvisoryEscalationEnabled: isSet(object.auditAdvisoryEscalationEnabled)
+        ? globalThis.Boolean(object.auditAdvisoryEscalationEnabled)
+        : isSet(object.audit_advisory_escalation_enabled)
+        ? globalThis.Boolean(object.audit_advisory_escalation_enabled)
+        : undefined,
+      auditAdvisoryAutoScrollMode: isSet(object.auditAdvisoryAutoScrollMode)
+        ? globalThis.String(object.auditAdvisoryAutoScrollMode)
+        : isSet(object.audit_advisory_auto_scroll_mode)
+        ? globalThis.String(object.audit_advisory_auto_scroll_mode)
+        : undefined,
+      auditPlanRegressionGateEnabled: isSet(object.auditPlanRegressionGateEnabled)
+        ? globalThis.Boolean(object.auditPlanRegressionGateEnabled)
+        : isSet(object.audit_plan_regression_gate_enabled)
+        ? globalThis.Boolean(object.audit_plan_regression_gate_enabled)
+        : undefined,
+      auditToolOutputAdvisoryEnabled: isSet(object.auditToolOutputAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditToolOutputAdvisoryEnabled)
+        : isSet(object.audit_tool_output_advisory_enabled)
+        ? globalThis.Boolean(object.audit_tool_output_advisory_enabled)
+        : undefined,
+      auditFileWriteAdvisoryEnabled: isSet(object.auditFileWriteAdvisoryEnabled)
+        ? globalThis.Boolean(object.auditFileWriteAdvisoryEnabled)
+        : isSet(object.audit_file_write_advisory_enabled)
+        ? globalThis.Boolean(object.audit_file_write_advisory_enabled)
+        : undefined,
+      auditIntentThresholdAdjustmentsEnabled: isSet(object.auditIntentThresholdAdjustmentsEnabled)
+        ? globalThis.Boolean(object.auditIntentThresholdAdjustmentsEnabled)
+        : isSet(object.audit_intent_threshold_adjustments_enabled)
+        ? globalThis.Boolean(object.audit_intent_threshold_adjustments_enabled)
+        : undefined,
+      auditIntentThresholdOverrides: isSet(object.auditIntentThresholdOverrides)
+        ? globalThis.String(object.auditIntentThresholdOverrides)
+        : isSet(object.audit_intent_threshold_overrides)
+        ? globalThis.String(object.audit_intent_threshold_overrides)
+        : undefined,
+      auditSarifHookExportEnabled: isSet(object.auditSarifHookExportEnabled)
+        ? globalThis.Boolean(object.auditSarifHookExportEnabled)
+        : isSet(object.audit_sarif_hook_export_enabled)
+        ? globalThis.Boolean(object.audit_sarif_hook_export_enabled)
+        : undefined,
+      auditWorkspaceArtifactsEnabled: isSet(object.auditWorkspaceArtifactsEnabled)
+        ? globalThis.Boolean(object.auditWorkspaceArtifactsEnabled)
+        : isSet(object.audit_workspace_artifacts_enabled)
+        ? globalThis.Boolean(object.audit_workspace_artifacts_enabled)
+        : undefined,
+      modEnabled: isSet(object.modEnabled)
+        ? globalThis.Boolean(object.modEnabled)
+        : isSet(object.mod_enabled)
+        ? globalThis.Boolean(object.mod_enabled)
+        : undefined,
+      modOutcome: isSet(object.modOutcome)
+        ? globalThis.String(object.modOutcome)
+        : isSet(object.mod_outcome)
+        ? globalThis.String(object.mod_outcome)
+        : undefined,
+      tokenCompressionEnabled: isSet(object.tokenCompressionEnabled)
+        ? globalThis.Boolean(object.tokenCompressionEnabled)
+        : isSet(object.token_compression_enabled)
+        ? globalThis.Boolean(object.token_compression_enabled)
+        : undefined,
+    };
+  },
 
-	create<I extends Exact<DeepPartial<UpdateSettingsRequest>, I>>(
-		base?: I,
-	): UpdateSettingsRequest {
-		return UpdateSettingsRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<UpdateSettingsRequest>, I>>(
-		object: I,
-	): UpdateSettingsRequest {
-		const message = createBaseUpdateSettingsRequest();
-		message.metadata =
-			object.metadata !== undefined && object.metadata !== null
-				? Metadata.fromPartial(object.metadata)
-				: undefined;
-		message.apiConfiguration =
-			object.apiConfiguration !== undefined && object.apiConfiguration !== null
-				? ModelsApiConfiguration.fromPartial(object.apiConfiguration)
-				: undefined;
-		message.telemetrySetting = object.telemetrySetting ?? undefined;
-		message.planActSeparateModelsSetting =
-			object.planActSeparateModelsSetting ?? undefined;
-		message.enableCheckpointsSetting =
-			object.enableCheckpointsSetting ?? undefined;
-		message.mcpMarketplaceEnabled = object.mcpMarketplaceEnabled ?? undefined;
-		message.shellIntegrationTimeout =
-			object.shellIntegrationTimeout ?? undefined;
-		message.terminalReuseEnabled = object.terminalReuseEnabled ?? undefined;
-		message.mcpResponsesCollapsed = object.mcpResponsesCollapsed ?? undefined;
-		message.mcpDisplayMode = object.mcpDisplayMode ?? undefined;
-		message.terminalOutputLineLimit =
-			object.terminalOutputLineLimit ?? undefined;
-		message.mode = object.mode ?? undefined;
-		message.preferredLanguage = object.preferredLanguage ?? undefined;
-		message.strictPlanModeEnabled = object.strictPlanModeEnabled ?? undefined;
-		message.focusChainSettings =
-			object.focusChainSettings !== undefined &&
-			object.focusChainSettings !== null
-				? FocusChainSettings.fromPartial(object.focusChainSettings)
-				: undefined;
-		message.useAutoCondense = object.useAutoCondense ?? undefined;
-		message.customPrompt = object.customPrompt ?? undefined;
-		message.browserSettings =
-			object.browserSettings !== undefined && object.browserSettings !== null
-				? BrowserSettingsUpdate.fromPartial(object.browserSettings)
-				: undefined;
-		message.defaultTerminalProfile = object.defaultTerminalProfile ?? undefined;
-		message.yoloModeToggled = object.yoloModeToggled ?? undefined;
-		message.multiRootEnabled = object.multiRootEnabled ?? undefined;
-		message.vscodeTerminalExecutionMode =
-			object.vscodeTerminalExecutionMode ?? undefined;
-		message.maxConsecutiveMistakes = object.maxConsecutiveMistakes ?? undefined;
-		message.subagentsEnabled = object.subagentsEnabled ?? undefined;
-		message.subagentTerminalOutputLineLimit =
-			object.subagentTerminalOutputLineLimit ?? undefined;
-		message.dietcodeEnv = object.dietcodeEnv ?? undefined;
-		message.nativeToolCallEnabled = object.nativeToolCallEnabled ?? undefined;
-		message.dietcodeWebToolsEnabled =
-			object.dietcodeWebToolsEnabled ?? undefined;
-		message.enableParallelToolCalling =
-			object.enableParallelToolCalling ?? undefined;
-		message.backgroundEditEnabled = object.backgroundEditEnabled ?? undefined;
-		message.ocaReasoningEffort = object.ocaReasoningEffort ?? undefined;
-		message.optOutOfRemoteConfig = object.optOutOfRemoteConfig ?? undefined;
-		message.worktreesEnabled = object.worktreesEnabled ?? undefined;
-		message.doubleCheckCompletionEnabled =
-			object.doubleCheckCompletionEnabled ?? undefined;
-		message.auditCompletionGateEnabled =
-			object.auditCompletionGateEnabled ?? undefined;
-		message.auditCompletionGateThreshold =
-			object.auditCompletionGateThreshold ?? undefined;
-		message.auditCompletionGateCriticalOnly =
-			object.auditCompletionGateCriticalOnly ?? undefined;
-		message.auditActModeAdvisoryEnabled =
-			object.auditActModeAdvisoryEnabled ?? undefined;
-		message.auditAdvisoryEscalationEnabled =
-			object.auditAdvisoryEscalationEnabled ?? undefined;
-		message.auditAdvisoryAutoScrollMode =
-			object.auditAdvisoryAutoScrollMode ?? undefined;
-		message.auditPlanRegressionGateEnabled =
-			object.auditPlanRegressionGateEnabled ?? undefined;
-		message.auditToolOutputAdvisoryEnabled =
-			object.auditToolOutputAdvisoryEnabled ?? undefined;
-		message.auditFileWriteAdvisoryEnabled =
-			object.auditFileWriteAdvisoryEnabled ?? undefined;
-		message.auditIntentThresholdAdjustmentsEnabled =
-			object.auditIntentThresholdAdjustmentsEnabled ?? undefined;
-		message.auditIntentThresholdOverrides =
-			object.auditIntentThresholdOverrides ?? undefined;
-		message.auditSarifHookExportEnabled =
-			object.auditSarifHookExportEnabled ?? undefined;
-		message.auditWorkspaceArtifactsEnabled =
-			object.auditWorkspaceArtifactsEnabled ?? undefined;
-		message.modEnabled = object.modEnabled ?? undefined;
-		message.modOutcome = object.modOutcome ?? undefined;
-		return message;
-	},
+  toJSON(message: UpdateSettingsRequest): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.apiConfiguration !== undefined) {
+      obj.apiConfiguration = ModelsApiConfiguration.toJSON(message.apiConfiguration);
+    }
+    if (message.telemetrySetting !== undefined) {
+      obj.telemetrySetting = message.telemetrySetting;
+    }
+    if (message.planActSeparateModelsSetting !== undefined) {
+      obj.planActSeparateModelsSetting = message.planActSeparateModelsSetting;
+    }
+    if (message.enableCheckpointsSetting !== undefined) {
+      obj.enableCheckpointsSetting = message.enableCheckpointsSetting;
+    }
+    if (message.mcpMarketplaceEnabled !== undefined) {
+      obj.mcpMarketplaceEnabled = message.mcpMarketplaceEnabled;
+    }
+    if (message.shellIntegrationTimeout !== undefined) {
+      obj.shellIntegrationTimeout = Math.round(message.shellIntegrationTimeout);
+    }
+    if (message.terminalReuseEnabled !== undefined) {
+      obj.terminalReuseEnabled = message.terminalReuseEnabled;
+    }
+    if (message.mcpResponsesCollapsed !== undefined) {
+      obj.mcpResponsesCollapsed = message.mcpResponsesCollapsed;
+    }
+    if (message.mcpDisplayMode !== undefined) {
+      obj.mcpDisplayMode = mcpDisplayModeToJSON(message.mcpDisplayMode);
+    }
+    if (message.terminalOutputLineLimit !== undefined) {
+      obj.terminalOutputLineLimit = Math.round(message.terminalOutputLineLimit);
+    }
+    if (message.mode !== undefined) {
+      obj.mode = planActModeToJSON(message.mode);
+    }
+    if (message.preferredLanguage !== undefined) {
+      obj.preferredLanguage = message.preferredLanguage;
+    }
+    if (message.strictPlanModeEnabled !== undefined) {
+      obj.strictPlanModeEnabled = message.strictPlanModeEnabled;
+    }
+    if (message.focusChainSettings !== undefined) {
+      obj.focusChainSettings = FocusChainSettings.toJSON(message.focusChainSettings);
+    }
+    if (message.useAutoCondense !== undefined) {
+      obj.useAutoCondense = message.useAutoCondense;
+    }
+    if (message.customPrompt !== undefined) {
+      obj.customPrompt = message.customPrompt;
+    }
+    if (message.browserSettings !== undefined) {
+      obj.browserSettings = BrowserSettingsUpdate.toJSON(message.browserSettings);
+    }
+    if (message.defaultTerminalProfile !== undefined) {
+      obj.defaultTerminalProfile = message.defaultTerminalProfile;
+    }
+    if (message.yoloModeToggled !== undefined) {
+      obj.yoloModeToggled = message.yoloModeToggled;
+    }
+    if (message.multiRootEnabled !== undefined) {
+      obj.multiRootEnabled = message.multiRootEnabled;
+    }
+    if (message.vscodeTerminalExecutionMode !== undefined) {
+      obj.vscodeTerminalExecutionMode = message.vscodeTerminalExecutionMode;
+    }
+    if (message.maxConsecutiveMistakes !== undefined) {
+      obj.maxConsecutiveMistakes = Math.round(message.maxConsecutiveMistakes);
+    }
+    if (message.subagentsEnabled !== undefined) {
+      obj.subagentsEnabled = message.subagentsEnabled;
+    }
+    if (message.subagentTerminalOutputLineLimit !== undefined) {
+      obj.subagentTerminalOutputLineLimit = Math.round(message.subagentTerminalOutputLineLimit);
+    }
+    if (message.dietcodeEnv !== undefined) {
+      obj.dietcodeEnv = message.dietcodeEnv;
+    }
+    if (message.nativeToolCallEnabled !== undefined) {
+      obj.nativeToolCallEnabled = message.nativeToolCallEnabled;
+    }
+    if (message.dietcodeWebToolsEnabled !== undefined) {
+      obj.dietcodeWebToolsEnabled = message.dietcodeWebToolsEnabled;
+    }
+    if (message.enableParallelToolCalling !== undefined) {
+      obj.enableParallelToolCalling = message.enableParallelToolCalling;
+    }
+    if (message.backgroundEditEnabled !== undefined) {
+      obj.backgroundEditEnabled = message.backgroundEditEnabled;
+    }
+    if (message.ocaReasoningEffort !== undefined) {
+      obj.ocaReasoningEffort = message.ocaReasoningEffort;
+    }
+    if (message.optOutOfRemoteConfig !== undefined) {
+      obj.optOutOfRemoteConfig = message.optOutOfRemoteConfig;
+    }
+    if (message.worktreesEnabled !== undefined) {
+      obj.worktreesEnabled = message.worktreesEnabled;
+    }
+    if (message.doubleCheckCompletionEnabled !== undefined) {
+      obj.doubleCheckCompletionEnabled = message.doubleCheckCompletionEnabled;
+    }
+    if (message.auditCompletionGateEnabled !== undefined) {
+      obj.auditCompletionGateEnabled = message.auditCompletionGateEnabled;
+    }
+    if (message.auditCompletionGateThreshold !== undefined) {
+      obj.auditCompletionGateThreshold = Math.round(message.auditCompletionGateThreshold);
+    }
+    if (message.auditCompletionGateCriticalOnly !== undefined) {
+      obj.auditCompletionGateCriticalOnly = message.auditCompletionGateCriticalOnly;
+    }
+    if (message.auditActModeAdvisoryEnabled !== undefined) {
+      obj.auditActModeAdvisoryEnabled = message.auditActModeAdvisoryEnabled;
+    }
+    if (message.auditAdvisoryEscalationEnabled !== undefined) {
+      obj.auditAdvisoryEscalationEnabled = message.auditAdvisoryEscalationEnabled;
+    }
+    if (message.auditAdvisoryAutoScrollMode !== undefined) {
+      obj.auditAdvisoryAutoScrollMode = message.auditAdvisoryAutoScrollMode;
+    }
+    if (message.auditPlanRegressionGateEnabled !== undefined) {
+      obj.auditPlanRegressionGateEnabled = message.auditPlanRegressionGateEnabled;
+    }
+    if (message.auditToolOutputAdvisoryEnabled !== undefined) {
+      obj.auditToolOutputAdvisoryEnabled = message.auditToolOutputAdvisoryEnabled;
+    }
+    if (message.auditFileWriteAdvisoryEnabled !== undefined) {
+      obj.auditFileWriteAdvisoryEnabled = message.auditFileWriteAdvisoryEnabled;
+    }
+    if (message.auditIntentThresholdAdjustmentsEnabled !== undefined) {
+      obj.auditIntentThresholdAdjustmentsEnabled = message.auditIntentThresholdAdjustmentsEnabled;
+    }
+    if (message.auditIntentThresholdOverrides !== undefined) {
+      obj.auditIntentThresholdOverrides = message.auditIntentThresholdOverrides;
+    }
+    if (message.auditSarifHookExportEnabled !== undefined) {
+      obj.auditSarifHookExportEnabled = message.auditSarifHookExportEnabled;
+    }
+    if (message.auditWorkspaceArtifactsEnabled !== undefined) {
+      obj.auditWorkspaceArtifactsEnabled = message.auditWorkspaceArtifactsEnabled;
+    }
+    if (message.modEnabled !== undefined) {
+      obj.modEnabled = message.modEnabled;
+    }
+    if (message.modOutcome !== undefined) {
+      obj.modOutcome = message.modOutcome;
+    }
+    if (message.tokenCompressionEnabled !== undefined) {
+      obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateSettingsRequest>, I>>(base?: I): UpdateSettingsRequest {
+    return UpdateSettingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateSettingsRequest>, I>>(object: I): UpdateSettingsRequest {
+    const message = createBaseUpdateSettingsRequest();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
+    message.apiConfiguration = (object.apiConfiguration !== undefined && object.apiConfiguration !== null)
+      ? ModelsApiConfiguration.fromPartial(object.apiConfiguration)
+      : undefined;
+    message.telemetrySetting = object.telemetrySetting ?? undefined;
+    message.planActSeparateModelsSetting = object.planActSeparateModelsSetting ?? undefined;
+    message.enableCheckpointsSetting = object.enableCheckpointsSetting ?? undefined;
+    message.mcpMarketplaceEnabled = object.mcpMarketplaceEnabled ?? undefined;
+    message.shellIntegrationTimeout = object.shellIntegrationTimeout ?? undefined;
+    message.terminalReuseEnabled = object.terminalReuseEnabled ?? undefined;
+    message.mcpResponsesCollapsed = object.mcpResponsesCollapsed ?? undefined;
+    message.mcpDisplayMode = object.mcpDisplayMode ?? undefined;
+    message.terminalOutputLineLimit = object.terminalOutputLineLimit ?? undefined;
+    message.mode = object.mode ?? undefined;
+    message.preferredLanguage = object.preferredLanguage ?? undefined;
+    message.strictPlanModeEnabled = object.strictPlanModeEnabled ?? undefined;
+    message.focusChainSettings = (object.focusChainSettings !== undefined && object.focusChainSettings !== null)
+      ? FocusChainSettings.fromPartial(object.focusChainSettings)
+      : undefined;
+    message.useAutoCondense = object.useAutoCondense ?? undefined;
+    message.customPrompt = object.customPrompt ?? undefined;
+    message.browserSettings = (object.browserSettings !== undefined && object.browserSettings !== null)
+      ? BrowserSettingsUpdate.fromPartial(object.browserSettings)
+      : undefined;
+    message.defaultTerminalProfile = object.defaultTerminalProfile ?? undefined;
+    message.yoloModeToggled = object.yoloModeToggled ?? undefined;
+    message.multiRootEnabled = object.multiRootEnabled ?? undefined;
+    message.vscodeTerminalExecutionMode = object.vscodeTerminalExecutionMode ?? undefined;
+    message.maxConsecutiveMistakes = object.maxConsecutiveMistakes ?? undefined;
+    message.subagentsEnabled = object.subagentsEnabled ?? undefined;
+    message.subagentTerminalOutputLineLimit = object.subagentTerminalOutputLineLimit ?? undefined;
+    message.dietcodeEnv = object.dietcodeEnv ?? undefined;
+    message.nativeToolCallEnabled = object.nativeToolCallEnabled ?? undefined;
+    message.dietcodeWebToolsEnabled = object.dietcodeWebToolsEnabled ?? undefined;
+    message.enableParallelToolCalling = object.enableParallelToolCalling ?? undefined;
+    message.backgroundEditEnabled = object.backgroundEditEnabled ?? undefined;
+    message.ocaReasoningEffort = object.ocaReasoningEffort ?? undefined;
+    message.optOutOfRemoteConfig = object.optOutOfRemoteConfig ?? undefined;
+    message.worktreesEnabled = object.worktreesEnabled ?? undefined;
+    message.doubleCheckCompletionEnabled = object.doubleCheckCompletionEnabled ?? undefined;
+    message.auditCompletionGateEnabled = object.auditCompletionGateEnabled ?? undefined;
+    message.auditCompletionGateThreshold = object.auditCompletionGateThreshold ?? undefined;
+    message.auditCompletionGateCriticalOnly = object.auditCompletionGateCriticalOnly ?? undefined;
+    message.auditActModeAdvisoryEnabled = object.auditActModeAdvisoryEnabled ?? undefined;
+    message.auditAdvisoryEscalationEnabled = object.auditAdvisoryEscalationEnabled ?? undefined;
+    message.auditAdvisoryAutoScrollMode = object.auditAdvisoryAutoScrollMode ?? undefined;
+    message.auditPlanRegressionGateEnabled = object.auditPlanRegressionGateEnabled ?? undefined;
+    message.auditToolOutputAdvisoryEnabled = object.auditToolOutputAdvisoryEnabled ?? undefined;
+    message.auditFileWriteAdvisoryEnabled = object.auditFileWriteAdvisoryEnabled ?? undefined;
+    message.auditIntentThresholdAdjustmentsEnabled = object.auditIntentThresholdAdjustmentsEnabled ?? undefined;
+    message.auditIntentThresholdOverrides = object.auditIntentThresholdOverrides ?? undefined;
+    message.auditSarifHookExportEnabled = object.auditSarifHookExportEnabled ?? undefined;
+    message.auditWorkspaceArtifactsEnabled = object.auditWorkspaceArtifactsEnabled ?? undefined;
+    message.modEnabled = object.modEnabled ?? undefined;
+    message.modOutcome = object.modOutcome ?? undefined;
+    message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
+    return message;
+  },
 };
 
 function createBaseUpdateTerminalConnectionTimeoutRequest(): UpdateTerminalConnectionTimeoutRequest {
-	return { timeoutMs: undefined };
+  return { timeoutMs: undefined };
 }
 
-export const UpdateTerminalConnectionTimeoutRequest: MessageFns<UpdateTerminalConnectionTimeoutRequest> =
-	{
-		encode(
-			message: UpdateTerminalConnectionTimeoutRequest,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.timeoutMs !== undefined) {
-				writer.uint32(8).int32(message.timeoutMs);
-			}
-			return writer;
-		},
+export const UpdateTerminalConnectionTimeoutRequest: MessageFns<UpdateTerminalConnectionTimeoutRequest> = {
+  encode(message: UpdateTerminalConnectionTimeoutRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.timeoutMs !== undefined) {
+      writer.uint32(8).int32(message.timeoutMs);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): UpdateTerminalConnectionTimeoutRequest {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseUpdateTerminalConnectionTimeoutRequest();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 8) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateTerminalConnectionTimeoutRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseUpdateTerminalConnectionTimeoutRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-							message.timeoutMs = reader.int32();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.timeoutMs = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): UpdateTerminalConnectionTimeoutRequest {
-			return {
-				timeoutMs: isSet(object.timeoutMs)
-					? globalThis.Number(object.timeoutMs)
-					: isSet(object.timeout_ms)
-						? globalThis.Number(object.timeout_ms)
-						: undefined,
-			};
-		},
+  fromJSON(object: any): UpdateTerminalConnectionTimeoutRequest {
+    return {
+      timeoutMs: isSet(object.timeoutMs)
+        ? globalThis.Number(object.timeoutMs)
+        : isSet(object.timeout_ms)
+        ? globalThis.Number(object.timeout_ms)
+        : undefined,
+    };
+  },
 
-		toJSON(message: UpdateTerminalConnectionTimeoutRequest): unknown {
-			const obj: any = {};
-			if (message.timeoutMs !== undefined) {
-				obj.timeoutMs = Math.round(message.timeoutMs);
-			}
-			return obj;
-		},
+  toJSON(message: UpdateTerminalConnectionTimeoutRequest): unknown {
+    const obj: any = {};
+    if (message.timeoutMs !== undefined) {
+      obj.timeoutMs = Math.round(message.timeoutMs);
+    }
+    return obj;
+  },
 
-		create<
-			I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutRequest>, I>,
-		>(base?: I): UpdateTerminalConnectionTimeoutRequest {
-			return UpdateTerminalConnectionTimeoutRequest.fromPartial(
-				base ?? ({} as any),
-			);
-		},
-		fromPartial<
-			I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutRequest>, I>,
-		>(object: I): UpdateTerminalConnectionTimeoutRequest {
-			const message = createBaseUpdateTerminalConnectionTimeoutRequest();
-			message.timeoutMs = object.timeoutMs ?? undefined;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutRequest>, I>>(
+    base?: I,
+  ): UpdateTerminalConnectionTimeoutRequest {
+    return UpdateTerminalConnectionTimeoutRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutRequest>, I>>(
+    object: I,
+  ): UpdateTerminalConnectionTimeoutRequest {
+    const message = createBaseUpdateTerminalConnectionTimeoutRequest();
+    message.timeoutMs = object.timeoutMs ?? undefined;
+    return message;
+  },
+};
 
 function createBaseFocusChainSettings(): FocusChainSettings {
-	return { enabled: false, remindDietcodeInterval: 0 };
+  return { enabled: false, remindDietcodeInterval: 0 };
 }
 
 export const FocusChainSettings: MessageFns<FocusChainSettings> = {
-	encode(
-		message: FocusChainSettings,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.enabled !== false) {
-			writer.uint32(8).bool(message.enabled);
-		}
-		if (message.remindDietcodeInterval !== 0) {
-			writer.uint32(16).int32(message.remindDietcodeInterval);
-		}
-		return writer;
-	},
+  encode(message: FocusChainSettings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.enabled !== false) {
+      writer.uint32(8).bool(message.enabled);
+    }
+    if (message.remindDietcodeInterval !== 0) {
+      writer.uint32(16).int32(message.remindDietcodeInterval);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): FocusChainSettings {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseFocusChainSettings();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): FocusChainSettings {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseFocusChainSettings();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.enabled = reader.bool();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.enabled = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.remindDietcodeInterval = reader.int32();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.remindDietcodeInterval = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): FocusChainSettings {
-		return {
-			enabled: isSet(object.enabled)
-				? globalThis.Boolean(object.enabled)
-				: false,
-			remindDietcodeInterval: isSet(object.remindDietcodeInterval)
-				? globalThis.Number(object.remindDietcodeInterval)
-				: isSet(object.remind_dietcode_interval)
-					? globalThis.Number(object.remind_dietcode_interval)
-					: 0,
-		};
-	},
+  fromJSON(object: any): FocusChainSettings {
+    return {
+      enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : false,
+      remindDietcodeInterval: isSet(object.remindDietcodeInterval)
+        ? globalThis.Number(object.remindDietcodeInterval)
+        : isSet(object.remind_dietcode_interval)
+        ? globalThis.Number(object.remind_dietcode_interval)
+        : 0,
+    };
+  },
 
-	toJSON(message: FocusChainSettings): unknown {
-		const obj: any = {};
-		if (message.enabled !== false) {
-			obj.enabled = message.enabled;
-		}
-		if (message.remindDietcodeInterval !== 0) {
-			obj.remindDietcodeInterval = Math.round(message.remindDietcodeInterval);
-		}
-		return obj;
-	},
+  toJSON(message: FocusChainSettings): unknown {
+    const obj: any = {};
+    if (message.enabled !== false) {
+      obj.enabled = message.enabled;
+    }
+    if (message.remindDietcodeInterval !== 0) {
+      obj.remindDietcodeInterval = Math.round(message.remindDietcodeInterval);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<FocusChainSettings>, I>>(
-		base?: I,
-	): FocusChainSettings {
-		return FocusChainSettings.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<FocusChainSettings>, I>>(
-		object: I,
-	): FocusChainSettings {
-		const message = createBaseFocusChainSettings();
-		message.enabled = object.enabled ?? false;
-		message.remindDietcodeInterval = object.remindDietcodeInterval ?? 0;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<FocusChainSettings>, I>>(base?: I): FocusChainSettings {
+    return FocusChainSettings.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FocusChainSettings>, I>>(object: I): FocusChainSettings {
+    const message = createBaseFocusChainSettings();
+    message.enabled = object.enabled ?? false;
+    message.remindDietcodeInterval = object.remindDietcodeInterval ?? 0;
+    return message;
+  },
 };
 
 function createBaseUpdateTerminalConnectionTimeoutResponse(): UpdateTerminalConnectionTimeoutResponse {
-	return { timeoutMs: undefined };
+  return { timeoutMs: undefined };
 }
 
-export const UpdateTerminalConnectionTimeoutResponse: MessageFns<UpdateTerminalConnectionTimeoutResponse> =
-	{
-		encode(
-			message: UpdateTerminalConnectionTimeoutResponse,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.timeoutMs !== undefined) {
-				writer.uint32(8).int32(message.timeoutMs);
-			}
-			return writer;
-		},
+export const UpdateTerminalConnectionTimeoutResponse: MessageFns<UpdateTerminalConnectionTimeoutResponse> = {
+  encode(message: UpdateTerminalConnectionTimeoutResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.timeoutMs !== undefined) {
+      writer.uint32(8).int32(message.timeoutMs);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): UpdateTerminalConnectionTimeoutResponse {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseUpdateTerminalConnectionTimeoutResponse();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 8) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateTerminalConnectionTimeoutResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseUpdateTerminalConnectionTimeoutResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-							message.timeoutMs = reader.int32();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.timeoutMs = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): UpdateTerminalConnectionTimeoutResponse {
-			return {
-				timeoutMs: isSet(object.timeoutMs)
-					? globalThis.Number(object.timeoutMs)
-					: isSet(object.timeout_ms)
-						? globalThis.Number(object.timeout_ms)
-						: undefined,
-			};
-		},
+  fromJSON(object: any): UpdateTerminalConnectionTimeoutResponse {
+    return {
+      timeoutMs: isSet(object.timeoutMs)
+        ? globalThis.Number(object.timeoutMs)
+        : isSet(object.timeout_ms)
+        ? globalThis.Number(object.timeout_ms)
+        : undefined,
+    };
+  },
 
-		toJSON(message: UpdateTerminalConnectionTimeoutResponse): unknown {
-			const obj: any = {};
-			if (message.timeoutMs !== undefined) {
-				obj.timeoutMs = Math.round(message.timeoutMs);
-			}
-			return obj;
-		},
+  toJSON(message: UpdateTerminalConnectionTimeoutResponse): unknown {
+    const obj: any = {};
+    if (message.timeoutMs !== undefined) {
+      obj.timeoutMs = Math.round(message.timeoutMs);
+    }
+    return obj;
+  },
 
-		create<
-			I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutResponse>, I>,
-		>(base?: I): UpdateTerminalConnectionTimeoutResponse {
-			return UpdateTerminalConnectionTimeoutResponse.fromPartial(
-				base ?? ({} as any),
-			);
-		},
-		fromPartial<
-			I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutResponse>, I>,
-		>(object: I): UpdateTerminalConnectionTimeoutResponse {
-			const message = createBaseUpdateTerminalConnectionTimeoutResponse();
-			message.timeoutMs = object.timeoutMs ?? undefined;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutResponse>, I>>(
+    base?: I,
+  ): UpdateTerminalConnectionTimeoutResponse {
+    return UpdateTerminalConnectionTimeoutResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateTerminalConnectionTimeoutResponse>, I>>(
+    object: I,
+  ): UpdateTerminalConnectionTimeoutResponse {
+    const message = createBaseUpdateTerminalConnectionTimeoutResponse();
+    message.timeoutMs = object.timeoutMs ?? undefined;
+    return message;
+  },
+};
 
 function createBaseProcessInfo(): ProcessInfo {
-	return { processId: 0, version: undefined, uptimeMs: undefined };
+  return { processId: 0, version: undefined, uptimeMs: undefined };
 }
 
 export const ProcessInfo: MessageFns<ProcessInfo> = {
-	encode(
-		message: ProcessInfo,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.processId !== 0) {
-			writer.uint32(8).int32(message.processId);
-		}
-		if (message.version !== undefined) {
-			writer.uint32(18).string(message.version);
-		}
-		if (message.uptimeMs !== undefined) {
-			writer.uint32(24).int64(message.uptimeMs);
-		}
-		return writer;
-	},
+  encode(message: ProcessInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.processId !== 0) {
+      writer.uint32(8).int32(message.processId);
+    }
+    if (message.version !== undefined) {
+      writer.uint32(18).string(message.version);
+    }
+    if (message.uptimeMs !== undefined) {
+      writer.uint32(24).int64(message.uptimeMs);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): ProcessInfo {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseProcessInfo();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ProcessInfo {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseProcessInfo();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.processId = reader.int32();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.processId = reader.int32();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.version = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.version = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.uptimeMs = longToNumber(reader.int64());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.uptimeMs = longToNumber(reader.int64());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ProcessInfo {
-		return {
-			processId: isSet(object.processId)
-				? globalThis.Number(object.processId)
-				: isSet(object.process_id)
-					? globalThis.Number(object.process_id)
-					: 0,
-			version: isSet(object.version)
-				? globalThis.String(object.version)
-				: undefined,
-			uptimeMs: isSet(object.uptimeMs)
-				? globalThis.Number(object.uptimeMs)
-				: isSet(object.uptime_ms)
-					? globalThis.Number(object.uptime_ms)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): ProcessInfo {
+    return {
+      processId: isSet(object.processId)
+        ? globalThis.Number(object.processId)
+        : isSet(object.process_id)
+        ? globalThis.Number(object.process_id)
+        : 0,
+      version: isSet(object.version) ? globalThis.String(object.version) : undefined,
+      uptimeMs: isSet(object.uptimeMs)
+        ? globalThis.Number(object.uptimeMs)
+        : isSet(object.uptime_ms)
+        ? globalThis.Number(object.uptime_ms)
+        : undefined,
+    };
+  },
 
-	toJSON(message: ProcessInfo): unknown {
-		const obj: any = {};
-		if (message.processId !== 0) {
-			obj.processId = Math.round(message.processId);
-		}
-		if (message.version !== undefined) {
-			obj.version = message.version;
-		}
-		if (message.uptimeMs !== undefined) {
-			obj.uptimeMs = Math.round(message.uptimeMs);
-		}
-		return obj;
-	},
+  toJSON(message: ProcessInfo): unknown {
+    const obj: any = {};
+    if (message.processId !== 0) {
+      obj.processId = Math.round(message.processId);
+    }
+    if (message.version !== undefined) {
+      obj.version = message.version;
+    }
+    if (message.uptimeMs !== undefined) {
+      obj.uptimeMs = Math.round(message.uptimeMs);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ProcessInfo>, I>>(base?: I): ProcessInfo {
-		return ProcessInfo.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ProcessInfo>, I>>(
-		object: I,
-	): ProcessInfo {
-		const message = createBaseProcessInfo();
-		message.processId = object.processId ?? 0;
-		message.version = object.version ?? undefined;
-		message.uptimeMs = object.uptimeMs ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ProcessInfo>, I>>(base?: I): ProcessInfo {
+    return ProcessInfo.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ProcessInfo>, I>>(object: I): ProcessInfo {
+    const message = createBaseProcessInfo();
+    message.processId = object.processId ?? 0;
+    message.version = object.version ?? undefined;
+    message.uptimeMs = object.uptimeMs ?? undefined;
+    return message;
+  },
 };
 
 function createBaseTrackBannerEventRequest(): TrackBannerEventRequest {
-	return { bannerId: "", eventType: "" };
+  return { bannerId: "", eventType: "" };
 }
 
 export const TrackBannerEventRequest: MessageFns<TrackBannerEventRequest> = {
-	encode(
-		message: TrackBannerEventRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.bannerId !== "") {
-			writer.uint32(10).string(message.bannerId);
-		}
-		if (message.eventType !== "") {
-			writer.uint32(18).string(message.eventType);
-		}
-		return writer;
-	},
+  encode(message: TrackBannerEventRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bannerId !== "") {
+      writer.uint32(10).string(message.bannerId);
+    }
+    if (message.eventType !== "") {
+      writer.uint32(18).string(message.eventType);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): TrackBannerEventRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTrackBannerEventRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TrackBannerEventRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTrackBannerEventRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.bannerId = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.bannerId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.eventType = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.eventType = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TrackBannerEventRequest {
-		return {
-			bannerId: isSet(object.bannerId)
-				? globalThis.String(object.bannerId)
-				: isSet(object.banner_id)
-					? globalThis.String(object.banner_id)
-					: "",
-			eventType: isSet(object.eventType)
-				? globalThis.String(object.eventType)
-				: isSet(object.event_type)
-					? globalThis.String(object.event_type)
-					: "",
-		};
-	},
+  fromJSON(object: any): TrackBannerEventRequest {
+    return {
+      bannerId: isSet(object.bannerId)
+        ? globalThis.String(object.bannerId)
+        : isSet(object.banner_id)
+        ? globalThis.String(object.banner_id)
+        : "",
+      eventType: isSet(object.eventType)
+        ? globalThis.String(object.eventType)
+        : isSet(object.event_type)
+        ? globalThis.String(object.event_type)
+        : "",
+    };
+  },
 
-	toJSON(message: TrackBannerEventRequest): unknown {
-		const obj: any = {};
-		if (message.bannerId !== "") {
-			obj.bannerId = message.bannerId;
-		}
-		if (message.eventType !== "") {
-			obj.eventType = message.eventType;
-		}
-		return obj;
-	},
+  toJSON(message: TrackBannerEventRequest): unknown {
+    const obj: any = {};
+    if (message.bannerId !== "") {
+      obj.bannerId = message.bannerId;
+    }
+    if (message.eventType !== "") {
+      obj.eventType = message.eventType;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TrackBannerEventRequest>, I>>(
-		base?: I,
-	): TrackBannerEventRequest {
-		return TrackBannerEventRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TrackBannerEventRequest>, I>>(
-		object: I,
-	): TrackBannerEventRequest {
-		const message = createBaseTrackBannerEventRequest();
-		message.bannerId = object.bannerId ?? "";
-		message.eventType = object.eventType ?? "";
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TrackBannerEventRequest>, I>>(base?: I): TrackBannerEventRequest {
+    return TrackBannerEventRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TrackBannerEventRequest>, I>>(object: I): TrackBannerEventRequest {
+    const message = createBaseTrackBannerEventRequest();
+    message.bannerId = object.bannerId ?? "";
+    message.eventType = object.eventType ?? "";
+    return message;
+  },
 };
 
 function createBaseTestConnectionResult(): TestConnectionResult {
-	return { success: false, message: undefined, error: undefined };
+  return { success: false, message: undefined, error: undefined };
 }
 
 export const TestConnectionResult: MessageFns<TestConnectionResult> = {
-	encode(
-		message: TestConnectionResult,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.success !== false) {
-			writer.uint32(8).bool(message.success);
-		}
-		if (message.message !== undefined) {
-			writer.uint32(18).string(message.message);
-		}
-		if (message.error !== undefined) {
-			writer.uint32(26).string(message.error);
-		}
-		return writer;
-	},
+  encode(message: TestConnectionResult, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== undefined) {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.error !== undefined) {
+      writer.uint32(26).string(message.error);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): TestConnectionResult {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTestConnectionResult();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TestConnectionResult {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTestConnectionResult();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.success = reader.bool();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.success = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.message = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.message = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.error = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.error = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TestConnectionResult {
-		return {
-			success: isSet(object.success)
-				? globalThis.Boolean(object.success)
-				: false,
-			message: isSet(object.message)
-				? globalThis.String(object.message)
-				: undefined,
-			error: isSet(object.error) ? globalThis.String(object.error) : undefined,
-		};
-	},
+  fromJSON(object: any): TestConnectionResult {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : undefined,
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
+    };
+  },
 
-	toJSON(message: TestConnectionResult): unknown {
-		const obj: any = {};
-		if (message.success !== false) {
-			obj.success = message.success;
-		}
-		if (message.message !== undefined) {
-			obj.message = message.message;
-		}
-		if (message.error !== undefined) {
-			obj.error = message.error;
-		}
-		return obj;
-	},
+  toJSON(message: TestConnectionResult): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== undefined) {
+      obj.message = message.message;
+    }
+    if (message.error !== undefined) {
+      obj.error = message.error;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TestConnectionResult>, I>>(
-		base?: I,
-	): TestConnectionResult {
-		return TestConnectionResult.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TestConnectionResult>, I>>(
-		object: I,
-	): TestConnectionResult {
-		const message = createBaseTestConnectionResult();
-		message.success = object.success ?? false;
-		message.message = object.message ?? undefined;
-		message.error = object.error ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TestConnectionResult>, I>>(base?: I): TestConnectionResult {
+    return TestConnectionResult.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TestConnectionResult>, I>>(object: I): TestConnectionResult {
+    const message = createBaseTestConnectionResult();
+    message.success = object.success ?? false;
+    message.message = object.message ?? undefined;
+    message.error = object.error ?? undefined;
+    return message;
+  },
 };
 
 export type StateServiceDefinition = typeof StateServiceDefinition;
 export const StateServiceDefinition = {
-	name: "StateService",
-	fullName: "dietcode.StateService",
-	methods: {
-		getLatestState: {
-			name: "getLatestState",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: State as typeof State,
-			responseStream: false,
-			options: {},
-		},
-		updateTerminalConnectionTimeout: {
-			name: "updateTerminalConnectionTimeout",
-			requestType:
-				UpdateTerminalConnectionTimeoutRequest as typeof UpdateTerminalConnectionTimeoutRequest,
-			requestStream: false,
-			responseType:
-				UpdateTerminalConnectionTimeoutResponse as typeof UpdateTerminalConnectionTimeoutResponse,
-			responseStream: false,
-			options: {},
-		},
-		updateTerminalReuseEnabled: {
-			name: "updateTerminalReuseEnabled",
-			requestType: BooleanRequest as typeof BooleanRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		getAvailableTerminalProfiles: {
-			name: "getAvailableTerminalProfiles",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: TerminalProfiles as typeof TerminalProfiles,
-			responseStream: false,
-			options: {},
-		},
-		subscribeToState: {
-			name: "subscribeToState",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: State as typeof State,
-			responseStream: true,
-			options: {},
-		},
-		toggleFavoriteModel: {
-			name: "toggleFavoriteModel",
-			requestType: StringRequest as typeof StringRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		resetState: {
-			name: "resetState",
-			requestType: ResetStateRequest as typeof ResetStateRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		togglePlanActModeProto: {
-			name: "togglePlanActModeProto",
-			requestType: TogglePlanActModeRequest as typeof TogglePlanActModeRequest,
-			requestStream: false,
-			responseType: Boolean as typeof Boolean,
-			responseStream: false,
-			options: {},
-		},
-		updateAutoApprovalSettings: {
-			name: "updateAutoApprovalSettings",
-			requestType:
-				AutoApprovalSettingsRequest as typeof AutoApprovalSettingsRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateSettings: {
-			name: "updateSettings",
-			requestType: UpdateSettingsRequest as typeof UpdateSettingsRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateTaskSettings: {
-			name: "updateTaskSettings",
-			requestType:
-				UpdateTaskSettingsRequest as typeof UpdateTaskSettingsRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateTelemetrySetting: {
-			name: "updateTelemetrySetting",
-			requestType: TelemetrySettingRequest as typeof TelemetrySettingRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		setWelcomeViewCompleted: {
-			name: "setWelcomeViewCompleted",
-			requestType: BooleanRequest as typeof BooleanRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateInfoBannerVersion: {
-			name: "updateInfoBannerVersion",
-			requestType: Int64Request as typeof Int64Request,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateModelBannerVersion: {
-			name: "updateModelBannerVersion",
-			requestType: Int64Request as typeof Int64Request,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		updateCliBannerVersion: {
-			name: "updateCliBannerVersion",
-			requestType: Int64Request as typeof Int64Request,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		dismissBanner: {
-			name: "dismissBanner",
-			requestType: StringRequest as typeof StringRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		trackBannerEvent: {
-			name: "trackBannerEvent",
-			requestType: TrackBannerEventRequest as typeof TrackBannerEventRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		getProcessInfo: {
-			name: "getProcessInfo",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: ProcessInfo as typeof ProcessInfo,
-			responseStream: false,
-			options: {},
-		},
-		flushPendingState: {
-			name: "flushPendingState",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		refreshRemoteConfig: {
-			name: "refreshRemoteConfig",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: Empty as typeof Empty,
-			responseStream: false,
-			options: {},
-		},
-		testOtelConnection: {
-			name: "testOtelConnection",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: TestConnectionResult as typeof TestConnectionResult,
-			responseStream: false,
-			options: {},
-		},
-		testPromptUploading: {
-			name: "testPromptUploading",
-			requestType: EmptyRequest as typeof EmptyRequest,
-			requestStream: false,
-			responseType: TestConnectionResult as typeof TestConnectionResult,
-			responseStream: false,
-			options: {},
-		},
-	},
+  name: "StateService",
+  fullName: "dietcode.StateService",
+  methods: {
+    getLatestState: {
+      name: "getLatestState",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: State as typeof State,
+      responseStream: false,
+      options: {},
+    },
+    updateTerminalConnectionTimeout: {
+      name: "updateTerminalConnectionTimeout",
+      requestType: UpdateTerminalConnectionTimeoutRequest as typeof UpdateTerminalConnectionTimeoutRequest,
+      requestStream: false,
+      responseType: UpdateTerminalConnectionTimeoutResponse as typeof UpdateTerminalConnectionTimeoutResponse,
+      responseStream: false,
+      options: {},
+    },
+    updateTerminalReuseEnabled: {
+      name: "updateTerminalReuseEnabled",
+      requestType: BooleanRequest as typeof BooleanRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    getAvailableTerminalProfiles: {
+      name: "getAvailableTerminalProfiles",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: TerminalProfiles as typeof TerminalProfiles,
+      responseStream: false,
+      options: {},
+    },
+    subscribeToState: {
+      name: "subscribeToState",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: State as typeof State,
+      responseStream: true,
+      options: {},
+    },
+    toggleFavoriteModel: {
+      name: "toggleFavoriteModel",
+      requestType: StringRequest as typeof StringRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    resetState: {
+      name: "resetState",
+      requestType: ResetStateRequest as typeof ResetStateRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    togglePlanActModeProto: {
+      name: "togglePlanActModeProto",
+      requestType: TogglePlanActModeRequest as typeof TogglePlanActModeRequest,
+      requestStream: false,
+      responseType: Boolean as typeof Boolean,
+      responseStream: false,
+      options: {},
+    },
+    updateAutoApprovalSettings: {
+      name: "updateAutoApprovalSettings",
+      requestType: AutoApprovalSettingsRequest as typeof AutoApprovalSettingsRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateSettings: {
+      name: "updateSettings",
+      requestType: UpdateSettingsRequest as typeof UpdateSettingsRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateTaskSettings: {
+      name: "updateTaskSettings",
+      requestType: UpdateTaskSettingsRequest as typeof UpdateTaskSettingsRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateTelemetrySetting: {
+      name: "updateTelemetrySetting",
+      requestType: TelemetrySettingRequest as typeof TelemetrySettingRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    setWelcomeViewCompleted: {
+      name: "setWelcomeViewCompleted",
+      requestType: BooleanRequest as typeof BooleanRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateInfoBannerVersion: {
+      name: "updateInfoBannerVersion",
+      requestType: Int64Request as typeof Int64Request,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateModelBannerVersion: {
+      name: "updateModelBannerVersion",
+      requestType: Int64Request as typeof Int64Request,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    updateCliBannerVersion: {
+      name: "updateCliBannerVersion",
+      requestType: Int64Request as typeof Int64Request,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    dismissBanner: {
+      name: "dismissBanner",
+      requestType: StringRequest as typeof StringRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    trackBannerEvent: {
+      name: "trackBannerEvent",
+      requestType: TrackBannerEventRequest as typeof TrackBannerEventRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    getProcessInfo: {
+      name: "getProcessInfo",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: ProcessInfo as typeof ProcessInfo,
+      responseStream: false,
+      options: {},
+    },
+    flushPendingState: {
+      name: "flushPendingState",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    refreshRemoteConfig: {
+      name: "refreshRemoteConfig",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: Empty as typeof Empty,
+      responseStream: false,
+      options: {},
+    },
+    testOtelConnection: {
+      name: "testOtelConnection",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: TestConnectionResult as typeof TestConnectionResult,
+      responseStream: false,
+      options: {},
+    },
+    testPromptUploading: {
+      name: "testPromptUploading",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: TestConnectionResult as typeof TestConnectionResult,
+      responseStream: false,
+      options: {},
+    },
+  },
 } as const;
 
-type Builtin =
-	| Date
-	| Function
-	| Uint8Array
-	| string
-	| number
-	| boolean
-	| undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-	? T
-	: T extends globalThis.Array<infer U>
-		? globalThis.Array<DeepPartial<U>>
-		: T extends ReadonlyArray<infer U>
-			? ReadonlyArray<DeepPartial<U>>
-			: T extends {}
-				? { [K in keyof T]?: DeepPartial<T[K]> }
-				: Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-	? P
-	: P & { [K in keyof P]: Exact<P[K], I[K]> } & {
-			[K in Exclude<keyof I, KeysOfUnion<P>>]: never;
-		};
+type Exact<P, I extends P> = P extends Builtin ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function longToNumber(int64: { toString(): string }): number {
-	const num = globalThis.Number(int64.toString());
-	if (num > globalThis.Number.MAX_SAFE_INTEGER) {
-		throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
-	}
-	if (num < globalThis.Number.MIN_SAFE_INTEGER) {
-		throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
-	}
-	return num;
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
 }
 
 function isObject(value: any): boolean {
-	return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
-	return value !== null && value !== undefined;
+  return value !== null && value !== undefined;
 }
 
 interface MessageFns<T> {
-	encode(message: T, writer?: BinaryWriter): BinaryWriter;
-	decode(input: BinaryReader | Uint8Array, length?: number): T;
-	fromJSON(object: any): T;
-	toJSON(message: T): unknown;
-	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }

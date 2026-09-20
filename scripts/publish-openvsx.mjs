@@ -4,7 +4,7 @@
  *
  * VS Code Marketplace uses package name "lumi-vscode" → CardSorting.lumi-vscode.
  * Open VSX listing was created as CardSorting.lumi — packages via
- * scripts/package-openvsx-vsix.mjs (includes better-sqlite3 native deps).
+ * scripts/package-openvsx-vsix.mjs (includes the dependency-free BroccoliDB runtime).
  *
  * Extensions show as verified only after the CardSorting namespace owner is
  * granted by Eclipse (see docs/MAINTAINER.md#open-vsx-namespace-verification).

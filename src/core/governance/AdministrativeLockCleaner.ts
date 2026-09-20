@@ -39,8 +39,8 @@ export class AdministrativeLockCleaner {
 		for (let index = 0; index < laneCount; index++) {
 			const resourceKey = `governed-lane:${swarmId}:${index}`
 
-			// 1. Clean SQLite DB if active
-			if (COORDINATION_AUTHORITY_MODE === "sqlite") {
+			// 1. Clean BroccoliDB coordination state if active
+			if (COORDINATION_AUTHORITY_MODE === "broccoli") {
 				try {
 					const db = await getCoordinationDb()
 					const existing = await db

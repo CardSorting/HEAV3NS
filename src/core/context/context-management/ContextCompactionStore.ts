@@ -6,7 +6,7 @@ import type {
 	ContextCompactionLoadInput,
 	ContextCompactionLoadResult,
 	ContextCompactionScopeKind,
-} from "@noorm/broccolidb"
+} from "./ContextCompactionContracts"
 
 export interface ContextCompactionScope {
 	id: string
@@ -17,7 +17,7 @@ export interface ContextCompactionScope {
 /**
  * Narrow adapter used by ContextManager. Keeping the manager dependent on this
  * contract makes durability failure behavior directly testable without opening
- * SQLite or loading a native module.
+ * native database driver or loading a native module.
  */
 export interface ContextCompactionStore {
 	getRecoverySource(scopeId: string): string

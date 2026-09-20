@@ -1,54 +1,34 @@
 import * as crypto from "node:crypto"
-import type Database from "better-sqlite3"
-import { type Kysely, sql, type Transaction } from "kysely"
 import { Logger } from "@/shared/services/Logger"
-import { destroyDb, getDb, getRawDb, registerDbPathChangeListener, type Schema } from "./Config"
-import { sqliteMaintenanceEngine } from "./SQLiteMaintenanceEngine"
-import { disableSqlitePersistence, isNativeModuleVersionMismatch, isSqlitePersistenceBypassed } from "./sqlitePersistence"
+import { destroyDb, getDb, registerDbPathChangeListener, type Schema } from "./Config"
+import { broccoliMaintenanceEngine } from "./BroccoliMaintenanceEngine"
+import { getRowId, type BroccoliStateDatabase } from "./BroccoliStateDatabase"
 
-// Production-grade Mutex implementation
 class Mutex {
 	private queue: (() => void)[] = []
 	private locked = false
-
-	constructor(public name: string) {}
 
 	async acquire(): Promise<() => void> {
 		if (!this.locked) {
 			this.locked = true
 			return () => this.release()
 		}
-
-		return new Promise((resolve) => {
-			this.queue.push(() => resolve(() => this.release()))
-		})
+		return new Promise((resolve) => this.queue.push(() => resolve(() => this.release())))
 	}
 
-	private release() {
+	private release(): void {
 		const next = this.queue.shift()
-		if (next) {
-			next()
-		} else {
-			this.locked = false
-		}
+		if (next) next()
+		else this.locked = false
 	}
 }
 
 export type DbLayer = "domain" | "infrastructure" | "ui" | "plumbing"
 
-type WhereCondition = {
+export type WhereCondition = {
 	column: string
 	value: string | number | string[] | number[] | null
 	operator?: "=" | "<" | ">" | "<=" | ">=" | "!=" | "IN" | "in" | "In" | "UNSAFE_IN" | "IS" | "IS NOT" | "LIKE"
-}
-
-type QueryOperator = NonNullable<WhereCondition["operator"]>
-
-type LooseSelectQuery = {
-	where(...args: unknown[]): LooseSelectQuery
-	orderBy(...args: unknown[]): LooseSelectQuery
-	limit(limit: number): LooseSelectQuery
-	execute(): Promise<unknown[]>
 }
 
 export type Increment = { _type: "increment"; value: number }
@@ -58,17 +38,13 @@ export type WriteOp = {
 	table: keyof Schema
 	values?: Record<string, unknown | Increment>
 	where?: WhereCondition | WhereCondition[]
-	conflictTarget?: string | string[] // For upserts
+	conflictTarget?: string | string[]
 	agentId?: string
 	layer?: DbLayer
-	// Level 6: Pre-calculated Metadata
 	hasIncrements?: boolean
 	dedupKey?: string
 }
 
-/**
- * Factory creating monomorphic WriteOp instances with constant V8 property layout.
- */
 export function createMonomorphicWriteOp(
 	type: WriteOp["type"],
 	table: keyof Schema,
@@ -80,361 +56,181 @@ export function createMonomorphicWriteOp(
 	hasIncrements?: boolean,
 	dedupKey?: string,
 ): WriteOp {
-	return {
-		type,
-		table,
-		values,
-		where,
-		conflictTarget,
-		agentId,
-		layer,
-		hasIncrements,
-		dedupKey,
-	}
+	return { type, table, values, where, conflictTarget, agentId, layer, hasIncrements, dedupKey }
 }
 
-const LAYER_PRIORITY: Record<DbLayer, number> = {
-	domain: 0,
-	infrastructure: 1,
-	ui: 2,
-	plumbing: 3,
-}
+const LAYER_PRIORITY: Record<DbLayer, number> = { domain: 0, infrastructure: 1, ui: 2, plumbing: 3 }
 
 function normalizeWhere(where: WhereCondition | WhereCondition[] | undefined): WhereCondition[] {
-	if (!where) return []
-	return Array.isArray(where) ? where : [where]
+	return !where ? [] : Array.isArray(where) ? where : [where]
 }
 
-/**
- * BufferedDbPool provides a high-performance, asynchronous write-behind layer
- * over SQLite. It batches operations, manages agent-specific uncommitted state,
- * and ensures data consistency between in-memory buffers and on-disk storage.
- */
+function matches(row: Record<string, unknown>, conditions: readonly WhereCondition[]): boolean {
+	return conditions.every((condition) => {
+		const actual = row[condition.column]
+		const operator = (condition.operator ?? "=").toUpperCase()
+		if ((operator === "IN" || operator === "UNSAFE_IN") || (Array.isArray(condition.value) && operator === "=")) {
+			return Array.isArray(condition.value) && condition.value.includes(actual as never)
+		}
+		if (operator === "IS") return condition.value === null ? actual === null || actual === undefined : actual === condition.value
+		if (operator === "IS NOT") return condition.value === null ? actual !== null && actual !== undefined : actual !== condition.value
+		if (operator === "LIKE") {
+			if (typeof actual !== "string") return false
+			const pattern = String(condition.value).replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".")
+			return new RegExp(`^${pattern}$`, "i").test(actual)
+		}
+		if (operator === "=") return actual === condition.value
+		if (operator === "!=") return actual !== condition.value
+		if (operator === ">") return (actual as any) > (condition.value as any)
+		if (operator === ">=") return (actual as any) >= (condition.value as any)
+		if (operator === "<") return (actual as any) < (condition.value as any)
+		if (operator === "<=") return (actual as any) <= (condition.value as any)
+		return false
+	})
+}
+
+function applyValues(row: Record<string, unknown>, values: Record<string, unknown | Increment>): Record<string, unknown> {
+	const next = { ...row }
+	for (const [column, value] of Object.entries(values)) {
+		if (typeof value === "object" && value !== null && "_type" in value && (value as Increment)._type === "increment") {
+			next[column] = Number(next[column] ?? 0) + (value as Increment).value
+		} else next[column] = value
+	}
+	return next
+}
+
 export class BufferedDbPool {
-	private bufferA = new Map<keyof Schema, WriteOp[]>()
-	private bufferB = new Map<keyof Schema, WriteOp[]>()
-	private activeBuffer: Map<keyof Schema, WriteOp[]> = this.bufferA
-	private inFlightOps: Map<keyof Schema, WriteOp[]> = new Map()
-	private agentShadows = new Map<
-		string,
-		{ ops: WriteOp[]; affectedFiles: Set<string>; lastUpdated: number; checksum: string } // V150: Grounded Trace
-	>()
-	private stateMutex = new Mutex("DbStateMutex")
-	private flushMutex = new Mutex("DbFlushMutex")
+	private activeOps: WriteOp[] = []
+	private inFlightOps: WriteOp[] = []
+	private agentShadows = new Map<string, { ops: WriteOp[]; affectedFiles: Set<string>; lastUpdated: number; checksum: string }>()
+	private readonly stateMutex = new Mutex()
+	private readonly flushMutex = new Mutex()
+	private db: BroccoliStateDatabase | null = null
 	private flushInterval: NodeJS.Timeout | null = null
-	private db: Kysely<Schema> | null = null
-	private rawDb: Database.Database | null = null
+	private flushTimeout: NodeJS.Timeout | null = null
+	private cleanupInterval: NodeJS.Timeout | null = null
 	private totalTransactions = 0
-	private stmtCache = new Map<string, Database.Statement>()
-	private readonly MAX_STMT_CACHE_SIZE = 250
-	private parameterBuffer = new Array(2000) // Pre-allocated for chunked inserts
-	private activeBufferSize = 0
-	private inFlightSize = 0
-	// Level 7: Event Horizon Status Index (O(1) Query Mapping)
-	private activeIndex = new Map<keyof Schema, Map<string, Set<WriteOp>>>()
-	private inFlightIndex = new Map<keyof Schema, Map<string, Set<WriteOp>>>()
-	private warmedIndices = new Set<string>() // Level 9: Authoritative Memory Indices
-	private opsFlushedSinceMaintenance = 0
-	private readonly MAINTENANCE_OPS_THRESHOLD = 10000
 	private started = false
 	private stopped = false
+	private enqueueLatencies: number[] = []
+	private processingLatencies: number[] = []
+	/** Compatibility buffer retained for callers that inspect flush allocation pressure. */
+	private parameterBuffer = new Array<unknown>(2000).fill(undefined)
 
 	constructor() {
-		// Timers are started lazily on first use so importing this singleton cannot
-		// leak intervals before the extension has configured the database path.
 		registerDbPathChangeListener(() => {
 			this.db = null
-			this.rawDb = null
-			for (const stmt of this.stmtCache.values()) {
-				try {
-					;(stmt as { dispose?: () => void })?.dispose?.()
-				} catch {}
-			}
-			this.stmtCache.clear()
+			this.activeOps = []
+			this.inFlightOps = []
+			this.agentShadows.clear()
 		})
 	}
 
-	private flushTimeout: NodeJS.Timeout | null = null
-	private currentFlushDelay: number | null = null
-
-	/**
-	 * Adaptive flush scheduling.
-	 */
-	private scheduleFlush(delay = 10) {
-		if (this.stopped) return
-		if (this.flushTimeout) {
-			if (this.currentFlushDelay !== null && this.currentFlushDelay <= delay) {
-				return
-			}
-			clearTimeout(this.flushTimeout)
-		}
-
-		this.currentFlushDelay = delay
-		this.flushTimeout = setTimeout(async () => {
-			this.currentFlushDelay = null
-			this.flushTimeout = null
-			try {
-				await this.flush()
-			} finally {
-				const release = await this.stateMutex.acquire()
-				try {
-					let hasData = false
-					for (const ops of this.activeBuffer.values()) {
-						if (ops.length > 0) {
-							hasData = true
-							break
-						}
-					}
-					if (hasData) {
-						this.scheduleFlush(10)
-					}
-				} finally {
-					release()
-				}
-			}
-		}, delay)
-	}
-
-	private cleanupInterval: NodeJS.Timeout | null = null
-
-	private startFlushLoop() {
+	private startFlushLoop(): void {
 		if (this.started) return
 		this.started = true
 		this.stopped = false
-		this.scheduleFlush(1000)
-		this.flushInterval = setInterval(() => this.scheduleFlush(1000), 1000)
-		this.cleanupInterval = setInterval(() => this.cleanupShadows(), 30000)
+		this.flushInterval = setInterval(() => void this.flush(), 1000)
+		this.cleanupInterval = setInterval(() => void this.cleanupShadows(), 30000)
 		this.flushInterval.unref?.()
 		this.cleanupInterval.unref?.()
-		sqliteMaintenanceEngine.start()
+		broccoliMaintenanceEngine.start()
 	}
 
-	private ensureStarted() {
+	private ensureStarted(): void {
 		if (!this.started || this.stopped) this.startFlushLoop()
 	}
 
-	private async cleanupShadows() {
+	private scheduleFlush(delay = 5): void {
+		if (this.stopped) return
+		if (this.flushTimeout) clearTimeout(this.flushTimeout)
+		this.flushTimeout = setTimeout(() => {
+			this.flushTimeout = null
+			void this.flush()
+		}, delay)
+	}
+
+	private async cleanupShadows(): Promise<void> {
 		const release = await this.stateMutex.acquire()
 		try {
-			const now = Date.now()
-			const SHADOW_EXPIRATION = 5 * 60 * 1000
-			for (const [agentId, shadow] of this.agentShadows.entries()) {
-				if (now - shadow.lastUpdated > SHADOW_EXPIRATION) {
-					this.agentShadows.delete(agentId)
-				}
-			}
+			const cutoff = Date.now() - 5 * 60 * 1000
+			for (const [agentId, shadow] of this.agentShadows) if (shadow.lastUpdated < cutoff) this.agentShadows.delete(agentId)
 		} finally {
 			release()
 		}
 	}
 
-	public async beginWork(agentId: string) {
-		this.ensureStarted()
-		const release = await this.stateMutex.acquire()
-		try {
-			if (!this.agentShadows.has(agentId)) {
-				this.agentShadows.set(agentId, {
-					ops: [],
-					affectedFiles: new Set(),
-					lastUpdated: Date.now(),
-					checksum: "INIT",
-				})
-			}
-		} finally {
-			release()
+	private detectMetadata(op: WriteOp): void {
+		op.hasIncrements = Object.values(op.values ?? {}).some((value) => this.isIncrement(value))
+		if (op.type === "update" && op.where && !Array.isArray(op.where) && op.where.column === "id") {
+			op.dedupKey = `${String(op.table)}:${op.where.value}`
 		}
 	}
 
-	public async push(op: WriteOp, agentId?: string, affectedFile?: string) {
-		return this.pushBatch([op], agentId, affectedFile)
+	private isIncrement(value: unknown): value is Increment {
+		return typeof value === "object" && value !== null && "_type" in value && (value as Increment)._type === "increment"
 	}
 
-	private async ensureDb(): Promise<Kysely<Schema>> {
-		if (!this.db) {
-			const db = await getDb()
-			await sql`PRAGMA cache_size = -16000;`.execute(db)
-			await sql`PRAGMA temp_store = MEMORY;`.execute(db)
-			await sql`PRAGMA auto_vacuum = INCREMENTAL;`.execute(db)
-			await sql`PRAGMA journal_mode = WAL;`.execute(db)
-			await sql`PRAGMA synchronous = NORMAL;`.execute(db)
-			await sql`PRAGMA mmap_size = 268435456;`.execute(db)
-			await sql`PRAGMA threads = 4;`.execute(db)
-			await sql`PRAGMA busy_timeout = 5000;`.execute(db)
-			await sql`PRAGMA wal_autocheckpoint = 1000;`.execute(db)
-			await sql`PRAGMA journal_size_limit = 67108864;`.execute(db)
-			this.db = db
-			this.rawDb = await getRawDb()
-		}
+	private async ensureDb(): Promise<BroccoliStateDatabase> {
+		if (!this.db) this.db = await getDb()
 		return this.db
 	}
 
-	private getStatement(sqlStr: string): Database.Statement {
-		let stmt = this.stmtCache.get(sqlStr)
-		if (!stmt && this.rawDb) {
-			stmt = this.rawDb.prepare(sqlStr)
-			if (this.stmtCache.size >= this.MAX_STMT_CACHE_SIZE) {
-				const oldestKey = this.stmtCache.keys().next().value
-				if (oldestKey !== undefined) {
-					const oldStmt = this.stmtCache.get(oldestKey)
-					try {
-						;(oldStmt as { dispose?: () => void })?.dispose?.()
-					} catch {}
-					this.stmtCache.delete(oldestKey)
-				}
-			}
-			this.stmtCache.set(sqlStr, stmt)
-		}
-		if (!stmt) {
-			throw new Error("Raw database connection is not initialized.")
-		}
-		return stmt
-	}
-
-	private enqueueLatencies: number[] = []
-	private processingLatencies: number[] = []
-	private MAX_METRICS_SAMPLES = 5000
-
-	private recordLatency(target: number[], value: number) {
-		target.push(value)
-		if (target.length > this.MAX_METRICS_SAMPLES) {
-			target.splice(0, target.length - this.MAX_METRICS_SAMPLES)
-		}
-	}
-
-	private calculatePercentile(samples: number[], percentile: number): number {
-		if (samples.length === 0) return 0
-		const len = samples.length
-		if (len === 1) return samples[0] ?? 0
-		const dataset = len > 500 ? samples.slice(len - 500) : samples
-		const sorted = dataset.slice().sort((a, b) => a - b)
-		const index = Math.ceil((percentile / 100) * sorted.length) - 1
-		return sorted[index] ?? 0
-	}
-
-	private addStatusIndex(op: WriteOp, targetIndex: Map<keyof Schema, Map<string, Set<WriteOp>>>): void {
-		const statusValue = op.values?.status
-		if ((op.table as string) !== "agent_tasks" || typeof statusValue !== "string") return
-
-		let tableIndex = targetIndex.get(op.table)
-		if (!tableIndex) {
-			tableIndex = new Map()
-			targetIndex.set(op.table, tableIndex)
-		}
-
-		const key = `status:${statusValue}`
-		let set = tableIndex.get(key)
-		if (!set) {
-			set = new Set()
-			tableIndex.set(key, set)
-		}
-		set.add(op)
-	}
-
-	public async pushBatch(ops: WriteOp[], agentId?: string, affectedFile?: string) {
+	public async beginWork(agentId: string): Promise<void> {
 		this.ensureStarted()
-		const enqueueStart = performance.now()
-		let currentBufferLength = 0
+		const release = await this.stateMutex.acquire()
+		try {
+			if (!this.agentShadows.has(agentId)) this.agentShadows.set(agentId, { ops: [], affectedFiles: new Set(), lastUpdated: Date.now(), checksum: "INIT" })
+		} finally {
+			release()
+		}
+	}
 
+	public async push(op: WriteOp, agentId?: string, affectedFile?: string): Promise<void> {
+		await this.pushBatch([op], agentId, affectedFile)
+	}
+
+	public async pushBatch(ops: WriteOp[], agentId?: string, affectedFile?: string): Promise<void> {
+		this.ensureStarted()
+		const startedAt = performance.now()
 		for (const op of ops) {
 			if (agentId) op.agentId = agentId
 			this.detectMetadata(op)
-
-			// Level 7: Index maintenance (O(1))
-			this.addStatusIndex(op, this.activeIndex)
 		}
-
-		if (agentId) {
-			// Level 3 Optimization: Lock-free shadow access
-			// Each agent is isolated; we only lock if we need to create the entry for the first time.
-			let shadow = this.agentShadows.get(agentId)
-
-			if (!shadow) {
-				const release = await this.stateMutex.acquire()
-				try {
-					shadow = this.agentShadows.get(agentId) ?? {
-						ops: [],
-						affectedFiles: new Set<string>(),
-						lastUpdated: Date.now(),
-						checksum: "INIT",
-					}
-					this.agentShadows.set(agentId, shadow)
-				} finally {
-					release()
-				}
-			}
-
-			// Safe to push without stateMutex because this agentId is unique to this caller
-			for (const op of ops) {
-				shadow.ops.push({ ...op, agentId })
-			}
-			if (affectedFile) shadow.affectedFiles.add(affectedFile)
-			shadow.lastUpdated = Date.now()
-
-			// V150: Update Shadow Checksum (Rolling Hash)
-			const opSummary = `${ops.length}:${ops[0]?.type}:${ops[0]?.table}`
-			shadow.checksum = crypto
-				.createHash("sha256")
-				.update(shadow.checksum + opSummary)
-				.digest("hex")
-		} else {
-			if (ops.length > 0) {
-				let tableBuffer = this.activeBuffer.get(ops[0].table)
-				if (!tableBuffer) {
-					tableBuffer = []
-					this.activeBuffer.set(ops[0].table, tableBuffer)
-				}
-				tableBuffer.push(...ops)
-				this.activeBufferSize += ops.length
-				currentBufferLength = this.activeBufferSize
-			}
-		}
-
-		if (currentBufferLength > 100000) {
-			Logger.warn(`[DbPool] CRITICAL backpressure: activeBuffer length is ${currentBufferLength}`)
-		}
-
-		const shouldFlush = currentBufferLength >= 10000
-
-		this.recordLatency(this.enqueueLatencies, performance.now() - enqueueStart)
-		if (shouldFlush) {
-			this.scheduleFlush(0)
-		} else {
-			this.scheduleFlush(5)
-		}
-	}
-
-	public async commitWork(agentId: string, _validator?: unknown) {
-		this.ensureStarted()
-		let shadowOpsCount = 0
 		const release = await this.stateMutex.acquire()
 		try {
-			const shadow = this.agentShadows.get(agentId)
-			this.agentShadows.delete(agentId)
-			if (shadow && shadow.ops.length > 0) {
-				shadowOpsCount = shadow.ops.length
-				for (const op of shadow.ops) {
-					let tableBuffer = this.activeBuffer.get(op.table)
-					if (!tableBuffer) {
-						tableBuffer = []
-						this.activeBuffer.set(op.table, tableBuffer)
-					}
-					tableBuffer.push(op)
-					this.activeBufferSize++
-
-					// Level 7: Index maintenance (O(1))
-					this.addStatusIndex(op, this.activeIndex)
-				}
+			if (agentId) {
+				const shadow = this.agentShadows.get(agentId) ?? { ops: [], affectedFiles: new Set<string>(), lastUpdated: Date.now(), checksum: "INIT" }
+				for (const op of ops) shadow.ops.push({ ...op, agentId, values: op.values ? { ...op.values } : undefined })
+				if (affectedFile) shadow.affectedFiles.add(affectedFile)
+				shadow.lastUpdated = Date.now()
+				shadow.checksum = crypto.createHash("sha256").update(`${shadow.checksum}:${ops.length}:${ops[0]?.table ?? ""}`).digest("hex")
+				this.agentShadows.set(agentId, shadow)
+			} else {
+				this.activeOps.push(...ops)
 			}
 		} finally {
 			release()
 		}
-
-		if (shadowOpsCount > 0) {
-			this.scheduleFlush(0)
-		}
+		this.enqueueLatencies.push(performance.now() - startedAt)
+		if (this.enqueueLatencies.length > 5000) this.enqueueLatencies.shift()
+		this.scheduleFlush(this.activeOps.length >= 10000 ? 0 : 5)
 	}
 
-	public async rollbackWork(agentId: string, _reason?: string) {
+	public async commitWork(agentId: string, _validator?: unknown): Promise<void> {
+		this.ensureStarted()
+		const release = await this.stateMutex.acquire()
+		try {
+			const shadow = this.agentShadows.get(agentId)
+			if (shadow) this.activeOps.push(...shadow.ops)
+			this.agentShadows.delete(agentId)
+		} finally {
+			release()
+		}
+		this.scheduleFlush(0)
+	}
+
+	public async rollbackWork(agentId: string, _reason?: string): Promise<void> {
 		this.ensureStarted()
 		const release = await this.stateMutex.acquire()
 		try {
@@ -451,714 +247,169 @@ export class BufferedDbPool {
 			const result = await callback(agentId)
 			await this.commitWork(agentId)
 			return result
-		} catch (e) {
+		} catch (error) {
 			await this.rollbackWork(agentId)
-			throw e
+			throw error
 		}
 	}
 
-	public async flush() {
-		if (isSqlitePersistenceBypassed()) return
-		if (this.stopped && this.activeBufferSize === 0 && this.inFlightSize === 0) return
+	public async flush(): Promise<void> {
+		if (this.stopped && this.activeOps.length === 0 && this.inFlightOps.length === 0) return
 		const releaseFlush = await this.flushMutex.acquire()
-		let opsToFlush: WriteOp[] = []
-		const startTime = Date.now()
-
+		const startedAt = performance.now()
 		try {
 			const releaseState = await this.stateMutex.acquire()
-			let hasData = false
 			try {
-				const dirtyBuffer = this.activeBuffer
-				for (const ops of dirtyBuffer.values()) {
-					if (ops.length > 0) {
-						hasData = true
-						break
-					}
-				}
-
-				if (hasData) {
-					// Atomic Swap: Infinite Horizon (Partitioned)
-					this.activeBuffer = dirtyBuffer === this.bufferA ? this.bufferB : this.bufferA
-					this.activeBuffer.clear() // Reset the new active buffer map
-					this.inFlightSize = this.activeBufferSize
-					this.activeBufferSize = 0
-
-					this.inFlightOps = dirtyBuffer
-
-					// Level 7: Index Swap
-					this.inFlightIndex = this.activeIndex
-					this.activeIndex = new Map()
-
-					opsToFlush = Array.from(dirtyBuffer.values())
-						.flat()
-						.sort((a, b) => {
-							const pA = LAYER_PRIORITY[a.layer ?? "plumbing"]
-							const pB = LAYER_PRIORITY[b.layer ?? "plumbing"]
-							if (pA !== pB) return pA - pB
-							if (a.table !== b.table) return (a.table as string).localeCompare(b.table as string)
-							return (a.type as string).localeCompare(b.type as string)
-						})
-				} else if (this.inFlightOps.size > 0) {
-					opsToFlush = Array.from(this.inFlightOps.values()).flat()
+				if (this.inFlightOps.length === 0 && this.activeOps.length > 0) {
+					this.inFlightOps = this.activeOps
+					this.activeOps = []
 				}
 			} finally {
 				releaseState()
 			}
+			if (this.inFlightOps.length === 0) return
 
-			if (opsToFlush.length === 0) return
-
-			const db = await this.ensureDb()
-			let totalFlushed = 0
-			this.totalTransactions++
-
-			await db.transaction().execute(async (trx) => {
-				const processedGroups = this.groupOps(opsToFlush)
-
-				for (const group of processedGroups) {
-					const first = group[0]
-					if (!first) continue
-					const table = first.table
-
-					// High-Performance Path: Chunked Raw SQL (Level 3 Quantum Boost)
-					if (group.length >= 100 && first.type === "insert" && this.rawDb) {
-						totalFlushed += await this.executeChunkedRawInsert(table, group)
-					} else if (group.length > 1 && first.type === "insert") {
-						totalFlushed += await this.executeBulkInsert(trx, table, group)
-					} else if (group.length > 1 && first.type === "update") {
-						totalFlushed += await this.executeBulkUpdate(trx, table, group)
-					} else {
-						for (const op of group) {
-							await this.executeSingleOp(trx, op)
-							totalFlushed++
-						}
-					}
-				}
+			const database = await this.ensureDb()
+			const operations = [...this.inFlightOps].sort((a, b) => {
+				const layerDelta = LAYER_PRIORITY[a.layer ?? "plumbing"] - LAYER_PRIORITY[b.layer ?? "plumbing"]
+				return layerDelta || String(a.table).localeCompare(String(b.table))
 			})
-
-			const duration = Date.now() - startTime
-			this.recordLatency(this.processingLatencies, duration)
-
-			const throughput = Math.round(totalFlushed / (duration / 1000 || 0.001))
-			if (duration > 50 || totalFlushed > 1000) {
-				const p95p = this.calculatePercentile(this.processingLatencies, 95)
-				const p99p = this.calculatePercentile(this.processingLatencies, 99)
-				const p95e = this.calculatePercentile(this.enqueueLatencies, 95)
-				Logger.info(
-					`[DbPool] Flush: ${totalFlushed} ops in ${duration}ms (${throughput} ops/sec) | Latency: p95_proc=${p95p.toFixed(1)}ms, p99_proc=${p99p.toFixed(1)}ms, p95_enq=${p95e.toFixed(2)}ms`,
-				)
-			}
-
-			this.opsFlushedSinceMaintenance += totalFlushed
-			if (this.opsFlushedSinceMaintenance >= this.MAINTENANCE_OPS_THRESHOLD) {
-				this.opsFlushedSinceMaintenance = 0
-				sqliteMaintenanceEngine.runMaintenance().catch((err) => {
-					Logger.warn(`[DbPool] Volume-triggered maintenance failed: ${err}`)
-				})
-			}
-
-			const releaseStateClear = await this.stateMutex.acquire()
+			await database.transaction().execute(async () => {
+				for (const op of operations) this.applyOperation(database, op)
+			})
+			this.inFlightOps = []
+			this.totalTransactions++
+			this.processingLatencies.push(performance.now() - startedAt)
+			if (this.processingLatencies.length > 5000) this.processingLatencies.shift()
+		} catch (error) {
+			const releaseState = await this.stateMutex.acquire()
 			try {
-				this.inFlightOps.clear()
-				this.inFlightSize = 0
-				this.inFlightIndex.clear()
+				this.activeOps.unshift(...this.inFlightOps)
+				this.inFlightOps = []
 			} finally {
-				releaseStateClear()
+				releaseState()
 			}
-		} catch (e: unknown) {
-			const err = e as { code?: string; message?: string }
-			const isRetryable =
-				err.code === "SQLITE_BUSY" ||
-				err.code === "SQLITE_LOCKED" ||
-				err.code === "SQLITE_MISUSE" ||
-				err.message?.includes("deadlock") ||
-				err.message?.includes("closed") ||
-				err.message?.includes("destroyed") ||
-				err.message?.includes("interrupted") ||
-				err.message?.includes("Library used incorrectly")
-
-			const releaseStateFail = await this.stateMutex.acquire()
-			try {
-				if (isRetryable) {
-					for (const op of opsToFlush) {
-						let tableBuffer = this.activeBuffer.get(op.table)
-						if (!tableBuffer) {
-							tableBuffer = []
-							this.activeBuffer.set(op.table, tableBuffer)
-						}
-						tableBuffer.unshift(op)
-						this.activeBufferSize++
-
-						// Level 7: Restore index
-						this.addStatusIndex(op, this.activeIndex)
-					}
-				}
-				this.inFlightOps.clear()
-				this.inFlightSize = 0
-				this.inFlightIndex.clear()
-			} finally {
-				releaseStateFail()
-			}
-			if (isRetryable) throw e
+			Logger.error("[BroccoliDbPool] Flush failed; operations returned to the buffer:", error)
+			throw error
 		} finally {
 			releaseFlush()
 		}
 	}
 
-	private async executeBulkUpdate(trx: Transaction<Schema>, table: keyof Schema, group: WriteOp[]): Promise<number> {
-		if (group.length === 0) return 0
-		const first = group[0]
-		if (!first?.values) return 0
-
-		const canBatchIntoSingleStatement = group.every(
-			(op) =>
-				this.isSameValues(op.values as Record<string, unknown>, first.values as Record<string, unknown>) &&
-				op.where &&
-				!Array.isArray(op.where) &&
-				op.where.column === "id" &&
-				(op.where.operator === "=" || op.where.operator === undefined),
-		)
-
-		if (canBatchIntoSingleStatement && first.where && !Array.isArray(first.where)) {
-			const ids: unknown[] = []
-			for (const op of group) {
-				const val = (op.where as WhereCondition).value
-				if (Array.isArray(val)) {
-					ids.push(...val)
-				} else {
-					ids.push(val)
-				}
-			}
-
-			const valuesWithNoIncrements: Record<string, unknown> = {}
-			const increments: Record<string, number> = {}
-			for (const [k, v] of Object.entries(first.values)) {
-				if (this.isIncrement(v)) {
-					increments[k] = v.value
-				} else {
-					valuesWithNoIncrements[k] = v
-				}
-			}
-
-			const query = trx.updateTable(table)
-			const sets: Record<string, unknown> = { ...valuesWithNoIncrements }
-			for (const [k, v] of Object.entries(increments)) {
-				sets[k] = sql`${sql.ref(k)} + ${v}`
-			}
-
-			await query
-				.set(sets as never)
-				.where("id" as never, "in", ids as never)
-				.execute()
-			return group.length
+	private applyOperation(database: BroccoliStateDatabase, op: WriteOp): void {
+		const table = String(op.table)
+		const values = op.values ? { ...op.values } : undefined
+		if (op.type === "insert" && values) {
+			database.putRow(table, values)
+			return
 		}
+		if (op.type === "delete") {
+			const conditions = normalizeWhere(op.where)
+			for (const row of database.rows(table)) if (matches(row, conditions)) database.table(table).delete(getRowId(table, row))
+			return
+		}
+		if (op.type === "update" && values) {
+			const conditions = normalizeWhere(op.where)
+			for (const row of database.rows(table)) {
+				if (matches(row, conditions)) database.putRow(table, applyValues(row, values))
+			}
+			return
+		}
+		if (op.type === "upsert" && values) {
+			const conditions = normalizeWhere(op.where)
+			const conflictFields = op.conflictTarget ? (Array.isArray(op.conflictTarget) ? op.conflictTarget : [op.conflictTarget]) : ["id"]
+			const existing = database.rows(table).find((row) => {
+				if (conditions.length > 0) return matches(row, conditions)
+				return conflictFields.every((field) => row[field] !== undefined && row[field] === values[field])
+			})
+			if (existing) database.putRow(table, applyValues(existing, values))
+			else database.putRow(table, values)
+		}
+	}
 
-		const promises = group.map((op) => this.executeSingleOp(trx, op))
-		await Promise.all(promises)
-		return group.length
+	private materialize<T extends keyof Schema>(table: T, agentId?: string): Schema[T][] {
+		const database = this.db
+		if (!database) return []
+		let rows = database.rows(String(table))
+		const operations = [...this.inFlightOps, ...this.activeOps, ...(agentId ? this.agentShadows.get(agentId)?.ops ?? [] : [])]
+		for (const op of operations) {
+			if (op.table !== table) continue
+			const values = op.values ? { ...op.values } : undefined
+			const conditions = normalizeWhere(op.where)
+			if (op.type === "insert" && values) rows.push(values)
+			else if (op.type === "delete") rows = rows.filter((row) => !matches(row, conditions))
+			else if (op.type === "update" && values) rows = rows.map((row) => (matches(row, conditions) ? applyValues(row, values) : row))
+			else if (op.type === "upsert" && values) {
+				const conflictFields = op.conflictTarget ? (Array.isArray(op.conflictTarget) ? op.conflictTarget : [op.conflictTarget]) : ["id"]
+				const index = rows.findIndex((row) => (conditions.length > 0 ? matches(row, conditions) : conflictFields.every((field) => row[field] === values[field])))
+				if (index >= 0) rows[index] = applyValues(rows[index]!, values)
+				else rows.push(values)
+			}
+		}
+		return rows as Schema[T][]
 	}
 
 	public async selectWhere<T extends keyof Schema>(
 		table: T,
 		where: WhereCondition | WhereCondition[],
 		agentId?: string,
-		options?: {
-			orderBy?: { column: keyof Schema[T]; direction: "asc" | "desc" }
-			limit?: number
-		},
+		options?: { orderBy?: { column: keyof Schema[T]; direction: "asc" | "desc" }; limit?: number },
 	): Promise<Schema[T][]> {
-		if (isSqlitePersistenceBypassed()) return []
 		this.ensureStarted()
+		await this.ensureDb()
+		const release = await this.stateMutex.acquire()
 		try {
-			const db = await this.ensureDb()
-			const release = await this.stateMutex.acquire()
-			try {
-				const conditions = normalizeWhere(where)
-				const statusCond = conditions.find(
-					(c) => (c.column === "status" || c.column === "type") && (c.operator === "=" || !c.operator),
-				)
-				const statusKey = statusCond ? `${statusCond.column}:${statusCond.value}` : null
-				const indexKey = statusCond ? `${table as string}:${statusKey}` : null
-				const isWarmed = Boolean(indexKey && this.warmedIndices.has(indexKey))
-				const hasMemoryIndexData = Boolean(
-					statusKey && (this.activeIndex.get(table)?.has(statusKey) || this.inFlightIndex.get(table)?.has(statusKey)),
-				)
-				const isWarmedAndActive = isWarmed && hasMemoryIndexData
-
-				let diskResults: Schema[T][] = []
-				if (!isWarmedAndActive) {
-					let query = db.selectFrom(table as never).selectAll() as unknown as LooseSelectQuery
-					for (const cond of conditions) {
-						const opStr: QueryOperator = cond.operator || "="
-						if (Array.isArray(cond.value)) {
-							query = query.where(cond.column, "in", cond.value)
-						} else {
-							query = query.where(cond.column, opStr, cond.value)
-						}
-					}
-
-					if (options?.orderBy) {
-						query = query.orderBy(options.orderBy.column, options.orderBy.direction)
-					}
-					if (options?.limit) {
-						query = query.limit(options.limit)
-					}
-					diskResults = (await query.execute()) as Schema[T][]
-				}
-
-				const applyOps = (ops: WriteOp[], sourceIndex: Map<string, Set<WriteOp>> | undefined, target: Schema[T][]) => {
-					// Level 7: Fast-Path Status Indexing
-					const statusCond = conditions.find(
-						(c) => (c.column === "status" || c.column === "type") && (c.operator === "=" || !c.operator),
-					)
-					let tableOps: Iterable<WriteOp> = []
-
-					if (statusCond && sourceIndex) {
-						const key = `${statusCond.column}:${statusCond.value}`
-						const set = sourceIndex.get(key)
-						tableOps = set || []
-					} else {
-						tableOps = ops
-					}
-
-					for (const op of tableOps) {
-						// Additional safety check if we're using a full buffer instead of an index
-						if (op.table !== table) continue
-
-						const applyValues = (existing: unknown, newValues: Record<string, unknown>, hasIncs?: boolean) => {
-							const next = { ...(existing as Record<string, unknown>) }
-							for (const [k, v] of Object.entries(newValues)) {
-								if (hasIncs && this.isIncrement(v)) {
-									next[k] = (Number(next[k]) || 0) + v.value
-								} else {
-									next[k] = v
-								}
-							}
-							return next as Schema[T]
-						}
-
-						const opWhere = normalizeWhere(op.where)
-
-						// Pre-compute Sets for IN operators to O(1) lookup
-						const inSets = opWhere.map((c) => {
-							if (c.operator?.toUpperCase() === "IN" && Array.isArray(c.value)) {
-								return new Set(c.value as unknown[])
-							}
-							return null
-						})
-
-						const matches = (r: unknown, queryConditions: WhereCondition[]) => {
-							const row = r as Record<string, unknown>
-							if (queryConditions.length === 0) return true
-							return queryConditions.every((c, idx) => {
-								const val = row[c.column]
-								const opStr = (c.operator || "=").toUpperCase()
-
-								if (opStr === "IN") {
-									// If this is matching against the op's where, use the pre-computed set
-									// If this is matching against the SELECT's where, just use the array
-									if (queryConditions === opWhere) {
-										const set = inSets[idx]
-										if (set) return set.has(val as string | number)
-									}
-									if (Array.isArray(c.value)) return (c.value as unknown[]).includes(val)
-									return val === c.value
-								}
-								if (opStr === "=") return val === c.value
-								if (opStr === "!=") return val !== c.value
-								if (opStr === ">") return Number(val) > Number(c.value)
-								if (opStr === "<") return Number(val) < Number(c.value)
-								if (opStr === ">=") return Number(val) >= Number(c.value)
-								if (opStr === "<=") return val !== null && Number(val) <= Number(c.value)
-								return false
-							})
-						}
-
-						if (op.type === "insert" && op.values) {
-							const newRow = { ...op.values } as unknown as Schema[T]
-							if (matches(newRow, conditions)) target.push(newRow)
-						} else if (op.type === "upsert" && op.values) {
-							const pkMatch = (r: unknown) => {
-								const row = r as Record<string, unknown>
-								if (opWhere.length > 0) return matches(row, opWhere)
-								return (
-									row.id !== undefined &&
-									(op.values as Record<string, unknown>).id !== undefined &&
-									row.id === (op.values as Record<string, unknown>).id
-								)
-							}
-							const existingIdx = target.findIndex(pkMatch)
-							if (existingIdx >= 0) {
-								const existing = target[existingIdx]
-								if (existing) {
-									const next = applyValues(existing, op.values as Record<string, unknown>, op.hasIncrements)
-									if (matches(next, conditions)) {
-										target[existingIdx] = next
-									} else {
-										target.splice(existingIdx, 1)
-									}
-								}
-							} else {
-								const newRow = { ...op.values } as unknown as Schema[T]
-								if (matches(newRow, conditions)) target.push(newRow)
-							}
-						} else if (op.type === "update" && op.values) {
-							for (let i = target.length - 1; i >= 0; i--) {
-								const existing = target[i]
-								if (existing && matches(existing, opWhere)) {
-									const next = applyValues(existing, op.values as Record<string, unknown>, op.hasIncrements)
-									if (matches(next, conditions)) {
-										target[i] = next
-									} else {
-										target.splice(i, 1)
-									}
-								}
-							}
-						} else if (op.type === "delete") {
-							for (let i = target.length - 1; i >= 0; i--) {
-								const existing = target[i]
-								if (existing && matches(existing, opWhere)) target.splice(i, 1)
-							}
-						}
-					}
-				}
-
-				let finalResults = [...diskResults]
-				applyOps(this.inFlightOps.get(table) || [], this.inFlightIndex.get(table), finalResults)
-				applyOps(this.activeBuffer.get(table) || [], this.activeIndex.get(table), finalResults)
-				if (agentId) {
-					const shadow = this.agentShadows.get(agentId)
-					if (shadow) applyOps(shadow.ops, undefined, finalResults)
-				}
-
-				if (options?.orderBy) {
-					const col = options.orderBy.column as string
-					const dir = options.orderBy.direction
-					finalResults.sort((a, b) => {
-						const valA = (a as Record<string, unknown>)[col]
-						const valB = (b as Record<string, unknown>)[col]
-						if (valA === undefined || valB === undefined || valA === null || valB === null) return 0
-						if (valA < valB) return dir === "asc" ? -1 : 1
-						if (valA > valB) return dir === "asc" ? 1 : -1
-						return 0
-					})
-				}
-				if (options?.limit) finalResults = finalResults.slice(0, options.limit)
-				return finalResults
-			} finally {
-				release()
+			let rows = this.materialize(table, agentId).filter((row) => matches(row as Record<string, unknown>, normalizeWhere(where)))
+			if (options?.orderBy) {
+				const column = String(options.orderBy.column)
+				const direction = options.orderBy.direction === "desc" ? -1 : 1
+				rows.sort((a, b) => ((a as any)[column] > (b as any)[column] ? direction : (a as any)[column] < (b as any)[column] ? -direction : 0))
 			}
-		} catch (error) {
-			if (isNativeModuleVersionMismatch(error)) {
-				disableSqlitePersistence(error instanceof Error ? error.message : String(error))
-				return []
-			}
-			throw error
+			if (options?.limit !== undefined) rows = rows.slice(0, options.limit)
+			return rows
+		} finally {
+			release()
 		}
 	}
 
-	public async selectOne<T extends keyof Schema>(
-		table: T,
-		where: WhereCondition | WhereCondition[],
-		agentId?: string,
-	): Promise<Schema[T] | null> {
-		const results = await this.selectWhere(table, where, agentId)
-		return results.length > 0 ? (results[results.length - 1] as Schema[T]) : null
+	public async selectOne<T extends keyof Schema>(table: T, where: WhereCondition | WhereCondition[], agentId?: string): Promise<Schema[T] | null> {
+		const rows = await this.selectWhere(table, where, agentId)
+		return rows.length > 0 ? rows[rows.length - 1]! : null
 	}
 
 	public static increment(value: number): Increment {
 		return { _type: "increment", value }
 	}
 
-	private groupOps(ops: WriteOp[]): WriteOp[][] {
-		const coalescedOps: WriteOp[] = []
-		const updateCache = new Map<string, number>()
-
-		for (const op of ops) {
-			if (op.type === "update" && op.dedupKey) {
-				const existingIdx = updateCache.get(op.dedupKey)
-				if (existingIdx !== undefined) {
-					const targetOp = coalescedOps[existingIdx]
-					if (targetOp?.values && op.values) {
-						for (const [key, val] of Object.entries(op.values)) {
-							const existingVal = targetOp.values[key]
-
-							if (this.isIncrement(val)) {
-								if (this.isIncrement(existingVal)) {
-									existingVal.value += val.value
-								} else if (typeof existingVal === "number") {
-									targetOp.values[key] = existingVal + val.value
-								} else {
-									targetOp.values[key] = { ...val } // Clone increment
-								}
-							} else {
-								targetOp.values[key] = val // Raw value overrides previous state
-							}
-						}
-						// Recalculate hasIncrements
-						targetOp.hasIncrements = Object.values(targetOp.values).some((v) => this.isIncrement(v))
-						continue
-					}
-				} else {
-					updateCache.set(op.dedupKey, coalescedOps.length)
-				}
-			}
-			coalescedOps.push(op)
-		}
-
-		const groups: WriteOp[][] = []
-		let currentGroup: WriteOp[] = []
-		for (const op of coalescedOps) {
-			if (op.type === "insert" && op.values) {
-				if (currentGroup.length > 0 && currentGroup[0]?.table === op.table && currentGroup[0]?.type === "insert") {
-					currentGroup.push(op)
-				} else {
-					if (currentGroup.length > 0) groups.push(currentGroup)
-					currentGroup = [op]
-				}
-			} else {
-				if (currentGroup.length > 0) groups.push(currentGroup)
-				currentGroup = []
-				groups.push([op])
-			}
-		}
-		if (currentGroup.length > 0) groups.push(currentGroup)
-		return groups
-	}
-
-	private async executeChunkedRawInsert(table: keyof Schema, group: WriteOp[]): Promise<number> {
-		if (group.length === 0 || !this.rawDb) return 0
-		const firstOp = group[0]
-		if (!firstOp?.values) return 0
-
-		const columns = Object.keys(firstOp.values)
-		const columnCount = Math.max(1, columns.length)
-		const CHUNK_SIZE = Math.min(100, Math.max(1, Math.floor(this.parameterBuffer.length / columnCount)))
-
-		let totalFlushed = 0
-		for (let i = 0; i < group.length; i += CHUNK_SIZE) {
-			const chunk = group.slice(i, i + CHUNK_SIZE)
-			const valuePlaceholders = `(${columns.map(() => "?").join(",")})`
-			const placeholders = chunk.map(() => valuePlaceholders).join(",")
-			const sqlStr = `INSERT INTO ${table as string} (${columns.join(",")}) VALUES ${placeholders}`
-
-			const stmt = this.getStatement(sqlStr)
-
-			// Level 4 Optimization: Zero-Allocation Parameter Flattening
-			// Reuse the pre-allocated parameterBuffer to avoid GC pressure for 1M+ ops
-			let pIdx = 0
-			for (const op of chunk) {
-				const vals = op.values as Record<string, unknown>
-				for (const col of columns) {
-					this.parameterBuffer[pIdx++] = vals[col]
-				}
-			}
-
-			const params = this.parameterBuffer.slice(0, pIdx)
-			try {
-				stmt.run(...params)
-			} finally {
-				// Memory leak prevention: Dereference inserted objects so V8 GC can collect them
-				this.parameterBuffer.fill(undefined, 0, pIdx)
-			}
-			totalFlushed += chunk.length
-		}
-
-		return totalFlushed
-	}
-
-	private async executeBulkInsert(trx: Transaction<Schema>, table: keyof Schema, group: WriteOp[]): Promise<number> {
-		const firstOp = group[0]
-		if (!firstOp?.values) return 0
-		const columnCount = Object.keys(firstOp.values).length || 1
-		const CHUNK_SIZE = Math.max(1, Math.floor(5000 / columnCount))
-		let flushed = 0
-		for (let i = 0; i < group.length; i += CHUNK_SIZE) {
-			const chunk = group.slice(i, i + CHUNK_SIZE)
-			const values = chunk.map((op) => op.values).filter((v): v is Record<string, unknown> => v !== undefined)
-			await trx
-				.insertInto(table)
-				.values(values as never)
-				.execute()
-			flushed += chunk.length
-		}
-		return flushed
-	}
-
-	private isIncrement(value: unknown): value is Increment {
-		return typeof value === "object" && value !== null && "_type" in value && (value as Increment)._type === "increment"
-	}
-
-	private detectMetadata(op: WriteOp) {
-		op.hasIncrements = false
-		if (op.values) {
-			for (const v of Object.values(op.values)) {
-				if (this.isIncrement(v)) {
-					op.hasIncrements = true
-					break
-				}
-			}
-		}
-
-		if (
-			op.type === "update" &&
-			op.where &&
-			!Array.isArray(op.where) &&
-			op.where.column === "id" &&
-			(op.where.operator === "=" || op.where.operator === undefined)
-		) {
-			op.dedupKey = `${op.table as string}:${op.where.value}`
-		}
-	}
-
-	private async executeSingleOp(trx: Transaction<Schema>, op: WriteOp) {
-		const conditions = normalizeWhere(op.where)
-		if (op.type === "insert" && op.values) {
-			await trx.insertInto(op.table).values(op.values).execute()
-		} else if (op.type === "upsert" && op.values) {
-			let query = trx.insertInto(op.table).values(op.values)
-			if (op.conflictTarget) {
-				const targets = Array.isArray(op.conflictTarget) ? op.conflictTarget : [op.conflictTarget]
-				query = query.onConflict((oc) => oc.columns(targets as never).doUpdateSet(op.values as never)) as never
-			} else {
-				query = query.onConflict((oc) => oc.column("id" as never).doUpdateSet(op.values as never)) as never
-			}
-			await query.execute()
-		} else if (op.type === "update" && op.values) {
-			const sets: Record<string, unknown> = {}
-			for (const [k, v] of Object.entries(op.values)) {
-				if (this.isIncrement(v)) {
-					sets[k] = sql`${sql.ref(k)} + ${v.value}`
-				} else {
-					sets[k] = v
-				}
-			}
-
-			let query = trx.updateTable(op.table).set(sets as never)
-			for (const cond of conditions) {
-				const opStr: QueryOperator = cond.operator || "="
-				if (Array.isArray(cond.value)) {
-					query = query.where(cond.column as never, "in", cond.value as never)
-				} else {
-					query = query.where(cond.column as never, opStr as never, cond.value as never)
-				}
-			}
-			await query.execute()
-		} else if (op.type === "delete") {
-			let query = trx.deleteFrom(op.table)
-			for (const cond of conditions) {
-				const opStr: QueryOperator = cond.operator || "="
-				if (Array.isArray(cond.value)) {
-					query = query.where(cond.column as never, "in", cond.value as never)
-				} else {
-					query = query.where(cond.column as never, opStr as never, cond.value as never)
-				}
-			}
-			await query.execute()
-		}
-	}
-
 	public getMetrics() {
+		const percentile = (values: number[], p: number) => {
+			if (values.length === 0) return 0
+			const sorted = [...values].sort((a, b) => a - b)
+			return sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)] ?? 0
+		}
 		return {
-			activeBuffer: this.activeBuffer === this.bufferA ? "A" : "B",
-			activeBufferSize: this.activeBufferSize,
-			inFlightOpsSize: this.inFlightSize,
+			activeBuffer: "A",
+			activeBufferSize: this.activeOps.length,
+			inFlightOpsSize: this.inFlightOps.length,
 			activeShadows: this.agentShadows.size,
 			totalTransactions: this.totalTransactions,
-			latencies: {
-				enqueue: {
-					p95: this.calculatePercentile(this.enqueueLatencies, 95),
-					p99: this.calculatePercentile(this.enqueueLatencies, 99),
-				},
-				processing: {
-					p95: this.calculatePercentile(this.processingLatencies, 95),
-					p99: this.calculatePercentile(this.processingLatencies, 99),
-				},
-			},
+			latencies: { enqueue: { p95: percentile(this.enqueueLatencies, 95), p99: percentile(this.enqueueLatencies, 99) }, processing: { p95: percentile(this.processingLatencies, 95), p99: percentile(this.processingLatencies, 99) } },
 		}
 	}
 
-	private isSameValues(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
-		if (a === b) return true
-		const keysA = Object.keys(a)
-		const keysB = Object.keys(b)
-		if (keysA.length !== keysB.length) return false
-		for (const key of keysA) {
-			if (a[key] !== b[key]) {
-				// Handle Increment objects specifically
-				const valA = a[key]
-				const valB = b[key]
-				if (this.isIncrement(valA) && this.isIncrement(valB)) {
-					if (valA.value !== valB.value) return false
-				} else {
-					return false
-				}
-			}
-		}
-		return true
-	}
-
-	/**
-	 * Level 9: Sovereign Recovery (Warmup)
-	 * Populates the in-memory Level 7 indexes from the Level 2 Checkpoint (Disk).
-	 * This ensures the "Brain" wakes up at full speed after a reboot.
-	 */
 	public async warmupTable<T extends keyof Schema>(table: T, statusCol: string, statusValue: string): Promise<number> {
-		if (isSqlitePersistenceBypassed()) return 0
 		this.ensureStarted()
-		try {
-			const db = await this.ensureDb()
-			const rows = (await (db.selectFrom(table as never).selectAll() as unknown as LooseSelectQuery)
-				.where(statusCol, "=", statusValue)
-				.limit(500)
-				.execute()) as Schema[T][]
-
-			if (rows.length === 0) return 0
-
-			let tableIndex = this.activeIndex.get(table)
-			if (!tableIndex) {
-				tableIndex = new Map()
-				this.activeIndex.set(table, tableIndex)
-			}
-
-			const key = `${statusCol}:${statusValue}`
-			// Rebuild the warmed set every time; never append duplicate synthetic rows.
-			const set = new Set<WriteOp>()
-			tableIndex.set(key, set)
-
-			// Convert disk rows into a "Virtual WriteOp" to satisfy Level 1 Select logic
-			for (const row of rows) {
-				const op: WriteOp = {
-					type: "insert",
-					table,
-					values: row as Record<string, unknown>,
-					hasIncrements: false,
-				}
-				set.add(op)
-			}
-
-			// Level 9: Mark as Authoritative
-			this.warmedIndices.add(`${table as string}:${statusCol}:${statusValue}`)
-
-			return rows.length
-		} catch (error) {
-			if (isNativeModuleVersionMismatch(error)) {
-				disableSqlitePersistence(error instanceof Error ? error.message : String(error))
-				return 0
-			}
-			throw error
-		}
+		await this.ensureDb()
+		this.db?.table(String(table)).createIndex(statusCol as never)
+		return (await this.selectWhere(table, { column: statusCol, value: statusValue }, undefined, { limit: 500 })).length
 	}
 
 	public async getActiveAffectedFiles(): Promise<Map<string, string>> {
 		const release = await this.stateMutex.acquire()
 		try {
-			const activeFiles = new Map<string, string>()
-			for (const [agentId, shadow] of this.agentShadows.entries()) {
-				for (const file of shadow.affectedFiles) {
-					activeFiles.set(file, agentId)
-				}
-			}
-			return activeFiles
+			const affected = new Map<string, string>()
+			for (const [agentId, shadow] of this.agentShadows) for (const file of shadow.affectedFiles) affected.set(file, agentId)
+			return affected
 		} finally {
 			release()
 		}
@@ -1168,43 +419,25 @@ export class BufferedDbPool {
 		return this.selectWhere(table, [], agentId)
 	}
 
-	public async stop() {
-		if (this.stopped) return
-		this.stopped = true
-		sqliteMaintenanceEngine.stop()
-		try {
-			await sqliteMaintenanceEngine.runMaintenance({ forceTruncateWal: true })
-		} catch {}
+	public async stop(): Promise<void> {
+		if (this.stopped && !this.started) return
 		if (this.flushInterval) clearInterval(this.flushInterval)
 		if (this.cleanupInterval) clearInterval(this.cleanupInterval)
 		if (this.flushTimeout) clearTimeout(this.flushTimeout)
 		this.flushInterval = null
 		this.cleanupInterval = null
 		this.flushTimeout = null
-		await this.flush()
-		this.bufferA.clear()
-		this.bufferB.clear()
-		this.activeBuffer.clear()
-		this.inFlightOps.clear()
+		try {
+			await this.flush()
+		} catch {}
+		broccoliMaintenanceEngine.stop()
+		this.activeOps = []
+		this.inFlightOps = []
 		this.agentShadows.clear()
-		this.activeIndex.clear()
-		this.inFlightIndex.clear()
-		this.warmedIndices.clear()
-		for (const stmt of this.stmtCache.values()) {
-			try {
-				;(stmt as { dispose?: () => void })?.dispose?.()
-			} catch {}
-		}
-		this.stmtCache.clear()
-		this.parameterBuffer.fill(undefined)
-		this.enqueueLatencies = []
-		this.processingLatencies = []
-		this.activeBufferSize = 0
-		this.inFlightSize = 0
-		this.rawDb = null
 		this.db = null
-		await destroyDb()
 		this.started = false
+		this.stopped = true
+		await destroyDb()
 	}
 }
 

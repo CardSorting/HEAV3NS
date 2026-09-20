@@ -8,7 +8,7 @@ export interface LockBackends {
 	broccoliFence: boolean
 }
 
-export type CoordinationAuthorityMode = "sqlite" | "local_test"
+export type CoordinationAuthorityMode = "broccoli" | "local_test"
 
 export interface LockClaim {
 	claimId: string

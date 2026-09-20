@@ -3,14 +3,11 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { expect } from "chai"
-import { getDbPath, setDbPath } from "@/infrastructure/db/Config"
 import { BroccoliContextCompactionStore, shutdownBroccoliContextCompactionStores } from "../BroccoliContextCompactionStore"
 
 describe("BroccoliContextCompactionStore", () => {
-	it("bridges exact context through the package capability and shared durable database", async () => {
+	it("bridges exact context through the table kernel and survives a restart", async () => {
 		const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "lumi-broccoli-context-"))
-		const previousDatabasePath = getDbPath()
-		setDbPath(path.join(temporaryRoot, "dietcode.db"))
 		const store = new BroccoliContextCompactionStore(temporaryRoot)
 		const sourceText = Array.from({ length: 1_000 }, (_, index) => `bridge source ${index}`).join("\n")
 		const projectionText = '<system_context_projection schema="2"/> bridge projection'
@@ -67,9 +64,24 @@ describe("BroccoliContextCompactionStore", () => {
 				sourceSha256,
 			})
 			expect(hydrated.text).to.equal(sourceText)
+
+			await shutdownBroccoliContextCompactionStores()
+			const restartedStore = new BroccoliContextCompactionStore(temporaryRoot)
+			const reloaded = await restartedStore.load({ scopeId: "task:bridge" })
+			expect(reloaded.projections).to.have.lengthOf(1)
+			expect(reloaded.cursor).to.deep.equal({ messageOffset: 7, blockOffset: 2, activeStart: 2 })
+			expect(
+				(
+					await restartedStore.hydrate({
+						scopeId: "task:bridge",
+						messageId: "ctx_msg_bridge",
+						blockId: "ctx_blk_bridge",
+						sourceSha256,
+					})
+				).text,
+			).to.equal(sourceText)
 		} finally {
 			await shutdownBroccoliContextCompactionStores()
-			setDbPath(previousDatabasePath)
 			await fs.rm(temporaryRoot, { recursive: true, force: true })
 		}
 	})

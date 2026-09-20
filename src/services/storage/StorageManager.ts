@@ -273,13 +273,13 @@ export class StorageManager {
 			await this.cleanPuppeteerStorage()
 			await this.vacuumCheckpoints()
 
-			// Run SQLite database maintenance (freelist vacuuming & WAL checkpoint truncation)
+			// Run BroccoliDB table/WAL maintenance.
 			try {
-				const { SQLiteMaintenanceEngine } = await import("@/infrastructure/db/SQLiteMaintenanceEngine")
-				const sqliteEngine = new SQLiteMaintenanceEngine()
-				await sqliteEngine.runMaintenance({ forceTruncateWal: true })
-			} catch (sqliteErr) {
-				Logger.debug("SQLite maintenance skipped or unavailable during storage optimization:", sqliteErr)
+				const { BroccoliMaintenanceEngine } = await import("@/infrastructure/db/BroccoliMaintenanceEngine")
+				const broccoliEngine = new BroccoliMaintenanceEngine()
+				await broccoliEngine.runMaintenance({ forceTruncateWal: true })
+			} catch (broccoliError) {
+				Logger.debug("BroccoliDB maintenance skipped or unavailable during storage optimization:", broccoliError)
 			}
 
 			const breakdownAfter = await this.getStorageBreakdown()

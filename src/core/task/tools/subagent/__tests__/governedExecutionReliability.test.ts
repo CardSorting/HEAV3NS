@@ -246,7 +246,7 @@ describe("governed execution reliability", () => {
 			dbConfig.setDbPath(path.join(tempDir, "fence-fail.db"))
 			await dbConfig.getCoordinationDb()
 			try {
-				const authority = new UnifiedLockAuthority("sqlite")
+				const authority = new UnifiedLockAuthority("broccoli")
 				const result = await authority.acquire("governed-lane:s:0", "agent-a", {
 					workspace: tempDir,
 					crossProcess: true,

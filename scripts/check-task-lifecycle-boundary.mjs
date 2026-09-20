@@ -8,7 +8,7 @@ const root = process.cwd()
 const sourceRoot = path.join(root, "src")
 const allowedProjectionWriter = path.normalize("src/core/task/lifecycle/TaskLifecycleFunnel.ts")
 const allowedPersistence = path.normalize("src/core/task/lifecycle/TaskLifecyclePersistence.ts")
-const allowedSchemaBootstrap = path.normalize("src/infrastructure/db/Config.ts")
+const allowedSchemaBootstrap = path.normalize("src/infrastructure/db/BroccoliStateDatabase.ts")
 const allowedAuthorityBindings = new Set([
 	allowedProjectionWriter,
 	path.normalize("src/core/task/index.ts"),

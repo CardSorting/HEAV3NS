@@ -97,8 +97,6 @@ const requiredLinks = [
 	"docs/papers/companion-brief.md",
 	"docs/SECURITY_BEST_PRACTICES.md",
 	"docs/MAINTAINER.md",
-	"broccolidb/docs/README.md",
-	"broccolidb/README.md",
 	"CONTRIBUTING.md",
 	"LICENSE",
 	"SECURITY.md",

@@ -674,9 +674,6 @@ function buildCommonPitfallsSection(snapshot: AgentPlaybookWorkspaceSnapshot): s
 		snapshot.topLevelEntries.includes("webview-ui/")
 			? "Do not assume extension-host and webview validation are the same; `webview-ui/` has its own surface."
 			: undefined,
-		snapshot.topLevelEntries.includes("broccolidb/")
-			? "Do not skip BroccoliDB-specific tests or docs when touching `broccolidb/`."
-			: undefined,
 		snapshot.hasRoadmap ? "Do not make long-horizon steering changes without checking `ROADMAP.md`." : undefined,
 		"Do not add generic troubleshooting. Tie every pitfall to this workspace's files, scripts, or observed failures.",
 	].filter((item): item is string => Boolean(item))

@@ -8,2709 +8,2331 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export enum ShowMessageType {
-	ERROR = 0,
-	INFORMATION = 1,
-	WARNING = 2,
-	UNRECOGNIZED = -1,
+  ERROR = 0,
+  INFORMATION = 1,
+  WARNING = 2,
+  UNRECOGNIZED = -1,
 }
 
 export function showMessageTypeFromJSON(object: any): ShowMessageType {
-	switch (object) {
-		case 0:
-		case "ERROR":
-			return ShowMessageType.ERROR;
-		case 1:
-		case "INFORMATION":
-			return ShowMessageType.INFORMATION;
-		case 2:
-		case "WARNING":
-			return ShowMessageType.WARNING;
-		case -1:
-		case "UNRECOGNIZED":
-		default:
-			return ShowMessageType.UNRECOGNIZED;
-	}
+  switch (object) {
+    case 0:
+    case "ERROR":
+      return ShowMessageType.ERROR;
+    case 1:
+    case "INFORMATION":
+      return ShowMessageType.INFORMATION;
+    case 2:
+    case "WARNING":
+      return ShowMessageType.WARNING;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ShowMessageType.UNRECOGNIZED;
+  }
 }
 
 export function showMessageTypeToJSON(object: ShowMessageType): string {
-	switch (object) {
-		case ShowMessageType.ERROR:
-			return "ERROR";
-		case ShowMessageType.INFORMATION:
-			return "INFORMATION";
-		case ShowMessageType.WARNING:
-			return "WARNING";
-		case ShowMessageType.UNRECOGNIZED:
-		default:
-			return "UNRECOGNIZED";
-	}
+  switch (object) {
+    case ShowMessageType.ERROR:
+      return "ERROR";
+    case ShowMessageType.INFORMATION:
+      return "INFORMATION";
+    case ShowMessageType.WARNING:
+      return "WARNING";
+    case ShowMessageType.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export interface ShowTextDocumentRequest {
-	path: string;
-	options?: ShowTextDocumentOptions | undefined;
+  path: string;
+  options?: ShowTextDocumentOptions | undefined;
 }
 
 /** See https://code.visualstudio.com/api/references/vscode-api#TextDocumentShowOptions */
 export interface ShowTextDocumentOptions {
-	preview?: boolean | undefined;
-	preserveFocus?: boolean | undefined;
-	viewColumn?: number | undefined;
+  preview?: boolean | undefined;
+  preserveFocus?: boolean | undefined;
+  viewColumn?: number | undefined;
 }
 
 export interface TextEditorInfo {
-	documentPath: string;
-	viewColumn?: number | undefined;
-	isActive: boolean;
+  documentPath: string;
+  viewColumn?: number | undefined;
+  isActive: boolean;
 }
 
 export interface ShowOpenDialogueRequest {
-	canSelectMany?: boolean | undefined;
-	openLabel?: string | undefined;
-	filters?: ShowOpenDialogueFilterOption | undefined;
+  canSelectMany?: boolean | undefined;
+  openLabel?: string | undefined;
+  filters?: ShowOpenDialogueFilterOption | undefined;
 }
 
 export interface ShowOpenDialogueFilterOption {
-	files: string[];
+  files: string[];
 }
 
 export interface SelectedResources {
-	paths: string[];
+  paths: string[];
 }
 
 export interface ShowMessageRequest {
-	type: ShowMessageType;
-	message: string;
-	options?: ShowMessageRequestOptions | undefined;
+  type: ShowMessageType;
+  message: string;
+  options?: ShowMessageRequestOptions | undefined;
 }
 
 export interface ShowMessageRequestOptions {
-	items: string[];
-	modal?: boolean | undefined;
-	detail?: string | undefined;
+  items: string[];
+  modal?: boolean | undefined;
+  detail?: string | undefined;
 }
 
 export interface SelectedResponse {
-	selectedOption?: string | undefined;
+  selectedOption?: string | undefined;
 }
 
 export interface ShowSaveDialogRequest {
-	options?: ShowSaveDialogOptions | undefined;
+  options?: ShowSaveDialogOptions | undefined;
 }
 
 export interface ShowSaveDialogOptions {
-	defaultPath?: string | undefined;
-	/**
-	 * A map of file types to extensions, e.g
-	 * "Text Files": { "extensions": ["txt", "md"] }
-	 */
-	filters: { [key: string]: FileExtensionList };
+  defaultPath?:
+    | string
+    | undefined;
+  /**
+   * A map of file types to extensions, e.g
+   * "Text Files": { "extensions": ["txt", "md"] }
+   */
+  filters: { [key: string]: FileExtensionList };
 }
 
 export interface ShowSaveDialogOptions_FiltersEntry {
-	key: string;
-	value: FileExtensionList | undefined;
+  key: string;
+  value: FileExtensionList | undefined;
 }
 
 export interface FileExtensionList {
-	/** A list of file extension (without the dot). */
-	extensions: string[];
+  /** A list of file extension (without the dot). */
+  extensions: string[];
 }
 
 export interface ShowSaveDialogResponse {
-	/** If the user cancelled the dialog, this will be empty. */
-	selectedPath?: string | undefined;
+  /** If the user cancelled the dialog, this will be empty. */
+  selectedPath?: string | undefined;
 }
 
 export interface ShowInputBoxRequest {
-	title: string;
-	prompt?: string | undefined;
-	value?: string | undefined;
+  title: string;
+  prompt?: string | undefined;
+  value?: string | undefined;
 }
 
 export interface ShowInputBoxResponse {
-	response?: string | undefined;
+  response?: string | undefined;
 }
 
 export interface OpenFileRequest {
-	filePath: string;
+  filePath: string;
 }
 
-export interface OpenFileResponse {}
+export interface OpenFileResponse {
+}
 
 export interface OpenSettingsRequest {
-	/**
-	 * Optional query to focus a particular settings section/key.
-	 * This value is host-specific. In VS Code, it is passed directly as the
-	 * Settings search query to the "workbench.action.openSettings" command.
-	 * Examples (VS Code, see - https://code.visualstudio.com/docs/getstarted/settings#settings-editor-filters.):
-	 * - "telemetry.telemetryLevel" → focuses the Telemetry Level setting
-	 * - "@id:telemetry.telemetryLevel" → navigates by exact setting id
-	 * - "@modified", "@ext:publisher.extension"
-	 * - Plain keywords/categories
-	 * If not provided the host opens the settings UI without specific focus.
-	 */
-	query?: string | undefined;
+  /**
+   * Optional query to focus a particular settings section/key.
+   * This value is host-specific. In VS Code, it is passed directly as the
+   * Settings search query to the "workbench.action.openSettings" command.
+   * Examples (VS Code, see - https://code.visualstudio.com/docs/getstarted/settings#settings-editor-filters.):
+   * - "telemetry.telemetryLevel" → focuses the Telemetry Level setting
+   * - "@id:telemetry.telemetryLevel" → navigates by exact setting id
+   * - "@modified", "@ext:publisher.extension"
+   * - Plain keywords/categories
+   * If not provided the host opens the settings UI without specific focus.
+   */
+  query?: string | undefined;
 }
 
-export interface OpenSettingsResponse {}
+export interface OpenSettingsResponse {
+}
 
-export interface GetOpenTabsRequest {}
+export interface GetOpenTabsRequest {
+}
 
 export interface GetOpenTabsResponse {
-	paths: string[];
+  paths: string[];
 }
 
-export interface GetVisibleTabsRequest {}
+export interface GetVisibleTabsRequest {
+}
 
 export interface GetVisibleTabsResponse {
-	paths: string[];
+  paths: string[];
 }
 
-export interface GetActiveEditorRequest {}
+export interface GetActiveEditorRequest {
+}
 
 export interface GetActiveEditorResponse {
-	filePath?: string | undefined;
+  filePath?: string | undefined;
 }
 
 function createBaseShowTextDocumentRequest(): ShowTextDocumentRequest {
-	return { path: "", options: undefined };
+  return { path: "", options: undefined };
 }
 
 export const ShowTextDocumentRequest: MessageFns<ShowTextDocumentRequest> = {
-	encode(
-		message: ShowTextDocumentRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.path !== "") {
-			writer.uint32(18).string(message.path);
-		}
-		if (message.options !== undefined) {
-			ShowTextDocumentOptions.encode(
-				message.options,
-				writer.uint32(26).fork(),
-			).join();
-		}
-		return writer;
-	},
+  encode(message: ShowTextDocumentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.path !== "") {
+      writer.uint32(18).string(message.path);
+    }
+    if (message.options !== undefined) {
+      ShowTextDocumentOptions.encode(message.options, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowTextDocumentRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowTextDocumentRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowTextDocumentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowTextDocumentRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.path = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.path = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.options = ShowTextDocumentOptions.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.options = ShowTextDocumentOptions.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowTextDocumentRequest {
-		return {
-			path: isSet(object.path) ? globalThis.String(object.path) : "",
-			options: isSet(object.options)
-				? ShowTextDocumentOptions.fromJSON(object.options)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ShowTextDocumentRequest {
+    return {
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      options: isSet(object.options) ? ShowTextDocumentOptions.fromJSON(object.options) : undefined,
+    };
+  },
 
-	toJSON(message: ShowTextDocumentRequest): unknown {
-		const obj: any = {};
-		if (message.path !== "") {
-			obj.path = message.path;
-		}
-		if (message.options !== undefined) {
-			obj.options = ShowTextDocumentOptions.toJSON(message.options);
-		}
-		return obj;
-	},
+  toJSON(message: ShowTextDocumentRequest): unknown {
+    const obj: any = {};
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    if (message.options !== undefined) {
+      obj.options = ShowTextDocumentOptions.toJSON(message.options);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowTextDocumentRequest>, I>>(
-		base?: I,
-	): ShowTextDocumentRequest {
-		return ShowTextDocumentRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowTextDocumentRequest>, I>>(
-		object: I,
-	): ShowTextDocumentRequest {
-		const message = createBaseShowTextDocumentRequest();
-		message.path = object.path ?? "";
-		message.options =
-			object.options !== undefined && object.options !== null
-				? ShowTextDocumentOptions.fromPartial(object.options)
-				: undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowTextDocumentRequest>, I>>(base?: I): ShowTextDocumentRequest {
+    return ShowTextDocumentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowTextDocumentRequest>, I>>(object: I): ShowTextDocumentRequest {
+    const message = createBaseShowTextDocumentRequest();
+    message.path = object.path ?? "";
+    message.options = (object.options !== undefined && object.options !== null)
+      ? ShowTextDocumentOptions.fromPartial(object.options)
+      : undefined;
+    return message;
+  },
 };
 
 function createBaseShowTextDocumentOptions(): ShowTextDocumentOptions {
-	return {
-		preview: undefined,
-		preserveFocus: undefined,
-		viewColumn: undefined,
-	};
+  return { preview: undefined, preserveFocus: undefined, viewColumn: undefined };
 }
 
 export const ShowTextDocumentOptions: MessageFns<ShowTextDocumentOptions> = {
-	encode(
-		message: ShowTextDocumentOptions,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.preview !== undefined) {
-			writer.uint32(8).bool(message.preview);
-		}
-		if (message.preserveFocus !== undefined) {
-			writer.uint32(16).bool(message.preserveFocus);
-		}
-		if (message.viewColumn !== undefined) {
-			writer.uint32(24).int32(message.viewColumn);
-		}
-		return writer;
-	},
+  encode(message: ShowTextDocumentOptions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.preview !== undefined) {
+      writer.uint32(8).bool(message.preview);
+    }
+    if (message.preserveFocus !== undefined) {
+      writer.uint32(16).bool(message.preserveFocus);
+    }
+    if (message.viewColumn !== undefined) {
+      writer.uint32(24).int32(message.viewColumn);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowTextDocumentOptions {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowTextDocumentOptions();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowTextDocumentOptions {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowTextDocumentOptions();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.preview = reader.bool();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.preview = reader.bool();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.preserveFocus = reader.bool();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.preserveFocus = reader.bool();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.viewColumn = reader.int32();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.viewColumn = reader.int32();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowTextDocumentOptions {
-		return {
-			preview: isSet(object.preview)
-				? globalThis.Boolean(object.preview)
-				: undefined,
-			preserveFocus: isSet(object.preserveFocus)
-				? globalThis.Boolean(object.preserveFocus)
-				: isSet(object.preserve_focus)
-					? globalThis.Boolean(object.preserve_focus)
-					: undefined,
-			viewColumn: isSet(object.viewColumn)
-				? globalThis.Number(object.viewColumn)
-				: isSet(object.view_column)
-					? globalThis.Number(object.view_column)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): ShowTextDocumentOptions {
+    return {
+      preview: isSet(object.preview) ? globalThis.Boolean(object.preview) : undefined,
+      preserveFocus: isSet(object.preserveFocus)
+        ? globalThis.Boolean(object.preserveFocus)
+        : isSet(object.preserve_focus)
+        ? globalThis.Boolean(object.preserve_focus)
+        : undefined,
+      viewColumn: isSet(object.viewColumn)
+        ? globalThis.Number(object.viewColumn)
+        : isSet(object.view_column)
+        ? globalThis.Number(object.view_column)
+        : undefined,
+    };
+  },
 
-	toJSON(message: ShowTextDocumentOptions): unknown {
-		const obj: any = {};
-		if (message.preview !== undefined) {
-			obj.preview = message.preview;
-		}
-		if (message.preserveFocus !== undefined) {
-			obj.preserveFocus = message.preserveFocus;
-		}
-		if (message.viewColumn !== undefined) {
-			obj.viewColumn = Math.round(message.viewColumn);
-		}
-		return obj;
-	},
+  toJSON(message: ShowTextDocumentOptions): unknown {
+    const obj: any = {};
+    if (message.preview !== undefined) {
+      obj.preview = message.preview;
+    }
+    if (message.preserveFocus !== undefined) {
+      obj.preserveFocus = message.preserveFocus;
+    }
+    if (message.viewColumn !== undefined) {
+      obj.viewColumn = Math.round(message.viewColumn);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowTextDocumentOptions>, I>>(
-		base?: I,
-	): ShowTextDocumentOptions {
-		return ShowTextDocumentOptions.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowTextDocumentOptions>, I>>(
-		object: I,
-	): ShowTextDocumentOptions {
-		const message = createBaseShowTextDocumentOptions();
-		message.preview = object.preview ?? undefined;
-		message.preserveFocus = object.preserveFocus ?? undefined;
-		message.viewColumn = object.viewColumn ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowTextDocumentOptions>, I>>(base?: I): ShowTextDocumentOptions {
+    return ShowTextDocumentOptions.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowTextDocumentOptions>, I>>(object: I): ShowTextDocumentOptions {
+    const message = createBaseShowTextDocumentOptions();
+    message.preview = object.preview ?? undefined;
+    message.preserveFocus = object.preserveFocus ?? undefined;
+    message.viewColumn = object.viewColumn ?? undefined;
+    return message;
+  },
 };
 
 function createBaseTextEditorInfo(): TextEditorInfo {
-	return { documentPath: "", viewColumn: undefined, isActive: false };
+  return { documentPath: "", viewColumn: undefined, isActive: false };
 }
 
 export const TextEditorInfo: MessageFns<TextEditorInfo> = {
-	encode(
-		message: TextEditorInfo,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.documentPath !== "") {
-			writer.uint32(10).string(message.documentPath);
-		}
-		if (message.viewColumn !== undefined) {
-			writer.uint32(16).int32(message.viewColumn);
-		}
-		if (message.isActive !== false) {
-			writer.uint32(24).bool(message.isActive);
-		}
-		return writer;
-	},
+  encode(message: TextEditorInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.documentPath !== "") {
+      writer.uint32(10).string(message.documentPath);
+    }
+    if (message.viewColumn !== undefined) {
+      writer.uint32(16).int32(message.viewColumn);
+    }
+    if (message.isActive !== false) {
+      writer.uint32(24).bool(message.isActive);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): TextEditorInfo {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseTextEditorInfo();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): TextEditorInfo {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseTextEditorInfo();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.documentPath = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+            message.documentPath = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.viewColumn = reader.int32();
-						continue;
-					}
-					case 3: {
-						if (tag !== 24) {
-							break;
-						}
+            message.viewColumn = reader.int32();
+            continue;
+          }
+          case 3: {
+            if (tag !== 24) {
+              break;
+            }
 
-						message.isActive = reader.bool();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.isActive = reader.bool();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): TextEditorInfo {
-		return {
-			documentPath: isSet(object.documentPath)
-				? globalThis.String(object.documentPath)
-				: isSet(object.document_path)
-					? globalThis.String(object.document_path)
-					: "",
-			viewColumn: isSet(object.viewColumn)
-				? globalThis.Number(object.viewColumn)
-				: isSet(object.view_column)
-					? globalThis.Number(object.view_column)
-					: undefined,
-			isActive: isSet(object.isActive)
-				? globalThis.Boolean(object.isActive)
-				: isSet(object.is_active)
-					? globalThis.Boolean(object.is_active)
-					: false,
-		};
-	},
+  fromJSON(object: any): TextEditorInfo {
+    return {
+      documentPath: isSet(object.documentPath)
+        ? globalThis.String(object.documentPath)
+        : isSet(object.document_path)
+        ? globalThis.String(object.document_path)
+        : "",
+      viewColumn: isSet(object.viewColumn)
+        ? globalThis.Number(object.viewColumn)
+        : isSet(object.view_column)
+        ? globalThis.Number(object.view_column)
+        : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : false,
+    };
+  },
 
-	toJSON(message: TextEditorInfo): unknown {
-		const obj: any = {};
-		if (message.documentPath !== "") {
-			obj.documentPath = message.documentPath;
-		}
-		if (message.viewColumn !== undefined) {
-			obj.viewColumn = Math.round(message.viewColumn);
-		}
-		if (message.isActive !== false) {
-			obj.isActive = message.isActive;
-		}
-		return obj;
-	},
+  toJSON(message: TextEditorInfo): unknown {
+    const obj: any = {};
+    if (message.documentPath !== "") {
+      obj.documentPath = message.documentPath;
+    }
+    if (message.viewColumn !== undefined) {
+      obj.viewColumn = Math.round(message.viewColumn);
+    }
+    if (message.isActive !== false) {
+      obj.isActive = message.isActive;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<TextEditorInfo>, I>>(
-		base?: I,
-	): TextEditorInfo {
-		return TextEditorInfo.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<TextEditorInfo>, I>>(
-		object: I,
-	): TextEditorInfo {
-		const message = createBaseTextEditorInfo();
-		message.documentPath = object.documentPath ?? "";
-		message.viewColumn = object.viewColumn ?? undefined;
-		message.isActive = object.isActive ?? false;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<TextEditorInfo>, I>>(base?: I): TextEditorInfo {
+    return TextEditorInfo.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TextEditorInfo>, I>>(object: I): TextEditorInfo {
+    const message = createBaseTextEditorInfo();
+    message.documentPath = object.documentPath ?? "";
+    message.viewColumn = object.viewColumn ?? undefined;
+    message.isActive = object.isActive ?? false;
+    return message;
+  },
 };
 
 function createBaseShowOpenDialogueRequest(): ShowOpenDialogueRequest {
-	return { canSelectMany: undefined, openLabel: undefined, filters: undefined };
+  return { canSelectMany: undefined, openLabel: undefined, filters: undefined };
 }
 
 export const ShowOpenDialogueRequest: MessageFns<ShowOpenDialogueRequest> = {
-	encode(
-		message: ShowOpenDialogueRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.canSelectMany !== undefined) {
-			writer.uint32(16).bool(message.canSelectMany);
-		}
-		if (message.openLabel !== undefined) {
-			writer.uint32(26).string(message.openLabel);
-		}
-		if (message.filters !== undefined) {
-			ShowOpenDialogueFilterOption.encode(
-				message.filters,
-				writer.uint32(34).fork(),
-			).join();
-		}
-		return writer;
-	},
+  encode(message: ShowOpenDialogueRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.canSelectMany !== undefined) {
+      writer.uint32(16).bool(message.canSelectMany);
+    }
+    if (message.openLabel !== undefined) {
+      writer.uint32(26).string(message.openLabel);
+    }
+    if (message.filters !== undefined) {
+      ShowOpenDialogueFilterOption.encode(message.filters, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowOpenDialogueRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowOpenDialogueRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 2: {
-						if (tag !== 16) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowOpenDialogueRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowOpenDialogueRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-						message.canSelectMany = reader.bool();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.canSelectMany = reader.bool();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.openLabel = reader.string();
-						continue;
-					}
-					case 4: {
-						if (tag !== 34) {
-							break;
-						}
+            message.openLabel = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-						message.filters = ShowOpenDialogueFilterOption.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.filters = ShowOpenDialogueFilterOption.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowOpenDialogueRequest {
-		return {
-			canSelectMany: isSet(object.canSelectMany)
-				? globalThis.Boolean(object.canSelectMany)
-				: isSet(object.can_select_many)
-					? globalThis.Boolean(object.can_select_many)
-					: undefined,
-			openLabel: isSet(object.openLabel)
-				? globalThis.String(object.openLabel)
-				: isSet(object.open_label)
-					? globalThis.String(object.open_label)
-					: undefined,
-			filters: isSet(object.filters)
-				? ShowOpenDialogueFilterOption.fromJSON(object.filters)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ShowOpenDialogueRequest {
+    return {
+      canSelectMany: isSet(object.canSelectMany)
+        ? globalThis.Boolean(object.canSelectMany)
+        : isSet(object.can_select_many)
+        ? globalThis.Boolean(object.can_select_many)
+        : undefined,
+      openLabel: isSet(object.openLabel)
+        ? globalThis.String(object.openLabel)
+        : isSet(object.open_label)
+        ? globalThis.String(object.open_label)
+        : undefined,
+      filters: isSet(object.filters) ? ShowOpenDialogueFilterOption.fromJSON(object.filters) : undefined,
+    };
+  },
 
-	toJSON(message: ShowOpenDialogueRequest): unknown {
-		const obj: any = {};
-		if (message.canSelectMany !== undefined) {
-			obj.canSelectMany = message.canSelectMany;
-		}
-		if (message.openLabel !== undefined) {
-			obj.openLabel = message.openLabel;
-		}
-		if (message.filters !== undefined) {
-			obj.filters = ShowOpenDialogueFilterOption.toJSON(message.filters);
-		}
-		return obj;
-	},
+  toJSON(message: ShowOpenDialogueRequest): unknown {
+    const obj: any = {};
+    if (message.canSelectMany !== undefined) {
+      obj.canSelectMany = message.canSelectMany;
+    }
+    if (message.openLabel !== undefined) {
+      obj.openLabel = message.openLabel;
+    }
+    if (message.filters !== undefined) {
+      obj.filters = ShowOpenDialogueFilterOption.toJSON(message.filters);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowOpenDialogueRequest>, I>>(
-		base?: I,
-	): ShowOpenDialogueRequest {
-		return ShowOpenDialogueRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowOpenDialogueRequest>, I>>(
-		object: I,
-	): ShowOpenDialogueRequest {
-		const message = createBaseShowOpenDialogueRequest();
-		message.canSelectMany = object.canSelectMany ?? undefined;
-		message.openLabel = object.openLabel ?? undefined;
-		message.filters =
-			object.filters !== undefined && object.filters !== null
-				? ShowOpenDialogueFilterOption.fromPartial(object.filters)
-				: undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowOpenDialogueRequest>, I>>(base?: I): ShowOpenDialogueRequest {
+    return ShowOpenDialogueRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowOpenDialogueRequest>, I>>(object: I): ShowOpenDialogueRequest {
+    const message = createBaseShowOpenDialogueRequest();
+    message.canSelectMany = object.canSelectMany ?? undefined;
+    message.openLabel = object.openLabel ?? undefined;
+    message.filters = (object.filters !== undefined && object.filters !== null)
+      ? ShowOpenDialogueFilterOption.fromPartial(object.filters)
+      : undefined;
+    return message;
+  },
 };
 
 function createBaseShowOpenDialogueFilterOption(): ShowOpenDialogueFilterOption {
-	return { files: [] };
+  return { files: [] };
 }
 
-export const ShowOpenDialogueFilterOption: MessageFns<ShowOpenDialogueFilterOption> =
-	{
-		encode(
-			message: ShowOpenDialogueFilterOption,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			for (const v of message.files) {
-				writer.uint32(10).string(v!);
-			}
-			return writer;
-		},
+export const ShowOpenDialogueFilterOption: MessageFns<ShowOpenDialogueFilterOption> = {
+  encode(message: ShowOpenDialogueFilterOption, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.files) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): ShowOpenDialogueFilterOption {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseShowOpenDialogueFilterOption();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowOpenDialogueFilterOption {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowOpenDialogueFilterOption();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.files.push(reader.string());
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.files.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): ShowOpenDialogueFilterOption {
-			return {
-				files: globalThis.Array.isArray(object?.files)
-					? object.files.map((e: any) => globalThis.String(e))
-					: [],
-			};
-		},
+  fromJSON(object: any): ShowOpenDialogueFilterOption {
+    return { files: globalThis.Array.isArray(object?.files) ? object.files.map((e: any) => globalThis.String(e)) : [] };
+  },
 
-		toJSON(message: ShowOpenDialogueFilterOption): unknown {
-			const obj: any = {};
-			if (message.files?.length) {
-				obj.files = message.files;
-			}
-			return obj;
-		},
+  toJSON(message: ShowOpenDialogueFilterOption): unknown {
+    const obj: any = {};
+    if (message.files?.length) {
+      obj.files = message.files;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<ShowOpenDialogueFilterOption>, I>>(
-			base?: I,
-		): ShowOpenDialogueFilterOption {
-			return ShowOpenDialogueFilterOption.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<ShowOpenDialogueFilterOption>, I>>(
-			object: I,
-		): ShowOpenDialogueFilterOption {
-			const message = createBaseShowOpenDialogueFilterOption();
-			message.files = object.files?.map((e) => e) || [];
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<ShowOpenDialogueFilterOption>, I>>(base?: I): ShowOpenDialogueFilterOption {
+    return ShowOpenDialogueFilterOption.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowOpenDialogueFilterOption>, I>>(object: I): ShowOpenDialogueFilterOption {
+    const message = createBaseShowOpenDialogueFilterOption();
+    message.files = object.files?.map((e) => e) || [];
+    return message;
+  },
+};
 
 function createBaseSelectedResources(): SelectedResources {
-	return { paths: [] };
+  return { paths: [] };
 }
 
 export const SelectedResources: MessageFns<SelectedResources> = {
-	encode(
-		message: SelectedResources,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.paths) {
-			writer.uint32(10).string(v!);
-		}
-		return writer;
-	},
+  encode(message: SelectedResources, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.paths) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): SelectedResources {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseSelectedResources();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): SelectedResources {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseSelectedResources();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.paths.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.paths.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): SelectedResources {
-		return {
-			paths: globalThis.Array.isArray(object?.paths)
-				? object.paths.map((e: any) => globalThis.String(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): SelectedResources {
+    return { paths: globalThis.Array.isArray(object?.paths) ? object.paths.map((e: any) => globalThis.String(e)) : [] };
+  },
 
-	toJSON(message: SelectedResources): unknown {
-		const obj: any = {};
-		if (message.paths?.length) {
-			obj.paths = message.paths;
-		}
-		return obj;
-	},
+  toJSON(message: SelectedResources): unknown {
+    const obj: any = {};
+    if (message.paths?.length) {
+      obj.paths = message.paths;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<SelectedResources>, I>>(
-		base?: I,
-	): SelectedResources {
-		return SelectedResources.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<SelectedResources>, I>>(
-		object: I,
-	): SelectedResources {
-		const message = createBaseSelectedResources();
-		message.paths = object.paths?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<SelectedResources>, I>>(base?: I): SelectedResources {
+    return SelectedResources.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SelectedResources>, I>>(object: I): SelectedResources {
+    const message = createBaseSelectedResources();
+    message.paths = object.paths?.map((e) => e) || [];
+    return message;
+  },
 };
 
 function createBaseShowMessageRequest(): ShowMessageRequest {
-	return { type: 0, message: "", options: undefined };
+  return { type: 0, message: "", options: undefined };
 }
 
 export const ShowMessageRequest: MessageFns<ShowMessageRequest> = {
-	encode(
-		message: ShowMessageRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.type !== 0) {
-			writer.uint32(8).int32(message.type);
-		}
-		if (message.message !== "") {
-			writer.uint32(18).string(message.message);
-		}
-		if (message.options !== undefined) {
-			ShowMessageRequestOptions.encode(
-				message.options,
-				writer.uint32(26).fork(),
-			).join();
-		}
-		return writer;
-	},
+  encode(message: ShowMessageRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.options !== undefined) {
+      ShowMessageRequestOptions.encode(message.options, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowMessageRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowMessageRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 8) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowMessageRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowMessageRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
 
-						message.type = reader.int32() as any;
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.type = reader.int32() as any;
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.message = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.message = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.options = ShowMessageRequestOptions.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.options = ShowMessageRequestOptions.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowMessageRequest {
-		return {
-			type: isSet(object.type) ? showMessageTypeFromJSON(object.type) : 0,
-			message: isSet(object.message) ? globalThis.String(object.message) : "",
-			options: isSet(object.options)
-				? ShowMessageRequestOptions.fromJSON(object.options)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ShowMessageRequest {
+    return {
+      type: isSet(object.type) ? showMessageTypeFromJSON(object.type) : 0,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      options: isSet(object.options) ? ShowMessageRequestOptions.fromJSON(object.options) : undefined,
+    };
+  },
 
-	toJSON(message: ShowMessageRequest): unknown {
-		const obj: any = {};
-		if (message.type !== 0) {
-			obj.type = showMessageTypeToJSON(message.type);
-		}
-		if (message.message !== "") {
-			obj.message = message.message;
-		}
-		if (message.options !== undefined) {
-			obj.options = ShowMessageRequestOptions.toJSON(message.options);
-		}
-		return obj;
-	},
+  toJSON(message: ShowMessageRequest): unknown {
+    const obj: any = {};
+    if (message.type !== 0) {
+      obj.type = showMessageTypeToJSON(message.type);
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.options !== undefined) {
+      obj.options = ShowMessageRequestOptions.toJSON(message.options);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowMessageRequest>, I>>(
-		base?: I,
-	): ShowMessageRequest {
-		return ShowMessageRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowMessageRequest>, I>>(
-		object: I,
-	): ShowMessageRequest {
-		const message = createBaseShowMessageRequest();
-		message.type = object.type ?? 0;
-		message.message = object.message ?? "";
-		message.options =
-			object.options !== undefined && object.options !== null
-				? ShowMessageRequestOptions.fromPartial(object.options)
-				: undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowMessageRequest>, I>>(base?: I): ShowMessageRequest {
+    return ShowMessageRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowMessageRequest>, I>>(object: I): ShowMessageRequest {
+    const message = createBaseShowMessageRequest();
+    message.type = object.type ?? 0;
+    message.message = object.message ?? "";
+    message.options = (object.options !== undefined && object.options !== null)
+      ? ShowMessageRequestOptions.fromPartial(object.options)
+      : undefined;
+    return message;
+  },
 };
 
 function createBaseShowMessageRequestOptions(): ShowMessageRequestOptions {
-	return { items: [], modal: undefined, detail: undefined };
+  return { items: [], modal: undefined, detail: undefined };
 }
 
-export const ShowMessageRequestOptions: MessageFns<ShowMessageRequestOptions> =
-	{
-		encode(
-			message: ShowMessageRequestOptions,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			for (const v of message.items) {
-				writer.uint32(10).string(v!);
-			}
-			if (message.modal !== undefined) {
-				writer.uint32(16).bool(message.modal);
-			}
-			if (message.detail !== undefined) {
-				writer.uint32(26).string(message.detail);
-			}
-			return writer;
-		},
+export const ShowMessageRequestOptions: MessageFns<ShowMessageRequestOptions> = {
+  encode(message: ShowMessageRequestOptions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.modal !== undefined) {
+      writer.uint32(16).bool(message.modal);
+    }
+    if (message.detail !== undefined) {
+      writer.uint32(26).string(message.detail);
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): ShowMessageRequestOptions {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseShowMessageRequestOptions();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowMessageRequestOptions {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowMessageRequestOptions();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.items.push(reader.string());
-							continue;
-						}
-						case 2: {
-							if (tag !== 16) {
-								break;
-							}
+            message.items.push(reader.string());
+            continue;
+          }
+          case 2: {
+            if (tag !== 16) {
+              break;
+            }
 
-							message.modal = reader.bool();
-							continue;
-						}
-						case 3: {
-							if (tag !== 26) {
-								break;
-							}
+            message.modal = reader.bool();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-							message.detail = reader.string();
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.detail = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): ShowMessageRequestOptions {
-			return {
-				items: globalThis.Array.isArray(object?.items)
-					? object.items.map((e: any) => globalThis.String(e))
-					: [],
-				modal: isSet(object.modal)
-					? globalThis.Boolean(object.modal)
-					: undefined,
-				detail: isSet(object.detail)
-					? globalThis.String(object.detail)
-					: undefined,
-			};
-		},
+  fromJSON(object: any): ShowMessageRequestOptions {
+    return {
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => globalThis.String(e)) : [],
+      modal: isSet(object.modal) ? globalThis.Boolean(object.modal) : undefined,
+      detail: isSet(object.detail) ? globalThis.String(object.detail) : undefined,
+    };
+  },
 
-		toJSON(message: ShowMessageRequestOptions): unknown {
-			const obj: any = {};
-			if (message.items?.length) {
-				obj.items = message.items;
-			}
-			if (message.modal !== undefined) {
-				obj.modal = message.modal;
-			}
-			if (message.detail !== undefined) {
-				obj.detail = message.detail;
-			}
-			return obj;
-		},
+  toJSON(message: ShowMessageRequestOptions): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items;
+    }
+    if (message.modal !== undefined) {
+      obj.modal = message.modal;
+    }
+    if (message.detail !== undefined) {
+      obj.detail = message.detail;
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<ShowMessageRequestOptions>, I>>(
-			base?: I,
-		): ShowMessageRequestOptions {
-			return ShowMessageRequestOptions.fromPartial(base ?? ({} as any));
-		},
-		fromPartial<I extends Exact<DeepPartial<ShowMessageRequestOptions>, I>>(
-			object: I,
-		): ShowMessageRequestOptions {
-			const message = createBaseShowMessageRequestOptions();
-			message.items = object.items?.map((e) => e) || [];
-			message.modal = object.modal ?? undefined;
-			message.detail = object.detail ?? undefined;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<ShowMessageRequestOptions>, I>>(base?: I): ShowMessageRequestOptions {
+    return ShowMessageRequestOptions.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowMessageRequestOptions>, I>>(object: I): ShowMessageRequestOptions {
+    const message = createBaseShowMessageRequestOptions();
+    message.items = object.items?.map((e) => e) || [];
+    message.modal = object.modal ?? undefined;
+    message.detail = object.detail ?? undefined;
+    return message;
+  },
+};
 
 function createBaseSelectedResponse(): SelectedResponse {
-	return { selectedOption: undefined };
+  return { selectedOption: undefined };
 }
 
 export const SelectedResponse: MessageFns<SelectedResponse> = {
-	encode(
-		message: SelectedResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.selectedOption !== undefined) {
-			writer.uint32(10).string(message.selectedOption);
-		}
-		return writer;
-	},
+  encode(message: SelectedResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.selectedOption !== undefined) {
+      writer.uint32(10).string(message.selectedOption);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): SelectedResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseSelectedResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): SelectedResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseSelectedResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.selectedOption = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.selectedOption = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): SelectedResponse {
-		return {
-			selectedOption: isSet(object.selectedOption)
-				? globalThis.String(object.selectedOption)
-				: isSet(object.selected_option)
-					? globalThis.String(object.selected_option)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): SelectedResponse {
+    return {
+      selectedOption: isSet(object.selectedOption)
+        ? globalThis.String(object.selectedOption)
+        : isSet(object.selected_option)
+        ? globalThis.String(object.selected_option)
+        : undefined,
+    };
+  },
 
-	toJSON(message: SelectedResponse): unknown {
-		const obj: any = {};
-		if (message.selectedOption !== undefined) {
-			obj.selectedOption = message.selectedOption;
-		}
-		return obj;
-	},
+  toJSON(message: SelectedResponse): unknown {
+    const obj: any = {};
+    if (message.selectedOption !== undefined) {
+      obj.selectedOption = message.selectedOption;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<SelectedResponse>, I>>(
-		base?: I,
-	): SelectedResponse {
-		return SelectedResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<SelectedResponse>, I>>(
-		object: I,
-	): SelectedResponse {
-		const message = createBaseSelectedResponse();
-		message.selectedOption = object.selectedOption ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<SelectedResponse>, I>>(base?: I): SelectedResponse {
+    return SelectedResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SelectedResponse>, I>>(object: I): SelectedResponse {
+    const message = createBaseSelectedResponse();
+    message.selectedOption = object.selectedOption ?? undefined;
+    return message;
+  },
 };
 
 function createBaseShowSaveDialogRequest(): ShowSaveDialogRequest {
-	return { options: undefined };
+  return { options: undefined };
 }
 
 export const ShowSaveDialogRequest: MessageFns<ShowSaveDialogRequest> = {
-	encode(
-		message: ShowSaveDialogRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.options !== undefined) {
-			ShowSaveDialogOptions.encode(
-				message.options,
-				writer.uint32(10).fork(),
-			).join();
-		}
-		return writer;
-	},
+  encode(message: ShowSaveDialogRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.options !== undefined) {
+      ShowSaveDialogOptions.encode(message.options, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowSaveDialogRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowSaveDialogRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowSaveDialogRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowSaveDialogRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.options = ShowSaveDialogOptions.decode(
-							reader,
-							reader.uint32(),
-						);
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.options = ShowSaveDialogOptions.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowSaveDialogRequest {
-		return {
-			options: isSet(object.options)
-				? ShowSaveDialogOptions.fromJSON(object.options)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ShowSaveDialogRequest {
+    return { options: isSet(object.options) ? ShowSaveDialogOptions.fromJSON(object.options) : undefined };
+  },
 
-	toJSON(message: ShowSaveDialogRequest): unknown {
-		const obj: any = {};
-		if (message.options !== undefined) {
-			obj.options = ShowSaveDialogOptions.toJSON(message.options);
-		}
-		return obj;
-	},
+  toJSON(message: ShowSaveDialogRequest): unknown {
+    const obj: any = {};
+    if (message.options !== undefined) {
+      obj.options = ShowSaveDialogOptions.toJSON(message.options);
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowSaveDialogRequest>, I>>(
-		base?: I,
-	): ShowSaveDialogRequest {
-		return ShowSaveDialogRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowSaveDialogRequest>, I>>(
-		object: I,
-	): ShowSaveDialogRequest {
-		const message = createBaseShowSaveDialogRequest();
-		message.options =
-			object.options !== undefined && object.options !== null
-				? ShowSaveDialogOptions.fromPartial(object.options)
-				: undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowSaveDialogRequest>, I>>(base?: I): ShowSaveDialogRequest {
+    return ShowSaveDialogRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowSaveDialogRequest>, I>>(object: I): ShowSaveDialogRequest {
+    const message = createBaseShowSaveDialogRequest();
+    message.options = (object.options !== undefined && object.options !== null)
+      ? ShowSaveDialogOptions.fromPartial(object.options)
+      : undefined;
+    return message;
+  },
 };
 
 function createBaseShowSaveDialogOptions(): ShowSaveDialogOptions {
-	return { defaultPath: undefined, filters: {} };
+  return { defaultPath: undefined, filters: {} };
 }
 
 export const ShowSaveDialogOptions: MessageFns<ShowSaveDialogOptions> = {
-	encode(
-		message: ShowSaveDialogOptions,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.defaultPath !== undefined) {
-			writer.uint32(10).string(message.defaultPath);
-		}
-		globalThis.Object.entries(message.filters).forEach(
-			([key, value]: [string, FileExtensionList]) => {
-				ShowSaveDialogOptions_FiltersEntry.encode(
-					{ key: key as any, value },
-					writer.uint32(18).fork(),
-				).join();
-			},
-		);
-		return writer;
-	},
+  encode(message: ShowSaveDialogOptions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.defaultPath !== undefined) {
+      writer.uint32(10).string(message.defaultPath);
+    }
+    globalThis.Object.entries(message.filters).forEach(([key, value]: [string, FileExtensionList]) => {
+      ShowSaveDialogOptions_FiltersEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowSaveDialogOptions {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowSaveDialogOptions();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowSaveDialogOptions {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowSaveDialogOptions();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.defaultPath = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.defaultPath = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						const entry2 = ShowSaveDialogOptions_FiltersEntry.decode(
-							reader,
-							reader.uint32(),
-						);
-						if (entry2.value !== undefined) {
-							message.filters[entry2.key] = entry2.value;
-						}
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            const entry2 = ShowSaveDialogOptions_FiltersEntry.decode(reader, reader.uint32());
+            if (entry2.value !== undefined) {
+              message.filters[entry2.key] = entry2.value;
+            }
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowSaveDialogOptions {
-		return {
-			defaultPath: isSet(object.defaultPath)
-				? globalThis.String(object.defaultPath)
-				: isSet(object.default_path)
-					? globalThis.String(object.default_path)
-					: undefined,
-			filters: isObject(object.filters)
-				? (globalThis.Object.entries(object.filters) as [string, any][]).reduce(
-						(
-							acc: { [key: string]: FileExtensionList },
-							[key, value]: [string, any],
-						) => {
-							globalThis.Object.defineProperty(acc, key, {
-								value: FileExtensionList.fromJSON(value),
-								enumerable: true,
-								configurable: true,
-								writable: true,
-							});
-							return acc;
-						},
-						{},
-					)
-				: {},
-		};
-	},
+  fromJSON(object: any): ShowSaveDialogOptions {
+    return {
+      defaultPath: isSet(object.defaultPath)
+        ? globalThis.String(object.defaultPath)
+        : isSet(object.default_path)
+        ? globalThis.String(object.default_path)
+        : undefined,
+      filters: isObject(object.filters)
+        ? (globalThis.Object.entries(object.filters) as [string, any][]).reduce(
+          (acc: { [key: string]: FileExtensionList }, [key, value]: [string, any]) => {
+            globalThis.Object.defineProperty(acc, key, {
+              value: FileExtensionList.fromJSON(value),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            });
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
 
-	toJSON(message: ShowSaveDialogOptions): unknown {
-		const obj: any = {};
-		if (message.defaultPath !== undefined) {
-			obj.defaultPath = message.defaultPath;
-		}
-		if (message.filters) {
-			const entries = globalThis.Object.entries(message.filters) as [
-				string,
-				FileExtensionList,
-			][];
-			if (entries.length > 0) {
-				obj.filters = {};
-				entries.forEach(([k, v]) => {
-					obj.filters[k] = FileExtensionList.toJSON(v);
-				});
-			}
-		}
-		return obj;
-	},
+  toJSON(message: ShowSaveDialogOptions): unknown {
+    const obj: any = {};
+    if (message.defaultPath !== undefined) {
+      obj.defaultPath = message.defaultPath;
+    }
+    if (message.filters) {
+      const entries = globalThis.Object.entries(message.filters) as [string, FileExtensionList][];
+      if (entries.length > 0) {
+        obj.filters = {};
+        entries.forEach(([k, v]) => {
+          obj.filters[k] = FileExtensionList.toJSON(v);
+        });
+      }
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowSaveDialogOptions>, I>>(
-		base?: I,
-	): ShowSaveDialogOptions {
-		return ShowSaveDialogOptions.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowSaveDialogOptions>, I>>(
-		object: I,
-	): ShowSaveDialogOptions {
-		const message = createBaseShowSaveDialogOptions();
-		message.defaultPath = object.defaultPath ?? undefined;
-		message.filters = (
-			globalThis.Object.entries(object.filters ?? {}) as [
-				string,
-				FileExtensionList,
-			][]
-		).reduce(
-			(
-				acc: { [key: string]: FileExtensionList },
-				[key, value]: [string, FileExtensionList],
-			) => {
-				if (value !== undefined) {
-					acc[key] = FileExtensionList.fromPartial(value);
-				}
-				return acc;
-			},
-			{},
-		);
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowSaveDialogOptions>, I>>(base?: I): ShowSaveDialogOptions {
+    return ShowSaveDialogOptions.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowSaveDialogOptions>, I>>(object: I): ShowSaveDialogOptions {
+    const message = createBaseShowSaveDialogOptions();
+    message.defaultPath = object.defaultPath ?? undefined;
+    message.filters = (globalThis.Object.entries(object.filters ?? {}) as [string, FileExtensionList][]).reduce(
+      (acc: { [key: string]: FileExtensionList }, [key, value]: [string, FileExtensionList]) => {
+        if (value !== undefined) {
+          acc[key] = FileExtensionList.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
 };
 
 function createBaseShowSaveDialogOptions_FiltersEntry(): ShowSaveDialogOptions_FiltersEntry {
-	return { key: "", value: undefined };
+  return { key: "", value: undefined };
 }
 
-export const ShowSaveDialogOptions_FiltersEntry: MessageFns<ShowSaveDialogOptions_FiltersEntry> =
-	{
-		encode(
-			message: ShowSaveDialogOptions_FiltersEntry,
-			writer: BinaryWriter = new BinaryWriter(),
-		): BinaryWriter {
-			if (message.key !== "") {
-				writer.uint32(10).string(message.key);
-			}
-			if (message.value !== undefined) {
-				FileExtensionList.encode(
-					message.value,
-					writer.uint32(18).fork(),
-				).join();
-			}
-			return writer;
-		},
+export const ShowSaveDialogOptions_FiltersEntry: MessageFns<ShowSaveDialogOptions_FiltersEntry> = {
+  encode(message: ShowSaveDialogOptions_FiltersEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      FileExtensionList.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
 
-		decode(
-			input: BinaryReader | Uint8Array,
-			length?: number,
-		): ShowSaveDialogOptions_FiltersEntry {
-			const reader =
-				input instanceof BinaryReader ? input : new BinaryReader(input);
-			const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-			if (previousRecursionDepth >= 100) {
-				throw new globalThis.Error("protobuf decode recursion limit exceeded");
-			}
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-			try {
-				const end = length === undefined ? reader.len : reader.pos + length;
-				const message = createBaseShowSaveDialogOptions_FiltersEntry();
-				while (reader.pos < end) {
-					const tag = reader.uint32();
-					switch (tag >>> 3) {
-						case 1: {
-							if (tag !== 10) {
-								break;
-							}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowSaveDialogOptions_FiltersEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowSaveDialogOptions_FiltersEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-							message.key = reader.string();
-							continue;
-						}
-						case 2: {
-							if (tag !== 18) {
-								break;
-							}
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-							message.value = FileExtensionList.decode(reader, reader.uint32());
-							continue;
-						}
-					}
-					if ((tag & 7) === 4 || tag === 0) {
-						break;
-					}
-					reader.skip(tag & 7);
-				}
-				return message;
-			} finally {
-				(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-			}
-		},
+            message.value = FileExtensionList.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-		fromJSON(object: any): ShowSaveDialogOptions_FiltersEntry {
-			return {
-				key: isSet(object.key) ? globalThis.String(object.key) : "",
-				value: isSet(object.value)
-					? FileExtensionList.fromJSON(object.value)
-					: undefined,
-			};
-		},
+  fromJSON(object: any): ShowSaveDialogOptions_FiltersEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? FileExtensionList.fromJSON(object.value) : undefined,
+    };
+  },
 
-		toJSON(message: ShowSaveDialogOptions_FiltersEntry): unknown {
-			const obj: any = {};
-			if (message.key !== "") {
-				obj.key = message.key;
-			}
-			if (message.value !== undefined) {
-				obj.value = FileExtensionList.toJSON(message.value);
-			}
-			return obj;
-		},
+  toJSON(message: ShowSaveDialogOptions_FiltersEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = FileExtensionList.toJSON(message.value);
+    }
+    return obj;
+  },
 
-		create<I extends Exact<DeepPartial<ShowSaveDialogOptions_FiltersEntry>, I>>(
-			base?: I,
-		): ShowSaveDialogOptions_FiltersEntry {
-			return ShowSaveDialogOptions_FiltersEntry.fromPartial(
-				base ?? ({} as any),
-			);
-		},
-		fromPartial<
-			I extends Exact<DeepPartial<ShowSaveDialogOptions_FiltersEntry>, I>,
-		>(object: I): ShowSaveDialogOptions_FiltersEntry {
-			const message = createBaseShowSaveDialogOptions_FiltersEntry();
-			message.key = object.key ?? "";
-			message.value =
-				object.value !== undefined && object.value !== null
-					? FileExtensionList.fromPartial(object.value)
-					: undefined;
-			return message;
-		},
-	};
+  create<I extends Exact<DeepPartial<ShowSaveDialogOptions_FiltersEntry>, I>>(
+    base?: I,
+  ): ShowSaveDialogOptions_FiltersEntry {
+    return ShowSaveDialogOptions_FiltersEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowSaveDialogOptions_FiltersEntry>, I>>(
+    object: I,
+  ): ShowSaveDialogOptions_FiltersEntry {
+    const message = createBaseShowSaveDialogOptions_FiltersEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? FileExtensionList.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
 
 function createBaseFileExtensionList(): FileExtensionList {
-	return { extensions: [] };
+  return { extensions: [] };
 }
 
 export const FileExtensionList: MessageFns<FileExtensionList> = {
-	encode(
-		message: FileExtensionList,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.extensions) {
-			writer.uint32(10).string(v!);
-		}
-		return writer;
-	},
+  encode(message: FileExtensionList, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.extensions) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): FileExtensionList {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseFileExtensionList();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): FileExtensionList {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseFileExtensionList();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.extensions.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.extensions.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): FileExtensionList {
-		return {
-			extensions: globalThis.Array.isArray(object?.extensions)
-				? object.extensions.map((e: any) => globalThis.String(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): FileExtensionList {
+    return {
+      extensions: globalThis.Array.isArray(object?.extensions)
+        ? object.extensions.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
 
-	toJSON(message: FileExtensionList): unknown {
-		const obj: any = {};
-		if (message.extensions?.length) {
-			obj.extensions = message.extensions;
-		}
-		return obj;
-	},
+  toJSON(message: FileExtensionList): unknown {
+    const obj: any = {};
+    if (message.extensions?.length) {
+      obj.extensions = message.extensions;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<FileExtensionList>, I>>(
-		base?: I,
-	): FileExtensionList {
-		return FileExtensionList.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<FileExtensionList>, I>>(
-		object: I,
-	): FileExtensionList {
-		const message = createBaseFileExtensionList();
-		message.extensions = object.extensions?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<FileExtensionList>, I>>(base?: I): FileExtensionList {
+    return FileExtensionList.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileExtensionList>, I>>(object: I): FileExtensionList {
+    const message = createBaseFileExtensionList();
+    message.extensions = object.extensions?.map((e) => e) || [];
+    return message;
+  },
 };
 
 function createBaseShowSaveDialogResponse(): ShowSaveDialogResponse {
-	return { selectedPath: undefined };
+  return { selectedPath: undefined };
 }
 
 export const ShowSaveDialogResponse: MessageFns<ShowSaveDialogResponse> = {
-	encode(
-		message: ShowSaveDialogResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.selectedPath !== undefined) {
-			writer.uint32(10).string(message.selectedPath);
-		}
-		return writer;
-	},
+  encode(message: ShowSaveDialogResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.selectedPath !== undefined) {
+      writer.uint32(10).string(message.selectedPath);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowSaveDialogResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowSaveDialogResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowSaveDialogResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowSaveDialogResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.selectedPath = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.selectedPath = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowSaveDialogResponse {
-		return {
-			selectedPath: isSet(object.selectedPath)
-				? globalThis.String(object.selectedPath)
-				: isSet(object.selected_path)
-					? globalThis.String(object.selected_path)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): ShowSaveDialogResponse {
+    return {
+      selectedPath: isSet(object.selectedPath)
+        ? globalThis.String(object.selectedPath)
+        : isSet(object.selected_path)
+        ? globalThis.String(object.selected_path)
+        : undefined,
+    };
+  },
 
-	toJSON(message: ShowSaveDialogResponse): unknown {
-		const obj: any = {};
-		if (message.selectedPath !== undefined) {
-			obj.selectedPath = message.selectedPath;
-		}
-		return obj;
-	},
+  toJSON(message: ShowSaveDialogResponse): unknown {
+    const obj: any = {};
+    if (message.selectedPath !== undefined) {
+      obj.selectedPath = message.selectedPath;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowSaveDialogResponse>, I>>(
-		base?: I,
-	): ShowSaveDialogResponse {
-		return ShowSaveDialogResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowSaveDialogResponse>, I>>(
-		object: I,
-	): ShowSaveDialogResponse {
-		const message = createBaseShowSaveDialogResponse();
-		message.selectedPath = object.selectedPath ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowSaveDialogResponse>, I>>(base?: I): ShowSaveDialogResponse {
+    return ShowSaveDialogResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowSaveDialogResponse>, I>>(object: I): ShowSaveDialogResponse {
+    const message = createBaseShowSaveDialogResponse();
+    message.selectedPath = object.selectedPath ?? undefined;
+    return message;
+  },
 };
 
 function createBaseShowInputBoxRequest(): ShowInputBoxRequest {
-	return { title: "", prompt: undefined, value: undefined };
+  return { title: "", prompt: undefined, value: undefined };
 }
 
 export const ShowInputBoxRequest: MessageFns<ShowInputBoxRequest> = {
-	encode(
-		message: ShowInputBoxRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.title !== "") {
-			writer.uint32(10).string(message.title);
-		}
-		if (message.prompt !== undefined) {
-			writer.uint32(18).string(message.prompt);
-		}
-		if (message.value !== undefined) {
-			writer.uint32(26).string(message.value);
-		}
-		return writer;
-	},
+  encode(message: ShowInputBoxRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.prompt !== undefined) {
+      writer.uint32(18).string(message.prompt);
+    }
+    if (message.value !== undefined) {
+      writer.uint32(26).string(message.value);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowInputBoxRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowInputBoxRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowInputBoxRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowInputBoxRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.title = reader.string();
-						continue;
-					}
-					case 2: {
-						if (tag !== 18) {
-							break;
-						}
+            message.title = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-						message.prompt = reader.string();
-						continue;
-					}
-					case 3: {
-						if (tag !== 26) {
-							break;
-						}
+            message.prompt = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-						message.value = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.value = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowInputBoxRequest {
-		return {
-			title: isSet(object.title) ? globalThis.String(object.title) : "",
-			prompt: isSet(object.prompt)
-				? globalThis.String(object.prompt)
-				: undefined,
-			value: isSet(object.value) ? globalThis.String(object.value) : undefined,
-		};
-	},
+  fromJSON(object: any): ShowInputBoxRequest {
+    return {
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      prompt: isSet(object.prompt) ? globalThis.String(object.prompt) : undefined,
+      value: isSet(object.value) ? globalThis.String(object.value) : undefined,
+    };
+  },
 
-	toJSON(message: ShowInputBoxRequest): unknown {
-		const obj: any = {};
-		if (message.title !== "") {
-			obj.title = message.title;
-		}
-		if (message.prompt !== undefined) {
-			obj.prompt = message.prompt;
-		}
-		if (message.value !== undefined) {
-			obj.value = message.value;
-		}
-		return obj;
-	},
+  toJSON(message: ShowInputBoxRequest): unknown {
+    const obj: any = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.prompt !== undefined) {
+      obj.prompt = message.prompt;
+    }
+    if (message.value !== undefined) {
+      obj.value = message.value;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowInputBoxRequest>, I>>(
-		base?: I,
-	): ShowInputBoxRequest {
-		return ShowInputBoxRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowInputBoxRequest>, I>>(
-		object: I,
-	): ShowInputBoxRequest {
-		const message = createBaseShowInputBoxRequest();
-		message.title = object.title ?? "";
-		message.prompt = object.prompt ?? undefined;
-		message.value = object.value ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowInputBoxRequest>, I>>(base?: I): ShowInputBoxRequest {
+    return ShowInputBoxRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowInputBoxRequest>, I>>(object: I): ShowInputBoxRequest {
+    const message = createBaseShowInputBoxRequest();
+    message.title = object.title ?? "";
+    message.prompt = object.prompt ?? undefined;
+    message.value = object.value ?? undefined;
+    return message;
+  },
 };
 
 function createBaseShowInputBoxResponse(): ShowInputBoxResponse {
-	return { response: undefined };
+  return { response: undefined };
 }
 
 export const ShowInputBoxResponse: MessageFns<ShowInputBoxResponse> = {
-	encode(
-		message: ShowInputBoxResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.response !== undefined) {
-			writer.uint32(10).string(message.response);
-		}
-		return writer;
-	},
+  encode(message: ShowInputBoxResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.response !== undefined) {
+      writer.uint32(10).string(message.response);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): ShowInputBoxResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseShowInputBoxResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): ShowInputBoxResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseShowInputBoxResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.response = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.response = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): ShowInputBoxResponse {
-		return {
-			response: isSet(object.response)
-				? globalThis.String(object.response)
-				: undefined,
-		};
-	},
+  fromJSON(object: any): ShowInputBoxResponse {
+    return { response: isSet(object.response) ? globalThis.String(object.response) : undefined };
+  },
 
-	toJSON(message: ShowInputBoxResponse): unknown {
-		const obj: any = {};
-		if (message.response !== undefined) {
-			obj.response = message.response;
-		}
-		return obj;
-	},
+  toJSON(message: ShowInputBoxResponse): unknown {
+    const obj: any = {};
+    if (message.response !== undefined) {
+      obj.response = message.response;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<ShowInputBoxResponse>, I>>(
-		base?: I,
-	): ShowInputBoxResponse {
-		return ShowInputBoxResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<ShowInputBoxResponse>, I>>(
-		object: I,
-	): ShowInputBoxResponse {
-		const message = createBaseShowInputBoxResponse();
-		message.response = object.response ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<ShowInputBoxResponse>, I>>(base?: I): ShowInputBoxResponse {
+    return ShowInputBoxResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShowInputBoxResponse>, I>>(object: I): ShowInputBoxResponse {
+    const message = createBaseShowInputBoxResponse();
+    message.response = object.response ?? undefined;
+    return message;
+  },
 };
 
 function createBaseOpenFileRequest(): OpenFileRequest {
-	return { filePath: "" };
+  return { filePath: "" };
 }
 
 export const OpenFileRequest: MessageFns<OpenFileRequest> = {
-	encode(
-		message: OpenFileRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.filePath !== "") {
-			writer.uint32(10).string(message.filePath);
-		}
-		return writer;
-	},
+  encode(message: OpenFileRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filePath !== "") {
+      writer.uint32(10).string(message.filePath);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): OpenFileRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseOpenFileRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): OpenFileRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseOpenFileRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.filePath = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.filePath = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): OpenFileRequest {
-		return {
-			filePath: isSet(object.filePath)
-				? globalThis.String(object.filePath)
-				: isSet(object.file_path)
-					? globalThis.String(object.file_path)
-					: "",
-		};
-	},
+  fromJSON(object: any): OpenFileRequest {
+    return {
+      filePath: isSet(object.filePath)
+        ? globalThis.String(object.filePath)
+        : isSet(object.file_path)
+        ? globalThis.String(object.file_path)
+        : "",
+    };
+  },
 
-	toJSON(message: OpenFileRequest): unknown {
-		const obj: any = {};
-		if (message.filePath !== "") {
-			obj.filePath = message.filePath;
-		}
-		return obj;
-	},
+  toJSON(message: OpenFileRequest): unknown {
+    const obj: any = {};
+    if (message.filePath !== "") {
+      obj.filePath = message.filePath;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<OpenFileRequest>, I>>(
-		base?: I,
-	): OpenFileRequest {
-		return OpenFileRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<OpenFileRequest>, I>>(
-		object: I,
-	): OpenFileRequest {
-		const message = createBaseOpenFileRequest();
-		message.filePath = object.filePath ?? "";
-		return message;
-	},
+  create<I extends Exact<DeepPartial<OpenFileRequest>, I>>(base?: I): OpenFileRequest {
+    return OpenFileRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OpenFileRequest>, I>>(object: I): OpenFileRequest {
+    const message = createBaseOpenFileRequest();
+    message.filePath = object.filePath ?? "";
+    return message;
+  },
 };
 
 function createBaseOpenFileResponse(): OpenFileResponse {
-	return {};
+  return {};
 }
 
 export const OpenFileResponse: MessageFns<OpenFileResponse> = {
-	encode(
-		_: OpenFileResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: OpenFileResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): OpenFileResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseOpenFileResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): OpenFileResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseOpenFileResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): OpenFileResponse {
-		return {};
-	},
+  fromJSON(_: any): OpenFileResponse {
+    return {};
+  },
 
-	toJSON(_: OpenFileResponse): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: OpenFileResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<OpenFileResponse>, I>>(
-		base?: I,
-	): OpenFileResponse {
-		return OpenFileResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<OpenFileResponse>, I>>(
-		_: I,
-	): OpenFileResponse {
-		const message = createBaseOpenFileResponse();
-		return message;
-	},
+  create<I extends Exact<DeepPartial<OpenFileResponse>, I>>(base?: I): OpenFileResponse {
+    return OpenFileResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OpenFileResponse>, I>>(_: I): OpenFileResponse {
+    const message = createBaseOpenFileResponse();
+    return message;
+  },
 };
 
 function createBaseOpenSettingsRequest(): OpenSettingsRequest {
-	return { query: undefined };
+  return { query: undefined };
 }
 
 export const OpenSettingsRequest: MessageFns<OpenSettingsRequest> = {
-	encode(
-		message: OpenSettingsRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.query !== undefined) {
-			writer.uint32(10).string(message.query);
-		}
-		return writer;
-	},
+  encode(message: OpenSettingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.query !== undefined) {
+      writer.uint32(10).string(message.query);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): OpenSettingsRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseOpenSettingsRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): OpenSettingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseOpenSettingsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.query = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.query = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): OpenSettingsRequest {
-		return {
-			query: isSet(object.query) ? globalThis.String(object.query) : undefined,
-		};
-	},
+  fromJSON(object: any): OpenSettingsRequest {
+    return { query: isSet(object.query) ? globalThis.String(object.query) : undefined };
+  },
 
-	toJSON(message: OpenSettingsRequest): unknown {
-		const obj: any = {};
-		if (message.query !== undefined) {
-			obj.query = message.query;
-		}
-		return obj;
-	},
+  toJSON(message: OpenSettingsRequest): unknown {
+    const obj: any = {};
+    if (message.query !== undefined) {
+      obj.query = message.query;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<OpenSettingsRequest>, I>>(
-		base?: I,
-	): OpenSettingsRequest {
-		return OpenSettingsRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<OpenSettingsRequest>, I>>(
-		object: I,
-	): OpenSettingsRequest {
-		const message = createBaseOpenSettingsRequest();
-		message.query = object.query ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<OpenSettingsRequest>, I>>(base?: I): OpenSettingsRequest {
+    return OpenSettingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OpenSettingsRequest>, I>>(object: I): OpenSettingsRequest {
+    const message = createBaseOpenSettingsRequest();
+    message.query = object.query ?? undefined;
+    return message;
+  },
 };
 
 function createBaseOpenSettingsResponse(): OpenSettingsResponse {
-	return {};
+  return {};
 }
 
 export const OpenSettingsResponse: MessageFns<OpenSettingsResponse> = {
-	encode(
-		_: OpenSettingsResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: OpenSettingsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): OpenSettingsResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseOpenSettingsResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): OpenSettingsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseOpenSettingsResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): OpenSettingsResponse {
-		return {};
-	},
+  fromJSON(_: any): OpenSettingsResponse {
+    return {};
+  },
 
-	toJSON(_: OpenSettingsResponse): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: OpenSettingsResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<OpenSettingsResponse>, I>>(
-		base?: I,
-	): OpenSettingsResponse {
-		return OpenSettingsResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<OpenSettingsResponse>, I>>(
-		_: I,
-	): OpenSettingsResponse {
-		const message = createBaseOpenSettingsResponse();
-		return message;
-	},
+  create<I extends Exact<DeepPartial<OpenSettingsResponse>, I>>(base?: I): OpenSettingsResponse {
+    return OpenSettingsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OpenSettingsResponse>, I>>(_: I): OpenSettingsResponse {
+    const message = createBaseOpenSettingsResponse();
+    return message;
+  },
 };
 
 function createBaseGetOpenTabsRequest(): GetOpenTabsRequest {
-	return {};
+  return {};
 }
 
 export const GetOpenTabsRequest: MessageFns<GetOpenTabsRequest> = {
-	encode(
-		_: GetOpenTabsRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: GetOpenTabsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetOpenTabsRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetOpenTabsRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOpenTabsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetOpenTabsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): GetOpenTabsRequest {
-		return {};
-	},
+  fromJSON(_: any): GetOpenTabsRequest {
+    return {};
+  },
 
-	toJSON(_: GetOpenTabsRequest): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: GetOpenTabsRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetOpenTabsRequest>, I>>(
-		base?: I,
-	): GetOpenTabsRequest {
-		return GetOpenTabsRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetOpenTabsRequest>, I>>(
-		_: I,
-	): GetOpenTabsRequest {
-		const message = createBaseGetOpenTabsRequest();
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetOpenTabsRequest>, I>>(base?: I): GetOpenTabsRequest {
+    return GetOpenTabsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOpenTabsRequest>, I>>(_: I): GetOpenTabsRequest {
+    const message = createBaseGetOpenTabsRequest();
+    return message;
+  },
 };
 
 function createBaseGetOpenTabsResponse(): GetOpenTabsResponse {
-	return { paths: [] };
+  return { paths: [] };
 }
 
 export const GetOpenTabsResponse: MessageFns<GetOpenTabsResponse> = {
-	encode(
-		message: GetOpenTabsResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.paths) {
-			writer.uint32(10).string(v!);
-		}
-		return writer;
-	},
+  encode(message: GetOpenTabsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.paths) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetOpenTabsResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetOpenTabsResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOpenTabsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetOpenTabsResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.paths.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.paths.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): GetOpenTabsResponse {
-		return {
-			paths: globalThis.Array.isArray(object?.paths)
-				? object.paths.map((e: any) => globalThis.String(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): GetOpenTabsResponse {
+    return { paths: globalThis.Array.isArray(object?.paths) ? object.paths.map((e: any) => globalThis.String(e)) : [] };
+  },
 
-	toJSON(message: GetOpenTabsResponse): unknown {
-		const obj: any = {};
-		if (message.paths?.length) {
-			obj.paths = message.paths;
-		}
-		return obj;
-	},
+  toJSON(message: GetOpenTabsResponse): unknown {
+    const obj: any = {};
+    if (message.paths?.length) {
+      obj.paths = message.paths;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetOpenTabsResponse>, I>>(
-		base?: I,
-	): GetOpenTabsResponse {
-		return GetOpenTabsResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetOpenTabsResponse>, I>>(
-		object: I,
-	): GetOpenTabsResponse {
-		const message = createBaseGetOpenTabsResponse();
-		message.paths = object.paths?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetOpenTabsResponse>, I>>(base?: I): GetOpenTabsResponse {
+    return GetOpenTabsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOpenTabsResponse>, I>>(object: I): GetOpenTabsResponse {
+    const message = createBaseGetOpenTabsResponse();
+    message.paths = object.paths?.map((e) => e) || [];
+    return message;
+  },
 };
 
 function createBaseGetVisibleTabsRequest(): GetVisibleTabsRequest {
-	return {};
+  return {};
 }
 
 export const GetVisibleTabsRequest: MessageFns<GetVisibleTabsRequest> = {
-	encode(
-		_: GetVisibleTabsRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: GetVisibleTabsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetVisibleTabsRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetVisibleTabsRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): GetVisibleTabsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetVisibleTabsRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): GetVisibleTabsRequest {
-		return {};
-	},
+  fromJSON(_: any): GetVisibleTabsRequest {
+    return {};
+  },
 
-	toJSON(_: GetVisibleTabsRequest): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: GetVisibleTabsRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetVisibleTabsRequest>, I>>(
-		base?: I,
-	): GetVisibleTabsRequest {
-		return GetVisibleTabsRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetVisibleTabsRequest>, I>>(
-		_: I,
-	): GetVisibleTabsRequest {
-		const message = createBaseGetVisibleTabsRequest();
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetVisibleTabsRequest>, I>>(base?: I): GetVisibleTabsRequest {
+    return GetVisibleTabsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetVisibleTabsRequest>, I>>(_: I): GetVisibleTabsRequest {
+    const message = createBaseGetVisibleTabsRequest();
+    return message;
+  },
 };
 
 function createBaseGetVisibleTabsResponse(): GetVisibleTabsResponse {
-	return { paths: [] };
+  return { paths: [] };
 }
 
 export const GetVisibleTabsResponse: MessageFns<GetVisibleTabsResponse> = {
-	encode(
-		message: GetVisibleTabsResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.paths) {
-			writer.uint32(10).string(v!);
-		}
-		return writer;
-	},
+  encode(message: GetVisibleTabsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.paths) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetVisibleTabsResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetVisibleTabsResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): GetVisibleTabsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetVisibleTabsResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.paths.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.paths.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): GetVisibleTabsResponse {
-		return {
-			paths: globalThis.Array.isArray(object?.paths)
-				? object.paths.map((e: any) => globalThis.String(e))
-				: [],
-		};
-	},
+  fromJSON(object: any): GetVisibleTabsResponse {
+    return { paths: globalThis.Array.isArray(object?.paths) ? object.paths.map((e: any) => globalThis.String(e)) : [] };
+  },
 
-	toJSON(message: GetVisibleTabsResponse): unknown {
-		const obj: any = {};
-		if (message.paths?.length) {
-			obj.paths = message.paths;
-		}
-		return obj;
-	},
+  toJSON(message: GetVisibleTabsResponse): unknown {
+    const obj: any = {};
+    if (message.paths?.length) {
+      obj.paths = message.paths;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetVisibleTabsResponse>, I>>(
-		base?: I,
-	): GetVisibleTabsResponse {
-		return GetVisibleTabsResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetVisibleTabsResponse>, I>>(
-		object: I,
-	): GetVisibleTabsResponse {
-		const message = createBaseGetVisibleTabsResponse();
-		message.paths = object.paths?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetVisibleTabsResponse>, I>>(base?: I): GetVisibleTabsResponse {
+    return GetVisibleTabsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetVisibleTabsResponse>, I>>(object: I): GetVisibleTabsResponse {
+    const message = createBaseGetVisibleTabsResponse();
+    message.paths = object.paths?.map((e) => e) || [];
+    return message;
+  },
 };
 
 function createBaseGetActiveEditorRequest(): GetActiveEditorRequest {
-	return {};
+  return {};
 }
 
 export const GetActiveEditorRequest: MessageFns<GetActiveEditorRequest> = {
-	encode(
-		_: GetActiveEditorRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: GetActiveEditorRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetActiveEditorRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetActiveEditorRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): GetActiveEditorRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetActiveEditorRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): GetActiveEditorRequest {
-		return {};
-	},
+  fromJSON(_: any): GetActiveEditorRequest {
+    return {};
+  },
 
-	toJSON(_: GetActiveEditorRequest): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: GetActiveEditorRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetActiveEditorRequest>, I>>(
-		base?: I,
-	): GetActiveEditorRequest {
-		return GetActiveEditorRequest.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetActiveEditorRequest>, I>>(
-		_: I,
-	): GetActiveEditorRequest {
-		const message = createBaseGetActiveEditorRequest();
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetActiveEditorRequest>, I>>(base?: I): GetActiveEditorRequest {
+    return GetActiveEditorRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetActiveEditorRequest>, I>>(_: I): GetActiveEditorRequest {
+    const message = createBaseGetActiveEditorRequest();
+    return message;
+  },
 };
 
 function createBaseGetActiveEditorResponse(): GetActiveEditorResponse {
-	return { filePath: undefined };
+  return { filePath: undefined };
 }
 
 export const GetActiveEditorResponse: MessageFns<GetActiveEditorResponse> = {
-	encode(
-		message: GetActiveEditorResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.filePath !== undefined) {
-			writer.uint32(10).string(message.filePath);
-		}
-		return writer;
-	},
+  encode(message: GetActiveEditorResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filePath !== undefined) {
+      writer.uint32(10).string(message.filePath);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetActiveEditorResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetActiveEditorResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): GetActiveEditorResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetActiveEditorResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.filePath = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.filePath = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): GetActiveEditorResponse {
-		return {
-			filePath: isSet(object.filePath)
-				? globalThis.String(object.filePath)
-				: isSet(object.file_path)
-					? globalThis.String(object.file_path)
-					: undefined,
-		};
-	},
+  fromJSON(object: any): GetActiveEditorResponse {
+    return {
+      filePath: isSet(object.filePath)
+        ? globalThis.String(object.filePath)
+        : isSet(object.file_path)
+        ? globalThis.String(object.file_path)
+        : undefined,
+    };
+  },
 
-	toJSON(message: GetActiveEditorResponse): unknown {
-		const obj: any = {};
-		if (message.filePath !== undefined) {
-			obj.filePath = message.filePath;
-		}
-		return obj;
-	},
+  toJSON(message: GetActiveEditorResponse): unknown {
+    const obj: any = {};
+    if (message.filePath !== undefined) {
+      obj.filePath = message.filePath;
+    }
+    return obj;
+  },
 
-	create<I extends Exact<DeepPartial<GetActiveEditorResponse>, I>>(
-		base?: I,
-	): GetActiveEditorResponse {
-		return GetActiveEditorResponse.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<GetActiveEditorResponse>, I>>(
-		object: I,
-	): GetActiveEditorResponse {
-		const message = createBaseGetActiveEditorResponse();
-		message.filePath = object.filePath ?? undefined;
-		return message;
-	},
+  create<I extends Exact<DeepPartial<GetActiveEditorResponse>, I>>(base?: I): GetActiveEditorResponse {
+    return GetActiveEditorResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetActiveEditorResponse>, I>>(object: I): GetActiveEditorResponse {
+    const message = createBaseGetActiveEditorResponse();
+    message.filePath = object.filePath ?? undefined;
+    return message;
+  },
 };
 
 /** Provides methods for working with IDE windows and editors. */
 export type WindowServiceDefinition = typeof WindowServiceDefinition;
 export const WindowServiceDefinition = {
-	name: "WindowService",
-	fullName: "host.WindowService",
-	methods: {
-		/** Opens a text document in the IDE editor and returns editor information. */
-		showTextDocument: {
-			name: "showTextDocument",
-			requestType: ShowTextDocumentRequest as typeof ShowTextDocumentRequest,
-			requestStream: false,
-			responseType: TextEditorInfo as typeof TextEditorInfo,
-			responseStream: false,
-			options: {},
-		},
-		/** Shows the open file dialogue / file picker. */
-		showOpenDialogue: {
-			name: "showOpenDialogue",
-			requestType: ShowOpenDialogueRequest as typeof ShowOpenDialogueRequest,
-			requestStream: false,
-			responseType: SelectedResources as typeof SelectedResources,
-			responseStream: false,
-			options: {},
-		},
-		/** Shows a notification. */
-		showMessage: {
-			name: "showMessage",
-			requestType: ShowMessageRequest as typeof ShowMessageRequest,
-			requestStream: false,
-			responseType: SelectedResponse as typeof SelectedResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Prompts the user for input and returns the response. */
-		showInputBox: {
-			name: "showInputBox",
-			requestType: ShowInputBoxRequest as typeof ShowInputBoxRequest,
-			requestStream: false,
-			responseType: ShowInputBoxResponse as typeof ShowInputBoxResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Shows the file save dialogue / file picker. */
-		showSaveDialog: {
-			name: "showSaveDialog",
-			requestType: ShowSaveDialogRequest as typeof ShowSaveDialogRequest,
-			requestStream: false,
-			responseType: ShowSaveDialogResponse as typeof ShowSaveDialogResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Opens a file in the IDE. */
-		openFile: {
-			name: "openFile",
-			requestType: OpenFileRequest as typeof OpenFileRequest,
-			requestStream: false,
-			responseType: OpenFileResponse as typeof OpenFileResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Opens the host settings UI, optionally focusing a specific query/section. */
-		openSettings: {
-			name: "openSettings",
-			requestType: OpenSettingsRequest as typeof OpenSettingsRequest,
-			requestStream: false,
-			responseType: OpenSettingsResponse as typeof OpenSettingsResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Returns the open tabs. */
-		getOpenTabs: {
-			name: "getOpenTabs",
-			requestType: GetOpenTabsRequest as typeof GetOpenTabsRequest,
-			requestStream: false,
-			responseType: GetOpenTabsResponse as typeof GetOpenTabsResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Returns the visible tabs. */
-		getVisibleTabs: {
-			name: "getVisibleTabs",
-			requestType: GetVisibleTabsRequest as typeof GetVisibleTabsRequest,
-			requestStream: false,
-			responseType: GetVisibleTabsResponse as typeof GetVisibleTabsResponse,
-			responseStream: false,
-			options: {},
-		},
-		/** Returns information about the current editor */
-		getActiveEditor: {
-			name: "getActiveEditor",
-			requestType: GetActiveEditorRequest as typeof GetActiveEditorRequest,
-			requestStream: false,
-			responseType: GetActiveEditorResponse as typeof GetActiveEditorResponse,
-			responseStream: false,
-			options: {},
-		},
-	},
+  name: "WindowService",
+  fullName: "host.WindowService",
+  methods: {
+    /** Opens a text document in the IDE editor and returns editor information. */
+    showTextDocument: {
+      name: "showTextDocument",
+      requestType: ShowTextDocumentRequest as typeof ShowTextDocumentRequest,
+      requestStream: false,
+      responseType: TextEditorInfo as typeof TextEditorInfo,
+      responseStream: false,
+      options: {},
+    },
+    /** Shows the open file dialogue / file picker. */
+    showOpenDialogue: {
+      name: "showOpenDialogue",
+      requestType: ShowOpenDialogueRequest as typeof ShowOpenDialogueRequest,
+      requestStream: false,
+      responseType: SelectedResources as typeof SelectedResources,
+      responseStream: false,
+      options: {},
+    },
+    /** Shows a notification. */
+    showMessage: {
+      name: "showMessage",
+      requestType: ShowMessageRequest as typeof ShowMessageRequest,
+      requestStream: false,
+      responseType: SelectedResponse as typeof SelectedResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Prompts the user for input and returns the response. */
+    showInputBox: {
+      name: "showInputBox",
+      requestType: ShowInputBoxRequest as typeof ShowInputBoxRequest,
+      requestStream: false,
+      responseType: ShowInputBoxResponse as typeof ShowInputBoxResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Shows the file save dialogue / file picker. */
+    showSaveDialog: {
+      name: "showSaveDialog",
+      requestType: ShowSaveDialogRequest as typeof ShowSaveDialogRequest,
+      requestStream: false,
+      responseType: ShowSaveDialogResponse as typeof ShowSaveDialogResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Opens a file in the IDE. */
+    openFile: {
+      name: "openFile",
+      requestType: OpenFileRequest as typeof OpenFileRequest,
+      requestStream: false,
+      responseType: OpenFileResponse as typeof OpenFileResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Opens the host settings UI, optionally focusing a specific query/section. */
+    openSettings: {
+      name: "openSettings",
+      requestType: OpenSettingsRequest as typeof OpenSettingsRequest,
+      requestStream: false,
+      responseType: OpenSettingsResponse as typeof OpenSettingsResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Returns the open tabs. */
+    getOpenTabs: {
+      name: "getOpenTabs",
+      requestType: GetOpenTabsRequest as typeof GetOpenTabsRequest,
+      requestStream: false,
+      responseType: GetOpenTabsResponse as typeof GetOpenTabsResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Returns the visible tabs. */
+    getVisibleTabs: {
+      name: "getVisibleTabs",
+      requestType: GetVisibleTabsRequest as typeof GetVisibleTabsRequest,
+      requestStream: false,
+      responseType: GetVisibleTabsResponse as typeof GetVisibleTabsResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** Returns information about the current editor */
+    getActiveEditor: {
+      name: "getActiveEditor",
+      requestType: GetActiveEditorRequest as typeof GetActiveEditorRequest,
+      requestStream: false,
+      responseType: GetActiveEditorResponse as typeof GetActiveEditorResponse,
+      responseStream: false,
+      options: {},
+    },
+  },
 } as const;
 
-type Builtin =
-	| Date
-	| Function
-	| Uint8Array
-	| string
-	| number
-	| boolean
-	| undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-	? T
-	: T extends globalThis.Array<infer U>
-		? globalThis.Array<DeepPartial<U>>
-		: T extends ReadonlyArray<infer U>
-			? ReadonlyArray<DeepPartial<U>>
-			: T extends {}
-				? { [K in keyof T]?: DeepPartial<T[K]> }
-				: Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-	? P
-	: P & { [K in keyof P]: Exact<P[K], I[K]> } & {
-			[K in Exclude<keyof I, KeysOfUnion<P>>]: never;
-		};
+type Exact<P, I extends P> = P extends Builtin ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
-	return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
-	return value !== null && value !== undefined;
+  return value !== null && value !== undefined;
 }
 
 interface MessageFns<T> {
-	encode(message: T, writer?: BinaryWriter): BinaryWriter;
-	decode(input: BinaryReader | Uint8Array, length?: number): T;
-	fromJSON(object: any): T;
-	toJSON(message: T): unknown;
-	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }

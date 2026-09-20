@@ -39,7 +39,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "2",
 				leaseEpoch: "2",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: Date.now() + 600_000,
@@ -70,7 +70,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "999",
 				leaseEpoch: "2",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: Date.now() + 600_000,
@@ -112,7 +112,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "1",
 				leaseEpoch: "1",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: Date.now() + 300_000, // Still valid
@@ -143,7 +143,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "1",
 				leaseEpoch: "1",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: Date.now() - 100_000, // Expired
@@ -169,7 +169,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "1",
 				leaseEpoch: "1",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				heartbeatAt: Date.now() - 700_000,
@@ -194,7 +194,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "1",
 				leaseEpoch: "1",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: Date.now() - 100_000, // Would be stale if parsed
@@ -233,7 +233,7 @@ describe("LockAuthorityReconciliation", () => {
 				pid: process.pid,
 				fencingToken: "1",
 				leaseEpoch: "1",
-				authorityMode: "sqlite",
+			authorityMode: "broccoli",
 				workspaceId: tmpDir,
 				swarmId: "test",
 				expiresAt: now - 1000, // Before claimedAt — malformed
@@ -250,7 +250,7 @@ describe("LockAuthorityReconciliation", () => {
 		})
 	})
 
-	describe("SQLite authority ordering and fail-closed behavior", () => {
+	describe("BroccoliDB authority ordering and fail-closed behavior", () => {
 		let previousDbPath: string
 
 		beforeEach(async () => {
@@ -264,9 +264,9 @@ describe("LockAuthorityReconciliation", () => {
 			setDbPath(previousDbPath)
 		})
 
-		it("prevents an old owner tuple from deleting a newer SQLite lease or file projection", async () => {
-			const authority = new UnifiedLockAuthority("sqlite")
-			const resourceKey = "governed-lane:sqlite-cas:0"
+		it("prevents an old owner tuple from deleting a newer BroccoliDB lease or file projection", async () => {
+			const authority = new UnifiedLockAuthority("broccoli")
+			const resourceKey = "governed-lane:broccoli-cas:0"
 			const acquired = await authority.acquire(resourceKey, "owner-new", {
 				workspace: tmpDir,
 				crossProcess: true,
@@ -287,8 +287,8 @@ describe("LockAuthorityReconciliation", () => {
 			released.ok.should.be.true()
 		})
 
-		it("does not roll back the SQLite transition when projection cleanup fails", async () => {
-			const authority = new UnifiedLockAuthority("sqlite")
+		it("does not roll back the BroccoliDB transition when projection cleanup fails", async () => {
+			const authority = new UnifiedLockAuthority("broccoli")
 			const resourceKey = "governed-lane:cleanup-failure:0"
 			const acquired = await authority.acquire(resourceKey, "owner-cleanup", {
 				workspace: tmpDir,
@@ -320,20 +320,20 @@ describe("LockAuthorityReconciliation", () => {
 					highestFencingToken: "9007199254740993",
 				})
 				.execute()
-			const authority = new UnifiedLockAuthority("sqlite")
+			const authority = new UnifiedLockAuthority("broccoli")
 			const acquired = await authority.acquire(resourceKey, "owner-big", { crossProcess: false, requireDurability: true })
 			if (!acquired.ok) throw new Error(acquired.error)
 			acquired.claim.fencingToken.should.equal("9007199254740994")
 			await authority.release(acquired.claim)
 		})
 
-		it("fails closed when persistent SQLite authority is unavailable", async () => {
+		it("fails closed when persistent BroccoliDB authority is unavailable", async () => {
 			const resourceKey = "governed-lane:db-outage:0"
 			await acquireGovernedFileLock(tmpDir, resourceKey, "owner-retained", "1", "1")
 			await destroyDb()
 			setDbPath(tmpDir)
 
-			const authority = new UnifiedLockAuthority("sqlite")
+			const authority = new UnifiedLockAuthority("broccoli")
 			const acquired = await authority.acquire(resourceKey, "owner-new", {
 				workspace: tmpDir,
 				crossProcess: true,
@@ -366,7 +366,7 @@ describe("LockAuthorityReconciliation", () => {
 						leaseEpoch: "1",
 						fencingToken: "1",
 						expiresAt: Date.now() - 1,
-						authorityMode: "sqlite",
+						authorityMode: "broccoli",
 					},
 				},
 				"requestor",

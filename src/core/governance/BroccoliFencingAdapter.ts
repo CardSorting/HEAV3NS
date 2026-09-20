@@ -54,7 +54,7 @@ export async function readBroccoliFence(workspace: string, resourceKey: string):
 		!Number.isFinite(record.claimedAt) ||
 		!Number.isFinite(record.expiresAt) ||
 		(record.expiresAt as number) < (record.claimedAt as number) ||
-		(record.authorityMode !== "sqlite" && record.authorityMode !== "local_test")
+		(record.authorityMode !== "broccoli" && record.authorityMode !== "local_test")
 	) {
 		return { status: "corrupt", path: filePath, reason: "invalid_record" }
 	}
@@ -70,7 +70,7 @@ export async function acquireBroccoliFence(
 	leaseEpoch: string | number = "1",
 	swarmId = "default",
 	laneId?: string,
-	authorityMode: CoordinationAuthorityMode = "sqlite",
+	authorityMode: CoordinationAuthorityMode = "broccoli",
 ): Promise<{ ok: true } | { ok: false; error: string }> {
 	const filePath = broccoliFencePath(workspace, resourceKey)
 	await fs.mkdir(path.dirname(filePath), { recursive: true })
@@ -181,7 +181,7 @@ export async function recoverStaleBroccoliFences(workspace: string, resourcePref
 					typeof parsed.fencingToken !== "string" ||
 					typeof parsed.leaseEpoch !== "string" ||
 					!Number.isFinite(parsed.expiresAt) ||
-					(parsed.authorityMode !== "sqlite" && parsed.authorityMode !== "local_test")
+					(parsed.authorityMode !== "broccoli" && parsed.authorityMode !== "local_test")
 				)
 					continue
 				const record = parsed as BroccoliFenceRecord
@@ -209,7 +209,7 @@ export async function verifyBroccoliFence(
 	ownerId: string,
 	fencingToken: string,
 	leaseEpoch?: string,
-	authorityMode: CoordinationAuthorityMode = "sqlite",
+	authorityMode: CoordinationAuthorityMode = "broccoli",
 ): Promise<{ valid: boolean; reason?: string }> {
 	const existing = await readBroccoliFence(workspace, resourceKey)
 	if (existing.status !== "present") return { valid: false, reason: existing.status }

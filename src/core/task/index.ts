@@ -61,6 +61,7 @@ import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import { formatContentBlockToMarkdown } from "@integrations/misc/export-markdown"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { ITerminalManager } from "@integrations/terminal/types"
+import { TokenCompressionService } from "@noorm/broccolidb"
 import { BrowserSession } from "@services/browser/BrowserSession"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
 import { featureFlagsService } from "@services/feature-flags"
@@ -357,7 +358,7 @@ export class Task {
 	// Workspace manager
 	workspaceManager?: WorkspaceRootManager
 
-	// Task Locking (Sqlite)
+	// Task locking (BroccoliDB)
 	private taskLockAcquired: boolean
 
 	// Command executor for running shell commands (extracted from executeCommandTool)
@@ -2738,9 +2739,19 @@ export class Task {
 			systemPrompt,
 			contextManagementMetadata.truncatedConversationHistory,
 		)
-		await this.writePromptMetadataArtifacts({ systemPrompt: requestSystemPrompt, providerInfo })
+		const tokenCompressionEnabled = this.stateManager.getGlobalSettingsKey("tokenCompressionEnabled") ?? false
+		const tokenCompression = tokenCompressionEnabled
+			? TokenCompressionService.getInstance().compactPrompt({
+					systemPrompt: requestSystemPrompt,
+					messages: contextManagementMetadata.truncatedConversationHistory,
+					requestedModel: providerInfo.model.id,
+				})
+			: undefined
+		const outboundSystemPrompt = tokenCompression?.compactedSystemPrompt ?? requestSystemPrompt
+		const outboundConversation = tokenCompression?.compactedMessages ?? contextManagementMetadata.truncatedConversationHistory
+		await this.writePromptMetadataArtifacts({ systemPrompt: outboundSystemPrompt, providerInfo })
 		this.latencyTracker.markOnce("model_request_started")
-		const stream = this.api.createMessage(requestSystemPrompt, contextManagementMetadata.truncatedConversationHistory, tools)
+		const stream = this.api.createMessage(outboundSystemPrompt, outboundConversation, tools)
 
 		const iterator = stream[Symbol.asyncIterator]()
 

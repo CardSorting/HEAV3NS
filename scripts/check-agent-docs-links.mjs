@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
  * Verify agent workspace docs: required files exist and relative links resolve.
- * Skips broccolidb/ subtree except cross-links we explicitly validate.
  */
 import assert from "node:assert"
 import fs from "node:fs"
@@ -139,11 +138,6 @@ async function main() {
 			while ((m = re.exec(content))) {
 				const target = m[1]
 				if (target.startsWith("http") || target.startsWith("#") || target.startsWith("mailto:")) continue
-				if (target.includes("../broccolidb") || target.includes("broccolidb/docs")) {
-					const resolved = resolveLink(full, target)
-					if (resolved && !existsCached(resolved)) broken.push(`${rel} → ${target}`)
-					continue
-				}
 				const resolved = resolveLink(full, target)
 				if (!resolved || !existsCached(resolved)) broken.push(`${rel} → ${target}`)
 			}

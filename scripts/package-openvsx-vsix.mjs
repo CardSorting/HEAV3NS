@@ -9,7 +9,7 @@ import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { assertVsixHasNativeModule, nativeTargetForHost, rebuildBetterSqlite3 } from "./vsix-native-deps.mjs"
+import { assertVsixHasNativeModule, nativeTargetForHost } from "./vsix-native-deps.mjs"
 import { createWorkspaceLinkManager } from "./workspace-link.mjs"
 
 const OPENVSX_EXTENSION_NAME = "lumi"
@@ -68,8 +68,6 @@ function main() {
 
 	try {
 		ensureBuildArtifacts(repoRoot)
-		rebuildBetterSqlite3(repoRoot)
-
 		pkg.name = OPENVSX_EXTENSION_NAME
 		if (
 			fs.existsSync(path.join(repoRoot, "dist", "extension.js")) &&

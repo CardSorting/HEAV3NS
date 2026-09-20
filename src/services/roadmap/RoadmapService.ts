@@ -48,7 +48,6 @@ const SKIP_DIRS = new Set([
 	"venv",
 	"__pycache__",
 	"kernel/build",
-	"broccolidb/node_modules",
 	".cursor",
 ])
 

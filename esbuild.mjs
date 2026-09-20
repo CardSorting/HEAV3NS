@@ -200,7 +200,7 @@ const extensionConfig = {
 	...baseConfig,
 	entryPoints: ["src/extension.ts"],
 	outfile: `${destDir}/extension.js`,
-	external: ["vscode", "better-sqlite3", "bindings", "file-uri-to-path"],
+	external: ["vscode"],
 }
 
 // E2E build script configuration
@@ -208,7 +208,7 @@ const e2eBuildConfig = {
 	...baseConfig,
 	entryPoints: ["src/test/e2e/utils/build.ts"],
 	outfile: `${destDir}/e2e-build.mjs`,
-	external: ["@vscode/test-electron", "execa", "bindings", "file-uri-to-path"],
+	external: ["@vscode/test-electron", "execa"],
 	sourcemap: false,
 	plugins: [aliasResolverPlugin, esbuildProblemMatcherPlugin],
 }

@@ -2,8 +2,7 @@
 /**
  * Package VS Code Marketplace VSIX as CardSorting.lumi-vscode.
  *
- * Rebuilds better-sqlite3 for Electron and verifies the native binary is
- * included before the VSIX is considered valid.
+ * Packages the extension and verifies the dependency-free BroccoliDB runtime.
  *
  * Usage:
  *   npm run package:vsix
@@ -12,7 +11,7 @@ import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { assertVsixHasNativeModule, nativeTargetForHost, rebuildBetterSqlite3 } from "./vsix-native-deps.mjs"
+import { assertVsixHasNativeModule, nativeTargetForHost } from "./vsix-native-deps.mjs"
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const packageJsonPath = path.join(repoRoot, "package.json")
@@ -58,8 +57,6 @@ function main() {
 
 	try {
 		ensureBuildArtifacts(repoRoot)
-		rebuildBetterSqlite3(repoRoot)
-
 		pkg.name = "lumi-vscode"
 		fs.writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, "\t")}\n`)
 		execFileSync("git", ["add", "package.json"], { cwd: repoRoot })

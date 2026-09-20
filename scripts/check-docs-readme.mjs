@@ -28,7 +28,6 @@ const requiredLinks = [
 	"AGENT_STACK.md",
 	"MAINTAINER.md",
 	"papers/companion-brief.md",
-	"broccolidb/docs/README.md",
 	"core-workflows/working-with-files.mdx",
 	".dietcoderules/hooks",
 ]

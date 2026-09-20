@@ -291,6 +291,8 @@ const USER_SETTINGS_FIELDS = {
 	modEnabled: { default: false as boolean },
 	modOutcome: { default: "plan-and-implement" as "plan-only" | "plan-and-implement" },
 	useAutoCondense: { default: true as boolean },
+	/** Opt-in GALXAI-derived whitespace prompt compression at the provider boundary. */
+	tokenCompressionEnabled: { default: false as boolean },
 	subagentsEnabled: { default: true as boolean },
 	maxSwarmDepth: { default: 3 as number },
 	dietcodeWebToolsEnabled: { default: true as boolean },

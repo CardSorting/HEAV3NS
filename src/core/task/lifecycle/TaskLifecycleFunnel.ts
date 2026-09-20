@@ -25,7 +25,7 @@ import {
 import type { TaskState } from "../TaskState"
 import {
 	InMemoryTaskLifecyclePersistence,
-	SqliteTaskLifecyclePersistence,
+	BroccoliTaskLifecyclePersistence,
 	type TaskLifecyclePersistence,
 } from "./TaskLifecyclePersistence"
 
@@ -796,7 +796,7 @@ export class TaskLifecycleFunnel {
 
 const taskAuthorityBindings = new WeakMap<TaskState, TaskLifecycleFunnel>()
 
-export const taskLifecycleFunnel = new TaskLifecycleFunnel(new SqliteTaskLifecyclePersistence())
+export const taskLifecycleFunnel = new TaskLifecycleFunnel(new BroccoliTaskLifecyclePersistence())
 
 export function bindTaskLifecycleAuthority(taskState: TaskState, authority: TaskLifecycleFunnel): void {
 	taskAuthorityBindings.set(taskState, authority)

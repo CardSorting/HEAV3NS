@@ -93,6 +93,7 @@ export interface ExtensionState {
 	strictPlanModeEnabled?: boolean
 	yoloModeToggled?: boolean
 	useAutoCondense?: boolean
+	tokenCompressionEnabled?: boolean
 	subagentsEnabled?: boolean
 	modEnabled?: boolean
 	modOutcome?: "plan-only" | "plan-and-implement"

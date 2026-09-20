@@ -29,7 +29,7 @@ export const cognitive_memory_variants: DietCodeToolSpec[] = [
 				name: "content",
 				required: true,
 				instruction: "The detailed content of the snapshot.",
-				usage: "We decided to use Kysely for database queries because it provides better type safety than raw SQL.",
+				usage: "We decided to use BroccoliDB table queries because its in-memory tables are portable across environments.",
 			},
 			{
 				name: "metadata",

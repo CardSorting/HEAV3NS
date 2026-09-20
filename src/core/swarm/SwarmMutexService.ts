@@ -22,7 +22,7 @@ function asDatabaseUnavailable(error: unknown, operation: string): CoordinationE
 	if (error instanceof CoordinationError) return error
 	return new CoordinationError(
 		CoordinationErrorCode.DATABASE_AUTHORITY_UNAVAILABLE,
-		`SQLite authority unavailable during ${operation}.`,
+		`BroccoliDB authority unavailable during ${operation}.`,
 		"retry",
 		undefined,
 		error,
@@ -49,7 +49,7 @@ function normalizeLease(row: Record<string, unknown>): DurableSwarmLease {
 		leaseEpoch: String(row.leaseEpoch ?? "0"),
 		fencingToken: String(row.fencingToken ?? "0"),
 		protocolVersion: Number(row.protocolVersion ?? 1),
-		authorityMode: (row.authorityMode as CoordinationAuthorityMode) ?? "sqlite",
+		authorityMode: (row.authorityMode as CoordinationAuthorityMode) ?? "broccoli",
 		pid: Number(row.pid ?? 0),
 	}
 }
@@ -70,7 +70,7 @@ function withImmediateTransaction<T>(rawDb: RawDatabase, operation: () => T): T 
 	}
 }
 
-/** SQLite-backed lease authority. All generation allocation and lease changes are CAS transactions. */
+/** BroccoliDB-backed lease authority. All generation allocation and lease changes are CAS transactions. */
 export class SwarmMutexService {
 	static async acquireLease(key: string, ownerId: string, timeoutMs = 300_000): Promise<DurableSwarmLease> {
 		let rawDb: RawDatabase
@@ -130,7 +130,7 @@ export class SwarmMutexService {
 					rawDb,
 					`INSERT INTO swarm_locks (
 							resource, ownerId, expiresAt, createdAt, leaseEpoch, fencingToken, protocolVersion, authorityMode, pid
-						) VALUES (?, ?, ?, ?, ?, ?, ?, 'sqlite', ?)
+						) VALUES (?, ?, ?, ?, ?, ?, ?, 'broccoli', ?)
 						ON CONFLICT(resource) DO UPDATE SET
 							ownerId = excluded.ownerId,
 							expiresAt = excluded.expiresAt,
@@ -159,7 +159,7 @@ export class SwarmMutexService {
 					leaseEpoch: leaseEpoch.toString(),
 					fencingToken: fencingToken.toString(),
 					protocolVersion: SWARM_LOCK_PROTOCOL_VERSION,
-					authorityMode: "sqlite",
+					authorityMode: "broccoli",
 					pid: process.pid,
 				}
 			})
@@ -199,7 +199,7 @@ export class SwarmMutexService {
 				const deletion = getCachedStatement(
 					rawDb,
 					`DELETE FROM swarm_locks
-						 WHERE resource = ? AND ownerId = ? AND leaseEpoch = ? AND fencingToken = ? AND authorityMode = 'sqlite'`,
+						 WHERE resource = ? AND ownerId = ? AND leaseEpoch = ? AND fencingToken = ? AND authorityMode = 'broccoli'`,
 				).run(key, ownerId, String(leaseEpoch), String(fencingToken))
 				if (deletion.changes === 1) return { status: "released", released: true }
 				const exists = getCachedStatement(rawDb, "SELECT 1 FROM swarm_locks WHERE resource = ?").get(key)
@@ -215,7 +215,7 @@ export class SwarmMutexService {
 		try {
 			const rawDb = await getCoordinationRawDb()
 			withImmediateTransaction(rawDb, () => {
-				getCachedStatement(rawDb, "DELETE FROM swarm_locks WHERE expiresAt < ? AND authorityMode = 'sqlite'").run(
+				getCachedStatement(rawDb, "DELETE FROM swarm_locks WHERE expiresAt < ? AND authorityMode = 'broccoli'").run(
 					Date.now(),
 				)
 			})

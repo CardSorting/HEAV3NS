@@ -259,7 +259,7 @@ function parseRecordRow(row: unknown): TaskLifecycleRecord | undefined {
 	return record
 }
 
-export class SqliteTaskLifecyclePersistence implements TaskLifecyclePersistence {
+export class BroccoliTaskLifecyclePersistence implements TaskLifecyclePersistence {
 	private async database(): Promise<LifecycleRawDatabase> {
 		return (await getCoordinationRawDb()) as LifecycleRawDatabase
 	}

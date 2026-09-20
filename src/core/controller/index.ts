@@ -30,7 +30,6 @@ import { HostProvider } from "@/hosts/host-provider"
 import { orchestrator } from "@/infrastructure/ai/Orchestrator"
 import { dbPool } from "@/infrastructure/db/BufferedDbPool"
 import { getDb, setDbPath } from "@/infrastructure/db/Config"
-import { disableSqlitePersistence, isNativeModuleVersionMismatch } from "@/infrastructure/db/sqlitePersistence"
 import { ExtensionRegistryInfo } from "@/registry"
 import { AuthService } from "@/services/auth/AuthService"
 import { OcaAuthService } from "@/services/auth/oca/OcaAuthService"
@@ -200,8 +199,8 @@ export class Controller implements IController {
 
 		// Initialize Joy-Zoning Persistence Layer
 		const dbPath = this.context.storageUri
-			? path.join(this.context.storageUri.fsPath, "joyzoning.sqlite")
-			: path.join(this.context.globalStorageUri.fsPath, "joyzoning.sqlite")
+			? path.join(this.context.storageUri.fsPath, "joyzoning.broccolidb")
+			: path.join(this.context.globalStorageUri.fsPath, "joyzoning.broccolidb")
 		setDbPath(dbPath)
 		getDb()
 			.then(() => {
@@ -210,9 +209,6 @@ export class Controller implements IController {
 				})
 			})
 			.catch((error) => {
-				if (isNativeModuleVersionMismatch(error)) {
-					disableSqlitePersistence(error instanceof Error ? error.message : String(error))
-				}
 				Logger.error("[Controller] Failed to initialize Joy-Zoning database:", error)
 			})
 
@@ -870,6 +866,7 @@ export class Controller implements IController {
 		const strictPlanModeEnabled = this.stateManager.getGlobalSettingsKey("strictPlanModeEnabled")
 		const yoloModeToggled = this.stateManager.getGlobalSettingsKey("yoloModeToggled")
 		const useAutoCondense = this.stateManager.getGlobalSettingsKey("useAutoCondense")
+		const tokenCompressionEnabled = this.stateManager.getGlobalSettingsKey("tokenCompressionEnabled")
 		const subagentsEnabled = this.stateManager.getGlobalSettingsKey("subagentsEnabled")
 		const modEnabled = this.stateManager.getGlobalSettingsKey("modEnabled")
 		const modOutcome = this.stateManager.getGlobalSettingsKey("modOutcome")
@@ -979,6 +976,7 @@ export class Controller implements IController {
 			strictPlanModeEnabled,
 			yoloModeToggled,
 			useAutoCondense,
+			tokenCompressionEnabled,
 			subagentsEnabled,
 			modEnabled,
 			modOutcome,

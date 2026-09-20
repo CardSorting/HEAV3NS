@@ -28,7 +28,7 @@ export const name = "dietcode"
 </diff>
 </replace_in_file>`
 
-/** Plain acknowledgment after replace_in_file — no attempt_completion (avoids sqlite in E2E). */
+/** Plain acknowledgment after replace_in_file — no attempt_completion (avoids state-layer startup in E2E). */
 const POST_EDIT_ACK = 'I successfully replaced "john" with "dietcode" in the test.ts file. The change has been completed.'
 
 const REPLACE_IN_FILE_RESULT_MARKER = "[replace_in_file for 'test.ts'] Result:"
@@ -82,7 +82,7 @@ export function getLastUserText(messages: MockMessage[]): string | undefined {
 
 export function resolveE2EMockResponse(messages: MockMessage[]): string {
 	// After the file edit tool runs, return plain text only — never attempt_completion
-	// (completion loads native sqlite and loops on ABI mismatch in the E2E extension host).
+	// (completion loads the durable state layer and can loop on an extension-host startup failure).
 	if (conversationHasReplaceInFileResult(messages)) {
 		return E2E_MOCK_API_RESPONSES.POST_EDIT_ACK
 	}

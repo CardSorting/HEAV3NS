@@ -8,208 +8,180 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import type { CallContext, CallOptions } from "nice-grpc-common";
 
-export interface GetWebviewHtmlRequest {}
+export interface GetWebviewHtmlRequest {
+}
 
 export interface GetWebviewHtmlResponse {
-	html?: string | undefined;
+  html?: string | undefined;
 }
 
 function createBaseGetWebviewHtmlRequest(): GetWebviewHtmlRequest {
-	return {};
+  return {};
 }
 
 export const GetWebviewHtmlRequest: MessageFns<GetWebviewHtmlRequest> = {
-	encode(
-		_: GetWebviewHtmlRequest,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		return writer;
-	},
+  encode(_: GetWebviewHtmlRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetWebviewHtmlRequest {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetWebviewHtmlRequest();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWebviewHtmlRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetWebviewHtmlRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(_: any): GetWebviewHtmlRequest {
-		return {};
-	},
+  fromJSON(_: any): GetWebviewHtmlRequest {
+    return {};
+  },
 
-	toJSON(_: GetWebviewHtmlRequest): unknown {
-		const obj: any = {};
-		return obj;
-	},
+  toJSON(_: GetWebviewHtmlRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
 
-	create(base?: DeepPartial<GetWebviewHtmlRequest>): GetWebviewHtmlRequest {
-		return GetWebviewHtmlRequest.fromPartial(base ?? {});
-	},
-	fromPartial(_: DeepPartial<GetWebviewHtmlRequest>): GetWebviewHtmlRequest {
-		const message = createBaseGetWebviewHtmlRequest();
-		return message;
-	},
+  create(base?: DeepPartial<GetWebviewHtmlRequest>): GetWebviewHtmlRequest {
+    return GetWebviewHtmlRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<GetWebviewHtmlRequest>): GetWebviewHtmlRequest {
+    const message = createBaseGetWebviewHtmlRequest();
+    return message;
+  },
 };
 
 function createBaseGetWebviewHtmlResponse(): GetWebviewHtmlResponse {
-	return { html: undefined };
+  return { html: undefined };
 }
 
 export const GetWebviewHtmlResponse: MessageFns<GetWebviewHtmlResponse> = {
-	encode(
-		message: GetWebviewHtmlResponse,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		if (message.html !== undefined) {
-			writer.uint32(10).string(message.html);
-		}
-		return writer;
-	},
+  encode(message: GetWebviewHtmlResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.html !== undefined) {
+      writer.uint32(10).string(message.html);
+    }
+    return writer;
+  },
 
-	decode(
-		input: BinaryReader | Uint8Array,
-		length?: number,
-	): GetWebviewHtmlResponse {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseGetWebviewHtmlResponse();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): GetWebviewHtmlResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseGetWebviewHtmlResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.html = reader.string();
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.html = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): GetWebviewHtmlResponse {
-		return {
-			html: isSet(object.html) ? globalThis.String(object.html) : undefined,
-		};
-	},
+  fromJSON(object: any): GetWebviewHtmlResponse {
+    return { html: isSet(object.html) ? globalThis.String(object.html) : undefined };
+  },
 
-	toJSON(message: GetWebviewHtmlResponse): unknown {
-		const obj: any = {};
-		if (message.html !== undefined) {
-			obj.html = message.html;
-		}
-		return obj;
-	},
+  toJSON(message: GetWebviewHtmlResponse): unknown {
+    const obj: any = {};
+    if (message.html !== undefined) {
+      obj.html = message.html;
+    }
+    return obj;
+  },
 
-	create(base?: DeepPartial<GetWebviewHtmlResponse>): GetWebviewHtmlResponse {
-		return GetWebviewHtmlResponse.fromPartial(base ?? {});
-	},
-	fromPartial(
-		object: DeepPartial<GetWebviewHtmlResponse>,
-	): GetWebviewHtmlResponse {
-		const message = createBaseGetWebviewHtmlResponse();
-		message.html = object.html ?? undefined;
-		return message;
-	},
+  create(base?: DeepPartial<GetWebviewHtmlResponse>): GetWebviewHtmlResponse {
+    return GetWebviewHtmlResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<GetWebviewHtmlResponse>): GetWebviewHtmlResponse {
+    const message = createBaseGetWebviewHtmlResponse();
+    message.html = object.html ?? undefined;
+    return message;
+  },
 };
 
 /** This is for use in integration tests to get the contents of the webview. */
 export type TestingServiceDefinition = typeof TestingServiceDefinition;
 export const TestingServiceDefinition = {
-	name: "TestingService",
-	fullName: "host.TestingService",
-	methods: {
-		getWebviewHtml: {
-			name: "getWebviewHtml",
-			requestType: GetWebviewHtmlRequest as typeof GetWebviewHtmlRequest,
-			requestStream: false,
-			responseType: GetWebviewHtmlResponse as typeof GetWebviewHtmlResponse,
-			responseStream: false,
-			options: {},
-		},
-	},
+  name: "TestingService",
+  fullName: "host.TestingService",
+  methods: {
+    getWebviewHtml: {
+      name: "getWebviewHtml",
+      requestType: GetWebviewHtmlRequest as typeof GetWebviewHtmlRequest,
+      requestStream: false,
+      responseType: GetWebviewHtmlResponse as typeof GetWebviewHtmlResponse,
+      responseStream: false,
+      options: {},
+    },
+  },
 } as const;
 
 export interface TestingServiceImplementation<CallContextExt = {}> {
-	getWebviewHtml(
-		request: GetWebviewHtmlRequest,
-		context: CallContext & CallContextExt,
-	): Promise<DeepPartial<GetWebviewHtmlResponse>>;
+  getWebviewHtml(
+    request: GetWebviewHtmlRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetWebviewHtmlResponse>>;
 }
 
 export interface TestingServiceClient<CallOptionsExt = {}> {
-	getWebviewHtml(
-		request: DeepPartial<GetWebviewHtmlRequest>,
-		options?: CallOptions & CallOptionsExt,
-	): Promise<GetWebviewHtmlResponse>;
+  getWebviewHtml(
+    request: DeepPartial<GetWebviewHtmlRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetWebviewHtmlResponse>;
 }
 
-type Builtin =
-	| Date
-	| Function
-	| Uint8Array
-	| string
-	| number
-	| boolean
-	| undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-	? T
-	: T extends globalThis.Array<infer U>
-		? globalThis.Array<DeepPartial<U>>
-		: T extends ReadonlyArray<infer U>
-			? ReadonlyArray<DeepPartial<U>>
-			: T extends {}
-				? { [K in keyof T]?: DeepPartial<T[K]> }
-				: Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 function isSet(value: any): boolean {
-	return value !== null && value !== undefined;
+  return value !== null && value !== undefined;
 }
 
 interface MessageFns<T> {
-	encode(message: T, writer?: BinaryWriter): BinaryWriter;
-	decode(input: BinaryReader | Uint8Array, length?: number): T;
-	fromJSON(object: any): T;
-	toJSON(message: T): unknown;
-	create(base?: DeepPartial<T>): T;
-	fromPartial(object: DeepPartial<T>): T;
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create(base?: DeepPartial<T>): T;
+  fromPartial(object: DeepPartial<T>): T;
 }

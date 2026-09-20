@@ -946,7 +946,7 @@ export async function durableGetTaskCompletion(taskId: string): Promise<TaskComp
 	} catch (error) {
 		throw new CoordinationError(
 			CoordinationErrorCode.DATABASE_AUTHORITY_UNAVAILABLE,
-			"SQLite authority unavailable while reading task completion.",
+			"BroccoliDB authority unavailable while reading task completion.",
 			"retry",
 			undefined,
 			error,
@@ -981,7 +981,7 @@ export function commitTaskCompletionTransaction(
 			lease.ownerId !== input.record.ownerId ||
 			lease.leaseEpoch !== input.record.leaseEpoch ||
 			lease.fencingToken !== input.record.fencingToken ||
-			lease.authorityMode !== "sqlite" ||
+			lease.authorityMode !== "broccoli" ||
 			Number(lease.protocolVersion) !== SWARM_LOCK_PROTOCOL_VERSION ||
 			Number(lease.expiresAt) < Date.now()
 		) {
@@ -1481,7 +1481,7 @@ export async function prepareCompletionAttempt(
 	const authorityMode = activeLockClaim?.authorityMode ?? configuredCoordinationAuthorityMode()
 	let existingCompletion: TaskCompletionRecord | undefined
 
-	if (authorityMode === "sqlite") {
+	if (authorityMode === "broccoli") {
 		existingCompletion = await durableGetTaskCompletion(config.taskId)
 		if (existingCompletion && existingCompletion.status !== "succeeded") {
 			throw new CoordinationError(
@@ -1542,7 +1542,7 @@ export async function prepareCompletionAttempt(
 	}
 
 	// Check if a rejection record already exists for this decisionId
-	if (authorityMode === "sqlite") {
+	if (authorityMode === "broccoli") {
 		try {
 			const rawDb = (await getCoordinationRawDb()) as CompletionRawDatabase
 			const existingRejection = rawDb
@@ -1626,7 +1626,7 @@ export async function prepareCompletionAttempt(
 	const hasCommand = !!input.command?.trim()
 	const phase = hasCommand ? "evidence_pending" : "prepared"
 
-	if (authorityMode === "sqlite") {
+	if (authorityMode === "broccoli") {
 		const commandDigest = input.command ? createHash("sha256").update(input.command).digest("hex") : null
 		await insertCompletionAttempt({
 			completionAttemptId,
@@ -1873,14 +1873,14 @@ export async function continueCompletionAttempt(
 
 		let committedRecord: TaskCompletionRecord | undefined
 		try {
-			if (authorityMode === "sqlite") {
+			if (authorityMode === "broccoli") {
 				let commitClaim = activeLockClaim
 				let releaseOwnedCompletionLease = false
 				try {
-					if (commitClaim && (commitClaim.authorityMode !== "sqlite" || !commitClaim.backends.swarmMutex)) {
+					if (commitClaim && (commitClaim.authorityMode !== "broccoli" || !commitClaim.backends.swarmMutex)) {
 						throw new CoordinationError(
 							CoordinationErrorCode.AUTHORITY_MODE_MISMATCH,
-							"A local-test or non-durable claim cannot terminalize through SQLite authority.",
+							"A local-test or non-durable claim cannot terminalize through BroccoliDB authority.",
 							"fail_closed",
 						)
 					}
@@ -1896,7 +1896,7 @@ export async function continueCompletionAttempt(
 							ownerId: lease.ownerId,
 							fencingToken: lease.fencingToken,
 							leaseEpoch: lease.leaseEpoch,
-							authorityMode: "sqlite",
+							authorityMode: "broccoli",
 							acquiredAt: lease.createdAt,
 							backends: {
 								inProcess: false,
@@ -2016,7 +2016,7 @@ export async function continueCompletionAttempt(
 	// Case B: Rejected
 	const feedbackText = text ?? ""
 	try {
-		if (authorityMode === "sqlite") {
+		if (authorityMode === "broccoli") {
 			const rawDb = (await getCoordinationRawDb()) as CompletionRawDatabase
 			rawDb
 				.prepare(

@@ -140,9 +140,9 @@ function emptyBackends(): LockBackends {
 
 function resolveStartupCoordinationAuthorityMode(): CoordinationAuthorityMode {
 	const explicit = process.env.LUMI_COORDINATION_AUTHORITY_MODE
-	if (explicit === "sqlite" || explicit === "local_test") return explicit
+	if (explicit === "broccoli" || explicit === "local_test") return explicit
 	if (process.env.LUMI_LOCAL_ONLY === "true" || process.env.TS_NODE_PROJECT?.includes("unit-test")) return "local_test"
-	return "sqlite"
+	return "broccoli"
 }
 
 /** Immutable process-start authority selection. It is never recomputed after module initialization. */
@@ -219,7 +219,7 @@ export function decideReconciliation(
 		return {
 			status: "fail_closed",
 			repairs: [],
-			reason: "SQLite authority is unavailable; no lease or projection may be reclaimed.",
+			reason: "BroccoliDB authority is unavailable; no lease or projection may be reclaimed.",
 		}
 	}
 	if (snapshot.corruptions?.length) {
@@ -237,10 +237,10 @@ export function decideReconciliation(
 			.filter(([, projection]) => projection !== undefined)
 			.map(([backend]) => ({ backend, action: "delete" as const }))
 		return repairs.length
-			? { status: "reclaim", repairs, reason: "Orphaned projections exist without an authoritative SQLite lease." }
+			? { status: "reclaim", repairs, reason: "Orphaned projections exist without an authoritative BroccoliDB lease." }
 			: { status: "already_released", repairs: [], reason: "Lease is already fully released." }
 	}
-	if (database.authorityMode !== "sqlite") {
+	if (database.authorityMode !== "broccoli") {
 		return { status: "fail_closed", repairs: [], reason: `Incompatible database authority mode '${database.authorityMode}'.` }
 	}
 	if (now > database.expiresAt) {
@@ -251,7 +251,7 @@ export function decideReconciliation(
 				{ backend: "database", action: "delete" },
 				...projections.filter(([, value]) => value).map(([backend]) => ({ backend, action: "delete" as const })),
 			],
-			reason: "Authoritative SQLite lease expired.",
+			reason: "Authoritative BroccoliDB lease expired.",
 		}
 	}
 
@@ -266,7 +266,7 @@ export function decideReconciliation(
 			return {
 				status: "fail_closed",
 				repairs: [],
-				reason: `${backend} projection has ${comparison} identity relative to SQLite.`,
+				reason: `${backend} projection has ${comparison} identity relative to BroccoliDB.`,
 			}
 		}
 		if (comparison === "older") repairs.push({ backend, action: "write" })
@@ -276,9 +276,9 @@ export function decideReconciliation(
 				status: "repair_projection",
 				authoritativeLease: database,
 				repairs,
-				reason: "Missing or stale projections must be repaired from SQLite.",
+				reason: "Missing or stale projections must be repaired from BroccoliDB.",
 			}
-		: { status: "retain", authoritativeLease: database, repairs: [], reason: "Active SQLite lease is consistent." }
+		: { status: "retain", authoritativeLease: database, repairs: [], reason: "Active BroccoliDB lease is consistent." }
 }
 
 function observationFromDurableLease(lease: DurableSwarmLease): LeaseObservation {
@@ -296,14 +296,14 @@ function databaseFailure(error: unknown, operation: string): CoordinationError {
 	if (error instanceof CoordinationError) return error
 	return new CoordinationError(
 		CoordinationErrorCode.DATABASE_AUTHORITY_UNAVAILABLE,
-		`SQLite coordination authority unavailable during ${operation}.`,
+		`BroccoliDB coordination authority unavailable during ${operation}.`,
 		"retry",
 		undefined,
 		error,
 	)
 }
 
-/** Unified production authority. SQLite is authoritative; memory and files are projections only. */
+/** Unified production authority. BroccoliDB is authoritative; memory and files are projections only. */
 export class UnifiedLockAuthority implements LockAuthority {
 	static readonly inProcessClaims = new Map<string, InProcessLease>()
 
@@ -466,7 +466,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 			return { ok: false, reason: "durable_backend_unavailable", error: coordination.message }
 		}
 		if (releaseResult.status === "not_owner") {
-			return { ok: false, reason: "owner_mismatch", error: "SQLite lease identity changed before release." }
+			return { ok: false, reason: "owner_mismatch", error: "BroccoliDB lease identity changed before release." }
 		}
 
 		const cleanupErrors: string[] = []
@@ -505,7 +505,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 		}
 		claim.releasedAt = Date.now()
 		if (cleanupErrors.length) {
-			Logger.warn(`[LockAuthority] SQLite release committed; projection cleanup failures: ${cleanupErrors.join("; ")}`)
+			Logger.warn(`[LockAuthority] BroccoliDB release committed; projection cleanup failures: ${cleanupErrors.join("; ")}`)
 		}
 		return { ok: true }
 	}
@@ -670,7 +670,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 						results.push({
 							resourceKey,
 							status: "ownership_conflict",
-							reason: "SQLite lease changed after snapshot.",
+							reason: "BroccoliDB lease changed after snapshot.",
 						})
 						continue
 					}
@@ -740,7 +740,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 		if (!lease || lease.fencingToken !== suppliedToken || lease.expiresAt < Date.now()) {
 			throw new CoordinationError(
 				CoordinationErrorCode.FENCING_TOKEN_REJECTED,
-				`Fencing token '${suppliedToken}' is not the current live SQLite token for '${resourceKey}'.`,
+				`Fencing token '${suppliedToken}' is not the current live BroccoliDB token for '${resourceKey}'.`,
 				"abort_owner",
 			)
 		}
@@ -752,7 +752,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 			) {
 				throw new CoordinationError(
 					CoordinationErrorCode.COORDINATION_STATE_CORRUPT,
-					`Filesystem projection is corrupt or newer than SQLite for '${resourceKey}'.`,
+						`Filesystem projection is corrupt or newer than BroccoliDB for '${resourceKey}'.`,
 					"fail_closed",
 				)
 			}
@@ -959,7 +959,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 	}
 }
 
-/** Test-only authority without SQLite or filesystem projections. */
+/** Test-only authority without BroccoliDB or filesystem projections. */
 export class InMemoryLockAuthority implements LockAuthority {
 	readonly authorityMode = "local_test" as const
 	private readonly delegate = new UnifiedLockAuthority("local_test")
@@ -1003,7 +1003,7 @@ export class InMemoryLockAuthority implements LockAuthority {
 
 export function createLockAuthority(options?: { inMemory?: boolean; mode?: CoordinationAuthorityMode }): LockAuthority {
 	const mode = options?.mode ?? (options?.inMemory ? "local_test" : configuredCoordinationAuthorityMode())
-	return mode === "local_test" ? new InMemoryLockAuthority() : new UnifiedLockAuthority("sqlite")
+	return mode === "local_test" ? new InMemoryLockAuthority() : new UnifiedLockAuthority("broccoli")
 }
 
 export async function releaseGovernedLock(

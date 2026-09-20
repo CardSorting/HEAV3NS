@@ -1699,8 +1699,8 @@ export class ExecutionFunnel {
 				const mode =
 					activeLockClaim && typeof activeLockClaim === "object" && "authorityMode" in activeLockClaim
 						? (activeLockClaim as any).authorityMode
-						: "sqlite"
-				if (mode === "sqlite") {
+						: "broccoli"
+				if (mode === "broccoli") {
 					void (async () => {
 						try {
 							const { getCoordinationRawDb } = require("../../../../infrastructure/db/Config")

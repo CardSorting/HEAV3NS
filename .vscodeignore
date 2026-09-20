@@ -7,21 +7,6 @@ out/
 dist-standalone/
 dist/*.vsix
 node_modules/
-!node_modules/better-sqlite3/package.json
-!node_modules/better-sqlite3/lib/**
-!node_modules/better-sqlite3/build/Release/better_sqlite3.node
-!node_modules/bindings/**
-!node_modules/file-uri-to-path/**
-!node_modules/prebuild-install/**
-!node_modules/detect-libc/**
-!node_modules/expand-template/**
-!node_modules/github-from-package/**
-!node_modules/minimist/**
-!node_modules/node-abi/**
-!node_modules/rc/**
-!node_modules/simple-get/**
-!node_modules/tar-fs/**
-!node_modules/tunnel-agent/**
 src/**
 standalone/**
 .gitignore
@@ -41,8 +26,6 @@ eslint-rules/**
 # cli
 cli/**
 
-# broccolidb
-broccolidb/**
 **/*.db
 **/*.db-shm
 **/*.db-wal
@@ -150,4 +133,3 @@ wrangler.jsonc
 ecosystem.config.cjs
 souls/**
 skills/**
-

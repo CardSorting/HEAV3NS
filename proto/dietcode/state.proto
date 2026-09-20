@@ -316,6 +316,7 @@ message Settings {
   optional string act_mode_galx_model_id = 352;
   optional OpenRouterModelInfo act_mode_galx_model_info = 353;
   map<string, string> open_ai_headers = 354;
+  optional bool token_compression_enabled = 355;
 }
 
 message State {
@@ -465,6 +466,7 @@ message UpdateSettingsRequest {
   optional bool audit_workspace_artifacts_enabled = 54;
   optional bool mod_enabled = 55;
   optional string mod_outcome = 56;
+  optional bool token_compression_enabled = 57;
 }
 
 message UpdateTerminalConnectionTimeoutRequest {

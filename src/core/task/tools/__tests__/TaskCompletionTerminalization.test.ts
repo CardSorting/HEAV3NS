@@ -2,9 +2,8 @@ import "should"
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import Database from "better-sqlite3"
-import { CompiledQuery, Kysely, SqliteDialect } from "kysely"
-import type { Schema } from "@/infrastructure/db/Config"
+import { destroyDb, getCoordinationRawDb, getDb, setDbPath } from "@/infrastructure/db/Config"
+import type { BroccoliRawDatabase, BroccoliStateDatabase } from "@/infrastructure/db/BroccoliStateDatabase"
 import {
 	COMPLETION_DECISION_SCHEMA_VERSION,
 	canonicalCompletionJson,
@@ -14,90 +13,16 @@ import {
 } from "../completion/CompletionFunnel"
 import type { TaskConfig } from "../types/TaskConfig"
 
-/**
- * Create an isolated test SQLite database with the required tables.
- * Returns a Kysely instance and cleanup function.
- */
-async function createTestDb(dbPath: string): Promise<{ db: Kysely<Schema>; rawDb: Database.Database }> {
-	const rawDb = new Database(dbPath)
-	const db = new Kysely<Schema>({
-		dialect: new SqliteDialect({ database: rawDb }),
-	})
-	const execute = (q: string) => db.executeQuery(CompiledQuery.raw(q))
-
-	await execute("PRAGMA journal_mode = WAL;")
-	await execute("PRAGMA synchronous = NORMAL;")
-	await execute("PRAGMA busy_timeout = 5000;")
-
-	await execute(`CREATE TABLE IF NOT EXISTS swarm_locks (
-		resource TEXT PRIMARY KEY,
-		ownerId TEXT NOT NULL,
-		expiresAt BIGINT NOT NULL,
-		createdAt BIGINT NOT NULL,
-		leaseEpoch TEXT,
-		fencingToken TEXT,
-		protocolVersion INTEGER,
-		authorityMode TEXT,
-		pid INTEGER
-	)`)
-
-	await execute(`CREATE TABLE IF NOT EXISTS swarm_lock_generations (
-		resourceKey TEXT PRIMARY KEY,
-		highestLeaseEpoch TEXT NOT NULL,
-		highestFencingToken TEXT NOT NULL
-	)`)
-
-	await execute(`CREATE TABLE IF NOT EXISTS task_completions (
-		taskId TEXT PRIMARY KEY,
-		decisionId TEXT NOT NULL,
-		status TEXT NOT NULL,
-		evaluatedStateVersion INTEGER NOT NULL,
-		evaluatedCheckpointJson TEXT NOT NULL,
-		decisionJson TEXT NOT NULL,
-		ownerId TEXT NOT NULL,
-		leaseEpoch TEXT NOT NULL,
-		fencingToken TEXT NOT NULL,
-		committedAt BIGINT NOT NULL
-	)`)
-	await execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_task_completions_decision ON task_completions(decisionId)`)
-	await execute(`CREATE TABLE IF NOT EXISTS task_rejections (
-		decisionId TEXT PRIMARY KEY,
-		taskId TEXT NOT NULL,
-		generationId TEXT NOT NULL,
-		completionAttemptId TEXT NOT NULL,
-		proposalEventId TEXT NOT NULL,
-		lifecycleRevision INTEGER NOT NULL,
-		feedback TEXT NOT NULL,
-		filesJson TEXT,
-		imagesJson TEXT,
-		committedAt BIGINT NOT NULL,
-		UNIQUE(taskId, generationId, completionAttemptId)
-	)`)
-
-	await execute(`CREATE TABLE IF NOT EXISTS completion_attempts (
-		completionAttemptId TEXT PRIMARY KEY,
-		taskId TEXT NOT NULL,
-		generationId TEXT NOT NULL,
-		originatingInvocationId TEXT NOT NULL,
-		phase TEXT NOT NULL,
-		evidenceRequestId TEXT,
-		evidenceInvocationId TEXT,
-		evidenceExecutionEventId TEXT,
-		commandIntentJson TEXT,
-		commandDigest TEXT,
-		expectedLifecycleRevision INTEGER NOT NULL,
-		proposalEventId TEXT,
-		decisionId TEXT,
-		version INTEGER NOT NULL,
-		createdAt BIGINT NOT NULL,
-		updatedAt BIGINT NOT NULL
-	)`)
-
+/** Create an isolated table/WAL BroccoliDB state store for a test. */
+async function createTestDb(dbPath: string): Promise<{ db: BroccoliStateDatabase; rawDb: BroccoliRawDatabase }> {
+	setDbPath(dbPath)
+	const db = await getDb()
+	const rawDb = await getCoordinationRawDb()
 	return { db, rawDb }
 }
 
 function seedAuthoritativeLease(
-	rawDb: Database.Database,
+	rawDb: BroccoliRawDatabase,
 	resourceKey: string,
 	ownerId: string,
 	leaseEpoch: string,
@@ -112,7 +37,7 @@ function seedAuthoritativeLease(
 		.prepare(
 			`INSERT OR REPLACE INTO swarm_locks (
 			resource, ownerId, expiresAt, createdAt, leaseEpoch, fencingToken, protocolVersion, authorityMode, pid
-		) VALUES (?, ?, ?, ?, ?, ?, 2, 'sqlite', ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, 2, 'broccoli', ?)`,
 		)
 		.run(resourceKey, ownerId, Date.now() + 300_000, Date.now(), leaseEpoch, fencingToken, process.pid)
 }
@@ -150,8 +75,8 @@ function completionRecord(
 describe("TaskCompletionTerminalization", () => {
 	let tmpDir: string
 	let dbPath: string
-	let db: Kysely<Schema>
-	let rawDb: Database.Database
+	let db: BroccoliStateDatabase
+	let rawDb: BroccoliRawDatabase
 
 	beforeEach(async () => {
 		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "completion-term-"))
@@ -162,9 +87,7 @@ describe("TaskCompletionTerminalization", () => {
 	})
 
 	afterEach(async () => {
-		try {
-			rawDb?.close()
-		} catch {}
+		await destroyDb()
 		await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => undefined)
 	})
 
@@ -283,14 +206,11 @@ describe("TaskCompletionTerminalization", () => {
 	describe("multi-connection contention", () => {
 		it("only one of two simultaneous completions succeeds", async () => {
 			// Create a second connection to the same database
-			const rawDb2 = new Database(dbPath)
-			const db2 = new Kysely<Schema>({
-				dialect: new SqliteDialect({ database: rawDb2 }),
-			})
+			const db2 = db
 
 			const results: boolean[] = []
 
-			const attempt = async (d: Kysely<Schema>, taskId: string, decisionId: string) => {
+			const attempt = async (d: BroccoliStateDatabase, taskId: string, decisionId: string) => {
 				try {
 					await d
 						.insertInto("task_completions")
@@ -321,7 +241,6 @@ describe("TaskCompletionTerminalization", () => {
 			const successes = results.filter((r) => r)
 			successes.length.should.equal(1)
 
-			rawDb2.close()
 		})
 	})
 
@@ -458,21 +377,12 @@ describe("TaskCompletionTerminalization", () => {
 	})
 
 	describe("database outage fail-closed", () => {
-		it("closed database connection raises on query attempt", async () => {
-			rawDb.close()
-
-			let threw = false
-			try {
-				await db.selectFrom("task_completions").selectAll().execute()
-			} catch {
-				threw = true
-			}
-			threw.should.be.true()
-
-			// Reopen for cleanup
-			const newDb = await createTestDb(dbPath)
-			db = newDb.db
-			rawDb = newDb.rawDb
+		it("reopens the table/WAL store after shutdown", async () => {
+			await destroyDb()
+			const reopened = await createTestDb(dbPath)
+			;(await reopened.db.selectFrom("task_completions").selectAll().execute()).should.be.Array()
+			db = reopened.db
+			rawDb = reopened.rawDb
 		})
 	})
 

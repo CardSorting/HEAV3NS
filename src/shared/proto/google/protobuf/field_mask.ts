@@ -208,132 +208,111 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
  * `INVALID_ARGUMENT` error if any path is unmappable.
  */
 export interface FieldMask {
-	/** The set of field mask paths. */
-	paths: string[];
+  /** The set of field mask paths. */
+  paths: string[];
 }
 
 function createBaseFieldMask(): FieldMask {
-	return { paths: [] };
+  return { paths: [] };
 }
 
 export const FieldMask: MessageFns<FieldMask> & FieldMaskWrapperFns = {
-	encode(
-		message: FieldMask,
-		writer: BinaryWriter = new BinaryWriter(),
-	): BinaryWriter {
-		for (const v of message.paths) {
-			writer.uint32(10).string(v!);
-		}
-		return writer;
-	},
+  encode(message: FieldMask, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.paths) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
 
-	decode(input: BinaryReader | Uint8Array, length?: number): FieldMask {
-		const reader =
-			input instanceof BinaryReader ? input : new BinaryReader(input);
-		const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
-		if (previousRecursionDepth >= 100) {
-			throw new globalThis.Error("protobuf decode recursion limit exceeded");
-		}
-		(reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
-		try {
-			const end = length === undefined ? reader.len : reader.pos + length;
-			const message = createBaseFieldMask();
-			while (reader.pos < end) {
-				const tag = reader.uint32();
-				switch (tag >>> 3) {
-					case 1: {
-						if (tag !== 10) {
-							break;
-						}
+  decode(input: BinaryReader | Uint8Array, length?: number): FieldMask {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseFieldMask();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-						message.paths.push(reader.string());
-						continue;
-					}
-				}
-				if ((tag & 7) === 4 || tag === 0) {
-					break;
-				}
-				reader.skip(tag & 7);
-			}
-			return message;
-		} finally {
-			(reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
-		}
-	},
+            message.paths.push(reader.string());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
 
-	fromJSON(object: any): FieldMask {
-		return {
-			paths:
-				typeof object === "string"
-					? object.split(",").filter(globalThis.Boolean)
-					: globalThis.Array.isArray(object?.paths)
-						? object.paths.map(globalThis.String)
-						: [],
-		};
-	},
+  fromJSON(object: any): FieldMask {
+    return {
+      paths: typeof object === "string"
+        ? object.split(",").filter(globalThis.Boolean)
+        : globalThis.Array.isArray(object?.paths)
+        ? object.paths.map(globalThis.String)
+        : [],
+    };
+  },
 
-	toJSON(message: FieldMask): string {
-		return message.paths.join(",");
-	},
+  toJSON(message: FieldMask): string {
+    return message.paths.join(",");
+  },
 
-	create<I extends Exact<DeepPartial<FieldMask>, I>>(base?: I): FieldMask {
-		return FieldMask.fromPartial(base ?? ({} as any));
-	},
-	fromPartial<I extends Exact<DeepPartial<FieldMask>, I>>(
-		object: I,
-	): FieldMask {
-		const message = createBaseFieldMask();
-		message.paths = object.paths?.map((e) => e) || [];
-		return message;
-	},
+  create<I extends Exact<DeepPartial<FieldMask>, I>>(base?: I): FieldMask {
+    return FieldMask.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FieldMask>, I>>(object: I): FieldMask {
+    const message = createBaseFieldMask();
+    message.paths = object.paths?.map((e) => e) || [];
+    return message;
+  },
 
-	wrap(paths: string[]): FieldMask {
-		const result = createBaseFieldMask();
-		result.paths = paths;
-		return result;
-	},
+  wrap(paths: string[]): FieldMask {
+    const result = createBaseFieldMask();
+    result.paths = paths;
+    return result;
+  },
 
-	unwrap(message: FieldMask): string[] {
-		return message.paths;
-	},
+  unwrap(message: FieldMask): string[] {
+    return message.paths;
+  },
 };
 
-type Builtin =
-	| Date
-	| Function
-	| Uint8Array
-	| string
-	| number
-	| boolean
-	| undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-	? T
-	: T extends globalThis.Array<infer U>
-		? globalThis.Array<DeepPartial<U>>
-		: T extends ReadonlyArray<infer U>
-			? ReadonlyArray<DeepPartial<U>>
-			: T extends {}
-				? { [K in keyof T]?: DeepPartial<T[K]> }
-				: Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-	? P
-	: P & { [K in keyof P]: Exact<P[K], I[K]> } & {
-			[K in Exclude<keyof I, KeysOfUnion<P>>]: never;
-		};
+type Exact<P, I extends P> = P extends Builtin ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 interface MessageFns<T> {
-	encode(message: T, writer?: BinaryWriter): BinaryWriter;
-	decode(input: BinaryReader | Uint8Array, length?: number): T;
-	fromJSON(object: any): T;
-	toJSON(message: T): unknown;
-	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }
 
 interface FieldMaskWrapperFns {
-	wrap(paths: string[]): FieldMask;
-	unwrap(message: FieldMask): string[];
+  wrap(paths: string[]): FieldMask;
+  unwrap(message: FieldMask): string[];
 }
