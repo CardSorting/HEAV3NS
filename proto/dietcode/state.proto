@@ -317,6 +317,7 @@ message Settings {
   optional OpenRouterModelInfo act_mode_galx_model_info = 353;
   map<string, string> open_ai_headers = 354;
   optional bool token_compression_enabled = 355;
+  optional bool joy_zoning_steering_enabled = 356;
 }
 
 message State {
@@ -407,6 +408,7 @@ message UpdateTaskSettingsRequest {
   Metadata metadata = 1;
   optional Settings settings = 2;
   optional string task_id = 3;
+  optional bool clear_joy_zoning_steering_enabled = 4;
 }
 
 // Message for updating settings
@@ -467,6 +469,7 @@ message UpdateSettingsRequest {
   optional bool mod_enabled = 55;
   optional string mod_outcome = 56;
   optional bool token_compression_enabled = 57;
+  optional bool joy_zoning_steering_enabled = 58;
 }
 
 message UpdateTerminalConnectionTimeoutRequest {

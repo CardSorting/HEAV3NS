@@ -133,6 +133,13 @@ export async function updateTaskSettings(controller: Controller, request: Update
 		}
 	}
 
+	// A task can temporarily opt out of JoyZoning guidance without changing
+	// the user's saved default. Clearing the override is intentionally explicit
+	// so an omitted protobuf field never resets a task by accident.
+	if (request.clearJoyZoningSteeringEnabled) {
+		controller.stateManager.clearTaskSetting(taskId, "joyZoningSteeringEnabled")
+	}
+
 	// Post updated state to webview
 	await controller.postStateToWebview()
 

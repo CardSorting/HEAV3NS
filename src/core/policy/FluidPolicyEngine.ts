@@ -29,6 +29,7 @@ import { StabilityPolicy } from "./StabilityPolicy"
 import { StabilityTelemetrics } from "./StabilityTelemetrics"
 import { SpiderEngine } from "./spider/SpiderEngine"
 import { TspPolicyPlugin } from "./TspPolicyPlugin"
+import { resolveWorkspaceArchitectureSteering, type WorkspaceArchitectureSteering } from "./WorkspaceArchitectureProfile"
 
 export interface PolicyResult {
 	success: boolean
@@ -102,7 +103,10 @@ export class FluidPolicyEngine {
 		private stateManager?: StateManager,
 		private virtualResolver?: (path: string) => string | undefined,
 	) {
-		this.tspPlugin = new TspPolicyPlugin(this.cwd)
+		this.tspPlugin = new TspPolicyPlugin(
+			this.cwd,
+			() => this.stateManager?.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false,
+		)
 		this.spiderEngine = new SpiderEngine(this.cwd)
 		this.auditRecorder = new AuditRecorder(this.cwd)
 		this.simulationEngine = new SimulationEngine(this.cwd)
@@ -119,7 +123,7 @@ export class FluidPolicyEngine {
 			this.spiderEngine,
 			this.anomalies,
 			this.stabilityMonitor,
-			this.usesCanonicalJoyZoning(),
+			() => this.usesCanonicalJoyZoning(),
 		)
 		this.telemetrics = new StabilityTelemetrics(this.cwd, this.stabilityMonitor, this.spiderEngine, this.anomalies)
 		this.verification = new AxiomVerificationService(
@@ -239,16 +243,29 @@ export class FluidPolicyEngine {
 	}
 
 	public getFileLayerContext(filePath: string): string {
+		if (this.getArchitectureSteering() === "disabled") return ""
 		const architectureProfile = this.tspPlugin.getArchitectureProfile()
-		if (!architectureProfile.enforceCanonicalLayers) {
-			return `📍 ${path.basename(filePath)} → WORKSPACE-NATIVE · JOYZONING-STEERED\n  ✅ Mirror nearby modules, naming, dependency flow, tests, and framework idioms\n  🧭 Use JoyZoning to steer cohesion, ownership, testability, and decision/effect boundaries\n  🚫 Do not introduce JoyZoning folders, layer tags, or DDD abstractions unless the workspace already uses them`
+		if (this.getArchitectureSteering() === "blended" || !architectureProfile.enforceCanonicalLayers) {
+			return `📍 ${path.basename(filePath)} → WORKSPACE-NATIVE · ARCHITECTURE-FIT\n  ✅ Mirror nearby modules, naming, dependency flow, tests, and framework idioms\n  🧭 Keep cohesion, ownership, testability, and decision/effect boundaries explicit\n  🚫 Do not introduce canonical folders, layer tags, or DDD abstractions unless the workspace already uses them`
 		}
 		const layer = this.getCachedLayer(filePath)
 		return this.verification.getFileLayerContext(filePath, layer)
 	}
 
+	public getArchitectureProfile() {
+		return this.tspPlugin.getArchitectureProfile()
+	}
+
+	public getArchitectureSteering(): WorkspaceArchitectureSteering {
+		return resolveWorkspaceArchitectureSteering(this.getArchitectureProfile(), this.isJoyZoningSteeringEnabled())
+	}
+
 	private usesCanonicalJoyZoning(): boolean {
-		return this.tspPlugin.getArchitectureProfile().enforceCanonicalLayers
+		return this.getArchitectureSteering() === "canonical"
+	}
+
+	public isJoyZoningSteeringEnabled(): boolean {
+		return this.stateManager?.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false
 	}
 
 	public getCorrectionHint(errors: string[], filePath?: string): string {
@@ -317,8 +334,9 @@ export class FluidPolicyEngine {
 		allowVirtualFallback?: boolean
 		allowAutoHeal?: boolean
 	}): Promise<{ content: string; hasAudit: boolean; hasBreath: boolean }> {
-		const allowVirtualFallback = options?.allowVirtualFallback ?? true
-		const allowAutoHeal = options?.allowAutoHeal ?? true
+		const canonicalSteering = this.usesCanonicalJoyZoning()
+		const allowVirtualFallback = canonicalSteering && (options?.allowVirtualFallback ?? true)
+		const allowAutoHeal = canonicalSteering && (options?.allowAutoHeal ?? true)
 		const scratchpadPath = path.join(this.cwd, "scratchpad.md")
 
 		try {
@@ -397,13 +415,16 @@ export class FluidPolicyEngine {
 			const isScratchpad = targetPath?.endsWith("scratchpad.md")
 
 			if (!isScratchpad) {
+				const planArtifactGuidance = this.usesCanonicalJoyZoning()
+					? "1. Update `scratchpad.md` with your architectural analysis."
+					: "1. Keep the plan in the workspace's established planning notes or in `plan_mode_respond`; do not create a scratchpad solely for this workflow."
 				return {
 					success: false,
 					error:
 						`🛑 PLAN MODE RESTRICTION: You are attempting to modify \`${targetPath}\` while in PLAN mode.\n\n` +
 						`💡 WORKFLOW GUIDANCE: You MUST NOT edit source code, documentation, changelogs, or wikis until your plan is finalized.\n\n` +
 						`✅ ALLOWED ACTIONS:\n` +
-						`1. Update \`scratchpad.md\` with your architectural analysis.\n` +
+						`${planArtifactGuidance}\n` +
 						`2. Use \`plan_mode_respond\` to present your final plan to the user.\n` +
 						`3. The system will automatically transition to ACT mode after your plan is finalized.`,
 				}
@@ -533,13 +554,15 @@ export class FluidPolicyEngine {
 		) {
 			const isTargetingAudit = (block.params as { path?: string })?.path?.endsWith("scratchpad.md")
 			if (!isTargetingAudit) {
-				const auditTemplate = IntegrityProtocol.generateAuditTemplate("Agentic Failure Recovery")
+				const recoveryGuidance = this.usesCanonicalJoyZoning()
+					? `💡 STEPS: To move forward, please perform a # STRATEGIC REVIEW in \`scratchpad.md\` to refine your plan.\n\n` +
+						`\`\`\`markdown\n${IntegrityProtocol.generateAuditTemplate("Agentic Failure Recovery")}\n\`\`\``
+					: "💡 STEPS: Pause the loop, restate the current objective from the latest evidence, then make one bounded change or present the plan."
 				result.warning =
 					(result.warning ? `${result.warning}\n` : "") +
 					`🛑 [ADVISORY] STRATEGIC FOCUS BREAK: Repetitive activity detected.\n` +
 					`You appear to be in a loop (repeated investigation without changes).\n\n` +
-					`💡 STEPS: To move forward, please perform a # STRATEGIC REVIEW in \`scratchpad.md\` to refine your plan.\n\n` +
-					`\`\`\`markdown\n${auditTemplate}\n\`\`\``
+					recoveryGuidance
 				return result // Total Deblocking: No longer blocking
 			}
 		}
@@ -605,24 +628,25 @@ export class FluidPolicyEngine {
 						return result
 					}
 
-					const auditTemplate = IntegrityProtocol.generateAuditTemplate("Cognitive Recovery")
-					const breathTemplate = IntegrityProtocol.generateBreathTemplate("Stability Reset", cooldown.reason)
+					const cooldownGuidance = this.usesCanonicalJoyZoning()
+						? `📝 OPTION A: [Strategic Review]\n` +
+							`\`\`\`markdown\n${IntegrityProtocol.generateAuditTemplate("Cognitive Recovery")}\n\`\`\`\n\n` +
+							`📝 OPTION B: [Stability Break]\n` +
+							`\`\`\`markdown\n${IntegrityProtocol.generateBreathTemplate("Stability Reset", cooldown.reason)}\n\`\`\`\n`
+						: "📝 Take a short planning pause in the workspace's normal notes, reduce the next change to one verifiable step, and continue when the evidence is clear."
 
 					result.warning =
 						(result.warning ? `${result.warning}\n` : "") +
 						`⚠️ [ADVISORY] ACTIVITY COOLDOWN: ${cooldown.reason}\n` +
 						`The project foundation has reached a high level of activity. Consider a planning pause.\n\n` +
-						`📝 OPTION A: [Strategic Review]\n` +
-						`\`\`\`markdown\n${auditTemplate}\n\`\`\`\n\n` +
-						`📝 OPTION B: [Stability Break]\n` +
-						`\`\`\`markdown\n${breathTemplate}\n\`\`\`\n`
+						cooldownGuidance
 					return result // Total Deblocking: No longer blocking
 				}
 			}
 		}
 
 		// V24: Implicit Guideline Injection (Contextual Awareness)
-		if (block.name === DietCodeDefaultTool.FILE_READ) {
+		if (block.name === DietCodeDefaultTool.FILE_READ && this.getArchitectureSteering() !== "disabled") {
 			const targetPath = (block.params as { path?: string })?.path
 			if (targetPath) {
 				const { content: scratchpadContent } = await this.resolveScratchpadContext()
@@ -719,10 +743,13 @@ export class FluidPolicyEngine {
 				}
 
 				if (status.active && !hasOverride && !hasBreath && !this.commitSeal) {
+					const safetyGuidance = this.usesCanonicalJoyZoning()
+						? "provide a justification in `scratchpad.md` to unlock a restoration token"
+						: "record the reason in the workspace's established planning notes or reduce the change to one verifiable step"
 					result.warning =
 						(result.warning ? `${result.warning}\n` : "") +
 						`⚠️ [ADVISORY] STABILITY SAFETY GUARD: \`${path.basename(targetPath)}\` is changing very rapidly right now (${status.reason}).\n` +
-						`💡 STEPS: To continue, please simplify your change or provide a justification in \`scratchpad.md\` to unlock a restoration token.\n` +
+						`💡 STEPS: To continue, please simplify your change or ${safetyGuidance}.\n` +
 						`Alternatively, you can use \`[STABILITY_EXCEPTION: Safety Guard Override]\` in your edit.`
 					return result // Total Deblocking: No longer blocking
 				}
@@ -785,8 +812,10 @@ export class FluidPolicyEngine {
 			const { oldPath, newPath } = block.params as { oldPath: string; newPath: string }
 
 			// V8: Detect agile mode in turn
-			const { content: scratchpadContent } = await this.resolveScratchpadContext({ allowVirtualFallback: false })
-			const isAgile = scratchpadContent.includes("# SOVEREIGN_AGILE")
+			const { content: scratchpadContent } = this.usesCanonicalJoyZoning()
+				? await this.resolveScratchpadContext({ allowVirtualFallback: false })
+				: { content: "" }
+			const isAgile = this.usesCanonicalJoyZoning() && scratchpadContent.includes("# SOVEREIGN_AGILE")
 
 			const sim = await this.simulationEngine.simulateMove(
 				oldPath,
@@ -798,7 +827,9 @@ export class FluidPolicyEngine {
 			)
 			if (!sim.safe && !this.commitSeal && !isHealingMode) {
 				const healingHint = !isHealingMode
-					? "\n\n💡 PRO-TIP: To bypass simulation blocks during structural repairs, add `# HEALING TURN` to your `scratchpad.md`."
+					? this.usesCanonicalJoyZoning()
+						? "\n\n💡 PRO-TIP: To bypass simulation blocks during structural repairs, add `# HEALING TURN` to your `scratchpad.md`."
+						: "\n\n💡 PRO-TIP: Narrow the move, verify its import/test impact, or use the normal workspace approval path for an intentional structural change."
 					: ""
 				return {
 					success: true,
@@ -835,7 +866,9 @@ export class FluidPolicyEngine {
 			block.name === DietCodeDefaultTool.FILE_EDIT ||
 			block.name === DietCodeDefaultTool.APPLY_PATCH
 		) {
-			const { content: scratchpadContent } = await this.resolveScratchpadContext()
+			const { content: scratchpadContent } = this.usesCanonicalJoyZoning()
+				? await this.resolveScratchpadContext()
+				: { content: "" }
 			if (scratchpadContent.includes("#REFACTOR") || scratchpadContent.includes("#MIGRATION")) {
 				if (this.refactorTurnsRemaining <= 0) {
 					this.refactorTurnsRemaining = 3 // Standard 3-turn window
@@ -911,7 +944,6 @@ export class FluidPolicyEngine {
 			if (this.mode === "plan" && block.params?.path) {
 				// consolidated to top-level import
 				const filePath = path.resolve(this.cwd, block.params.path)
-				const layer = getLayer(filePath)
 
 				// Predictive Collision Check: Warn early if another stream has a lock
 				const collision = await orchestrator.checkCollision(this.streamId || "viewer", [filePath])
@@ -921,6 +953,20 @@ export class FluidPolicyEngine {
 						warning: `⚠️ PREDICTIVE COLLISION: You are planning to edit \`${path.basename(filePath)}\`, but it's currently LOCKED by a sibling stream. Coordination is required before acting.`,
 					}
 				}
+
+				const steeringMode = this.getArchitectureSteering()
+				if (steeringMode === "disabled") {
+					return { success: true }
+				}
+
+				if (steeringMode === "blended") {
+					return {
+						success: true,
+						warning: `📍 Planning against the workspace's existing boundaries (${path.basename(filePath)}). Preserve local placement, vocabulary, and verification seams.`,
+					}
+				}
+
+				const layer = getLayer(filePath)
 
 				return {
 					success: true,
@@ -1133,8 +1179,9 @@ export class FluidPolicyEngine {
 			// V204: Non-Blocking Integrity Advisories (TIA)
 			// Pull healing suggestions from the structural graph only for targeted files.
 			const targetedPath = block.params?.path as string
-			if (targetedPath && typeof targetedPath === "string") {
-				const advisories = this.spiderEngine.getIntegrityAdvisories(targetedPath)
+			if (this.getArchitectureSteering() !== "disabled" && targetedPath && typeof targetedPath === "string") {
+				const canonicalSteering = this.getArchitectureSteering() === "canonical"
+				const advisories = canonicalSteering ? this.spiderEngine.getIntegrityAdvisories(targetedPath) : []
 				const brittlePaths = this.refactorHealer.detectRelativeImports(
 					targetedPath,
 					block.params?.content as string,
@@ -1176,7 +1223,8 @@ export class FluidPolicyEngine {
 						...vibrations.map((v) => `  - 🚨 [SUBSTRATE_VIBRATION]: ${v.message}`),
 					].join("\n")
 
-					result.warning = `${result.warning ? `${result.warning}\n\n` : ""}### 🔍 ARCHITECTURAL ADVISORIES\n${advisoryHint}\n\n*These are passive suggestions to improve structural health. You may address them in this turn or a subsequent stabilization phase.*`
+					const heading = canonicalSteering ? "ARCHITECTURAL ADVISORIES" : "ARCHITECTURE FIT ADVISORIES"
+					result.warning = `${result.warning ? `${result.warning}\n\n` : ""}### 🔍 ${heading}\n${advisoryHint}\n\n*These are passive suggestions. Preserve native workspace boundaries and address them only when they support the requested change.*`
 				}
 			}
 		} finally {
@@ -1243,6 +1291,12 @@ export class FluidPolicyEngine {
 		await this.stalenessTracker.recordRead(absolutePath, content)
 		this.stabilityMonitor.recordRead(absolutePath, content)
 
+		// Keep the read useful and cheap when architecture guidance is off. The
+		// lightweight tracking above still supports generic safety/telemetry paths;
+		// all JoyZoning-specific context and audit enrichment stops here.
+		if (!this.isJoyZoningSteeringEnabled()) return content
+		const canonicalSteering = this.getArchitectureSteering() === "canonical"
+
 		// V189: Neural Forensic Extraction
 		const symbolRegex = /(?:class|function|interface)\s+([a-zA-Z0-9_$]+)/g
 		let match = symbolRegex.exec(content)
@@ -1264,10 +1318,18 @@ export class FluidPolicyEngine {
 
 		const layerContext = this.getFileLayerContext(absolutePath)
 		const validation = this.tspPlugin.validateSource(absolutePath, content, this.virtualResolver)
-		const layer = this.getCachedLayer(absolutePath)
-		const refactorSuggestions = SpiderRefactorer.getRefactoringSuggestions(this.spiderEngine)
+		const layer = canonicalSteering ? this.getCachedLayer(absolutePath) : ""
+		const refactorSuggestions = canonicalSteering ? SpiderRefactorer.getRefactoringSuggestions(this.spiderEngine) : []
 
 		let header = `${layerContext}\n`
+
+		if (validation.warnings.length > 0) {
+			const heading = canonicalSteering ? "ARCHITECTURAL ADVISORIES" : "ARCHITECTURE FIT ADVISORIES"
+			header += `\n### 🔍 ${heading}\n${validation.warnings
+				.slice(0, 8)
+				.map((warning) => `  - ${warning}`)
+				.join("\n")}\n`
+		}
 
 		if (refactorSuggestions.length > 0) {
 			header += `🕷️ ARCHITECTURAL REFACTORING OPPORTUNITIES:\n${refactorSuggestions.map((s: RefactoringSuggestion) => `  - [${s.type}] ${s.target}: ${s.reason} (${s.benefit})`).join("\n")}\n`
@@ -1307,7 +1369,10 @@ export class FluidPolicyEngine {
 		const karmaBonus = this.karma > 1500 ? " (Elite Karma Active)" : ""
 
 		if (buildHealth < 70) {
-			header += `\n🛡️ [STABILITY ADVISORY]: Structural Integrity is ${buildHealth}/100${karmaBonus}. Prioritize healing circularities and layer violations.\n`
+			const integrityFocus = this.usesCanonicalJoyZoning()
+				? "Prioritize healing circularities and canonical boundary violations."
+				: "Prioritize the smallest build, lint, dependency, or test failures that block progress."
+			header += `\n🛡️ [STABILITY ADVISORY]: Structural Integrity is ${buildHealth}/100${karmaBonus}. ${integrityFocus}\n`
 		}
 
 		// Axiomatic Logic Report
@@ -1320,7 +1385,7 @@ export class FluidPolicyEngine {
 
 		// V300: Drift Prophecy in PLAN mode
 		if (this.mode === "plan") {
-			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd)
+			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd, () => this.getArchitectureSteering())
 			const status = await enforcer.getStrategicReviewStatus(this.stabilityMonitor)
 			if (status.prophecy) {
 				header += `\n${status.prophecy}\n`
@@ -1341,7 +1406,7 @@ export class FluidPolicyEngine {
 				scratchpadExists = true
 			} catch (_) {}
 
-			if (!scratchpadExists && (doubt >= 15.0 || cooldown.active)) {
+			if (canonicalSteering && !scratchpadExists && (doubt >= 15.0 || cooldown.active)) {
 				const template = this.getSystemDiagnostics()
 				header +=
 					`⚠️ HEAVY INVESTIGATION DETECTED: Your activity suggests a plan update is needed.\n` +
@@ -1365,24 +1430,26 @@ export class FluidPolicyEngine {
 				header += `\n${drift.warning}\n`
 			}
 
-			if (drift.drift > 0.15) {
+			if (canonicalSteering && drift.drift > 0.15) {
 				header += `\n🕸️ [STRUCTURAL DRIFT]: Graph is ${SafeNumber.formatPercent(drift.drift, 1)}% cross-layer (Target: < 15%).\n`
 			}
 		}
 
 		// V340: Sovereign Drafting & Instruction Pruning
-		const isAgileLayer = ["ui", "infrastructure", "api", "utils", "shared", "plumbing"].includes(layer)
-		const isCoreLayer = layer === "domain" || layer === "core"
+		const isAgileLayer = canonicalSteering && ["ui", "infrastructure", "api", "utils", "shared", "plumbing"].includes(layer)
+		const isCoreLayer = canonicalSteering && (layer === "domain" || layer === "core")
 		const isSaturated = totalReadCount >= 5
 
 		if (this.mode === "plan") {
-			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd)
+			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd, () => this.getArchitectureSteering())
 			const status = await enforcer.getStrategicReviewStatus(this.stabilityMonitor)
 			if (status.prophecy) header += `\n${status.prophecy}\n`
 
 			if (isSaturated) {
 				header += `\n⚡ [CONTEXT SATURATED]: Sufficient info gathered. Call \`plan_mode_respond\` NOW.\n`
-				header += `📍 [SOVEREIGN DRAFTING]: Focus purely on logic. Secondary audits are DEFERRED to ACT mode.\n`
+				header += canonicalSteering
+					? `📍 [SOVEREIGN DRAFTING]: Focus purely on logic. Secondary audits are DEFERRED to ACT mode.\n`
+					: `📍 [ARCHITECTURE FIT]: Focus on the requested change and the workspace's native seams. Defer unrelated cleanup.\n`
 			} else {
 				const node = this.spiderEngine.nodes.get(this.normalize(absolutePath))
 				if (node && node.dependents.length > 5 && isCoreLayer) {
@@ -1403,7 +1470,9 @@ export class FluidPolicyEngine {
 				header += `\n⚠️ [SCANNING LIMIT]: Call \`plan_mode_respond\`.\n`
 			}
 		} else if (this.mode === "act") {
-			header += `🛠️ Layer: ${layer.toUpperCase()} | Karma: ${this.karma}\n`
+			if (canonicalSteering) {
+				header += `🛠️ Layer: ${layer.toUpperCase()} | Karma: ${this.karma}\n`
+			}
 
 			// Context-Aware Tool Guidance
 			if (this.commitSeal) {
@@ -1551,7 +1620,12 @@ export class FluidPolicyEngine {
 						// If build health is low and the current edit is in a peripheral file, encourage healing first.
 						const drift = this.stabilityMonitor.getTaskDrift(isRefactoringIntent)
 						const layer = this.getCachedLayer(filePath)
-						if (drift.warning && this.lastBuildHealth < 75 && !layer.match(/domain|core/i)) {
+						if (
+							this.getArchitectureSteering() === "canonical" &&
+							drift.warning &&
+							this.lastBuildHealth < 75 &&
+							!layer.match(/domain|core/i)
+						) {
 							result.success = true // V201: Soft-Lock (Allow but Mandate)
 							result.warning =
 								`The substrate has enabled an Integrity Advisory. You are encouraged to return focus to healing the core logic violations before proceed with this new logic.\n\n` +
@@ -1847,6 +1921,10 @@ export class FluidPolicyEngine {
 	}
 
 	private async ensureScratchpadIntegrity(taskName = "Architectural Recovery"): Promise<{ content: string; created: boolean }> {
+		if (!this.usesCanonicalJoyZoning()) {
+			return { content: "", created: false }
+		}
+
 		const scratchpadPath = path.join(this.cwd, "scratchpad.md")
 		try {
 			const content = await fs.readFile(scratchpadPath, "utf-8")
@@ -1936,7 +2014,8 @@ export class FluidPolicyEngine {
 	 * Removed raw XML to prevent agentic spiraling.
 	 */
 	private generateIntegrityAdvisor(files: string[]): string {
-		return `💡 [INTEGRITY_ADVISORY]: Auto-healing available. Run 'sovereign_integrity_sweep' with files: ${JSON.stringify(files)} to resolve.`
+		const tool = this.usesCanonicalJoyZoning() ? "sovereign_integrity_sweep" : "stability_integrity_sweep"
+		return `💡 [INTEGRITY_ADVISORY]: Auto-healing available. Run '${tool}' with files: ${JSON.stringify(files)} to resolve.`
 	}
 	/**
 	 * V225: Sovereign Forensic Gate (PASSIVE).

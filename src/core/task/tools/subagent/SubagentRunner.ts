@@ -36,6 +36,7 @@ import type { CompactionTier, RecoverableContextReference } from "@/core/context
 import { ContextManager } from "@/core/context/context-management/ContextManager"
 import { checkContextWindowExceededError } from "@/core/context/context-management/context-error-handling"
 import { getCompactionTierFromTokens, getContextWindowInfo } from "@/core/context/context-management/context-window-utils"
+import { detectWorkspaceArchitectureProfile } from "@/core/policy/WorkspaceArchitectureProfile"
 import { orchestrator } from "@/infrastructure/ai/Orchestrator"
 import { HostRegistryInfo } from "@/registry"
 import { DietCodeError, DietCodeErrorType } from "@/services/error"
@@ -61,6 +62,7 @@ import { executionFunnel, shouldBypassGuardForLaneIoTool, shouldUseIoAuthorityRe
 import { validateSubagentCompletionGates } from "../subagentCompletionGates"
 import { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 import { resolveContinuationFromParentSignals } from "./CoordinatorExecutionAuthority"
 import { shouldEnableParallelToolCallingForLane } from "./LockNecessity"
 import { SubagentBuilder } from "./SubagentBuilder"
@@ -323,6 +325,8 @@ export class SubagentRunner {
 	private readonly agent: SubagentBuilder
 	private readonly allowedTools: DietCodeDefaultTool[]
 	private activeApiAbort?: () => void
+	/** Per-runner cancellation authority; never share a child lane's abort state with siblings. */
+	private readonly runnerAbortController = new AbortController()
 	private abortRequested = false
 	private recursionDepth = 0
 	private laneExecutionMode: LaneExecutionMode = "mutation"
@@ -394,6 +398,9 @@ export class SubagentRunner {
 
 	async abort(): Promise<void> {
 		this.abortRequested = true
+		if (!this.runnerAbortController.signal.aborted) {
+			this.runnerAbortController.abort(new Error("Subagent run cancelled."))
+		}
 
 		try {
 			this.activeApiAbort?.()
@@ -677,6 +684,13 @@ export class SubagentRunner {
 				focusChainSettings: this.baseConfig.focusChainSettings,
 				browserSettings: this.baseConfig.browserSettings,
 				yoloModeToggled: false,
+				joyZoningSteeringEnabled:
+					this.baseConfig.services.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false,
+				workspaceArchitectureProfile:
+					this.baseConfig.services.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false
+						? (this.baseConfig.universalGuard?.getArchitectureProfile?.() ??
+							detectWorkspaceArchitectureProfile(this.baseConfig.cwd))
+						: undefined,
 				enableNativeToolCalls: nativeToolCallsRequested,
 				enableParallelToolCalling: shouldEnableParallelToolCallingForLane(
 					this.laneExecutionMode,
@@ -733,7 +747,7 @@ export class SubagentRunner {
 				const dag = this.laneDAG
 				const currentIdx = this.laneIndex
 
-				for (const [agentId, envelope] of this.siblingEnvelopes.entries()) {
+				for (const [_agentId, envelope] of this.siblingEnvelopes.entries()) {
 					const sibIdx = envelope.lineage?.index
 					if (sibIdx === undefined || sibIdx === currentIdx) continue
 
@@ -1137,6 +1151,7 @@ export class SubagentRunner {
 						lane: "subagent",
 						laneMode: this.laneExecutionMode,
 						allowedInLane: this.allowedTools.includes(toolName),
+						signal: this.runnerAbortController.signal,
 						collisionCheck: this.streamId
 							? async (mutationPaths) => {
 									if (mutationPaths.length === 0) return undefined
@@ -1149,25 +1164,7 @@ export class SubagentRunner {
 					})
 					toolResult = outcome.result ?? formatResponse.toolError(outcome.event.reason)
 
-					const guard = this.baseConfig.universalGuard
-					if (
-						guard &&
-						(toolName === DietCodeDefaultTool.FILE_READ || toolName === DietCodeDefaultTool.SEARCH) &&
-						toolCallParams.path &&
-						typeof toolResult === "string"
-					) {
-						const pathKey = toolCallParams.path
-						const currentCount = state.currentTurnReadHistory.get(pathKey) || 0
-						if (currentCount === 0) state.currentTurnUniqueReadCount++
-						const newCount = currentCount + 1
-						state.currentTurnReadHistory.set(pathKey, newCount)
-						state.currentTurnTotalReadCount++
-						const globalCount = (state.taskReadHistory.get(pathKey) || 0) + 1
-						state.taskReadHistory.set(pathKey, globalCount)
-						toolResult = shouldUseIoAuthorityReadFastPath(toolName, this.laneExecutionMode)
-							? guard.onReadIoAuthority(pathKey, toolResult)
-							: await guard.onRead(pathKey, toolResult, state.currentTurnUniqueReadCount, newCount, globalCount)
-					}
+					toolResult = await this.projectSubagentReadEvidence(toolName, toolCallParams.path, toolResult, state)
 
 					stats.toolCalls += 1
 					onProgress({ stats: { ...stats } })
@@ -1256,6 +1253,9 @@ export class SubagentRunner {
 			api: this.apiHandler,
 			coordinator,
 			taskState: subagentTaskState,
+			taskSignal: this.baseConfig.taskSignal
+				? AbortSignal.any([this.baseConfig.taskSignal, this.runnerAbortController.signal])
+				: this.runnerAbortController.signal,
 			messageState: this.baseConfig.messageState, // Use parent's message state handler but they will have their own stream
 			recursionDepth: this.recursionDepth,
 			isSubagentExecution: true,
@@ -1357,8 +1357,10 @@ export class SubagentRunner {
 				lane: "subagent",
 				laneMode: this.laneExecutionMode,
 				allowedInLane: this.allowedTools.includes(toolName),
+				signal: this.runnerAbortController.signal,
 			})
-			const toolResult: unknown = execution.result ?? formatResponse.toolError(execution.event.reason)
+			const rawToolResult: unknown = execution.result ?? formatResponse.toolError(execution.event.reason)
+			const toolResult = await this.projectSubagentReadEvidence(toolName, toolCallParams.path, rawToolResult, state)
 
 			return {
 				call,
@@ -1394,6 +1396,7 @@ export class SubagentRunner {
 				laneMode: this.laneExecutionMode,
 				allowedInLane: false,
 				laneDenialReason: `Swarm Tool Call Limit Exceeded (${MAX_TOTAL_TOOL_CALLS}). Tool was not executed.`,
+				signal: this.runnerAbortController.signal,
 			})
 			outcomes.push({
 				call,
@@ -1452,6 +1455,40 @@ export class SubagentRunner {
 		return toolResultBlocks
 	}
 
+	/**
+	 * Keep the fast parallel lane behaviorally equivalent to the sequential lane.
+	 * Read accounting is task-owned evidence, while the I/O-authority hook remains
+	 * the lightweight, non-blocking path for non-mutating lanes.
+	 */
+	private async projectSubagentReadEvidence(
+		toolName: DietCodeDefaultTool,
+		pathKey: string | undefined,
+		toolResult: unknown,
+		state: TaskState,
+	): Promise<unknown> {
+		const guard = this.baseConfig.universalGuard
+		if (
+			!guard ||
+			(toolName !== DietCodeDefaultTool.FILE_READ && toolName !== DietCodeDefaultTool.SEARCH) ||
+			!pathKey ||
+			typeof toolResult !== "string"
+		) {
+			return toolResult
+		}
+
+		const currentCount = state.currentTurnReadHistory.get(pathKey) || 0
+		if (currentCount === 0) state.currentTurnUniqueReadCount++
+		const newCount = currentCount + 1
+		state.currentTurnReadHistory.set(pathKey, newCount)
+		state.currentTurnTotalReadCount++
+		const globalCount = (state.taskReadHistory.get(pathKey) || 0) + 1
+		state.taskReadHistory.set(pathKey, globalCount)
+
+		return shouldUseIoAuthorityReadFastPath(toolName, this.laneExecutionMode)
+			? guard.onReadIoAuthority(pathKey, toolResult)
+			: await guard.onRead(pathKey, toolResult, state.currentTurnUniqueReadCount, newCount, globalCount)
+	}
+
 	private applyRepetitionDetection(
 		toolName: DietCodeDefaultTool,
 		toolCallParams: ToolUse["params"],
@@ -1470,7 +1507,7 @@ export class SubagentRunner {
 
 		toolResultBlocks.push({
 			type: "text",
-			text: `[SELF-CORRECTION NUDGE] You have called the same tool with the same parameters ${this.MAX_CONSECUTIVE_IDENTICAL_CALLS + 1} times in a row. This suggests you are stuck. Please RE-EVALUATE your approach, explore a different architectural layer, or use 'ask_followup_question' to clarify the objective with the parent.`,
+			text: `[SELF-CORRECTION NUDGE] You have called the same tool with the same parameters ${this.MAX_CONSECUTIVE_IDENTICAL_CALLS + 1} times in a row. This suggests you are stuck. Please RE-EVALUATE your approach, inspect a different boundary or evidence source, or use 'ask_followup_question' to clarify the objective with the parent.`,
 		})
 		Logger.warn(`[SubagentRunner] Repetition detected for tool ${toolName}; injected nudge.`)
 		void this.signalCriticalFindingsToSwarm(
@@ -1851,7 +1888,6 @@ export class SubagentRunner {
 
 		const criticalKeywords = [
 			"CRITICAL:",
-			"JOY-ZONING VIOLATION",
 			"ARCHITECTURE VIOLATION",
 			"SECURITY RISK",
 			"TOXIC HOTSPOT",
@@ -1860,6 +1896,9 @@ export class SubagentRunner {
 			"GROUNDED SPECIFICATION REFRESH",
 			"CONTEXT UNCERTAINTY",
 		]
+		if (getTaskArchitectureSteering(this.baseConfig) === "canonical") {
+			criticalKeywords.push("JOY-ZONING VIOLATION")
+		}
 		const upperResult = result.toUpperCase()
 		const findingKey = this.hashString(upperResult).slice(0, 16)
 

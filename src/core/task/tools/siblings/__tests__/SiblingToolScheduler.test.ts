@@ -258,6 +258,37 @@ describe("SiblingToolScheduler", () => {
 		assert.equal(results[1].error, "query failed")
 	})
 
+	it("captures a synchronous worker throw as a failed sibling", async () => {
+		const scheduler = new SiblingToolScheduler<string>({
+			run: () => {
+				throw new Error("worker failed before returning a promise")
+			},
+		})
+
+		const results = await scheduler.execute(readNodes(1))
+
+		assert.equal(results[0]?.status, "failed")
+		assert.equal(results[0]?.error, "worker failed before returning a promise")
+	})
+
+	it("fails fast on a malformed dependency graph", async () => {
+		const node = readNodes(1)[0]
+		assert.ok(node)
+		node.dependencyEdges = [
+			{
+				sequence: 99,
+				kind: "prerequisite",
+				reason: "explicit-dependency",
+			},
+		]
+
+		const scheduler = new SiblingToolScheduler<string>({
+			run: async () => "unreachable",
+		})
+
+		await assert.rejects(scheduler.execute([node]), /references missing sequence 99/)
+	})
+
 	it("skips only a dependent when a completed tool returns a semantic failure envelope", async () => {
 		const producer = tool(DietCodeDefaultTool.FILE_READ, { path: "src/source.ts" }, "producer")
 		const dependent = {
@@ -345,6 +376,27 @@ describe("SiblingToolScheduler", () => {
 		assert.deepEqual(entered, [1, 0])
 		mutationGate.resolve("write")
 		await execution
+	})
+
+	it("fails soft when an admission guard never releases", async () => {
+		let runCount = 0
+		const scheduler = new SiblingToolScheduler<string>({
+			stallTimeoutMs: 5,
+			canStart: () => false,
+			run: async () => {
+				runCount++
+				return "unreachable"
+			},
+		})
+
+		const results = await scheduler.execute(readNodes(2))
+
+		assert.equal(runCount, 0)
+		assert.deepEqual(
+			results.map((result) => result.status),
+			["skipped", "skipped"],
+		)
+		assert.match(results[0]?.error ?? "", /Sibling scheduling stalled for 5ms/)
 	})
 
 	it("bounds active children and joins every child before resolving", async () => {

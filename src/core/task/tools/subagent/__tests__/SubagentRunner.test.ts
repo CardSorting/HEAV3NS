@@ -444,6 +444,91 @@ describe("SubagentRunner", () => {
 		assert.equal(result.stats.toolCalls, 7)
 	})
 
+	it("projects read evidence through the same audit hook in parallel lanes", async () => {
+		const createMessage = sinon.stub()
+		createMessage.onFirstCall().callsFake(async function* () {
+			for (const [id, filePath] of ["a.ts", "b.ts"].map(
+				(filePath, index) => [`toolu_parallel_read_${index}`, filePath] as const,
+			)) {
+				yield {
+					type: "tool_calls",
+					tool_call: {
+						function: {
+							id,
+							name: DietCodeDefaultTool.FILE_READ,
+							arguments: JSON.stringify({ path: filePath }),
+						},
+					},
+				}
+			}
+		})
+		createMessage.onSecondCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+			const results = (conversation[2] as { content: Array<{ content?: string }> }).content
+			assert.deepEqual(
+				results.map((result) => result.content),
+				["audited:a.ts:raw:a.ts", "audited:b.ts:raw:b.ts"],
+			)
+			yield {
+				type: "tool_calls",
+				tool_call: {
+					function: {
+						id: "toolu_parallel_read_complete",
+						name: DietCodeDefaultTool.ATTEMPT,
+						arguments: JSON.stringify({ result: VALID_SUBAGENT_COMPLETION_RESULT }),
+					},
+				},
+			}
+		})
+
+		const promptRegistry = PromptRegistry.getInstance()
+		sinon.stub(promptRegistry, "get").callsFake(async () => {
+			promptRegistry.nativeTools = [{ name: DietCodeDefaultTool.FILE_READ } as any]
+			return "system prompt"
+		})
+		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: DietCodeDefaultTool.FILE_READ }] as any)
+		stubApiHandler(createMessage)
+		initializeHostProvider()
+
+		const readAudit = sinon.stub().callsFake((filePath: string, content: string) => `audited:${filePath}:${content}`)
+		const config = createTaskConfig(true)
+		config.universalGuard = { onReadIoAuthority: readAudit } as unknown as NonNullable<TaskConfig["universalGuard"]>
+		config.coordinator.getHandler = sinon.stub().callsFake((toolName: DietCodeDefaultTool) => {
+			if (toolName !== DietCodeDefaultTool.FILE_READ) return undefined
+			return {
+				name: DietCodeDefaultTool.FILE_READ,
+				getApprovalIntent: (block: { name: string; params: Record<string, string> }) =>
+					declareApprovalIntent(block as never, {
+						description: "Read a file for the parallel audit projection test",
+						requirements: [
+							{
+								capability: "workspace_read",
+								risk: "low",
+								requestedSideEffects: [],
+								autoApprovalEligible: true,
+								path: block.params.path,
+								scope: "workspace",
+							},
+						],
+					}),
+				execute: sinon
+					.stub()
+					.callsFake(async (_config: TaskConfig, block: { params: { path: string } }) => `raw:${block.params.path}`),
+				getDescription: sinon.stub().returns("read_file"),
+			}
+		})
+
+		const runner = new SubagentRunner(config, new SubagentBuilder(config, "subagent"))
+		runner.setLaneExecutionMode("read_only")
+		const result = await runner.run("Read files", () => {})
+
+		assert.equal(result.status, "completed", result.error)
+		assert.equal(readAudit.callCount, 2)
+		assert.deepEqual(
+			readAudit.args.map(([filePath]) => filePath),
+			["a.ts", "b.ts"],
+		)
+	})
+
 	it("does not inherit parent focus-chain blockers at lane completion", async () => {
 		const createMessage = sinon.stub().callsFake(async function* () {
 			yield {

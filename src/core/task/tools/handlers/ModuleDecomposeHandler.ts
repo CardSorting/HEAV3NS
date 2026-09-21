@@ -4,6 +4,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import { ModuleDecomposer } from "../../../policy/ModuleDecomposer"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
 
@@ -51,7 +52,10 @@ export class ModuleDecomposeHandler implements IToolHandler {
 			const content = await fs.readFile(absPath, "utf-8")
 
 			const decomposer = new ModuleDecomposer()
-			const plan = decomposer.analyze(relPath, content)
+			const canonicalSteeringEnabled = getTaskArchitectureSteering(config) === "canonical"
+			const plan = decomposer.analyze(relPath, content, undefined, undefined, {
+				canonicalLayers: canonicalSteeringEnabled,
+			})
 			const totalLines = content.split("\n").length
 
 			if (plan.steps.length === 0) {
@@ -64,7 +68,9 @@ export class ModuleDecomposeHandler implements IToolHandler {
 
 			let response =
 				`Structural Decomposition Plan for: ${plan.filePath}\n` +
-				`Current Layer: ${plan.currentLayer.toUpperCase()}\n` +
+				(canonicalSteeringEnabled
+					? `Current Layer: ${plan.currentLayer.toUpperCase()}\n`
+					: `Native workspace role: preserve the repository's existing placement and module boundaries\n`) +
 				`Build Health: ${plan.buildHealth} / 100${plan.projectedHealth ? ` -> PROJECTED: ${plan.projectedHealth} / 100 [V180 Recovery]` : ""}\n` +
 				`Integrity Score: ${plan.integrityScore} / 100${plan.projectedIntegrity ? ` -> PROJECTED: ${plan.projectedIntegrity} / 100` : ""}\n` +
 				`Line Count: ${totalLines} / 1500${totalLines > 1200 ? " (WARNING: Approaching Industrial Limit)" : ""}\n\n` +
@@ -81,7 +87,7 @@ export class ModuleDecomposeHandler implements IToolHandler {
 				const riskEmoji = step.risk === "LOW" ? "✅" : step.risk === "MEDIUM" ? "⚠️" : "🛑"
 
 				response +=
-					`${index + 1}. [${step.risk || "MEDIUM"}] [${category}: ${step.action}] ${step.target} -> ${step.destination} ${riskEmoji}\n` +
+					`${index + 1}. [${step.risk || "MEDIUM"}] [${category}: ${step.action}] ${step.target} ${canonicalSteeringEnabled ? `-> ${step.destination}` : `→ ${step.destination} (hypothesis)`} ${riskEmoji}\n` +
 					`   Reason: ${step.reason}\n`
 
 				if (step.boilerplate) {
@@ -97,7 +103,9 @@ export class ModuleDecomposeHandler implements IToolHandler {
 				response += `\nProjected State: Executing [FISSION] steps will increase Build Health to ${plan.projectedHealth}/100 and ensure module modularity.`
 			}
 
-			response += `\n\nDirective: Follow these steps to restore structural integrity. Use 'scaffold_module' to create the destination files if they don't exist.`
+			response += canonicalSteeringEnabled
+				? `\n\nDirective: Follow these steps to restore structural integrity. Use 'scaffold_module' to create the destination files if they don't exist.`
+				: `\n\nDirective: Treat destination labels as classifier hypotheses, not relocation instructions. Keep extracted code in the repository's native module shape and use the existing file/test creation workflow for new files.`
 
 			return formatResponse.toolResult(response)
 		} catch (error) {

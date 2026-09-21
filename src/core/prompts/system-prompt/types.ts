@@ -10,6 +10,7 @@ import type { FocusChainSettings } from "@/shared/FocusChainSettings"
 import { ModelFamily } from "@/shared/prompts"
 import type { SkillMetadata } from "@/shared/skills"
 import { DietCodeDefaultTool } from "@/shared/tools"
+import type { WorkspaceArchitectureProfile } from "@/core/policy/WorkspaceArchitectureProfile"
 import { SystemPromptSection } from "./templates/placeholders"
 
 /**
@@ -163,6 +164,10 @@ export interface SystemPromptContext {
 	readonly runtimePlaceholders?: Readonly<Record<string, unknown>>
 	readonly yoloModeToggled?: boolean
 	readonly subagentsEnabled?: boolean
+	/** Defaults on for backward compatibility; false removes JoyZoning steering prompt sections. */
+	readonly joyZoningSteeringEnabled?: boolean
+	/** Workspace evidence used to choose canonical vs blended agent guidance. */
+	readonly workspaceArchitectureProfile?: WorkspaceArchitectureProfile
 	readonly dietcodeWebToolsEnabled?: boolean
 	readonly isMultiRootEnabled?: boolean
 	readonly workspaceRoots?: Array<{ path: string; name: string; vcs?: string }>

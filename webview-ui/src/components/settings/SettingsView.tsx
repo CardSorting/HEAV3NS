@@ -137,7 +137,20 @@ const GalxGridSection = (props: ProviderSectionProps) => <ProviderModelGridSecti
 
 const TAB_KEYWORDS: Record<SettingsTabID, string[]> = {
 	"provider-galx": ["galx", "galxai", "wholesale", "gpt-5.6", "sol", "terra", "luna", "compute"],
-	features: ["preferences", "behavior", "subagents", "think together", "tool calls", "plan", "auto-compact", "parallel"],
+	features: [
+		"preferences",
+		"behavior",
+		"subagents",
+		"think together",
+		"tool calls",
+		"plan",
+		"auto-compact",
+		"parallel",
+		"architecture",
+		"guidance",
+		"steering",
+		"joyzoning",
+	],
 	skills: ["skills", "mcp", "tools", "plugins", "marketplace"],
 	browser: ["browser", "chrome", "viewport", "screenshot", "web"],
 	terminal: ["terminal", "shell", "bash", "zsh", "timeout", "reuse", "output", "lockout"],
@@ -315,7 +328,7 @@ const SettingsView = ({ targetSection }: SettingsViewProps) => {
 						"flex shrink-0 items-center gap-2 overflow-hidden whitespace-nowrap border-transparent px-3 text-foreground/70 hover:bg-list-hover hover:text-foreground",
 						useHorizontalNavigation
 							? "min-h-10 w-auto justify-start border-b-2"
-							: "min-h-[30px] h-[30px] w-full justify-start border-l-2 rounded-r-md px-4 transition-colors",
+								: "min-h-[30px] h-[30px] w-full justify-start border-l rounded-r-md px-4 transition-colors",
 						isActive &&
 							(useHorizontalNavigation
 								? "border-b-foreground bg-selection-inactive text-foreground"

@@ -1,4 +1,4 @@
-import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/dietcode/state"
+import { McpDisplayMode, Settings, UpdateSettingsRequest, UpdateTaskSettingsRequest } from "@shared/proto/dietcode/state"
 import { StateServiceClient } from "@/services/grpc-client"
 
 /** Settings persisted via updateSettings but not yet on UpdateSettingsRequest proto */
@@ -48,13 +48,28 @@ const convertToProtoValue = (field: ExtendedSettingsKey, value: any): any => {
  * @param value - The new value for the field
  */
 export const updateSetting = (field: ExtendedSettingsKey, value: any) => {
+	void updateSettingAsync(field, value).catch((error) => {
+		console.error(`Failed to update setting ${field}:`, error)
+	})
+}
+
+/** Await a setting update when the calling surface needs explicit save/error state. */
+export const updateSettingAsync = (field: ExtendedSettingsKey, value: any) => {
 	const updateRequest: Record<string, unknown> = {
 		[field]: convertToProtoValue(field, value),
 	}
 
-	StateServiceClient.updateSettings(UpdateSettingsRequest.create(updateRequest as Partial<UpdateSettingsRequest>)).catch(
-		(error) => {
-			console.error(`Failed to update setting ${field}:`, error)
-		},
-	)
+	return StateServiceClient.updateSettings(UpdateSettingsRequest.create(updateRequest as Partial<UpdateSettingsRequest>))
 }
+
+/** Update a setting only for the active task, leaving the saved default intact. */
+export const updateTaskSetting = (field: keyof Settings, value: unknown, taskId?: string) => {
+	const settings = Settings.create({ [field]: value } as Partial<Settings>)
+	return StateServiceClient.updateTaskSettings(UpdateTaskSettingsRequest.create({ settings, taskId }))
+}
+
+/** Return JoyZoning guidance to the saved global default for the active task. */
+export const resetJoyZoningTaskOverride = (taskId?: string) =>
+	StateServiceClient.updateTaskSettings(
+		UpdateTaskSettingsRequest.create({ clearJoyZoningSteeringEnabled: true, taskId }),
+	)

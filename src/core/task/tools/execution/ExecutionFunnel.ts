@@ -45,6 +45,7 @@ import { getToolInvocationContext, resolveInvocationResultTarget } from "../sibl
 import type { TaskConfig } from "../types/TaskConfig"
 import type { IToolHandler, ToolResponse } from "../types/ToolContracts"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { getLayer, getTargetPath } from "@/utils/joy-zoning"
 
 /** Local read/diagnostic tools with workspace I/O authority. */
 export const IO_AUTHORITY_TOOLS = new Set<DietCodeDefaultTool>([
@@ -153,7 +154,8 @@ export function shouldSkipLayerInjectionForParentIoTool(toolName: string): boole
 
 export function appendSessionStabilityContext(config: TaskConfig, relPath: string, fileText: string): string {
 	const guard = config.universalGuard
-	if (!guard || config.isSubagentExecution) return fileText
+	const steeringEnabled = guard?.isJoyZoningSteeringEnabled?.() ?? true
+	if (!guard || config.isSubagentExecution || !steeringEnabled) return fileText
 
 	const nodes = guard.engine.getNodes()
 	const absPath = path.resolve(config.cwd, relPath)
@@ -170,10 +172,14 @@ export function appendSessionStabilityContext(config: TaskConfig, relPath: strin
 
 	const intentMatch = fileText.match(/\[INTEGRITY_INTENT:\s*(.*?)\]/)
 	const intent = intentMatch ? intentMatch[1] : "Not explicitly documented."
+	const canonicalSteering = guard.isCanonicalJoyZoningEnabled?.() ?? steeringEnabled
+	const contextHeader = canonicalSteering
+		? `Layer: ${node.layer?.toUpperCase() || "UNKNOWN"}`
+		: "Workspace role: preserve the repository's existing placement and module boundaries"
 	return (
 		fileText +
 		`\n\n[STABILITY_CONTEXT]\n` +
-		`Layer: ${node.layer?.toUpperCase() || "UNKNOWN"}\n` +
+		`${contextHeader}\n` +
 		`Architectural Intent: ${intent}\n` +
 		`Metrics: Logic Density: ${SafeNumber.format(node.logicDensity, 2)}, I/O Entropy: ${SafeNumber.format(node.ioEntropy, 2)}\n` +
 		`Status: ${node.orphaned ? "ORPHANED" : "INTEGRATED"}\n`
@@ -824,10 +830,16 @@ export class ExecutionFunnel {
 			if (cancelled) return this.block(decision, "task_cancelled", "cancellation.initial", cancelled, "cancel", "cancelled")
 			decision.stages.push(pass("cancellation.initial", "Task and invocation signals are active"))
 
-			if (!isIoAuthorityTool(block.name) && block.params.path) {
-				const { getLayer } = require("@/utils/joy-zoning")
+			const steeringEnabled = config.universalGuard?.isJoyZoningSteeringEnabled?.() ?? true
+			const canonicalSteeringEnabled =
+				config.universalGuard?.isCanonicalJoyZoningEnabled?.() ?? steeringEnabled
+			if (canonicalSteeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
 				block.layer = getLayer(path.resolve(config.cwd, block.params.path))
 				decision.stages.push(pass("target.layer", `Resolved target layer as ${block.layer || "unknown"}`))
+			} else if (!steeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
+				decision.stages.push(na("target.layer", "Architecture guidance is disabled; preserving workspace-native context"))
+			} else if (!canonicalSteeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
+				decision.stages.push(na("target.layer", "Workspace-native architecture; preserving the repository's target boundary"))
 			} else {
 				decision.stages.push(na("target.layer", "Layer injection is unnecessary for this invocation"))
 			}
@@ -1745,12 +1757,13 @@ export class ExecutionFunnel {
 		if (!config.strictPlanModeEnabled || config.mode !== "plan") return undefined
 		let targetPath: string | undefined
 		try {
-			const { getTargetPath } = require("@/utils/joy-zoning")
-			targetPath = getTargetPath(block.params)
+			targetPath = getTargetPath(block.params) ?? undefined
 		} catch {
 			targetPath = block.params.path
 		}
-		const layer = targetPath ? config.universalGuard?.getLayerForPath(targetPath) : undefined
+		const canonicalSteeringEnabled =
+			config.universalGuard?.isCanonicalJoyZoningEnabled?.() ?? config.universalGuard?.isJoyZoningSteeringEnabled?.() ?? true
+		const layer = canonicalSteeringEnabled && targetPath ? config.universalGuard?.getLayerForPath(targetPath) : undefined
 		const layerRestricted =
 			(layer === "domain" || layer === "core") &&
 			(block.name === DietCodeDefaultTool.BASH || block.name === DietCodeDefaultTool.MCP_USE)

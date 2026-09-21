@@ -119,7 +119,19 @@ export class ReadFileToolHandler implements IToolHandler, IPartialBlockHandler {
 				}),
 			)
 		} catch (error) {
-			if (error instanceof Error && error.message.includes("File not found") && absolutePath.endsWith("scratchpad.md")) {
+			const steeringEnabled =
+				config.universalGuard?.isJoyZoningSteeringEnabled?.() ??
+				config.services.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false
+			const guardSteering = config.universalGuard?.getArchitectureSteering?.()
+			const canonicalSteering =
+				config.universalGuard?.isCanonicalJoyZoningEnabled?.() ??
+				(guardSteering ? guardSteering === "canonical" : steeringEnabled)
+			if (
+				canonicalSteering &&
+				error instanceof Error &&
+				error.message.includes("File not found") &&
+				absolutePath.endsWith("scratchpad.md")
+			) {
 				// V19: Proactive diagnostic injection on auto-creation
 				let diagnostics: import("../../../policy/IntegrityProtocol").StabilityDiagnostics | undefined
 				try {

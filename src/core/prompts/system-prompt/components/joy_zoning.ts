@@ -1,19 +1,32 @@
-import { detectWorkspaceArchitectureProfile } from "@/core/policy/WorkspaceArchitectureProfile"
+import {
+	detectWorkspaceArchitectureProfile,
+	resolveWorkspaceArchitectureSteering,
+} from "@/core/policy/WorkspaceArchitectureProfile"
 import { orchestrator } from "@/infrastructure/ai/Orchestrator"
 import { dbPool } from "@/infrastructure/db/BufferedDbPool"
 import type { PromptVariant, SystemPromptContext } from "../types"
 
 export async function getJoyZoningSection(_variant?: PromptVariant, context?: SystemPromptContext) {
+	// The steering layer is opt-out, not a second audit switch. Returning before
+	// workspace/profile or live-context reads keeps the off path truly neutral
+	// and avoids doing JoyZoning I/O for a request that opted out.
+	if (context?.joyZoningSteeringEnabled === false) {
+		return undefined
+	}
+
 	const mode = context?.mode || "act"
-	const architectureProfile = detectWorkspaceArchitectureProfile(context?.cwd)
+	const architectureProfile = context?.workspaceArchitectureProfile ?? detectWorkspaceArchitectureProfile(context?.cwd)
+	const steering = resolveWorkspaceArchitectureSteering(architectureProfile, context?.joyZoningSteeringEnabled ?? true)
+	const canonicalSteering = steering === "canonical"
 	const posture =
-		architectureProfile.mode === "workspace-native"
+		steering === "blended"
 			? "BLENDED — WORKSPACE-NATIVE + JOYZONING STEERING"
 			: architectureProfile.mode === "greenfield"
 				? "GREENFIELD"
 				: "JOY-ZONING NATIVE"
+	const commitmentHeader = canonicalSteering ? "SOVEREIGN COMMITMENT SEAL" : "PLANNING COMMITMENT"
 	const sovereignCommitment = context?.taskState?.sovereignAuditSynthesis
-		? `\n\n[SOVEREIGN COMMITMENT SEAL]
+		? `\n\n[${commitmentHeader}]
 Your architectural audit resulted in the following hardening synthesis:
 > ${context.taskState.sovereignAuditSynthesis}
 Maintain this commitment strictly during execution.`
@@ -35,8 +48,8 @@ Maintain this commitment strictly during execution.`
 			if (affectedFiles.size > 0) {
 				const [firstFilePath] = Array.from(affectedFiles.keys())
 				const { FluidPolicyEngine } = await import("../../../policy/FluidPolicyEngine")
-				const tempEngine = new FluidPolicyEngine(process.cwd())
-				layerHint = `\n\n📌 Active layer context:\n${tempEngine.getFileLayerContext(firstFilePath)}\nKeep this in mind for your next change.`
+				const tempEngine = new FluidPolicyEngine(context?.cwd ?? process.cwd())
+				layerHint = `\n\n📌 Active architecture context:\n${tempEngine.getFileLayerContext(firstFilePath)}\nKeep this in mind for your next change.`
 			}
 
 			const compressed = await orchestrator.getCompressedContext(latestStream.id)
@@ -119,8 +132,12 @@ Map the workspace before choosing a structure:
 4. Classify each proposed abstraction as required now, already established, or speculative.
 5. Plan the smallest change that looks native to this repository.
 
-For an existing workspace, describe impact using its real modules and boundaries, then apply the JoyZoning lens to cohesion, ownership, effects, and testability. Do not force a Domain/Core/Infrastructure decomposition into the plan.
-For greenfield work or an explicit JoyZoning workspace, use the canonical layer guide when it is proportional to the app's complexity.`
+				${
+					canonicalSteering
+						? "For existing workspaces, describe impact using real modules and boundaries, then apply the JoyZoning lens to cohesion, ownership, effects, and testability. Do not force a Domain/Core/Infrastructure decomposition unless the repository supports it."
+						: "Treat JoyZoning classifications as evidence only. Preserve the workspace's native modules, vocabulary, dependency direction, and test/build seams; do not reorganize files to satisfy a canonical model."
+				}
+				${canonicalSteering ? "For greenfield work or an explicit JoyZoning workspace, use the canonical layer guide when it is proportional to the app's complexity." : ""}`
 			: `\n
 ⚡ ACT MODE — Infused Execution:
 Before each change:
@@ -131,7 +148,7 @@ Before each change:
 5. Avoid unrelated architectural migration and speculative interfaces.
 ${sovereignCommitment}
 
-JoyZoning never switches off. In canonical projects it can govern structure; in workspace-native projects it remains active as non-blocking steering inside the workspace's existing form.
+		${canonicalSteering ? "JoyZoning steering is active for this workspace and may govern canonical structure where explicitly adopted." : "JoyZoning steering is advisory for this workspace; native placement and terminology remain authoritative."}
 
 ⚠️ GROUNDED REALITY NOTE:
 The terms "Metabolic," "Substrate," "Immune," and "Forensic" are architectural metaphors used within the DietCode project to describe code quality and performance metrics. 
@@ -140,12 +157,19 @@ The terms "Metabolic," "Substrate," "Immune," and "Forensic" are architectural m
 - Do not report environment-level blockers (like "missing Node.js" or "substrate failure") based on these architectural metrics. 
 - Focus on actual engineering results and verifiable file states.`
 
+	const operatingModel = canonicalSteering
+		? "1. MIRROR workspace placement/vocabulary -> 2. STEER cohesion (JZ-C01), decision/effect boundaries (JZ-B01), ownership (JZ-O01) -> 3. VERIFY with native build/tests."
+		: "1. MIRROR workspace placement/vocabulary -> 2. STEER cohesion, ownership, decision/effect boundaries -> 3. VERIFY with native build/tests."
+	const canonicalLayers = canonicalSteering
+		? "- CANONICAL_LAYERS (Greenfield/Explicit): Domain -> Core -> Infrastructure -> UI -> Plumbing."
+		: "- CLASSIFIER_SCOPE: Layer signals are advisory evidence only; native boundaries and repository conventions win."
+
 	return `[JOY_ZONING_CONTRACT]
 - POSTURE: **${posture}** (${architectureProfile.reason})
-- OPERATING_MODEL: 1. MIRROR workspace placement/vocabulary -> 2. STEER cohesion (JZ-C01), decision/effect boundaries (JZ-B01), ownership (JZ-O01) -> 3. VERIFY with native build/tests.
+- OPERATING_MODEL: ${operatingModel}
 - PATTERN_FIT: Adopt existing architecture (vertical-slice, layered, clean, modular-monolith, event-driven, plugin). Do NOT force artificial domain/core/infra directory renames.
 - MACRO_RULES: User requirements authoritative | Match local naming, file placement, exports, error handling | Extend existing seams over parallel abstractions.
 - MICRO_RULES: Single reason to change per class/fn | Pure business logic separated from I/O effects | Explicit input/output invariants.
-- CANONICAL_LAYERS (Greenfield/Explicit): Domain -> Core -> Infrastructure -> UI -> Plumbing.
+- ${canonicalLayers.slice(2)}
 ${modeGuidance}${auditContext}`
 }

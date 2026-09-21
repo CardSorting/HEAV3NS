@@ -6,14 +6,15 @@ import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../
 
 interface QueryParams {
 	layer?: string
-	minLogicDensity?: number
-	maxIOEntropy?: number
-	minComplexity?: number
-	orphanedOnly?: boolean
-	limit?: number
+	minLogicDensity?: number | string
+	maxIOEntropy?: number | string
+	minComplexity?: number | string
+	orphanedOnly?: boolean | string
+	limit?: number | string
 }
 
 import { SpiderEngine } from "../../../policy/spider/SpiderEngine"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 
 /**
  * StabilityQueryHandler: The Architectural Search Engine.
@@ -39,7 +40,7 @@ export class StabilityQueryHandler implements IToolHandler {
 
 	getDescription(block: ToolUse): string {
 		const params = block.params as unknown as QueryParams
-		return `[query stability registry for layers: ${params.layer || "all"}]`
+		return `[query stability registry${params.layer ? ` classifier: ${params.layer}` : ""}]`
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
@@ -49,11 +50,20 @@ export class StabilityQueryHandler implements IToolHandler {
 			)
 		}
 		const params = block.params as unknown as QueryParams
-		const { layer, minLogicDensity = 0, maxIOEntropy = 1, minComplexity = 0, orphanedOnly = false } = params
+		const parseNumber = (value: number | string | undefined, fallback: number): number => {
+			const parsed = typeof value === "number" ? value : Number(value)
+			return Number.isFinite(parsed) ? parsed : fallback
+		}
+		const minLogicDensity = parseNumber(params.minLogicDensity, 0)
+		const maxIOEntropy = parseNumber(params.maxIOEntropy, 1)
+		const minComplexity = parseNumber(params.minComplexity, 0)
+		const orphanedOnly = params.orphanedOnly === true || params.orphanedOnly === "true"
+		const limit = Math.min(100, Math.max(1, Math.floor(parseNumber(params.limit, 20))))
 
 		try {
 			const engine = new SpiderEngine(config.cwd)
 			const loaded = await engine.loadRegistry()
+			const steering = getTaskArchitectureSteering(config)
 
 			if (!loaded) {
 				return formatResponse.toolResult(
@@ -62,7 +72,7 @@ export class StabilityQueryHandler implements IToolHandler {
 			}
 
 			const results = Array.from(engine.nodes.values()).filter((node) => {
-				if (layer && node.layer !== layer.toLowerCase()) return false
+				if (params.layer && node.layer !== params.layer.toLowerCase()) return false
 				if (node.logicDensity < minLogicDensity) return false
 				if (node.ioEntropy > maxIOEntropy) return false
 				if (node.astComplexity < minComplexity) return false
@@ -82,17 +92,23 @@ export class StabilityQueryHandler implements IToolHandler {
 			})
 
 			const report = results
-				.slice(0, 20)
+				.slice(0, limit)
 				.map(
 					(node) =>
-						`- ${node.path} [${node.layer.toUpperCase()}]\n` +
+						(steering === "canonical"
+							? `- ${node.path} [${node.layer.toUpperCase()}]\n`
+							: `- ${node.path} [classifier signal: ${node.layer.toUpperCase()} — evidence only]\n`) +
 						`  Density: ${(node.logicDensity * 100).toFixed(1)}% | Entropy: ${(node.ioEntropy * 100).toFixed(1)}% | Complexity: ${node.astComplexity}`,
 				)
 				.join("\n\n")
+			const postureNote =
+				steering === "canonical"
+					? ""
+					: "\n\nClassifier labels are forensic evidence only in this workspace posture; do not treat them as relocation or naming instructions."
 
 			return formatResponse.toolResult(
-				`Stability Query Results (${results.length} files found):\n\n${report}` +
-					(results.length > 20 ? `\n\n... and ${results.length - 20} more files matched.` : ""),
+				`Stability Query Results (${results.length} files found):\n\n${report}${postureNote}` +
+					(results.length > limit ? `\n\n... and ${results.length - limit} more files matched.` : ""),
 			)
 		} catch (error) {
 			return `Stability query failed: ${(error as Error)?.message}`

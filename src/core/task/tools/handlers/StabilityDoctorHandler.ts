@@ -6,6 +6,7 @@ import { StabilityDoctor } from "../../../policy/StabilityDoctor"
 import { SpiderEngine } from "../../../policy/spider/SpiderEngine"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 
 /**
  * StabilityDoctorHandler: Handles the 'diagnose_sovereignty' tool.
@@ -53,6 +54,25 @@ export class StabilityDoctorHandler implements IToolHandler {
 
 			const doctor = new StabilityDoctor(config.cwd)
 			const report = await doctor.diagnose(engine)
+			const steering = getTaskArchitectureSteering(config)
+			const optimizationHeading = steering === "canonical" ? "Optimization Opportunities" : "Architecture Fit Signals"
+			const violationHeading = steering === "canonical" ? "Active Violations" : "Observed Signals (evidence only)"
+			const optimizationLines = report.optimizations
+				.map((optimization) =>
+					steering === "canonical"
+						? `- Move ${optimization.file} to ${optimization.recommendedLayer}: ${optimization.reason}`
+						: `- Review ${optimization.file}: ${optimization.reason}`,
+				)
+				.join("\n")
+			const violationLines = report.violations
+				.map((violation) => {
+					const remediation =
+						steering === "canonical"
+							? `Remediation: ${violation.remediation}`
+							: "Follow-up: inspect the surrounding module, dependency direction, and native verification path."
+					return `[${violation.type}] ${violation.path}: ${violation.message}\n   -> ${remediation}`
+				})
+				.join("\n\n")
 
 			return formatResponse.toolResult(
 				`Stability Diagnostic Report [Status: ${doctor.getAgentSignal(report)}]\n\n` +
@@ -65,8 +85,8 @@ export class StabilityDoctorHandler implements IToolHandler {
 						.slice(0, 5)
 						.map((f: { path: string; score: number }) => `- ${f.path} (Score: ${SafeNumber.format(f.score, 1)})`)
 						.join("\n")}\n\n` +
-					`Active Violations:\n${report.violations.map((v) => `[${v.type}] ${v.path}: ${v.message}\n   -> Remediation: ${v.remediation}`).join("\n\n")}\n\n` +
-					`Optimization Opportunities:\n${report.optimizations.map((o) => `- Move ${o.file} to ${o.recommendedLayer}: ${o.reason}`).join("\n")}`,
+					`${violationHeading}:\n${violationLines}\n\n` +
+					`${optimizationHeading}:\n${optimizationLines || "- No additional signals."}`,
 			)
 		} catch (error) {
 			return `Error during stability diagnosis: ${(error as Error)?.message}`

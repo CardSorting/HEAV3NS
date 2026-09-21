@@ -1,4 +1,5 @@
 import type { AuditHealthSummary } from "@shared/audit/auditRollup"
+import type { SubagentAuditSummary } from "@shared/audit/auditSubagentRollup"
 import type { ResolvedCompletionFunnelSnapshot } from "@shared/completion/completionFunnelMessages"
 import type { DietCodeMessage, TaskAuditMetadata } from "@shared/ExtensionMessage"
 import type { TaskLifecycleEvent } from "@shared/lifecycle/taskLifecycleEvent"
@@ -17,12 +18,14 @@ import {
 import { memo, useMemo } from "react"
 import { useIsCompact } from "@/context/DensityContext"
 import { cn } from "@/lib/utils"
+import { SubagentAuditBadge } from "../task-header/SubagentAuditBadge"
 import { deriveExecutionStatus, type ExecutionState } from "./executionStatus"
 
 interface ExecutionStatusHeaderProps {
 	messages: readonly DietCodeMessage[]
 	auditMetadata?: TaskAuditMetadata
 	auditHealth?: AuditHealthSummary
+	subagentAuditSummary?: SubagentAuditSummary
 	completionFunnel?: ResolvedCompletionFunnelSnapshot
 	lifecycleEvent?: TaskLifecycleEvent
 	checkpointError?: string
@@ -88,6 +91,7 @@ export const ExecutionStatusHeader = memo(
 		messages,
 		auditMetadata,
 		auditHealth,
+		subagentAuditSummary,
 		completionFunnel,
 		lifecycleEvent,
 		checkpointError,
@@ -175,6 +179,11 @@ export const ExecutionStatusHeader = memo(
 							{compactSafety(status.safety)}
 						</span>
 					)}
+					<SubagentAuditBadge
+						className="shrink-0"
+						onExpandTaskHeader={!isDetailsOpen ? onToggleDetails : undefined}
+						summary={subagentAuditSummary}
+					/>
 					<button
 						aria-expanded={isDetailsOpen}
 						aria-label={isDetailsOpen ? "Hide task details" : "Show task details"}

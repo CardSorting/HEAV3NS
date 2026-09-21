@@ -127,6 +127,15 @@ export class StateManager {
 	// Debounced persistence state
 	private pendingGlobalState = new Set<GlobalStateAndSettingsKey>()
 	private pendingTaskState = new Map<string, Set<SettingsKey>>()
+	/**
+	 * Snapshot task-scoped values at write time. The active task cache is intentionally
+	 * only one task wide, but debounced writes can contain updates for more than one
+	 * task (for example when a history item is edited while another task is active).
+	 * Reading from taskStateCache during persistence would otherwise write the last
+	 * active value into every pending task's settings file.
+	 */
+	private pendingTaskStateValues = new Map<string, Map<SettingsKey, unknown>>()
+	private activeTaskId: string | undefined
 	private pendingSecrets = new Set<SecretKey>()
 	private pendingWorkspaceState = new Set<LocalStateKey>()
 	private persistenceTimeout: NodeJS.Timeout | null = null
@@ -294,18 +303,50 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
-		if (isValueEqual(this.taskStateCache[key], value)) {
+		const isActiveTask = this.activeTaskId === undefined || this.activeTaskId === taskId
+		const pendingValues = this.pendingTaskStateValues.get(taskId)
+		if (
+			(isActiveTask && isValueEqual(this.taskStateCache[key], value)) ||
+			(!isActiveTask && pendingValues?.has(key) && isValueEqual(pendingValues.get(key), value))
+		) {
 			return
 		}
 
-		// Update cache immediately for instant access
-		this.taskStateCache[key] = value
+		// Only the active task participates in effective setting reads. A write for a
+		// different task is persisted from its own snapshot without changing the
+		// current task's steering/policy decisions.
+		if (isActiveTask) {
+			this.taskStateCache[key] = value
+		}
 
 		// Add to pending persistence set and schedule debounced write
-		if (!this.pendingTaskState.has(taskId)) {
-			this.pendingTaskState.set(taskId, new Set())
+		this.markTaskSettingPending(taskId, key, value)
+		this.scheduleDebouncedPersistence()
+	}
+
+	/**
+	 * Remove one task-scoped override and fall back to the saved global value.
+	 * The key remains pending so the persisted task settings file is updated
+	 * atomically instead of leaving a stale override behind.
+	 */
+	clearTaskSetting<K extends keyof Settings>(taskId: string, key: K): void {
+		if (!this.isInitialized) {
+			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
-		this.pendingTaskState.get(taskId)?.add(key)
+
+		const isActiveTask = this.activeTaskId === undefined || this.activeTaskId === taskId
+		const pendingValues = this.pendingTaskStateValues.get(taskId)
+		if (
+			(isActiveTask && !Object.hasOwn(this.taskStateCache, key)) ||
+			(!isActiveTask && pendingValues?.has(key) && pendingValues.get(key) === undefined)
+		) {
+			return
+		}
+
+		if (isActiveTask) {
+			delete this.taskStateCache[key]
+		}
+		this.markTaskSettingPending(taskId, key, undefined)
 		this.scheduleDebouncedPersistence()
 	}
 
@@ -320,14 +361,18 @@ export class StateManager {
 		let hasChanges = false
 		for (const [key, value] of Object.entries(updates)) {
 			const settingsKey = key as SettingsKey
-			if (!isValueEqual((this.taskStateCache as any)[settingsKey], value)) {
+			const isActiveTask = this.activeTaskId === undefined || this.activeTaskId === taskId
+			const pendingValues = this.pendingTaskStateValues.get(taskId)
+			const isNoop =
+				(isActiveTask && isValueEqual((this.taskStateCache as any)[settingsKey], value)) ||
+				(!isActiveTask && pendingValues?.has(settingsKey) && isValueEqual(pendingValues.get(settingsKey), value))
+			if (isNoop) continue
+
+			if (isActiveTask) {
 				;(this.taskStateCache as any)[settingsKey] = value
-				if (!this.pendingTaskState.has(taskId)) {
-					this.pendingTaskState.set(taskId, new Set())
-				}
-				this.pendingTaskState.get(taskId)?.add(settingsKey)
-				hasChanges = true
 			}
+			this.markTaskSettingPending(taskId, settingsKey, value)
+			hasChanges = true
 		}
 
 		if (hasChanges) {
@@ -343,20 +388,41 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
+		// A task switch is a cache boundary. Flush any edits from the previous
+		// task before replacing the cache so a scoped steering override cannot leak
+		// into the next task or be written to the wrong task file.
+		await this.clearTaskSettings()
+
+		let taskSettings: Partial<Settings> = {}
 		try {
-			const taskSettings = await readTaskSettingsFromStorage(taskId)
-			// Populate task cache with loaded settings
-			Object.assign(this.taskStateCache, taskSettings)
+			taskSettings = await readTaskSettingsFromStorage(taskId)
 		} catch (error) {
-			// If reading fails, just use empty cache
 			Logger.error("[StateManager] Failed to load task settings, defaulting to globally selected settings.", error)
 		}
+
+		// Replace, rather than merge, so keys absent from this task cannot inherit
+		// the previous task's overrides.
+		this.taskStateCache = { ...taskSettings }
+		this.activeTaskId = taskId
+	}
+
+	/** Read a task override without falling through to global settings. */
+	getTaskSettingsKey<K extends keyof Settings>(key: K): Settings[K] | undefined {
+		if (!this.isInitialized) {
+			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
+		}
+		return this.taskStateCache[key]
 	}
 
 	/**
 	 * Clear task settings cache - ensures pending changes are persisted first
 	 */
 	async clearTaskSettings(): Promise<void> {
+		if (this.persistenceTimeout) {
+			clearTimeout(this.persistenceTimeout)
+			this.persistenceTimeout = null
+		}
+
 		// If there are pending task settings, persist them first
 		if (this.pendingTaskState.size > 0) {
 			try {
@@ -364,13 +430,32 @@ export class StateManager {
 				await this.persistTaskStateBatch(this.pendingTaskState)
 				// Clear pending set after successful persistence
 				this.pendingTaskState.clear()
+				this.pendingTaskStateValues.clear()
 			} catch (error) {
 				Logger.error("[StateManager] Failed to persist task settings before clearing:", error)
+				// Keep the snapshots queued so the normal debounced retry can still
+				// persist the user's change after a transient disk failure.
+				this.scheduleDebouncedPersistence()
 			}
 		}
 
 		this.taskStateCache = {}
-		this.pendingTaskState.clear()
+		this.activeTaskId = undefined
+		if (this.pendingTaskState.size === 0) {
+			this.pendingTaskStateValues.clear()
+		}
+	}
+
+	private markTaskSettingPending(taskId: string, key: SettingsKey, value: unknown): void {
+		if (!this.pendingTaskState.has(taskId)) {
+			this.pendingTaskState.set(taskId, new Set())
+		}
+		this.pendingTaskState.get(taskId)?.add(key)
+
+		if (!this.pendingTaskStateValues.has(taskId)) {
+			this.pendingTaskStateValues.set(taskId, new Map())
+		}
+		this.pendingTaskStateValues.get(taskId)?.set(key, value)
 	}
 
 	/**
@@ -730,6 +815,18 @@ export class StateManager {
 	}
 
 	/**
+	 * Read the saved global value without task, session, or remote overrides.
+	 * This is used only for settings UI that needs to distinguish a default from
+	 * an active task-specific mode.
+	 */
+	getSavedGlobalSettingsKey<K extends keyof Settings>(key: K): Settings[K] {
+		if (!this.isInitialized) {
+			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
+		}
+		return this.globalStateCache[key]
+	}
+
+	/**
 	 * Get method for global state keys - reads from in-memory cache
 	 */
 	getGlobalStateKey<K extends keyof GlobalState>(key: K): GlobalState[K] {
@@ -835,11 +932,13 @@ export class StateManager {
 		this.pendingSecrets.clear()
 		this.pendingWorkspaceState.clear()
 		this.pendingTaskState.clear()
+		this.pendingTaskStateValues.clear()
 
 		this.globalStateCache = {} as GlobalStateAndSettings
 		this.secretsCache = {} as Secrets
 		this.workspaceStateCache = {} as LocalState
 		this.taskStateCache = {}
+		this.activeTaskId = undefined
 		this.remoteConfigCache = {} as GlobalStateAndSettings
 		this.sessionOverrideCache = {}
 
@@ -874,6 +973,7 @@ export class StateManager {
 		this.pendingSecrets.clear()
 		this.pendingWorkspaceState.clear()
 		this.pendingTaskState.clear()
+		this.pendingTaskStateValues.clear()
 	}
 
 	/**
@@ -952,11 +1052,12 @@ export class StateManager {
 					return Promise.resolve()
 				}
 				const settingsToWrite: Record<string, unknown> = {}
+				const taskSnapshots = this.pendingTaskStateValues.get(taskId)
 				for (const key of keys) {
-					const value = this.taskStateCache[key]
-					if (value !== undefined) {
-						settingsToWrite[key] = value
-					}
+					// Keep undefined entries as deletion markers. This lets a task
+					// override return to the saved global default without leaving a
+					// stale value in its settings.json file.
+					settingsToWrite[key] = taskSnapshots?.has(key) ? taskSnapshots.get(key) : this.taskStateCache[key]
 				}
 				return writeTaskSettingsToStorage(taskId, settingsToWrite as Partial<Settings>)
 			}),

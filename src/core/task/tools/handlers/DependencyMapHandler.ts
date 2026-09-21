@@ -4,6 +4,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import { SpiderEngine } from "../../../policy/spider/SpiderEngine"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
 
@@ -33,7 +34,7 @@ export class DependencyMapHandler implements IToolHandler {
 		return "[generate integrity health map]"
 	}
 
-	async execute(config: TaskConfig, _block: ToolUse): Promise<ToolResponse> {
+	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		if (!config.isSubagentExecution) {
 			return formatResponse.toolError(
 				"🛑 **ACCESS DENIED**: Architectural mapping tools are reserved for Forensic Sub-Agents. Call `run_finalization` for authorized documentation in this session.",
@@ -41,17 +42,30 @@ export class DependencyMapHandler implements IToolHandler {
 		}
 		const engine = new SpiderEngine(config.cwd)
 		await engine.loadRegistry()
+		const steering = getTaskArchitectureSteering(config)
+		const canonicalSteering = steering === "canonical"
 
-		const nodes = Array.from(engine.nodes.values())
+		const rootPathParam = (block.params as unknown as { rootPath?: unknown }).rootPath
+		const rootPath = typeof rootPathParam === "string" ? rootPathParam.trim().replace(/\\/g, "/") : ""
+		const nodes = Array.from(engine.nodes.values()).filter((node) => {
+			if (!rootPath) return true
+			const normalized = node.path.replace(/\\/g, "/")
+			return normalized === rootPath || normalized.startsWith(`${rootPath.replace(/\/$/, "")}/`)
+		})
 
 		// 1. Generate Mermaid Graph
 		let mermaidGraph = "graph TD\n"
 
 		// Style definitions
-		mermaidGraph += "  classDef domain fill:#f96,stroke:#333,stroke-width:4px;\n"
-		mermaidGraph += "  classDef core fill:#69c,stroke:#333,stroke-width:2px;\n"
-		mermaidGraph += "  classDef infra fill:#6c6,stroke:#333,stroke-width:2px;\n"
-		mermaidGraph += "  classDef ui fill:#c6c,stroke:#333,stroke-width:2px;\n"
+		if (canonicalSteering) {
+			mermaidGraph += "  classDef domain fill:#f96,stroke:#333,stroke-width:4px;\n"
+			mermaidGraph += "  classDef core fill:#69c,stroke:#333,stroke-width:2px;\n"
+			mermaidGraph += "  classDef infrastructure fill:#6c6,stroke:#333,stroke-width:2px;\n"
+			mermaidGraph += "  classDef ui fill:#c6c,stroke:#333,stroke-width:2px;\n"
+			mermaidGraph += "  classDef plumbing fill:#999,stroke:#333,stroke-width:2px;\n"
+		} else {
+			mermaidGraph += "  classDef native fill:#69c,stroke:#333,stroke-width:2px;\n"
+		}
 		mermaidGraph += "  classDef orphan stroke:#f00,stroke-width:4px,stroke-dasharray: 5 5;\n"
 
 		// Nodes and Edges
@@ -61,13 +75,13 @@ export class DependencyMapHandler implements IToolHandler {
 			mermaidGraph += `  ${sanitizedPath}["${label}<br/><small>Score: ${node.logicDensity.toFixed(2)}</small>"]\n`
 
 			// Class assignment
-			mermaidGraph += `  class ${sanitizedPath} ${node.layer || "plumbing"};\n`
+			mermaidGraph += `  class ${sanitizedPath} ${canonicalSteering ? node.layer || "plumbing" : "native"};\n`
 			if (node.orphaned) mermaidGraph += `  class ${sanitizedPath} orphan;\n`
 
 			// Edges (Dependencies)
 			for (const depId of node.imports || []) {
 				const depNode = engine.nodes.get(depId)
-				if (depNode) {
+				if (depNode && (!rootPath || nodes.includes(depNode))) {
 					const sanitizedDep = depNode.path.replace(/\//g, "_").replace(/\./g, "_")
 					mermaidGraph += `  ${sanitizedPath} --> ${sanitizedDep}\n`
 				}
@@ -95,6 +109,7 @@ export class DependencyMapHandler implements IToolHandler {
 <body>
     <div class="container">
         <h1>Integrity Health Map</h1>
+        <p>${canonicalSteering ? "Canonical layer view" : "Workspace-native dependency view; classifier labels are evidence only"}</p>
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value">${nodes.length}</div>
@@ -125,7 +140,11 @@ export class DependencyMapHandler implements IToolHandler {
 		await fs.writeFile(reportPath, htmlTemplate)
 
 		return formatResponse.toolResult(
-			`Integrity Health Map generated successfully at: ${reportPath}\nYou can open this file in your browser to visualize the codebase health.`,
+			`Integrity Health Map generated successfully at: ${reportPath}\n` +
+				(canonicalSteering
+					? "The map uses canonical layer categories."
+					: "The map preserves workspace-native topology; any classifier labels are advisory evidence, not relocation instructions.") +
+				"\nYou can open this file in your browser to visualize the codebase health.",
 		)
 	}
 }

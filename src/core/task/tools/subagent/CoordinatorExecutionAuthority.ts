@@ -60,9 +60,33 @@ export class GovernanceParalysisTracker {
 
 	snapshot(validationKey?: string): GovernanceParalysisSnapshot {
 		const matching = validationKey ? this.entries.filter((e) => e.key === validationKey) : this.entries
+		const last = matching[matching.length - 1]
+		const previous = matching[matching.length - 2]
+		const workspaceUnchanged =
+			last !== undefined &&
+			previous !== undefined &&
+			last.workspaceFingerprint !== undefined &&
+			last.workspaceFingerprint === previous.workspaceFingerprint
+		const diagnostics: GovernanceDiagnosticEvent[] = []
+		if (workspaceUnchanged && matching.length >= 2) {
+			diagnostics.push(
+				diagnostic(
+					"governance_recursion_detected",
+					`Governance path "${last.key}" re-entered without state progress.`,
+				),
+			)
+		}
+		if (workspaceUnchanged && matching.length >= PARALYSIS_REPEAT_THRESHOLD) {
+			diagnostics.push(
+				diagnostic(
+					"no_progress_execution_loop",
+					`Repeated validation "${last.key}" ${matching.length}× without workspace change.`,
+				),
+			)
+		}
 		return {
-			diagnostics: [],
-			lastValidationKey: validationKey,
+			diagnostics,
+			lastValidationKey: last?.key ?? validationKey,
 			repeatCount: matching.length,
 		}
 	}

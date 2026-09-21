@@ -4,6 +4,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import { generateLayerComment } from "@/utils/joy-zoning"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
 
@@ -53,6 +54,13 @@ export class ModuleScaffoldHandler implements IToolHandler {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
+		const canonicalSteeringEnabled = getTaskArchitectureSteering(config) === "canonical"
+		if (!canonicalSteeringEnabled) {
+			return formatResponse.toolError(
+				"Canonical scaffold_module is unavailable for this workspace. Use the native file creation and test patterns already established in the repository.",
+			)
+		}
+
 		const params = block.params as unknown as ScaffoldParams
 		const name = params.name
 		const layer = (params.layer || "").toLowerCase()

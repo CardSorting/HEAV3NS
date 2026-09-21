@@ -23,9 +23,13 @@ export class IntegrityGarbageCollector {
 		private spiderEngine: SpiderEngine,
 		private anomalies?: import("../integrity/AnomalyRegistry").AnomalyRegistry,
 		private monitor?: import("../integrity/StabilityMonitor").StabilityMonitor,
-		private enforceCanonicalLayers = true,
+		private readonly enforceCanonicalLayers: boolean | (() => boolean) = true,
 	) {
 		this.healer = new RefactorHealer(cwd)
+	}
+
+	private isCanonicalLayerEnforcementEnabled(): boolean {
+		return typeof this.enforceCanonicalLayers === "function" ? this.enforceCanonicalLayers() : this.enforceCanonicalLayers
 	}
 
 	/**
@@ -70,7 +74,7 @@ export class IntegrityGarbageCollector {
 				}
 
 				// 1. Layer Alignment (Structural Primacy)
-				if (this.enforceCanonicalLayers && (await this.alignLayerTags(filePath))) {
+				if (this.isCanonicalLayerEnforcementEnabled() && (await this.alignLayerTags(filePath))) {
 					totalFixed++
 					fileModified = true
 					repairLog.push(`[ALIGNMENT] Resolved [LAYER] metadata drift in ${filePath}`)
@@ -100,7 +104,7 @@ export class IntegrityGarbageCollector {
 					}
 
 					// 3b. Structural Alignment (Spider-Level violations)
-					if (this.enforceCanonicalLayers && (await this.healer.autoHeal(filePath, this.spiderEngine))) {
+					if (this.isCanonicalLayerEnforcementEnabled() && (await this.healer.autoHeal(filePath, this.spiderEngine))) {
 						totalFixed++
 						fileModified = true
 						repairLog.push(`[STRUCTURAL_HEAL] Corrected architectural regression in ${filePath}`)

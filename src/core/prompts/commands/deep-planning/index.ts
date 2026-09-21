@@ -1,5 +1,7 @@
 import type { ApiProviderInfo } from "@/core/api"
+import type { WorkspaceArchitectureSteering } from "@/core/policy/WorkspaceArchitectureProfile"
 import type { SystemPromptContext } from "@/core/prompts/system-prompt/types"
+import { resolveDeepPlanningArchitectureGuidance } from "./architectureGuidance"
 import { getDeepPlanningRegistry } from "./registry"
 import { generateGemini3Template } from "./variants/gemini3"
 import { generateGPT51Template } from "./variants/gpt51"
@@ -19,6 +21,7 @@ export function getDeepPlanningPrompt(
 	providerInfo?: ApiProviderInfo,
 	enableNativeToolCalls?: boolean,
 	modEnabled?: boolean,
+	architectureSteering: WorkspaceArchitectureSteering = "canonical",
 ): string {
 	// Create context for variant selection
 	const context: SystemPromptContext = {
@@ -26,6 +29,7 @@ export function getDeepPlanningPrompt(
 		ide: "vscode",
 		mode: "plan",
 		modEnabled,
+		joyZoningSteeringEnabled: architectureSteering !== "disabled",
 	}
 
 	// Get the appropriate variant from registry
@@ -36,7 +40,7 @@ export function getDeepPlanningPrompt(
 
 	// For variants with extensive focus chain prompting, generate template with focus chain flag
 	let template: string
-	if (variant.id === "gpt-51") {
+	if (variant.id === "gpt-5") {
 		template = generateGPT51Template(focusChainSettings?.enabled ?? false, enableNativeToolCalls ?? false)
 	} else if (variant.id === "gemini-3") {
 		template = generateGemini3Template(focusChainSettings?.enabled ?? false, enableNativeToolCalls ?? false)
@@ -46,7 +50,7 @@ export function getDeepPlanningPrompt(
 		template = template.replace("{{NEW_TASK_INSTRUCTIONS}}", newTaskInstructions)
 	}
 
-	return template
+	return resolveDeepPlanningArchitectureGuidance(template, architectureSteering)
 }
 
 /**

@@ -3,6 +3,7 @@ import * as path from "path"
 
 export type WorkspaceArchitectureMode = "greenfield" | "joy-zoning" | "workspace-native"
 export type WorkspaceArchitecturePreference = "auto" | "joy-zoning" | "workspace-native"
+export type WorkspaceArchitectureSteering = "disabled" | "blended" | "canonical"
 
 export interface JoyZoningSteeringThresholds {
 	maxFunctionLines: number
@@ -17,6 +18,19 @@ export interface WorkspaceArchitectureProfile {
 	joyZoningSteering: "canonical" | "blended"
 	steeringThresholds: JoyZoningSteeringThresholds
 	reason: string
+}
+
+/**
+ * Resolve the agent's effective architecture posture from workspace evidence
+ * and the task-scoped steering switch. Keeping this decision in one place
+ * prevents prompt, subagent, and execution paths from drifting apart.
+ */
+export function resolveWorkspaceArchitectureSteering(
+	profile: WorkspaceArchitectureProfile,
+	steeringEnabled = true,
+): WorkspaceArchitectureSteering {
+	if (!steeringEnabled) return "disabled"
+	return profile.enforceCanonicalLayers ? "canonical" : "blended"
 }
 
 export const DEFAULT_JOY_ZONING_STEERING_THRESHOLDS: JoyZoningSteeringThresholds = {

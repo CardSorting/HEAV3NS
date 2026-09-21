@@ -4,11 +4,16 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { applyWorkspaceAuditPolicy } from "@shared/audit/auditGatePolicyLoader"
+import {
+	detectWorkspaceArchitectureProfile,
+	resolveWorkspaceArchitectureSteering,
+} from "@/core/policy/WorkspaceArchitectureProfile"
 import { parsePartialArrayString } from "@/shared/array"
 import { runCompletionAudit } from "@/shared/audit/completionAudit"
 import { DietCodePlanModeResponse } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import { DietCodeDefaultTool } from "@/shared/tools"
+import { getLayer, getTargetPath } from "@/utils/joy-zoning"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareNoConsentIntent, type IPartialBlockHandler, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
@@ -63,7 +68,14 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 			}
 		}
 
-		if (config.strictPlanModeEnabled && config.mode === "plan") {
+		const architectureSteering =
+			config.universalGuard?.getArchitectureSteering?.() ??
+			resolveWorkspaceArchitectureSteering(
+				detectWorkspaceArchitectureProfile(config.cwd),
+				config.services?.stateManager?.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false,
+			)
+
+		if (config.strictPlanModeEnabled && config.mode === "plan" && architectureSteering === "canonical") {
 			const { content, source } = StabilityScribe.getLatestScratchpadContent(
 				config.messageState.getApiConversationHistory(),
 			)
@@ -144,17 +156,32 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 
 		const layerSummary = await this.getLayerPlanningSummary(config)
 		const stabilityHandover = config.strictPlanModeEnabled ? this.getStabilityHandover(config) : ""
-		const architecturalCommitment = layerSummary
-			? `\n\n[ARCHITECTURAL COMMITMENT SEAL]
-You are now in ACT mode. Maintain the integrity of the layers explored:
-- DOMAIN files will remain pure, logic-only, and free of side effects.
-- CORE will coordinate without implementing low-level infrastructure.
-- INFRASTRUCTURE will only implement Domain interfaces via Dependency Inversion.`
-			: ""
+		const architecturalCommitment = layerSummary ? this.getArchitectureCommitment(config) : ""
 
 		return formatResponse.toolResult(
 			`[Planning complete. Proceed with implementing the plan in ACT MODE.]${layerSummary}${stabilityHandover}${architecturalCommitment}`,
 		)
+	}
+
+	private getArchitectureCommitment(config: TaskConfig): string {
+		const profile = config.universalGuard?.getArchitectureProfile?.() ?? detectWorkspaceArchitectureProfile(config.cwd)
+		const steeringMode = resolveWorkspaceArchitectureSteering(
+			profile,
+			config.services?.stateManager?.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false,
+		)
+		if (steeringMode === "blended") {
+			return `\n\n[WORKSPACE-NATIVE HANDOVER]
+Preserve the repository's existing module boundaries, naming, dependency direction, and effect seams.
+- Treat architectural classifications as evidence, not relocation instructions.
+- Prefer the nearest analogous implementation and its native verification path.
+- Keep the change cohesive and avoid introducing canonical folders or layer tags without repository evidence.`
+		}
+
+		return `\n\n[ARCHITECTURAL COMMITMENT SEAL]
+You are now in ACT mode. Maintain the integrity of the layers explored:
+- DOMAIN files will remain pure, logic-only, and free of side effects.
+- CORE will coordinate without implementing low-level infrastructure.
+- INFRASTRUCTURE will only implement Domain interfaces via Dependency Inversion.`
 	}
 
 	private getStabilityHandover(config: TaskConfig): string {
@@ -169,7 +196,13 @@ Maintain this commitment throughout the ACT phase.`
 	}
 
 	private async getLayerPlanningSummary(config: TaskConfig): Promise<string> {
-		const { getLayer, getTargetPath } = require("@/utils/joy-zoning")
+		const steeringEnabled = config.services?.stateManager?.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false
+		if (!steeringEnabled) return ""
+
+		const profile = config.universalGuard?.getArchitectureProfile?.() ?? detectWorkspaceArchitectureProfile(config.cwd)
+		const steeringMode = resolveWorkspaceArchitectureSteering(profile, steeringEnabled)
+		if (steeringMode === "disabled") return ""
+
 		const affectedLayers = new Set<string>()
 
 		const history = config.messageState.getApiConversationHistory()
@@ -189,6 +222,12 @@ Maintain this commitment throughout the ACT phase.`
 		}
 
 		if (affectedLayers.size === 0) return ""
+
+		if (steeringMode === "blended") {
+			return `\n\n[ARCHITECTURE FIT DIGEST]
+You explored files that the advisory classifier groups as **${Array.from(affectedLayers).join(", ")}**.
+Use that classification as evidence only. Preserve the workspace's existing placement, vocabulary, dependency direction, and native test/build seams; do not reorganize files to satisfy a canonical layer model.`
+		}
 
 		return `\n\n[JOY-ZONING PLANNING DIGEST]
 You have explored files in the following layers: **${Array.from(affectedLayers).join(", ")}**.

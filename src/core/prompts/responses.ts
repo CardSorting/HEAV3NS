@@ -2,6 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as diff from "diff"
 import * as path from "path"
 import { Mode } from "@/shared/storage/types"
+import { getLayer } from "@/utils/joy-zoning"
 import { DietCodeIgnoreController, LOCK_TEXT_SYMBOL } from "../ignore/DietCodeIgnoreController"
 
 const CONTEXT_WINDOW_WARNING_THRESHOLD_PERCENT = 50
@@ -184,14 +185,15 @@ Otherwise, if you have not completed the task and do not need additional informa
 		files: string[],
 		didHitLimit: boolean,
 		dietcodeIgnoreController?: DietCodeIgnoreController,
+		showArchitectureLayerTags = true,
 	): string => {
-		const { getLayer } = require("@/utils/joy-zoning")
+		const getLayerForFile = showArchitectureLayerTags ? getLayer : undefined
 
 		const sorted = files
 			.map((file) => {
 				// convert absolute path to relative path
-				const relativePath = path.relative(absolutePath, file).toPosix()
-				const layer = getLayer(file)
+				const relativePath = path.relative(absolutePath, file).replace(/\\/g, "/")
+				const layer = getLayerForFile?.(file)
 				const layerTag = layer ? `[${layer.toUpperCase()}] ` : ""
 				return file.endsWith("/") ? `${layerTag + relativePath}/` : layerTag + relativePath
 			})
@@ -282,15 +284,23 @@ Otherwise, if you have not completed the task and do not need additional informa
 		return [taskResumptionMessage, userResponseMessage]
 	},
 
-	planModeInstructions: () => {
-		return `In this mode you should gather information and design a solution that fits the workspace before choosing abstractions.
-
-# Architecture Fit Guide:
-1. **Read the workspace**: Inspect repository rules, nearby analogous code, tests, manifests, and tooling.
+	planModeInstructions: (joyZoningSteeringEnabled = true) => {
+		const architectureFitGuide = joyZoningSteeringEnabled
+			? `1. **Read the workspace**: Inspect repository rules, nearby analogous code, tests, manifests, and tooling.
 2. **Mirror real boundaries**: Plan with the modules and dependency flow the workspace already uses. Apply canonical JoyZoning layer names only for greenfield or explicitly JoyZoned projects.
 3. **Steer every change**: Keep JoyZoning active inside the workspace-native shape: make new functions/classes cohesive and testable, separate decisions from side effects at existing seams, and add contracts only where volatility requires them.
 4. **Limit migration**: Do not restructure unrelated code or introduce DDD ceremony solely for architectural appearance.
-5. **Prove quality**: Select the quality attributes materially affected by the change and plan observable evidence using the workspace's native tests, checks, benchmarks, security controls, or telemetry.
+5. **Prove quality**: Select the quality attributes materially affected by the change and plan observable evidence using the workspace's native tests, checks, benchmarks, security controls, or telemetry.`
+			: `1. **Read the workspace**: Inspect repository rules, nearby analogous code, tests, manifests, and tooling.
+2. **Mirror real boundaries**: Plan with the modules and dependency flow the workspace already uses, including its vocabulary, framework idioms, and testing seams.
+3. **Keep the plan neutral**: Improve cohesion and testability where the task requires it, without applying an additional architecture or steering vocabulary.
+4. **Limit migration**: Do not restructure unrelated code or introduce ceremony solely for architectural appearance.
+5. **Prove quality**: Select the quality attributes materially affected by the change and plan observable evidence using the workspace's native tests, checks, benchmarks, security controls, or telemetry.`
+
+		return `In this mode you should gather information and design a solution that fits the workspace before choosing abstractions.
+
+# Architecture Fit Guide:
+${architectureFitGuide}
 
 Once you have a detailed architectural plan, use the plan_mode_respond tool to present it. The system will automatically transition to ACT MODE so you can implement. Do not use the plan_mode_respond tool until you've gathered all the information you need e.g. with read_file or ask_followup_question.`
 	},

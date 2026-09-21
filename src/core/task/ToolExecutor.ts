@@ -643,7 +643,8 @@ export class ToolExecutor {
 		let toolResult = initialResult
 		const scratchpadReadMayCreate =
 			block.name === DietCodeDefaultTool.FILE_READ &&
-			path.basename(block.params.path?.trim() ?? "").toLowerCase() === "scratchpad.md"
+			path.basename(block.params.path?.trim() ?? "").toLowerCase() === "scratchpad.md" &&
+			this.guard.isCanonicalJoyZoningEnabled()
 		const localMutation = isLocalMutationTool(block.name) || scratchpadReadMayCreate
 		const opaqueMutation =
 			block.name === DietCodeDefaultTool.MCP_USE ||
@@ -672,7 +673,11 @@ export class ToolExecutor {
 			}
 		}
 
-		if ((block.name === DietCodeDefaultTool.FILE_NEW || block.name === DietCodeDefaultTool.FILE_EDIT) && block.params.path) {
+		if (
+			(block.name === DietCodeDefaultTool.FILE_NEW || block.name === DietCodeDefaultTool.FILE_EDIT) &&
+			block.params.path &&
+			this.guard.isCanonicalJoyZoningEnabled()
+		) {
 			void this.healer.alignTag(path.resolve(this.cwd, block.params.path)).catch(() => undefined)
 		}
 

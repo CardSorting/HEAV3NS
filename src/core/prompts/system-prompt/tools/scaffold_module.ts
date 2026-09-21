@@ -5,10 +5,11 @@ import { TASK_PROGRESS_PARAMETER } from "../types"
 
 /**
  * ## scaffold_module
- * Description: Scaffolds a new module following architectural best practices. Creates the file structure and provides boilerplate.
+ * Description: Scaffolds a new module in a canonical JoyZoning workspace. Established repositories should use their native file and test patterns instead.
  * Parameters:
- * - path: (required) Target path for the new module.
- * - template: (optional) Template to use (e.g. 'domain-service', 'infrastructure-adapter').
+ * - name: (required) Module name.
+ * - layer: (required) Canonical layer: domain, core, infrastructure, plumbing, or ui.
+ * - dir: (optional) Subdirectory within the canonical layer.
  */
 
 const id = DietCodeDefaultTool.STABILITY_SCAFFOLD
@@ -18,19 +19,28 @@ const GENERIC: DietCodeToolSpec = {
 	id,
 	name: "scaffold_module",
 	description:
-		"Scaffolds a new module following architectural best practices. Creates the file structure and provides boilerplate.",
+		"Scaffolds a new module in a canonical JoyZoning workspace. For an established repository, create the module using its existing path, naming, and test conventions.",
+	contextRequirements: (context) =>
+		context.joyZoningSteeringEnabled !== false && context.workspaceArchitectureProfile?.enforceCanonicalLayers !== false,
 	parameters: [
 		{
-			name: "path",
+			name: "name",
 			required: true,
 			type: "string",
-			instruction: "Target path for the new module.",
+			instruction: "Module name.",
 		},
 		{
-			name: "template",
+			name: "layer",
+			required: true,
+			type: "string",
+			instruction: "Canonical JoyZoning layer: domain, core, infrastructure, plumbing, or ui.",
+			enum: ["domain", "core", "infrastructure", "plumbing", "ui"],
+		},
+		{
+			name: "dir",
 			required: false,
 			type: "string",
-			instruction: "Template type (e.g. 'domain-service', 'infrastructure-adapter').",
+			instruction: "Optional subdirectory within the selected canonical layer.",
 		},
 		TASK_PROGRESS_PARAMETER,
 	],

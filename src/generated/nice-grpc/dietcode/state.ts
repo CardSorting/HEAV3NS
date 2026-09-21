@@ -457,6 +457,7 @@ export interface Settings {
   actModeGalxModelInfo?: OpenRouterModelInfo | undefined;
   openAiHeaders: { [key: string]: string };
   tokenCompressionEnabled?: boolean | undefined;
+  joyZoningSteeringEnabled?: boolean | undefined;
 }
 
 export interface Settings_OpenAiHeadersEntry {
@@ -528,6 +529,7 @@ export interface UpdateTaskSettingsRequest {
   metadata: Metadata | undefined;
   settings?: Settings | undefined;
   taskId?: string | undefined;
+  clearJoyZoningSteeringEnabled?: boolean | undefined;
 }
 
 /** Message for updating settings */
@@ -585,6 +587,7 @@ export interface UpdateSettingsRequest {
   modEnabled?: boolean | undefined;
   modOutcome?: string | undefined;
   tokenCompressionEnabled?: boolean | undefined;
+  joyZoningSteeringEnabled?: boolean | undefined;
 }
 
 export interface UpdateTerminalConnectionTimeoutRequest {
@@ -2298,6 +2301,7 @@ function createBaseSettings(): Settings {
     actModeGalxModelInfo: undefined,
     openAiHeaders: {},
     tokenCompressionEnabled: undefined,
+    joyZoningSteeringEnabled: undefined,
   };
 }
 
@@ -2911,6 +2915,9 @@ export const Settings: MessageFns<Settings> = {
     });
     if (message.tokenCompressionEnabled !== undefined) {
       writer.uint32(2840).bool(message.tokenCompressionEnabled);
+    }
+    if (message.joyZoningSteeringEnabled !== undefined) {
+      writer.uint32(2848).bool(message.joyZoningSteeringEnabled);
     }
     return writer;
   },
@@ -4555,6 +4562,14 @@ export const Settings: MessageFns<Settings> = {
             message.tokenCompressionEnabled = reader.bool();
             continue;
           }
+          case 356: {
+            if (tag !== 2848) {
+              break;
+            }
+
+            message.joyZoningSteeringEnabled = reader.bool();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -5602,6 +5617,11 @@ export const Settings: MessageFns<Settings> = {
         : isSet(object.token_compression_enabled)
         ? globalThis.Boolean(object.token_compression_enabled)
         : undefined,
+      joyZoningSteeringEnabled: isSet(object.joyZoningSteeringEnabled)
+        ? globalThis.Boolean(object.joyZoningSteeringEnabled)
+        : isSet(object.joy_zoning_steering_enabled)
+        ? globalThis.Boolean(object.joy_zoning_steering_enabled)
+        : undefined,
     };
   },
 
@@ -6222,6 +6242,9 @@ export const Settings: MessageFns<Settings> = {
     if (message.tokenCompressionEnabled !== undefined) {
       obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
     }
+    if (message.joyZoningSteeringEnabled !== undefined) {
+      obj.joyZoningSteeringEnabled = message.joyZoningSteeringEnabled;
+    }
     return obj;
   },
 
@@ -6545,6 +6568,7 @@ export const Settings: MessageFns<Settings> = {
       {},
     );
     message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
+    message.joyZoningSteeringEnabled = object.joyZoningSteeringEnabled ?? undefined;
     return message;
   },
 };
@@ -7696,7 +7720,7 @@ export const BrowserSettingsUpdate: MessageFns<BrowserSettingsUpdate> = {
 };
 
 function createBaseUpdateTaskSettingsRequest(): UpdateTaskSettingsRequest {
-  return { metadata: undefined, settings: undefined, taskId: undefined };
+  return { metadata: undefined, settings: undefined, taskId: undefined, clearJoyZoningSteeringEnabled: undefined };
 }
 
 export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = {
@@ -7709,6 +7733,9 @@ export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = 
     }
     if (message.taskId !== undefined) {
       writer.uint32(26).string(message.taskId);
+    }
+    if (message.clearJoyZoningSteeringEnabled !== undefined) {
+      writer.uint32(32).bool(message.clearJoyZoningSteeringEnabled);
     }
     return writer;
   },
@@ -7750,6 +7777,14 @@ export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = 
             message.taskId = reader.string();
             continue;
           }
+          case 4: {
+            if (tag !== 32) {
+              break;
+            }
+
+            message.clearJoyZoningSteeringEnabled = reader.bool();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -7771,6 +7806,11 @@ export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = 
         : isSet(object.task_id)
         ? globalThis.String(object.task_id)
         : undefined,
+      clearJoyZoningSteeringEnabled: isSet(object.clearJoyZoningSteeringEnabled)
+        ? globalThis.Boolean(object.clearJoyZoningSteeringEnabled)
+        : isSet(object.clear_joy_zoning_steering_enabled)
+        ? globalThis.Boolean(object.clear_joy_zoning_steering_enabled)
+        : undefined,
     };
   },
 
@@ -7784,6 +7824,9 @@ export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = 
     }
     if (message.taskId !== undefined) {
       obj.taskId = message.taskId;
+    }
+    if (message.clearJoyZoningSteeringEnabled !== undefined) {
+      obj.clearJoyZoningSteeringEnabled = message.clearJoyZoningSteeringEnabled;
     }
     return obj;
   },
@@ -7800,6 +7843,7 @@ export const UpdateTaskSettingsRequest: MessageFns<UpdateTaskSettingsRequest> = 
       ? Settings.fromPartial(object.settings)
       : undefined;
     message.taskId = object.taskId ?? undefined;
+    message.clearJoyZoningSteeringEnabled = object.clearJoyZoningSteeringEnabled ?? undefined;
     return message;
   },
 };
@@ -7856,6 +7900,7 @@ function createBaseUpdateSettingsRequest(): UpdateSettingsRequest {
     modEnabled: undefined,
     modOutcome: undefined,
     tokenCompressionEnabled: undefined,
+    joyZoningSteeringEnabled: undefined,
   };
 }
 
@@ -8010,6 +8055,9 @@ export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
     }
     if (message.tokenCompressionEnabled !== undefined) {
       writer.uint32(456).bool(message.tokenCompressionEnabled);
+    }
+    if (message.joyZoningSteeringEnabled !== undefined) {
+      writer.uint32(464).bool(message.joyZoningSteeringEnabled);
     }
     return writer;
   },
@@ -8427,6 +8475,14 @@ export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
             message.tokenCompressionEnabled = reader.bool();
             continue;
           }
+          case 58: {
+            if (tag !== 464) {
+              break;
+            }
+
+            message.joyZoningSteeringEnabled = reader.bool();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -8683,6 +8739,11 @@ export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
         : isSet(object.token_compression_enabled)
         ? globalThis.Boolean(object.token_compression_enabled)
         : undefined,
+      joyZoningSteeringEnabled: isSet(object.joyZoningSteeringEnabled)
+        ? globalThis.Boolean(object.joyZoningSteeringEnabled)
+        : isSet(object.joy_zoning_steering_enabled)
+        ? globalThis.Boolean(object.joy_zoning_steering_enabled)
+        : undefined,
     };
   },
 
@@ -8838,6 +8899,9 @@ export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
     if (message.tokenCompressionEnabled !== undefined) {
       obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
     }
+    if (message.joyZoningSteeringEnabled !== undefined) {
+      obj.joyZoningSteeringEnabled = message.joyZoningSteeringEnabled;
+    }
     return obj;
   },
 
@@ -8904,6 +8968,7 @@ export const UpdateSettingsRequest: MessageFns<UpdateSettingsRequest> = {
     message.modEnabled = object.modEnabled ?? undefined;
     message.modOutcome = object.modOutcome ?? undefined;
     message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
+    message.joyZoningSteeringEnabled = object.joyZoningSteeringEnabled ?? undefined;
     return message;
   },
 };

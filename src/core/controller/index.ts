@@ -868,6 +868,9 @@ export class Controller implements IController {
 		const useAutoCondense = this.stateManager.getGlobalSettingsKey("useAutoCondense")
 		const tokenCompressionEnabled = this.stateManager.getGlobalSettingsKey("tokenCompressionEnabled")
 		const subagentsEnabled = this.stateManager.getGlobalSettingsKey("subagentsEnabled")
+		const joyZoningSteeringEnabled = this.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled")
+		const joyZoningSteeringDefaultEnabled = this.stateManager.getSavedGlobalSettingsKey("joyZoningSteeringEnabled")
+		const joyZoningSteeringTaskOverride = this.stateManager.getTaskSettingsKey("joyZoningSteeringEnabled")
 		const modEnabled = this.stateManager.getGlobalSettingsKey("modEnabled")
 		const modOutcome = this.stateManager.getGlobalSettingsKey("modOutcome")
 		const userInfo = this.stateManager.getGlobalStateKey("userInfo")
@@ -978,6 +981,9 @@ export class Controller implements IController {
 			useAutoCondense,
 			tokenCompressionEnabled,
 			subagentsEnabled,
+			joyZoningSteeringEnabled,
+			joyZoningSteeringDefaultEnabled,
+			joyZoningSteeringTaskOverride,
 			modEnabled,
 			modOutcome,
 			userInfo,

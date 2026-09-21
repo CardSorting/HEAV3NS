@@ -329,8 +329,9 @@ export const deepPlanningToolResponse = (
 	providerInfo?: ApiProviderInfo,
 	enableNativeToolCalls?: boolean,
 	modEnabled?: boolean,
+	architectureSteering?: import("@/core/policy/WorkspaceArchitectureProfile").WorkspaceArchitectureSteering,
 ) => {
-	return getDeepPlanningPrompt(focusChainSettings, providerInfo, enableNativeToolCalls, modEnabled)
+	return getDeepPlanningPrompt(focusChainSettings, providerInfo, enableNativeToolCalls, modEnabled, architectureSteering)
 }
 
 export const documentToolResponse = () =>

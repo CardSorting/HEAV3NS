@@ -42,6 +42,8 @@ export interface SiblingDependencyModelOptions {
 	invocationPrefix?: string
 	/** Scheduler-prewarmed canonical targets avoid another realpath walk for queries. */
 	canonicalTargetBySequence?: readonly (string | undefined)[]
+	/** Canonical steering may use scratchpad reads with create-on-miss semantics. */
+	scratchpadReadCreates?: boolean
 }
 
 const EXTERNAL_TOOLS = new Set<string>([
@@ -98,11 +100,17 @@ function invocationId(block: ToolUse, sequence: number, prefix = "sibling"): str
 	return block.call_id?.trim() || `${prefix}-${sequence}`
 }
 
-function classifyCategory(block: ToolUse): SiblingToolCategory {
+function classifyCategory(block: ToolUse, scratchpadReadCreates = true): SiblingToolCategory {
 	const target = block.params.path?.trim()
 	// read_file has legacy create-on-miss behavior for scratchpad.md, so it is
-	// conservatively treated as a mutation fence instead of a pure query.
-	if (block.name === DietCodeDefaultTool.FILE_READ && target && path.basename(target).toLowerCase() === "scratchpad.md") {
+	// conservatively treated as a mutation fence instead of a pure query while
+	// canonical steering owns that workflow. Native workspaces can batch it.
+	if (
+		scratchpadReadCreates &&
+		block.name === DietCodeDefaultTool.FILE_READ &&
+		target &&
+		path.basename(target).toLowerCase() === "scratchpad.md"
+	) {
 		return "mutation"
 	}
 	if (isIoAuthorityTool(block.name)) return "query"
@@ -205,7 +213,7 @@ export function buildSiblingToolDependencyModel(
 ): SiblingToolDependencyNode[] {
 	const nodes: SiblingToolDependencyNode[] = []
 	for (const [sequence, block] of blocks.entries()) {
-		const category = classifyCategory(block)
+		const category = classifyCategory(block, options.scratchpadReadCreates)
 		const workspaceLocal = options.workspaceLocalBySequence?.[sequence] ?? true
 		const queryNeedsApproval = category === "query" && !workspaceLocal
 		const readOnlyVerificationCommand = category === "command" && isReadOnlyVerificationCommand(block.params.command)

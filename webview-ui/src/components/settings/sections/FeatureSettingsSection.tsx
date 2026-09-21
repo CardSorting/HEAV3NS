@@ -15,6 +15,7 @@ import { type ExtendedSettingsKey, updateSetting } from "../utils/settingsHandle
 interface FeatureCheckboxProps {
 	checked: boolean | undefined
 	onChange: (checked: boolean) => void
+	id?: string
 	label: string
 	description: ReactNode
 	disabled?: boolean
@@ -63,6 +64,14 @@ const featureToggles: FeatureToggle[] = [
 		description: "During the automatic planning phase, LUMI won't edit files until it begins implementation.",
 		stateKey: "strictPlanModeEnabled",
 		settingKey: "strictPlanModeEnabled",
+	},
+	{
+		id: "joy-zoning-steering",
+		label: "Follow workspace patterns",
+		description:
+			"Let LUMI use your repository's existing boundaries and conventions during planning. Turn it off for a fully native workflow; individual tasks can override this default.",
+		stateKey: "joyZoningSteeringDefaultEnabled",
+		settingKey: "joyZoningSteeringEnabled",
 	},
 	{
 		id: "auto-compact",
@@ -206,6 +215,7 @@ const FeatureRow = memo(
 	({
 		checked = false,
 		onChange,
+		id,
 		label,
 		description,
 		disabled,
@@ -217,15 +227,19 @@ const FeatureRow = memo(
 			return null
 		}
 
+		const switchId = id ?? label.toLowerCase().replace(/\s+/g, "-")
 		const checkbox = (
 			<div className="flex items-center justify-between w-full">
-				<div className="text-sm font-medium text-foreground">{label}</div>
+				<Label className="text-sm font-medium text-foreground" htmlFor={switchId}>
+					{label}
+				</Label>
 				<div>
 					<Switch
 						checked={checked}
 						className="shrink-0"
 						disabled={disabled || isRemoteLocked}
-						id={label}
+						aria-label={label}
+						id={switchId}
 						onCheckedChange={onChange}
 						size="lg"
 					/>
@@ -266,6 +280,7 @@ const FeatureSettingsSection = ({ renderSectionHeader }: FeatureSettingsSectionP
 		useAutoCondense,
 		tokenCompressionEnabled,
 		subagentsEnabled,
+		joyZoningSteeringDefaultEnabled,
 		dietcodeWebToolsEnabled,
 		worktreesEnabled,
 		focusChainSettings,
@@ -305,6 +320,7 @@ const FeatureSettingsSection = ({ renderSectionHeader }: FeatureSettingsSectionP
 		useAutoCondense,
 		tokenCompressionEnabled,
 		subagentsEnabled,
+		joyZoningSteeringDefaultEnabled,
 		modEnabled,
 		dietcodeWebToolsEnabled: dietcodeWebToolsEnabled?.user,
 		worktreesEnabled: worktreesEnabled?.user,
@@ -356,6 +372,7 @@ const FeatureSettingsSection = ({ renderSectionHeader }: FeatureSettingsSectionP
 							<FeatureRow
 								checked={featureState[feature.stateKey]}
 								description={feature.description}
+								id={feature.id}
 								isVisible={featureVisibility[feature.stateKey] ?? true}
 								label={feature.label}
 								onChange={(checked) =>

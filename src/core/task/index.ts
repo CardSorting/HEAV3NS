@@ -2661,6 +2661,11 @@ export class Task {
 			browserSettings: this.stateManager.getGlobalSettingsKey("browserSettings"),
 			yoloModeToggled: this.stateManager.getGlobalSettingsKey("yoloModeToggled"),
 			subagentsEnabled: this.stateManager.getGlobalSettingsKey("subagentsEnabled"),
+			joyZoningSteeringEnabled: this.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled"),
+			workspaceArchitectureProfile:
+				this.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false
+					? this.toolExecutor.getGuard().getArchitectureProfile()
+					: undefined,
 			dietcodeWebToolsEnabled:
 				this.stateManager.getGlobalSettingsKey("dietcodeWebToolsEnabled") && featureFlagsService.getWebtoolsEnabled(),
 			isMultiRootEnabled: multiRootEnabled,
@@ -3007,6 +3012,7 @@ export class Task {
 			workspaceLocalBySequence,
 			invocationPrefix: batchId,
 			canonicalTargetBySequence: blocks.map((block) => this.toolExecutor.peekIoAuthority?.(block)?.canonicalTarget),
+			scratchpadReadCreates: this.toolExecutor.getGuard().isCanonicalJoyZoningEnabled(),
 		})
 
 		for (const node of nodes) {
@@ -3255,6 +3261,7 @@ export class Task {
 				}
 				// If we have a pending initial commit, non-read-only tools must wait until it finishes.
 				const isScratchpadReadMutation =
+					this.toolExecutor.getGuard().isCanonicalJoyZoningEnabled() &&
 					block.name === DietCodeDefaultTool.FILE_READ &&
 					path.basename(block.params.path?.trim() ?? "").toLowerCase() === "scratchpad.md"
 				const isReadOnlyTool =
@@ -4001,6 +4008,7 @@ export class Task {
 						isIoAuthorityTool(block.name) &&
 						(!block.params.path?.trim() || isLocatedInPath(this.cwd, path.resolve(this.cwd, block.params.path))) &&
 						!(
+							this.toolExecutor.getGuard().isCanonicalJoyZoningEnabled() &&
 							block.name === DietCodeDefaultTool.FILE_READ &&
 							path.basename(block.params.path?.trim() ?? "").toLowerCase() === "scratchpad.md"
 						),
@@ -4401,6 +4409,7 @@ export class Task {
 				mcpPromptFetcher,
 				cwd,
 				this.stateManager.getGlobalSettingsKey("modEnabled") ?? false,
+				this.toolExecutor.getGuard().getArchitectureSteering(),
 			)
 
 			if (needsCheck) {
@@ -4721,7 +4730,13 @@ export class Task {
 				details += "(Desktop files not shown automatically. Use list_files to explore if needed.)"
 			} else {
 				const [files, didHitLimit] = await listFiles(this.cwd, true, 200)
-				const result = formatResponse.formatFilesList(this.cwd, files, didHitLimit, this.dietcodeIgnoreController)
+				const result = formatResponse.formatFilesList(
+					this.cwd,
+					files,
+					didHitLimit,
+					this.dietcodeIgnoreController,
+					this.toolExecutor.getGuard().isCanonicalJoyZoningEnabled(),
+				)
 				details += result
 			}
 
@@ -4789,7 +4804,9 @@ export class Task {
 		details += "\n\n# Current Mode"
 		const mode = this.stateManager.getGlobalSettingsKey("mode")
 		if (mode === "plan") {
-			details += `\nPLAN MODE\n${formatResponse.planModeInstructions()}`
+			details += `\nPLAN MODE\n${formatResponse.planModeInstructions(
+				this.stateManager.getGlobalSettingsKey("joyZoningSteeringEnabled") !== false,
+			)}`
 		} else {
 			details += `\nACT MODE\n${formatResponse.actModeInstructions()}`
 		}

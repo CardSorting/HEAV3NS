@@ -44,6 +44,29 @@ describe("SiblingToolDependency", () => {
 		assert.ok(nodes.every((node) => !node.requiresCheckpoint))
 	})
 
+	it("batches scratchpad reads when native steering owns the planning flow", () => {
+		const nodes = buildSiblingToolDependencyModel(
+			[tool(DietCodeDefaultTool.FILE_READ, { path: "scratchpad.md" }, "native-plan")],
+			"/workspace",
+			{ scratchpadReadCreates: false },
+		)
+
+		assert.equal(nodes[0]?.category, "query")
+		assert.equal(nodes[0]?.capturePresentation, true)
+		assert.equal(nodes[0]?.requiresCheckpoint, false)
+	})
+
+	it("keeps scratchpad reads fenced when canonical steering owns creation", () => {
+		const nodes = buildSiblingToolDependencyModel(
+			[tool(DietCodeDefaultTool.FILE_READ, { path: "scratchpad.md" }, "canonical-plan")],
+			"/workspace",
+		)
+
+		assert.equal(nodes[0]?.category, "mutation")
+		assert.equal(nodes[0]?.capturePresentation, false)
+		assert.equal(nodes[0]?.requiresCheckpoint, true)
+	})
+
 	it("orders overlapping writes by resource conflict", () => {
 		const nodes = buildSiblingToolDependencyModel(
 			[

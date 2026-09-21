@@ -9,12 +9,17 @@ import fs from "fs/promises"
 import * as path from "path"
 import { Logger } from "@/shared/services/Logger"
 import { IntegrityProtocol } from "./IntegrityProtocol"
+import type { WorkspaceArchitectureSteering } from "./WorkspaceArchitectureProfile"
 
 export interface PlanModeRequirements {
 	draftRequirements: boolean
 	drilldownNecessary: boolean
 	triadAuditRequired: boolean
 	fileReadLimit: number
+}
+
+export interface PlanModeMonitor {
+	getStabilityStats?: () => unknown
 }
 
 /**
@@ -33,10 +38,15 @@ export interface PlanModeRequirements {
  */
 export class PlanModeEnforcer {
 	private scratchpadPath: string
-	private currentResponseCount = 0
+	private readonly architectureSteering: () => WorkspaceArchitectureSteering
 
-	constructor(cwd: string) {
+	constructor(cwd: string, architectureSteering: () => WorkspaceArchitectureSteering = () => "canonical") {
 		this.scratchpadPath = path.join(cwd, "scratchpad.md")
+		this.architectureSteering = architectureSteering
+	}
+
+	private getArchitectureSteering(): WorkspaceArchitectureSteering {
+		return this.architectureSteering()
 	}
 
 	/**
@@ -44,6 +54,10 @@ export class PlanModeEnforcer {
 	 * V290: Advisory Architectural Drafting (Non-blocking).
 	 */
 	public async enforceStrategicReview(): Promise<{ allowed: boolean; reason?: string }> {
+		if (this.getArchitectureSteering() !== "canonical") {
+			return { allowed: true }
+		}
+
 		const content = await this.readScratchpad()
 		const isSovereign = content?.includes("#SOVEREIGN_MODE") || content?.includes("#BYPASS")
 
@@ -93,7 +107,7 @@ export class PlanModeEnforcer {
 		// V290: Surgical Bypass for Triad markers
 		const isSurgical = (content.match(/- \[ \]/g) || []).length <= 2
 		const reviewersPending =
-			content.includes("[ ] " + IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "")) ||
+			content.includes(`[ ] ${IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "")}`) ||
 			(IntegrityProtocol.SEMANTIC_PATTERNS.ARCHITECT.test(content) && content.includes("[ ]"))
 
 		if (reviewersPending && !isSurgical) {
@@ -113,15 +127,13 @@ export class PlanModeEnforcer {
 	 * Analyzes the proposed plan in scratchpad.md and predicts if it will trigger
 	 * TASK DRIFT or MISSION DRIFT alerts during implementation.
 	 */
-	public predictDrift(content: string, monitor: any): { drift: number; predictedWarning?: string } {
+	public predictDrift(content: string, _monitor?: PlanModeMonitor): { drift: number; predictedWarning?: string } {
 		// Fuzzy search for file paths in the plan (look for markdown lists or code blocks)
 		const fileRegex = /(?:src|lib|cli|packages)\/[a-zA-Z0-9_\-./]+/g
 		const matches = content.match(fileRegex) || []
 		const uniqueFiles = new Set(matches.map((f) => f.trim()))
 
 		const drift = uniqueFiles.size
-		const stats = monitor.getStabilityStats()
-
 		// V300: Prophecy Logic
 		if (drift > 20) {
 			return {
@@ -130,7 +142,7 @@ export class PlanModeEnforcer {
 			}
 		}
 
-		if (drift > 10) {
+		if (drift > 10 && this.getArchitectureSteering() === "canonical") {
 			const nonCoreCount = Array.from(uniqueFiles).filter((f) => !f.includes("/domain/") && !f.includes("/core/")).length
 			const missionRatio = nonCoreCount / drift
 			if (missionRatio > 0.8) {
@@ -147,7 +159,7 @@ export class PlanModeEnforcer {
 	/**
 	 * Provides feedback on the STRATEGIC REVIEW compliance status.
 	 */
-	public async getStrategicReviewStatus(monitor?: any): Promise<{
+	public async getStrategicReviewStatus(monitor?: PlanModeMonitor): Promise<{
 		hasScratchpad: boolean
 		Requirements: boolean
 		Architect: boolean
@@ -182,7 +194,7 @@ export class PlanModeEnforcer {
 			),
 			SRE: lines.some((l) => l.includes(IntegrityProtocol.HEADERS.SRE) || IntegrityProtocol.SEMANTIC_PATTERNS.SRE.test(l)),
 			TRIADAudit:
-				!content.includes("[ ] " + IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "")) &&
+				!content.includes(`[ ] ${IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "")}`) &&
 				!IntegrityProtocol.SEMANTIC_PATTERNS.ARCHITECT.test(content) &&
 				lines.length > 10,
 			prophecy,
@@ -222,6 +234,10 @@ export class PlanModeEnforcer {
 	 * Generates STRATEGIC REVIEW completion prompts.
 	 */
 	public async generateStrategicReviewPrompts(): Promise<string> {
+		if (this.getArchitectureSteering() !== "canonical") {
+			return `✅ NATIVE PLAN REVIEW READY\n\nArchitectural scratchpad review is optional in the workspace-native posture. Present the plan using the repository's existing boundaries, verification commands, and terminology.`
+		}
+
 		const status = await this.getStrategicReviewStatus()
 
 		if (!status.hasScratchpad) {
@@ -230,9 +246,9 @@ export class PlanModeEnforcer {
 
 		const missing = []
 		if (!status.Requirements) missing.push("Requirement Analysis")
-		if (!status.Architect) missing.push(IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "") + " review")
-		if (!status.Critic) missing.push(IntegrityProtocol.HEADERS.CRITIC.replace(/^#+\s+/, "") + " review")
-		if (!status.SRE) missing.push(IntegrityProtocol.HEADERS.SRE.replace(/^#+\s+/, "") + " review")
+		if (!status.Architect) missing.push(`${IntegrityProtocol.HEADERS.ARCHITECT.replace(/^#+\s+/, "")} review`)
+		if (!status.Critic) missing.push(`${IntegrityProtocol.HEADERS.CRITIC.replace(/^#+\s+/, "")} review`)
+		if (!status.SRE) missing.push(`${IntegrityProtocol.HEADERS.SRE.replace(/^#+\s+/, "")} review`)
 		if (!status.TRIADAudit) missing.push("STABILITY GUARD ([x] marks)")
 
 		if (missing.length === 0) {
@@ -248,14 +264,20 @@ export class PlanModeEnforcer {
 	public performArchitectAudit(planSummary: string): string[] {
 		const issues: string[] = []
 
-		// Check for layer violations
-		const layerCheck = this.checkLayerDiscipline(planSummary)
-		if (layerCheck.violations.length > 0) {
-			issues.push(`ARCHITECTURAL VIOLATIONS:\n${layerCheck.violations.map((v) => `- ${v}`).join("\n")}`)
+		// Canonical layer discipline is opt-in. Workspace-native and disabled
+		// postures still review dependency direction and failure modes, but do not
+		// reinterpret local vocabulary as a relocation contract.
+		if (this.getArchitectureSteering() === "canonical") {
+			const layerCheck = this.checkLayerDiscipline(planSummary)
+			if (layerCheck.violations.length > 0) {
+				issues.push(`ARCHITECTURAL VIOLATIONS:\n${layerCheck.violations.map((v) => `- ${v}`).join("\n")}`)
+			}
 		}
 
-		// Check for Domain/Core/Infrastructure separation
-		if (planSummary.match(/domain.*core|core.*domain|domain.*infrastructure|core.*infrastructure/gi)) {
+		if (
+			this.getArchitectureSteering() === "canonical" &&
+			planSummary.match(/domain.*core|core.*domain|domain.*infrastructure|core.*infrastructure/gi)
+		) {
 			issues.push("Geo-Clash Detected: Mixing layers in a single proposal. Separate them.")
 		}
 

@@ -4,6 +4,7 @@
 
 import { Mode } from "@shared/storage/types"
 import { PlanModeEnforcer } from "@/core/policy/PlanModeEnforcer"
+import { getLayer } from "@/utils/joy-zoning"
 import { ToolUse } from "../assistant-message"
 import { StateManager } from "../storage/StateManager"
 import { FluidPolicyEngine, PolicyResult } from "./FluidPolicyEngine"
@@ -20,7 +21,7 @@ export class UniversalGuard {
 
 	constructor(cwd: string, taskId: string, stateManager: StateManager) {
 		this.engine = new FluidPolicyEngine(cwd, taskId, stateManager)
-		this.planModeEnforcer = new PlanModeEnforcer(cwd)
+		this.planModeEnforcer = new PlanModeEnforcer(cwd, () => this.engine.getArchitectureSteering())
 	}
 
 	/**
@@ -92,6 +93,22 @@ export class UniversalGuard {
 		return this.engine.getFileLayerContext(filePath)
 	}
 
+	public isJoyZoningSteeringEnabled(): boolean {
+		return this.engine.isJoyZoningSteeringEnabled()
+	}
+
+	public isCanonicalJoyZoningEnabled(): boolean {
+		return this.engine.isJoyZoningSteeringEnabled() && this.engine.getArchitectureProfile().enforceCanonicalLayers
+	}
+
+	public getArchitectureProfile() {
+		return this.engine.getArchitectureProfile()
+	}
+
+	public getArchitectureSteering() {
+		return this.engine.getArchitectureSteering()
+	}
+
 	/**
 	 * Performs read-time AST auditing.
 	 */
@@ -125,7 +142,6 @@ export class UniversalGuard {
 	 * Useful for injecting layer confirmations into tool results.
 	 */
 	public getLayerForPath(filePath: string): string {
-		const { getLayer } = require("@/utils/joy-zoning")
 		return getLayer(filePath)
 	}
 

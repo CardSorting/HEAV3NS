@@ -43,7 +43,7 @@ export const SubagentAuditBadge = memo(({ summary, onExpandTaskHeader, className
 		[
 			summary?.totalAgents ? `${summary.totalAgents} helper(s)` : undefined,
 			isRunning ? `${activeAgents} active` : undefined,
-			summary?.failedCount ? `${summary.failedCount} didn't work out` : undefined,
+			summary?.failedCount ? `${summary.failedCount} helper(s) failed` : undefined,
 			labels.length > 0 ? labels.join(" · ") : undefined,
 			onExpandTaskHeader ? "Click for a little more detail" : undefined,
 		]
@@ -71,6 +71,7 @@ export const SubagentAuditBadge = memo(({ summary, onExpandTaskHeader, className
 	if (onExpandTaskHeader) {
 		return (
 			<button
+				aria-label={titleText ? `Delegated helpers: ${titleText}` : "Delegated helpers"}
 				className={cn(badgeClassName, "bg-transparent font-sans")}
 				onClick={(event) => {
 					event.stopPropagation()
@@ -84,7 +85,7 @@ export const SubagentAuditBadge = memo(({ summary, onExpandTaskHeader, className
 	}
 
 	return (
-		<span className={badgeClassName} title={titleText}>
+		<span aria-label={titleText ? `Delegated helpers: ${titleText}` : "Delegated helpers"} className={badgeClassName} title={titleText}>
 			{badgeContent}
 		</span>
 	)

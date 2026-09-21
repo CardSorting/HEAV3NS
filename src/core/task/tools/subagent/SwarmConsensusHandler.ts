@@ -1,5 +1,6 @@
 import { Logger } from "@/shared/services/Logger"
 import { TaskConfig } from "../types/TaskConfig"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 
 /**
  * Handles Swarm Consensus signaling and verification loops.
@@ -37,7 +38,10 @@ export class SwarmConsensusHandler {
 		}
 
 		// Detect standard keywords
-		const keywords = ["CRITICAL:", "SECURITY RISK:", "ARCHITECTURE VIOLATION:", "JOY-ZONING VIOLATION:"]
+		const keywords = ["CRITICAL:", "SECURITY RISK:", "ARCHITECTURE VIOLATION:"]
+		if (getTaskArchitectureSteering(config) === "canonical") {
+			keywords.push("JOY-ZONING VIOLATION:")
+		}
 		for (const keyword of keywords) {
 			if (upperResult.includes(keyword)) {
 				// Extract the line containing the keyword

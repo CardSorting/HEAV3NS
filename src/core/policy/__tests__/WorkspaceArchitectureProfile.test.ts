@@ -3,7 +3,7 @@ import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 import { TspPolicyPlugin } from "../TspPolicyPlugin"
-import { detectWorkspaceArchitectureProfile } from "../WorkspaceArchitectureProfile"
+import { detectWorkspaceArchitectureProfile, resolveWorkspaceArchitectureSteering } from "../WorkspaceArchitectureProfile"
 
 describe("WorkspaceArchitectureProfile", () => {
 	let cwd: string
@@ -23,6 +23,8 @@ describe("WorkspaceArchitectureProfile", () => {
 		expect(profile.enforceCanonicalLayers).to.equal(true)
 		expect(profile.joyZoningSteering).to.equal("canonical")
 		expect(profile.steeringThresholds.maxFunctionLines).to.equal(80)
+		expect(resolveWorkspaceArchitectureSteering(profile)).to.equal("canonical")
+		expect(resolveWorkspaceArchitectureSteering(profile, false)).to.equal("disabled")
 	})
 
 	it("preserves an established workspace without forcing canonical layers", () => {
@@ -38,6 +40,7 @@ describe("WorkspaceArchitectureProfile", () => {
 		expect(profile.mode).to.equal("workspace-native")
 		expect(profile.enforceCanonicalLayers).to.equal(false)
 		expect(profile.joyZoningSteering).to.equal("blended")
+		expect(resolveWorkspaceArchitectureSteering(profile)).to.equal("blended")
 		expect(validation.success).to.equal(true)
 		expect(validation.errors).to.deep.equal([])
 		expect(validation.warnings).to.not.satisfy((warnings: string[]) =>
@@ -75,7 +78,7 @@ describe("WorkspaceArchitectureProfile", () => {
 
 		expect(validation.success).to.equal(true)
 		expect(validation.errors).to.deep.equal([])
-		expect(validation.warnings.some((warning) => warning.includes("[JOY STEERING JZ-B01: BOUNDARY]"))).to.equal(true)
+		expect(validation.warnings.some((warning) => warning.includes("[ARCHITECTURE FIT: BOUNDARY]"))).to.equal(true)
 		expect(validation.warnings.some((warning) => warning.includes("src/domain"))).to.equal(false)
 	})
 
@@ -104,7 +107,7 @@ describe("WorkspaceArchitectureProfile", () => {
 
 		expect(profile.steeringThresholds.maxFunctionLines).to.equal(5)
 		expect(validation.success).to.equal(true)
-		expect(validation.warnings.some((warning) => warning.includes("[JOY STEERING JZ-C01: COHESION]"))).to.equal(true)
+		expect(validation.warnings.some((warning) => warning.includes("[ARCHITECTURE FIT: COHESION]"))).to.equal(true)
 	})
 
 	it("retains structural enforcement when a workspace opts into JoyZoning", () => {
@@ -134,6 +137,22 @@ describe("WorkspaceArchitectureProfile", () => {
 
 		expect(profile.mode).to.equal("workspace-native")
 		expect(profile.enforceCanonicalLayers).to.equal(false)
+	})
+
+	it("can disable JoyZoning policy guidance without changing direct audit construction", () => {
+		fs.mkdirSync(path.join(cwd, "src"))
+		const content = `export async function decideAndPersist(input: number, repository: { save(value: number): Promise<void> }) {
+	const normalized = Math.max(0, input)
+	await repository.save(normalized)
+	return normalized
+}
+`
+		const plugin = new TspPolicyPlugin(cwd, () => false)
+
+		const validation = plugin.validateSource(path.join(cwd, "src", "feature.ts"), content)
+
+		expect(validation).to.deep.equal({ success: true, errors: [], warnings: [] })
+		expect(plugin.findCrossLayerViolations({} as never, path.join(cwd, "src", "feature.ts"))).to.deep.equal([])
 	})
 
 	it("uses source evidence when architecture mode is auto", () => {

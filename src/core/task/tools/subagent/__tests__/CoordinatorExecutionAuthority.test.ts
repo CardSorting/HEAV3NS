@@ -88,6 +88,21 @@ describe("CoordinatorExecutionAuthority", () => {
 		assert.ok(events.some((e) => e.code === "no_progress_execution_loop"))
 	})
 
+	it("exposes active paralysis diagnostics in snapshots", () => {
+		const tracker = new GovernanceParalysisTracker()
+		const fp = "unchanged-workspace"
+		tracker.record("completion_gate:audit_gate", fp)
+		tracker.record("completion_gate:audit_gate", fp)
+		tracker.record("completion_gate:audit_gate", fp)
+
+		const snapshot = tracker.snapshot("completion_gate:audit_gate")
+
+		assert.equal(snapshot.lastValidationKey, "completion_gate:audit_gate")
+		assert.equal(snapshot.repeatCount, 3)
+		assert.ok(snapshot.diagnostics.some((event) => event.code === "governance_recursion_detected"))
+		assert.ok(snapshot.diagnostics.some((event) => event.code === "no_progress_execution_loop"))
+	})
+
 	it("continues lanes when parent gate signals are advisory only", () => {
 		const result = resolveContinuationFromParentSignals([
 			"ADVISORY: GATE: PARENT_BLOCKED (2)",

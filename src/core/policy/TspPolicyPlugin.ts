@@ -34,9 +34,11 @@ export interface FileQualityScore {
  */
 export class TspPolicyPlugin {
 	private readonly architectureProfile: WorkspaceArchitectureProfile
+	private readonly joyZoningSteeringEnabled: () => boolean
 
-	public constructor(cwd = process.cwd()) {
+	public constructor(cwd = process.cwd(), joyZoningSteeringEnabled: () => boolean = () => true) {
 		this.architectureProfile = detectWorkspaceArchitectureProfile(cwd)
+		this.joyZoningSteeringEnabled = joyZoningSteeringEnabled
 	}
 
 	public getArchitectureProfile(): WorkspaceArchitectureProfile {
@@ -250,6 +252,10 @@ export class TspPolicyPlugin {
 		_resolveContent?: (path: string) => string | undefined,
 		isRecovering = false, // V9: Downgrade errors to warnings if project integrity is recovering
 	): { success: boolean; errors: string[]; warnings: string[] } {
+		if (!this.joyZoningSteeringEnabled()) {
+			return { success: true, errors: [], warnings: [] }
+		}
+
 		const errors: string[] = []
 		const warnings: string[] = []
 
@@ -353,7 +359,7 @@ export class TspPolicyPlugin {
 	}
 
 	/**
-	 * Applies topology-neutral JoyZoning guidance to established workspaces.
+	 * Applies topology-neutral architecture-fit guidance to established workspaces.
 	 * These checks never reject a write or prescribe canonical directories.
 	 */
 	private validateBlendedSteering(filePath: string, content: string): string[] {
@@ -390,7 +396,7 @@ export class TspPolicyPlugin {
 
 			if (lineCount > this.architectureProfile.steeringThresholds.maxFunctionLines) {
 				warnings.push(
-					`[JOY STEERING JZ-C01: COHESION] ${unit.name} spans ${lineCount} lines. Keep its workspace-native placement, but consider extracting one coherent responsibility using nearby project patterns.`,
+					`[ARCHITECTURE FIT: COHESION] ${unit.name} spans ${lineCount} lines. Keep its workspace-native placement, but consider extracting one coherent responsibility using nearby project patterns.`,
 				)
 			}
 
@@ -400,7 +406,7 @@ export class TspPolicyPlugin {
 				metrics.externalEffects > 0
 			) {
 				warnings.push(
-					`[JOY STEERING JZ-B01: BOUNDARY] ${unit.name} combines ${metrics.decisions} decision points with ${metrics.externalEffects} external-effect call(s). Mirror the workspace's existing boundary seam, then keep the decision portion independently testable where practical.`,
+					`[ARCHITECTURE FIT: BOUNDARY] ${unit.name} combines ${metrics.decisions} decision points with ${metrics.externalEffects} external-effect call(s). Mirror the workspace's existing boundary seam, then keep the decision portion independently testable where practical.`,
 				)
 			}
 		}
@@ -410,7 +416,7 @@ export class TspPolicyPlugin {
 				const methodCount = node.members.filter((member) => ts.isMethodDeclaration(member)).length
 				if (methodCount > this.architectureProfile.steeringThresholds.maxClassMethods) {
 					warnings.push(
-						`[JOY STEERING JZ-O01: OWNERSHIP] ${node.name.text} exposes ${methodCount} methods. Preserve local class conventions, but verify that it still represents one cohesive capability.`,
+						`[ARCHITECTURE FIT: OWNERSHIP] ${node.name.text} exposes ${methodCount} methods. Preserve local class conventions, but verify that it still represents one cohesive capability.`,
 					)
 				}
 			}
@@ -494,7 +500,7 @@ export class TspPolicyPlugin {
 	}
 
 	public findCrossLayerViolations(sourceFile: ts.SourceFile, filePath: string): string[] {
-		if (!this.architectureProfile.enforceCanonicalLayers) return []
+		if (!this.joyZoningSteeringEnabled() || !this.architectureProfile.enforceCanonicalLayers) return []
 
 		const violations: string[] = []
 		const currentLayer = getLayer(filePath)

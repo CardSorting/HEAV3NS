@@ -170,6 +170,12 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			}
 		}
 
+		// Update automatic JoyZoning architecture guidance. Explicit audits and
+		// their reports remain available when it is disabled.
+		if (request.joyZoningSteeringEnabled !== undefined) {
+			controller.stateManager.setGlobalState("joyZoningSteeringEnabled", request.joyZoningSteeringEnabled)
+		}
+
 		// Update auto-condense setting
 		if (request.useAutoCondense !== undefined) {
 			if (controller.task) {

@@ -95,6 +95,11 @@ export interface ExtensionState {
 	useAutoCondense?: boolean
 	tokenCompressionEnabled?: boolean
 	subagentsEnabled?: boolean
+	joyZoningSteeringEnabled?: boolean
+	/** Saved default; the effective value may be overridden for the active task. */
+	joyZoningSteeringDefaultEnabled?: boolean
+	/** Active task override, when one is present. */
+	joyZoningSteeringTaskOverride?: boolean
 	modEnabled?: boolean
 	modOutcome?: "plan-only" | "plan-and-implement"
 	dietcodeWebToolsEnabled?: DietCodeFeatureSetting

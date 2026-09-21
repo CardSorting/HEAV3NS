@@ -14,6 +14,11 @@ export class ReactivePolicyObserver {
 	 * Only triggers on tool_use blocks (not text discussion) to minimize false positives.
 	 */
 	public observeStream(content: AssistantMessageContent[]): { warning?: string; interrupt?: boolean } {
+		// These checks encode canonical layer semantics. Blended workspaces still
+		// receive topology-neutral guidance from the policy engine, but should not
+		// be warned as if their native modules were Domain/Core/Infrastructure.
+		if (!this.guard.isCanonicalJoyZoningEnabled()) return {}
+
 		const mode = this.guard.getMode()
 		for (const block of content) {
 			if (block.type === "tool_use" && "name" in block) {

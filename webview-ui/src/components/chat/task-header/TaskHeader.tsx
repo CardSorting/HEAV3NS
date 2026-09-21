@@ -5,9 +5,15 @@ import type { SubagentAuditSummary } from "@shared/audit/auditSubagentRollup"
 import type { ResolvedCompletionFunnelSnapshot } from "@shared/completion/completionFunnelMessages"
 import { DietCodeMessage } from "@shared/ExtensionMessage"
 import { StringArrayRequest } from "@shared/proto/dietcode/common"
-import React, { useCallback, useMemo, useState } from "react"
+import React, { useCallback, useId, useMemo, useState } from "react"
 import Thumbnails from "@/components/common/Thumbnails"
 import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
+import {
+	resetJoyZoningTaskOverride,
+	updateSettingAsync,
+	updateTaskSetting,
+} from "@/components/settings/utils/settingsHandlers"
+import { Switch } from "@/components/ui/switch"
 import { useIsCompact } from "@/context/DensityContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
@@ -78,6 +84,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 		currentTaskItem,
 		checkpointManagerErrorMessage,
 		focusChainSettings,
+		joyZoningSteeringEnabled,
+		joyZoningSteeringTaskOverride,
 		navigateToSettings,
 		mode,
 		expandTaskHeader: isTaskExpanded,
@@ -86,12 +94,61 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	} = useExtensionState()
 
 	const [deleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false)
+	const [isSavingArchitectureGuidance, setIsSavingArchitectureGuidance] = useState(false)
+	const [architectureGuidanceError, setArchitectureGuidanceError] = useState<string | null>(null)
+	const [pendingArchitectureGuidance, setPendingArchitectureGuidance] = useState<boolean | null>(null)
+	const architectureGuidanceStatusId = useId()
+	const architectureGuidanceErrorId = useId()
 
 	const handleCheckpointSettingsClick = useCallback(() => {
 		navigateToSettings("features")
 	}, [navigateToSettings])
 
+	const handleJoyZoningToggle = useCallback(
+		async (enabled: boolean) => {
+			setPendingArchitectureGuidance(enabled)
+			setArchitectureGuidanceError(null)
+			setIsSavingArchitectureGuidance(true)
+			try {
+				if (currentTaskItem?.id) {
+					await updateTaskSetting("joyZoningSteeringEnabled", enabled, currentTaskItem.id)
+				} else {
+					await updateSettingAsync("joyZoningSteeringEnabled", enabled)
+				}
+			} catch (error) {
+				console.error("Failed to update task architecture guidance:", error)
+				setArchitectureGuidanceError("Couldn't save this change. Try again.")
+			} finally {
+				setPendingArchitectureGuidance(null)
+				setIsSavingArchitectureGuidance(false)
+			}
+		},
+		[currentTaskItem?.id],
+	)
+
+	const handleUseDefaultJoyZoningSetting = useCallback(async () => {
+		setArchitectureGuidanceError(null)
+		setIsSavingArchitectureGuidance(true)
+		try {
+			await resetJoyZoningTaskOverride(currentTaskItem?.id)
+		} catch (error) {
+			console.error("Failed to reset task architecture guidance:", error)
+			setArchitectureGuidanceError("Couldn't restore the default. Try again.")
+		} finally {
+			setIsSavingArchitectureGuidance(false)
+		}
+	}, [currentTaskItem?.id])
+
 	const isCompact = useIsCompact()
+	const isJoyZoningSteeringEnabled = pendingArchitectureGuidance ?? joyZoningSteeringEnabled !== false
+	const hasTaskJoyZoningOverride = joyZoningSteeringTaskOverride !== undefined
+	const joyZoningScopeLabel = hasTaskJoyZoningOverride ? "This task" : "Using default"
+	const architectureGuidanceStatus = isSavingArchitectureGuidance
+		? "Saving…"
+		: architectureGuidanceError ||
+			(hasTaskJoyZoningOverride
+				? `${isJoyZoningSteeringEnabled ? "On" : "Off"} for this task · next request`
+				: `${isJoyZoningSteeringEnabled ? "On" : "Off"} by default · next request`)
 
 	// Simplified computed values
 	const { selectedModelInfo } = normalizeApiConfiguration(apiConfiguration, mode)
@@ -136,7 +193,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 				lifecycleEvent={taskLifecycleEvent}
 				messages={messages}
 				onReviewBlock={onScrollToLatestGateBlock}
-				onToggleDetails={() => setExpandTaskHeader(!isTaskExpanded)}>
+				onToggleDetails={() => setExpandTaskHeader(!isTaskExpanded)}
+				subagentAuditSummary={subagentAuditSummary}>
 				{isTaskExpanded && (
 					<div
 						className={cn(
@@ -147,6 +205,41 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 							checkpointManagerErrorMessage={checkpointManagerErrorMessage}
 							handleCheckpointSettingsClick={handleCheckpointSettingsClick}
 						/>
+						<div
+							aria-busy={isSavingArchitectureGuidance}
+							className="flex items-center justify-between gap-2 rounded-md border border-border/20 bg-background/20 px-2 py-1.5">
+							<div className="min-w-0">
+								<div className="text-[10px] font-medium text-foreground">Follow workspace patterns</div>
+								<div
+									aria-atomic="true"
+									className={cn("text-[10px] text-muted-foreground", architectureGuidanceError && "text-error")}
+									id={architectureGuidanceStatusId}
+									role={architectureGuidanceError ? "alert" : "status"}>
+									{joyZoningScopeLabel} · {architectureGuidanceStatus}
+								</div>
+							</div>
+							<div className="flex shrink-0 items-center gap-2">
+								{hasTaskJoyZoningOverride && (
+									<button
+										aria-label="Reset workspace pattern guidance to default"
+										className="min-h-7 rounded border-0 bg-transparent px-2 py-1 text-[9px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-50"
+										disabled={isSavingArchitectureGuidance}
+										onClick={handleUseDefaultJoyZoningSetting}
+										title="Reset this task to the saved default"
+										type="button">
+										Reset to default
+									</button>
+								)}
+								<Switch
+									aria-describedby={`${architectureGuidanceStatusId}${architectureGuidanceError ? ` ${architectureGuidanceErrorId}` : ""}`}
+									aria-label="Follow workspace patterns for this task"
+									checked={isJoyZoningSteeringEnabled}
+									disabled={isSavingArchitectureGuidance}
+									onCheckedChange={handleJoyZoningToggle}
+								/>
+							</div>
+							{architectureGuidanceError && <span className="sr-only" id={architectureGuidanceErrorId}>{architectureGuidanceError}</span>}
+						</div>
 						<div className="flex items-start gap-1.5 text-xs">
 							<span className="font-bold text-muted-foreground shrink-0 uppercase tracking-wide text-[9px] mt-0.5">
 								Task:

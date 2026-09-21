@@ -613,6 +613,14 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				isolatedBuilder.setAllowedTools(
 					constrainSubagentToolsForLane(effectiveAllowedTools, laneNecessities[index].lockRequired),
 				)
+				isolatedBuilder.setLaneExecutionContext({
+					index,
+					executionMode: laneIntents[index].executionMode,
+					readSet: laneIntents[index].readSet,
+					writeSet: laneIntents[index].writeSet,
+					dependsOn: governedCoordinator.getLaneDAG().getNode(index)?.dependsOn,
+					lockRequired: laneNecessities[index].lockRequired,
+				})
 				const runner = new SubagentRunner(config, isolatedBuilder)
 				runner.setRecursionDepth(currentDepth + 1)
 				runner.setLaneExecutionMode(laneIntents[index].executionMode)

@@ -3,15 +3,16 @@ import type { PromptVariant, SystemPromptContext } from "../types"
 
 const getIntegrityWikiTemplateText = () => `[INTEGRITY_KNOWLEDGE_LEDGER_OMNI_BRIDGE]
 
-- TAXONOMY_STRUCTURE: Strictly organize into .wiki/ subdirectories:
+- LEDGER_SCOPE: Treat .wiki/ as an existing project surface, not a prerequisite for implementation. Read relevant entries when they reduce uncertainty; do not create or update docs solely to satisfy this contract.
+- TAXONOMY_STRUCTURE: When the assigned lane explicitly owns documentation, follow the repository's existing .wiki/ structure; otherwise leave shared-ledger synthesis to the parent:
   - onboarding/: getting-started.md, walkthrough.md, troubleshooting.md
   - architecture/: overview.md (Mermaid diagrams), directories.md, schemas.md, decisions.md (ADRs), risk-map.md
-  - agent/: playbook.md (MANDATORY live brief), agent-memory.md, key-findings.md, troubleshooting.md, common-pitfalls.md, patterns.md
-  - root (.wiki/): index.md (MANDATORY 1:1 TOC sync), changelog.md (MANDATORY blast radius report)
-- ANTI_LAZINESS_PROTOCOL: NO orphan files in .wiki/ root. Deep-link all docs in .wiki/index.md.
-- AGENT_PLAYBOOK_METHOD: Read .wiki/agent/playbook.md before work. Update it during finalization with live evidence, active validation commands, and current state.
-- FORENSIC_PHASE_WORKFLOW: 1. Complete implementation 100% -> 2. Declare Forensic Phase -> 3. Lock code edits -> 4. Write hierarchical .wiki/ docs -> 5. Verify index.md deep-links & changelog.md.
-- TERMINAL_CHECKLIST: Verify index.md updated, architecture/ synced, changelog.md written, playbook.md updated, all claims backed by FPoW.`
+  - agent/: playbook.md (live brief), agent-memory.md, key-findings.md, troubleshooting.md, common-pitfalls.md, patterns.md
+  - root (.wiki/): index.md (TOC), changelog.md (blast radius report)
+- ANTI_LAZINESS_PROTOCOL: Do not leave orphan docs when you own documentation; deep-link new entries using the repository's normal index convention.
+- AGENT_PLAYBOOK_METHOD: Read or update the playbook only when it is relevant to the assigned scope and write authority.
+- FORENSIC_PHASE_WORKFLOW: If documentation is in scope: finish implementation -> capture evidence -> write the smallest useful doc change -> verify links. Code lanes do not pause implementation for a documentation phase.
+- TERMINAL_CHECKLIST: Verify only the documentation surfaces you changed, with claims backed by FPoW.`
 
 export async function getIntegrityWikiSection(_variant: PromptVariant, context: SystemPromptContext): Promise<string> {
 	if (!context.isSubagentRun) {

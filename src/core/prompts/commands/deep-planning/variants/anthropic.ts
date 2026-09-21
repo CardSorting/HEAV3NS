@@ -60,7 +60,7 @@ For existing code, start with a **Project Map**. Prefer the \`project_map\` tool
 - **Files to understand first**: Use \`npx tsx scripts/agent-spider.ts pre-heat <file>\` only when a deeper study pack is needed.
 - **Context**: Use cognitive memory context where available to find semantically related files.
 
-Use these tools to determine the language(s) used in the codebase, and to identify the domain(s) and layers (Domain, Core, Infrastructure) relevant to the user's request.
+Use these tools to determine the language(s) used in the codebase, and to identify the native domains, module boundaries, dependency direction, and effect seams relevant to the user's request. {{ARCHITECTURE_STEERING_GUIDANCE}}
 
 
 ## STEP 2: Check the facts
@@ -128,8 +128,8 @@ Your questions should be direct and specific. Avoid long explanations or multipl
 
 ### Grounded review
 Before finalizing your plan, you must follow the **Double Down Planning** workflow:
-1. **Draft**: Use \`scratchpad.md\` for your investigation. You MUST follow the **Sovereign Triad V8 Template** (Grounding Probes -> Hazard Analysis -> Resolution).
-2. **Grounded Audit**: Answer the three investigative probes (Boundary, Assumption, Atomic) in the scratchpad.
+1. {{DEEP_PLANNING_AUDIT_GUIDANCE}}
+2. **Grounded Audit**: Answer the three investigative probes (Boundary, Assumption, Atomic) in {{DEEP_PLANNING_EVIDENCE_LOCATION}}.
 3. **Risk analysis**: Explicitly list any risk areas found in Step 1 (high-impact files, hotspots, ambiguous symbols, or cleanup/debt areas) and explain how your plan mitigates them.
 4. **Stale-map and impact check**: Verify mapped files still exist, forecast conflicts where available, and use \`npx tsx scripts/agent-spider.ts blast-radius\` when impact needs quantifying.
 5. **Draft Resolution**: Synthesize all hardening results into the formal \`implementation_plan.md\`.

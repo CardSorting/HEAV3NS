@@ -41,9 +41,11 @@ export class ModuleDecomposer {
 			size: { mean: number; stdDev: number }
 			giniCoefficient: number
 		},
+		options: { canonicalLayers?: boolean } = {},
 	): DecompositionPlan {
 		const sourceFile = ts.createSourceFile("analyze.ts", content, ts.ScriptTarget.Latest, true)
 		const layer = getLayer(filePath)
+		const canonicalLayers = options.canonicalLayers !== false
 		const totalLines = content.split("\n").length
 
 		const steps: DecompositionStep[] = []
@@ -59,7 +61,7 @@ export class ModuleDecomposer {
 					const name = this.getFunctionName(node)
 
 					// VIOLATION: Pure Logic in INFRASTRUCTURE
-					if (layer === "infrastructure" && density > 0.3 && !hasIO) {
+					if (canonicalLayers && layer === "infrastructure" && density > 0.3 && !hasIO) {
 						steps.push({
 							action: "MOVE",
 							target: `Logic '${name}'`,
@@ -71,7 +73,7 @@ export class ModuleDecomposer {
 					}
 
 					// VIOLATION: Direct I/O in CORE/DOMAIN
-					if ((layer === "core" || layer === "domain") && hasIO) {
+					if (canonicalLayers && (layer === "core" || layer === "domain") && hasIO) {
 						steps.push({
 							action: "MOVE",
 							target: `Logic '${name}'`,
@@ -166,7 +168,12 @@ export class ModuleDecomposer {
 					const isMassive = mass > 1500 || totalLines > 5000
 
 					if (isOutlier || isMassive) {
-						const boilerplate = this.generateBoilerplate(extendedIsland, sourceFile, islandImports, layer)
+						const boilerplate = this.generateBoilerplate(
+							extendedIsland,
+							sourceFile,
+							islandImports,
+							canonicalLayers ? layer : undefined,
+						)
 
 						steps.push({
 							action: "EXTRACT",
@@ -565,7 +572,7 @@ export class ModuleDecomposer {
 		symbols: string[],
 		sourceFile: ts.SourceFile,
 		imports: ts.ImportDeclaration[],
-		layer: string,
+		layer?: string,
 	): string {
 		const islandNodes: ts.Node[] = []
 		const externalDeps = new Set<string>()
@@ -623,7 +630,7 @@ export class ModuleDecomposer {
 		}
 
 		// 3. Construct final content
-		let content = `// [LAYER: ${layer.toUpperCase()}]\n`
+		let content = layer ? `// [LAYER: ${layer.toUpperCase()}]\n` : ""
 		if (neededImports.length > 0) {
 			content += `${neededImports.join("\n")}\n\n`
 		}

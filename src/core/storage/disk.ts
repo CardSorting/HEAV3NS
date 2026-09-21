@@ -4,7 +4,7 @@ import { execa } from "@packages/execa"
 import { DietCodeMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { RemoteConfig } from "@shared/remote-config/schema"
-import { GlobalState, Settings } from "@shared/storage/state-keys"
+import { Settings } from "@shared/storage/state-keys"
 import { fileExistsAtPath, isDirectory } from "@utils/fs"
 import * as crypto from "crypto"
 import fs from "fs/promises"
@@ -67,6 +67,7 @@ async function atomicWriteFile(filePath: string, data: string, updateChecksum = 
 
 const MAX_CHECKSUM_CACHE_SIZE = 50
 const checksumCacheMap = new Map<string, Record<string, string>>()
+const taskSettingsWriteQueues = new Map<string, Promise<void>>()
 
 function setChecksumCache(checksumPath: string, checksums: Record<string, string>): void {
 	checksumCacheMap.delete(checksumPath)
@@ -597,7 +598,7 @@ export async function writeTaskHistoryToState(items: HistoryItem[]): Promise<voi
 	}
 }
 
-export async function readTaskSettingsFromStorage(taskId: string): Promise<Partial<GlobalState>> {
+export async function readTaskSettingsFromStorage(taskId: string): Promise<Partial<Settings>> {
 	try {
 		const taskDirectoryFilePath = await ensureTaskDirectoryExists(taskId)
 		const settingsFilePath = path.join(taskDirectoryFilePath, "settings.json")
@@ -620,14 +621,35 @@ export async function writeTaskSettingsToStorage(taskId: string, settings: Parti
 		const taskDirectoryFilePath = await ensureTaskDirectoryExists(taskId)
 		const settingsFilePath = path.join(taskDirectoryFilePath, "settings.json")
 
-		let existingSettings = {}
-		if (await fileExistsAtPath(settingsFilePath)) {
-			const existingSettingsContent = await fs.readFile(settingsFilePath, "utf8")
-			existingSettings = JSON.parse(existingSettingsContent)
-		}
+		const previousWrite = taskSettingsWriteQueues.get(settingsFilePath) ?? Promise.resolve()
+		const currentWrite = previousWrite
+			.catch(() => undefined)
+			.then(async () => {
+				let existingSettings = {}
+				if (await fileExistsAtPath(settingsFilePath)) {
+					const existingSettingsContent = await fs.readFile(settingsFilePath, "utf8")
+					existingSettings = JSON.parse(existingSettingsContent)
+				}
 
-		const updatedSettings = { ...existingSettings, ...settings }
-		await fs.writeFile(settingsFilePath, JSON.stringify(updatedSettings))
+				const updatedSettings = { ...(existingSettings as Record<string, unknown>) }
+				for (const [key, value] of Object.entries(settings)) {
+					if (value === undefined) {
+						delete updatedSettings[key]
+					} else {
+						updatedSettings[key] = value
+					}
+				}
+				await atomicWriteFile(settingsFilePath, JSON.stringify(updatedSettings))
+			})
+
+		taskSettingsWriteQueues.set(settingsFilePath, currentWrite)
+		try {
+			await currentWrite
+		} finally {
+			if (taskSettingsWriteQueues.get(settingsFilePath) === currentWrite) {
+				taskSettingsWriteQueues.delete(settingsFilePath)
+			}
+		}
 	} catch (error) {
 		Logger.error("[Disk] Failed to write task settings:", error)
 		throw error

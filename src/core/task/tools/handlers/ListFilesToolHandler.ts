@@ -9,6 +9,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import { declareApprovalIntent, type IPartialBlockHandler, type IToolHandler, type ToolResponse } from "../types/ToolContracts"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 
 export class ListFilesToolHandler implements IToolHandler, IPartialBlockHandler {
 	readonly name = DietCodeDefaultTool.LIST_FILES
@@ -112,7 +113,13 @@ export class ListFilesToolHandler implements IToolHandler, IPartialBlockHandler 
 				},
 			})
 			io.incrementCounter("ignorePolicyEvaluations", files.length)
-			return formatResponse.formatFilesList(absolutePath, files, didHitLimit, config.services.dietcodeIgnoreController)
+			return formatResponse.formatFilesList(
+				absolutePath,
+				files,
+				didHitLimit,
+				config.services.dietcodeIgnoreController,
+				getTaskArchitectureSteering(config) === "canonical",
+			)
 		})
 
 		if (!config.isSubagentExecution) {

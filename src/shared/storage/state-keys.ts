@@ -294,6 +294,8 @@ const USER_SETTINGS_FIELDS = {
 	/** Opt-in GALXAI-derived whitespace prompt compression at the provider boundary. */
 	tokenCompressionEnabled: { default: false as boolean },
 	subagentsEnabled: { default: true as boolean },
+	/** Keep JoyZoning architecture guidance in prompts. Audits and reports remain available when disabled. */
+	joyZoningSteeringEnabled: { default: true as boolean },
 	maxSwarmDepth: { default: 3 as number },
 	dietcodeWebToolsEnabled: { default: true as boolean },
 	worktreesEnabled: { default: false as boolean },

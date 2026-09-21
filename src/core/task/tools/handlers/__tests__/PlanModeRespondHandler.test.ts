@@ -59,6 +59,56 @@ describe("PlanModeRespondHandler - Exploration Limits", () => {
 		expect(result).to.contain("Planning complete")
 	})
 
+	it("does not append JoyZoning handoff guidance when steering is off", async () => {
+		mockConfig.services = {
+			stateManager: {
+				getGlobalSettingsKey: (key: string) => (key === "joyZoningSteeringEnabled" ? false : undefined),
+			},
+		}
+		mockConfig.messageState.getApiConversationHistory = () => [
+			{
+				role: "assistant",
+				content: [{ type: "tool_use", input: { path: "src/domain/example.ts" } }],
+			},
+		]
+
+		const result = await handler.execute(mockConfig as any, {
+			name: DietCodeDefaultTool.PLAN_MODE,
+			params: { response: "Here is the neutral plan." },
+		} as any)
+
+		expect(result).to.not.contain("JOY-ZONING")
+		expect(result).to.not.contain("ARCHITECTURAL COMMITMENT SEAL")
+	})
+
+	it("hands blended workspaces back to ACT mode with native-boundary guidance", async () => {
+		mockConfig.strictPlanModeEnabled = true
+		mockConfig.services = {
+			stateManager: {
+				getGlobalSettingsKey: (key: string) => (key === "joyZoningSteeringEnabled" ? true : undefined),
+			},
+		}
+		mockConfig.universalGuard = {
+			enforceStrategicReviewInPlanMode: async () => ({ allowed: true }),
+			getArchitectureProfile: () => ({ enforceCanonicalLayers: false }),
+		}
+		mockConfig.messageState.getApiConversationHistory = () => [
+			{
+				role: "assistant",
+				content: [{ type: "tool_use", input: { path: "src/domain/example.ts" } }],
+			},
+		]
+
+		const result = await handler.execute(mockConfig as any, {
+			name: DietCodeDefaultTool.PLAN_MODE,
+			params: { response: "Here is the native plan." },
+		} as any)
+
+		expect(result).to.contain("ARCHITECTURE FIT DIGEST")
+		expect(result).to.contain("WORKSPACE-NATIVE HANDOVER")
+		expect(result).to.not.contain("ARCHITECTURAL COMMITMENT SEAL")
+	})
+
 	it("should allow needs_more_exploration until threshold (3)", async () => {
 		const block = {
 			name: DietCodeDefaultTool.PLAN_MODE,

@@ -6,6 +6,8 @@ import { DietCodeFileStorage } from "@shared/storage/DietCodeFileStorage"
 import { createStorageContext } from "@shared/storage/storage-context"
 import { expect } from "chai"
 import { afterEach, beforeEach, describe, it } from "mocha"
+import { HostProvider } from "@/hosts/host-provider"
+import { readTaskSettingsFromStorage, writeTaskSettingsToStorage } from "../disk"
 import { StateManager } from "../StateManager"
 import { writeCoalescer } from "../WriteCoalescer"
 
@@ -17,6 +19,7 @@ describe("Storage & Memory Optimizations", () => {
 	})
 
 	afterEach(() => {
+		HostProvider.reset()
 		fs.rmSync(tempDir, { recursive: true, force: true })
 	})
 
@@ -91,6 +94,74 @@ describe("Storage & Memory Optimizations", () => {
 
 			manager.purgeExpiredCaches()
 			expect(manager.getModelsCache("openRouter")).to.equal(null)
+		})
+	})
+
+	describe("StateManager Task Settings Isolation", () => {
+		function createInitializedManager(): StateManager {
+			HostProvider.initialize(
+				(() => undefined) as unknown as Parameters<typeof HostProvider.initialize>[0],
+				(() => undefined) as unknown as Parameters<typeof HostProvider.initialize>[1],
+				(() => undefined) as unknown as Parameters<typeof HostProvider.initialize>[2],
+				(() => undefined) as unknown as Parameters<typeof HostProvider.initialize>[3],
+				{ workspaceClient: {}, envClient: {}, windowClient: {}, diffClient: {} } as Parameters<
+					typeof HostProvider.initialize
+				>[4],
+				() => {},
+				async () => "",
+				async () => "",
+				path.join(tempDir, "extension"),
+				path.join(tempDir, "global"),
+			)
+			const manager = Reflect.construct(StateManager, [
+				createStorageContext({ dietcodeDir: tempDir, workspacePath: tempDir }),
+			]) as StateManager
+			;(manager as unknown as { isInitialized: boolean }).isInitialized = true
+			return manager
+		}
+
+		it("should replace the active task cache instead of carrying overrides into a new task", async () => {
+			const manager = createInitializedManager()
+
+			manager.setTaskSettings("previous-task", "joyZoningSteeringEnabled", true)
+			await writeTaskSettingsToStorage("next-task", { mode: "plan" })
+
+			await manager.loadTaskSettings("next-task")
+
+			expect(manager.getTaskSettingsKey("joyZoningSteeringEnabled")).to.equal(undefined)
+			expect(manager.getTaskSettingsKey("mode")).to.equal("plan")
+			expect(await readTaskSettingsFromStorage("previous-task")).to.deep.equal({
+				joyZoningSteeringEnabled: true,
+			})
+		})
+
+		it("should persist each task's latest snapshot when debounced updates overlap", async () => {
+			const manager = createInitializedManager()
+
+			manager.setTaskSettings("task-a", "joyZoningSteeringEnabled", true)
+			manager.setTaskSettings("task-b", "joyZoningSteeringEnabled", false)
+			await manager.flushPendingState()
+
+			expect(await readTaskSettingsFromStorage("task-a")).to.deep.equal({
+				joyZoningSteeringEnabled: true,
+			})
+			expect(await readTaskSettingsFromStorage("task-b")).to.deep.equal({
+				joyZoningSteeringEnabled: false,
+			})
+		})
+
+		it("should serialize overlapping writes for one task without dropping fields", async () => {
+			createInitializedManager()
+
+			await Promise.all([
+				writeTaskSettingsToStorage("same-task", { joyZoningSteeringEnabled: true }),
+				writeTaskSettingsToStorage("same-task", { mode: "plan" }),
+			])
+
+			expect(await readTaskSettingsFromStorage("same-task")).to.deep.equal({
+				joyZoningSteeringEnabled: true,
+				mode: "plan",
+			})
 		})
 	})
 

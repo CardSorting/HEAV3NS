@@ -14,12 +14,24 @@ import {
 	SubagentBuilder,
 } from "../SubagentBuilder"
 
-function createTaskConfig(mode: "act" | "plan", provider: string): TaskConfig {
+function createTaskConfig(
+	mode: "act" | "plan",
+	provider: string,
+	joyZoningSteeringEnabled?: boolean,
+	architecture: "canonical" | "workspace-native" = "canonical",
+): TaskConfig {
 	return {
 		ulid: "ulid-123",
+		universalGuard: {
+			getArchitectureProfile: () => ({ enforceCanonicalLayers: architecture === "canonical" }),
+		},
 		services: {
 			stateManager: {
-				getGlobalSettingsKey: (key: string) => (key === "mode" ? mode : undefined),
+			getGlobalSettingsKey: (key: string) => {
+				if (key === "mode") return mode
+				if (key === "joyZoningSteeringEnabled") return joyZoningSteeringEnabled
+				return undefined
+			},
 				getApiConfiguration: () => ({
 					actModeApiProvider: provider,
 					planModeApiProvider: provider,
@@ -113,6 +125,35 @@ describe("SubagentBuilder", () => {
 					.slice(0, 40),
 			),
 		)
+	})
+
+	it("keeps subagent guidance workspace-native when JoyZoning steering is off", () => {
+		sinon.stub(AgentConfigLoader, "getInstance").returns({
+			getCachedConfig: () => undefined,
+		} as unknown as AgentConfigLoader)
+		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+
+		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic", false))
+		const prompt = builder.buildSystemPrompt("generated prompt")
+
+		assert.match(prompt, /STATUS: WORKSPACE-NATIVE/)
+		assert.match(prompt, /Architecture Fit/)
+		assert.doesNotMatch(prompt, /JOY-ZONED|JoyZoning|SOVEREIGN_GUIDE|DOMAIN-FIRST/)
+	})
+
+	it("blends JoyZoning signals into an established workspace without imposing canonical layers", () => {
+		sinon.stub(AgentConfigLoader, "getInstance").returns({
+			getCachedConfig: () => undefined,
+		} as unknown as AgentConfigLoader)
+		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+
+		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic", true, "workspace-native"))
+		const prompt = builder.buildSystemPrompt("generated prompt")
+
+		assert.match(prompt, /STATUS: WORKSPACE-NATIVE/)
+		assert.match(prompt, /Architecture Fit/)
+		assert.match(prompt, /JoyZoning as advisory/)
+		assert.doesNotMatch(prompt, /Every file you modify must respect|DOMAIN-FIRST|src\/domain\//)
 	})
 
 	it("applies plan-mode openrouter model override fields", () => {
