@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises"
+import { lstat, mkdir, realpath, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { Logger } from "@/shared/services/Logger"
 import {
@@ -9,15 +9,15 @@ import {
 } from "./types"
 
 export class WorkspaceIntelligenceStore {
-	private readonly intelligenceDir: string
-
-	constructor(private readonly workspaceRoot: string) {
-		this.intelligenceDir = path.join(workspaceRoot, ".wiki/intelligence")
-	}
+	constructor(private readonly workspaceRoot: string) {}
 
 	async readModel(): Promise<WorkspaceCognitiveModel | undefined> {
-		const jsonPath = path.join(this.intelligenceDir, "workspace-intelligence.json")
+		const intelligenceDir = await this.resolveIntelligenceDirectory(false)
+		if (!intelligenceDir) return undefined
+		const jsonPath = path.join(intelligenceDir, "workspace-intelligence.json")
 		try {
+			const modelStat = await lstat(jsonPath)
+			if (modelStat.isSymbolicLink() || !modelStat.isFile()) return undefined
 			const { readFile } = await import("node:fs/promises")
 			const raw = await readFile(jsonPath, "utf-8")
 			const parsed = JSON.parse(raw)
@@ -80,8 +80,9 @@ export class WorkspaceIntelligenceStore {
 			if (!errMsg.includes("ENOENT")) {
 				Logger.warn(`[Workspace Knowledge System] Failed to parse existing model: ${errMsg}. Recovering best-effort.`)
 				try {
-					const { appendFile, mkdir } = await import("node:fs/promises")
-					await mkdir(this.intelligenceDir, { recursive: true })
+					const { appendFile } = await import("node:fs/promises")
+					const diagnosticsPath = path.join(intelligenceDir, "diagnostics.jsonl")
+					await this.assertLocalFileDestination(diagnosticsPath)
 					const entry = {
 						severity: "warning" as const,
 						code: "PARSE_ERROR",
@@ -93,7 +94,7 @@ export class WorkspaceIntelligenceStore {
 							"Restore a backup of workspace-intelligence.json if it is corrupted.",
 						],
 					}
-					await appendFile(path.join(this.intelligenceDir, "diagnostics.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8")
+					await appendFile(diagnosticsPath, `${JSON.stringify(entry)}\n`, "utf-8")
 				} catch {
 					// Stay advisory-only
 				}
@@ -104,10 +105,15 @@ export class WorkspaceIntelligenceStore {
 	}
 
 	async writeModel(model: WorkspaceCognitiveModel): Promise<WorkspaceIntelligenceArtifactRecord[]> {
-		await mkdir(this.intelligenceDir, { recursive: true })
+		const intelligenceDir = await this.resolveIntelligenceDirectory(true)
+		if (!intelligenceDir) throw new Error("Workspace knowledge requires an existing local workspace directory.")
 
-		const jsonPath = path.join(this.intelligenceDir, "workspace-intelligence.json")
-		const mdPath = path.join(this.intelligenceDir, "workspace-intelligence.md")
+		const jsonPath = path.join(intelligenceDir, "workspace-intelligence.json")
+		const mdPath = path.join(intelligenceDir, "workspace-intelligence.md")
+		const diagnosticsPath = path.join(intelligenceDir, "diagnostics.jsonl")
+		await this.assertLocalFileDestination(jsonPath)
+		await this.assertLocalFileDestination(mdPath)
+		await this.assertLocalFileDestination(diagnosticsPath)
 
 		try {
 			const { appendFile } = await import("node:fs/promises")
@@ -119,7 +125,7 @@ export class WorkspaceIntelligenceStore {
 				source: "WorkspaceIntelligenceStore.writeModel",
 				recoveryHints: [],
 			}
-			await appendFile(path.join(this.intelligenceDir, "diagnostics.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8")
+			await appendFile(diagnosticsPath, `${JSON.stringify(entry)}\n`, "utf-8")
 		} catch {
 			// Stay advisory-only
 		}
@@ -147,6 +153,56 @@ export class WorkspaceIntelligenceStore {
 			},
 		]
 	}
+
+	private async resolveIntelligenceDirectory(create: boolean): Promise<string | undefined> {
+		let root: string
+		try {
+			root = await realpath(this.workspaceRoot)
+		} catch {
+			return undefined
+		}
+
+		const directories = [path.join(root, ".wiki"), path.join(root, ".wiki", "intelligence")]
+		for (const directory of directories) {
+			let stat: Awaited<ReturnType<typeof lstat>>
+			try {
+				stat = await lstat(directory)
+			} catch (error) {
+				if (errorCode(error) !== "ENOENT") throw error
+				if (!create) return undefined
+				try {
+					await mkdir(directory)
+					stat = await lstat(directory)
+				} catch (createError) {
+					if (errorCode(createError) !== "EEXIST") throw createError
+					stat = await lstat(directory)
+				}
+			}
+			if (stat.isSymbolicLink() || !stat.isDirectory()) {
+				if (create) throw new Error(`Workspace knowledge path must stay project-local: ${path.relative(root, directory)}`)
+				return undefined
+			}
+		}
+		return directories[1]
+	}
+
+	private async assertLocalFileDestination(filePath: string): Promise<void> {
+		try {
+			const stat = await lstat(filePath)
+			if (stat.isSymbolicLink() || !stat.isFile()) {
+				throw new Error(
+					`Workspace knowledge artifact must stay project-local: ${path.relative(this.workspaceRoot, filePath)}`,
+				)
+			}
+		} catch (error) {
+			if (errorCode(error) !== "ENOENT") throw error
+		}
+	}
+}
+
+function errorCode(error: unknown): string | undefined {
+	if (error && typeof error === "object" && "code" in error && typeof error.code === "string") return error.code
+	return undefined
 }
 
 export function renderMarkdownModel(model: WorkspaceCognitiveModel, health?: WorkspaceKnowledgeHealth): string {
@@ -290,7 +346,15 @@ function renderProvenanceFactsMarkdown<T>(
 		)
 		for (const prov of fact.provenance) {
 			const typeIcon =
-				prov.type === "finalization_evidence" ? "📜" : prov.type === "manifest" ? "📦" : prov.type === "adr" ? "🏛️" : "📁"
+				prov.type === "agent_report"
+					? "📝"
+					: prov.type === "finalization_evidence"
+						? "📜"
+						: prov.type === "manifest"
+							? "📦"
+							: prov.type === "adr"
+								? "🏛️"
+								: "📁"
 			const runInfo = prov.runId ? ` [run: \`${prov.runId.slice(0, 8)}\`]` : ""
 			const pathInfo = prov.path ? ` in \`${prov.path}\`` : ""
 			lines.push(`  - ${typeIcon} *${prov.description}*${pathInfo}${runInfo} (at \`${prov.timestamp}\`)`)

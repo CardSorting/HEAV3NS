@@ -20,7 +20,7 @@ export interface FinalizationRunnerResult {
 export class FinalizationRunner {
 	constructor(private readonly config: TaskConfig) {}
 
-	async run(): Promise<FinalizationRunnerResult> {
+	async run(handoffSummary?: string): Promise<FinalizationRunnerResult> {
 		if (!isTaskHarnessTerminal(this.config.taskState)) {
 			return {
 				success: false,
@@ -28,10 +28,14 @@ export class FinalizationRunner {
 			}
 		}
 
+		const normalizedHandoffSummary = AutonomousDocumentationFinalizer.normalizeHandoffSummary(handoffSummary)
 		const existing = await AutonomousDocumentationFinalizer.readExistingEvidence(this.config)
 		if (existing?.status === "passed") {
 			const checksum = AutonomousDocumentationFinalizer.evidenceChecksum(existing)
-			if (this.config.taskState.finalizationRunId === checksum) {
+			const handoffSummaryMatches =
+				!normalizedHandoffSummary ||
+				existing.handoffSummaryHash === AutonomousDocumentationFinalizer.handoffSummaryHash(normalizedHandoffSummary)
+			if (this.config.taskState.finalizationRunId === checksum && handoffSummaryMatches) {
 				return {
 					success: true,
 					message: "Post-completion documentation is already current (idempotent replay).",
@@ -44,7 +48,7 @@ export class FinalizationRunner {
 		this.config.taskState.finalizationPhase = "running"
 		try {
 			const finalizer = new AutonomousDocumentationFinalizer(this.config)
-			const result = await finalizer.run(this.config.taskState.finalizationRunId)
+			const result = await finalizer.run(this.config.taskState.finalizationRunId, normalizedHandoffSummary)
 			if (result.accessDenied) {
 				this.config.taskState.finalizationPhase = "failed"
 				return {

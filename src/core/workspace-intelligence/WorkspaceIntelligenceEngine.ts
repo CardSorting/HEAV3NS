@@ -287,7 +287,14 @@ export class WorkspaceIntelligenceEngine {
 						categoryCounts: countCategories(previousModel.categories),
 					}
 				: undefined,
-			facts: await buildFacts(this.config.cwd, sourceSnapshot, changedFiles, driftFindings, input, previousModel),
+			facts: await buildFacts(
+				this.config.cwd,
+				sourceSnapshot,
+				changedFiles,
+				driftFindings,
+				{ ...input, handoffSummary: normalizeAgentHandoffSummary(input.handoffSummary) },
+				previousModel,
+			),
 		}
 
 		let records: WorkspaceIntelligenceArtifactRecord[] = []
@@ -296,36 +303,6 @@ export class WorkspaceIntelligenceEngine {
 		} catch (err) {
 			const errMsg = err instanceof Error ? err.message : String(err)
 			Logger.warn(`[Workspace Knowledge System] Failed to write model projections: ${errMsg}`)
-			try {
-				const { appendFile, mkdir } = await import("node:fs/promises")
-				await mkdir(path.join(this.config.cwd, ".wiki/intelligence"), { recursive: true })
-				const entry = {
-					severity: "degraded" as const,
-					code: "WRITE_ERROR",
-					message: `failed to write model files: ${errMsg}`,
-					timestamp: input.timestamp,
-					source: "WorkspaceIntelligenceEngine.learnFromFinalization",
-					recoveryHints:
-						errMsg.toLowerCase().includes("permission") || errMsg.toLowerCase().includes("eacces")
-							? [
-									"Filesystem write permission denied. Verify directory permissions of .wiki/intelligence/",
-									"Check if execution is running in a sandbox environment that restricts write access.",
-								]
-							: errMsg.toLowerCase().includes("disk") || errMsg.toLowerCase().includes("nospc")
-								? ["Disk space is full. Free up some space or clean up directory files."]
-								: [
-										"Check the full diagnostic trace in .wiki/intelligence/diagnostics.jsonl",
-										"Run a manual finalization attempt or check repository accessibility.",
-									],
-				}
-				await appendFile(
-					path.join(this.config.cwd, ".wiki/intelligence/diagnostics.jsonl"),
-					`${JSON.stringify(entry)}\n`,
-					"utf-8",
-				)
-			} catch {
-				// Ignore write failures to stay advisory-only
-			}
 		}
 
 		const memoryLayerUpdated = await this.publishToCognitiveMemory(model, input)
@@ -682,7 +659,7 @@ function extractProviderCounts(readme: string): number[] {
 
 function buildAssumptions(snapshot: WorkspaceIntelligenceSourceSnapshot): string[] {
 	const assumptions = [
-		"Implementation files remain the source of truth when documentation disagrees.",
+		"Conflicting documentation, implementation, tests, runtime evidence, or explicit project constraints require reconciliation; no source automatically wins.",
 		"Finalization is the durable learning point for completed task knowledge.",
 	]
 	if (snapshot.preferredCommands.length) {
@@ -779,6 +756,11 @@ function sanitizeId(value: string): string {
 	)
 }
 
+export function normalizeAgentHandoffSummary(summary: string | undefined): string | undefined {
+	const normalized = summary?.replace(/\s+/g, " ").trim().slice(0, 1_200)
+	return normalized || undefined
+}
+
 async function buildFacts(
 	cwd: string,
 	snapshot: WorkspaceIntelligenceSourceSnapshot,
@@ -797,13 +779,13 @@ async function buildFacts(
 				id: `fact-subsystem-${sanitizeId(surface)}-stability`,
 				type: "subsystem_stability",
 				value: { path: surface, status: "stable" },
-				confidence: "confirmed",
+				confidence: "inferred",
 				provenance: [
 					{
 						type: "finalization_evidence",
 						path: surface,
 						runId: input.finalizationRunId,
-						description: `Subsystem ${surface} was not modified in the task impact summary for task ${input.taskId}.`,
+						description: `No change to ${surface} was reported in task ${input.taskId}; this does not establish semantic stability.`,
 						timestamp: input.timestamp,
 					},
 				],
@@ -930,6 +912,32 @@ async function buildFacts(
 		description: `Recorded during session finalization of task ${input.taskId}.`,
 		timestamp: input.timestamp,
 	}
+	if (input.handoffSummary) {
+		currentFacts.push({
+			id: `fact-agent-handoff-${sanitizeId(input.taskId)}`,
+			type: "handoff_fact",
+			value: { fact: `Agent-reported handoff (unverified): ${input.handoffSummary}` },
+			confidence: "needs_verification",
+			provenance: [
+				{
+					type: "agent_report",
+					runId: input.finalizationRunId,
+					description:
+						"Agent-authored task handoff. This report is a lead for the next session, not independently verified project truth.",
+					timestamp: input.timestamp,
+				},
+				...changedFiles.slice(0, 8).map((file) => ({
+					type: "file_change" as const,
+					path: file,
+					runId: input.finalizationRunId,
+					description: `Reported changed file for task ${input.taskId}; inspect it to verify the handoff consequence.`,
+					timestamp: input.timestamp,
+				})),
+			],
+			lifecycle: "active",
+			lastUpdated: input.timestamp,
+		})
+	}
 
 	if (snapshot.packageName) {
 		currentFacts.push({
@@ -1017,6 +1025,7 @@ export function mergeAndLifecycleManageFacts(
 		}
 	}
 	const deduplicatedCurrent = Array.from(currentFactsMap.values())
+	const hasNewAgentHandoff = deduplicatedCurrent.some((fact) => fact.id.startsWith("fact-agent-handoff-"))
 
 	const merged: WorkspaceFact[] = [...deduplicatedCurrent]
 
@@ -1024,6 +1033,24 @@ export function mergeAndLifecycleManageFacts(
 		// If currentFacts already contains a fact with the same ID:
 		const matchingCurrent = deduplicatedCurrent.find((f) => f.id === prev.id)
 		if (matchingCurrent) {
+			continue
+		}
+
+		if (hasNewAgentHandoff && prev.id.startsWith("fact-agent-handoff-") && prev.lifecycle === "active") {
+			merged.push({
+				...prev,
+				lifecycle: "superseded",
+				lastUpdated: input.timestamp,
+				provenance: [
+					...prev.provenance,
+					{
+						type: "finalization_evidence",
+						runId: input.finalizationRunId,
+						description: `A later finalization superseded this handoff note in task ${input.taskId}; retain it as history, not current truth.`,
+						timestamp: input.timestamp,
+					},
+				],
+			})
 			continue
 		}
 

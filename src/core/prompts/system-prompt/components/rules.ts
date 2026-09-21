@@ -44,7 +44,7 @@ export async function getRulesSection(variant: PromptVariant, context: SystemPro
 	const ledgerLabel = context.joyZoningSteeringEnabled === false ? "KNOWLEDGE LEDGER" : "SOVEREIGN KNOWLEDGE LEDGER"
 	const WIKI_RULES = isSubagent
 		? `\n- ${ledgerLabel}: Return ledger-ready evidence for your assigned scope. Write directly to \`.wiki/\` only when your lane explicitly owns documentation and was launched with mutation/write-set authority; otherwise leave shared-ledger synthesis to the parent to avoid cross-lane conflicts. Do NOT attempt to run \`run_finalization\` (it is unavailable to subagents). When done, call \`attempt_completion\` to complete your task.`
-		: `\n- ${ledgerLabel}: Maintain the project's Knowledge Ledger (SKL) through the workspace documentation workflow. \`run_finalization\`, when available, is optional post-completion documentation maintenance only; it cannot authorize, block, reopen, or seal task completion.`
+		: `\n- ${ledgerLabel}: Maintain the project's Knowledge Ledger (SKL) through the workspace documentation workflow. For substantive changes, include a concise handoff summary when calling \`run_finalization\`: changed behavior, supporting project-local files/checks, affected decisions or constraints, and unresolved uncertainty. Its agent-reported summary is marked for verification and is not canonical truth. \`run_finalization\` is post-completion documentation maintenance only; it cannot authorize, block, reopen, or seal task completion.`
 
 	const GOVERNED_AUTHORITY_RULES =
 		context.subagentsEnabled === true

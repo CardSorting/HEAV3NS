@@ -91,7 +91,7 @@ export interface WorkspaceCognitiveModel {
 }
 
 export interface WorkspaceProvenance {
-	type: "finalization_evidence" | "manifest" | "git_commit" | "adr" | "test_run" | "file_change"
+	type: "agent_report" | "finalization_evidence" | "manifest" | "git_commit" | "adr" | "test_run" | "file_change"
 	path?: string
 	runId?: string
 	ref?: string
@@ -164,6 +164,7 @@ export interface WorkspaceIntelligenceFinalizationInput {
 	finalizationRunId: string
 	timestamp: string
 	impactSummary: string
+	handoffSummary?: string
 }
 
 export interface WorkspaceIntelligenceRunResult {

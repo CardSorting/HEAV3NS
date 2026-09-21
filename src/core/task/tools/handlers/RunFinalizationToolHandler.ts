@@ -49,7 +49,8 @@ export class RunFinalizationToolHandler implements IToolHandler {
 			)
 		}
 
-		const result = await runner.run()
+		const handoffSummary = typeof block.params.summary === "string" ? block.params.summary : undefined
+		const result = await runner.run(handoffSummary)
 		if (!result.success) {
 			return formatResponse.toolError(result.message)
 		}

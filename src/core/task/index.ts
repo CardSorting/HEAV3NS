@@ -53,7 +53,7 @@ import {
 import { releaseTaskLock } from "@core/task/TaskLockUtils"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
-import { WorkspaceIntelligenceReader, WorkspaceIntelligenceStore } from "@core/workspace-intelligence"
+import { loadWorkspaceKnowledgeContext } from "@core/workspace-intelligence/WorkspaceKnowledgeContext"
 import { buildCheckpointManager, shouldUseMultiRoot } from "@integrations/checkpoints/factory"
 import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializer"
 import { ICheckpointManager } from "@integrations/checkpoints/types"
@@ -1494,7 +1494,7 @@ export class Task {
 		// Phase 0: Multi-Agent Stream Initiation moved to Phase 2 (Intent Grounding Handoff)
 		// in initiateTaskLoop() to ensure grounded context is available.
 
-		await this.loadWorkspaceIntelligence()
+		await this.loadWorkspaceIntelligence(task || "")
 		this.taskRuntimeReady = true
 
 		// Roadmap orientation and progress journaling are advisory. Reuse cached
@@ -1677,7 +1677,7 @@ export class Task {
 			.find((message) => !(message.ask === "resume_task" || message.ask === "resume_completed_task"))
 		const askType = await this.resolveResumeAskType(currentDietCodeMessages)
 
-		await this.loadWorkspaceIntelligence()
+		await this.loadWorkspaceIntelligence(lastDietCodeMessage?.text ?? "")
 		this.taskRuntimeReady = true
 
 		const yoloModeToggled = this.stateManager.getGlobalSettingsKey("yoloModeToggled")
@@ -4849,17 +4849,13 @@ export class Task {
 		return this.knowledgeGraphService
 	}
 
-	private async loadWorkspaceIntelligence(): Promise<void> {
+	private async loadWorkspaceIntelligence(taskDescription: string): Promise<void> {
+		this.taskState.workspaceIntelligenceSummary = undefined
 		try {
-			const store = new WorkspaceIntelligenceStore(this.cwd)
-			const model = await store.readModel()
-			if (model) {
-				const reader = new WorkspaceIntelligenceReader(model)
-				this.taskState.workspaceIntelligenceSummary = reader.getCompactSummary()
-				Logger.info(`[Workspace Intelligence] Loaded model from task ${model.taskId}`)
-			}
+			this.taskState.workspaceIntelligenceSummary = await loadWorkspaceKnowledgeContext(this.cwd, taskDescription)
+			Logger.info("[Workspace Knowledge] Loaded bounded project-local task context")
 		} catch (error) {
-			Logger.error("Failed to load workspace intelligence summary:", error)
+			Logger.error("Failed to load project-local workspace knowledge context:", error)
 		}
 	}
 }

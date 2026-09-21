@@ -1,6 +1,10 @@
-import { access, appendFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises"
+import { createHash } from "node:crypto"
+import { access, appendFile, lstat, mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { WorkspaceIntelligenceEngine } from "@core/workspace-intelligence"
+import {
+	normalizeAgentHandoffSummary,
+	WorkspaceIntelligenceEngine,
+} from "@core/workspace-intelligence/WorkspaceIntelligenceEngine"
 import type { FinalizationEvidence } from "@shared/completion/finalizationEvidence"
 import { v4 as uuidv4 } from "uuid"
 import { remediateRoadmapGatesInternally } from "@/services/roadmap/RoadmapCompletionGate"
@@ -86,7 +90,7 @@ const PREFERRED_SCRIPT_ORDER = [
 export class AutonomousDocumentationFinalizer {
 	constructor(private readonly config: TaskConfig) {}
 
-	async run(existingRunId?: string): Promise<FinalizationRunResult> {
+	async run(existingRunId?: string, handoffSummary?: string): Promise<FinalizationRunResult> {
 		const runId = existingRunId ?? uuidv4()
 		const cwd = this.config.cwd
 		const wikiDir = path.join(cwd, ".wiki")
@@ -96,7 +100,10 @@ export class AutonomousDocumentationFinalizer {
 		const artifactPaths: string[] = []
 
 		try {
+			const normalizedHandoffSummary = normalizeAgentHandoffSummary(handoffSummary)
 			const wikiAlreadyExisted = await pathExists(wikiDir)
+			await ensureLocalWorkspaceDirectory(cwd, ".wiki")
+			await assertLocalWorkspaceFile(cwd, ".wiki/changelog.md")
 			await mkdir(wikiDir, { recursive: true })
 
 			const impactSummary = this.config.universalGuard?.getSessionImpactSummary() ?? "_No session impact recorded._"
@@ -138,6 +145,7 @@ export class AutonomousDocumentationFinalizer {
 					finalizationRunId: runId,
 					timestamp,
 					impactSummary,
+					handoffSummary: normalizedHandoffSummary,
 				})
 				intelligenceResult = {
 					records: result.records,
@@ -154,7 +162,8 @@ export class AutonomousDocumentationFinalizer {
 				Logger.warn(`[Workspace Knowledge System] Degraded state: ${errMsg}`)
 				try {
 					const diagnosticPath = path.join(wikiDir, "intelligence/diagnostics.jsonl")
-					await mkdir(path.join(wikiDir, "intelligence"), { recursive: true })
+					await ensureLocalWorkspaceDirectory(cwd, ".wiki/intelligence")
+					await assertLocalWorkspaceFile(cwd, ".wiki/intelligence/diagnostics.jsonl")
 					const diagnosticEntry = {
 						severity: "degraded" as const,
 						code: "FINALIZER_ERROR",
@@ -174,6 +183,7 @@ export class AutonomousDocumentationFinalizer {
 				}
 			}
 
+			await assertLocalWorkspaceFile(cwd, ".wiki/migration-state.md")
 			const migrationStamp = {
 				taskId: this.config.taskId,
 				finalizedAt: timestamp,
@@ -220,6 +230,7 @@ export class AutonomousDocumentationFinalizer {
 				workspaceIntelligenceUpdated,
 				workspaceIntelligenceArtifacts: intelligenceResult.records.map((record) => record.relPath),
 				workspaceKnowledgeCategories: intelligenceResult.categoryCounts,
+				handoffSummaryHash: AutonomousDocumentationFinalizer.handoffSummaryHash(normalizedHandoffSummary),
 				completedAt: Date.now(),
 			}
 
@@ -238,7 +249,11 @@ export class AutonomousDocumentationFinalizer {
 			return { evidence }
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
-			if (message.toLowerCase().includes("eacces") || message.toLowerCase().includes("permission")) {
+			if (
+				message.toLowerCase().includes("eacces") ||
+				message.toLowerCase().includes("permission") ||
+				message.toLowerCase().includes("must stay project-local")
+			) {
 				return {
 					evidence: {
 						finalizationRunId: runId,
@@ -294,7 +309,17 @@ export class AutonomousDocumentationFinalizer {
 			docs: evidence.docsUpdated,
 			ledger: evidence.ledgerStamped,
 			paths: evidence.artifactPaths,
+			handoffSummaryHash: evidence.handoffSummaryHash,
 		})
+	}
+
+	static normalizeHandoffSummary(summary: string | undefined): string | undefined {
+		return normalizeAgentHandoffSummary(summary)
+	}
+
+	static handoffSummaryHash(summary: string | undefined): string | undefined {
+		const normalized = normalizeAgentHandoffSummary(summary)
+		return normalized ? createHash("sha256").update(normalized).digest("hex") : undefined
 	}
 
 	private async writeAgentPlaybook(args: {
@@ -304,7 +329,7 @@ export class AutonomousDocumentationFinalizer {
 		wikiAlreadyExisted: boolean
 	}): Promise<WikiWriteRecord[]> {
 		const agentDir = path.join(args.wikiDir, "agent")
-		await mkdir(agentDir, { recursive: true })
+		await ensureLocalWorkspaceDirectory(this.config.cwd, ".wiki/agent")
 
 		const snapshot = await this.collectAgentPlaybookSnapshot(args.timestamp, args.impactSummary, args.wikiAlreadyExisted)
 		const records: WikiWriteRecord[] = []
@@ -361,6 +386,8 @@ export class AutonomousDocumentationFinalizer {
 		]
 
 		for (const write of writes) {
+			const relativePath = path.relative(this.config.cwd, write.absPath)
+			await assertLocalWorkspaceFile(this.config.cwd, relativePath)
 			await upsertManagedMarkdownSection(write.absPath, write.title, write.sectionId, write.body)
 			records.push({ relPath: write.relPath, absPath: write.absPath })
 		}
@@ -401,6 +428,53 @@ async function pathExists(filePath: string): Promise<boolean> {
 	} catch {
 		return false
 	}
+}
+
+async function ensureLocalWorkspaceDirectory(cwd: string, relativePath: string): Promise<void> {
+	let current = await realpath(cwd)
+	for (const segment of relativePath.split(/[\\/]+/).filter(Boolean)) {
+		current = path.join(current, segment)
+		try {
+			const stat = await lstat(current)
+			if (stat.isSymbolicLink() || !stat.isDirectory()) {
+				throw new Error(`Workspace knowledge directory must stay project-local: ${relativePath}`)
+			}
+		} catch (error) {
+			if (errorCode(error) !== "ENOENT") throw error
+			try {
+				await mkdir(current)
+			} catch (createError) {
+				if (errorCode(createError) !== "EEXIST") throw createError
+			}
+			const createdStat = await lstat(current)
+			if (createdStat.isSymbolicLink() || !createdStat.isDirectory()) {
+				throw new Error(`Workspace knowledge directory must stay project-local: ${relativePath}`)
+			}
+		}
+	}
+}
+
+async function assertLocalWorkspaceFile(cwd: string, relativePath: string): Promise<void> {
+	let current = await realpath(cwd)
+	const segments = relativePath.split(/[\\/]+/).filter(Boolean)
+	for (let index = 0; index < segments.length; index += 1) {
+		current = path.join(current, segments[index])
+		try {
+			const stat = await lstat(current)
+			const isFile = index === segments.length - 1
+			if (stat.isSymbolicLink() || (isFile ? !stat.isFile() : !stat.isDirectory())) {
+				throw new Error(`Workspace knowledge file must stay project-local: ${relativePath}`)
+			}
+		} catch (error) {
+			if (errorCode(error) === "ENOENT") return
+			throw error
+		}
+	}
+}
+
+function errorCode(error: unknown): string | undefined {
+	if (error && typeof error === "object" && "code" in error && typeof error.code === "string") return error.code
+	return undefined
 }
 
 async function readPackageJson(cwd: string): Promise<PackageJsonShape | undefined> {
