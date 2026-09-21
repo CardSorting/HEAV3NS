@@ -15,7 +15,7 @@ We have completed the full port and deep integration of the 12 advanced Broccoli
 
 1. **Adaptive Fixed-Frame Buffer Pool (`BroccoliBufferPoolManager`)**:
    - Implements **LRU-2 (Least Recently Used with K=2 backward distance)** page frame eviction.
-   - Pinned frame counting and dirty page flusher to CAS, providing total immunity against table scan cache pollution.
+   - Pinned frame counting and dirty page flushing to CAS, reducing table-scan cache pollution under the modeled access pattern.
 
 2. **Log-Structured Merge-Tree (`BroccoliLsmStore`)**:
    - High-throughput skiplist MemTable and immutable sorted SSTable arrays with 64-bit Bloom filters.

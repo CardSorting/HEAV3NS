@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 166: Zero-Dependency Broccoli Workspace Architecture Profiler
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/WorkspaceArchitectureProfile.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/WorkspaceArchitectureProfile.ts.
  * Detects workspace architectural mode (joy-zoning vs workspace-native vs greenfield), calculates canonical layer tag compliance scores,
  * and enforces Joy-Zoning steering thresholds (maxFunctionLines, maxClassMethods). Zero external npm dependencies.
  */

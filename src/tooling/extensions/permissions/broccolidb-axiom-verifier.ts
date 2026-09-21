@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 160: Zero-Dependency Broccoli Axiom Verifier
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/AxiomVerificationService.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/AxiomVerificationService.ts.
  * Validates file layer headers ([LAYER: DOMAIN/CORE/INFRASTRUCTURE]), provides proactive architectural layer context,
  * and generates actionable correction hints for layer boundary leaks. Zero external npm dependencies.
  */

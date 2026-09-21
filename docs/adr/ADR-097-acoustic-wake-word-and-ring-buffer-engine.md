@@ -23,7 +23,7 @@ In voice and multimodal interfaces (CLI, TUI, Electron Desktop, background daemo
    - Tracks trigger events, audio frame statistics, and detection metrics with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Streaming Acoustic Wake-Word Detection and Ring-Buffer Engine for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Streaming Acoustic Wake-Word Detection and Ring-Buffer Engine for **LUMI-JOY**:
 
 1. **`DeterministicWakeWord` ([deterministic-wake-word.ts](../../src/agents/extensions/wake_word/deterministic-wake-word.ts))**:
    - **Audio Signal Processor**: Computes RMS energy, peak amplitude, zero-crossing rate, and Little-Endian int16 conversions.
@@ -37,7 +37,7 @@ We implemented a zero-GC, typed, frame-perfect Streaming Acoustic Wake-Word Dete
    - In-memory Broccolidb repository storing active detector state, trigger events, acoustic frame statistics, and detection metrics.
 
 4. **`WakeWordSnapshotManager` ([wake-word-snapshot-manager.ts](../../src/sessions/extensions/wake_word/wake-word-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`WakeWordToolSuite` ([wake-word-tool-suite.ts](../../src/tooling/extensions/wake_word/wake-word-tool-suite.ts))**:
    - Exposes 5 model tools:

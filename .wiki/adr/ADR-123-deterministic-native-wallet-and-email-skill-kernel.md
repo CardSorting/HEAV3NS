@@ -6,7 +6,7 @@ ACCEPTED (AKD-DSO Monolith Hardened)
 ## Context
 Ancestral Hermes Agent repositories contained loosely typed, un-gated, and side-effect-prone wallet and email utilities. In LUMI's deterministic, high-throughput ecosystem, executing unvetted blockchain actions or dispatching unreviewed emails introduces severe security and operational risks (e.g. fund drainers, accidental secret disclosures, prompt injection through untrusted email bodies).
 
-The user specified an **Osmosis Strategy** from `/Users/bozoegg/Downloads/hermes-agent-main` to `/Users/bozoegg/Desktop/LUMI-NEW`, requesting that the capabilities be elevated **beyond the fold** with world-class UX, approachable navigation, and patterns mirroring industry leaders (**Rainbow, Phantom, Blowfish, 1inch, Jupiter, Aave v3, Across, Superhuman, Front, Shortwave, Hey.com, and Revoke.cash**).
+The user specified an **Osmosis Strategy** from `external Hermes Agent source workspace` to `repository root`, requesting that the capabilities be elevated **beyond the fold** with world-class UX, approachable navigation, and patterns mirroring industry leaders (**Rainbow, Phantom, Blowfish, 1inch, Jupiter, Aave v3, Across, Superhuman, Front, Shortwave, Hey.com, and Revoke.cash**).
 
 ## Decision
 We implemented a sovereign, deterministic native skill architecture for both Wallet and Email featuring:
@@ -52,4 +52,4 @@ We implemented a sovereign, deterministic native skill architecture for both Wal
 ## Consequences
 - **Security**: Complete immunization against prompt-injection overrides in email and malicious transaction drains in web3.
 - **Ergonomics**: Consumer-approachable markdown cards formatted for instant human readability.
-- **Performance**: Zero-GC memory substrate and sub-millisecond turn latency adhering to the 16MB contiguous slab invariant.
+- **Performance**: allocation-bounded memory substrate and sub-millisecond turn latency adhering to the 16MB contiguous slab invariant.

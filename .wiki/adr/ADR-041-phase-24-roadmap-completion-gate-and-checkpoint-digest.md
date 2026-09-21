@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing roadmap quality gate evaluation (`RoadmapCompletionGate` from `packages/codemarie/src/services/roadmap`), milestone checksum digest calculation (`RoadmapCheckpointDigest` from `packages/codemarie/src/services/roadmap`), and performing Phase 24 master subsystem synthesis (Passes 82–84) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing roadmap quality gate evaluation (`RoadmapCompletionGate` from `packages/codemarie/src/services/roadmap`), milestone checksum digest calculation (`RoadmapCheckpointDigest` from `packages/codemarie/src/services/roadmap`), and performing Phase 24 master subsystem synthesis (Passes 82–84) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

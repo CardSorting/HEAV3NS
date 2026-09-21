@@ -11,10 +11,10 @@ In ancestral architectures such as `hermes-agent-main` (`tools/computer_use/` an
 4. **Irreversible Side-Effects & Zero Rollback**: Physical OS actions could not be snapshotted, replayed, or verified in continuous integration or headless test runners.
 
 ## Decision
-We implemented a zero-GC, in-memory **Deterministic Computer Use, Virtual Display Buffer & OS Automation Substrate ($\mathcal{K}_{\text{os}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Deterministic Computer Use, Virtual Display Buffer & OS Automation Substrate ($\mathcal{K}_{\text{os}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicDisplayDriver`** (`src/tooling/extensions/computer-use/deterministic-display-driver.ts`):
-   - In-memory zero-GC virtual display driver with Set-of-Marks (SoM) element overlay indexing.
+   - In-memory allocation-bounded virtual display driver with Set-of-Marks (SoM) element overlay indexing.
    - Bounding-box hit testing, focus-aware text mutation, drag and scroll transforms.
    - Micro-benchmark: 10,000 UI input actions executed in $<10\text{ ms}$ ($<0.001\text{ ms/op}$).
 
@@ -22,7 +22,7 @@ We implemented a zero-GC, in-memory **Deterministic Computer Use, Virtual Displa
    - In-memory Broccolidb repository for virtual display frames, UI element trees, action logs, and window registries.
 
 3. **`DisplaySnapshotManager`** (`src/sessions/extensions/computer-use/display-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
 
 4. **`ComputerUseSupervisor`** (`src/agents/extensions/computer-use/computer-use-supervisor.ts`):
    - Master supervisor coordinating virtual display actions, Set-of-Marks indexing, element hit-testing, and deterministic replay.

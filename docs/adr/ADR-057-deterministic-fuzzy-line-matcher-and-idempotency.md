@@ -17,7 +17,7 @@ In ancestral agent frameworks (`tools/fuzzy_match.py` — ~50,000 LOC), automate
 10. **Line Ending Variations**: Files with CRLF (`\r\n`) vs LF (`\n`) must preserve the file's native line endings upon modification.
 
 ## Decision
-We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomic multi-hunk patch engine, ellipsis-wildcard block resolver, unified diff patch parser & applicator, Unicode coordinate mapper, and edit idempotency substrate for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, in-memory 12-strategy fuzzy line matcher, atomic multi-hunk patch engine, ellipsis-wildcard block resolver, unified diff patch parser & applicator, Unicode coordinate mapper, and edit idempotency substrate for **LUMI-JOY**:
 
 1. **`DeterministicFuzzyMatcher` ([deterministic-fuzzy-matcher.ts](../../src/tooling/extensions/fuzzy/deterministic-fuzzy-matcher.ts))**:
    - **Cascading 12-strategy engine**:
@@ -80,7 +80,7 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
       - Pre-flight validates all hunks simultaneously across the 12 strategies.
       - Detects and rejects overlapping spans (`OVERLAPPING_HUNKS_ERROR`).
       - Applies mutations in descending start-offset order to prevent subsequent hunk index corruption.
-      - All-or-nothing transactional guarantee: fails with zero disk/memory mutation if any hunk fails.
+      - All-or-nothing transactional failure path: a failed hunk is intended to leave the covered disk and memory state unchanged.
     - **Myers Unified Diff Patch Engine (`generateUnifiedDiff`)**: Generates standard unified diff patches with `@@ -start,count +start,count @@` hunk headers.
     - **Escape Drift & Doubling Guard**: `detectEscapeDrift` detects spurious `\'` / `\"` and doubled backslashes, blocking file corruption.
     - **Relative Indentation Re-Anchor**: `reindentReplacement` computes relative indentation of `new_string` lines anchored to `old_string`'s base and re-anchors them onto the file's base indent.
@@ -92,7 +92,7 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
    - In-memory Broccolidb repository for executions, strategy frequency analytics, custom Unicode maps, similarity thresholds, and configuration flags.
 
 3. **`FuzzySnapshotManager` ([fuzzy-snapshot-manager.ts](../../src/sessions/extensions/fuzzy/fuzzy-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`FuzzyMatcherSupervisor` ([fuzzy-matcher-supervisor.ts](../../src/agents/extensions/fuzzy/fuzzy-matcher-supervisor.ts))**:
    - Master supervisor coordinating 12-strategy search & replace, multi-hunk batches, SEARCH/REPLACE blocks, line-hint matching, patience diffs, token stream alignment, scope-bounded splicing, N-gram cosine similarity search, workspace symbol refactoring, adaptive patch drift compensation, Git Rerere conflict resolution replay, AST function signature refactoring, multi-cursor parallel edits, histogram line diffing, speculative branch exploration, nullability guard synthesis, import alias/namespace resolution, conditional branch inversion, codemod rule pipelines, structured config patching, function inlining/extraction, workspace patch impact analysis, code relocation, doc comment sync, multi-region skeleton splicing, unused import pruning, structural pattern matching, semantic tree diffing, swarm multi-source patch synthesis, import optimization, conflict explanation, inverse patch generation, 3-way merging, LSP edits, syntax auto-repair, candidate ranking, conflict marker resolution, indentation harmonization, syntax boundary snapping, multi-file transactions, unified diff patch application, dry runs, idempotency checks, Unicode normalization, and mismatch diagnostics.
@@ -107,9 +107,9 @@ We implemented a zero-GC, typed, in-memory 12-strategy fuzzy line matcher, atomi
 - Single and multi-hunk code edits never fail due to minor whitespace, indentation, comment discrepancies, token spacing, ellipsis wildcards, Unicode typography, or literal escape anomalies.
 - Unified diff patches can be parsed and applied directly with line-offset fuzz tolerance.
 - Native file line endings (CRLF vs LF) are automatically preserved.
-- Character-level coordinate maps guarantee byte-accurate file replacements even with expanding/collapsing Unicode glyphs.
+- Character-level coordinate maps are tested for byte-accurate file replacements across expanding and collapsing Unicode glyphs.
 - Overlapping hunks are blocked before mutation, eliminating partial patch corruptions.
 - Idempotent edit re-submissions resolve immediately with 0 unnecessary file re-reads.
 - Escape drift and doubled backslashes are intercepted pre-flight with actionable error directives.
 - Whitespace mismatches and word-level diffs are diagnosed with visible glyphs (`→` and `·`) for single-turn model correction.
-- Fully in-memory, zero-GC, and state-snapshotable with $O(1)$ rollback in $<0.05\text{ ms}$.
+- Fully in-memory, allocation-bounded, and state-snapshotable with $O(1)$ rollback in $<0.05\text{ ms}$.

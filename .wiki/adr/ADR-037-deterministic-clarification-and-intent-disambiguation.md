@@ -11,7 +11,7 @@ In ancestral architectures such as `hermes-agent-main` (`tools/clarify_tool.py`,
 4. **Lack of Snapshot-Aware In-Memory Rollback**: Clarification inquiries and resolutions were untracked across session state snapshots, preventing rollbacks during turn rewinds.
 
 ## Decision
-We implemented a zero-GC, in-memory **Clarification, Interactive Inquiry & Intent Disambiguation Substrate ($\mathcal{K}_{\text{clarify}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Clarification, Interactive Inquiry & Intent Disambiguation Substrate ($\mathcal{K}_{\text{clarify}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicClarifyEngine`** (`src/tooling/extensions/clarify/deterministic-clarify-engine.ts`):
    - In-memory state machine for non-blocking asynchronous inquiry submission and resolution.
@@ -23,7 +23,7 @@ We implemented a zero-GC, in-memory **Clarification, Interactive Inquiry & Inten
    - In-memory Broccolidb substrate tracking pending/resolved inquiries and resolutions.
 
 3. **`ClarifySnapshotManager`** (`src/sessions/extensions/clarify/clarify-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
 
 4. **`ClarifyInquirySupervisor`** (`src/agents/extensions/clarify/clarify-inquiry-supervisor.ts`):
    - Master supervisor coordinating UI bridges, default selection policies, and telemetry.

@@ -1,31 +1,44 @@
-# ADR-052: Permissive Open-Source Licensing, Patent Grant & Prior-Art IP Protection
+# ADR-052: Apache licensing, provenance, and evidence-bounded IP records
 
 ## Status
-**Accepted**
+
+Accepted and superseded in part by the current claim-control records.
 
 ## Context
-The August 9, 2026 disclosure recorded sub-millisecond local turn execution, a fixed 16MB ArrayBuffer slab, and $O(1)$ state restoration. Those decision-time measurements are preserved in the prior-art record; they are not current guarantees. Current worktree evidence is generated in [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json). Protecting the intellectual property and public prior-art rights of the project while keeping the codebase **100% permissive for commercial and community adoption** was critical.
+
+The project adopted Apache-2.0 and began keeping dated engineering disclosures
+for its architecture and benchmark history. Earlier versions of this ADR used
+broader language about patent scope, prior-art effect, and project-wide
+ownership than the available evidence supported. A permissive license also
+needs a clear boundary between first-party work, dependencies, inspirations,
+and trademarks.
 
 ## Decision
-We adopted the **Apache License, Version 2.0** alongside an explicit **Attribution NOTICE** and **Invention Disclosure Specification** ([INVENTION-DISCLOSURE-AND-PRIOR-ART.md](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/ip/INVENTION-DISCLOSURE-AND-PRIOR-ART.md)).
 
-### Core IP Protection Mechanisms
+Keep Apache License 2.0 as the current project license and make the following
+controls authoritative for future changes:
 
-1. **Permissive Open-Source Utilization**:
-   - Allows royalty-free commercial, open-source, and enterprise usage, reproduction, and modification.
-
-2. **Perpetual Royalty-Free Patent License Grant**:
-   - Explicitly grants patent rights for the underlying implementation to all users and contributors.
-
-3. **Defensive Patent Termination Clause**:
-   - Automatically revokes patent rights for any entity that files patent infringement lawsuits against the project or its contributors.
-
-4. **Public Prior-Art Timestamping**:
-   - Documents August 9, 2026 as the formal prior-art disclosure date for AKD-DSO, zero-GC slab memory allocation, and $O(1)$ state pointer rewinding.
+1. `LICENSE` controls first-party copyright and the Apache contributor patent
+   grant.
+2. `NOTICE` records factual attribution and does not change the license.
+3. `DCO` and signed-off commits provide a contributor provenance control.
+4. `TRADEMARKS.md` separates names, logos, and endorsement from copyright
+   permissions.
+5. `.wiki/ip/CLAIM-REGISTER.md` and `.wiki/ip/SOURCE-PROVENANCE.md` bound
+   technical claims and preserve source/license records.
+6. Automated legal, claim, DCO, and package-boundary checks run before release.
 
 ## Consequences
 
-### Positive
-- Fully permissive open-source license encourages broad adoption.
-- Protects the project and contributors against predatory patent litigation.
-- Establishes clear public prior art precluding third-party patent claims.
+The project can remain broadly reusable under Apache-2.0 while making fewer
+unsupported statements about patentability, ownership, or benchmark outcomes,
+or third-party work. The cost is that a copied or imported component with an
+unresolved license must be treated as a release blocker until its provenance is
+recorded or the component is removed.
+
+## Evidence
+
+- [Licensing and claim-control strategy](../../docs/LEGAL-STRATEGY.md)
+- [Claim register](../../.wiki/ip/CLAIM-REGISTER.md)
+- [Source provenance](../../.wiki/ip/SOURCE-PROVENANCE.md)
+- [Apache License 2.0](../../LICENSE)

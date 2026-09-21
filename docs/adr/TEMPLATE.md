@@ -14,7 +14,7 @@
 
 ### Drivers & Objectives
 - **Zero External Dependencies**: Pure TypeScript utilizing built-in Node.js APIs.
-- **Sub-Millisecond SLAs**: Deterministic in-memory operations with Zero-GC slab memory.
+- **Sub-Millisecond SLAs**: Deterministic in-memory operations with allocation-bounded slab memory.
 - **Contract Stability**: Strict OOP class hierarchy and immutable data contracts.
 - **Human-Centric Ergonomics**: Plain-English diagnostics and intuitive navigation.
 

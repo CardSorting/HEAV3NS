@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing swarm mutex locks and subagent task delegation from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/swarm/SwarmMutexService.ts` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 11).
+- **Technical Story**: Absorbing swarm mutex locks and subagent task delegation from teacher package `external pi-main source workspace/packages/codemarie/src/core/swarm/SwarmMutexService.ts` into `repository root` via the **Osmosis Strategy** (Pass 11).
 
 ---
 

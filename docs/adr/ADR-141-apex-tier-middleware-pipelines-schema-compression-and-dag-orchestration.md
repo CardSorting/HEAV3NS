@@ -79,5 +79,5 @@ Scaling tool systems to enterprise complexity requires modular execution pipelin
 
 ## 4. Verification Evidence
 
-- Automated Test Suite 1: [`scripts/validate-apex-tool-middleware-engine.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-apex-tool-middleware-engine.ts) (6/6 tests passing).
-- Automated Test Suite 2: [`scripts/validate-apex-tool-dag-engine.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-apex-tool-dag-engine.ts) (6/6 tests passing).
+- Automated Test Suite 1: [`scripts/validate-apex-tool-middleware-engine.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-apex-tool-middleware-engine.ts) (6/6 tests passing).
+- Automated Test Suite 2: [`scripts/validate-apex-tool-dag-engine.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-apex-tool-dag-engine.ts) (6/6 tests passing).

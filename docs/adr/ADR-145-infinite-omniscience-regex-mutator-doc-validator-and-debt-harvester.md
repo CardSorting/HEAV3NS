@@ -8,13 +8,13 @@ Refactoring across large file trees requires multi-file regex mutations with cap
 
 ## Decision
 1. **Multi-File Regex Mutation Engine**:
-   - Implemented `batch_regex_mutate` ([`BatchRegexMutator`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/execution/batch-regex-mutator.ts)) supporting capture groups (`$1`, `$2`), flags (`g`, `m`, `i`), dry-run preview, and transactional journal backups.
+   - Implemented `batch_regex_mutate` ([`BatchRegexMutator`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/execution/batch-regex-mutator.ts)) supporting capture groups (`$1`, `$2`), flags (`g`, `m`, `i`), dry-run preview, and transactional journal backups.
 2. **Markdown Documentation Link Validator**:
-   - Implemented `validate_documentation_links` ([`DocLinkValidator`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/doc-link-validator.ts)) parsing markdown files and verifying relative targets and anchors.
+   - Implemented `validate_documentation_links` ([`DocLinkValidator`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/doc-link-validator.ts)) parsing markdown files and verifying relative targets and anchors.
 3. **Mutation Journal History Inspector**:
    - Implemented `inspect_file_history` querying `ToolTransactionJournal` to display chronological file revisions, tool names, turn IDs, and diffs.
 4. **Technical Debt & TODO Harvester**:
-   - Implemented `harvest_technical_debt` ([`TechnicalDebtHarvester`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/technical-debt-harvester.ts)) extracting and prioritizing `TODO`, `FIXME`, `HACK`, `BUG`, `OPTIMIZE`, and `DEPRECATED` annotations.
+   - Implemented `harvest_technical_debt` ([`TechnicalDebtHarvester`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/technical-debt-harvester.ts)) extracting and prioritizing `TODO`, `FIXME`, `HACK`, `BUG`, `OPTIMIZE`, and `DEPRECATED` annotations.
 5. **Memory Slab & Buffer Optimizer**:
    - Implemented `optimize_memory_slab` inspecting RSS, external array buffers, heap memory, and confirming the 16MB contiguous slab memory invariant.
 

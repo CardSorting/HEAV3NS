@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 60 Osmosis Distillation (`codemarie` → `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 60 completes the second wave of zero-dependency terminal handling distillation from `/Users/bozoegg/Downloads/codemarie-new/src/integrations/terminal/commandDiagnostics.ts` and `CommandOrchestrator.ts` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 60 completes the second wave of zero-dependency terminal handling distillation from `external source workspace/codemarie-new/src/integrations/terminal/commandDiagnostics.ts` and `CommandOrchestrator.ts` into `repository root/src`.
 
 This architectural pass introduces:
 

@@ -2,17 +2,17 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 32 Osmosis Distillation (`codemarie-new/src` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 32 completes the Osmosis distillation of production performance and multi-agent resource safety systems from `/Users/bozoegg/Downloads/codemarie-new/src` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 32 completes the Osmosis distillation of production performance and multi-agent resource safety systems from `external codemarie-new source workspace/src` into `repository root/src`.
 
 This architectural pass introduces:
-1. **JoyRide Hot-Path Execution Cache (`JoyRideHotPathCache`)**: Zero-GC, LRU memory-budgeted cache for read-only command executions and workspace symbol inspection with automatic regex secret redaction.
+1. **JoyRide Hot-Path Execution Cache (`JoyRideHotPathCache`)**: allocation-bounded, LRU memory-budgeted cache for read-only command executions and workspace symbol inspection with automatic regex secret redaction.
 2. **Command Safety Classifier (`HotPathCommandClassifier`)**: Real-time safety classification dividing CLI invocations into `safe_readonly`, `workspace_mutating`, and `system_dangerous`.
 3. **Lock Authority Engine (`LockAuthorityEngine`)**: Fine-grained workspace file locking substrate with lease epoch enforcement, fencing tokens (`BroccoliFencingSubstrate`), and stale lock recovery.
 

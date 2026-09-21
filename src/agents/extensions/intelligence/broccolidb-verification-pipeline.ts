@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 137: Zero-Dependency Broccoli Verification Pipeline
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/VerificationPipeline.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/VerificationPipeline.ts).
  * Performs 2-phase post-mutation verification comparing baseline reports vs post-audit findings (introducedFindings, resolvedFindings),
  * invariant compliance checks, and gate status evaluation. Zero external npm dependencies.
  */

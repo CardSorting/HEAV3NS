@@ -8,13 +8,13 @@ Code discovery across complex codebases requires fast lexical and semantic relev
 
 ## Decision
 1. **Sub-5ms In-Memory Semantic Search**:
-   - Implemented `search_codebase_semantic` ([`InMemorySemanticSearchEngine`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/in-memory-semantic-search.ts)) utilizing BM25 term saturation and CamelCase token decomposition.
+   - Implemented `search_codebase_semantic` ([`InMemorySemanticSearchEngine`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/in-memory-semantic-search.ts)) utilizing BM25 term saturation and CamelCase token decomposition.
 2. **Orphan & Unused Export Pruner**:
-   - Implemented `prune_unused_exports` ([`UnusedExportDetector`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/unused-export-detector.ts)) cross-referencing all workspace exports against the import graph to find dead code.
+   - Implemented `prune_unused_exports` ([`UnusedExportDetector`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/unused-export-detector.ts)) cross-referencing all workspace exports against the import graph to find dead code.
 3. **Template Scaffolding**:
-   - Implemented `scaffold_file_template` ([`FileTemplateScaffolder`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/execution/file-template-scaffolder.ts)) generating boilerplate for `service`, `controller`, `test`, `component`, and `config` files.
+   - Implemented `scaffold_file_template` ([`FileTemplateScaffolder`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/execution/file-template-scaffolder.ts)) generating boilerplate for `service`, `controller`, `test`, `component`, and `config` files.
 4. **Code Complexity & Maintainability Evaluation**:
-   - Implemented `evaluate_code_complexity` ([`CodeComplexityEvaluator`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/code-complexity-evaluator.ts)) computing cyclomatic complexity, LOC, function density, and Maintainability Index (0–100).
+   - Implemented `evaluate_code_complexity` ([`CodeComplexityEvaluator`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/code-complexity-evaluator.ts)) computing cyclomatic complexity, LOC, function density, and Maintainability Index (0–100).
 5. **High-Resolution Latency Benchmarking**:
    - Implemented `benchmark_tool_latency` measuring p50, p95, p99, and execution throughput over N iterations.
 

@@ -10,7 +10,7 @@
 ## 1. Context & Motivation (The Why)
 
 ### Protecting Subsystem Integrity & Preventing Overwrites
-As `/Users/bozoegg/Desktop/LUMI-NEW` evolves across sequential passes (Pass 1 through Pass 14+), absorbing features directly into existing base files (`eyes.ts`, `ears.ts`, `session-store.ts`) introduces structural drift, risks overwriting previous pass implementations, and breaks single-responsibility separation.
+As `repository root` evolves across sequential passes (Pass 1 through Pass 14+), absorbing features directly into existing base files (`eyes.ts`, `ears.ts`, `session-store.ts`) introduces structural drift, risks overwriting previous pass implementations, and breaks single-responsibility separation.
 
 To ensure long-term architectural stability:
 1. **Base Classes Are Immutable**: Foundational domain contracts and base classes in `src/*/base/` remain pure and unchanged.

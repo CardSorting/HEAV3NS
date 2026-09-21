@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 182: Zero-Dependency Broccoli Stability Forensics
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/StabilityForensics.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/StabilityForensics.ts.
  * Verifies architectural evidence cited in Plan and Act Mode reviews, detecting phantom path citations,
  * conversational context grounding, and structural hash integrity. Zero external npm dependencies.
  */

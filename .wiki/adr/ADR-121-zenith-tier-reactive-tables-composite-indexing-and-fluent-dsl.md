@@ -2,7 +2,7 @@
 
 - **Status**: Accepted & Solidified
 - **Date**: August 16, 2026
-- **Authors**: William Andrew Cruz & Antigravity Autonomous Agent
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Supercedes**: Base L1 Reactive Table in ADR-120
 - **Scope**: Substrate Subsystem (`src/sessions/extensions/substrate/broccolidb-table.ts`, `src/sessions/extensions/substrate/broccolidb-natural-query.ts`, `src/core/contracts/broccolidb.contracts.ts`, `src/tooling/extensions/database/database-tools.ts`)
 
@@ -45,7 +45,7 @@ We have superceded `BroccoliDbTable<T>` to the **Zenith Tier** by implementing:
 - Observable subscription mechanism (`table.subscribe((event) => void, filter?)`) emitting structured `TableChangeEvent<T>` with operation (`INSERT`, `UPDATE`, `DELETE`, `CLEAR`), `before` / `after` records, and field-level diff objects.
 
 ### 2.4 Atomic In-Memory Transactions
-- `table.transaction((tx) => R)` provides ACID unit-of-work guarantees with automatic snapshot rollback on exception and atomic WAL frame emission on commit.
+- `table.transaction((tx) => R)` provides an ACID-oriented unit-of-work API with automatic snapshot rollback on exception and atomic WAL frame emission on commit in the covered storage path.
 
 ### 2.5 Introspection, Descriptive Statistics & Natural Language Querying
 - `table.describe()`: Introspects columns, index configurations, total records, and memory footprint.
@@ -57,6 +57,6 @@ We have superceded `BroccoliDbTable<T>` to the **Zenith Tier** by implementing:
 ## 3. Consequences & Verification
 
 - **Backwards Compatibility**: 100% compatible with existing `IDbTable<T>` interfaces.
-- **Zero External Dependencies**: Implemented in 100% pure TypeScript using Node.js built-ins.
+- **Zero External Dependencies**: Implemented in TypeScript using Node.js built-ins.
 - **Performance**: Insertion throughput remains $>180,000\text{ ops/sec}$ with full multi-modal index synchronization; indexed query lookups resolve in $<1.5\ \mu\text{s}$.
 - **Verification**: Validated via `scripts/validate-broccolidb-table-zenith.ts` (all 10 tests passed 100%).

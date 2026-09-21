@@ -2,6 +2,10 @@
 
 This directory contains the authoritative current-worktree runtime evidence.
 
+Read [`CLAIM-SCOPE.md`](CLAIM-SCOPE.md) before treating any report, ADR,
+whitepaper, or field note as a current performance claim, rights statement, or
+authorship record.
+
 ## Source of truth
 
 [`LIVE_BASELINE.json`](LIVE_BASELINE.json) is the machine-readable source. [`BENCHMARK_REPORT.md`](BENCHMARK_REPORT.md) and [`GRAND_ARCHITECTURAL_AUDIT.md`](GRAND_ARCHITECTURAL_AUDIT.md) are generated from the same in-memory run by `npm run baseline:update`.
@@ -33,7 +37,7 @@ Do not hand-edit measured values in those three files. The baseline command writ
 - **Heterogeneous benchmark:** five cases measured as case latency and cases/second. The complete Flappy Bird case generates 12 React + TypeScript + Vite files and reports eight independent assertions.
 - **Guardrails:** dedicated local fast-path latency and throughput, warmed rewind p95 plus state restoration, 16MB slab capacity, zero-barrel imports, and foundational base-file presence.
 
-The heterogeneous benchmark includes TypeScript compiler work and must not be interpreted as local frame latency. The performance SLA is enforced only by the dedicated guardrail workload.
+The heterogeneous benchmark includes TypeScript compiler work and must not be interpreted as local frame latency. The dedicated guardrail workload is a repository regression check, not a customer-facing SLA.
 
 ## Reproduce
 

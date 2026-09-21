@@ -9,10 +9,10 @@ When AI coding agents run terminal commands on local machines, subtle environmen
 2. PEP-668 `externally-managed-environment` protections preventing global `pip install` commands.
 3. Missing package managers (`uv`, `npm`, `pnpm`, `bun`, `cargo`) or deactivated virtual environments (`VIRTUAL_ENV`).
 4. Probing the environment must be completely non-blocking, cached in the substrate, and impose strictly **zero token overhead** when the environment is clean (`""`).
-5. Subsystems need frame-perfect snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput diagnostic generation ($>1,000,000\text{ ops/sec}$).
+5. Subsystems need checkpointed snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput diagnostic generation ($>1,000,000\text{ ops/sec}$).
 
 ## Decision
-We implement a zero-GC, typed, deterministic Toolchain Environment Diagnostic Probing Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Toolchain Environment Diagnostic Probing Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`env-probe.contracts.ts`)**:
    - Defines `ToolchainRuntimeKind`, `ToolchainAnomalyCategory`, `ToolchainProbeDescriptor`, `EnvProbeConfig`, `EnvProbeMetrics`, and `EnvProbeWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-env-probe-substrate.ts`, `env-probe-snapshot-manager.ts`)**:
@@ -28,5 +28,5 @@ We implement a zero-GC, typed, deterministic Toolchain Environment Diagnostic Pr
 
 ## Consequences
 - Preemptive detection of toolchain friction points before the agent attempts destructive or invalid installation commands.
-- Guaranteed zero token overhead on clean system environments.
+- Designed to avoid avoidable token overhead on clean system environments; actual requests and provider behavior remain outside this record.
 - Non-blocking execution ensuring fast agent startup and turn ticks.

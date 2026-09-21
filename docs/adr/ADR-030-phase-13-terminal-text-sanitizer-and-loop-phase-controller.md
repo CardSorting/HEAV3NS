@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing terminal control code sanitization (`packages/utils/src/sanitize-text.ts`), agent loop execution phase state machine (`packages/utils/src/loop-phase.ts`), and performing Phase 13 master subsystem synthesis (Passes 49–51) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing terminal control code sanitization (`packages/utils/src/sanitize-text.ts`), agent loop execution phase state machine (`packages/utils/src/loop-phase.ts`), and performing Phase 13 master subsystem synthesis (Passes 49–51) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

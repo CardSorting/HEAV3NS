@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 43 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 43 completes the zero-dependency Osmosis distillation of multi-file rollback snapshot recovery and inter-subagent mailbox message queues from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 43 completes the zero-dependency Osmosis distillation of multi-file rollback snapshot recovery and inter-subagent mailbox message queues from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Rollback Coordinator (`BroccoliRollbackCoordinator`)**: Pre-mutation snapshot capture (`snapshotBefore`) and atomic multi-file transaction restoration (`restore`) restoring exact text state upon repair failures or abort signals without third-party libraries. Directly embedded inside `NativeMutationTransactionSubstrate`.

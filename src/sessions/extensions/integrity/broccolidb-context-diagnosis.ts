@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 149: Zero-Dependency Broccoli Context Diagnosis Service
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/DiagnosisService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/DiagnosisService.ts).
  * Evaluates epistemic context health audits (diagnoseContext), calculating graph health scores (0-100),
  * detecting stale/unverified/contradictory node counts, and flagging high-entropy items. Zero external npm dependencies.
  */

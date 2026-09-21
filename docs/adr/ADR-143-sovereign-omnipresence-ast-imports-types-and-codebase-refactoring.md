@@ -8,15 +8,15 @@ When performing multi-file refactoring and file movements, agents frequently enc
 
 ## Decision
 1. **AST-Driven Import Auto-Repair**:
-   - Implemented `resolve_and_fix_imports` ([`AstImportResolver`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/ast-import-resolver.ts)) calculating correct relative paths and appending missing import headers.
+   - Implemented `resolve_and_fix_imports` ([`AstImportResolver`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/ast-import-resolver.ts)) calculating correct relative paths and appending missing import headers.
 2. **Type Signature Compression**:
-   - Implemented `introspect_type_signatures` ([`TypeSignatureIntrospector`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/type-signature-introspector.ts)) providing condensed public TypeScript declarations with ~46.4% token compression.
+   - Implemented `introspect_type_signatures` ([`TypeSignatureIntrospector`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/type-signature-introspector.ts)) providing condensed public TypeScript declarations with ~46.4% token compression.
 3. **Whole-Word Codebase Symbol Renamer**:
-   - Implemented `rename_symbol_across_codebase` ([`CodebaseSymbolRenamer`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/execution/codebase-symbol-renamer.ts)) utilizing `\b` word boundary regex, multi-file dry-run preview, and journal transaction backups.
+   - Implemented `rename_symbol_across_codebase` ([`CodebaseSymbolRenamer`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/execution/codebase-symbol-renamer.ts)) utilizing `\b` word boundary regex, multi-file dry-run preview, and journal transaction backups.
 4. **Git-Free In-Memory Stash Manager**:
-   - Implemented `manage_workspace_stash` ([`InMemoryStashManager`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/execution/in-memory-stash-manager.ts)) enabling `save`, `pop`, `list`, and `drop` snapshot operations without child processes.
+   - Implemented `manage_workspace_stash` ([`InMemoryStashManager`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/execution/in-memory-stash-manager.ts)) enabling `save`, `pop`, `list`, and `drop` snapshot operations without child processes.
 5. **Dependency Matrix & Cycle Detector**:
-   - Implemented `generate_dependency_matrix` ([`DependencyMatrixGenerator`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/search/dependency-matrix-generator.ts)) generating directed graph adjacency matrices, DFS cycle detection, and Kahn's topological sort.
+   - Implemented `generate_dependency_matrix` ([`DependencyMatrixGenerator`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/search/dependency-matrix-generator.ts)) generating directed graph adjacency matrices, DFS cycle detection, and Kahn's topological sort.
 
 ## Consequences
 - Symbol refactoring and import repairs execute in sub-millisecond speeds without disk corruption.

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-19
-- **Technical Story**: Formalizing and executing the complete, enterprise-grade **Evolutionary Skill Tree, Strategy Engine & Self-Healing Substrate System** for LUMI-JOY. Upgrades procedural memory from static markdown files into a dynamic, goal-driven directed acyclic graph ($\mathcal{G}_{\text{skill}}$) equipped with multi-policy strategy synthesis, 4D Bayesian competency evolution, autonomous speciation and genetic recombination, critical path bottleneck analysis, atomic multi-skill transactions (WAL), and Shannon entropy immune guards.
+- **Technical Story**: Formalizing and executing the selected **Evolutionary Skill Tree, Strategy Engine & Self-Healing Substrate System** for LUMI-JOY. Upgrades procedural memory from static markdown files into a dynamic, goal-driven directed acyclic graph ($\mathcal{G}_{\text{skill}}$) equipped with multi-policy strategy synthesis, 4D Bayesian competency evolution, autonomous speciation and genetic recombination, critical path bottleneck analysis, atomic multi-skill transactions (WAL), and Shannon-entropy guardrails.
 
 ---
 
@@ -11,7 +11,7 @@
 
 In traditional autonomous AI agent architectures, procedural skill systems suffer from fundamental limitations:
 1. **Flat, Uncoordinated Storage**: Skills exist as isolated text documents lacking topological dependency awareness, prerequisites, or difficulty leveling.
-2. **Brittle String & Regex Mutations**: Modifications are applied as destructive full-file rewrites without line-anchored provenance verification or frame-perfect rollbacks.
+2. **Brittle String & Regex Mutations**: Modifications are applied as destructive full-file rewrites without line-anchored provenance verification or checkpointed rollbacks.
 3. **Absence of Goal-Driven Strategy Planning**: Agents struggle to compose multi-skill execution chains, lacking fallback mitigation routes, execution policies, and combinatorial synergy bonuses.
 4. **Epistemic Stagnation & Mutation Degeneration**: Without axiomatic immune guardrails, transient tool errors and negative self-refusals ("tool X is broken, never use it") pollute procedural memory.
 5. **No Speciation or Genetic Recombination**: Skills expand indefinitely until overloaded, lacking structured mechanisms to split into specialized child branches or fuse overlapping procedures.
@@ -62,14 +62,14 @@ src/
 │   ├── skill-notification-dispatcher.ts     # Cross-platform desktop & terminal notification router
 │   └── skill-tree-tool-suite.ts             # 35+ model tools for autonomous execution & inspection
 ├── sessions/extensions/skills/
-│   ├── broccoli-skill-tree-substrate.ts     # Zero-GC cache, secondary inverted indices & WAL transactions
+│   ├── broccoli-skill-tree-substrate.ts     # allocation-bounded cache, secondary inverted indices & WAL transactions
 │   ├── skill-tree-snapshot-manager.ts       # Frame snapshots, O(1) rollback & time-travel diffing
 │   └── deterministic-skill-curator.ts       # Half-life tick decay, Jaccard clusters & risk-assessed pruning
 └── agents/extensions/skills/
     ├── skill-strategy-engine.ts             # Multi-policy planner, combo synergies, CPM & latency solver
     ├── evolutionary-skill-tree-engine.ts    # 5-signal sensing, Bayesian competencies, speciation & auto-healing
     ├── skill-tree-prompt-composer.ts        # LOD 0/1/2 prompt composition, token budget & inlining
-    └── anti-degeneration-guard.ts           # Immune guardrails, Shannon entropy & thrashing interception
+    └── anti-degeneration-guard.ts           # Entropy guardrails, Shannon analysis & thrashing interception
 ```
 
 ---
@@ -91,11 +91,11 @@ src/
 - **Genetic Recombination**: Synthesizes clean, structured markdown bodies when consolidating overlapping clusters into unified master nodes.
 - **DAG Self-Healing**: Automatically repairs dangling edges, broken prerequisite IDs, and reactivates orphaned high-mastery skills.
 
-### 3. Zero-GC Substrate, Inverted Secondary Indices & WAL (`BroccoliSkillTreeSubstrate`)
+### 3. allocation-bounded Substrate, Inverted Secondary Indices & WAL (`BroccoliSkillTreeSubstrate`)
 - **Inverted Indices**: Secondary category, tier, and tag sets enable instant $O(k)$ filtering without linear scanning.
-- **Atomic Multi-Skill Transactions (WAL)**: `beginTransaction()`, `commitTransaction()`, and `rollbackTransaction()` guarantee transactional all-or-nothing mutations.
+- **Atomic Multi-Skill Transactions (WAL)**: `beginTransaction()`, `commitTransaction()`, and `rollbackTransaction()` implement transactional all-or-nothing mutation handling for the covered storage path.
 
-### 4. Immune Defense & Anti-Degeneration (`AntiDegenerationGuard`)
+### 4. Guarded Defense & Anti-Degeneration (`AntiDegenerationGuard`)
 - **Axiomatic Invariants**: Rejects negative tool refusals, transient environment failures, and untested failure loops.
 - **Shannon Entropy Analysis**: Intercepts repetitive degenerate loops ($H < 1.8$).
 - **Thrashing Interception**: Blocks rapid mutation oscillation on single nodes.
@@ -112,7 +112,7 @@ src/
 | :--- | :--- | :--- | :--- |
 | **Substrate Lookup Latency** | $< 0.1\text{ ms}$ per query | **$0.00009\text{ ms}$ (90 ns/op)** | **PASS** |
 | **Frame Snapshot Rewind** | $< 0.1\text{ ms}$ p95 | **$0.01\text{ ms}$** | **PASS** |
-| **Zero-GC Contiguous Slab Memory** | 16 MB invariant | **16,777,216 bytes** | **PASS** |
+| **allocation-bounded Contiguous Slab Memory** | 16 MB invariant | **16,777,216 bytes** | **PASS** |
 | **Turn Tick Latency** | $< 1.0\text{ ms}$ | **$0.14\text{ ms}$** | **PASS** |
 | **Validation Test Suites** | 100% pass | **34/34 suites passed (0 failures)** | **PASS** |
 | **TypeScript Type Safety** | 0 errors | **0 errors (`tsc --noEmit`)** | **PASS** |
@@ -124,7 +124,7 @@ src/
 
 ### Positive Consequences
 - **Deterministic Procedural Intelligence**: Skills systematically evolve through experience without degradation or corruption.
-- **Sub-Microsecond Efficiency**: Zero disk I/O on hot lookup paths; instant strategy plan generation.
+- **Hot-Path Efficiency**: The described lookup path targets bounded local work and reduced disk I/O; timing and strategy-plan generation remain workload-specific.
 - **Human & Non-Technical Approachability**: Guided career pathways and gamified achievement quests lower the cognitive barrier to understanding agent skills.
 
 ### Reversible Extension Points

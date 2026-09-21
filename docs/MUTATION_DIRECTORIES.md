@@ -46,7 +46,7 @@ This document specifies the complete directory structure and single-responsibili
 | | `intelligence/` | Workspace topology, package identity indexing & blast radius calculation | `WorkspaceIntelligenceEngine`, `BroccoliBlastRadiusCalculator` |
 | | `mentions/` *(Pass 9)* | Prompt `@mention` context expansion | `MentionResolver` |
 | **Sessions** (`src/sessions/extensions/`) | `substrate/` | Contiguous 16MB ArrayBuffer slab allocation, Broccolidb tables, view renderer & file locks | `ArenaAllocator`, `BroccoliDbTable`, `BroccoliViewRenderer`, `FileLockManager` |
-| | `persistence/` | File persistence, CAS storage & frame-perfect snapshot rewind | `PersistentSessionStore`, `BroccoliCASStorageService` |
+| | `persistence/` | File persistence, CAS storage & checkpointed snapshot rewind | `PersistentSessionStore`, `BroccoliCASStorageService` |
 | | `memory/` | Long-term fact store & semantic knowledge graph persistence | `SessionMemoryStore`, `KnowledgeGraphSubstrate` |
 | | `vfs/` | In-memory Virtual File System diff overlay | `SessionVfs` |
 | | `compaction/` | Sliding window compaction & dense bitmap archiving | `SessionCompactor`, `SnapcompactEngine` |

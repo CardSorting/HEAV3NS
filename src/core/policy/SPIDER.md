@@ -3,7 +3,7 @@
 The **Spider Engine** is a high-performance structural analysis system integrated into the core database and the Fluid Policy Engine. It uses Abstract Syntax Tree (AST) parsing to build a comprehensive dependency graph of the codebase, enabling proactive architectural enforcement, entropy detection, and automated refactoring.
 
 > [!TIP]
-> For a deep dive into the philosophy and principles behind the engine, see [Spider Theory: Structural Entropy & Architectural Sovereignty](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/SPIDER_THEORY.md).
+> For a deep dive into the philosophy and principles behind the engine, see [Spider Theory: Structural Entropy & Architectural Sovereignty](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md).
 
 ## 🏗️ Architecture
 
@@ -26,7 +26,7 @@ The engine has been hardened for production-level workloads:
 3.  **Ghost Persistence**: The substrate is persisted to the **Conversational Ghost Memory (DB)** for near-instant cold starts on massive graphs, without polluting the local workspace with auxiliary files.
 4.  **Merkle Shield (Forensic Calibration)**: The registry tracks file modification timestamps (`mtime`). Upon startup, the engine automatically re-indexes nodes that have been modified externally, ensuring 100% fidelity between the graph and the disk.
 
-For deep technical details on the zero-overhead architecture, see [PERFORMANCE.md](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/PERFORMANCE.md).
+For deep technical details on the zero-overhead architecture, see [PERFORMANCE.md](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md).
 
 ## 📊 Metrics & Entropy
 

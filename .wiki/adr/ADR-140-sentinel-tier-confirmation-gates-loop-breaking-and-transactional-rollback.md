@@ -60,7 +60,7 @@ Unconstrained tool execution poses critical risks to developer workspaces:
 ## 3. Consequences & Trade-offs (The Impact)
 
 ### Positive
-- **Guaranteed Workspace Safety**: Destructive commands and unauthorized mutations are gated or simulated.
+- **Workspace Safety Controls**: Destructive commands and unauthorized mutations are gated or simulated in the covered paths; operator review remains necessary.
 - **Infinite Loop Elimination**: Repetitive hallucinations are broken autonomously.
 - **Zero Broken Intermediate States**: Atomic multi-file patching and rollback ensure workspace consistency.
 
@@ -71,5 +71,5 @@ Unconstrained tool execution poses critical risks to developer workspaces:
 
 ## 4. Verification Evidence
 
-- Automated Test Suite 1: [`scripts/validate-apex-tool-ecosystem-zenith.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-apex-tool-ecosystem-zenith.ts) (8/8 tests passing).
-- Automated Test Suite 2: [`scripts/validate-apex-tool-runtime-sentinel.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-apex-tool-runtime-sentinel.ts) (7/7 tests passing).
+- Automated Test Suite 1: [`scripts/validate-apex-tool-ecosystem-zenith.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-apex-tool-ecosystem-zenith.ts) (8/8 tests passing).
+- Automated Test Suite 2: [`scripts/validate-apex-tool-runtime-sentinel.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-apex-tool-runtime-sentinel.ts) (7/7 tests passing).

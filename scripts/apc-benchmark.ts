@@ -106,7 +106,7 @@ async function runHeadlessBenchmark() {
 		"    at node:internal/main/run_main_module:11\n" +
 		"    at node:internal/main/run_main_module:12\n" +
 		"    at node:internal/main/run_main_module:13\n" +
-		"Path: /Users/bozoegg/Downloads/codemarie-new/src/core/api/transform/apc-stable-engine.ts\n" +
+		"Path: external source workspace/codemarie-new/src/core/api/transform/apc-stable-engine.ts\n" +
 		"Repeated error status\nRepeated error status\nRepeated error status\nRepeated error status\n"
 
 	const cleaned = engine.cleanText(rawMessyInput)

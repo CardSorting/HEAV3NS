@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 119: Broccoli Tool Circuit Breaker & Token Bucket Rate Governor
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/policy).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/policy).
  * Circuit breaker auto-trips on repeated tool failure loops. Rate governor enforces
  * token-per-minute limits. Zero external dependencies.
  */

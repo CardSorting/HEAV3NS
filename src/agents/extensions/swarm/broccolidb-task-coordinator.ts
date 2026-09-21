@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 152: Zero-Dependency Broccoli Task Coordinator
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/CoordinatorService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/CoordinatorService.ts).
  * Orchestrates multi-worker software engineering tasks across subagents, tracking worker heartbeats,
  * active worker processes, and worker lease expiration. Zero external npm dependencies.
  */

@@ -11,7 +11,7 @@ In ancestral architectures such as `hermes-agent-main` (`tools/checkpoint_manage
 4. **Lack of In-Memory Rollback Integration**: Rollbacks required full disk overwrites and lacked frame-tick synchronized $O(1)$ state snapshotting.
 
 ## Decision
-We implemented a zero-GC, in-memory **Deterministic Content-Addressable Blob Store, Filesystem Checkpoint Kernel & State Branch Tree Substrate ($\mathcal{K}_{\text{cas}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Deterministic Content-Addressable Blob Store, Filesystem Checkpoint Kernel & State Branch Tree Substrate ($\mathcal{K}_{\text{cas}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicCasStore`** (`src/tooling/extensions/checkpoint/deterministic-cas-store.ts`):
    - In-memory Content-Addressable Storage (CAS) with SHA-256 binary hashing.
@@ -24,7 +24,7 @@ We implemented a zero-GC, in-memory **Deterministic Content-Addressable Blob Sto
    - In-memory Broccolidb repository for CAS metadata, commit history, and workspace snapshots.
 
 3. **`CheckpointSnapshotManager`** (`src/sessions/extensions/checkpoint/checkpoint-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
 
 4. **`CheckpointKernelSupervisor`** (`src/agents/extensions/checkpoint/checkpoint-kernel-supervisor.ts`):
    - Master supervisor coordinating pre-mutation snapshots, atomic rollback to any checkpoint commit ID, Merkle tree diffing, and storage pruning.

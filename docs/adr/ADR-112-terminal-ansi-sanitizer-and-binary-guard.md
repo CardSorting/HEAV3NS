@@ -8,10 +8,10 @@ When running shell tools and rendering CLI/gateway histories, un-sanitized outpu
 1. ANSI and ECMA-48 escape codes in subprocess outputs pollute LLM context windows, leading models to hallucinate or copy raw escape bytes into file edits.
 2. Control characters (BEL, NUL, DEL, backspace) and raw carriage returns (`\r`) in replayed conversation history or terminal recaps can clear the screen, retitle terminal windows, move the cursor, or perform `\r`-overwrite spoofing to conceal malicious activity.
 3. Models frequently attempt to write plain text to opaque binary container documents (`.docx`, `.xlsx`, `.pptx`, `.epub`, `.odt`), corrupting their underlying zip/binary structure.
-4. Sanitization and classification must be zero-GC, ultra-fast ($>1,000,000\text{ ops/sec}$), and provide sub-millisecond state rollback ($<0.05\text{ ms SLA}$).
+4. Sanitization and classification must be allocation-bounded, ultra-fast ($>1,000,000\text{ ops/sec}$), and provide sub-millisecond state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implement a zero-GC, typed, deterministic Terminal ANSI Sanitizer & Binary Guard Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Terminal ANSI Sanitizer & Binary Guard Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`terminal-cleaner.contracts.ts`)**:
    - Defines `AnsiCleanMode`, `BinaryAssetClassification`, `TerminalCleanerConfig`, `TerminalCleanerMetrics`, `TerminalCleanerWorkspaceSnapshot`, `TERMINAL_KNOWN_BINARY_EXTENSIONS`, and `TERMINAL_OPAQUE_DOCUMENT_EXTENSIONS`.
 2. **In-Memory Substrate & Snapshots (`broccoli-terminal-cleaner-substrate.ts`, `terminal-cleaner-snapshot-manager.ts`)**:

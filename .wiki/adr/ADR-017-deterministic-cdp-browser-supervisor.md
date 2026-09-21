@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's heavy Python Playwright & CDP supervisor architecture (`tools/browser_tool.py` ~236 KB, `tools/browser_supervisor.py` ~64 KB, `tools/browser_cdp_tool.py` ~27 KB, `tools/browser_dialog_tool.py` ~5.5 KB) into a typed, deterministic **CDP Browser Supervisor & Dialog Automation Engine ($\mathcal{K}_{\text{cdp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces async worker thread deadlocks, hacky XHR monkey-patching (`hermes-dialog-bridge.invalid`), bloated DOM/screenshot token floods, and unvalidated SSRF vulnerabilities with native CDP protocol dialog resolution, bounded accessibility DOM trees, zero-GC Broccolidb substrate memory slabs, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's heavy Python Playwright & CDP supervisor architecture (`tools/browser_tool.py` ~236 KB, `tools/browser_supervisor.py` ~64 KB, `tools/browser_cdp_tool.py` ~27 KB, `tools/browser_dialog_tool.py` ~5.5 KB) into a typed, deterministic **CDP Browser Supervisor & Dialog Automation Engine ($\mathcal{K}_{\text{cdp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces async worker thread deadlocks, hacky XHR monkey-patching (`hermes-dialog-bridge.invalid`), bloated DOM/screenshot token floods, and unvalidated SSRF vulnerabilities with native CDP protocol dialog resolution, bounded accessibility DOM trees, allocation-bounded Broccolidb substrate memory slabs, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -29,10 +29,10 @@ Forensic evaluation revealed severe architectural flaws:
 ### 2. Bounded Semantic DOM Snapshotter (`CdpDomSnapshotter`)
 - Extracts compact, accessibility-focused text representations (`role`, `aria-label`, `tag`, `text`, `attributes`) with bounded depth ($\le 4$) and token caps, preserving prompt prefix caching.
 
-### 3. Zero-GC In-Memory Substrate (`BroccoliBrowserSubstrate`)
+### 3. allocation-bounded In-Memory Substrate (`BroccoliBrowserSubstrate`)
 - Houses active browser tabs, console ring buffers, and network requests in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ lookup latency.
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`BrowserSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ Rollback (`BrowserSnapshotManager`)
 - Captures browser session state (targets, active tab, console logs, dialog history) enabling instant rollback ($<0.1\text{ ms}$).
 
 ### 5. Axiomatic URL & SSRF Guard (`CdpNavigationGuard`)
@@ -60,8 +60,8 @@ src/
 │   ├── cdp-dom-snapshotter.ts              # Bounded semantic DOM tree & accessibility parser
 │   └── cdp-tool-suite.ts                   # Model tools (browser_navigate, browser_snapshot, browser_click, browser_type, browser_dialog, browser_eval, browser_cdp_send)
 ├── sessions/extensions/cdp/
-│   ├── broccoli-browser-substrate.ts       # Zero-GC in-memory cache of targets, console history & network ledgers
-│   └── browser-snapshot-manager.ts         # Frame-perfect binary snapshotting & O(1) state rewind
+│   ├── broccoli-browser-substrate.ts       # allocation-bounded in-memory cache of targets, console history & network ledgers
+│   └── browser-snapshot-manager.ts         # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/cdp/
     ├── cdp-navigation-guard.ts             # Security boundary, URL validator & credential redactor
     ├── cdp-dialog-policy-engine.ts         # Non-blocking dialog arbitration (auto_dismiss, auto_accept, interactive)
@@ -72,7 +72,7 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Full Test Coverage**: `scripts/validate-cdp-supervisor.ts` executes all 8 test suites spanning SSRF guardrails, credential redactions, protocol dialogs, DOM snapshotting, in-memory substrates, binary snapshots, model tools, and micro-benchmarks.
-- **Guaranteed Performance SLAs**: 1,000 DOM tree snapshot parses complete in $22.357\text{ ms}$ ($22.357\ \mu\text{s}$ per parse).
+- **Recorded performance observation**: A dated local run measured 1,000 DOM tree snapshot parses at $22.357\text{ ms}$. Re-run the named workload before comparing hosts; this is not an SLA.
 - **Component Graduation**: Monolith graduates cleanly from 171 to **178 components**.

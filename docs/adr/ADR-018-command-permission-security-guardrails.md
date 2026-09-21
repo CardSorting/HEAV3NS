@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing command permission validation, security guardrails, and dangerous shell operator detection from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/permissions/CommandPermissionController.ts` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 14).
+- **Technical Story**: Absorbing command permission validation, security guardrails, and dangerous shell operator detection from teacher package `external pi-main source workspace/packages/codemarie/src/core/permissions/CommandPermissionController.ts` into `repository root` via the **Osmosis Strategy** (Pass 14).
 
 ---
 

@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 184: Zero-Dependency Broccoli Semantic Axiom Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/SemanticAxiomEngine.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/SemanticAxiomEngine.ts.
  * High-level logical truth validator enforcing SIMPLICITY axioms, cognitive bloat limits (2500 lines pre-emptive warning,
  * 3000 lines hard limit), and automatic remediation plan generation for domain/core modules. Zero external npm dependencies.
  */

@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 181: Zero-Dependency Broccoli Integrity Optimizer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/IntegrityOptimizer.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/IntegrityOptimizer.ts.
  * Scans workspace architecture profiles to identify layer drift optimization opportunities,
  * deadwood export sensing with archetypal file protection, and structural integrity gain scoring. Zero external npm dependencies.
  */

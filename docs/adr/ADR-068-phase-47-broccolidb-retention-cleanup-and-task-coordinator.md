@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 47 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 47 completes the zero-dependency Osmosis distillation of workspace memory retention garbage collection and multi-worker task orchestration from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 47 completes the zero-dependency Osmosis distillation of workspace memory retention garbage collection and multi-worker task orchestration from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Retention Cleanup Service (`BroccoliRetentionCleanupService`)**: Automatic workspace garbage collection (`runBackgroundCleanup`, `purgeStaleLocks`, `cleanupTempFiles`), pruning stale locks, orphan scratchpad files, and expired cache buffers without external libraries. Directly embedded inside `StabilityDoctor`.

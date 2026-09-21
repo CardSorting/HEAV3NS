@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing YAML frontmatter parsing utilities (`packages/utils/src/frontmatter.ts`), bounded memory line range file peeking (`packages/utils/src/peek-file.ts`), and performing Phase 11 master subsystem synthesis (Passes 43–45) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing YAML frontmatter parsing utilities (`packages/utils/src/frontmatter.ts`), bounded memory line range file peeking (`packages/utils/src/peek-file.ts`), and performing Phase 11 master subsystem synthesis (Passes 43–45) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

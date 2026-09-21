@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing system prompt handlebar template compilation (`PromptTemplateEngine`), dynamic environment variable injection (`DynamicVariableInjector`), and performing Phase 20 master subsystem synthesis (Passes 70–72) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing system prompt handlebar template compilation (`PromptTemplateEngine`), dynamic environment variable injection (`DynamicVariableInjector`), and performing Phase 20 master subsystem synthesis (Passes 70–72) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

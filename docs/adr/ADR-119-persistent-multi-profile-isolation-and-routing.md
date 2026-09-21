@@ -4,11 +4,11 @@
 **Accepted & Hardened (Zenith Tier)** — Phase 76
 
 ## Context & Problem Statement
-In enterprise autonomous agent architectures and specialized multi-agent meshes (full-stack software engineering, deep academic research, site reliability triage, technical authoring, Socratic tutoring), agents require strongly typed, isolated operational contexts with deterministic state guarantees.
+In enterprise autonomous agent architectures and specialized multi-agent meshes (full-stack software engineering, deep academic research, site reliability triage, technical authoring, Socratic tutoring), agents benefit from strongly typed, isolated operational contexts with deterministic state behavior in the modeled paths.
 
 Traditional agent frameworks suffer from major architectural deficiencies:
 1. **Global Process Mutation**: Modifying global environment variables or child process state causes severe concurrency race conditions across concurrent sessions.
-2. **Prefix-Cache Destruction**: Ad-hoc prompt template assembly alters the byte-level prefix across turns, destroying LLM prompt cache hit rates (Anthropic / OpenAI prompt caching) and inflating token costs by 50–90%.
+2. **Prefix-Cache Destruction**: Ad-hoc prompt template assembly can alter the byte-level prefix across turns and may reduce provider cache reuse; cache behavior and billing remain provider- and workload-specific.
 3. **Runaway Swarm Handoffs**: Multi-agent delegation systems without execution budgets or cycle-safe topology guards create infinite delegation loops and runaway token costs.
 4. **Fragile Single-Model Dependencies**: Relying on a single model endpoint without fallback circuit breakers leads to cascading failures during rate limits, context overflows, or provider outages.
 5. **Lack of In-Context Learning (ICL) Demonstrations**: Prompt personas without curated, dynamically selectable few-shot exemplars yield high variance in output formatting and typing compliance.
@@ -75,7 +75,7 @@ graph TD
   - `exemplarsBlock`: In-context learning few-shot demonstration pairs.
   - `dynamicBlock`: Runtime hydrated variables (`{{workspace.root}}`, `{{session.id}}`).
 - Computes a deterministic 64-character SHA-256 `prefixCacheHash` representing the immutable static prefix.
-- Maximizes prompt-caching hit rates (up to 90% latency and cost savings) while preserving runtime adaptability.
+- Preserves a stable prefix for configured inputs; any latency or cost effect depends on the provider, cache policy, workload, and request mix.
 
 ### 2. Multi-Agent Run State Machine & Step Budget Governance
 - Orchestrated execution tracking via `ProfileRunState` and `ProfileRunStep`:
@@ -111,9 +111,9 @@ graph TD
 - Observable hook pipeline (`registerHook`, `triggerHook`):
   - Intercepts `before_session_bind`, `after_session_bind`, `on_governance_violation`, `on_drift_detected`, `on_model_fallback`, `on_run_completed`.
 
-### 9. Immutable Revision Ledger & O(1) Time-Travel Rollback
+### 9. Immutable Revision Ledger & Indexed Time-Travel Rollback
 - Cryptographically signed revision snapshots (`v1.0.0`, `v1.0.1`) with changelogs and author tags.
-- Microsecond frame-perfect state rollback (`rollbackToRevision`) satisfying the $< 0.05\text{ ms}$ SLA.
+- `rollbackToRevision` restores the modeled profile state; timing, fidelity, and external side effects remain workload- and provider-dependent.
 
 ### 10. Comprehensive Model Tools (47 Specialized Tools) & Zenith TUI Studio
 - 47 registered model tools for autonomous profile orchestration.

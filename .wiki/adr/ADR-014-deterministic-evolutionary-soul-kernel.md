@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's unstructured, truncating `SOUL.md` persona implementation into a typed, high-performance **Evolutionary AI Agent Soul & Ethos Kernel System ($\mathcal{K}_{\text{soul}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw string concatenations, disk thrashing, and naive blacklists with structured manifests, immutable operational axioms, bounded dynamic trait modulation, zero-GC in-memory substrate caching, line-anchored provenance verification, and multi-layered threat firewalls.
+- **Technical Story**: Transmuting Hermes Agent's unstructured, truncating `SOUL.md` persona implementation into a typed **Evolutionary AI Agent Soul & Ethos Kernel System ($\mathcal{K}_{\text{soul}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw string concatenations, disk thrashing, and naive blacklists with structured manifests, immutable operational axioms, bounded dynamic trait modulation, arena-backed substrate caching, line-anchored provenance verification, and multi-layered threat checks. This record does not establish ownership, novelty, or universal runtime properties.
 
 ---
 
@@ -26,21 +26,21 @@ However, the Teacher architecture suffers from critical software friction and sa
 ### 1. Structured Persona & Ethos Manifest ($\mathcal{M}_{\text{soul}}$)
 Implements a typed manifest (`SoulManifest`) comprising:
 - **Archetypes**: `lumi_core`, `game_engine_architect`, `formal_verifier`, `autonomous_critic`, `security_sentinel`, `custom_persona`.
-- **Core Axioms ($\mathcal{A}$)**: Immutable operational invariants (e.g. Hard Determinism, Zero Fabrication, Zero-GC Slab Memory, Prompt Cache Purity, Read-Before-Write) that cannot be altered or removed by mutations.
+- **Core Axioms ($\mathcal{A}$)**: Immutable operational invariants (e.g. Hard Determinism, Zero Fabrication, arena-backed memory, Prompt Cache Purity, Read-Before-Write) that the mutation path is designed to protect.
 - **Dynamic Bounded Traits ($\mathcal{T} = \{\tau_i, \omega_i\}$)**: Adaptable personality traits (e.g. Conciseness, Code Density, Mathematical Rigor, Forensic Skepticism) with strictly enforced mathematical bounds $[\omega_{\min}, \omega_{\max}]$.
 - **Style Rules**: Explicit tone, verbosity, code preferences, and mathematical rigor definitions.
 
-### 2. Zero-GC Broccolidb Memory Substrate (`BroccoliSoulSubstrate`)
+### 2. Allocation-Bounded Broccolidb Memory Substrate (`BroccoliSoulSubstrate`)
 - Caches active and profile-scoped soul manifests directly in memory.
-- Achieves sub-microsecond lookup latency ($< 0.5\ \mu\text{s}$ per query) without disk I/O bottlenecks.
+- A historical local run recorded sub-microsecond lookup latency ($< 0.5\ \mu\text{s}$ per query); provider, host, workload, and runtime conditions can change the result.
 
 ### 3. Line-Anchored Forensic Mutator (`AnchoredSoulMutator`)
 - Executes mutations using `AnchoredHands` with SHA-256 pre/post integrity hashing.
 - Enforces strict **Read-Before-Write Provenance**: mutations fail closed unless the caller has recently inspected the target manifest at its current hash.
 
-### 4. Frame-Perfect Snapshots & Instant $O(1)$ Rollback (`SoulSnapshotManager`)
+### 4. Checkpointed Snapshots & Indexed Rollback (`SoulSnapshotManager`)
 - Captures binary state snapshots prior to every persona mutation.
-- Exposes `rollbackLastMutation()` allowing instant reversion in $<0.1\text{ ms}$ if downstream verification fails.
+- Exposes `rollbackLastMutation()` for modeled-state reversion if downstream verification fails; the implementation does not rewind external side effects.
 
 ### 5. Axiomatic Threat Guard & Injection Firewall (`SoulThreatGuard`)
 - Real-time multi-layered firewall analyzing prompt text, mutation rationales, and proposed axiom additions.
@@ -48,7 +48,7 @@ Implements a typed manifest (`SoulManifest`) comprising:
 
 ### 6. Byte-Stable Progressive Prompt Composer (`SoulPromptComposer`)
 - Pre-compiles the Slot #1 identity segment for the system prompt.
-- Produces 100% byte-stable prompt output to maximize LLM prompt cache prefix retention.
+- Produces byte-stable output for the configured inputs; provider cache behavior and retention remain provider-specific.
 
 ### 7. Soul Model Tools (`SoulToolSuite`)
 - `soul_view`: Inspects active soul manifest, archetype, axioms, and traits.
@@ -68,8 +68,8 @@ src/
 │   ├── anchored-soul-mutator.ts            # Line-anchored patch mutator with provenance guards
 │   └── soul-tool-suite.ts                  # Model tools (soul_view, soul_tune_trait, soul_audit_integrity)
 ├── sessions/extensions/soul/
-│   ├── broccoli-soul-substrate.ts          # Zero-GC in-memory persona caching & profile isolation
-│   └── soul-snapshot-manager.ts            # Frame-perfect snapshot & O(1) rollback coordinator
+│   ├── broccoli-soul-substrate.ts          # allocation-bounded in-memory persona caching & profile isolation
+│   └── soul-snapshot-manager.ts            # checkpointed snapshot & O(1) rollback coordinator
 └── agents/extensions/soul/
     ├── soul-threat-guard.ts                # Axiomatic prompt injection firewall & threat detector
     └── soul-prompt-composer.ts             # Byte-stable Slot #1 system prompt identity compiler
@@ -79,6 +79,6 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
-- **Full Test Coverage**: `scripts/validate-soul-kernel.ts` executes all 8 test suites spanning frontmatter, axioms, traits, provenance, snapshots, threat guard, prompt composer, and latency benchmarks.
-- **Guaranteed SLAs**: 1,000 in-memory substrate lookups complete in $< 0.5\text{ ms}$ ($0.485\ \mu\text{s}$ per lookup).
+- **TypeScript verification**: `tsc --noEmit` completed with zero errors in the recorded run.
+- **Validation record**: `scripts/validate-soul-kernel.ts` executed 8 recorded suites spanning frontmatter, axioms, traits, provenance, snapshots, threat guard, prompt composer, and latency benchmarks.
+- **Historical measurement (not an SLA)**: The 1,000-query result is a host- and workload-specific observation; no product-wide latency guarantee is made.

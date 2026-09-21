@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing Virtual File System (VFS) router logic, interactive slash command dispatching, and microsecond telemetry benchmarking from teacher model (`/Users/bozoegg/Downloads/pi-main`) while maintaining strict <= 5 class caps per tier.
+- **Technical Story**: Absorbing Virtual File System (VFS) router logic, interactive slash command dispatching, and microsecond telemetry benchmarking from teacher model (`external pi-main source workspace`) while maintaining strict <= 5 class caps per tier.
 
 ---
 
@@ -18,7 +18,7 @@ Inspection of `pi-main` revealed key interactive and staging capabilities:
 ### Reinterpretation for LUMI-NEW Monolith
 - `SessionVfs` in Tier 2 (`sessions/`): Staged file diff overlays and commit engine.
 - `AgentSlashRouter` in Tier 1 (`agents/`): Instant slash command interceptor.
-- Microsecond timing telemetry embedded directly in [Ears](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L12) in Tier 3 (`tooling/`).
+- Microsecond timing telemetry embedded directly in [Ears](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L12) in Tier 3 (`tooling/`).
 
 ---
 
@@ -53,9 +53,9 @@ src/
 
 ### Key Added Capabilities
 
-1. **Virtual File Overlay**: [SessionVfs](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-vfs.ts#L11) stages uncommitted buffer changes, computes unified diffs (`generateDiff`), and batch-commits through `Hands`.
-2. **Interactive Slash Router**: [AgentSlashRouter](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/agent-slash-router.ts#L23) intercepts `/compact`, `/clear`, `/stats`, `/skills`, `/models`, and `/vfs` commands with sub-millisecond execution.
-3. **Performance Telemetry**: [Ears](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L12) tracks microsecond execution durations via `startTimer(label)` and `endTimer(label)`.
+1. **Virtual File Overlay**: [SessionVfs](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-vfs.ts#L11) stages uncommitted buffer changes, computes unified diffs (`generateDiff`), and batch-commits through `Hands`.
+2. **Interactive Slash Router**: [AgentSlashRouter](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/agent-slash-router.ts#L23) intercepts `/compact`, `/clear`, `/stats`, `/skills`, `/models`, and `/vfs` commands with sub-millisecond execution.
+3. **Performance Telemetry**: [Ears](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L12) tracks microsecond execution durations via `startTimer(label)` and `endTimer(label)`.
 
 ---
 

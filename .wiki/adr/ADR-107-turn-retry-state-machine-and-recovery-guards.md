@@ -10,10 +10,10 @@ Previously, managing these recovery branches led to scattered boolean variables 
 1. Repetitive infinite retry loops on unrecoverable authentication errors.
 2. Incoherent state management between top-level turns and subagent delegations.
 3. Lack of unified telemetry on which recovery branches fired and their success rate.
-4. Missing frame-perfect state rollback ($<0.05\text{ ms SLA}$) and high-throughput execution ($>1,000,000\text{ ops/sec}$).
+4. Missing checkpointed state rollback ($<0.05\text{ ms SLA}$) and high-throughput execution ($>1,000,000\text{ ops/sec}$).
 
 ## Decision
-We implement a zero-GC, typed, deterministic Turn Retry State Machine Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Turn Retry State Machine Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`turn-retry.contracts.ts`)**:
    - Defines `TurnRetryGuards` (one-shot booleans for Codex, Anthropic, Nous, Copilot, Vertex, thinking signature, compaction, image shrink, multimodal tools, rate-limit), `TurnRestartSignals` (compressed messages, length continuation, rebuilt messages, redirected messages), `TurnRetryStateDescriptor`, `TurnRetryConfig`, and `TurnRetryWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-turn-retry-substrate.ts`, `turn-retry-snapshot-manager.ts`)**:
@@ -28,6 +28,6 @@ We implement a zero-GC, typed, deterministic Turn Retry State Machine Subsystem 
    - Monolith expanded from **494 to 499 components** in optimal alphabetical cohesion.
 
 ## Consequences
-- Guaranteed at-most-once execution for any recovery branch per attempt, eliminating infinite retry loops.
+- Tracks at-most-once execution for covered recovery branches per attempt and is intended to limit repeated retry loops.
 - Structured telemetry on recovery branches across all LLM providers and platforms.
-- Frame-perfect rollback and zero-GC memory performance.
+- checkpointed rollback and allocation-bounded memory performance.

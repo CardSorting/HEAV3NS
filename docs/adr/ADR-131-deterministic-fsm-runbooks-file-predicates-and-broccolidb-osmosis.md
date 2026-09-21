@@ -23,7 +23,7 @@ Prior to Pass 193, autonomous multi-turn agents operated primarily via prompt-dr
 
 ### The Need for Native Osmosis into LUMI
 Rather than wrapping StateM as a foreign Python CLI or spawning subshell processes, LUMI required a deep **Osmosis Assimilation**:
-- **Zero External Dependencies**: Implemented in 100% pure TypeScript using Node.js built-ins.
+- **Zero External Dependencies**: Implemented in TypeScript using Node.js built-ins.
 - **Zero Subshell Overhead**: Zero-subshell file predicates and JSONPath inspection executing directly in memory ($<0.05\text{ ms}$).
 - **Hybrid BroccoliDB Backing**: Persisting runbook specs, nodes, edges, dynamic manifests, and WAL transition events in LUMI's 4-tier database kernel.
 - **World-Class Humanized Ergonomics**: Translating low-level predicate errors into empathetic plain-English diagnostics and interactive visual TUI dashboards for technical and non-technical users alike.
@@ -109,20 +109,20 @@ Addresses context window exhaustion by synthesizing `/compact` prompts that reta
 
 | Subsystem Component | File Path | Primary Responsibility |
 | :--- | :--- | :--- |
-| **FSM Core Contracts** | [`runbook.contracts.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/core/contracts/runbook.contracts.ts) | Declares `RunbookSpec`, nodes, edges, predicates, dynamic check manifests, and runtime states. |
-| **BroccoliDB Row Schemas** | [`broccolidb-runbook.contracts.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/core/contracts/broccolidb-runbook.contracts.ts) | Declares typed row interfaces for the 7 BroccoliDB runbook tables. |
-| **Predicate Evaluator** | [`file-predicate-evaluator.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/file-predicate-evaluator.ts) | In-memory zero-subshell file, regex, and JSONPath inspection engine. |
-| **MiniYAML Parser** | [`mini-yaml-parser.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/mini-yaml-parser.ts) | Zero-dependency in-tree YAML parser supporting block scalars (`>`, `|`), mappings, and lists. |
-| **BroccoliDB Substrate** | [`broccoli-runbook-substrate.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/broccoli-runbook-substrate.ts) | Multi-modal indexed persistence, entry-scoped manifests, and WAL event logging. |
-| **FSM Supervisor** | [`runbook-supervisor.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/runbook-supervisor.ts) | 10-step atomic transition manager with attempt limits, hook execution, and re-entrant mutexes. |
-| **Compaction Synthesizer** | [`stateful-compaction-synthesizer.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/compaction/stateful-compaction-synthesizer.ts) | Amnesia-proof `/compact` prompt generator and post-clear reconstitution directives. |
-| **Model Tool Suite** | [`runbook-tool-suite.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/runbooks/runbook-tool-suite.ts) | Exposes 9 model tools (`runbook_start`, `runbook_cur`, `runbook_goto`, `runbook_save`, etc.). |
-| **Diagnostic Humanizer** | [`runbook-humanizer.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/runbook-humanizer.ts) | Plain-English gate diagnostics, executive storytelling, and visual ASCII pipeline rendering. |
-| **Workflow Catalog** | [`runbook-catalog.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/runbooks/runbook-catalog.ts) | 5 battle-tested out-of-the-box runbook templates. |
-| **TUI Dashboard Modal** | [`runbook-dashboard-modal.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tui/components/runbook-dashboard-modal.ts) | Interactive TUI dashboard with above-the-fold KPI ribbon, 5 view modes, and keyboard navigation. |
-| **Slash Router** | [`agent-slash-router.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/resolution/agent-slash-router.ts) | Interactive `/runbook` command router for CLI and TUI sessions. |
-| **Monolith Factory** | [`monolith-factory.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/factories/monolith-factory.ts) | Dependency injection and component assembly root. |
-| **Baseline Synthesizer** | [`grand-monolith-synthesizer.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/factories/grand-monolith-synthesizer.ts) | Registered in `CURRENT_REQUIRED_COMPONENTS` (Pass 193 / ADR-123). |
+| **FSM Core Contracts** | [`runbook.contracts.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/core/contracts/runbook.contracts.ts) | Declares `RunbookSpec`, nodes, edges, predicates, dynamic check manifests, and runtime states. |
+| **BroccoliDB Row Schemas** | [`broccolidb-runbook.contracts.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/core/contracts/broccolidb-runbook.contracts.ts) | Declares typed row interfaces for the 7 BroccoliDB runbook tables. |
+| **Predicate Evaluator** | [`file-predicate-evaluator.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/file-predicate-evaluator.ts) | In-memory zero-subshell file, regex, and JSONPath inspection engine. |
+| **MiniYAML Parser** | [`mini-yaml-parser.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/mini-yaml-parser.ts) | Zero-dependency in-tree YAML parser supporting block scalars (`>`, `|`), mappings, and lists. |
+| **BroccoliDB Substrate** | [`broccoli-runbook-substrate.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/broccoli-runbook-substrate.ts) | Multi-modal indexed persistence, entry-scoped manifests, and WAL event logging. |
+| **FSM Supervisor** | [`runbook-supervisor.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/runbook-supervisor.ts) | 10-step atomic transition manager with attempt limits, hook execution, and re-entrant mutexes. |
+| **Compaction Synthesizer** | [`stateful-compaction-synthesizer.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/compaction/stateful-compaction-synthesizer.ts) | Amnesia-proof `/compact` prompt generator and post-clear reconstitution directives. |
+| **Model Tool Suite** | [`runbook-tool-suite.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/runbooks/runbook-tool-suite.ts) | Exposes 9 model tools (`runbook_start`, `runbook_cur`, `runbook_goto`, `runbook_save`, etc.). |
+| **Diagnostic Humanizer** | [`runbook-humanizer.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/runbook-humanizer.ts) | Plain-English gate diagnostics, executive storytelling, and visual ASCII pipeline rendering. |
+| **Workflow Catalog** | [`runbook-catalog.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/runbooks/runbook-catalog.ts) | 5 battle-tested out-of-the-box runbook templates. |
+| **TUI Dashboard Modal** | [`runbook-dashboard-modal.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tui/components/runbook-dashboard-modal.ts) | Interactive TUI dashboard with above-the-fold KPI ribbon, 5 view modes, and keyboard navigation. |
+| **Slash Router** | [`agent-slash-router.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/resolution/agent-slash-router.ts) | Interactive `/runbook` command router for CLI and TUI sessions. |
+| **Monolith Factory** | [`monolith-factory.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/factories/monolith-factory.ts) | Dependency injection and component assembly root. |
+| **Baseline Synthesizer** | [`grand-monolith-synthesizer.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/factories/grand-monolith-synthesizer.ts) | Registered in `CURRENT_REQUIRED_COMPONENTS` (Pass 193 / ADR-123). |
 
 ---
 
@@ -130,12 +130,12 @@ Addresses context window exhaustion by synthesizing `/compact` prompts that reta
 
 ### Positive Consequences
 1. **Deterministic Quality Enforcement**: Agents cannot skip tests, ignore requirements, or exit prematurely. Transitions strictly require verified proof.
-2. **Context Amnesia Immunity**: Full recovery after `/compact` using BroccoliDB durable state pointers.
+2. **Context Recovery Checks**: Recovery after `/compact` is supported through BroccoliDB durable state pointers in the covered paths; provider and host state remain outside that model.
 3. **Sub-Millisecond Gate Latency**: Pure TypeScript zero-subshell predicates execute in $<0.05\text{ ms}$, eliminating OS process spawning overhead.
 4. **Approachable Operational Visibility**: Non-technical users receive friendly, actionable plain-English feedback rather than cryptic stack traces.
 
 ### Automated Validation Battery
-1. **FSM & Database Substrate**: [`scripts/validate-runbook-fsm.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-runbook-fsm.ts) (7/7 tests passed, 100% green).
-2. **UX & Humanizer Suite**: [`scripts/validate-runbook-ux.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-runbook-ux.ts) (5/5 tests passed, 100% green).
+1. **FSM & Database Substrate**: [`scripts/validate-runbook-fsm.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-runbook-fsm.ts) (7/7 tests passed, 100% green).
+2. **UX & Humanizer Suite**: [`scripts/validate-runbook-ux.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-runbook-ux.ts) (5/5 tests passed, 100% green).
 3. **Monolith Composition**: `GrandMonolithSynthesizer.verifyComposition()` confirmed **589 components** intact with status `OPTIMAL`.
 4. **TypeScript Safety**: `npm run check` and `npm run build` completed with zero type errors.

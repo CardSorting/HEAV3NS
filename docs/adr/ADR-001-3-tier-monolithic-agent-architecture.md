@@ -3,7 +3,7 @@
 - **Status**: Accepted (Updated)
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Establishing the 3-tier monolithic architecture (`agents`, `sessions`, `tooling`) for `/Users/bozoegg/Desktop/LUMI-NEW`.
+- **Technical Story**: Establishing the 3-tier monolithic architecture (`agents`, `sessions`, `tooling`) for `repository root`.
 
 ---
 
@@ -20,7 +20,7 @@ The system is divided into three distinct operational tiers, modeling a **Determ
 
 1. **AGENTS (`src/agents/`)**: Primary decision-making tier containing agent configuration, prompt composition, fallback model resolution, interactive slash command routing, and the deterministic tick engine loop.
 2. **SESSIONS (`src/sessions/`)**: World state tier managing session context, turn history compaction, Virtual File System (VFS) staging, long-term memory fact stores, and state store persistence.
-3. **TOOLING (`src/tooling/`)**: Sensory subsystem tier containing perception ([Eyes](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/base/eyes.ts#L14)), physics & mutation ([AnchoredHands](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/hands.ts#L10)), telemetry & audio ([ProtocolEars](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/ears.ts#L4)), skill manifest ingestor ([SkillsIngestor](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/skills-ingestor.ts#L11)), and parameter-validated tool registry ([ValidatingToolRegistry](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/tool-registry.ts#L9)).
+3. **TOOLING (`src/tooling/`)**: Sensory subsystem tier containing perception ([Eyes](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/base/eyes.ts#L14)), physics & mutation ([AnchoredHands](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/hands.ts#L10)), telemetry & audio ([ProtocolEars](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/ears.ts#L4)), skill manifest ingestor ([SkillsIngestor](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/skills-ingestor.ts#L11)), and parameter-validated tool registry ([ValidatingToolRegistry](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/tool-registry.ts#L9)).
 
 ### Organic Extension Rule
 Tiers may expand beyond initial class limits as subsystem complexity grows, provided all new components strictly align with and model the **Deterministic Game Engine Strategy**.

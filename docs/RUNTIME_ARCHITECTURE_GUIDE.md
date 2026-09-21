@@ -1,13 +1,13 @@
 # LUMI Monolith Runtime Architecture & Executive Subsystem Guide
 
-This document provides a comprehensive technical reference for the **LUMI Monolith Runtime**, detailing its baremetal substrate, zero-GC memory allocation model, differential terminal rendering engine, state time-travel capabilities, and SLA verification guardrails.
+This document is a technical design reference for the **LUMI Monolith Runtime**. It describes a configured arena buffer, differential terminal rendering, snapshot-oriented state handling, and workload-specific verification guardrails. It is not a performance warranty, security certification, or provider guarantee; consult [`docs/LIVE_BASELINE.json`](LIVE_BASELINE.json) for dated measurements.
 
 ---
 
 ## 🌟 Executive Summary: What LUMI Is & Why This Matters
 
 ### What is LUMI?
-**LUMI** is an enterprise-grade AI pair programmer and autonomous agent framework engineered like a **Deterministic Game Engine Kernel**. Rather than treating agent interactions as loose async request/response wrappers or distributed microservices, LUMI treats every agent turn as an atomic frame tick (`tick()`), operates over a **16MB Zero-GC Contiguous ArrayBuffer Slab**, captures immutable game-save snapshots (`GameStateSnapshot`), and supports sub-millisecond ($< 0.05\text{ ms}$) state time-travel rollback (`rewindToSnapshot()`).
+**LUMI** is an AI pair-programming and agent framework with a **deterministic game-engine-inspired** execution model. Selected state paths use a configured 16 MB `ArrayBuffer` arena and snapshot records; Node.js and provider operations can still allocate, block, vary by host, or fail. Rollback behavior and timing must be assessed against the named workload and current baseline.
 
 ### The Core Problem in Modern AI Agents
 Traditional agent frameworks (LangChain, AutoGen, CrewAI, raw REST wrappers) suffer from systemic architectural friction:
@@ -18,18 +18,18 @@ Traditional agent frameworks (LangChain, AutoGen, CrewAI, raw REST wrappers) suf
 
 ### Why LUMI's Architecture Matters
 1. **For Developers & Engineers**:
-   - **Instant Feedback & Sub-Millisecond Speed**: Local orchestration overhead is slashed to **$0.17\text{ ms}$** ($>5,700\text{ frames/second}$), making the CLI and programmatic SDK feel instantaneously responsive.
-   - **Zero-Friction State Rewind**: Rewind state to any earlier checkpoint in **$0.027\text{ ms}$** via `/rewind`. Staged virtual files, transcripts, and memory facts roll back in a single frame.
+   - **Measured local orchestration**: Dated baseline runs report workload-specific observations; the CLI and SDK remain subject to host, workspace, provider, and input variability.
+   - **Reviewable state rewind**: `/rewind` can restore supported staged state when a valid checkpoint exists; correctness and timing depend on the checkpoint and workload.
    - **Polished Terminal Experience**: Differential screen rendering with zero visual flicker, dynamic borders that never wrap on split screens, and ANSI syntax highlighting with continuation gutters.
 
 2. **For AI Systems & Researchers**:
    - **Enabling High-Frequency Search**: High-level reasoning strategies like Monte Carlo Tree Search (MCTS), A* pathfinding, and autonomous multi-branch exploration require running hundreds of simulated rollouts. By removing IPC and GC overhead, researchers can run dense tree searches locally.
-   - **Hard Determinism**: Seeded simulations, exact composition manifests (142/142 components), and fail-closed completion gates guarantee 100% reproducible execution traces.
+   - **Inspectable determinism**: Seeded simulations, composition manifests, and completion gates provide testable invariants for selected paths; they do not guarantee identical traces across hosts, providers, or external systems.
 
 3. **For Enterprises & Technology Leaders**:
-   - **Maximized Compute Efficiency**: Running $>5,700$ frames/second on a single core allows running dense multi-agent swarms without expensive cloud infrastructure clusters.
+   - **Workload-specific efficiency evidence**: Local benchmark observations may inform capacity planning, but do not establish a universal throughput or infrastructure-cost claim.
    - **Enterprise Security**: Native PKCE OAuth 2.0 with credentials stored locally with 0600 file permissions and zero secret leakage in progress event streams.
-   - **Permanent Open Innovation**: Licensed under Apache 2.0 and backed by a defensive patent non-aggression pledge.
+   - **Explicit rights boundary**: Current first-party work is Apache-2.0 licensed; the separate patent policy does not add rights, warranties, or restrictions beyond that license.
 
 ---
 
@@ -37,10 +37,10 @@ Traditional agent frameworks (LangChain, AutoGen, CrewAI, raw REST wrappers) suf
 
 The LUMI runtime is engineered for high-frequency execution with deterministic, predictable performance characteristics:
 
-1. **Zero-GC Contiguous Slab Memory**: A dedicated 16MB `ArrayBuffer` slab is initialized upon startup. String and node allocations write directly into structured typed array views (`Uint32Array` and `Uint8Array`), eliminating heap allocation churn and V8 garbage collection pauses during agent execution ticks.
-2. **Sub-Millisecond Mean Tick Latency**: Turn dispatch, prompt composition, and fact storage execute in $< 1.0\text{ ms}$ on the local fast path (**$0.17\text{ ms}$ measured**).
-3. **High-Throughput Execution**: The monolith exceeds $1,000\text{ frames/second}$ execution throughput (**$5,761.61\text{ fps}$ measured**).
-4. **$O(1)$ State Rewind**: Time-travel rollback restores conversation frames, VFS staging layers, and memory stores in $< 0.10\text{ ms p95}$ (**$0.027\text{ ms p95}$ measured**).
+1. **Configured arena capacity**: A dedicated 16 MB `ArrayBuffer` can be initialized for selected state paths. This does not mean the process is allocation-bounded or allocation-free.
+2. **Measured local timing**: Turn dispatch, prompt composition, and fact storage can be benchmarked on a named workload; the generated baseline is evidence, not a service level.
+3. **Measured throughput**: Throughput figures must remain tied to the command, inputs, host, warmup, and report date in the baseline.
+4. **Snapshot rewind behavior**: Supported state can be restored from a valid snapshot; complexity and timing claims must be verified against the implementation and workload.
 5. **Zero Barrel Imports (ADR-012)**: Strictly disallows index barrel re-exports to eliminate circular initialization hazards and optimize tree-shaking and module loading latency.
 6. **Base Class Immutability**: Foundational abstract classes (`AbstractAgentEngine`, `AbstractSessionStore`, `AbstractHands`) remain pure, extensible interfaces without ad-hoc coupling.
 
@@ -51,7 +51,7 @@ The LUMI runtime is engineered for high-frequency execution with deterministic, 
 ### 2.1 Arena Allocator (`src/sessions/extensions/substrate/arena-allocator.ts`)
 The `ArenaAllocator` operates over a single fixed-capacity `ArrayBuffer` (default: `16,777,216 bytes`).
 
-- **Static Zero-GC Encoding**: Retains static, reusable `TextEncoder` and `TextDecoder("utf-8")` instances across all invocations, eliminating per-turn object allocations.
+- **Reusable encoding helpers**: Retains reusable `TextEncoder` and `TextDecoder("utf-8")` instances; other code paths may allocate normally.
 - **Direct Slab Writes**: Allocates strings and binary payloads directly into the slab's byte view with bounds verification.
 - **Bounds-Checked Slices**: Exposes `readString(byteOffset, byteLength)` for zero-copy deserialization.
 - **Offset Rewind**: Resets memory allocations via `setOffset(offsetWords)` during state rollback in $O(1)$ complexity.
@@ -78,7 +78,7 @@ The Zenith-tier hybrid database kernel ($\mathcal{K}_{\text{broccoli}}$ / [ADR-1
 - **L6 4-Pillar Diagnostic Probe**: Real-time auditing for Disk Invariants, CAS Integrity, WAL Journal Drift, and Table Consistency.
 
 ### 2.4 Substrate Store Adapter (`src/sessions/extensions/substrate/broccoli-substrate-store.ts`)
-- Bridges all session extension domains (goals, tasks, profiles, reasoning, kanban, memories) to the hybrid kernel with 100% backwards compatibility.
+- Bridges supported session extension domains (goals, tasks, profiles, reasoning, kanban, memories) to the hybrid kernel; compatibility is validated by the relevant tests and may vary with schema or version.
 - Exposes model database tools (`db_inspect_status`, `db_query_table`, `db_checkpoint_wal`, `db_cas_audit`, `db_timeline_history`, `db_rollback_timeline`).
 
 ---
@@ -130,7 +130,7 @@ The monolith supports full-spectrum state checkpoints:
 | `/health` | — | Runs subsystem health audit and displays component diagnostic status. |
 | `/providers` | — | Tests latency and authentication for all configured LLM providers. |
 | `/setup` | — | Launches the guided provider API key configuration wizard. |
-| `/about` | — | Displays monolith specifications, slab capacity, and active SLAs. |
+| `/about` | — | Displays monolith specifications, slab capacity, and active repository guardrails. |
 | `/clear` | `Ctrl+L` | Clears the TUI message output history container. |
 | `/exit` | `Ctrl+C` / `Ctrl+D` | Exits the interactive TUI or fallback readline session cleanly. |
 
@@ -145,9 +145,9 @@ The `CombinedAutocompleteProvider` in `src/tui/autocomplete.ts` supports:
 
 ---
 
-## 7. Verification & SLA Guardrails
+## 7. Verification & Measurement Guardrails
 
-The repository enforces 6 performance and architectural SLAs on every pull request and commit:
+The repository runs performance and architectural checks on every pull request and commit. Measurements are tied to the named workload and current baseline; they are not customer-facing SLAs.
 
 ```bash
 # Type safety check
@@ -156,7 +156,7 @@ npm run check
 # Smoke test suite (9 cross-cutting runtime checks)
 npm run smoke
 
-# Architectural guardrail and performance SLA suite
+# Architectural guardrail and performance measurement suite
 npm test
 
 # Monolith benchmark suite (5 heterogeneous cases including Flappy Bird synthesis)
@@ -173,7 +173,7 @@ node --import tsx scripts/validate-prompt-cache.ts
 
 ## 8. Zenith-Tier Deterministic Byte-Stable Prompt Caching Subsystem (ADR-135)
 
-LUMI incorporates an enterprise-grade, zero-GC prompt caching and reasoning sanitizer engine that slashes multi-turn API costs by up to 75%–90% and reduces first-token prefill latency (TTFT) by up to 85%–94%:
+LUMI includes a prompt-caching and reasoning-sanitizer design intended to reduce repeated work in supported paths. Cache hit rates, provider billing, and first-token latency depend on provider policy, request shape, cache configuration, and workload; this document makes no savings or latency guarantee.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -192,8 +192,8 @@ LUMI incorporates an enterprise-grade, zero-GC prompt caching and reasoning sani
 2. **AWS Cost Explorer Multi-Horizon Forecasting**: Projects Daily, Weekly, Monthly, and Annual savings alongside token warmth classification (`Frozen`, `Cold`, `Warm`, `Hot`).
 3. **Docker-Style Multi-Layer Cache Keys (L0–L3)**: Partial-layer composite hashing (`L0:hash|L1:hash|L2:hash|L3:hash`) that keeps core instructions and tool definitions warm even when rules or turns change.
 4. **Datadog APM Waterfall Execution Spans**: Visualizes prefill time saved per semantic tier with plain-English narratives for non-technical users.
-5. **PostgreSQL-Style `EXPLAIN` Simulator & Copilot Auto-Tuner**: Pre-computes turn costs and automatically rewrites flawed system prompts to extract volatile timestamps and UUIDs, lifting cache retention from Grade D (45) to Grade A+ (98).
-6. **Strict UI/UX Isolation**: 100% of caching logic is implemented in backend contracts, deterministic cachers, substrates, supervisors, and JSON-RPC gateway endpoints with zero visual UI tampering.
+5. **Inspectable cache diagnostics**: Exposes cache and prompt-shape diagnostics where supported; reported grades are local heuristics, not provider guarantees or billing forecasts.
+6. **UI/UX boundary**: Caching logic is implemented in the documented backend paths; tests and review must verify that presentation code does not receive unintended cache internals.
 
 ---
 
@@ -213,7 +213,7 @@ LUMI incorporates a native, zero-subprocess pattern perception and filesystem ma
 │ Layer 2: In-Memory Perception & Service Runtime                                 │
 │   ├── RipgrepSearchService (chunked parallel walker, literal fast-path, streams)│
 │   ├── ArgumentCoercer (stringified JSON auto-parse, type coercion)              │
-│   └── BroccoliCircuitBreaker (developer tool immunity rules)                    │
+│   └── BroccoliCircuitBreaker (developer-tool handling rules)                    │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 3: Substrate Storage & 78-Point Validation Engine                         │
 │   ├── 78 Automated Quality-of-Life (QoL) Validation Suites                      │
@@ -222,7 +222,7 @@ LUMI incorporates a native, zero-subprocess pattern perception and filesystem ma
 ```
 
 ### Core Strategic Capabilities:
-1. **Zero-Subprocess Search Authority (`RipgrepSearchService`)**: In-memory TypeScript directory traversal with native `indexOf` literal fast-paths delivering 5–10x higher throughput than shell `grep` subprocesses.
+1. **Literal search fast path (`RipgrepSearchService`)**: In-memory TypeScript directory traversal with a native `indexOf` path for literal searches; comparative throughput depends on workload, filesystem, and host.
 2. **Regex Subgroup Captures & Path Scoping**: Extracts capture groups directly into `RipgrepMatch.captures` and filters file paths using RegExp (`pathRegex`) without glob limitations.
 3. **Token Defense & Context Shielding**: Employs per-file match limits (`maxMatchesPerFile`), comment stripping (`ignoreComments`), and centered character windows (`maxLineLength`) to protect context budgets against token overflows.
 4. **Typo Resilience & Dry-Run Replacement**: Features subsequence fuzzy matching (`fuzzy`) and non-destructive diff previews (`previewReplacement`).
@@ -231,7 +231,7 @@ LUMI incorporates a native, zero-subprocess pattern perception and filesystem ma
 
 ## 10. Apex-Tier Tool Calling, Scheduling & Execution Subsystem (ADR-138 – ADR-141)
 
-LUMI incorporates an enterprise-grade, multi-pass tool calling and execution substrate engineered to eliminate model invocation friction, argument parse crashes, context token bloat, and destructive command execution:
+LUMI incorporates a multi-pass tool calling and execution substrate intended to reduce model invocation friction, malformed-argument failures, context bloat, and unsafe command execution:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -254,7 +254,7 @@ LUMI incorporates an enterprise-grade, multi-pass tool calling and execution sub
 │   └── ToolExecutionCache (Deterministic SHA-256 Keying & Path Invalidation)     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 4: Parallel Scheduling & Topological DAG Execution                        │
-│   ├── ToolExecutionScheduler (Concurrent Read Waves: ~2.9x Speedup)             │
+│   ├── ToolExecutionScheduler (Concurrent Read Waves; measure per workload)      │
 │   └── ToolDependencyGraphPlanner (Kahn's Topological Sort & Piped Args: $node1)│
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 5: Output Intelligence, Sentinel Safety & Atomic Rollback Substrate       │
@@ -270,7 +270,7 @@ LUMI incorporates an enterprise-grade, multi-pass tool calling and execution sub
 ### Core Architectural Capabilities:
 1. **Universal Multi-Provider Portability (ADR-138)**: Losslessly converts tool declarations and wire payloads across OpenAI/OpenRouter (`tool_calls`), Anthropic (`tool_use` / `tool_result`), Google Gemini (`functionCall` / `functionResponse`), and MCP standard tool protocols.
 2. **Self-Healing Argument Parser (ADR-138)**: Automatically repairs markdown JSON fences, unbalanced braces, single quotes, Python boolean literals (`True`, `False`, `None`), and stringified parameter objects without throwing runtime turn errors.
-3. **Parallel Concurrency Wave Scheduler (ADR-139)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`), achieving a **~2.9x concurrency speedup** over sequential execution.
+3. **Parallel Concurrency Wave Scheduler (ADR-139)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`). Comparative speed is workload-, host-, and request-mix-dependent and must be established by a dated benchmark.
 4. **Deterministic In-Memory Read Cache (ADR-139)**: Computes deterministic SHA-256 hashes of tool arguments to serve read hits in microsecond latency, automatically invalidating cached paths upon file writes, edits, or deletions.
 5. **Output Governance & Semantic Failure Summarization (ADR-139 & ADR-141)**: Clamps verbose tool outputs into bounded windows, extracts critical compiler errors and stack traces, filters progress noise, and persists full payloads in the spill vault.
 6. **Sentinel Safety & Human-in-the-Loop Gatekeeper (ADR-140)**: Scores operations into `SAFE`, `MUTATING`, and `CRITICAL` risk tiers, intercepts destructive patterns (`rm -rf`, `git reset --hard`, database drops), supports `isDryRun: true` diff simulations, and provides interactive approval hooks.

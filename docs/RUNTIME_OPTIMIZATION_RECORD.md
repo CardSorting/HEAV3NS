@@ -11,7 +11,7 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 - **Execution Throughput**: Sustaining **`5,761.61 frames/sec`** ($>5.7\times$ over the $\ge 1,000\text{ fps}$ SLA).
 - **Turn Tick Latency**: Measured at **`0.17 ms`** ($>5.8\times$ faster than the $< 1.0\text{ ms}$ SLA).
 - **State Rewind Latency**: Measured at **`0.027 ms p95`** ($>3.7\times$ faster than the $< 0.10\text{ ms p95}$ SLA).
-- **Memory Invariant**: Maintained an exact **`16,777,216 byte` (`16 MB`)** contiguous `ArrayBuffer` slab with zero GC pauses.
+- **Memory Invariant**: Maintained an exact **`16,777,216 byte` (`16 MB`)** contiguous `ArrayBuffer` slab with allocation-bounded pauses.
 - **Terminal Rendering**: Synchronized, differential cell-buffer rendering with zero visual tearing and adaptive viewport widths.
 
 ### Why This Matters in Practice
@@ -26,7 +26,7 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 
 | Subsystem Component | Legacy Pattern | Optimized LUMI Pattern | Architectural Impact |
 | :--- | :--- | :--- | :--- |
-| **String Ingestion** | Dynamic `new TextEncoder().encode()` per call | Static cached singletons & zero-allocation typed array slices | **Zero GC pauses; $5\times$ throughput** |
+| **String Ingestion** | Dynamic `new TextEncoder().encode()` per call | Static cached singletons & zero-allocation typed array slices | **allocation-bounded pauses; $5\times$ throughput** |
 | **Write Buffering** | Uncontrolled synchronous or timer-leaking writes | FNV-1a hash deduplication & `.unref()` timers | **SSD cycle protection; clean process exit** |
 | **State Rollback** | Re-parsing serialized text logs ($285\text{ ms}$) | Full-envelope $O(1)$ memory pointer rewind ($<0.05\text{ ms}$) | **Instant sub-millisecond time travel** |
 | **TUI Viewport** | Hardcoded fixed-column borders (79 chars) | Dynamically scaled box rules & adaptive pipeline arrows | **Zero wrapping/tearing on split panes** |
@@ -38,7 +38,7 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 
 ## 3. Deep Subsystem Optimization Analysis
 
-### 3.1 Zero-GC Static Encoding in ArenaAllocator (`src/sessions/extensions/substrate/arena-allocator.ts`)
+### 3.1 allocation-bounded Static Encoding in ArenaAllocator (`src/sessions/extensions/substrate/arena-allocator.ts`)
 - **Problem**: In high-frequency turn loops (thousands of frames per second), creating `new TextEncoder()` instances per string allocation produced significant V8 heap churn and GC pauses.
 - **Optimization**: Cached static `TextEncoder` and `TextDecoder("utf-8")` singletons on the class level. String byte allocations now write directly into the contiguous 16MB `Uint8Array` view without intermediate buffer allocations.
 - **Bounds Protection**: Implemented `readString(byteOffset, byteLength)` with strict bounds validation to prevent buffer overruns during zero-copy deserialization.
@@ -97,12 +97,12 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 - **Per-File Match Quota Bounding (`maxMatchesPerFile`)**: Prevents single massive files from exhausting global `maxResults` budgets, ensuring balanced multi-file symbol discovery.
 - **Regex Subgroup Captures (`captures`)**: Directly extracts capture group tokens in `RipgrepMatch` for downstream AST and refactoring tools.
 - **Direct Process & Port Liberation (`kill_port`, `find_free_port`)**: Eliminates `EADDRINUSE` port collision deadlocks automatically.
-- **Universal Parameter Coercion & Tool Immunity**: `ArgumentCoercer` handles JSON arrays/primitives, and `BroccoliCircuitBreaker` grants immunity to interactive developer tools.
+- **Universal Parameter Coercion & Tool Handling**: `ArgumentCoercer` handles JSON arrays/primitives, and `BroccoliCircuitBreaker` applies configured handling to interactive developer tools.
 
 ### 3.11 Apex-Tier Universal Tool Calling, Scheduling & DAG Orchestration (ADR-138 – ADR-141)
 - **Universal Multi-Provider Serialization & Wire Adapters (`src/tooling/extensions/registry/tool-schema-serializer.ts`, `universal-tool-call-adapter.ts`)**: Losslessly translates schemas and wire envelopes across OpenAI Functions / Strict Mode, Anthropic Tools, Google Gemini Declarations, and MCP standard tools with zero code branching.
 - **4-Pass Resilient Self-Healing Argument Parser (`src/tooling/extensions/registry/tool-call-arg-parser.ts`)**: Automatically repairs markdown JSON fences, unbalanced braces, Python boolean literals (`True` -> `true`), unquoted single strings, and stringified JSON objects, eliminating 99.8% of typical LLM tool argument crashes.
-- **Parallel Concurrency Wave Scheduler (`src/tooling/extensions/execution/tool-execution-scheduler.ts`)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`), achieving a **~2.9x concurrency speedup** over sequential execution.
+- **Parallel Concurrency Wave Scheduler (`src/tooling/extensions/execution/tool-execution-scheduler.ts`)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`); comparative timing must be regenerated for the named workload and host.
 - **Microsecond In-Memory Read Caching (`src/tooling/extensions/execution/tool-execution-cache.ts`)**: Computes deterministic SHA-256 hashes of arguments, serving idempotent file reads in **<0.01 ms** and invalidating modified paths automatically upon file writes, edits, or deletions.
 - **Topological DAG Execution Planner (`src/tooling/extensions/execution/tool-dependency-graph-planner.ts`)**: Organizes multi-tool turns into topological waves using Kahn's algorithm, resolves piped parameters (`$node1.result.path`), and detects cycles with descriptive pre-flight errors.
 - **Dynamic Parameter Schema Compression (`src/tooling/extensions/registry/tool-schema-compressor.ts`)**: Minifies verbose JSON schemas into compact parameter descriptors, achieving **43% prompt token savings** across tool suites.
@@ -124,7 +124,7 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 | **Parallel Read Speedup** | $\ge 2.0\times$ concurrency | **`2.91x speedup`** | **PASS** |
 | **Read Cache Lookup Latency** | $< 0.05\text{ ms}$ | **`< 0.01 ms`** | **PASS** |
 | **Schema Token Compression** | $\ge 35\%\text{ savings}$ | **`43.9% token savings`** | **PASS** |
-| **Zero-GC Contiguous Slab** | $16\text{ MB Exact}$ | **`16,777,216 bytes`** | **PASS** |
+| **allocation-bounded Contiguous Slab** | $16\text{ MB Exact}$ | **`16,777,216 bytes`** | **PASS** |
 | **Zero Barrel Imports (ADR-012)** | $0\text{ files}$ | **`0 barrel files`** | **PASS** |
 | **Base Class Immutability** | $3/3\text{ intact}$ | **`3/3 intact`** | **PASS** |
 | **Apex Tool Suites (Passes 1–6)** | $40/40\text{ checks}$ | **`40/40 passed (100%)`** | **PASS** |

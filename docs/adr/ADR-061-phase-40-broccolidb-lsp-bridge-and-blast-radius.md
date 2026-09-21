@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 40 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 40 completes the zero-dependency Osmosis distillation of Language Server Protocol bridges and structural blast radius calculation engines from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 40 completes the zero-dependency Osmosis distillation of Language Server Protocol bridges and structural blast radius calculation engines from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli LSP Protocol Bridge (`BroccoliLspProtocolBridge`)**: Stdio JSON-RPC LSP request formatting (`initialize`, `textDocument/definition`, `textDocument/hover`), language server executable maps (`typescript-language-server`, `pyright-langserver`, `gopls`), and diagnostic map indexing without third-party npm libraries. Directly embedded inside `AstPerceptionEyes`.

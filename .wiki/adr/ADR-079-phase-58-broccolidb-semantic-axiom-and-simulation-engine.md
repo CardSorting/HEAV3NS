@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 58 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 58 completes the zero-dependency Osmosis distillation of AST cognitive bloat validation and pre-flight architectural mutation impact simulation from `/Users/bozoegg/Downloads/codemarie-new/src/core/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 58 completes the zero-dependency Osmosis distillation of AST cognitive bloat validation and pre-flight architectural mutation impact simulation from `external codemarie-new source workspace/src/core/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Semantic Axiom Engine (`BroccoliSemanticAxiomEngine`)**: High-level logical truth validator (`validateAxioms`), cognitive bloat threshold checking (2500 lines pre-emptive warning, 3000 lines hard limit), and automatic remediation plan generation without third-party dependencies. Directly embedded inside `BroccoliAxiomVerifier`.

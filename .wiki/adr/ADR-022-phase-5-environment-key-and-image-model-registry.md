@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing environment API key resolution (`packages/ai/src/env-api-keys.ts`), image model metadata capabilities (`packages/ai/src/image-models.ts`), and performing Phase 5 master subsystem synthesis (Passes 25–27) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing environment API key resolution (`packages/ai/src/env-api-keys.ts`), image model metadata capabilities (`packages/ai/src/image-models.ts`), and performing Phase 5 master subsystem synthesis (Passes 25–27) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

@@ -1,26 +1,29 @@
-========================================================================
-LUMI-JOY Agent Framework & AKD-DSO Substrate
-Copyright (c) 2026 William Andrew Cruz (bozoegg / CardSorting) and LUMI-JOY Contributors
-========================================================================
+=======================================================================
+HEAV3NS / LUMI-JOY
+Copyright (c) 2026 William Andrew Cruz (bozoegg / CardSorting)
+and LUMI-JOY contributors
+=======================================================================
 
-Primary Inventor & Author: William Andrew Cruz (bozoegg / CardSorting)
+This distribution contains first-party software and documentation developed
+for the HEAV3NS / LUMI-JOY project. The current project line is licensed under
+the Apache License, Version 2.0; see LICENSE. This NOTICE file is
+informational and does not modify that license.
 
-This product includes software and inventions developed by William Andrew Cruz (bozoegg / CardSorting)
-and contributors as part of the LUMI-JOY project (https://github.com/CardSorting/LUMI-JOY).
+Project names, logos, icons, and other branding are addressed separately in
+TRADEMARKS.md. The Apache license does not grant trademark rights.
 
-Primary Architectural & Mathematical Innovations:
-- Architectural Knowledge Distillation & Deterministic Substrate Optimization (AKD-DSO)
-- Zero-GC Contiguous 16MB ArrayBuffer Slab State Management (ArenaAllocator)
-- O(1) Atomic State Pointer Rewind Mechanism (rewindToSnapshot)
-- Sub-Millisecond Synchronous Function Dispatch Game Engine Architecture (tick)
+Referenced projects and research:
 
-Ancestral Teacher Attribution & Acknowledgments:
-- Contains concepts, domain capabilities, and architectural inspiration distilled
-  via the AKD-DSO osmosis paradigm from Hermes Agent (https://github.com/NousResearch/hermes-agent),
-  developed by Nous Research and its open-source contributors (MIT License).
-- Contains experimental workflow orchestration concepts, finite state machine (FSM)
-  runbook paradigms, and verification gate inspiration distilled from StateM
-  (the Terminal-Bench 2.1 benchmark architecture and research project).
+- The documentation acknowledges Hermes Agent and Nous Research as an
+  architectural and community reference. Hermes Agent is separately licensed
+  under its own MIT license. This acknowledgment is not a statement that all
+  repository code is derived from or redistributed from Hermes Agent.
+- The documentation records StateM and related workflow research as an
+  inspiration and evaluation reference. No endorsement or code-inclusion
+  statement is made by this notice.
+- The repository records the BroccoliDB dependency and migration history in
+  .wiki/ip/SOURCE-PROVENANCE.md. The dependency retains its own license and
+  notices.
 
-Public Prior Art Disclosure Date: August 9, 2026
-License: Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+Additional dependency notices remain with the packages and assets that carry
+them. See THIRD-PARTY-NOTICES.md and package-lock.json.

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling Background Skill Curator, Multi-Provider Memory Manager, and Learning Graph subsystems (`agent/curator.py` [2,020 LOC] + `agent/memory_manager.py` [1,292 LOC] + `agent/memory_provider.py` [450 LOC] + `tools/memory_tool.py` [1,400 LOC] + `agent/learning_graph.py` [329 LOC] + `agent/learning_mutations.py` [250 LOC] + `agent/learn_prompt.py` [380 LOC] + `agent/learning_graph_render.py` [650 LOC] — totaling **11,000+ LOC, 450 KB**) into a typed, deterministic, zero-GC **Persistent Memory Substrate, Knowledge Graph & Continuous Learning Curator ($\mathcal{K}_{\text{mem}}$ / Phase 76)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 11,000+ lines of unbounded daemon ThreadPool syncs, ad-hoc Markdown parsing (`MEMORY.md`, `USER.md`), and raw lexical string overlap with typed entity-relation graphs, in-memory Broccolidb storage substrates, mathematical exponential decay, semantic node consolidation, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling Background Skill Curator, Multi-Provider Memory Manager, and Learning Graph subsystems (`agent/curator.py` [2,020 LOC] + `agent/memory_manager.py` [1,292 LOC] + `agent/memory_provider.py` [450 LOC] + `tools/memory_tool.py` [1,400 LOC] + `agent/learning_graph.py` [329 LOC] + `agent/learning_mutations.py` [250 LOC] + `agent/learn_prompt.py` [380 LOC] + `agent/learning_graph_render.py` [650 LOC] — totaling **11,000+ LOC, 450 KB**) into a typed, deterministic, allocation-bounded **Persistent Memory Substrate, Knowledge Graph & Continuous Learning Curator ($\mathcal{K}_{\text{mem}}$ / Phase 76)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 11,000+ lines of unbounded daemon ThreadPool syncs, ad-hoc Markdown parsing (`MEMORY.md`, `USER.md`), and raw lexical string overlap with typed entity-relation graphs, in-memory Broccolidb storage substrates, mathematical exponential decay, semantic node consolidation, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -23,14 +23,14 @@ Forensic inspection revealed critical performance and consistency issues:
 ## 2. Architectural Decision (The What)
 
 ### 1. In-Memory Directed Knowledge Graph (`SemanticKnowledgeGraph`)
-- Zero-GC bidirectional adjacency index supporting $O(1)$ node lookups and topological BFS shortest-path queries.
+- allocation-bounded bidirectional adjacency index supporting $O(1)$ node lookups and topological BFS shortest-path queries.
 - High-performance semantic recall ranking combining Jaccard term overlap, confidence weighting, and neighbor relation expansion.
 - Micro-benchmark performance: 10,000 graph mutations in $<5\text{ ms}$ ($<0.0005\text{ ms/op}$).
 
-### 2. Zero-GC Memory Substrate (`BroccoliLearningSubstrate`)
+### 2. allocation-bounded Memory Substrate (`BroccoliLearningSubstrate`)
 - In-memory Broccolidb substrate storing knowledge nodes, associative relation edges, user preference entities, and access frequency metrics.
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`LearningSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`LearningSnapshotManager`)
 - Captures atomic snapshots of the knowledge graph at frame $t$, restoring memory and relation state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Continuous Learning Curator (`ContinuousLearningCurator`)
@@ -57,7 +57,7 @@ src/
 ├── sessions/extensions/memory/
 │   ├── semantic-knowledge-graph.ts        # In-memory typed graph DAG with bidirectional adjacency & BFS/Dijkstra scoring
 │   ├── broccoli-learning-substrate.ts     # In-memory Broccolidb substrate for knowledge nodes, edges, and preference facts
-│   └── learning-snapshot-manager.ts       # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── learning-snapshot-manager.ts       # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 ├── agents/extensions/memory/
 │   └── continuous-learning-curator.ts     # Background learning curator with exponential decay, consolidation, and prompt envelopes
 └── tooling/extensions/memory/

@@ -2,9 +2,9 @@
 
 ### **LUMI-JOY: Building from the Heart**
 
-**Author & Primary Inventor**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)  
+**Author & Project Steward**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)
 **Date**: August 2026  
-**License**: Apache License 2.0 with Defensive Patent Non-Aggression Pledge  
+**License**: Apache License 2.0; see the defensive patent and prior-art policy
 
 ---
 
@@ -36,13 +36,13 @@ Nous Research represents something rare and sacred in modern artificial intellig
 
 When **Hermes Agent** emerged from Nous Research, it set a bold new standard for autonomous personal agents: introducing closed learning loops, experiential skill creation (`agentskills.io`), and multi-platform continuity. Mentoring developers and witnessing the community's passion sparked the vision for LUMI-JOY.
 
-LUMI-JOY is my love letter and humble offering back to Nous Research and the Hermes community. It takes the expansive domain mastery of Hermes Agent and distills it into an ultra-high-throughput, zero-GC deterministic game engine kernel—giving our open community the fastest, most reliable engine possible to explore the frontiers of agentic intelligence.
+LUMI-JOY is my love letter and humble offering back to Nous Research and the Hermes community. It studies ideas from agent tooling and expresses them in a typed, tick-oriented game-engine-inspired kernel. The goal is to make local orchestration, recovery, and verification easier to inspect; provider and host behavior still determine the end-to-end experience.
 
 ### Remembering the Magic of Game Engines
 
 For years, as Large Language Models emerged, we wrapped these magnificent reasoning models inside heavy, tangled layers of enterprise web architecture ("framework soup"). With every layer of microservice RPC complexity, our tools grew slower, state drifted, and the magic of interacting with intelligence was buried under software friction.
 
-The widespread assumption was that we had to accept this tax—that sub-millisecond execution loops would require supercomputers, custom TPU silicon, or physical breakthroughs.
+The widespread assumption was that local orchestration had to accept this tax—that every interaction needed another layer of framework overhead.
 
 **Deep down, I knew we could do better.**
 
@@ -52,15 +52,15 @@ The epiphany came late one night in August 2026. I thought back to the software 
 
 That single question changed everything.
 
-By reframing an AI agent runtime as a deterministic game engine kernel (`tick()`), allocating a contiguous **16MB Zero-GC Contiguous ArrayBuffer Slab** like a classic C++ arena allocator, and capturing frame-perfect state snapshots (`GameStateSnapshot`), LUMI-JOY proved that software friction was an illusion. Suddenly, agent turns executed in sub-millisecond local fast-path time ($<1.0\text{ ms}$), throughput surged past $1,000\text{ frames/second}$, and state could time-travel backward in instant $O(1)$ rewinds ($<0.1\text{ ms}$ warmed p95).
+By reframing selected agent paths as a tick-oriented game-engine-inspired kernel (`tick()`), reserving a contiguous ArrayBuffer for part of the state substrate, and capturing modeled state snapshots (`GameStateSnapshot`), LUMI-JOY gave us a concrete surface to measure and improve. The benchmark records are host- and workload-specific; they do not describe provider latency, external side effects, or a universal service level.
 
 ### Embracing Finite State Machines: The StateM Inspiration
 
-Our quest for deterministic agent reliability also led us to study the frontier of benchmark-winning agent architectures. The innovative work in **StateM** (the Terminal-Bench 2.1 champion project) revealed the immense power of formal, graph-theoretic Finite State Machines (FSMs) and verification gates. By assimilating this concept into LUMI's native BroccoliDB substrate—transforming foreign subprocess loops into zero-subshell file predicates, amnesia-proof `/compact` synthesis, and plain-English visual TUI pipelines—we unified game engine execution with mathematical workflow guarantees.
+Our quest for deterministic agent reliability also led us to study external agent-architecture references, including **StateM** and its reported Terminal-Bench 2.1 result. That review highlighted the usefulness of formal, graph-theoretic Finite State Machines (FSMs) and verification gates. LUMI applies those design ideas in selected BroccoliDB-backed paths—using file predicates, durable `/compact` state, and plain-English visual TUI pipelines—while treating the resulting behavior as implementation work subject to local tests and host-specific verification.
 
 ### A Gift to the Open World
 
-I chose to publish every line of this architecture, whitepaper, and prior-art specification under the permissive Apache License 2.0 backed by an explicit Defensive Patent Non-Aggression Pledge. I did this because the knowledge that raised me came from the generosity of open-source creators who shared their code freely with the world. No corporate entity should ever lock away the fundamental substrate of high-speed deterministic intelligence.
+I chose to publish the first-party work under Apache License 2.0 and to keep a factual provenance and claim record alongside it. The defensive patent policy explains the limits of that choice; it does not change the license or speak for third-party contributors. I did this because the knowledge that raised me came from the generosity of open-source creators who shared their code freely with the world.
 
 As you explore this repository—whether you run its benchmarks, inspect its 3-tier monolithic structure, or embed `LumiMonolith` into your own creations—I hope LUMI-JOY inspires you to build with curiosity, to honor your craft, and to never lose the wonder of turning ideas into reality.
 

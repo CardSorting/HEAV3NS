@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 151: Zero-Dependency Broccoli Retention Cleanup Service
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/CleanupService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/CleanupService.ts).
  * Automatic workspace memory retention garbage collection, lock file pruning, and temporary file purging
  * with unref'd interval timers. Zero external npm dependencies.
  */

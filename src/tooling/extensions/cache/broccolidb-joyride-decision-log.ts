@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 176: Zero-Dependency Broccoli JoyRide Decision Log
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/joyride/JoyRideDecisionLog.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/joyride/JoyRideDecisionLog.ts.
  * Maintains a bounded in-process ring-buffer log of cache decisions (hit, miss, evicted, degraded),
  * enabling zero-GC Maintainer diagnostics and high-resolution audit trails. Zero external npm dependencies.
  */

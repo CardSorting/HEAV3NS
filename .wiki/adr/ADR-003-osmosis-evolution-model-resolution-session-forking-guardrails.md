@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing model resolution/fallbacks, session branching/forking, and execution stream guardrails from teacher model (`/Users/bozoegg/Downloads/pi-main`) while maintaining strict <= 5 class caps per tier.
+- **Technical Story**: Absorbing model resolution/fallbacks, session branching/forking, and execution stream guardrails from teacher model (`external pi-main source workspace`) while maintaining strict <= 5 class caps per tier.
 
 ---
 
@@ -19,7 +19,7 @@ Inspection of `pi-main` revealed critical production-grade requirements:
 Instead of introducing huge external session managers or complex multi-class guardrail hierarchies, `LUMI-NEW` absorbed these capabilities directly:
 - `ModelResolver` in Tier 1 (`agents/`).
 - `SessionStore.fork()` and `exportJsonl()` / `importJsonl()` in Tier 2 (`sessions/`).
-- Stream guardrail methods directly inside [Hands](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/hands.ts#L13) and [Ears](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L12) in Tier 3 (`tooling/`).
+- Stream guardrail methods directly inside [Hands](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/hands.ts#L13) and [Ears](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L12) in Tier 3 (`tooling/`).
 
 ---
 
@@ -52,9 +52,9 @@ src/
 
 ### Key Added Capabilities
 
-1. **Model Fallback Chain**: [ModelResolver](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/model-resolver.ts#L13) tracks model health, switches to fallback models (`gemini-1.5-pro`, `gemini-1.5-flash`), and calculates token usage metrics.
-2. **Session Branching**: [SessionStore.fork()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-store.ts#L30) deep-copies turn state into isolated branches. `LumiMonolith.forkSession()` constructs a new composition root inheriting active session history.
-3. **Execution Guardrails**: [Hands.runCommand()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/hands.ts#L43) enforces line bounds (`maxOutputLines: 1000`) and byte size limits (`maxOutputBytes: 100KB`).
+1. **Model Fallback Chain**: [ModelResolver](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/model-resolver.ts#L13) tracks model health, switches to fallback models (`gemini-1.5-pro`, `gemini-1.5-flash`), and calculates token usage metrics.
+2. **Session Branching**: [SessionStore.fork()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-store.ts#L30) deep-copies turn state into isolated branches. `LumiMonolith.forkSession()` constructs a new composition root inheriting active session history.
+3. **Execution Guardrails**: [Hands.runCommand()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/hands.ts#L43) enforces line bounds (`maxOutputLines: 1000`) and byte size limits (`maxOutputBytes: 100KB`).
 
 ---
 

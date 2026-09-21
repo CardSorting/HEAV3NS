@@ -38,7 +38,7 @@ This audit and [the benchmark report](BENCHMARK_REPORT.md) are generated atomica
 
 | Rule | Live Measurement | Required Threshold | Status |
 |---|---:|---:|---|
-| Zero-GC Contiguous Slab Memory Invariant | 16777216 bytes | 16777216 bytes | PASS |
+| allocation-bounded Contiguous Slab Memory Invariant | 16777216 bytes | 16777216 bytes | PASS |
 | Performance SLA: Sub-Millisecond Turn Tick Latency | 0.12 ms | < 1 ms | PASS |
 | Performance SLA: Execution Throughput | 8506.11 frames/sec | >= 1000 frames/sec | PASS |
 | Performance SLA: State Rewind Latency | 0.029 ms p95 | < 0.1 ms p95 | PASS |

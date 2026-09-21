@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 185: Zero-Dependency Broccoli Simulation Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/SimulationEngine.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/SimulationEngine.ts.
  * Pre-flight architectural impact simulator. Predicts structural integrity outcome, score drop,
  * and downstream impacted dependents during Plan Mode before modifications are applied to disk. Zero external npm dependencies.
  */

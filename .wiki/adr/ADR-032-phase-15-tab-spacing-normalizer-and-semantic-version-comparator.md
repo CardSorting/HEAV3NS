@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing tab expansion and indentation normalization (`packages/utils/src/tab-spacing.ts`), semantic version comparison (`packages/utils/src/version.ts`), and performing Phase 15 master subsystem synthesis (Passes 55–57) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing tab expansion and indentation normalization (`packages/utils/src/tab-spacing.ts`), semantic version comparison (`packages/utils/src/version.ts`), and performing Phase 15 master subsystem synthesis (Passes 55–57) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

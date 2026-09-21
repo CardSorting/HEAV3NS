@@ -2,7 +2,7 @@
 
 ## 🌟 Executive Summary & Why This Matters
 
-The **Runtime Universal Pass** establishes an enterprise-grade agent execution lifecycle for LUMI, integrating the **LumiMonolith** coordinator, high-performance TUI alt-screen differential renderer, zero-GC memory substrate, and frame-accurate state rewind time-travel system.
+The **Runtime Universal Pass** establishes an enterprise-grade agent execution lifecycle for LUMI, integrating the **LumiMonolith** coordinator, high-performance TUI alt-screen differential renderer, allocation-bounded memory substrate, and frame-accurate state rewind time-travel system.
 
 ### Why This Architecture Matters
 1. **Zero Garbage Collection Friction**: Using a contiguous 16MB `ArrayBuffer` slab with static UTF-8 encoders eliminates V8 garbage collection pauses, preventing agent UI stutter during live streaming.
@@ -74,7 +74,7 @@ When executed in non-TTY environments (CI/CD pipelines, automated scripts, piped
 
 The LUMI runtime enforces strict architectural and performance guardrails verified via `npm test` and `npm run smoke`:
 
-- **Zero-GC 16MB ArrayBuffer Memory Slab** (`16,777,216 bytes`).
+- **allocation-bounded 16MB ArrayBuffer Memory Slab** (`16,777,216 bytes`).
 - **Sub-Millisecond Turn Tick Latency** ($< 1.0\text{ ms}$ required, **$0.17\text{ ms}$ measured**).
 - **Execution Throughput** ($\ge 1,000\text{ frames/sec}$ required, **$5,761.61\text{ fps}$ measured**).
 - **State Rewind Latency** ($< 0.10\text{ ms p95}$ required, **$0.027\text{ ms p95}$ measured**).

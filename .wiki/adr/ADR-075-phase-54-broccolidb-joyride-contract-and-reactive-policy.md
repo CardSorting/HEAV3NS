@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 54 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 54 completes the zero-dependency Osmosis distillation of public export boundary contract verification and real-time streaming tool execution observation from `/Users/bozoegg/Downloads/codemarie-new/src/core/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 54 completes the zero-dependency Osmosis distillation of public export boundary contract verification and real-time streaming tool execution observation from `external codemarie-new source workspace/src/core/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli JoyRide Contract Verifier (`BroccoliJoyRideContractVerifier`)**: Public export boundary contract enforcement (`JOYRIDE_FORBIDDEN_EXPORTS`, `validateExportSurface`), preventing internal symbol leaks without third-party dependencies. Directly embedded inside `JoyRideHotPathCache`.

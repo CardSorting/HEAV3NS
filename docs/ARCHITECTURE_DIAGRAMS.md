@@ -31,7 +31,7 @@ LUMI-JOY models the autonomous AI agent turn loop after high-performance video g
 │   └───────────┬─────────────┘                                               │
 │               │                                                             │
 │               ▼                                                             │
-│   [ O(1) Rewind / Subagent ] ◄─── rewindToSnapshot() (< 0.1ms p95)          │
+│   [ Snapshot Rewind / Subagent ] ◄─── `rewindToSnapshot()` (workload-specific) │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -77,7 +77,7 @@ graph TD
         G --> H[(In-Memory Reactive Tables)]
         H --> I[Append-Only WAL Journal]
         H --> J[256-Way Sharded CAS Vault]
-        G -->|Sub-millisecond Rollback| K[ExecutionGuardSnapshotManager]
+        G -->|Measured Rollback| K[ExecutionGuardSnapshotManager]
     end
 
     subgraph "Presentation & Tool Surfaces"
@@ -205,12 +205,12 @@ graph TD
         A[Model Tool Call: grep_search / batch_write / kill_port] --> B[Universal Alias Normalizer]
         B --> C[ArgumentCoercer JSON/Primitive Parser]
         C --> D{Broccoli Circuit Breaker}
-        D -->|Immune Developer Tool| E[Direct Native Execution]
+        D -->|Configured Developer Tool Handling| E[Direct Native Execution]
     end
 
     subgraph "2. RipgrepSearchService In-Memory Engine"
         E --> F{Query Strategy Analyzer}
-        F -->|Pure Literal| G[Native indexOf Fast-Path 5-10x Speed]
+        F -->|Pure Literal| G[Native indexOf Fast-Path; measure per workload]
         F -->|Multiline / Regex| H[Global RegExp Engine + Captures]
         F -->|Subsequence Fuzzy| I[Fuzzy Subsequence Compiler]
         
@@ -302,7 +302,7 @@ flowchart TD
     subgraph "2. Concurrent Wave Execution"
         PART --> W0[Wave 0: Independent Concurrent Reads]
         W0 --> CACHE{ToolExecutionCache Check}
-        CACHE -->|Microsecond Hit| HIT[Instant Cache Return]
+        CACHE -->|Measured Cache Hit| HIT[Cache Return]
         CACHE -->|Miss| EXEC0[Promise.all Concurrent Execution]
         
         EXEC0 --> PIPE[Resolve Piped Arguments: $node1.result]

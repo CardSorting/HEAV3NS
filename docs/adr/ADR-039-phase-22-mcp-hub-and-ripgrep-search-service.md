@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing Model Context Protocol integration (`McpHub` from `packages/codemarie/src/services/mcp`), workspace pattern search (`RipgrepSearchService` from `packages/codemarie/src/services/ripgrep`), and performing Phase 22 master subsystem synthesis (Passes 76–78) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing Model Context Protocol integration (`McpHub` from `packages/codemarie/src/services/mcp`), workspace pattern search (`RipgrepSearchService` from `packages/codemarie/src/services/ripgrep`), and performing Phase 22 master subsystem synthesis (Passes 76–78) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

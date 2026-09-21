@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 157: Zero-Dependency Broccoli Query Loop Orchestrator
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/QueryLoop.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/QueryLoop.ts).
  * Orchestrates the autonomous execution of an agentic turn, tracking turn counts, tool execution rounds,
  * token consumption, and context window compaction barrier checks. Zero external npm dependencies.
  */

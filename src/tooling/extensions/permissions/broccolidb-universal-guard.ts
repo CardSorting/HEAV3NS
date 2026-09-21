@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 175: Zero-Dependency Broccoli Universal Guard
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/UniversalGuard.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/UniversalGuard.ts.
  * Serves as a unified, singleton authority for all Joy-Zoning architectural policy enforcement,
  * system pressure management, and execution mode tracking (plan vs act). Zero external npm dependencies.
  */

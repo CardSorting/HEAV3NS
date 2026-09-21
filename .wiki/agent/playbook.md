@@ -1,10 +1,10 @@
 # LUMI-NEW Agent Playbook
 
-This playbook serves as the primary orientation document for AI agents working in `/Users/bozoegg/Desktop/LUMI-NEW`.
+This playbook serves as the primary orientation document for AI agents working in `repository root`.
 
 ## Current System Snapshot
 
-LUMI-NEW is a greenfield 3-tier monolithic agent framework built in TypeScript for Node.js (ESM). It is structured around the architectural design of a **Deterministic Game Engine**, where interactions execute as frame ticks (`tick()`), state transitions are captured in immutable snapshots (`GameStateSnapshot`), memory is pre-allocated in a 16MB contiguous slab (`ArenaAllocator`), and the runtime supports sub-millisecond ($<0.1\text{ ms}$ warmed p95) frame-perfect state rewind (`rewindToSnapshot()`) and session forking (`forkSession()`).
+LUMI-NEW is a greenfield 3-tier monolithic agent framework built in TypeScript for Node.js (ESM). It is structured around the architectural design of a **Deterministic Game Engine**, where interactions execute as frame ticks (`tick()`), state transitions are captured in immutable snapshots (`GameStateSnapshot`), memory is pre-allocated in a 16MB contiguous slab (`ArenaAllocator`), and the runtime supports sub-millisecond ($<0.1\text{ ms}$ warmed p95) checkpointed state rewind (`rewindToSnapshot()`) and session forking (`forkSession()`).
 
 Tiers expand organically as needed to support specialized subsystem features, with the primary constraint being strict alignment with the Deterministic Game Engine Strategy ([ADR-008](../adr/ADR-008-deterministic-game-engine-architecture.md)).
 

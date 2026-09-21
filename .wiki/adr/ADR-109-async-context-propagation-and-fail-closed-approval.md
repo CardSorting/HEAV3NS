@@ -10,10 +10,10 @@ Losing this context causes critical security risks:
 1. Approval callbacks for dangerous commands (e.g. `rm -rf`, `chmod +s`, `curl | bash`, raw sudo) are lost, causing non-interactive background executors to either fail open or execute without authorization.
 2. Sudo password prompts cannot reach the interactive user.
 3. Threads in persistent worker pools hold onto stale references to disposed CLI or session instances, leaking memory.
-4. Subsystems need frame-perfect snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput context dispatching ($>1,000,000\text{ ops/sec}$).
+4. Subsystems need checkpointed snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput context dispatching ($>1,000,000\text{ ops/sec}$).
 
 ## Decision
-We implement a zero-GC, typed, deterministic Async Context Propagation Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Async Context Propagation Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`thread-context.contracts.ts`)**:
    - Defines `SecurityApprovalCallback`, `SudoPasswordCallback`, `AsyncTurnContextDescriptor`, `ContextPropagationConfig`, `ExecutionDispatchEvent`, `ContextPropagationMetrics`, and `ThreadContextWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-thread-context-substrate.ts`, `thread-context-snapshot-manager.ts`)**:
@@ -21,13 +21,13 @@ We implement a zero-GC, typed, deterministic Async Context Propagation Subsystem
 3. **Deterministic Engine (`deterministic-thread-context-engine.ts`)**:
    - Uses `AsyncLocalStorage` to store active contexts, wraps async functions for child worker propagation (`propagateContext()`), and enforces fail-closed approval evaluation.
 4. **Supervisor (`thread-context-supervisor.ts`)**:
-   - Coordinates context lifecycle (`spawnContext()`, `runInContext()`, `wrapWorkerDispatch()`, `requestDangerousApproval()`, `requestSudo()`), guaranteeing automatic reference cleanup on exit.
+   - Coordinates context lifecycle (`spawnContext()`, `runInContext()`, `wrapWorkerDispatch()`, `requestDangerousApproval()`, `requestSudo()`), with reference cleanup attempted on exit in the covered paths.
 5. **Model Tool Suite (`thread-context-tool-suite.ts`)**:
    - Exposes 5 model tools (`thread_context_inspect`, `thread_context_request_approval`, `thread_context_verify_propagation`, `thread_context_configure`, `thread_context_get_metrics`).
 6. **Grand Monolith Expansion**:
    - Monolith expanded from **504 to 509 components** in optimal alphabetical cohesion.
 
 ## Consequences
-- Guaranteed preservation of parent security approval and sudo callbacks across all asynchronous worker dispatches.
+- Designed to preserve parent security approval and sudo callbacks across the covered asynchronous dispatch paths; failures still require runtime verification.
 - Strict fail-closed execution if approval callbacks are missing or throw errors.
 - Automatic zero-leak cleanup upon worker task completion.

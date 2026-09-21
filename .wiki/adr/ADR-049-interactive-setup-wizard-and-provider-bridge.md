@@ -7,7 +7,7 @@
 As **LUMI-NEW** expanded to 105 evolutionary passes, managing authentication credentials across multiple LLM providers (Anthropic, OpenAI, Google Gemini, DeepSeek, Custom Proxies) and OpenAI Codex OAuth PKCE authentication required a unified, interactive setup interface. Users needed an easy CLI and REPL routine to audit, configure, exchange, and verify model credentials without manually editing JSON files or exporting shell environment variables.
 
 ## Decision
-We implemented **SetupWizard** ([setup-wizard.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/setup/setup-wizard.ts)) as a dedicated setup extension module, integrated directly into the `LUMI` CLI (`lumi --setup`) and interactive REPL session (`/setup` command).
+We implemented **SetupWizard** ([setup-wizard.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/setup/setup-wizard.ts)) as a dedicated setup extension module, integrated directly into the `LUMI` CLI (`lumi --setup`) and interactive REPL session (`/setup` command).
 
 ### Key Architectural Components
 
@@ -23,7 +23,7 @@ We implemented **SetupWizard** ([setup-wizard.ts](file:///Users/bozoegg/Desktop/
    - Allows a user with valid existing credentials to keep them and activate the Codex default model without repeating login.
 
 3. **Live LLM Provider Dispatch & Dynamic Fallback**:
-   - Wires `CodexProviderBridge` and `LlmProxyGateway` into `AgentEngine` ([agent-engine.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/execution/agent-engine.ts)).
+   - Wires `CodexProviderBridge` and `LlmProxyGateway` into `AgentEngine` ([agent-engine.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/extensions/execution/agent-engine.ts)).
    - Performs live Codex OAuth dispatch through `@openai/codex-sdk` and API-key dispatch through the configured HTTP endpoint.
    - Returns actionable setup guidance when no credentials match the selected model.
    - Keeps the built-in HTML5 Frogger generator as an explicit `frogger` demo shortcut only; it is not a generic unauthenticated creation fallback.

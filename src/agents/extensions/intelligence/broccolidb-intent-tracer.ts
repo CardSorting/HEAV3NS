@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 146: Zero-Dependency Broccoli Intent Tracer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/IntentTracer.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/IntentTracer.ts).
  * Tracks high-level agent intentions across tool execution phases (startIntent, endIntent, failIntent),
  * measuring latency statistics, capability counts, and active intent maps. Zero external npm dependencies.
  */

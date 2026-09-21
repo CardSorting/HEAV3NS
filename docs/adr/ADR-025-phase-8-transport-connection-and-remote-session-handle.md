@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing RPC transport connection controllers (`packages/client/src/connection.ts`), remote session handles (`packages/client/src/session-handle.ts`), and performing Phase 8 master subsystem synthesis (Passes 34–36) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing RPC transport connection controllers (`packages/client/src/connection.ts`), remote session handles (`packages/client/src/session-handle.ts`), and performing Phase 8 master subsystem synthesis (Passes 34–36) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

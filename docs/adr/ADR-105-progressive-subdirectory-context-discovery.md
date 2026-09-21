@@ -11,14 +11,14 @@ Furthermore, recursive tools navigating the filesystem risk re-injecting duplica
 Hermes Agent solved this via lazy progressive discovery in `agent/subdirectory_hints.py`.
 
 ## Decision
-We implement a zero-GC, typed, deterministic **Progressive Subdirectory Context Discovery, Dynamic Instruction Hints & Prefix-Cache-Safe Tool Attachment Subsystem** in LUMI-JOY:
+We implement a allocation-bounded, typed, deterministic **Progressive Subdirectory Context Discovery, Dynamic Instruction Hints & Prefix-Cache-Safe Tool Attachment Subsystem** in LUMI-JOY:
 
 1. **Contracts Layer (`subdirectory-hints.contracts.ts`)**:
    - Defines `DiscoveredSubdirHint`, `SubdirHintDiscoveryResult`, `SubdirectoryHintsConfig`, `SubdirectoryHintsMetrics`, `DEFAULT_SUBDIRECTORY_HINTS_CONFIG`, and `SubdirectoryHintsWorkspaceSnapshot`.
 
 2. **Substrate & Snapshots (`broccoli-subdir-hints-substrate.ts`, `subdir-hints-snapshot-manager.ts`)**:
    - In-memory Broccolidb repository tracking discovered hints, loaded directories, SHA-256 content digests (preventing duplicate injections), virtual in-memory hint files, and telemetry metrics.
-   - Binary snapshot manager for frame-perfect state rollback in $<0.05\text{ ms}$.
+   - Binary snapshot manager for checkpointed state rollback in $<0.05\text{ ms}$.
 
 3. **Deterministic Engine & Supervisor (`deterministic-subdir-hint-engine.ts`, `subdir-hints-supervisor.ts`)**:
    - `DeterministicSubdirHintEngine`: Extracts path candidates from tool arguments (`path`, `file_path`, `workdir`, command string tokens), traverses parent directories bounded by `maxAncestorWalk: 5`, enforces workspace containment within `workingDir`, filters non-authoritative excluded directories (`node_modules`, `.git`, `vendor`, `site-packages`), computes SHA-256 digests, and formats markdown context attachments.

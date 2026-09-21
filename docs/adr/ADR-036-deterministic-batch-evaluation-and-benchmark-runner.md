@@ -11,10 +11,10 @@ In ancestral architectures such as `hermes-agent-main` (`batch_runner.py`, `mini
 4. **Lack of In-Memory State Rollback**: Batch execution progress and score history were not integrated into session snapshots, preventing frame-level time-travel and rollback.
 
 ## Decision
-We implemented a zero-GC, in-memory **Batch Evaluation, SWE Benchmark Runner & Dataset Orchestration Substrate ($\mathcal{K}_{\text{batch}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Batch Evaluation, SWE Benchmark Runner & Dataset Orchestration Substrate ($\mathcal{K}_{\text{batch}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicBatchEvaluator`** (`src/tooling/extensions/batch/deterministic-batch-evaluator.ts`):
-   - In-memory zero-GC concurrent worker evaluator with bounded worker pooling (`concurrency`: 1 to 16).
+   - In-memory allocation-bounded concurrent worker evaluator with bounded worker pooling (`concurrency`: 1 to 16).
    - Deterministic Mulberry32 PRNG for reproducible dataset shuffling and distribution sampling.
    - Automated substring, regex, and rubric criteria grading for SWE benchmarks.
    - Micro-benchmark: 1,000 batch task evaluations completed in $1.15\text{ ms}$ ($0.0011\text{ ms/task}$).
@@ -23,7 +23,7 @@ We implemented a zero-GC, in-memory **Batch Evaluation, SWE Benchmark Runner & D
    - In-memory Broccolidb repository for dataset entries, batch run records, task results, and metrics.
 
 3. **`BatchSnapshotManager`** (`src/sessions/extensions/batch/batch-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
 
 4. **`BatchEvaluationSupervisor`** (`src/agents/extensions/batch/batch-evaluation-supervisor.ts`):
    - Master supervisor coordinating dataset ingestion, worker pools, trajectory formatting, and benchmark telemetry.

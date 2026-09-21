@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 140: Zero-Dependency Broccoli Inter-Agent Mailbox
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/MailboxService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/MailboxService.ts).
  * Provides decentralized inter-subagent communication queues (postMessage, pollInbox, postStatus)
  * with ring-buffer FIFO message bounds. Zero external npm dependencies.
  */

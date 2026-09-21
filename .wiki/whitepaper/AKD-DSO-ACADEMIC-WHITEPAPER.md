@@ -2,10 +2,10 @@
 
 **Formal Academic Specification & Research Paper**
 
-**Primary Author & Inventor**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)  
-**Co-Authors**: LUMI Advanced Agentic AI Core & DeepMind Agent Systems  
-**Publication Standard**: NeurIPS / ICML Architectural Systems Track  
-**Repository**: `/Users/bozoegg/Desktop/LUMI-NEW` | [GitHub: CardSorting/LUMI-JOY](https://github.com/CardSorting/LUMI-JOY)
+**Author & Project Steward**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)
+**External co-authors**: None claimed by this repository; inspirations and upstream projects are acknowledged separately.
+**Publication status**: Internal engineering research record; not peer-reviewed and not a patent, inventorship, or novelty determination.
+**Repository**: [GitHub: CardSorting/LUMI-JOY](https://github.com/CardSorting/LUMI-JOY)
 
 ---
 
@@ -22,7 +22,7 @@ The original paper and its Section 3 experiment record the August 9 foundation-e
 | Monolith Fast-Path Mean Turn Tick Latency | $0.12\text{ ms}$ |
 | Deterministic Monolith Throughput | $8506.11\text{ frames/second}$ |
 | State Snapshot Restoration ($O(1)$ Rewind p95) | $0.029\text{ ms}$ |
-| Garbage Collection Overhead in Live Execution Loop | $0.00\text{ ms}$ (Zero-GC Slab) |
+| Garbage Collection Overhead in Live Execution Loop | Workload-specific measurement; no whole-process allocation-bounded claim |
 
 The exact machine-readable evidence, runtime identity, and generation timestamp are in [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json). [`docs/BENCHMARK_REPORT.md`](../../docs/BENCHMARK_REPORT.md) contains all eight Flappy assertion results. Performance observations are host-sensitive and are not permanent guarantees.
 
@@ -30,11 +30,11 @@ The exact machine-readable evidence, runtime identity, and generation timestamp 
 
 ## Abstract
 
-We present **AKD-DSO** (**Architectural Knowledge Distillation & Deterministic Substrate Optimization**), a novel paradigm for autonomous agent self-mutation and state-space compression. Current multi-agent LLM frameworks suffer from exponential context decay, un-reproducible state drift, and high latency caused by microservice IPC channels ("framework soup"). 
+We describe **AKD-DSO** (**Architectural Knowledge Distillation & Deterministic Substrate Optimization**) as an engineering design proposal for autonomous-agent state handling. The document records hypotheses and implementation observations; it does not establish novelty, priority, or comparative superiority over current multi-agent systems.
 
-AKD-DSO formulates agent evolution as a dual-process system: (1) **Structural Knowledge Distillation ($\mathcal{L}_{\text{AKD}}$)**, wherein production capabilities from a high-capacity Teacher Model ($\mathcal{T}$, e.g. [pi-main](file:///Users/bozoegg/Downloads/pi-main)) are distilled into a compact 3-tier monolithic Student Engine ($\mathcal{S}$, [LUMI-NEW](file:///Users/bozoegg/Desktop/LUMI-NEW)); and (2) **Deterministic Substrate Optimization (DSO)**, wherein turn execution is modeled as a frame tick loop over an immutable state manifold with frame-perfect rewind and zero-drift snapshot compression. 
+AKD-DSO formulates agent evolution as a dual-process system: (1) **Structural Knowledge Distillation ($\mathcal{L}_{\text{AKD}}$)**, wherein selected capabilities from referenced upstream or internal sources are modeled in a compact 3-tier monolithic Student Engine ($\mathcal{S}$, LUMI-NEW); and (2) **Deterministic Substrate Optimization (DSO)**, wherein selected turn paths are modeled as frame phases over snapshot-oriented state. Source and license boundaries are recorded separately in the provenance record.
 
-We prove that AKD-DSO achieves $O(1)$ state rewind latency, $100\%$ type safety under Node strip-only erasable syntax bounds, and a $94.2\%$ reduction in execution overhead compared to monorepo microservice pipelines.
+The recorded experiments test whether selected LUMI paths provide snapshot restoration, TypeScript checks, and lower local orchestration overhead under a named harness. They do not prove patentable novelty, universal $O(1)$ behavior, product-wide type safety, or a fixed percentage reduction against other systems.
 
 ---
 
@@ -48,33 +48,33 @@ Direct distillation of raw monorepo structures incurs prohibitive latency $\sum_
 
 $$\mathcal{S}^* = \arg\min_{\mathcal{S}} \left( \sum_{k=1}^K \mathcal{D}_{\text{KL}}\left( \phi_k(\mathcal{X}) \,\parallel\, \psi_{\mathcal{S}}(\mathcal{X}) \right) + \lambda \cdot \text{Complexity}(\mathcal{S}) \right)$$
 
-Where $\psi_{\mathcal{S}}$ represents the 3-tier monolithic target engine ([LUMI-NEW](file:///Users/bozoegg/Desktop/LUMI-NEW/src)), $\mathcal{D}_{\text{KL}}$ is the Kullback-Leibler divergence between Teacher and Student execution outputs, and $\lambda$ penalizes architectural complexity.
+Where $\psi_{\mathcal{S}}$ represents the 3-tier monolithic target engine ([LUMI-NEW](https://github.com/CardSorting/LUMI-VSIX/blob/main/src)), $\mathcal{D}_{\text{KL}}$ is the Kullback-Leibler divergence between Teacher and Student execution outputs, and $\lambda$ penalizes architectural complexity.
 
 - **$\mathcal{K}_{\text{patch}}$ (Deterministic Patch Engine & VFS — Phase 77 / ADR-029)**: In-memory Broccolidb staging substrates, pre-flight dry runs, unified patch AST parsing, and atomic rollback.
 - **$\mathcal{K}_{\text{lsp}}$ (Deterministic LSP & AST Code Intelligence — Phase 78 / ADR-030)**: In-memory AST symbol extraction, TypeScript compiler diagnostics, type hover cards, definition resolution, and delta diagnostic baselines.
-- **$\mathcal{K}_{\text{voice}}$ (Deterministic Voice Mode & Audio Streaming — Phase 79 / ADR-031)**: In-memory zero-GC RIFF WAV codecs, RMS signal energy VAD, Broccolidb audio ring buffers, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{vision}}$ (Deterministic Multimodal Vision & Image Codecs — Phase 80 / ADR-032)**: In-memory zero-GC binary image header decoders, SHA-256 deduplicated media storage, aspect ratio reduction algorithms, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{kanban}}$ (Deterministic Kanban Board Dispatcher & Task DAG — Phase 81 / ADR-033)**: In-memory zero-GC Task DAG dependency topological sorting, cycle detection, column state-machine validation, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{web}}$ (Deterministic Web Intelligence & SSRF Guardrails — Phase 82 / ADR-034)**: In-memory zero-GC private CIDR SSRF firewall, semantic HTML-to-Markdown extraction, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{exec}}$ (Deterministic Programmatic Tool Execution & Sandbox — Phase 83 / ADR-035)**: In-memory zero-GC scripting sandbox with direct in-process tool binding and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{batch}}$ (Deterministic Batch Evaluation & SWE Benchmark Runner — Phase 84 / ADR-036)**: In-memory zero-GC concurrent worker pools, Mulberry32 PRNG dataset shuffling, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{clarify}}$ (Deterministic Clarification & Intent Disambiguation — Phase 85 / ADR-037)**: In-memory zero-GC interactive inquiry state machines with automated recommendation tagging and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{threat}}$ (Deterministic Threat Pattern Scanner & Security Firewall — Phase 86 / ADR-038)**: In-memory zero-GC compiled regex threat scanners with bounded filler and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{cas}}$ (Deterministic Content-Addressable Blob Store & Checkpoint Kernel — Phase 87 / ADR-039)**: In-memory zero-GC Content-Addressable Storage (CAS) with SHA-256 Merkle tree deduplication and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{os}}$ (Deterministic Computer Use & Virtual Display Buffer — Phase 88 / ADR-040)**: In-memory zero-GC virtual display driver with Set-of-Marks (SoM) element overlays and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{hub}}$ (Deterministic Skills Hub & Package Quarantine Substrate — Phase 89 / ADR-041)**: In-memory zero-GC skills hub with SHA-256 package verification, SemVer resolution, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{cost}}$ (Deterministic Model Pricing & Cost Governance Substrate — Phase 90 / ADR-042)**: In-memory zero-GC model pricing catalog with integer micro-cent arithmetic, pre-flight hard-cap gating, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{disc}}$ (Deterministic Progressive Tool Disclosure & Dynamic Schema Gateway — Phase 91 / ADR-043)**: In-memory zero-GC progressive tool disclosure engine with 4-tier token budgeting, BM25 filtering, dynamic activation, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{evid}}$ (Deterministic Coding Verification Evidence Ledger & Stop-Gate Substrate — Phase 92 / ADR-044)**: In-memory zero-GC verification evidence ledger with non-code extension filtering, stop-gate turn completion evaluation, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{prompt}}$ (Deterministic Byte-Stable Prompt Cache Boundary & Reasoning Sanitizer Substrate — Phase 93 / ADR-045)**: In-memory zero-GC prompt cache boundary calculator with 4-breakpoint layout, byte-stable static prefix isolation, `<think>` token scrubbing, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{loop}}$ (Deterministic Tool Execution Segmenter & Loop-Guardrail Substrate — Phase 94 / ADR-046)**: In-memory zero-GC batch parallelism scheduler with mutating barrier placement, escalating anti-loop gates, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{redact}}$ (Deterministic Secret Redactor, Query Masker & Sensitive Path Safety Substrate — Phase 95 / ADR-047)**: In-memory zero-GC secret redactor with query/body masking, suffix-preservation rules, path safety gating, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{review}}$ (Deterministic Background Review, Self-Improvement Fork & Session Insights Substrate — Phase 96 / ADR-048)**: In-memory zero-GC review evaluator with candidate fact/skill extraction, session token/cost breakdown, topic title synthesis, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{doctor}}$ (Deterministic Diagnostic Doctor, Live Health Probing, Orphaned Session Salvage & State Integrity Substrate — Phase 97 / ADR-049)**: In-memory zero-GC diagnostic doctor running deterministic health checks, live subsystem probes, non-destructive orphaned turn repair, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{auth}}$ (Deterministic OAuth2 PKCE Device Flow, Multi-Provider Identity Federation & Subscription Tier Governance Substrate — Phase 98 / ADR-052)**: In-memory zero-GC identity federator with RFC 7636 PKCE S256 verification, subscription tier matrix gating, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{archive}}$ (Deterministic Multi-Format Session Export, Archive Packaging & Encrypted Backup Substrate — Phase 99 / ADR-053)**: In-memory zero-GC session archiver with strict HTML entity escaping, nonced CSP, binary backup packaging, SHA-256 verification, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{skin}}$ (Deterministic Terminal UI Skin Engine, Theme Palette & Animated Banner Substrate — Phase 100 Centennial Milestone / ADR-054)**: In-memory zero-GC terminal skin engine with TrueColor palette resolution, seedable Kawaii spinner state machines, and frame-perfect state rollback.
-- **$\mathcal{K}_{\text{aux}}$ (Deterministic Auxiliary Client Router, Sub-Task Fallback Chain & Dynamic User Model Selection Substrate — Phase 101 / ADR-055)**: In-memory zero-GC auxiliary task router with 100% dynamic user model selection, credit exhaustion auto-failover, and frame-perfect state rollback.
+- **$\mathcal{K}_{\text{voice}}$ (Deterministic Voice Mode & Audio Streaming — Phase 79 / ADR-031)**: In-memory allocation-bounded RIFF WAV codecs, RMS signal energy VAD, Broccolidb audio ring buffers, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{vision}}$ (Deterministic Multimodal Vision & Image Codecs — Phase 80 / ADR-032)**: In-memory allocation-bounded binary image header decoders, SHA-256 deduplicated media storage, aspect ratio reduction algorithms, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{kanban}}$ (Deterministic Kanban Board Dispatcher & Task DAG — Phase 81 / ADR-033)**: In-memory allocation-bounded Task DAG dependency topological sorting, cycle detection, column state-machine validation, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{web}}$ (Deterministic Web Intelligence & SSRF Guardrails — Phase 82 / ADR-034)**: In-memory allocation-bounded private CIDR SSRF firewall, semantic HTML-to-Markdown extraction, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{exec}}$ (Deterministic Programmatic Tool Execution & Sandbox — Phase 83 / ADR-035)**: In-memory allocation-bounded scripting sandbox with direct in-process tool binding and checkpointed state rollback.
+- **$\mathcal{K}_{\text{batch}}$ (Deterministic Batch Evaluation & SWE Benchmark Runner — Phase 84 / ADR-036)**: In-memory allocation-bounded concurrent worker pools, Mulberry32 PRNG dataset shuffling, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{clarify}}$ (Deterministic Clarification & Intent Disambiguation — Phase 85 / ADR-037)**: In-memory allocation-bounded interactive inquiry state machines with automated recommendation tagging and checkpointed state rollback.
+- **$\mathcal{K}_{\text{threat}}$ (Deterministic Threat Pattern Scanner & Security Firewall — Phase 86 / ADR-038)**: In-memory allocation-bounded compiled regex threat scanners with bounded filler and checkpointed state rollback.
+- **$\mathcal{K}_{\text{cas}}$ (Deterministic Content-Addressable Blob Store & Checkpoint Kernel — Phase 87 / ADR-039)**: In-memory allocation-bounded Content-Addressable Storage (CAS) with SHA-256 Merkle tree deduplication and checkpointed state rollback.
+- **$\mathcal{K}_{\text{os}}$ (Deterministic Computer Use & Virtual Display Buffer — Phase 88 / ADR-040)**: In-memory allocation-bounded virtual display driver with Set-of-Marks (SoM) element overlays and checkpointed state rollback.
+- **$\mathcal{K}_{\text{hub}}$ (Deterministic Skills Hub & Package Quarantine Substrate — Phase 89 / ADR-041)**: In-memory allocation-bounded skills hub with SHA-256 package verification, SemVer resolution, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{cost}}$ (Deterministic Model Pricing & Cost Governance Substrate — Phase 90 / ADR-042)**: In-memory allocation-bounded model pricing catalog with integer micro-cent arithmetic, pre-flight hard-cap gating, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{disc}}$ (Deterministic Progressive Tool Disclosure & Dynamic Schema Gateway — Phase 91 / ADR-043)**: In-memory allocation-bounded progressive tool disclosure engine with 4-tier token budgeting, BM25 filtering, dynamic activation, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{evid}}$ (Deterministic Coding Verification Evidence Ledger & Stop-Gate Substrate — Phase 92 / ADR-044)**: In-memory allocation-bounded verification evidence ledger with non-code extension filtering, stop-gate turn completion evaluation, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{prompt}}$ (Deterministic Byte-Stable Prompt Cache Boundary & Reasoning Sanitizer Substrate — Phase 93 / ADR-045)**: In-memory allocation-bounded prompt cache boundary calculator with 4-breakpoint layout, byte-stable static prefix isolation, `<think>` token scrubbing, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{loop}}$ (Deterministic Tool Execution Segmenter & Loop-Guardrail Substrate — Phase 94 / ADR-046)**: In-memory allocation-bounded batch parallelism scheduler with mutating barrier placement, escalating anti-loop gates, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{redact}}$ (Deterministic Secret Redactor, Query Masker & Sensitive Path Safety Substrate — Phase 95 / ADR-047)**: In-memory allocation-bounded secret redactor with query/body masking, suffix-preservation rules, path safety gating, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{review}}$ (Deterministic Background Review, Self-Improvement Fork & Session Insights Substrate — Phase 96 / ADR-048)**: In-memory allocation-bounded review evaluator with candidate fact/skill extraction, session token/cost breakdown, topic title synthesis, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{doctor}}$ (Deterministic Diagnostic Doctor, Live Health Probing, Orphaned Session Salvage & State Integrity Substrate — Phase 97 / ADR-049)**: In-memory allocation-bounded diagnostic doctor running deterministic health checks, live subsystem probes, non-destructive orphaned turn repair, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{auth}}$ (Deterministic OAuth2 PKCE Device Flow, Multi-Provider Identity Federation & Subscription Tier Governance Substrate — Phase 98 / ADR-052)**: In-memory allocation-bounded identity federator with RFC 7636 PKCE S256 verification, subscription tier matrix gating, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{archive}}$ (Deterministic Multi-Format Session Export, Archive Packaging & Encrypted Backup Substrate — Phase 99 / ADR-053)**: In-memory allocation-bounded session archiver with strict HTML entity escaping, nonced CSP, binary backup packaging, SHA-256 verification, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{skin}}$ (Deterministic Terminal UI Skin Engine, Theme Palette & Animated Banner Substrate — Phase 100 Centennial Milestone / ADR-054)**: In-memory allocation-bounded terminal skin engine with TrueColor palette resolution, seedable Kawaii spinner state machines, and checkpointed state rollback.
+- **$\mathcal{K}_{\text{aux}}$ (Deterministic Auxiliary Client Router, Sub-Task Fallback Chain & Dynamic User Model Selection Substrate — Phase 101 / ADR-055)**: In-memory allocation-bounded auxiliary task router with configured user model selection, credit exhaustion auto-failover, and checkpointed state rollback.
 
 ```
 ┌───────────────────────────────────────────┐         AKD DISTILLATION FILTER         ┌───────────────────────────────────────────┐
@@ -99,10 +99,10 @@ Where $\mathcal{I}_t \in \text{EngineTickInput}$ is the input vector, $\mathcal{
 
 $$\mathcal{M}_t = \left\langle \text{Messages}_t, \text{VFSStaged}_t, \text{Memories}_t, \text{Metrics}_t \right\rangle$$
 
-#### Theorem 1 (Frame-Perfect Snapshot Compression & Zero-Drift Rewind)
-*Let $\mathcal{C}(\mathcal{M}_t) \rightarrow \mathbf{Snapshot}_t$ be the snapshot operator defined in [PersistentSessionStore](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/session-store.ts#L36). Let $\mathcal{R}(\mathbf{Snapshot}_t) \rightarrow \mathcal{M}_t'$ be the rewind operator. Then for all valid frame indices $t$, $\mathcal{M}_t' \equiv \mathcal{M}_t$ with exact equality across all state components, and rewind latency is $O(1)$ with respect to total session history length.*
+#### Theorem 1 (checkpointed Snapshot Compression & Zero-Drift Rewind)
+*Let $\mathcal{C}(\mathcal{M}_t) \rightarrow \mathbf{Snapshot}_t$ be the snapshot operator defined in [PersistentSessionStore](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/session-store.ts#L36). Let $\mathcal{R}(\mathbf{Snapshot}_t) \rightarrow \mathcal{M}_t'$ be the rewind operator. Then for all valid frame indices $t$, $\mathcal{M}_t' \equiv \mathcal{M}_t$ with exact equality across all state components, and rewind latency is $O(1)$ with respect to total session history length.*
 
-*Proof*: See [PersistentSessionStore.rewindToSnapshot()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/session-store.ts#L52). Because snapshot storage is immutable and un-mutated by subsequent ticks, $\mathcal{R}(\mathcal{C}(\mathcal{M}_t))$ performs a direct pointer restoration of message logs and staged VFS buffers, achieving exact state equivalence $\mathcal{M}_t' = \mathcal{M}_t$ in $O(1)$ time. $\blacksquare$
+*Proof*: See [PersistentSessionStore.rewindToSnapshot()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/session-store.ts#L52). Because snapshot storage is immutable and un-mutated by subsequent ticks, $\mathcal{R}(\mathcal{C}(\mathcal{M}_t))$ performs a direct pointer restoration of message logs and staged VFS buffers, achieving exact state equivalence $\mathcal{M}_t' = \mathcal{M}_t$ in $O(1)$ time. $\blacksquare$
 
 ---
 
@@ -128,21 +128,21 @@ Ensuring zero null-pointer exceptions during autonomous tool execution loops.
 
 ## 3. Original August 9 Empirical Benchmark (Historical Dataset)
 
-The following acceptance-time experiment was conducted on macOS ARM64 (Apple M-Series) running Node.js 20+ and is retained for reproducibility and provenance. It is not the current baseline; use the validation addendum and generated reports above for current claims.
+The following acceptance-time experiment was conducted on macOS ARM64 (Apple M-Series) running Node.js 20+ and is retained as historical evidence. It is not the current baseline or a warranty; use the validation addendum and generated reports above for current, workload-bounded claims.
 
 | Metric | Legacy Monorepo (`pi-main`) | AKD-DSO Engine (`LUMI-NEW`) | Underlying Mechanism / Speedup |
 |---|---|---|---|
-| **Mean Turn Tick Latency** | $14.20\text{ ms}$ | **$0.22\text{ ms}$** | Direct function dispatch replacing IPC/RPC network queues (**$64.5\times$ Speedup**). Under controlled local test conditions, the resulting Monolith achieves **$8506.11\text{ frames/second}$** ($0.12\text{ ms}$ fast-path mean turn tick latency) across **566/566 required components**, outperforming ancestral Python-based execution by over $100\times$ in throughput while guaranteeing $O(1)$ state rollback in $0.029\text{ ms p95**. |
+| **Mean Turn Tick Latency** | $14.20\text{ ms}$ | **$0.22\text{ ms}$** | Historical local comparison for the named harness; not a universal speedup or service level. |
 | **Execution Throughput** | $70.4\text{ turns/sec}$ | **$4,132.2\text{ turns/sec}$** | Synchronous in-memory game loop execution (**$58.7\times$ Throughput Boost**). |
 | **State Rewind Latency** | $285.00\text{ ms}$ (Re-parse) | **$0.04\text{ ms}$** | $O(1)$ Atomic pointer assignment across session snapshots (**$7,125\times$ Speedup**). |
 | **VFS Perception Speed** | $12.40\text{ ms}$ (Disk I/O) | **$0.03\text{ ms}$** | In-memory contiguous VFS overlay inspection (**$413.3\times$ Speedup**). |
-| **Memory Allocation** | Dynamic Heap GC Sweep | **16MB Zero-GC Slab** | Pre-allocated ArrayBuffer slab eliminates Garbage Collection sweeps during turn ticks. |
+| **Memory Allocation** | Dynamic heap allocation | **16MB configured arena** | Selected state paths use a pre-allocated buffer; the full process may allocate and perform garbage collection. |
 | **Canvas Game Synthesis** | N/A (Seconds) | **$0.43\text{ ms}$** | Sub-millisecond 60FPS Canvas HTML5/JS app generation in contiguous memory. |
 
 ---
 
 ## 4. Academic Handoff & Research Roadmap
 
-- 📖 [The Osmosis Methodology & Developer Handoff Guide](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/agent/osmosis-methodology.md)
-- 📦 [True 1-to-1 Package Mapping Matrix](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md)
-- 📖 [ADR-008: Deterministic Game Engine Architecture](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-008-deterministic-game-engine-architecture.md)
+- 📖 [The Osmosis Methodology & Developer Handoff Guide](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/agent/osmosis-methodology.md)
+- 📦 [True 1-to-1 Package Mapping Matrix](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/package-mappings/PACKAGE-MAPPING-MATRIX.md)
+- 📖 [ADR-008: Deterministic Game Engine Architecture](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-008-deterministic-game-engine-architecture.md)

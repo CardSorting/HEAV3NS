@@ -9,7 +9,7 @@ Long-running autonomous agent sessions accumulate large amounts of context acros
 Hermes Agent introduced real-time context token breakdown and telemetry in `agent/context_breakdown.py`.
 
 ## Decision
-We implement a zero-GC, typed, deterministic **Context Window Token Composition Breakdown & Category Metering Subsystem** in LUMI-JOY:
+We implement a allocation-bounded, typed, deterministic **Context Window Token Composition Breakdown & Category Metering Subsystem** in LUMI-JOY:
 
 1. **Contracts Layer (`context-breakdown.contracts.ts`)**:
    - Defines `ContextCategoryId` (`"system_prompt" | "tool_definitions" | "rules" | "skills" | "mcp" | "subagent_definitions" | "memory" | "conversation"`).
@@ -17,7 +17,7 @@ We implement a zero-GC, typed, deterministic **Context Window Token Composition 
 
 2. **Substrate & Snapshots (`broccoli-context-breakdown-substrate.ts`, `context-breakdown-snapshot-manager.ts`)**:
    - In-memory Broccolidb repository storing latest breakdown snapshots, per-category historical token trends, configuration parameters, and telemetry metrics.
-   - Binary snapshot manager for frame-perfect state rollback in $<0.05\text{ ms}$.
+   - Binary snapshot manager for checkpointed state rollback in $<0.05\text{ ms}$.
 
 3. **Deterministic Engine & Supervisor (`deterministic-context-breakdown-engine.ts`, `context-breakdown-supervisor.ts`)**:
    - `DeterministicContextBreakdownEngine`: Computes fast zero-allocation token estimations (`charsToTokens`, `jsonTokens`), partitions model tools (builtin, MCP, subagent), calculates capacity utilization percentages, headroom tokens, compression proximity triggers, and renders ASCII progress bars.

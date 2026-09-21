@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 158: Zero-Dependency Broccoli Structural Discovery Service
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/StructuralDiscoveryService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/StructuralDiscoveryService.ts).
  * Analyzes workspace file dependency graphs, calculates node blast radius, centrality scores, and critical dependent sets
  * with incremental inverse graph indexing. Zero external npm dependencies.
  */

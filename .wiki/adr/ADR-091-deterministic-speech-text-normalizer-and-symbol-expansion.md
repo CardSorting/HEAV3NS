@@ -11,7 +11,7 @@ In multimodal conversational agents (`tools/tts_text_normalize.py`, `tools/tts_t
 4. **Cadence & Whitespace Smoothing**: Headings (`# Weather`) must fold into subsequent content lines as spoken lead-ins (`"Weather, it will be sunny."`), and multi-line text must flatten into clean sentence pauses for newline-sensitive single-line TTS backends (e.g. Kokoro).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Deterministic Speech Text Normalizer, Non-Spoken Block Stripper, and Phonetic Lexicon Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Deterministic Speech Text Normalizer, Non-Spoken Block Stripper, and Phonetic Lexicon Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicSpeechTextNormalizer` ([deterministic-speech-text-normalizer.ts](../../src/agents/extensions/speech_normalizer/deterministic-speech-text-normalizer.ts))**:
    - **Non-Spoken Block Stripper**: Strips `<think>...</think>`, unclosed streaming `<think>` tags, and `⚠️ File-mutation verifier:` footers.
@@ -27,7 +27,7 @@ We implemented a zero-GC, typed, frame-perfect Deterministic Speech Text Normali
    - In-memory Broccolidb repository storing custom phonetic pronunciation lexicons, transform history, and aggregate telemetry.
 
 4. **`SpeechNormalizerSnapshotManager` ([speech-normalizer-snapshot-manager.ts](../../src/sessions/extensions/speech_normalizer/speech-normalizer-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`SpeechNormalizerToolSuite` ([speech-normalizer-tool-suite.ts](../../src/tooling/extensions/speech_normalizer/speech-normalizer-tool-suite.ts))**:
    - Exposes 5 model tools:

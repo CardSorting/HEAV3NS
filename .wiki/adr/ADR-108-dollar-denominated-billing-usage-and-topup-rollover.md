@@ -8,10 +8,10 @@ In conversational AI agent platforms and subscription surfaces (`/usage`, `/subs
 1. Expiring monthly plan allowances (e.g. $20/month included in plan) must be visibly distinguished from non-expiring purchased top-up balances (e.g. $50 top-up that rolls over).
 2. Trying to cram these two distinct magnitudes into a single 3-segment progress bar causes unreadable visual density at terminal widths.
 3. Mid-run cutoffs occur if accounts drop below safe balance thresholds without warning ($< $5.00).
-4. Subsystems need frame-perfect snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput metering ($>1,000,000\text{ ops/sec}$).
+4. Subsystems need checkpointed snapshotting and instant state rollback ($<0.05\text{ ms SLA}$) with ultra-high-throughput metering ($>1,000,000\text{ ops/sec}$).
 
 ## Decision
-We implement a zero-GC, typed, deterministic Dollar-Denominated Billing Usage Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Dollar-Denominated Billing Usage Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`billing-usage.contracts.ts`)**:
    - Defines `AccountStatus` (`free`, `active_paid`, `low_balance`, `exhausted`, `unreachable`), `UsageBarDescriptor` (plan vs topup), `UsageModelDescriptor`, `BillingAccountInfo`, `BillingUsageConfig`, and `BillingUsageWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-billing-usage-substrate.ts`, `billing-usage-snapshot-manager.ts`)**:
@@ -26,6 +26,6 @@ We implement a zero-GC, typed, deterministic Dollar-Denominated Billing Usage Su
    - Monolith expanded from **499 to 504 components** in optimal alphabetical cohesion.
 
 ## Consequences
-- Guaranteed clear dollar-denominated accounting across CLI and TUI interfaces.
+- Provides dollar-denominated accounting across the covered CLI and TUI paths; provider billing and reconciliation remain external concerns.
 - Automatic plan allowance depletion prior to non-expiring top-up rollover deduction.
-- Frame-perfect rollback and zero-GC memory performance.
+- checkpointed rollback and allocation-bounded memory performance.

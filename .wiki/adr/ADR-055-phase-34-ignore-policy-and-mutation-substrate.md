@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 34 Osmosis Distillation (`codemarie-new/src` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 34 completes the Osmosis distillation of workspace ignore policy control and safe native file mutation transactions from `/Users/bozoegg/Downloads/codemarie-new/src` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 34 completes the Osmosis distillation of workspace ignore policy control and safe native file mutation transactions from `external codemarie-new source workspace/src` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Lumi Ignore Policy Controller (`LumiIgnorePolicyController`)**: Standard `.lumiignore` / `.gitignore` pattern matcher, inclusion overrides, policy generation counters, and LRU access decision caching (4096 entry limit).

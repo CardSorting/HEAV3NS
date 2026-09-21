@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing workspace prompt context `@mention` parsing and context block expansion from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/mentions` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 9).
+- **Technical Story**: Absorbing workspace prompt context `@mention` parsing and context block expansion from teacher package `external pi-main source workspace/packages/codemarie/src/core/mentions` into `repository root` via the **Osmosis Strategy** (Pass 9).
 
 ---
 

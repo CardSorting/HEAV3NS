@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 154: Zero-Dependency Broccoli Side Query Service
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/SideQueryService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/SideQueryService.ts).
  * Provides isolated out-of-band reasoning query evaluations without mutating engine turn state,
  * performing intent classification and constitutional policy pre-audits. Zero external npm dependencies.
  */

@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 33 Osmosis Distillation (`codemarie-new/src` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 33 completes the Osmosis distillation of cognitive freshness tracking and knowledge graph synthesis systems from `/Users/bozoegg/Downloads/codemarie-new/src` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 33 completes the Osmosis distillation of cognitive freshness tracking and knowledge graph synthesis systems from `external codemarie-new source workspace/src` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Context Staleness Tracker (`ContextStalenessTracker`)**: In-memory signature calculator and filesystem modification tracker detecting stale context entries.

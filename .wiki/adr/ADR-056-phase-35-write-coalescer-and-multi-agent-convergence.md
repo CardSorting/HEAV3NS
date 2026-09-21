@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 35 Osmosis Distillation (`codemarie-new/src` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 35 completes the Osmosis distillation of write-behind debounced buffer storage and multi-agent priority lattice consensus from `/Users/bozoegg/Downloads/codemarie-new/src` into `/Users/bozoegg/Desktop/LUMI-NEW/src` under an **Improved Osmosis Strategy**.
+Phase 35 completes the Osmosis distillation of write-behind debounced buffer storage and multi-agent priority lattice consensus from `external codemarie-new source workspace/src` into `repository root/src` under an **Improved Osmosis Strategy**.
 
 This architectural pass introduces:
 1. **Write Coalescing Substrate (`WriteCoalescerSubstrate`)**: High-performance debounced write-behind buffer with bitwise FNV-1a content-hash deduplication (`calculateFastHash`) preventing redundant disk write operations. Directly embedded inside `PersistentSessionStore.coalesceSaveToFile()`.

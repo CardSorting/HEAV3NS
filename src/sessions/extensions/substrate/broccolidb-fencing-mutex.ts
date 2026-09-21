@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 134: Zero-Dependency Broccoli Fencing Mutex Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/MutexService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/MutexService.ts).
  * Manages fault-tolerant distributed locking using Sovereign Fencing Tokens, automatic lock annexation
  * for stale processes, and heartbeat timers. Zero external npm dependencies.
  */

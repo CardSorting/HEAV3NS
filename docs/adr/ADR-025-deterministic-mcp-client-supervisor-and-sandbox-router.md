@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's Model Context Protocol client implementation (`tools/mcp_tool.py` — 7,753 LOC, 340 KB) into a typed, deterministic, zero-GC **Model Context Protocol (MCP) Client Supervisor & Sandbox Protocol Router ($\mathcal{K}_{\text{mcp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 7,750+ lines of untyped Python asyncio daemon threads, loose mutable globals, unmanaged child subprocesses, and unredacted credential leaks with typed JSON-RPC 2.0 streaming codecs, automated environment secret scrubbing, in-memory Broccolidb tool/resource substrates, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's Model Context Protocol client implementation (`tools/mcp_tool.py` — 7,753 LOC, 340 KB) into a typed, deterministic, allocation-bounded **Model Context Protocol (MCP) Client Supervisor & Sandbox Protocol Router ($\mathcal{K}_{\text{mcp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 7,750+ lines of untyped Python asyncio daemon threads, loose mutable globals, unmanaged child subprocesses, and unredacted credential leaks with typed JSON-RPC 2.0 streaming codecs, automated environment secret scrubbing, in-memory Broccolidb tool/resource substrates, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -30,11 +30,11 @@ Forensic inspection identified critical design and scalability bottlenecks:
 - Automatically scrubs sensitive environment variables (API keys, OAuth tokens, database credentials) before passing them to child MCP server processes.
 - Redacts bearer tokens and secrets from stderr logs and error messages returned to the model.
 
-### 3. Zero-GC In-Memory MCP Substrate (`BroccoliMcpSubstrate`)
+### 3. allocation-bounded In-Memory MCP Substrate (`BroccoliMcpSubstrate`)
 - Manages registered server configurations, live server statuses, discovered tools, resources, and prompts inside Broccolidb memory structures.
 - Tracks execution metrics (total calls, failed calls, active requests).
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`McpSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`McpSnapshotManager`)
 - Captures atomic snapshots of registered tools, active servers, and discovered resources at frame $t$ for sub-millisecond restoration ($<0.05\text{ ms}$).
 
 ### 5. Master MCP Client Supervisor Engine (`McpSupervisorEngine`)
@@ -61,7 +61,7 @@ src/
 │   └── mcp-client-tool-suite.ts          # Model tools (list_servers, call_tool, read_resource, get_prompt)
 ├── sessions/extensions/mcp/
 │   ├── broccoli-mcp-substrate.ts         # In-memory Broccolidb tool/resource substrate
-│   └── mcp-snapshot-manager.ts           # Frame-perfect binary snapshotting & O(1) state rewind
+│   └── mcp-snapshot-manager.ts           # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/mcp/
     └── mcp-supervisor-engine.ts          # Master lifecycle supervisor & schema transformer
 ```

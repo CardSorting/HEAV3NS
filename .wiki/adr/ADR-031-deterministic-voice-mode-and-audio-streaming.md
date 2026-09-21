@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling voice mode, unmanaged thread pools, and shell-subprocess audio engines (`tools/voice_mode.py` [2,380 LOC] + `tools/tts_tool.py` [4,500 LOC] + `tools/transcription_tools.py` [3,326 LOC] + `tools/wake_word.py` [1,400 LOC] + `tools/tts_streaming.py` [500 LOC] + `tools/tts_text_normalize.py` [350 LOC] — totaling **12,000+ LOC, 550+ KB**) into a typed, deterministic, zero-GC **Real-Time Voice Mode, Speech Perception & Audio Streaming Substrate ($\mathcal{K}_{\text{voice}}$ / Phase 79)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces unmanaged native thread pools, temporary disk files, and external host audio players (`afplay`, `ffplay`) with in-memory zero-GC RIFF WAV codecs, RMS signal energy VAD, Broccolidb audio ring buffers, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling voice mode, unmanaged thread pools, and shell-subprocess audio engines (`tools/voice_mode.py` [2,380 LOC] + `tools/tts_tool.py` [4,500 LOC] + `tools/transcription_tools.py` [3,326 LOC] + `tools/wake_word.py` [1,400 LOC] + `tools/tts_streaming.py` [500 LOC] + `tools/tts_text_normalize.py` [350 LOC] — totaling **12,000+ LOC, 550+ KB**) into a typed, deterministic, allocation-bounded **Real-Time Voice Mode, Speech Perception & Audio Streaming Substrate ($\mathcal{K}_{\text{voice}}$ / Phase 79)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces unmanaged native thread pools, temporary disk files, and external host audio players (`afplay`, `ffplay`) with in-memory allocation-bounded RIFF WAV codecs, RMS signal energy VAD, Broccolidb audio ring buffers, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -14,7 +14,7 @@ The Teacher agent implemented voice recording, transcription, and TTS across `to
 Forensic inspection revealed critical consistency and isolation issues:
 1. **Unbounded Native Thread Spawning & Global Process State**: `tools/voice_mode.py` and `tools/tts_tool.py` spawn multiple unmanaged `threading.Thread` and `ThreadPoolExecutor` instances with blocking `queue.Queue` loops to capture audio and stream chunks. If an audio stream stalls or a provider drops connection, these threads hang indefinitely, leaking memory and process handles.
 2. **Blocking Subprocess Execution of Host Audio Binaries**: Audio playback and conversion execute shell subprocesses (`afplay`, `aplay`, `ffplay`, `ffmpeg`, `mpv`) with temporary files on disk (`/tmp/*.wav`, `/tmp/*.mp3`), writing unencrypted temporary audio files without sandboxing or cleanup guarantees.
-3. **No In-Memory Audio Streaming / Zero-GC PCM Buffer Substrate**: Raw binary audio PCM chunks and waveforms are passed through unbounded Python lists, strings, and temporary file disk I/O, causing high GC allocation and disk wear.
+3. **No In-Memory Audio Streaming / allocation-bounded PCM Buffer Substrate**: Raw binary audio PCM chunks and waveforms are passed through unbounded Python lists, strings, and temporary file disk I/O, causing high GC allocation and disk wear.
 4. **Lack of Snapshot-Compatible Voice State & Deterministic Synthesis**: Voice mode session parameters (active provider, voice ID, sample rate, vad threshold, streaming chunks, transcription history) are kept in module-global Python variables (`_VOICE_STATE`, `_STREAM_CACHE`). State cannot be rewound or restored in Broccolidb.
 5. **Untyped Audio Headers & Loose String Encodings**: Loose dictionaries and ad-hoc string formatting for speech synthesis parameters, audio headers, and voice activity detection.
 
@@ -23,7 +23,7 @@ Forensic inspection revealed critical consistency and isolation issues:
 ## 2. Architectural Decision (The What)
 
 ### 1. Deterministic Audio Binary Codec (`DeterministicAudioCodec`)
-- In-memory zero-GC RIFF WAV binary encoder and decoder for 16-bit linear PCM mono/stereo.
+- In-memory allocation-bounded RIFF WAV binary encoder and decoder for 16-bit linear PCM mono/stereo.
 - Root-Mean-Square (RMS) signal energy calculation and dBFS voice activity detector (VAD).
 - Linear interpolation audio resampler (e.g. 48kHz to 16kHz downsampling).
 - Synthesized audio tone generator for verification.
@@ -33,7 +33,7 @@ Forensic inspection revealed critical consistency and isolation issues:
 - In-memory Broccolidb storage tracking voice session state, active profiles, circular audio byte ring buffers, and transcript history.
 - Built-in multi-provider voice registry (Edge, OpenAI, ElevenLabs, Groq, Mistral).
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`VoiceSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`VoiceSnapshotManager`)
 - Captures atomic snapshots of voice session states, active profiles, and audio buffer pointers at frame $t$, restoring state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Master Real-Time Voice Supervisor (`VoiceSpeechSupervisor`)
@@ -55,11 +55,11 @@ src/
 ├── core/contracts/
 │   └── voice.contracts.ts                 # AudioFormat, AudioSampleRate, VoiceProvider, VoiceProfile, AudioChunk, TranscriptionResult, SpeechSynthesisResult, VadDecision, VoiceSessionState
 ├── tooling/extensions/voice/
-│   ├── deterministic-audio-codec.ts       # Zero-GC RIFF WAV/PCM binary codec, RMS energy VAD engine, and downsampling resynthesizer
+│   ├── deterministic-audio-codec.ts       # allocation-bounded RIFF WAV/PCM binary codec, RMS energy VAD engine, and downsampling resynthesizer
 │   └── voice-speech-tool-suite.ts         # Model tools (voice_transcribe, voice_synthesize, voice_list_profiles, voice_detect_activity, voice_session_status)
 ├── sessions/extensions/voice/
 │   ├── broccoli-voice-substrate.ts        # In-memory Broccolidb audio chunk ring buffer, transcript store, and profile registry
-│   └── voice-snapshot-manager.ts          # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── voice-snapshot-manager.ts          # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/voice/
     └── voice-speech-supervisor.ts         # Master voice supervisor coordinating STT/TTS synthesis, PTT recording, and VAD streams
 ```

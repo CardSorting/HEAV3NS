@@ -34,5 +34,5 @@ However, a critical gap remained: edit approvals in ACP were evaluated purely on
    - Advanced repository evolution baseline to **Pass 195 / 598 components**.
 
 ## Consequences
-- **Positive**: IDE clients receive real-time adversarial security feedback; operators can review and approve code mutations with full provenance guarantees; zero subshell execution preserves extreme performance.
+- **Positive**: IDE clients receive real-time adversarial security feedback; operators can review and approve code mutations with reviewable provenance records; the described path avoids subshell execution, while performance remains workload-specific.
 - **Verification**: All 8 suites in `scripts/validate-acp-industrialization.ts` pass cleanly alongside repository forensic audits.

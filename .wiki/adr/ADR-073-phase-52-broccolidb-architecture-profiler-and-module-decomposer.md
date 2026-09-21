@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 52 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 52 completes the zero-dependency Osmosis distillation of workspace architectural mode resolution, Joy-Zoning header compliance scoring, steering threshold checks, and module decomposition refactoring planning from `/Users/bozoegg/Downloads/codemarie-new/src/core/policy/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 52 completes the zero-dependency Osmosis distillation of workspace architectural mode resolution, Joy-Zoning header compliance scoring, steering threshold checks, and module decomposition refactoring planning from `external codemarie-new source workspace/src/core/policy/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Workspace Architecture Profiler (`BroccoliWorkspaceArchitectureProfiler`)**: Workspace architectural mode detection (`detectProfile`), canonical layer compliance scoring, and Joy-Zoning steering threshold checks (`maxFunctionLines`, `maxClassMethods`) without third-party dependencies. Directly embedded inside `BroccoliAxiomVerifier`.

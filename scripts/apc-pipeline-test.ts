@@ -76,7 +76,7 @@ async function runRealPipelineTest() {
 			tool_call_id: `call_${turn}`,
 			content:
 				`\u001b[32m[SUCCESS]\u001b[0m Tool output for step ${turn}:\n` +
-				`File: /Users/bozoegg/Downloads/codemarie-new/src/core/api/providers/cerebras.ts\n` +
+				`File: external source workspace/codemarie-new/src/core/api/providers/cerebras.ts\n` +
 				`    at node:internal/main/run_main_module:10\n`.repeat(4) +
 				`Status 200 OK\nStatus 200 OK\nStatus 200 OK\n`,
 		} as unknown as DietCodeStorageMessage)

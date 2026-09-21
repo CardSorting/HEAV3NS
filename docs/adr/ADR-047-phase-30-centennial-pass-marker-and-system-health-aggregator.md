@@ -13,7 +13,7 @@ Phase 30 marks the **100th Centennial Evolutionary Pass Milestone** of the **LUM
 
 In this phase (Passes 100–102), LUMI-NEW ingested century milestone certification tracking concepts and system-wide diagnostic aggregation concepts from `pi-main/packages/coding-agent/src/core/health.ts` and `packages/utils`.
 
-These capabilities are absorbed into single-responsibility monolithic extension classes (`CentennialPassMarker` and `SystemHealthAggregator`), certifying 100+ passes of zero-GC slab memory & deterministic game engine evolution without external monorepo dependencies.
+These capabilities are absorbed into single-responsibility monolithic extension classes (`CentennialPassMarker` and `SystemHealthAggregator`), certifying 100+ passes of allocation-bounded slab memory & deterministic game engine evolution without external monorepo dependencies.
 
 ---
 

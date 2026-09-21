@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 42 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 42 completes the zero-dependency Osmosis distillation of repair mutation execution and post-edit verification pipelines from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 42 completes the zero-dependency Osmosis distillation of repair mutation execution and post-edit verification pipelines from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Repair Mutation Executor (`BroccoliRepairMutationExecutor`)**: Sole authorized repair directive mutation path (`applyDirective`, `execute`), executing multi-step repair plans transactionally with trace tracking (`appliedSteps`, `skippedSteps`). Directly embedded inside `AgentLoopHarness`.

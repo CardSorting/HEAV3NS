@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 124: Zero-Dependency Broccoli Epistemic Reasoning Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/ReasoningService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/ReasoningService.ts).
  * Implements Epistemic PageRank (EP-Rank) over knowledge graph nodes with damping factor score propagation,
  * contradiction edge decay, and logical contradiction detection. Zero external npm dependencies.
  */

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing resilient HTTP retry utilities (`packages/utils/src/fetch-retry.ts`), 64-bit Snowflake ID generation (`packages/utils/src/snowflake.ts`), and performing Phase 10 master subsystem synthesis (Passes 40–42) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing resilient HTTP retry utilities (`packages/utils/src/fetch-retry.ts`), 64-bit Snowflake ID generation (`packages/utils/src/snowflake.ts`), and performing Phase 10 master subsystem synthesis (Passes 40–42) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 139: Zero-Dependency Broccoli Rollback Coordinator
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/RollbackCoordinator.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/RollbackCoordinator.ts).
  * Captures pre-edit file content snapshots before file mutations and executes multi-file atomic
  * transaction restorations upon edit failures or abort signals. Zero external npm dependencies.
  */

@@ -36,7 +36,7 @@ LUMI resolves these challenges with a **5-Layer Deterministic Tool Execution Eng
 │   └── ToolExecutionCache (Deterministic SHA-256 Keying & Path Invalidation)     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 4: Parallel Scheduling & Topological DAG Execution                        │
-│   ├── ToolExecutionScheduler (Concurrent Read Waves: ~2.9x Speedup)             │
+│   ├── ToolExecutionScheduler (Concurrent Read Waves; workload-specific measure) │
 │   └── ToolDependencyGraphPlanner (Kahn's Topological Sort & Piped Args: $node1)│
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 5: Output Intelligence, Sentinel Safety & Atomic Rollback Substrate       │
@@ -89,7 +89,7 @@ If an argument remains invalid after all 4 passes, `ToolErrorAutoHealer` generat
 
 ### Parallel Concurrency Scheduling (`ToolExecutionScheduler`)
 When an agent requests multiple tool calls in a single turn, the scheduler partitions the batch into sequential waves:
-- **Concurrent Read Waves**: Read-only tools (`view_file`, `grep_search`, `list_dir`, `file_info`) are executed simultaneously via `Promise.allSettled`, yielding a **~2.9x concurrency speedup**.
+- **Concurrent Read Waves**: Read-only tools (`view_file`, `grep_search`, `list_dir`, `file_info`) are executed simultaneously via `Promise.allSettled`; any speedup depends on workload, filesystem, and host.
 - **Serialized Mutation Waves**: Mutating tools (`write_file`, `replace_file_content`, `delete_file`) are executed sequentially with transactional barrier locks to prevent race conditions.
 
 ### Microsecond Read Caching (`ToolExecutionCache`)
@@ -253,5 +253,4 @@ LUMI equips agents with sub-millisecond, zero-blocker developer tools partitione
 - **`inspect_file_history`**: Chronological mutation journal history querying past tool modifications and diffs.
 - **`inspect_monolith_health`**: Verifies Grand Monolith composition (591/591 components, OPTIMAL cohesion, slab integrity).
 - **`export_session_state`**: Diagnostic JSON snapshot of session variables, journal transaction counts, cache stats, and latency metrics.
-- **`optimize_memory_slab`**: Verifies zero-GC contiguous 16MB slab memory buffer health and runtime GC stats.
-
+- **`optimize_memory_slab`**: Verifies allocation-bounded contiguous 16MB slab memory buffer health and runtime GC stats.

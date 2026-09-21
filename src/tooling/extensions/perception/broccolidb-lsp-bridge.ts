@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 130: Zero-Dependency Broccoli LSP Protocol Bridge
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/LspService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/LspService.ts).
  * Formats JSON-RPC LSP protocol requests (initialize, textDocument/definition, textDocument/hover),
  * manages language server executable maps, and indexes diagnostic notifications. Zero external npm dependencies.
  */

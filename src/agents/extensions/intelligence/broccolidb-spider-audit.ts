@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 122: Zero-Dependency Broccoli Spider Forensic Audit Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/SpiderService.ts, core/policy/SpiderEngine.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/SpiderService.ts, core/policy/SpiderEngine.ts).
  * Performs 2-phase structural scoping audits, ghost symbol detection, file physical reality checks
  * (virtual VFS topology vs real disk stat), and topology link graph verification. Zero external npm dependencies.
  */

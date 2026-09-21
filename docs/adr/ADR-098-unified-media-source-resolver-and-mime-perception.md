@@ -21,7 +21,7 @@ In multimodal AI agents handling image analysis, video understanding, OCR, and g
    - In-memory Broccolidb repository tracking resolved media payloads, MIME distributions, and hash audit trails with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Unified Media Source Resolver and Magic-Byte Perception Engine for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Unified Media Source Resolver and Magic-Byte Perception Engine for **LUMI-JOY**:
 
 1. **`DeterministicMediaResolver` ([deterministic-media-resolver.ts](../../src/agents/extensions/media_source/deterministic-media-resolver.ts))**:
    - **Magic-Byte Sniffer**: High-throughput header inspector identifying genuine MIME types and media categories (`image`, `video`, `unknown`).
@@ -35,7 +35,7 @@ We implemented a zero-GC, typed, frame-perfect Unified Media Source Resolver and
    - In-memory Broccolidb repository storing resolved media descriptors, cached data payloads, and resolution audit trails.
 
 4. **`MediaSourceSnapshotManager` ([media-source-snapshot-manager.ts](../../src/sessions/extensions/media_source/media-source-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`MediaSourceToolSuite` ([media-source-tool-suite.ts](../../src/tooling/extensions/media_source/media-source-tool-suite.ts))**:
    - Exposes 5 model tools:

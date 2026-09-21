@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 188: Zero-Dependency Broccoli Shell Environment Resolver
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/utils/shell.ts.
+ * Lifted from external source workspace/codemarie-new/src/utils/shell.ts.
  * Platform-aware shell path detection (detectDefaultShell), system shell profile map generator (getSystemShellProfiles),
  * and terminal execution argument composition for macOS, Linux, and Windows. Zero external npm dependencies.
  */

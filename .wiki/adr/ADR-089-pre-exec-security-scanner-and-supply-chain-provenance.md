@@ -13,7 +13,7 @@ In high-autonomy agent execution environments (`tools/tirith_security.py`, `tool
 6. **Supply-Chain Integrity**: External downloaded binaries require SHA-256 checksum and Cosign GitHub Actions workflow release identity verification.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Pre-Exec Security Scanner, Supply-Chain Provenance Verification, and Pre-Flight Threat Gate for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Pre-Exec Security Scanner, Supply-Chain Provenance Verification, and Pre-Flight Threat Gate for **LUMI-JOY**:
 
 1. **`DeterministicPreflightScanner` ([deterministic-preflight-scanner.ts](../../src/agents/extensions/preflight_scanner/deterministic-preflight-scanner.ts))**:
    - **Content-Level Pattern Rules**: Detects pipe-to-interpreter, base64 payload decoders, dangerous chmod permissions, terminal escape injections, credential exfiltration, and suspicious raw downloaders.
@@ -27,7 +27,7 @@ We implemented a zero-GC, typed, frame-perfect Pre-Exec Security Scanner, Supply
    - In-memory Broccolidb repository storing scan history, active findings, security policy configurations, and circuit breaker metrics.
 
 4. **`PreflightSnapshotManager` ([preflight-snapshot-manager.ts](../../src/sessions/extensions/preflight_scanner/preflight-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`PreflightToolSuite` ([preflight-tool-suite.ts](../../src/tooling/extensions/preflight_scanner/preflight-tool-suite.ts))**:
    - Exposes 5 model tools:

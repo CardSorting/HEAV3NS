@@ -46,4 +46,4 @@ To maintain the **Near-Zero** status of the substrate, follow these guidelines w
 4.  **Async Ghost-Sync**: Substrate persistence is managed asynchronously via the Ghost Memory layer to ensure zero impact on the main agent loop.
 
 ---
-*For general architecture, see [SPIDER.md](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/SPIDER.md).*
+*For general architecture, see [SPIDER.md](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md).*

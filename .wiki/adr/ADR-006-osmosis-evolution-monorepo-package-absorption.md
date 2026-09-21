@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing core production packages from teacher monorepo (`/Users/bozoegg/Downloads/pi-main/packages/*`) including line anchor hashing (`hashline`), schema parameter validation (`omptype`), file session backends (`session-backends`), and protocol envelope encoding (`protocol`) while preserving the strict 5-class cap per tier.
+- **Technical Story**: Absorbing core production packages from teacher monorepo (`external pi-main source workspace/packages/*`) including line anchor hashing (`hashline`), schema parameter validation (`omptype`), file session backends (`session-backends`), and protocol envelope encoding (`protocol`) while preserving the strict 5-class cap per tier.
 
 ---
 
@@ -18,10 +18,10 @@ Deep investigation of `pi-main/packages/*` revealed 4 key architectural packages
 
 ### Reinterpretation for LUMI-NEW Monolith
 Rather than adding extra micro-packages or breaking class caps, `LUMI-NEW` enriched existing monolithic classes:
-- [Hands.applyAnchoredEdit()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/hands.ts#L61) in `src/tooling/hands.ts` (`hashline`).
-- [ToolRegistry.validateToolArgs()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/tool-registry.ts#L44) in `src/tooling/tool-registry.ts` (`omptype`).
-- [SessionStore.saveToFile() / .loadFromFile()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-store.ts#L44) in `src/sessions/session-store.ts` (`session-backends`).
-- [Ears.formatJsonRpcEvent()](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L52) in `src/tooling/ears.ts` (`protocol`).
+- [Hands.applyAnchoredEdit()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/hands.ts#L61) in `src/tooling/hands.ts` (`hashline`).
+- [ToolRegistry.validateToolArgs()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/tool-registry.ts#L44) in `src/tooling/tool-registry.ts` (`omptype`).
+- [SessionStore.saveToFile() / .loadFromFile()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-store.ts#L44) in `src/sessions/session-store.ts` (`session-backends`).
+- [Ears.formatJsonRpcEvent()](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L52) in `src/tooling/ears.ts` (`protocol`).
 
 ---
 

@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 53 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 53 completes the zero-dependency Osmosis distillation of AST-level policy enforcement themes (`strict`, `relaxed`, `safety`), exception rule registration, and JoyRide hot-path telemetry diagnostic reporting from `/Users/bozoegg/Downloads/codemarie-new/src/core/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 53 completes the zero-dependency Osmosis distillation of AST-level policy enforcement themes (`strict`, `relaxed`, `safety`), exception rule registration, and JoyRide hot-path telemetry diagnostic reporting from `external codemarie-new source workspace/src/core/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli TSP Policy Plugin (`BroccoliTspPolicyPlugin`)**: Configurable enforcement theme management (`strict`, `relaxed`, `safety`), exception rule registry (`addExceptionRule`), and real-time architectural policy rule evaluator without third-party dependencies. Directly embedded inside `BroccoliAxiomVerifier`.

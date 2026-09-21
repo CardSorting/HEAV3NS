@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 38 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 38 completes the zero-dependency distillation of `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 38 completes the zero-dependency distillation of `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Epistemic Reasoning Engine (`BroccoliEpistemicReasoningEngine`)**: Epistemic PageRank (EP-Rank) calculation over knowledge graph nodes with damping factor score propagation, hub score calculation, and contradiction decay without third-party libraries. Directly embedded inside `KnowledgeGraphSubstrate.computeEpistemicPageRank()`.

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's heavy messaging gateway (`gateway/run.py` ~1.46 MB, 53 files in `gateway/`) into a typed, deterministic **Unified Multi-Platform Messaging Gateway Subsystem ($\mathcal{K}_{\text{gw}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces sprawling uncoordinated asyncio loops, fragmented platform adapters, unbounded message queue buffering, and out-of-process memory leaks with typed platform adapters (Telegram, Discord, Slack, Webhook), bounded delivery queue backpressure (500 max capacity), zero-GC Broccolidb channel session slabs, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's heavy messaging gateway (`gateway/run.py` ~1.46 MB, 53 files in `gateway/`) into a typed, deterministic **Unified Multi-Platform Messaging Gateway Subsystem ($\mathcal{K}_{\text{gw}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces sprawling uncoordinated asyncio loops, fragmented platform adapters, unbounded message queue buffering, and out-of-process memory leaks with typed platform adapters (Telegram, Discord, Slack, Webhook), bounded delivery queue backpressure (500 max capacity), allocation-bounded Broccolidb channel session slabs, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -34,10 +34,10 @@ Forensic evaluation revealed major architectural problems:
 ### 3. Bounded Delivery Queue & Backpressure (`GatewayDeliveryLedger`)
 - Enforces strict 500-capacity bounded ring buffer with automatic oldest-item pruning and delivery receipt tracking.
 
-### 4. Zero-GC Broccolidb Channel Session Substrate (`BroccoliGatewaySubstrate`)
+### 4. allocation-bounded Broccolidb Channel Session Substrate (`BroccoliGatewaySubstrate`)
 - Stores active channel sessions, pairing keys, and interaction statistics directly in Broccolidb with $<0.5\ \mu\text{s}$ query latency.
 
-### 5. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`GatewaySnapshotManager`)
+### 5. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`GatewaySnapshotManager`)
 - Restores channel registrations, pending deliveries, and message histories in $<0.1\text{ ms}$.
 
 ### 6. Event-Driven Dispatcher & Model Tools (`GatewayDispatcherEngine`, `GatewayToolSuite`)
@@ -62,8 +62,8 @@ src/
 │   └── gateway-tool-suite.ts               # Model tools (broadcast_message, list_channels, inspect_session, delivery_status)
 ├── sessions/extensions/gateway/
 │   ├── gateway-delivery-ledger.ts          # Bounded delivery queue (max 500) with backpressure
-│   ├── broccoli-gateway-substrate.ts       # Zero-GC in-memory cache of channel sessions in Broccolidb
-│   └── gateway-snapshot-manager.ts         # Frame-perfect binary snapshotting & O(1) state rewind
+│   ├── broccoli-gateway-substrate.ts       # allocation-bounded in-memory cache of channel sessions in Broccolidb
+│   └── gateway-snapshot-manager.ts         # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/gateway/
     └── gateway-dispatcher-engine.ts        # Event-driven ingress router & egress streaming dispatcher
 ```
@@ -72,7 +72,7 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Dedicated Test Suite**: `scripts/validate-messaging-gateway.ts` validates all 8 test suites spanning ingress parsing, platform chunking, HMAC verification, bounded backpressure, in-memory caching, binary rollback, model tools, and micro-benchmarks.
 - **Performance SLA**: 1,000 message dispatches complete in $2.685\text{ ms}$ ($2.685\ \mu\text{s}$ per dispatch).
 - **Monolith Graduation**: Monolith graduates cleanly to **194 components**.

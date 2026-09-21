@@ -10,11 +10,11 @@ LUMI's **SOUL** (Identity, Ethos, Voice) and **SKILLS** (Procedural Capability, 
 3. **Approachable Creation Flows for Non-Technical Users**:
    - **One-Shot Natural Language Forge**: Synthesize complete manifests from free-form prompt descriptions.
    - **Interactive 5-Step Guided Wizard Questionnaire**: Step-by-step multiple-choice customizer.
-   - **Modular Power-Up Add-On Packs**: 1-click feature extensions (e.g. *Zero-GC Slabs*, *Retry Resilience*, *Forensic Audit Logs*, *AST Input Firewall*).
+   - **Modular Power-Up Add-On Packs**: 1-click feature extensions (e.g. *allocation-bounded Slabs*, *Retry Resilience*, *Forensic Audit Logs*, *AST Input Firewall*).
    - **Zero-Boilerplate Clone & Modify (Forking)**: Clone existing profiles/skills and customize rules without touching raw boilerplate.
    - **Proactive Linters with 1-Click Auto-Fix ("Doctors")**: Continuous health scoring (0–100) and automatic remediation of missing instructions or rule mismatches.
-4. **Deterministic Kernel Guarantees**:
-   - Zero-GC Contiguous Slab Memory Invariants (16 MB slab).
+4. **Deterministic Kernel Checks**:
+   - allocation-bounded Contiguous Slab Memory Invariants (16 MB slab).
    - Cryptographic SHA-256 integrity verification on all manifests.
    - Sub-millisecond turn tick latencies (< 0.15 ms) and 8,000+ frames/sec throughput.
    - O(1) state snapshotting and frame rollback (< 0.05 ms SLA).
@@ -89,7 +89,7 @@ const mentorSoul = substrate.forgeCustomSoul(
 
 // SKILL Synthesis
 const perfSkill = skillSubstrate.forgeCustomSkill(
-  "A TypeScript performance auditor that asserts 16 MB slab invariants, checks zero-GC on hot loops, and reports frame latencies.",
+  "A TypeScript performance auditor that asserts 16 MB slab invariants, checks allocation-bounded on hot loops, and reports frame latencies.",
   { tier: "sovereign" }
 );
 ```
@@ -136,7 +136,7 @@ Power-up packs allow 1-click feature upgrades without rewriting instructions:
 | Power-Up ID | Name | Subsystem | Description |
 |---|---|---|---|
 | `retry_resilience` | Retry Resilience & Fault Tolerance | Both | Exponential backoff, jitter, and automatic recovery handlers. |
-| `zero_gc_buffer` | Zero-GC Memory Slab Buffering | Both | 16 MB typed array slabs and zero dynamic heap allocations on hot loops. |
+| `zero_gc_buffer` | allocation-bounded Memory Slab Buffering | Both | 16 MB typed array slabs and zero dynamic heap allocations on hot loops. |
 | `audit_logging` | Forensic Audit Logging | Both | Tamper-evident transaction logs and SHA-256 state tracking. |
 | `adversarial_security` | Adversarial Input Firewall | Both | Path traversal sanitization and AST safety boundaries. |
 | `rate_limit_guard` | Token Budget & Concurrency Guard | Both | Leaky-bucket throttling and maximum turn execution ceilings. |
@@ -294,9 +294,9 @@ The `MonolithGatewayServer` exposes JSON-RPC 2.0 endpoints for all operations:
 
 The entire system is continuously validated against strict enterprise performance invariants:
 
-1. **Zero-GC Contiguous Slab**: Exactly 16,777,216 bytes pre-allocated; zero runtime allocations on hot loops.
+1. **allocation-bounded Contiguous Slab**: Exactly 16,777,216 bytes pre-allocated; zero runtime allocations on hot loops.
 2. **Sub-Millisecond Turn Tick Latency**: Turn execution time < 0.15 ms (SLA: < 1.0 ms).
 3. **Execution Throughput**: Exceeds 8,500 frames/sec (SLA: >= 1,000 frames/sec).
-4. **State Rewind Latency**: Frame-perfect rollback in 0.01 ms p95 (SLA: < 0.1 ms).
+4. **State Rewind Latency**: checkpointed rollback in 0.01 ms p95 (SLA: < 0.1 ms).
 5. **Zero Barrel Imports (ADR-012)**: 0 barrel files across the repository.
 6. **Base Class Immutability**: All base classes locked and verified intact.

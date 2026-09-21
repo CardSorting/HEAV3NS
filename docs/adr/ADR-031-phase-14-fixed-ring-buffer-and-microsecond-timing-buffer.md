@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing pre-allocated circular ring buffer data structures (`packages/utils/src/ring.ts`), debounced microsecond telemetry timing buffers (`packages/utils/src/timing-buffer.ts`), and performing Phase 14 master subsystem synthesis (Passes 52–54) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing pre-allocated circular ring buffer data structures (`packages/utils/src/ring.ts`), debounced microsecond telemetry timing buffers (`packages/utils/src/timing-buffer.ts`), and performing Phase 14 master subsystem synthesis (Passes 52–54) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

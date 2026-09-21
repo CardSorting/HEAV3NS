@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing system directory resolution (`packages/utils/src/dirs.ts`), executable PATH lookup (`packages/utils/src/which.ts`), and performing Phase 12 master subsystem synthesis (Passes 46–48) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing system directory resolution (`packages/utils/src/dirs.ts`), executable PATH lookup (`packages/utils/src/which.ts`), and performing Phase 12 master subsystem synthesis (Passes 46–48) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

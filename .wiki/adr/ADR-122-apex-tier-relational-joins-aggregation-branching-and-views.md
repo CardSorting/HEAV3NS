@@ -2,7 +2,7 @@
 
 - **Status**: Accepted & Solidified
 - **Date**: August 16, 2026
-- **Authors**: William Andrew Cruz & Antigravity Autonomous Agent
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Supercedes**: Zenith-Tier Reactive Tables in ADR-121
 - **Scope**: Substrate & Tooling Subsystems (`src/sessions/extensions/substrate/broccolidb-*.ts`, `src/core/contracts/broccolidb.contracts.ts`, `src/tooling/extensions/database/database-tools.ts`)
 
@@ -12,7 +12,7 @@
 
 In ADR-120 and ADR-121, LUMI-NEW introduced the zero-dependency hybrid BroccoliDB kernel ($\mathcal{K}_{\text{broccoli}}$) and Zenith-tier multi-modal indexing. While single-table queries and point lookups operated at sub-microsecond latency ($<0.5\ \mu\text{s}$), enterprise agent workflows required:
 1. **Relational Links & Join Graphs**: Navigating associations between domain entities (e.g., `Task` $\to$ `Goal`, `Card` $\to$ `Swimlane`) with foreign-key referential integrity safeguards (`CASCADE`, `SET_NULL`, `RESTRICT`).
-2. **Multi-Dimensional Statistical Aggregations**: Computing groupings, statistical accumulators (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`), and `HAVING` predicate filters in a single zero-GC pass.
+2. **Multi-Dimensional Statistical Aggregations**: Computing groupings, statistical accumulators (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`), and `HAVING` predicate filters in a single allocation-bounded pass.
 3. **Git-for-Data Table Branching & Isolated Worktrees**: Enabling agents to fork Copy-on-Write branches (e.g. `main` $\to$ `experimental-feature`), make speculative mutations, test hypotheses, and execute 3-way merge conflict resolution.
 4. **Action-Level Undo / Redo History**: Granular microsecond step-back and step-forward time-travel per table.
 5. **Time-To-Live (TTL) & Ephemeral Record Expiration**: Native timer queues for temporary locks, session tokens, and caching entries without manual cleanup loops.
@@ -81,6 +81,6 @@ We have superceded the database kernel and table engine to the **Apex Tier** ($\
 
 ## 3. Consequences & Verification
 
-- **Pure TypeScript Substrate**: 100% pure TypeScript utilizing Node.js built-ins. Zero external C++ native binaries.
+- **Pure TypeScript Substrate**: TypeScript utilizing Node.js built-ins. Zero external C++ native binaries.
 - **Microsecond SLAs**: Relational joins resolve in $<1.5\ \mu\text{s}$; statistical aggregations execute in $<0.2\text{ ms}$ for thousands of records.
 - **Verification**: Validated via `scripts/validate-broccolidb-apex-tier.ts` (all 10 test suites passed 100%).

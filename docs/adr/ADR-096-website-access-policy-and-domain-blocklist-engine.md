@@ -21,7 +21,7 @@ In agentic web operations (web searching, web page scraping, headless browser au
    - Tracks active rules, access evaluation history, and block rate metrics with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Website Access Policy Engine and Domain Wildcard Matching Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Website Access Policy Engine and Domain Wildcard Matching Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicWebsitePolicy` ([deterministic-website-policy.ts](../../src/agents/extensions/website_policy/deterministic-website-policy.ts))**:
    - **URL/Host Normalizer**: Cleans domains, removes protocols, paths, and `www.` prefixes.
@@ -35,7 +35,7 @@ We implemented a zero-GC, typed, frame-perfect Website Access Policy Engine and 
    - In-memory Broccolidb repository storing active policy rules, access decision audit trails, and block statistics.
 
 4. **`WebsitePolicySnapshotManager` ([website-policy-snapshot-manager.ts](../../src/sessions/extensions/website_policy/website-policy-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`WebsitePolicyToolSuite` ([website-policy-tool-suite.ts](../../src/tooling/extensions/website_policy/website-policy-tool-suite.ts))**:
    - Exposes 5 model tools:

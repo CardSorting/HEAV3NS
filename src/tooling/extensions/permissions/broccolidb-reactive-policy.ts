@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 173: Zero-Dependency Broccoli Reactive Policy Observer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/ReactivePolicyObserver.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/ReactivePolicyObserver.ts.
  * Monitors real-time tool execution streams, inspecting file mutation payloads to provide proactive
  * Joy-Zoning warnings (cross-layer imports, I/O in domain) before write execution completes. Zero external npm dependencies.
  */

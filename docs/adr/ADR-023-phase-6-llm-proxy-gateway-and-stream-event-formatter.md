@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing LLM proxy middleware (`packages/agent/src/proxy.ts`), response text stream chunking (`packages/agent/src/stream-fn.ts`), and performing Phase 6 master subsystem synthesis (Passes 28–30) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing LLM proxy middleware (`packages/agent/src/proxy.ts`), response text stream chunking (`packages/agent/src/stream-fn.ts`), and performing Phase 6 master subsystem synthesis (Passes 28–30) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

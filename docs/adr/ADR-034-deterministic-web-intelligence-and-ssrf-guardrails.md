@@ -11,19 +11,19 @@ In ancestral architectures such as `hermes-agent-main` (`tools/web_tools.py`, `t
 4. **Lack of Snapshot-Compatible Web Caching**: Extracted page documents and search results were discarded or untracked across session state snapshots, breaking frame rewinds and wasting tokens.
 
 ## Decision
-We implemented a zero-GC, typed in-memory **Web Intelligence, Semantic Extraction & SSRF Guardrail Substrate ($\mathcal{K}_{\text{web}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, typed in-memory **Web Intelligence, Semantic Extraction & SSRF Guardrail Substrate ($\mathcal{K}_{\text{web}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicWebEngine`** (`src/tooling/extensions/web/deterministic-web-engine.ts`):
    - Strict CIDR-based private IP and cloud instance metadata rejection (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `100.64.0.0/10`, `[::1]`, `fe80::/10`, `fc00::/7`).
    - Dangerous protocol scheme firewall (`file:`, `gopher:`, `dict:`, `ftp:`, `data:`, `javascript:`).
-   - Zero-GC semantic HTML-to-Markdown parser stripping scripts, styles, navigation, headers, footers, iframes, and svg tags into clean structural Markdown with metadata extraction.
+   - allocation-bounded semantic HTML-to-Markdown parser stripping scripts, styles, navigation, headers, footers, iframes, and svg tags into clean structural Markdown with metadata extraction.
    - Deterministic BM25 ranker over cached document extractions for offline simulation.
 
 2. **`BroccoliWebSubstrate`** (`src/sessions/extensions/web/broccoli-web-substrate.ts`):
    - In-memory Broccolidb document storage, search query caches, and repository domain security policies.
 
 3. **`WebSnapshotManager`** (`src/sessions/extensions/web/web-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.003\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.003\text{ ms}$ observed).
 
 4. **`WebIntelligenceSupervisor`** (`src/agents/extensions/web/web-intelligence-supervisor.ts`):
    - Master coordinator enforcing URL security verification, query ranking, semantic content extraction, and readability filters.

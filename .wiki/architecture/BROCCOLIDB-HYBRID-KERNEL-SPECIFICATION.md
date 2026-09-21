@@ -2,7 +2,7 @@
 
 - **Document Version**: `1.0.0`
 - **Architectural Phase**: Phase 71 / ADR-120
-- **Status**: Authoritative & Solidified
+- **Status**: Design record; verify against the current implementation and baseline
 - **Primary Implementations**:
   - Contracts: [`src/core/contracts/broccolidb.contracts.ts`](../../src/core/contracts/broccolidb.contracts.ts)
   - Kernel Facade: [`src/sessions/extensions/substrate/broccolidb-kernel.ts`](../../src/sessions/extensions/substrate/broccolidb-kernel.ts)
@@ -20,17 +20,17 @@
 ### 1.1 The Volatile-Storage Bottleneck
 In early agent runtime iterations, ephemeral subsystem state (goals, tasks, profiles, reasoning trajectories, kanban DAGs, epistemic facts, transcripts, skill nodes, credential pools, and cron schedules) was held strictly in volatile in-memory heap structures (`Map<string, T>`).
 
-While raw in-memory operation delivers sub-microsecond query performance ($< 0.5\ \mu\text{s}$), it suffers from three critical architectural vulnerabilities:
+While raw in-memory operation may be fast for small in-process workloads, it suffers from three critical architectural vulnerabilities:
 1. **Crash & Abort Volatility**: An unhandled exception, Node.js process termination (`SIGKILL`), or system reboot wipes 100% of unexported session state and evolutionary agent milestones.
-2. **AST & Payload Memory Bloat**: Holding large multi-megabyte parse trees, tool execution stdout/stderr captures, and context compaction envelopes directly inside the JavaScript V8 heap triggers severe Garbage Collection (GC) pauses ($> 15\text{ ms}$), degrading deterministic turn tick throughput ($SLA < 1.0\text{ ms}$).
-3. **The Native C++ Dependency Hazard**: The teacher codebase (`/Users/bozoegg/Downloads/codemarie-new/broccolidb`) addressed persistence using SQLite with `better-sqlite3` and `kysely`. Injecting native C++ compiled bindings into LUMI-NEW violates the **Zero-Dependency Native Substrate Principle**, breaking hermetic portability across environments without C++ build toolchains (Python, make, gcc, clang).
+2. **AST & Payload Memory Bloat**: Holding large parse trees, tool execution captures, and context envelopes in the JavaScript V8 heap can increase memory pressure and pause time; measure the actual workload instead of treating a fixed pause or SLA as universal.
+3. **The Native C++ Dependency Hazard**: The teacher codebase (`external codemarie-new source workspace/broccolidb`) addressed persistence using SQLite with `better-sqlite3` and `kysely`. Injecting native C++ compiled bindings into LUMI-NEW violates the **Zero-Dependency Native Substrate Principle**, breaking hermetic portability across environments without C++ build toolchains (Python, make, gcc, clang).
 
 ### 1.2 The Hybrid Architectural Solution
 LUMI-NEW resolves this trilemma through **$\mathcal{K}_{\text{broccoli}}$: The Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel**. 
 
-Built with **100% pure TypeScript** using only Node.js standard built-ins (`node:fs/promises`, `node:crypto`, `node:zlib`, `node:async_hooks`, `node:path`), $\mathcal{K}_{\text{broccoli}}$ synthesizes:
-- **L1 Hot In-Memory Reactive Tables**: Sub-microsecond synchronous CRUD and multi-map secondary indexing.
-- **L2 Crash-Safe Write-Ahead Log (WAL)**: Asynchronous micro-batched write coalescing ($20\text{ms}$ ring buffer), monotonic cryptographic SHA-256 frame chaining, and cold-start replay.
+Built with TypeScript and Node.js standard built-ins in the documented runtime path, $\mathcal{K}_{\text{broccoli}}$ synthesizes:
+- **L1 Hot In-Memory Reactive Tables**: Synchronous CRUD and multi-map secondary indexing whose timing depends on data size and workload.
+- **L2 Write-Ahead Log (WAL)**: Asynchronous micro-batched write coalescing ($20\text{ms}$ ring buffer), monotonic cryptographic SHA-256 frame chaining, and a tested cold-start replay path.
 - **L3 Sharded Content-Addressable Storage (CAS) Vault**: 256-way sharded blob storage (`.broccolidb/cas/[00-ff]/`), adaptive Brotli compression ($\ge 1024\text{B}$, $\ge 10\%$ savings), SHA-256 read validation, automatic bit-rot quarantine (`.broccolidb/cas/corrupt/`), and mark-sweep garbage collection.
 - **L4 Double-Buffered Time Machine Checkpointing**: Atomic base snapshot compaction (`.broccolidb/checkpoint.db`) via `.tmp -> rename` and safe WAL rotation.
 - **L5 Re-Entrant Async Mutex**: `AsyncLocalStorage` context propagation, 30s dead-man timeout leases, and randomized Poisson jitter backoff.
@@ -58,7 +58,7 @@ Built with **100% pure TypeScript** using only Node.js standard built-ins (`node
 │  Layer 4: Double-Buffered Base State & Time Machine (BroccoliDatabaseKernel)                     │
 │    ├── Atomic Base Snapshot (.broccolidb/checkpoint.db via tmp-rename)                           │
 │    ├── Safe WAL Truncation & Rotation (.broccolidb/wal.log.old)                                  │
-│    └── O(1) Frame-Perfect State Rewind Coordinator (< 0.05 ms SLA)                               │
+│    └── Snapshot State Rewind Coordinator (workload-specific timing)                             │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +67,7 @@ Built with **100% pure TypeScript** using only Node.js standard built-ins (`node
 ## 2. Core Mathematical Formalisms & Invariants
 
 ### 2.1 Monotonic Cryptographic Frame Chaining
-Every mutation recorded in the Write-Ahead Log stream is cryptographically chained to its ancestor, guaranteeing bit-level tamper detection and crash boundary detection:
+Every mutation recorded in the Write-Ahead Log stream is cryptographically chained to its ancestor, supporting detection of changes within the modeled log and crash boundary:
 
 $$\mathcal{H}_0 = \text{“0000000000000000000000000000000000000000000000000000000000000000”}$$
 
@@ -90,7 +90,7 @@ State snapshots are committed to disk via POSIX atomic rename semantics:
 
 $$\text{Commit}(\mathcal{S}) \implies \text{Write}(\mathcal{S} \to \text{checkpoint.db.tmp}) \xrightarrow{\text{fsync}} \text{rename}(\text{checkpoint.db.tmp} \to \text{checkpoint.db})$$
 
-Because POSIX `rename(2)` is atomic, the database file is guaranteed never to exist in a partially-written or corrupt intermediate state, even if the operating system crashes mid-write.
+POSIX `rename(2)` narrows the replacement window on supported filesystems; it does not guarantee durability, absence of corruption, or identical crash behavior across operating systems and storage layers.
 
 ---
 
@@ -261,7 +261,7 @@ Rolls back the entire engine database to a historical milestone checkpoint in su
 ### 6.1 `BroccoliSubstrateStore` Adapter
 File: [`src/sessions/extensions/substrate/broccoli-substrate-store.ts`](../../src/sessions/extensions/substrate/broccoli-substrate-store.ts)
 
-The `BroccoliSubstrateStore` acts as a 100% backwards-compatible adapter between existing session subsystems and the new master kernel:
+The `BroccoliSubstrateStore` acts as a compatibility adapter between supported session subsystems and the new master kernel:
 - Maps domain entity types (`sessions`, `tasks`, `goals`, `skills`, `memories`, `kanban`) directly into typed `BroccoliDbTable<T>` instances.
 - Delegates mutation operations (`putEntity`, `deleteEntity`, `clearEntities`) to reactive tables, ensuring all writes are automatically captured in the WAL.
 - Re-exports entity counts, query filters, and transactional flushes.
@@ -287,11 +287,13 @@ const toolRegistry = new ValidatingToolRegistry(
 
 ---
 
-## 7. Verification & SLA Matrix
+## 7. Verification & historical measurement matrix
 
-The hybrid kernel is rigorously verified on every commit and build:
+The hybrid kernel is checked by repository tests and historical measurement
+fixtures. Results depend on the fixture, host, filesystem, and failure mode;
+the table is not a durability warranty or customer-facing SLA:
 
-| Invariant / SLA | Target Threshold | Measured Performance | Verification Battery |
+| Invariant / measurement | Target or test condition | Recorded result | Verification battery |
 |---|---|---|---|
 | **L1 CRUD Write Latency** | $< 10.0\ \mu\text{s}$ | **$2.36\ \mu\text{s}/\text{op}$** | `validate-broccolidb-hybrid-kernel.ts` (Test 1) |
 | **L1 Secondary Index Query** | $< 5.0\text{ ms}$ (10k items) | **$1.46\text{ ms}$** (5k matches) | `validate-broccolidb-hybrid-kernel.ts` (Test 1) |
@@ -302,7 +304,7 @@ The hybrid kernel is rigorously verified on every commit and build:
 | **L4 Atomic Checkpoint** | POSIX atomic rename | Verified | `validate-broccolidb-hybrid-kernel.ts` (Test 5) |
 | **L5 Re-Entrant Mutex** | 0 deadlocks | 3 nested layers verified | `validate-broccolidb-hybrid-kernel.ts` (Test 6) |
 | **L6 4-Pillar Health Audit** | Traffic-light status | `HEALTHY` verified | `validate-broccolidb-hybrid-kernel.ts` (Test 7) |
-| **Time Machine Rollback** | $< 0.10\text{ ms SLA}$ | **$0.015\text{ ms}$** | `validate-broccolidb-hybrid-kernel.ts` (Test 8) |
+| **Time Machine Rollback** | Restoration correctness plus named sample set | **$0.015\text{ ms}$ recorded observation** | `validate-broccolidb-hybrid-kernel.ts` (Test 8) |
 | **Model Tool Invocations** | 6 registered tools | All 6 verified | `validate-broccolidb-hybrid-kernel.ts` (Test 9) |
 | **Monolith Composition** | 556 components | `OPTIMAL` cohesion | `validate-forensic-integrity.ts` |
 | **Mean Turn Tick Latency** | $< 1.0\text{ ms}$ | **$0.14\text{ ms}$** | `validate-repo.ts` |

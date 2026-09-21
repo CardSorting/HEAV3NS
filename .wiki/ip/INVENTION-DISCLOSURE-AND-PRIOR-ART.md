@@ -1,61 +1,82 @@
-# 📜 IP Prior Art & Invention Disclosure Specification
+# Engineering disclosure and historical prior-art record
 
-**Document ID**: `IP-2026-08-09-AKD-DSO-01`  
-**Primary Inventor & Author**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)  
-**Public Prior Art Disclosure Date**: August 9, 2026  
-**License Paradigm**: Apache License 2.0 (Permissive Open Source with Perpetual Patent Grant & Defensive Patent Termination)  
+**Document ID:** `IP-2026-08-09-AKD-DSO-01`
 
----
+**Record owner:** William Andrew Cruz (`bozoegg` / `CardSorting`)
 
-> **Measurement provenance:** Numerical performance impacts in this disclosure are the August 9, 2026 prior-art measurements and are preserved as part of the dated disclosure record. They are not assertions about the current worktree. Current verification is Pass 192 + runtime hardening with 142/142 components, 9/9 smoke checks, 5/5 benchmark cases, 8/8 Flappy project assertions, and 6/6 guardrails; exact current measurements are generated in [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json).
+**Project-recorded disclosure date:** 2026-08-09
 
-## 📌 Executive Statement
+**Last reviewed:** 2026-09-21
 
-This document serves as the formal public prior-art invention disclosure for the architectural discoveries and execution substrate innovations conceived by **William Andrew Cruz** and embodied within **LUMI-NEW** (`/Users/bozoegg/Desktop/LUMI-NEW`).
+**Status:** historical engineering record; legal review not performed
 
-By publishing this specification under the **Apache License, Version 2.0**, the primary inventor **William Andrew Cruz** provides a **permissive, royalty-free, perpetual license** for commercial and non-commercial utilization while explicitly establishing **defensive patent protections** against any entity seeking to patent, litigate, or monopolize these underlying techniques.
+This document preserves technical observations recorded by the project at the
+time of the referenced commits. It is not a patent application, an ownership
+assignment, a novelty opinion, or a conclusion about the legal status of any
+publication. The Apache License 2.0 in the repository root controls the
+copyright and patent permissions for material to which a contributor has
+rights; this document does not add a second license.
 
----
+## Evidence boundary
 
-## 🧠 Core Architectural Discoveries & Inventions
+The repository history and the files linked below are the evidence to inspect.
+Performance values are historical measurements and must not be copied into a
+current product claim without a fresh run of the current benchmark. A source
+reference shows where an implementation was recorded; it does not by itself
+establish inventorship, originality, or a license to redistribute third-party
+material.
 
-### 1. Zero-GC Contiguous ArrayBuffer Slab State Management (`ArenaAllocator`)
-- **Inventor**: William Andrew Cruz
-- **Innovation**: Pre-allocates a fixed, contiguous **16MB ArrayBuffer** (`capacityBytes: 16777216`) inside the agent session store.
-- **Problem Solved**: Eliminates V8 Garbage Collection pauses and dynamic heap allocations during high-frequency agent turn generation steps ($\mathbf{Step}_t$).
-- **Prior Art Timestamp**: August 9, 2026.
+## Technical observations
 
-### 2. $O(1)$ Atomic State Pointer Rewind Mechanism (`rewindToSnapshot`)
-- **Inventor**: William Andrew Cruz
-- **Innovation**: State rollbacks are executed as atomic pointer reassignments across pre-allocated memory offset words rather than JSON serialization, diff-tree parsing, or git commits.
-- **Performance Impact**: Reduces state rewind latency from $285.00\text{ ms}$ down to **$0.04\text{ ms}$** ($7,125\times$ speedup).
-- **Prior Art Timestamp**: August 9, 2026.
+### 1. Fixed-size arena state substrate
 
-### 3. Deterministic Game Engine Execution Loop for LLM Agents (`tick()`)
-- **Inventor**: William Andrew Cruz
-- **Innovation**: Structures LLM agent interactions as a deterministic game loop enforcing the invariant tick lifecycle: `preTick() -> executeTick() -> postTick()`.
-- **Performance Impact**: Replaces distributed microservice RPC queues and async event buses with direct function dispatch, reducing mean turn latency to **$0.22\text{ ms}$** ($4,132.2\text{ turns/sec}$).
-- **Prior Art Timestamp**: August 9, 2026.
+The `ArenaAllocator` implementation reserves a fixed-size ArrayBuffer for part
+of the session state substrate. The design goal is to bound and reuse selected
+storage rather than to make a universal claim about V8 allocation or garbage
+collection behavior.
 
----
+**Evidence:** `src/sessions/extensions/substrate/arena-allocator.ts`,
+`src/sessions/extensions/persistence/session-store.ts`, and the current
+guardrail scripts.
 
-## 🛡️ License & Defensive Patent Protection Terms
+### 2. In-memory snapshot and rewind
 
-1. **Permissive Commercial & Open Use**:
-   - Anyone is free to use, modify, distribute, and commercialize this software.
+The session store exposes snapshot and rewind operations for its modeled state.
+The record does not extend that behavior to files, terminals, network calls,
+provider requests, or other external side effects.
 
-2. **Perpetual Patent License Grant (Apache 2.0 Section 3)**:
-   - Contributors grant a perpetual, worldwide, royalty-free patent license covering all necessary patent claims.
+**Evidence:** `src/sessions/extensions/persistence/session-store.ts` and the
+runtime validation commands named by `CONTRIBUTING.md`.
 
-3. **Defensive Patent Termination Clause**:
-   - If any entity institutes patent litigation alleging that this software or its underlying architectural mechanisms infringe patents, their patent licenses under this work shall automatically terminate as of the filing date.
+### 3. Tick-oriented agent execution
 
----
+Selected agent paths use typed lifecycle contracts around a tick-oriented
+execution model. Provider and operating-system behavior remain outside the
+scope of an in-memory lifecycle observation.
 
-## 📚 References & Prior Art Links
+**Evidence:** `src/core/abstracts/`, `src/agents/`, and the generated runtime
+baseline reports.
 
-- 🎓 [Academic Whitepaper](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/whitepaper/AKD-DSO-ACADEMIC-WHITEPAPER.md)
-- 📊 [Benchmark Performance Field Note](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/field-notes/BENCHMARK-PERFORMANCE-FIELD-NOTE.md)
-- 📈 [Current Machine-Readable Runtime Baseline](../../docs/LIVE_BASELINE.json)
-- 📄 [Apache License 2.0](file:///Users/bozoegg/Desktop/LUMI-NEW/LICENSE)
-- 📋 [Attribution NOTICE](file:///Users/bozoegg/Desktop/LUMI-NEW/NOTICE)
+### 4. Anchored edit verification
+
+The hashline tooling computes a line digest before applying an anchored edit.
+The digest is a drift-detection aid, not a cryptographic identity proof or a
+collision-avoidance note for the described implementation.
+
+**Evidence:** `src/tooling/extensions/hashline/` and its tests.
+
+### 5. PKCE loopback setup
+
+The setup flow uses PKCE and a temporary loopback callback for supported
+provider authentication. The result depends on provider, browser, local
+firewall, and operating-system behavior.
+
+**Evidence:** `src/agents/extensions/setup/` and the authentication tests.
+
+## Related records
+
+- [Claim register](CLAIM-REGISTER.md)
+- [Source provenance](SOURCE-PROVENANCE.md)
+- [Defensive prior-art record](DEFENSIVE-PRIOR-ART-CLAIMS.md)
+- [Live runtime baseline](../../docs/LIVE_BASELINE.json)
+- [Apache License 2.0](../../LICENSE)

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling context compression subsystem (`agent/context_compressor.py` ~368 KB, 7,390 lines; `agent/conversation_compression.py` ~202 KB; `trajectory_compressor.py` ~70 KB) into a typed, deterministic **Context Compression & Trajectory Pruning Subsystem ($\mathcal{K}_{\text{comp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces sprawling nested auxiliary LLM calls, ad-hoc string regex stripping of tool outputs, arbitrary message slicing, and non-transactional context corruptions with mathematical Head/Tail token window partitioning, AST-aware deterministic tool pruning (base64 and repeated line collapsing), structured `LUMI-CONTEXT/1` compaction blocks, zero-GC Broccolidb substrate memory slabs, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling context compression subsystem (`agent/context_compressor.py` ~368 KB, 7,390 lines; `agent/conversation_compression.py` ~202 KB; `trajectory_compressor.py` ~70 KB) into a typed, deterministic **Context Compression & Trajectory Pruning Subsystem ($\mathcal{K}_{\text{comp}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces sprawling nested auxiliary LLM calls, ad-hoc string regex stripping of tool outputs, arbitrary message slicing, and non-transactional context corruptions with mathematical Head/Tail token window partitioning, AST-aware deterministic tool pruning (base64 and repeated line collapsing), structured `LUMI-CONTEXT/1` compaction blocks, allocation-bounded Broccolidb substrate memory slabs, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -32,10 +32,10 @@ Forensic inspection revealed multiple critical inefficiencies:
 ### 3. Trajectory Compactor Engine (`TrajectoryCompactorEngine`)
 - Compresses middle turns into structured, byte-stable `LUMI-CONTEXT/1` summary blocks extracting resolved items and active pending goals without breaking prompt prefix caches.
 
-### 4. Zero-GC Broccolidb Substrate (`BroccoliCompressionSubstrate`)
+### 4. allocation-bounded Broccolidb Substrate (`BroccoliCompressionSubstrate`)
 - Stores compressed summaries and turn hashes in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ lookup latency.
 
-### 5. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`CompressionSnapshotManager`)
+### 5. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`CompressionSnapshotManager`)
 - Captures complete compression state and token savings for instant sub-millisecond restoration ($<0.1\text{ ms}$).
 
 ### 6. Model-Facing Compression Tools (`CompressionToolSuite`)
@@ -56,8 +56,8 @@ src/
 │   ├── deterministic-tool-pruner.ts        # AST-safe pruning of base64 & repetitive log dumps
 │   └── compression-tool-suite.ts           # Model tools (context_compress_window, context_prune_tools, context_inspect_budget)
 ├── sessions/extensions/compaction/
-│   ├── broccoli-compression-substrate.ts   # Zero-GC in-memory cache of compressed summaries in Broccolidb
-│   └── compression-snapshot-manager.ts     # Frame-perfect binary snapshotting & O(1) state rewind
+│   ├── broccoli-compression-substrate.ts   # allocation-bounded in-memory cache of compressed summaries in Broccolidb
+│   └── compression-snapshot-manager.ts     # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/compaction/
     └── trajectory-compactor-engine.ts      # Structured multi-turn trajectory compactor
 ```
@@ -66,7 +66,7 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Dedicated Test Suite**: `scripts/validate-context-compression.ts` validates all 8 test suites spanning budget calculation, head/tail partitioning, tool pruning, trajectory compaction, in-memory caching, binary rollback, model tools, and micro-benchmarks.
 - **Performance SLA**: 1,000 tool prunings complete in $6.733\text{ ms}$ ($6.733\ \mu\text{s}$ per prune).
 - **Monolith Graduation**: Monolith graduates cleanly to **200 components**.

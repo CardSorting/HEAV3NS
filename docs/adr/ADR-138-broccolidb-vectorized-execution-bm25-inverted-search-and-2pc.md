@@ -8,7 +8,7 @@
 **ACCEPTED** (Pass 200 Centennial Landmark Baseline Integration)
 
 ## Context
-As LUMI reaches the historic **Pass 200 Centennial Landmark**, multi-agent operations require high-throughput analytical query processing, fast relevance-ranked document retrieval across workspace contexts, and ACID-guaranteed distributed atomic transactions across heterogeneous multi-table partitions.
+As LUMI reaches the historic **Pass 200 Centennial Landmark**, multi-agent operations require high-throughput analytical query processing, fast relevance-ranked document retrieval across workspace contexts, and transactional distributed operations whose ACID behavior is limited to the implemented storage path.
 
 Specifically:
 1. **Iterative Row Scanning Overhead**: Processing large table scans row-by-row incurred significant interpreter overhead and memory allocation churn.

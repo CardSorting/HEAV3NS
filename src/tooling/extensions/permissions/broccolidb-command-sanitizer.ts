@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 187: Zero-Dependency Broccoli Command Sanitizer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/integrations/terminal/commandSanitizer.ts.
+ * Lifted from external source workspace/codemarie-new/src/integrations/terminal/commandSanitizer.ts.
  * Provides shell command boundary splitting (splitCommand), interactive editor/REPL blocking (validateCommand),
  * shell environment assignment parsing, and execution safety scoring. Zero external npm dependencies.
  */

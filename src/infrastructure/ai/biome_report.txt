@@ -1,4 +1,4 @@
-/Users/bozoegg/Downloads/cline-main/src/infrastructure/ai/src/infrastructure/ai/Orchestrator.ts internalError/io  INTERNAL  ━━━━━━━━━━
+external source workspace/cline-main/src/infrastructure/ai/src/infrastructure/ai/Orchestrator.ts internalError/io  INTERNAL  ━━━━━━━━━━
 
   × No such file or directory (os error 2)
   
@@ -16,4 +16,3 @@ check ━━━━━━━━━━━━━━━━━━━━━━
   
   - src/infrastructure/ai/Orchestrator.ts
   
-

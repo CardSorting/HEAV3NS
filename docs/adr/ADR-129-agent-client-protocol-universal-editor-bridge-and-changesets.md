@@ -17,4 +17,4 @@ Elevate the Agent Client Protocol (ACP) Universal Editor Bridge within the LUMI 
 ## Consequences
 - Seamless pairing experience with major editor clients.
 - Clear multi-file change reviews mirroring industry best practices.
-- Zero-GC state snapshots enabling instant rollback of unaccepted edits.
+- allocation-bounded state snapshots enabling instant rollback of unaccepted edits.

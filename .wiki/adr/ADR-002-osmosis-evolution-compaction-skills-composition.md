@@ -3,14 +3,14 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing architectural strengths from teacher model (`/Users/bozoegg/Downloads/pi-main`) and re-interpreting them into `/Users/bozoegg/Desktop/LUMI-NEW`'s 3-tier monolithic structure while preserving the <= 5 class cap per tier.
+- **Technical Story**: Absorbing architectural strengths from teacher model (`external pi-main source workspace`) and re-interpreting them into `repository root`'s 3-tier monolithic structure while preserving the <= 5 class cap per tier.
 
 ---
 
 ## 1. Context & Motivation (The Why)
 
 ### Teacher Model Insights
-Inspection of `/Users/bozoegg/Downloads/pi-main` revealed key production capabilities:
+Inspection of `external pi-main source workspace` revealed key production capabilities:
 1. **Context Window Trimming**: Handling long agent sessions without overflowing context bounds (`compaction/`).
 2. **Skill Discovery & Manifest Loading**: Dynamically discovering `.agents/skills/*/SKILL.md` instruction files (`skills.ts`).
 3. **Structured System Prompt Assembly**: Formatting system prompt, tool capabilities, session context, and skills into clean LLM prompts (`system-prompt.ts`).
@@ -50,9 +50,9 @@ src/
 ## 3. Technical Implementation (The How)
 
 ### Implemented Files
-1. [SessionCompactor](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-compactor.ts#L7) in `src/sessions/session-compactor.ts`: Sliding window history summarizer & truncator.
-2. [SkillsIngestor](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/skills-ingestor.ts#L11) in `src/tooling/skills-ingestor.ts`: Skill manifest discoverer and frontmatter parser using `Eyes`.
-3. [PromptComposer](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/prompt-composer.ts#L12) in `src/agents/prompt-composer.ts`: Assembles system context, session state, tool schemas, and skill manifests.
+1. [SessionCompactor](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-compactor.ts#L7) in `src/sessions/session-compactor.ts`: Sliding window history summarizer & truncator.
+2. [SkillsIngestor](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/skills-ingestor.ts#L11) in `src/tooling/skills-ingestor.ts`: Skill manifest discoverer and frontmatter parser using `Eyes`.
+3. [PromptComposer](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/prompt-composer.ts#L12) in `src/agents/prompt-composer.ts`: Assembles system context, session state, tool schemas, and skill manifests.
 
 ---
 

@@ -7,7 +7,7 @@ In multi-agent environments, several critical requirements must be satisfied:
 1. **Product & Release Attribution Tagging (`nous_portal_tags`)**: Every request directed to Nous Portal must carry standardized, byte-stable attribution metadata (`product=lumi-joy`, `client=lumi-client-v<version>`, and `conversation=<sessionId>`) to enable telemetry, credit tracking, and model routing.
 2. **Device-Code OAuth & JWT Credential Lifecycle**: Developers require headless/terminal login capability via standard RFC 8628 OAuth 2.0 Device Authorization Grant with automatic refresh token management.
 3. **Free Tool-Pool Entitlements**: Active Nous Portal subscribers receive free tool-pool entitlements (`firecrawl`, `fal`, `openai-audio`, `browser-use`, `modal`), requiring client-side entitlement verification and categorization.
-4. **Deterministic Substrate & Microsecond Rollback**: Provider state, session tokens, and credit ledgers must reside in a zero-GC in-memory substrate (`BroccoliNousPortalSubstrate`) with frame-perfect snapshotting (`NousPortalSnapshotManager`) $< 0.05\text{ ms}$.
+4. **Deterministic Substrate & Microsecond Rollback**: Provider state, session tokens, and credit ledgers must reside in a allocation-bounded in-memory substrate (`BroccoliNousPortalSubstrate`) with checkpointed snapshotting (`NousPortalSnapshotManager`) $< 0.05\text{ ms}$.
 
 ## Proposed Architecture & Solution
 
@@ -38,7 +38,7 @@ Constructs canonical product attribution arrays formatted as:
 ```
 These tags are embedded into request headers and `extra_body.tags` across main loops and auxiliary tasks.
 
-### 2. Zero-GC In-Memory Substrate (`BroccoliNousPortalSubstrate`)
+### 2. allocation-bounded In-Memory Substrate (`BroccoliNousPortalSubstrate`)
 Maintains:
 - Active account session info (`NousPortalAccountInfo`)
 - Real-time device login state (`NousPortalDeviceCodeSession`)

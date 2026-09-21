@@ -1,17 +1,18 @@
 {
 	"name": "heav3ns-vscode",
 	"displayName": "HEAV3NS",
-	"description": "HEAV3NS is your calm coding companion — comfort-first developer tooling for long sessions.",
+	"description": "HEAV3NS is a calm, local-first coding companion with explicit review and provider choice.",
 	"version": "12.6.0",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."
 	],
 	"engines": {
-		"vscode": "^1.84.0"
+		"vscode": "^1.84.0",
+		"node": ">=20.0.0"
 	},
 	"author": {
-		"name": "DietCode Inc."
+		"name": "William Andrew Cruz (CardSorting)"
 	},
 	"license": "Apache-2.0",
 	"publisher": "CardSorting",
@@ -19,6 +20,26 @@
 		"type": "git",
 		"url": "https://github.com/CardSorting/LUMI-VSIX.git"
 	},
+	"files": [
+		"dist",
+		"webview-ui/build",
+		"assets",
+		"walkthrough",
+		"README.md",
+		"PRODUCT.md",
+		"PREFACE.md",
+		"SOUL_AND_SKILLS_GUIDE.md",
+		"CHANGELOG.md",
+		"LICENSE",
+		"NOTICE",
+		"PATENT-NON-AGGRESSION-PLEDGE.md",
+		"TRADEMARKS.md",
+		"THIRD-PARTY-NOTICES.md",
+		"LICENSE-MAP.md",
+		"SECURITY.md",
+		"CONTRIBUTING.md",
+		"DCO"
+	],
 	"homepage": "https://dietcode.io",
 	"categories": [
 		"AI",
@@ -85,7 +106,7 @@
 					{
 						"id": "advanced-features",
 						"title": "Always Use the Best AI Models",
-						"description": "HEAV3NS connects you with State-of-the-Art AI, connecting to top models (Anthropic, Gemini, OpenAI & more).",
+						"description": "HEAV3NS connects you to supported AI models from providers such as Anthropic, Gemini, OpenAI, and others.",
 						"media": {
 							"markdown": "walkthrough/step3.md"
 						}
@@ -452,6 +473,11 @@
 	},
 	"scripts": {
 		"check": "tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
+		"legal:check": "npm-run-all -s ip:check license:check package:check",
+		"ip:check": "node scripts/check-ip-claims.mjs",
+		"license:check": "node scripts/check-licensing.mjs",
+		"package:check": "node scripts/check-package-boundary.mjs",
+		"dco:check": "node scripts/check-dco.mjs",
 		"build": "tsc",
 		"test": "npx npm-run-all test:unit test:integration",
 		"smoke": "node --import tsx src/index.ts --smoke",
@@ -468,7 +494,7 @@
 		"worker:types:check": "wrangler types src/worker-configuration.d.ts --check",
 		"worker:build": "wrangler deploy --dry-run",
 		"start": "node dist/index.js",
-		"prepublishOnly": "npm run check && npm test && npm run build",
+		"prepublishOnly": "npm run legal:check && npm run check && npm test && npm run build",
 		"compile": "npm run check-types && npm run lint && node esbuild.mjs",
 		"dev": "npm run protos && npm run watch",
 		"watch": "npm-run-all -p watch:*",
@@ -630,7 +656,7 @@
 		"@grpc/reflection": "^1.0.4",
 		"@mistralai/mistralai": "^1.14.1",
 		"@modelcontextprotocol/sdk": "^1.25.1",
-		"@noorm/broccolidb": "file:../BroccoliDB",
+		"@noorm/broccolidb": "https://github.com/CardSorting/ABroccoliDB/archive/77a1814f7c8549d8cce4da6df3e633468d178450.tar.gz",
 		"@opentelemetry/api": "^1.9.1",
 		"@opentelemetry/core": "^2.8.0",
 		"@opentelemetry/exporter-logs-otlp-grpc": "^0.219.0",

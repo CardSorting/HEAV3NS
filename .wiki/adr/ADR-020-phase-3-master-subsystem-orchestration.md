@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing telemetry tracing (`packages/telemetry`), concurrent file locks and snapshot LRU caching (`packages/utils`), and performing Phase 3 master subsystem orchestration (Passes 19–21) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing telemetry tracing (`packages/telemetry`), concurrent file locks and snapshot LRU caching (`packages/utils`), and performing Phase 3 master subsystem orchestration (Passes 19–21) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

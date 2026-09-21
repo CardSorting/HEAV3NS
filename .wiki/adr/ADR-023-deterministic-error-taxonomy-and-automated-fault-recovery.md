@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's provider error classifier and retry loop (`agent/error_classifier.py` ~86 KB, 1,964 lines; `agent/retry_utils.py` ~8 KB; `agent/turn_retry_state.py` ~5 KB) into a typed, deterministic, zero-GC **Provider Error Taxonomy & Automated Fault Recovery Subsystem ($\mathcal{K}_{\text{err}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 2,000 lines of regex substring matching, Python SDK exception coupling, non-deterministic random jitter, and 25+ mutable boolean loop flags with typed fault categories, deterministic seeded jitter backoff governors, in-memory provider health tracking in Broccolidb, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's provider error classifier and retry loop (`agent/error_classifier.py` ~86 KB, 1,964 lines; `agent/retry_utils.py` ~8 KB; `agent/turn_retry_state.py` ~5 KB) into a typed, deterministic, allocation-bounded **Provider Error Taxonomy & Automated Fault Recovery Subsystem ($\mathcal{K}_{\text{err}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 2,000 lines of regex substring matching, Python SDK exception coupling, non-deterministic random jitter, and 25+ mutable boolean loop flags with typed fault categories, deterministic seeded jitter backoff governors, in-memory provider health tracking in Broccolidb, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -16,7 +16,7 @@ Forensic inspection identified critical design and scalability bottlenecks:
 2. **Untyped Exception Entanglement**: Hardcoded references to Python-specific exception classes (`openai.APIError`, `anthropic.APIStatusError`, `httpx.HTTPStatusError`) that broke outside direct Python SDK usage.
 3. **25+ Mutable Boolean Flags**: `TurnRetryState` mutated one-shot recovery flags inline across 2,400 lines of loop body, creating race conditions and non-reproducible retry sequences.
 4. **Non-Deterministic Jitter**: Random unseeded delays (`random.uniform()`) in `retry_utils.py` prevented deterministic turn replay.
-5. **No Zero-GC Fault Tracking**: No frame-level snapshotting or in-memory tracking of provider error histories, leading to unobserved cascading failure loops.
+5. **No allocation-bounded Fault Tracking**: No frame-level snapshotting or in-memory tracking of provider error histories, leading to unobserved cascading failure loops.
 
 ---
 
@@ -28,10 +28,10 @@ Forensic inspection identified critical design and scalability bottlenecks:
 ### 2. Deterministic Provider Error Classifier (`DeterministicErrorClassifier`)
 - Normalizes API errors, HTTP statuses (401, 402, 403, 404, 413, 429, 500, 503), error codes, and message strings into normalized `FaultCategory` entries and assigns concrete `RecoveryDirectiveType` actions.
 
-### 3. Zero-GC In-Memory Fault Substrate (`BroccoliFaultSubstrate`)
+### 3. allocation-bounded In-Memory Fault Substrate (`BroccoliFaultSubstrate`)
 - Tracks error frequencies, provider success/failure counts, consecutive failure streaks, and cooldown timestamps in Broccolidb memory structures.
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`FaultSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`FaultSnapshotManager`)
 - Captures fault taxonomy and provider health records at frame $t$ for sub-millisecond restoration ($<0.1\text{ ms}$).
 
 ### 5. High-Level Fault Recovery Supervisor (`FaultRecoverySupervisor`)
@@ -56,7 +56,7 @@ src/
 │   └── fault-diagnostic-tool-suite.ts      # Model tools (inspect_error, query_health, reset_history)
 ├── sessions/extensions/faults/
 │   ├── broccoli-fault-substrate.ts         # In-memory provider health tracking in Broccolidb
-│   └── fault-snapshot-manager.ts           # Frame-perfect binary snapshotting & O(1) state rewind
+│   └── fault-snapshot-manager.ts           # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/faults/
     └── fault-recovery-supervisor.ts        # Fault coordination & dynamic backoff evaluation
 ```
@@ -67,4 +67,4 @@ src/
 
 - **Type Safety**: Fully typed under `tsc --noEmit` (0 errors).
 - **Classification Performance**: 1,000 error classifications in $1.050\text{ ms}$ ($1.050\ \mu\text{s}$ per classification); frame rollback in $0.032\text{ ms}$.
-- **Determinism**: Guaranteed repeatable jitter calculations and turn replay via seedable PRNG.
+- **Determinism**: Covered seedable-PRNG paths support repeatable jitter calculations and turn replay.

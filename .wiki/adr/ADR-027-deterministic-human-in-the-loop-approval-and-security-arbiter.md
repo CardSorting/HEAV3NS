@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling Dangerous Command Approval, E-Stop & Write Gate subsystems (`tools/approval.py` [5,010 LOC] + `tools/write_approval.py` [494 LOC] + `tools/tirith_security.py` [800 LOC] + `agent/file_safety.py` [600 LOC] + `agent/estop.py` [200 LOC] — totaling **7,100+ LOC, 320 KB**) into a typed, deterministic, zero-GC **Human-in-the-Loop Approval & Interactive Security Arbiter ($\mathcal{K}_{\text{arbiter}}$ / Phase 75)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 7,100+ lines of untyped regex heuristics, thread-unsafe process environment mutations, loose disk file staging, and unmanaged approval caches with typed risk tiers, SHA-256 canonical command hashing, in-memory Broccolidb approval substrates, frame-perfect $O(1)$ state rollback, and emergency E-Stop killswitches.
+- **Technical Story**: Transmuting Hermes Agent's sprawling Dangerous Command Approval, E-Stop & Write Gate subsystems (`tools/approval.py` [5,010 LOC] + `tools/write_approval.py` [494 LOC] + `tools/tirith_security.py` [800 LOC] + `agent/file_safety.py` [600 LOC] + `agent/estop.py` [200 LOC] — totaling **7,100+ LOC, 320 KB**) into a typed, deterministic, allocation-bounded **Human-in-the-Loop Approval & Interactive Security Arbiter ($\mathcal{K}_{\text{arbiter}}$ / Phase 75)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 7,100+ lines of untyped regex heuristics, thread-unsafe process environment mutations, loose disk file staging, and unmanaged approval caches with typed risk tiers, SHA-256 canonical command hashing, in-memory Broccolidb approval substrates, checkpointed $O(1)$ state rollback, and emergency E-Stop killswitches.
 
 ---
 
@@ -34,10 +34,10 @@ Forensic inspection revealed critical security and architectural flaws:
 - Hashes normalized command strings with argument tokenization.
 - Manages session-scoped and persistent allowlists with $O(1)$ lookup performance.
 
-### 3. Zero-GC In-Memory Arbiter Substrate (`BroccoliArbiterSubstrate`)
+### 3. allocation-bounded In-Memory Arbiter Substrate (`BroccoliArbiterSubstrate`)
 - In-memory Broccolidb substrate for pending approval queues, approved command ledger, session grants, write-staging buckets (memory & skills), and security metrics.
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`ArbiterSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`ArbiterSnapshotManager`)
 - Captures atomic snapshots of pending requests, grants, and staging buckets at frame $t$, restoring arbiter state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 5. Master Interactive Security Arbiter (`InteractiveSecurityArbiter`)
@@ -63,7 +63,7 @@ src/
 │   └── arbiter-tool-suite.ts              # Model & control tools (arbiter_request_approval, arbiter_resolve_approval, arbiter_list_pending, arbiter_estop)
 ├── sessions/extensions/arbiter/
 │   ├── broccoli-arbiter-substrate.ts      # In-memory Broccolidb substrate for pending queues, staging buckets, and audit metrics
-│   └── arbiter-snapshot-manager.ts        # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── arbiter-snapshot-manager.ts        # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/arbiter/
     └── interactive-security-arbiter.ts    # Master security arbiter with E-Stop killswitch, auto-approval thresholds, and write gates
 ```

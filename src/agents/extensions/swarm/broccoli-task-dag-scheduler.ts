@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 119: Broccoli Task DAG Scheduler
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration).
  * Dependency-based task scheduling (dependsOnTaskIds), topological sort execution queues,
  * and failure cascade resolution. Zero external dependencies.
  */

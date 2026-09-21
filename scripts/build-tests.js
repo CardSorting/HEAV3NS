@@ -1,6 +1,13 @@
 #!/usr/bin/env node
-const { execSync } = require("child_process")
-const esbuild = require("esbuild")
+// SPDX-License-Identifier: Apache-2.0
+
+import { execFile } from "node:child_process"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { promisify } from "node:util"
+import * as esbuild from "esbuild"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const watch = process.argv.includes("--watch")
 
@@ -41,11 +48,7 @@ const srcConfig = {
 	plugins: [esbuildProblemMatcherPlugin],
 }
 
-const { execFile } = require("child_process")
-const { promisify } = require("util")
 const execFileAsync = promisify(execFile)
-
-const path = require("path")
 
 async function runTsc() {
 	const tscBin = path.join(__dirname, "..", "node_modules", "typescript", "bin", "tsc")

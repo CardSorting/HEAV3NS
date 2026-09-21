@@ -31,13 +31,13 @@ As autonomous agents engage in complex multi-turn reasoning loops, context sizes
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ Tier 2: Domain Supervision & Calculation Engine Layer                                                           │
 │   ├── PromptCacheSupervisor (Master Lifecycle Orchestration & Substrate Coordination)                          │
-│   ├── DeterministicPromptCacher (Zero-GC 5-Tier Semantic Segmenter, Multi-Dialect Reasoning Scrubber)           │
+│   ├── DeterministicPromptCacher (allocation-bounded 5-Tier Semantic Segmenter, Multi-Dialect Reasoning Scrubber)           │
 │   ├── AnomalyAlertPolicyEngine (Prefix Mutation Spikes, Underflow Warnings, 5-Min TTL Guardrails)                │
 │   └── PromptAutoTuner (Automated Volatile Variable Extraction & Reordering Engine)                              │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ Tier 3: Storage Substrate & State Persistence                                                                   │
 │   ├── BroccoliPromptCacheSubstrate (In-Memory Hybrid BroccoliDB Persistence & Dynamic Indexing)                 │
-│   ├── PromptCacheSnapshotManager (Frame-Perfect Binary Snapshotting & <0.05 ms O(1) State Rewind)              │
+│   ├── PromptCacheSnapshotManager (checkpointed Binary Snapshotting & <0.05 ms O(1) State Rewind)              │
 │   └── EpistemicReasoningLedger (Cryptographic SHA-256 Hashing of Scrubbed CoT Traces)                          │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```

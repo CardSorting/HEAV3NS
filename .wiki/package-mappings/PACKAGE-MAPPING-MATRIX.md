@@ -1,6 +1,6 @@
 # True 1-to-1 Package Mapping Matrix: `pi-main` vs `LUMI-NEW`
 
-This document provides a formal, industry-standard 1-to-1 technical mapping between the 18 packages in the Teacher Model ([pi-main](file:///Users/bozoegg/Downloads/pi-main/packages)) and their reinvented monolithic implementations in the Student Model ([LUMI-NEW](file:///Users/bozoegg/Desktop/LUMI-NEW/src)).
+This document provides a formal, industry-standard 1-to-1 technical mapping between the 18 packages in the Teacher Model ([pi-main](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)) and their reinvented monolithic implementations in the Student Model ([LUMI-NEW](https://github.com/CardSorting/LUMI-VSIX/blob/main/src)).
 
 ---
 
@@ -28,7 +28,7 @@ This document provides a formal, industry-standard 1-to-1 technical mapping betw
 
 ### Package 1: `packages/hashline` $\longrightarrow$ `AnchoredHands.applyAnchoredEdit()`
 
-- **Teacher Package Path**: `/Users/bozoegg/Downloads/pi-main/packages/hashline`
+- **Teacher Package Path**: `external pi-main source workspace/packages/hashline`
 - **Teacher Signature**: `applyLineDelta(filePath: string, line: number, expectedHash: string, newContent: string)`
 - **Student Implementation**: [AnchoredHands.applyAnchoredEdit()](../../src/tooling/extensions/hashline/hands.ts) in `src/tooling/extensions/hashline/hands.ts`
 - **Code-Level Comparison**:
@@ -56,7 +56,7 @@ static computeLineHash(lineContent: string): string {
 
 ### Package 2: `packages/omptype` $\longrightarrow$ `ValidatingToolRegistry.validateToolArgs()`
 
-- **Teacher Package Path**: `/Users/bozoegg/Downloads/pi-main/packages/omptype`
+- **Teacher Package Path**: `external pi-main source workspace/packages/omptype`
 - **Teacher Signature**: `parseAndValidateSchema(schema: OmpSchema, data: unknown): ValidationResult`
 - **Student Implementation**: [ValidatingToolRegistry.validateToolArgs()](../../src/tooling/extensions/registry/tool-registry.ts) in `src/tooling/extensions/registry/tool-registry.ts`
 - **Code-Level Comparison**:
@@ -86,7 +86,7 @@ validateToolArgs(name: string, args: Record<string, unknown>): SchemaValidationR
 
 ### Package 3: `packages/session-backends` $\longrightarrow$ `PersistentSessionStore`
 
-- **Teacher Package Path**: `/Users/bozoegg/Downloads/pi-main/packages/session-backends`
+- **Teacher Package Path**: `external pi-main source workspace/packages/session-backends`
 - **Teacher Signature**: `JsonlSessionBackend.save(session: SessionData): Promise<void>`
 - **Student Implementation**: [PersistentSessionStore.saveToFile()](../../src/sessions/extensions/persistence/session-store.ts) in `src/sessions/extensions/persistence/session-store.ts`
 - **Code-Level Comparison**:
@@ -110,7 +110,7 @@ export class PersistentSessionStore extends AbstractSessionStore {
 
 ### Package 4: `packages/protocol` $\longrightarrow$ `ProtocolEars.formatJsonRpcEvent()`
 
-- **Teacher Package Path**: `/Users/bozoegg/Downloads/pi-main/packages/protocol`
+- **Teacher Package Path**: `external pi-main source workspace/packages/protocol`
 - **Teacher Signature**: `createNotification(method: string, params: object): JsonRpcNotification`
 - **Student Implementation**: [ProtocolEars.formatJsonRpcEvent()](../../src/tooling/extensions/telemetry/ears.ts) in `src/tooling/extensions/telemetry/ears.ts`
 - **Code-Level Comparison**:

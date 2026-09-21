@@ -18,4 +18,4 @@ Implement the Enterprise Daemon Process Supervisor within the LUMI AKD-DSO Monol
 ## Consequences
 - Robust management and auto-healing of all background dependencies.
 - Clear, approachable operational observability for non-technical users.
-- Contiguous memory footprint and zero leak invariants during long-running tasks.
+- Contiguous memory accounting with leak checks during long-running tasks; long-run behavior remains environment- and workload-dependent.

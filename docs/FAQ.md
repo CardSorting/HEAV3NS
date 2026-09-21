@@ -76,10 +76,10 @@ Find your goal and execute the solution with zero guesswork:
 | **Search code symbols with typo-tolerance & captures** | `grep_search` | Uses native zero-subprocess in-memory search with fuzzy matching, regex captures, and comment filtering. |
 | **Free a port locked by a ghost dev server** | `kill_port :3000` | Automatically finds and kills background processes blocking the specified TCP port. |
 | **Draft architecture ADRs or documentation** | `/profile use writer` | Activates Keep-a-Changelog schemas, Mermaid diagram synthesis, and technical style guides. |
-| **Undo the agent's last file modification** | `/rewind 1` | Instantly rolls back virtual files, memory, and conversation history in **$0.022\text{ ms}$**. |
+| **Undo the agent's last file modification** | `/rewind 1` | Rolls back supported virtual files, memory, and conversation history when a valid checkpoint exists; timing is workload-specific. |
 | **Create my own customized agent persona** | `/profile init coder my_lead_dev` | Clones the battle-tested Coder blueprint into your isolated custom profile. |
 | **Compare two agent profiles side-by-side** | `/profile diff default my_lead_dev` | Generates a structural delta of toolsets, soul prompts, custom axioms, and memory. |
-| **Hot-swap the AI model without restarting** | `Ctrl+M` *(or `/model claude-3-7-sonnet`)* | Instantly routes future turns to the new model with 100% prefix cache retention. |
+| **Hot-swap the AI model without restarting** | `Ctrl+M` *(or `/model claude-3-7-sonnet`)* | Routes future turns to the selected model when provider configuration permits; cache retention depends on request shape and provider policy. |
 | **Inspect database tables and memory facts** | `/db status` *(or `/db query profiles`)* | Opens the BroccoliDB reactive in-memory database inspection studio. |
 | **Open the full 6-tab Profile Studio Modal** | `/profile` *(or press `Tab` / `1-6` in modal)* | Opens the interactive visual orchestrator for profiles, blueprints, revisions, and health. |
 
@@ -142,28 +142,28 @@ graph TD
 ## 🏗️ Architecture & Core Concepts (FAQ)
 
 ### Q: What is LUMI-JOY and what core problem does it solve?
-**LUMI-JOY** is an enterprise-grade TypeScript autonomous AI pair programmer and multi-agent framework engineered from first principles like a **Deterministic Game Engine**. Traditional agent frameworks wrap LLMs in loose asynchronous microservices, causing $14\text{ ms} - 500\text{ ms}$ serialization latency per turn, non-deterministic state drift, V8 garbage collection stutter, and costly restart-from-scratch failures. LUMI-JOY solves this by executing agent turns as deterministic frame ticks (`tick()`), maintaining state in an in-memory zero-GC contiguous memory slab (`ArenaAllocator`), and enabling instant $O(1)$ state time-travel (`rewindToSnapshot()`, $<0.05\text{ ms}$ SLA).
+**LUMI-JOY** is a TypeScript coding companion and multi-agent framework with a deterministic game-engine-inspired execution model. It uses ordered frame phases, selected arena-backed state paths, and snapshot-oriented recovery; host scheduling, provider calls, filesystem state, and runtime allocation can still vary or fail. See the dated baseline for workload-specific measurements rather than treating these behaviors as SLAs.
 
 ### Q: Why is the LUMI-JOY agent runtime modeled after video game engines?
-High-performance video game engines guarantee predictable frame rates, zero memory leaks, and deterministic state playback. Modeling the AI agent lifecycle as a game engine establishes:
-1. **Deterministic Frame Ticks (`tick()`)**: Atomic 5-stage lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`).
-2. **Zero-GC Contiguous Slab Memory**: 16MB pre-allocated `ArrayBuffer` slab eliminating V8 garbage collection sweeps during high-throughput token streaming.
-3. **$O(1)$ Binary Snapshot Rewind**: Frame-perfect rollback of virtual files (`SessionVfs`), conversation transcripts, and memory facts (`SessionMemoryStore`) in $<0.05\text{ ms}$.
-4. **In-Process Monolithic Dispatch**: Direct function dispatch delivering $>8,500\text{ frames/second}$ local orchestration throughput.
+Video-game architecture is a useful analogy, not a guarantee of predictable frame rates or leak-free behavior. Modeling the lifecycle this way establishes testable design targets:
+1. **Ordered frame phases (`tick()`)**: A modeled lifecycle (`Input -> Context Assembly -> Provider Dispatch -> State Mutation -> Telemetry`).
+2. **Configured arena memory**: A 16 MB `ArrayBuffer` can back selected state paths; the process remains capable of ordinary allocation and garbage collection.
+3. **Snapshot-oriented rewind**: Supported virtual files, transcripts, and facts can be restored from valid checkpoints; timing and completeness depend on the workload.
+4. **In-process dispatch**: Direct calls can be benchmarked locally, but throughput remains host- and workload-specific.
 
-### Q: How does Prefix Cache Frame Decomposition save up to 90% in token cost?
-Traditional prompt templating destroys byte-level prefix stability across turns. LUMI-JOY's **Prefix Cache Frame Engine** ([ADR-119](../.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)) partitions prompt context into deterministic blocks:
+### Q: How does Prefix Cache Frame Decomposition affect repeated prompt work?
+Traditional prompt templating can change byte-level prefixes across turns. LUMI-JOY's **Prefix Cache Frame Engine** ([ADR-119](../.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md)) partitions prompt context into deterministic blocks:
 1. `systemBlock`: Identity, category, and immutable operational axioms.
 2. `toolsBlock`: Enabled toolsets and MCP server declarations.
 3. `knowledgeBlock`: Pinned RAG knowledge scopes.
 4. `exemplarsBlock`: In-context learning few-shot demonstration pairs.
 5. `dynamicBlock`: Runtime hydrated variables (`{{workspace.root}}`, `{{session.id}}`).
-By computing a cryptographic 64-character SHA-256 `prefixCacheHash` over static blocks and guaranteeing exact byte-order stability, LLM providers (Anthropic Claude, OpenAI, DeepSeek) retain maximum prefix cache hit rates, slashing token costs and first-token latency by **50% to 90%**.
+By computing a cryptographic SHA-256 `PrefixCacheHash` over static blocks and preserving a stable serialization order where supported, the client can make repeated prompt structure easier to inspect. Provider cache eligibility, billing, hit rates, and first-token latency remain provider- and workload-dependent; no savings percentage is promised.
 
 ### Q: What is BroccoliDB and why doesn't LUMI-JOY use external SQLite binaries?
-**BroccoliDB** is LUMI-JOY's built-in, zero-dependency in-memory + hybrid persistence database kernel ([ADR-120](../.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)):
+**BroccoliDB** is LUMI-JOY's built-in in-memory + hybrid persistence database kernel ([ADR-120](../.wiki/adr/ADR-120-deterministic-hybrid-inmemory-broccolidb-kernel.md)):
 - **Zero External Dependencies**: Eliminates C/C++ native addons, Python SQLite locks, and cross-platform compilation failures.
-- **Sub-Microsecond Latency**: Pure TypeScript in-memory reactive tables (`BroccoliDbTable<T>`) deliver $<0.5\ \mu\text{s}$ primary/secondary index lookups.
+- **Measured lookup path**: Pure TypeScript in-memory reactive tables (`BroccoliDbTable<T>`) can be benchmarked for primary/secondary index lookups; the result is workload-specific.
 - **256-Way Sharded CAS**: Content-addressable storage with adaptive Brotli compression, cryptographic SHA-256 verification, and bit-rot quarantine.
 - **Append-Only WAL Journal**: Micro-batched write-ahead logging with cryptographic hash chaining and cold-start crash replay.
 - **Git-for-Data Branching & Aggregations**: Supports Copy-on-Write table branching (`forkBranch`), 3-way merge conflict resolution, and statistical aggregation pipelines (`groupBy`, `HAVING`, `SUM`, `AVG`, `STDDEV`).
@@ -187,26 +187,26 @@ LLMs frequently emit malformed arguments that crash standard JSON parsers. LUMI'
 3. **Pass 3 (Substring Extraction)**: Uses brace-matching state machines to extract embedded JSON blocks when models emit explanatory text alongside tool calls.
 4. **Pass 4 (Type Coercion)**: Auto-converts stringified numbers (`"42"` -> `42`), booleans (`"true"` -> `true`), and stringified JSON objects into their expected schema types.
 
-### Q: How does Parallel Concurrency Wave Scheduling achieve a ~2.9x speedup?
+### Q: How does Parallel Concurrency Wave Scheduling affect multi-file inspection?
 When an LLM requests multiple tool invocations in a single turn (e.g. reading 4 different files), standard agent loops execute them one after another. LUMI's `ToolExecutionScheduler` ([ADR-139](adr/ADR-139-zenith-tier-tool-scheduling-caching-governance-and-auto-healing.md)) analyzes tools for mutating side effects:
 - **Read-Only Waves**: Executed concurrently via `Promise.allSettled`, parallelizing I/O.
-- **Mutating Waves**: Executed in strict serial order to guarantee atomic filesystem consistency.
-This parallel partitioning slashes multi-file inspection latency by **~65% (2.9x speedup)**.
+- **Mutating Waves**: Executed in strict serial order to preserve atomic filesystem consistency in the modeled wave; filesystem, host, and crash behavior still require verification.
+This partitioning can reduce wall-clock time for independent reads on some hosts. Measure the named workload before making a comparative speed or cost claim.
 
 ### Q: How does In-Memory Read Caching work without returning stale files?
-LUMI's `ToolExecutionCache` computes a deterministic SHA-256 hash of `(toolName, sortedArgs, cwd)`. Idempotent read operations (`view_file`, `file_info`, `path_exists`, `grep_search`) return in **<0.01 ms**. Whenever a mutating tool (`write_file`, `replace_file_content`, `delete_file`, `atomic_multi_file_patch`) executes, the cache extracts the modified path and automatically invalidates all cached entries for that file and its parent directories.
+LUMI's `ToolExecutionCache` computes a SHA-256 hash of `(toolName, sortedArgs, cwd)` for supported cache keys. Idempotent reads may be served from cache; latency and freshness depend on cache state and filesystem conditions. Whenever a supported mutating tool executes, the cache invalidates entries for the modified path and applicable parent directories.
 
 ### Q: What is the Tool Loop Breaker and how does it stop infinite loops?
 Runaway hallucination loops occur when an agent repeatedly invokes identical tool calls after hitting an error. LUMI's `ToolLoopBreaker` ([ADR-140](adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md)) tracks recent calls in a sliding ring buffer. If 3 consecutive calls share the exact same tool name and argument signature, the breaker halts execution and injects an actionable advisory prompting the model to switch strategies.
 
-### Q: How does the Atomic Mutation Journal allow instant rollback via `rollback_last_mutation`?
-Before executing any file write, replacement, or deletion, LUMI's `ToolTransactionJournal` ([ADR-140](adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md)) snapshots the pre-mutation disk state (or flags the file as newly created). The model or developer can invoke `rollback_last_mutation` (or `/rewind`) to atomically restore previous file contents and remove newly created files in **<0.05 ms**.
+### Q: How does the Atomic Mutation Journal support rollback via `rollback_last_mutation`?
+Before supported file mutations, LUMI's `ToolTransactionJournal` ([ADR-140](adr/ADR-140-sentinel-tier-confirmation-gates-loop-breaking-and-transactional-rollback.md)) records the pre-mutation state or flags a newly created file. The model or developer can invoke `rollback_last_mutation` (or `/rewind`) when a valid journal entry exists; restoration depends on the path, process state, and filesystem.
 
 ### Q: How does Topological DAG Planning handle dependent tool data pipelines?
 When multi-tool turns contain data dependencies (e.g. Node 1 finds a path, and Node 2 reads `$node1.result.path`), LUMI's `ToolDependencyGraphPlanner` ([ADR-141](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md)) performs Kahn's topological sort, verifies cycle freedom, groups independent branches into concurrent waves, and resolves piped variable substitutions dynamically as upstream nodes complete.
 
-### Q: How does Tool Schema Compression save 43% in prompt tokens?
-Exposing dozens of verbose JSON schemas burns valuable context tokens. LUMI's `ToolSchemaCompressor` ([ADR-141](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md)) minifies parameter schemas into dense string descriptors (`type:description (req)`), stripping redundant structural boilerplate while preserving 100% semantic clarity for the LLM.
+### Q: How does Tool Schema Compression affect prompt size?
+Exposing verbose JSON schemas can consume context. LUMI's `ToolSchemaCompressor` ([ADR-141](adr/ADR-141-apex-tier-middleware-pipelines-schema-compression-and-dag-orchestration.md)) can minify supported parameter schemas into dense descriptors while preserving the fields required by the selected adapter; compression ratio and semantic coverage require workload-specific validation.
 
 ---
 

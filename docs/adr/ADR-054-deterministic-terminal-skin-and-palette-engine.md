@@ -4,13 +4,13 @@
 **Accepted**
 
 ## Context
-In ancestral architectures such as `hermes-agent` (`hermes_cli/skin_engine.py`, `banner.py`, `curses_ui.py`, `theme.py`, `colors.py` — totaling 150+ KB, 4,000+ LOC), terminal theming, palette definitions, and animation state relied on synchronous blocking disk reads from `~/.hermes/skins/`, non-deterministic pseudo-random spinner frame choices (`random.choice`), and ANSI regex string substitutions causing screen flicker and mangled multibyte Unicode glyphs. Furthermore, these subsystems lacked deterministic in-memory models and frame-perfect $O(1)$ state rollback.
+In ancestral architectures such as `hermes-agent` (`hermes_cli/skin_engine.py`, `banner.py`, `curses_ui.py`, `theme.py`, `colors.py` — totaling 150+ KB, 4,000+ LOC), terminal theming, palette definitions, and animation state relied on synchronous blocking disk reads from `~/.hermes/skins/`, non-deterministic pseudo-random spinner frame choices (`random.choice`), and ANSI regex string substitutions causing screen flicker and mangled multibyte Unicode glyphs. Furthermore, these subsystems lacked deterministic in-memory models and checkpointed $O(1)$ state rollback.
 
 ## Decision
-We implemented a zero-GC, typed, in-memory Terminal UI Skin Engine, Theme Palette & Animated Banner Substrate ($\mathcal{K}_{\text{skin}}$ / Phase 100 Centennial Milestone) for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, in-memory Terminal UI Skin Engine, Theme Palette & Animated Banner Substrate ($\mathcal{K}_{\text{skin}}$ / Phase 100 Centennial Milestone) for **LUMI-JOY**:
 
 1. **`DeterministicSkinEngine`**:
-   - In-memory zero-GC terminal skinning and color palette engine.
+   - In-memory allocation-bounded terminal skinning and color palette engine.
    - 6 built-in aesthetic themes: `default` (gold/bronze), `tokyo-night` (cyber-blue/purple), `nord` (frost/polar), `dracula` (goth purple/pink), `monokai` (vibrant green/yellow), `cyberpunk` (neon yellow/cyan).
    - TrueColor (24-bit) & 256-color ANSI rendering utilities.
    - Deterministic Kawaii spinner state machine with Mulberry32 PRNG seedable animation frames.
@@ -20,7 +20,7 @@ We implemented a zero-GC, typed, in-memory Terminal UI Skin Engine, Theme Palett
    - In-memory Broccolidb repository for skin presets, custom palettes, and active theme overrides.
 
 3. **`SkinSnapshotManager`**:
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 4. **`TerminalSkinSupervisor`**:
    - Master supervisor coordinating active theme loading, banner rendering, spinner animation ticks, and palette resolution.

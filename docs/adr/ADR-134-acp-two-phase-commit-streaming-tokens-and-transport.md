@@ -34,5 +34,5 @@ Bi-directional AI coding agents operating across modern development environments
    - Advanced repository evolution baseline to **Pass 196 / 599 components**.
 
 ## Consequences
-- **Positive**: Eliminates partial or corrupted file writes via 2PC transactions; enables real-time streaming tokens and collapsible thought traces; provides 1-click rollback guarantees; adheres strictly to zero-subshell invariants.
+- **Positive**: Uses 2PC transactions to detect and roll back covered partial-write paths; enables streaming tokens and collapsible thought traces; supports one-click rollback flows; the described path avoids subshells.
 - **Verification**: Verified via `scripts/validate-acp-2pc-streaming.ts`, `scripts/validate-acp-industrialization.ts`, `scripts/validate-forensic-integrity.ts`, and full 141-suite regression runs.

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing workspace topology, package identity, and cognitive model generation from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/workspace-intelligence/WorkspaceIntelligenceEngine.ts` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 13).
+- **Technical Story**: Absorbing workspace topology, package identity, and cognitive model generation from teacher package `external pi-main source workspace/packages/codemarie/src/core/workspace-intelligence/WorkspaceIntelligenceEngine.ts` into `repository root` via the **Osmosis Strategy** (Pass 13).
 
 ---
 

@@ -54,6 +54,6 @@ flowchart TD
 ## Consequences
 
 ### Positive
-- Sub-microsecond local token retrieval with zero disk I/O bottlenecks.
-- Complete wire tamper protection and duplicate insert immunity.
+- Workload-specific local token retrieval with no disk I/O on the described hot path.
+- Wire-integrity checks and duplicate-insert handling in the covered path; broader tamper resistance requires separate security review.
 - Verified by automated enterprise resilience test suites.

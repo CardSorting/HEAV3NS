@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 161: Zero-Dependency Broccoli Plan Mode Enforcer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/PlanModeEnforcer.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/PlanModeEnforcer.ts.
  * Enforces strategic architectural drafting workflows, validating scratchpad templates,
  * Triad Audits (Architect, Critic, SRE), and sovereign bypass markers. Zero external npm dependencies.
  */

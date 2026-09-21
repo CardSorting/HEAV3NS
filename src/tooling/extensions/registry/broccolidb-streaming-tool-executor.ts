@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 127: Zero-Dependency Broccoli Streaming Tool Executor
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/StreamingToolExecutor.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/StreamingToolExecutor.ts).
  * Manages tool execution phase transitions (queued -> validating -> running -> completed/failed/timeout),
  * native timeout cancellation via AbortController, and progress callbacks. Zero external npm dependencies.
  */

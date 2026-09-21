@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 164: Zero-Dependency Broccoli Joy-Zoning Guard
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/utils/joy-zoning.ts.
+ * Lifted from external source workspace/codemarie-new/src/utils/joy-zoning.ts.
  * Enforces single-direction architectural layer boundary rules, preventing illegal imports (e.g. Domain importing Infrastructure or Core importing UI)
  * to guarantee strict clean-architecture layer isolation. Zero external npm dependencies.
  */

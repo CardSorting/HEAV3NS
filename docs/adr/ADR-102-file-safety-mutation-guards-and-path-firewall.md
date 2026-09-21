@@ -9,14 +9,14 @@ Autonomous agents running with tool execution privileges have access to local fi
 Hermes Agent defined a centralized path safety rule engine in `agent/file_safety.py`.
 
 ## Decision
-We implement a zero-GC, typed, deterministic **File Safety Mutation Guards, Sensitive Path Firewall & Safe Root Governance Subsystem** in LUMI-JOY:
+We implement a allocation-bounded, typed, deterministic **File Safety Mutation Guards, Sensitive Path Firewall & Safe Root Governance Subsystem** in LUMI-JOY:
 
 1. **Contracts Layer (`file-safety.contracts.ts`)**:
    - Defines `FileSafetyVerdict`, `FileSafetyEvaluation`, `FileSafetyPolicyConfig`, `FileSafetyMetrics`, and `FileSafetyWorkspaceSnapshot`.
 
 2. **Substrate & Snapshots (`broccoli-file-safety-substrate.ts`, `file-safety-snapshot-manager.ts`)**:
    - In-memory Broccolidb repository storing safety policies, custom deny rules, dynamic safe roots, evaluation audit logs, and metrics.
-   - Binary snapshot manager for frame-perfect state rollback in $<0.05\text{ ms}$.
+   - Binary snapshot manager for checkpointed state rollback in $<0.05\text{ ms}$.
 
 3. **Deterministic Guard & Supervisor (`deterministic-file-safety-guard.ts`, `file-safety-supervisor.ts`)**:
    - `DeterministicFileSafetyGuard`: Normalizes paths, checks hard-denied file paths and directory prefixes, detects sensitive credentials, enforces approval on designated files (`~/.ssh/config`, shell rc files), and validates safe roots enclosure.

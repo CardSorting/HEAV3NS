@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing automated conventional commit message analysis (`packages/coding-agent/src/commit`), interactive CLI turn execution controllers (`packages/coding-agent/src/modes`), and performing Phase 4 master subsystem orchestration (Passes 22–24) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing automated conventional commit message analysis (`packages/coding-agent/src/commit`), interactive CLI turn execution controllers (`packages/coding-agent/src/modes`), and performing Phase 4 master subsystem orchestration (Passes 22–24) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

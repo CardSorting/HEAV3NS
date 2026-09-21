@@ -28,14 +28,14 @@ The current implementation also exposes `lumi --baseline`. It runs the capabilit
    These are August 9 acceptance-time measurements. They are retained as historical evidence rather than copied forward as the current baseline.
 
 3. **Field Note Documentation**:
-   - Published field note report ([BENCHMARK-PERFORMANCE-FIELD-NOTE.md](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/field-notes/BENCHMARK-PERFORMANCE-FIELD-NOTE.md)) detailing throughput mathematical equations, zero-GC slab memory allocation, and reproducibility steps.
+   - Published field note report ([BENCHMARK-PERFORMANCE-FIELD-NOTE.md](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/field-notes/BENCHMARK-PERFORMANCE-FIELD-NOTE.md)) detailing throughput mathematical equations, allocation-bounded slab memory allocation, and reproducibility steps.
 
 ## Consequences
 
 ### Positive
 - One-command performance validation (`lumi --benchmark`).
 - One-command live baseline publication (`npm run baseline:update`) with nonzero failure semantics and synchronized machine-readable and human-readable artifacts.
-- Empirical proof of $O(1)$ zero-drift snapshot state rewinding and zero-GC ArrayBuffer slab memory allocation.
+- Empirical proof of $O(1)$ zero-drift snapshot state rewinding and allocation-bounded ArrayBuffer slab memory allocation.
 - Continuous throughput monitoring prevents performance regression.
 
 ## Current Verification (August 13, 2026 UTC)

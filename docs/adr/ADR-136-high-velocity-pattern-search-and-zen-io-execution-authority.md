@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-21
-- **Technical Story**: Upgraded LUMI-JOY with a high-performance, regex-safe, zero-subprocess pattern search service (`RipgrepSearchService`) and a comprehensive suite of native I/O execution tools (`kill_port`, `kill_process`, `chmod_file`, `create_temp_dir`, `search_and_replace`, `disk_usage`, `touch_file`, `download_file`, `batch_write_files`, `batch_view_files`, `batch_delete_files`, `http_request`, `workspace_summary`, `check_port`, `find_free_port`, `memory_usage`), accompanied by universal alias normalization, automated type coercion, circuit breaker immunity, and a 78-test validation suite.
+- **Technical Story**: Upgraded LUMI-JOY with a regex-safe, zero-subprocess pattern search service (`RipgrepSearchService`) and a suite of native I/O execution tools (`kill_port`, `kill_process`, `chmod_file`, `create_temp_dir`, `search_and_replace`, `disk_usage`, `touch_file`, `download_file`, `batch_write_files`, `batch_view_files`, `batch_delete_files`, `http_request`, `workspace_summary`, `check_port`, `find_free_port`, `memory_usage`), accompanied by universal alias normalization, automated type coercion, configured circuit-breaker handling, and a 78-test validation suite.
 
 ---
 
@@ -20,7 +20,7 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
 │    Model Intent ──► [ Schema & Alias Normalization ] ──► [ Argument Auto-Coerce ] │
 │                             │                                     │               │
 │                             ▼                                     ▼               │
-│               [ Circuit Breaker Immunity ] ◄─── [ Direct Native TS Execution ]     │
+│               [ Circuit Breaker Handling ] ◄─── [ Direct Native TS Execution ]     │
 │                             │                                     │               │
 │                             ▼                                     ▼               │
 │               [ High-Density Token Defense ] ──► Instant Single-Turn Convergence  │
@@ -43,7 +43,7 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
    - *Strategic resolution*: Autonomous port checking (`check_port`), free port allocation (`find_free_port`), and cross-platform process termination (`kill_port`, `kill_process`).
 5. **Circuit Breaker False-Positive Lockouts**:
    - *Previous state*: Expected non-zero exits from test suites or lint checkers tripped global circuit breakers, locking out interactive exploration tools.
-   - *Strategic resolution*: Explicit immunity policy for all 30+ interactive developer inspection and mutation tools.
+   - *Strategic resolution*: Explicit handling policy for all 30+ interactive developer inspection and mutation tools.
 
 ---
 
@@ -62,16 +62,16 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
 │ Layer 2: Perception, Parsing & Execution Services                                 │
 │   ├── RipgrepSearchService (chunked parallel walker, literal fast-path, streams)   │
 │   ├── ArgumentCoercer (stringified JSON, primitive conversion, alias mapping)     │
-│   └── BroccoliCircuitBreaker (developer tool immunity rules)                       │
+│   └── BroccoliCircuitBreaker (developer-tool handling rules)                       │
 ├───────────────────────────────────────────────────────────────────────────────────┤
 │ Layer 3: Substrate Memory, VFS & Filesystem Authority                             │
-│   ├── Zero-GC Contiguous Slab Invariant (16MB memory buffer)                       │
+│   ├── allocation-bounded Contiguous Slab Invariant (16MB memory buffer)                       │
 │   ├── SessionVFS Overlay (DiffSynthesizer, /diff, /commit, /discard)              │
 │   └── 78-Point Automated QoL Validation Pipeline                                  │
 └───────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.1 Pattern Search Strategy Matrix ([RipgrepSearchService](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/perception/ripgrep-search-service.ts))
+### 2.1 Pattern Search Strategy Matrix ([RipgrepSearchService](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/perception/ripgrep-search-service.ts))
 
 | Feature Strategy | Option Parameter | Problem Addressed | Architectural Behavior |
 |---|---|---|---|
@@ -85,7 +85,7 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
 | **Dry-Run Diff Synthesis** | `previewReplacement` | Destructive blind edits | Populates `previewLineContent` with simulated line replacement |
 | **Match Hotspot Filter** | `minMatchesPerFile` | Low-density noise | Filters out files having fewer than $N$ matches |
 | **Visual In-Line Highlight** | `highlight` | Snippet scan fatigue | Wraps matched token segments with visual boundary tags (`<<<...>>>`) |
-| **Literal `indexOf` Fast-Path** | *Auto-detected* | Regex engine overhead | Pure literal queries bypass regex loops for 5–10x throughput |
+| **Literal `indexOf` Fast-Path** | *Auto-detected* | Regex engine overhead | Pure literal queries may reduce regex-loop overhead; measure on the target workload |
 | **Async Generator Stream** | `searchStream()` | Long-running scan latency | Yields matches asynchronously as files are read |
 | **Centered Window Slicing** | `maxLineLength` | Buffer/token blowouts | Slices a centered character window around the match column |
 | **Null-Byte Binary Sniffing** | *Built-in* | Binary corruption/crashes | Sniffs first 512 bytes for `\0` null bytes and strips UTF-8 BOM |
@@ -94,20 +94,20 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
 
 | Tool Capability | Aliases | Operational Strategy | Benefit / SLA |
 |---|---|---|---|
-| `kill_port` | `killPort`, `free_port_process` | Cross-platform port liberation (`lsof -ti`, `netstat`/`taskkill`) | Instant `EADDRINUSE` resolution |
-| `kill_process` | `killProcess`, `terminate_process` | Clean PID termination with signal escalation | Zero zombie background processes |
+| `kill_port` | `killPort`, `free_port_process` | Cross-platform port liberation (`lsof -ti`, `netstat`/`taskkill`) | Attempts to resolve an `EADDRINUSE` condition |
+| `kill_process` | `killProcess`, `terminate_process` | Clean PID termination with signal escalation | Reduces orphan risk; process behavior remains OS-dependent |
 | `check_port` | `port_status`, `checkPort` | Ephemeral socket probe testing port availability | Pre-flight server launch safety |
-| `find_free_port` | `free_port`, `get_free_port` | Allocates dynamic available TCP port from OS kernel | Guaranteed zero port collisions |
+| `find_free_port` | `free_port`, `get_free_port` | Requests a dynamic available TCP port from the OS | Does not guarantee against later races or collisions |
 | `chmod_file` | `chmod`, `make_executable` | Direct octal/named file permission modification | Fixes `EACCES` without subshells |
 | `create_temp_dir` | `temp_dir`, `make_temp_dir` | Allocates isolated temporary sandbox in OS tmpdir | Clean scratchpad for evaluations |
 | `batch_view_files` | `read_multiple_files` | Parallel multi-file reading with size bounds | Reads $N$ files in 1 round-trip |
 | `batch_write_files` | `write_multiple_files` | Atomic multi-file scaffolding with directory creation | Scaffolds entire projects in 1 turn |
-| `batch_delete_files` | `delete_files` | Parallel multi-file deletion with safety checks | Instant workspace cleanup |
+| `batch_delete_files` | `delete_files` | Parallel multi-file deletion with safety checks | Bounded workspace cleanup attempt |
 | `search_and_replace` | `global_replace` | Recursive multi-file string substitution | Project-wide refactoring in 1 turn |
-| `workspace_summary` | `project_summary` | Aggregated file counts by extension and directory metrics | Instant codebase architectural scan |
+| `workspace_summary` | `project_summary` | Aggregated file counts by extension and directory metrics | Bounded codebase summary |
 | `disk_usage` | `du`, `dir_size` | Recursive space calculation formatted in KB/MB | Identifies massive build directories |
 | `http_request` | `fetch`, `curl` | Zero-subprocess HTTP GET/POST with JSON parsing | Fast REST/webhook API communication |
-| `touch_file` | `touch` | Instant 0-byte file creation and timestamp updating | File initialization without overhead |
+| `touch_file` | `touch` | 0-byte file creation and timestamp updating | File initialization through the supported path |
 
 ---
 
@@ -136,10 +136,10 @@ In autonomous AI-driven pair programming, turn latency and tool reliability dire
 ## 4. Consequences & Trade-offs (The Impact)
 
 ### Positive
-- **5–10x Faster Search Execution**: Direct TypeScript scanning with literal fast-paths avoids shell process spawning overhead entirely.
+- **Workload-specific search behavior**: Direct TypeScript scanning with literal fast-paths avoids the shell process path for supported queries; comparative speed requires a dated, reproducible workload report.
 - **Zero Blockers**: Typo resilience (`fuzzy`), port liberation (`kill_port`), permission fixing (`chmod_file`), and auto-coercion prevent developer blocker loops.
 - **Token Protection**: Head/tail output retention and windowed match snippets protect context budgets against token overflows.
-- **100% Non-Destructive**: All base contracts, 41 osmotic subsystems, and 591 components are preserved intact.
+- **Non-destructive by design in the modeled state path**: All base contracts, 41 osmotic subsystems, and 591 components are preserved intact.
 
 ### Negative & Mitigations
 - **Memory Footprint During Massive Searches**: Mitigated by chunked parallel processing (10 files/chunk), early `maxResults` exits, and `searchStream` async generator.

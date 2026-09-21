@@ -1,70 +1,71 @@
-# 📜 Defensive Prior-Art Claims Specification
+# Defensive prior-art search record
 
-**Document ID**: `IP-CLAIMS-2026-08-09-01`  
-**Public Prior-Art Publication Date**: August 9, 2026  
-**Primary Inventor & Assignee**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)  
-**Purpose**: Formal prior-art claim disclosure establishing anticipation and obviousness under 35 U.S.C. § 102 / § 103 for patent examiner search databases.
+**Document ID:** `IP-CLAIMS-2026-08-09-01`
 
----
+**Publication record:** 2026-08-09 project disclosure
 
-> **Measurement provenance:** The fixed figures in these claims are part of the August 9, 2026 disclosure and remain unchanged for legal provenance. They must not be cited as current-worktree measurements. The current generated authority is [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json), backed by synchronized benchmark and architectural-audit reports.
+**Status:** search-oriented engineering record; legal review not performed
 
-## 📌 Claim 1: Contiguous ArrayBuffer Slab Memory Allocation for AI Agents
+This file gives a search-friendly index of implementation concepts recorded in
+the repository. It is deliberately not written as a patent claim set. It does
+not determine novelty, inventorship, infringement, enforceability, or the
+effect of publication in any jurisdiction.
 
-**Disclosed Prior Art (Inventor: William Andrew Cruz)**:  
-A system and method for zero-garbage-collection state management in an artificial intelligence (AI) agent runtime, comprising:
-- Pre-allocating a single, contiguous **16MB ArrayBuffer** (`capacityBytes: 16777216`) in memory;
-- Allocating session message frames, extracted memory facts, and state metadata as fixed offset words within the contiguous ArrayBuffer;
-- Re-using allocated memory words across consecutive execution turns without triggering heap memory allocation or garbage collection sweeps.
+## Search records
 
-**Implementation Reference**: [arena-allocator.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/arena-allocator.ts#L10) & [session-store.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/persistence/session-store.ts#L14).
+### Record A — fixed-size session arena
 
----
+The runtime includes a fixed-size ArrayBuffer allocator used by selected
+session state paths.
 
-## 📌 Claim 2: $O(1)$ Atomic Pointer Snapshot Rewinding for LLM Agents
+**Evidence:** `src/sessions/extensions/substrate/arena-allocator.ts` and
+`src/sessions/extensions/persistence/session-store.ts`.
 
-**Disclosed Prior Art (Inventor: William Andrew Cruz)**:  
-A system and method for instantaneous state rewind and replay in an LLM agent execution environment, comprising:
-- Capturing an immutable frame snapshot (`GameStateSnapshot`) containing an offset pointer to a contiguous memory slab;
-- Executing state time-travel by reassigning the session state pointer directly to the snapshot offset pointer in **$0.04\text{ ms}$** without re-parsing JSON text, parsing AST diff trees, or issuing disk file locks.
+**Limit:** the record does not establish that the entire runtime is free of
+heap allocations or garbage collection.
 
-**Implementation Reference**: `PersistentSessionStore.rewindToSnapshot()` ([session-store.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/persistence/session-store.ts#L35)) & `LumiMonolith.rewindToSnapshot()` ([index.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/index.ts#L457)).
+### Record B — modeled state rewind
 
----
+The session store can restore its modeled in-memory representation from a
+snapshot.
 
-## 📌 Claim 3: Synchronous Game Loop Execution Loop for LLM Agent Frameworks
+**Evidence:** `src/sessions/extensions/persistence/session-store.ts` and the
+runtime validation scripts.
 
-**Disclosed Prior Art (Inventor: William Andrew Cruz)**:  
-A method for executing AI agent turns as deterministic game engine frames, comprising:
-- Invoking a synchronous tick loop (`tick()`) enforcing an invariant lifecycle: `preTick() -> executeTick() -> postTick()`;
-- Executing turns in sub-millisecond mean latency (**$0.22\text{ ms}$**) and achieving execution throughput exceeding **$4,000\text{ turns/second}$** by replacing inter-process RPC message queues and asynchronous event buses with direct in-memory function dispatch.
+**Limit:** restoring an in-memory object does not undo external effects.
 
-**Implementation Reference**: `AbstractAgentEngine` ([abstract-agent-engine.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/core/abstracts/abstract-agent-engine.ts#L12)) & `AgentEngine` ([agent-engine.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/execution/agent-engine.ts#L47)).
+### Record C — tick-oriented lifecycle
 
----
+Typed contracts represent selected agent work as a lifecycle around a tick
+operation.
 
-## 📌 Claim 4: Line-Anchored Hash Edit Verification (`hashline`)
+**Evidence:** `src/core/abstracts/`, `src/agents/`, and generated reports.
 
-**Disclosed Prior Art (Inventor: William Andrew Cruz)**:  
-A system for zero-drift file modifications in AI agent code editing, comprising:
-- Calculating a 32-bit bitwise hash (`computeLineHash`) for each target code line;
-- Verifying matching line hashes prior to applying edits to guarantee exact line matching and prevent line drift errors.
+**Limit:** the observation excludes provider, network, subprocess, and human
+approval time.
 
-**Implementation Reference**: [hands.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/hashline/hands.ts#L30).
+### Record D — anchored edit digest
 
----
+Hashline tooling compares a line digest before applying an anchored edit.
 
-## 📌 Claim 5: Local HTTP OAuth Redirect Listener for Agent Setup
+**Evidence:** `src/tooling/extensions/hashline/`.
 
-**Disclosed Prior Art (Inventor: William Andrew Cruz)**:  
-A system for interactive agent authentication setup, comprising:
-- Generating a PKCE code challenge and opening an OAuth authorization URL;
-- Starting a temporary HTTP callback server on port `1455` (`http://localhost:1455/auth/callback`) to automatically receive the authorization code redirect and exchange it for access and refresh tokens.
+**Limit:** a short line digest is not a cryptographic proof of file identity.
 
-**Implementation Reference**: [setup-wizard.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/extensions/setup/setup-wizard.ts#L170).
+### Record E — PKCE loopback callback
 
----
+The setup flow combines a PKCE challenge with a temporary loopback callback for
+supported authentication providers.
 
-## 📌 Examiner Search Keywords
+**Evidence:** `src/agents/extensions/setup/` and authentication tests.
 
-`William Andrew Cruz`, `LLM Agent Game Loop`, `Contiguous Slab Memory AI Session`, `Zero-GC ArrayBuffer Agent State`, `O(1) Snapshot Pointer Rewind`, `Line Anchored Hash Code Editing`, `PKCE OAuth Local HTTP Callback Port 1455`.
+**Limit:** this is an implementation description, not a claim about every
+provider or every host configuration.
+
+## Search terms
+
+`AKD-DSO`, `tick`, `ArenaAllocator`, `session snapshot`, `rewindToSnapshot`,
+`hashline`, `PKCE`, `loopback callback`, `HEAV3NS`, `LUMI-JOY`.
+
+For license and source rights, use [SOURCE-PROVENANCE.md](SOURCE-PROVENANCE.md)
+and the root `LICENSE`, `NOTICE`, and `THIRD-PARTY-NOTICES.md` files.

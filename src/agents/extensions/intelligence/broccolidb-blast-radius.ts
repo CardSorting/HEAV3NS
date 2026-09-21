@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 131: Zero-Dependency Broccoli Blast Radius Calculator
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/StructuralDiscoveryService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/StructuralDiscoveryService.ts).
  * Calculates file edit blast radius, inverse dependency graph traversal, centrality scores,
  * and critical dependent lists without external parsing libraries. Zero external npm dependencies.
  */

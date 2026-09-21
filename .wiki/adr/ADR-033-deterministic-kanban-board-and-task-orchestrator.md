@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling Kanban tools, blocking SQLite file transactions, and unmanaged worker dispatch loops (`tools/kanban_tools.py` [2,481 LOC] + `plugins/kanban/` [3,500 LOC] + `tools/todo_tool.py` [400 LOC] — totaling **6,300+ LOC, 260+ KB**) into a typed, deterministic, zero-GC **Kanban Board Dispatcher, Task DAG & Multi-Agent Issue Orchestrator ($\mathcal{K}_{\text{kanban}}$ / Phase 81)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw disk SQLite contention, untyped status transitions, and unmanaged worker races with an in-memory topological DAG dependency resolver, strict column state-machine validation, cycle prevention, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling Kanban tools, blocking SQLite file transactions, and unmanaged worker dispatch loops (`tools/kanban_tools.py` [2,481 LOC] + `plugins/kanban/` [3,500 LOC] + `tools/todo_tool.py` [400 LOC] — totaling **6,300+ LOC, 260+ KB**) into a typed, deterministic, allocation-bounded **Kanban Board Dispatcher, Task DAG & Multi-Agent Issue Orchestrator ($\mathcal{K}_{\text{kanban}}$ / Phase 81)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw disk SQLite contention, untyped status transitions, and unmanaged worker races with an in-memory topological DAG dependency resolver, strict column state-machine validation, cycle prevention, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -22,7 +22,7 @@ Forensic inspection revealed critical operational deficiencies:
 ## 2. Architectural Decision (The What)
 
 ### 1. Deterministic Kanban Engine (`DeterministicKanbanEngine`)
-- In-memory zero-GC Task DAG dependency topological resolver and cycle detector.
+- In-memory allocation-bounded Task DAG dependency topological resolver and cycle detector.
 - Enforces strict column transition invariants (`backlog -> todo -> in_progress -> review -> done` or `archived`).
 - Evaluates task unblocked readiness and computes priority weights (`critical`, `high`, `medium`, `low`).
 - Benchmarked at 10,000 DAG task blocker evaluations in $<5\text{ ms}$ ($<0.0005\text{ ms/op}$).
@@ -30,7 +30,7 @@ Forensic inspection revealed critical operational deficiencies:
 ### 2. In-Memory Broccolidb Kanban Substrate (`BroccoliKanbanSubstrate`)
 - In-memory Broccolidb board ledger, task indexing by column/assignee/tag, and circular transition audit logs.
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`KanbanSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`KanbanSnapshotManager`)
 - Captures atomic snapshots of Kanban boards and task lists at frame $t$, restoring state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Master Kanban Board Supervisor (`KanbanBoardSupervisor`)
@@ -52,11 +52,11 @@ src/
 ├── core/contracts/
 │   └── kanban.contracts.ts                # KanbanColumn, KanbanPriority, KanbanTask, KanbanBoard, KanbanTaskMutation, KanbanQueryFilter, KanbanWorkspaceSnapshot
 ├── tooling/extensions/kanban/
-│   ├── deterministic-kanban-engine.ts     # In-memory zero-GC Task DAG dependency topological sorter, cycle detector, and state-machine transition validator
+│   ├── deterministic-kanban-engine.ts     # In-memory allocation-bounded Task DAG dependency topological sorter, cycle detector, and state-machine transition validator
 │   └── kanban-orchestration-tool-suite.ts # Model tools (kanban_create_task, kanban_update_task, kanban_list_tasks, kanban_claim_task, kanban_board_status)
 ├── sessions/extensions/kanban/
 │   ├── broccoli-kanban-substrate.ts       # In-memory Broccolidb task and board storage, indexed queries, and mutation ledger
-│   └── kanban-snapshot-manager.ts         # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── kanban-snapshot-manager.ts         # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/kanban/
     └── kanban-board-supervisor.ts         # Master Kanban board supervisor coordinating task lifecycle, dependency resolution, and worker claims
 ```

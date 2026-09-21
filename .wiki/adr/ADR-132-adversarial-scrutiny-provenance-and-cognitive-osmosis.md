@@ -26,7 +26,7 @@ We distilled the learnings from BroccoliDB Compaction and implemented an uncompr
    - `decomposeCognitiveSpend()`: Separates compressible fluff from irreducible task invariants.
    - `verifyTaskCompletion()`: Validates completion against empirical test and compiler receipts.
 2. **`BroccoliAdversarialSubstrate`** (`src/sessions/extensions/adversarial/`):
-   - Zero-GC in-memory repository with BroccoliDB WAL event journaling and telemetry tracking.
+   - allocation-bounded in-memory repository with BroccoliDB WAL event journaling and telemetry tracking.
 3. **`AdversarialHumanizer`** (`src/agents/extensions/adversarial/`):
    - High-contrast ASCII shields, severity badges, and plain-English actionable remediations.
 4. **`AdversarialToolSuite`** (`src/tooling/extensions/adversarial/`):

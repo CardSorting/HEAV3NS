@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 143: Zero-Dependency Broccoli Mutation Planner
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/MutationPlanner.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/MutationPlanner.ts).
  * Constructs repair mutation step sequences (planFromAudit), calculates aggregate plan risk (maxRisk),
  * and assigns required verification commands without third-party libraries. Zero external npm dependencies.
  */

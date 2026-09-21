@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 169: Zero-Dependency Broccoli TSP Policy Plugin
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/TspPolicyPlugin.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/TspPolicyPlugin.ts.
  * Implements configurable architectural enforcement themes (strict, relaxed, safety),
  * exception rule registry (whitelists and exclusions), and real-time layer boundary policy evaluation. Zero external npm dependencies.
  */

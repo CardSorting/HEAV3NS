@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's multi-threaded, blocking subagent delegation (`delegate_task`, `subagent_worktree.py`, `subagent_lifecycle.py`) into a typed, deterministic **Autonomous Swarm Delegation & Git Worktree Isolation System ($\mathcal{K}_{\text{swarm}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces Python thread deadlocks, blocking stdin prompts, unbounded recursion, and heavy filesystem worktree churn with copy-on-write `SessionVfs` overlay branching, DAG subagent scheduling, frame-level resource budgeting, and instant rollback.
+- **Technical Story**: Transmuting Hermes Agent's multi-threaded, blocking subagent delegation (`delegate_task`, `subagent_worktree.py`, `subagent_lifecycle.py`) into a typed, deterministic **Autonomous Swarm Delegation & Git Worktree Isolation System ($\mathcal{K}_{\text{swarm}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces Python thread deadlocks, blocking stdin prompts, unbounded recursion, and heavy filesystem worktree churn with copy-on-write `SessionVfs` overlay branching, DAG subagent scheduling, frame-level resource budgeting, and checkpointed rollback. This record is not a timing warranty or ownership conclusion.
 
 ---
 
@@ -24,9 +24,9 @@ However, the Teacher implementation suffers from severe architectural bottleneck
 ## 2. Architectural Decision (The What)
 
 ### 1. In-Memory Copy-on-Write VFS Overlay Branching (`SubagentVfsBrancher`)
-- Clones parent `SessionVfs` state into an isolated subagent overlay in $<0.01\text{ ms}$.
+- Clones parent `SessionVfs` state into an isolated subagent overlay; any timing observation is host- and workload-specific.
 - Child file mutations remain strictly isolated in memory and are only committed to the parent session upon explicit task success.
-- On task failure or abort, the branch overlay is discarded with zero disk side effects.
+- On task failure or abort, the covered branch overlay path discards its changes without observed disk side effects; host and concurrent-operator behavior still require verification.
 
 ### 2. Line-Anchored Git Worktree Sandbox Manager (`AnchoredWorktreeManager`)
 - Sandboxes external processes in dedicated temporary git worktrees using `AnchoredHands`.
@@ -74,6 +74,6 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
-- **Full Test Coverage**: `scripts/validate-swarm-delegation.ts` executes all 8 test suites spanning manifest validation, recursion depth limits, tool filtering, budget governors, copy-on-write VFS branching, worktrees, parallel batches, status/abort, and allocation latency.
-- **Guaranteed SLAs**: 1,000 subagent budget allocations complete in $1.134\text{ ms}$ ($1.134\ \mu\text{s}$ per allocation).
+- **TypeScript verification**: `tsc --noEmit` completed with zero errors in the recorded run.
+- **Validation record**: `scripts/validate-swarm-delegation.ts` executed 8 recorded suites spanning manifest validation, recursion depth limits, tool filtering, budget governors, copy-on-write VFS branching, worktrees, parallel batches, status/abort, and allocation timing.
+- **Historical measurement (not an SLA)**: The 1,000-allocation result is a host- and workload-specific observation; no product-wide latency guarantee is made.

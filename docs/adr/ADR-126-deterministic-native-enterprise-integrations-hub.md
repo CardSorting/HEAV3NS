@@ -27,8 +27,8 @@ We implemented the **Deterministic Native Enterprise Integrations Hub Subsystem*
 ### 3. Deterministic Sandbox Mock Generator
 - Provides complete, realistic seed datasets for all 8 providers, eliminating network flakiness and enabling sub-millisecond local execution.
 
-### 4. Zero-GC Memory Substrate & Microsecond Rollback
-- Bounded in-memory Broccolidb substrate ([`BroccoliIntegrationsSubstrate`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/integrations/broccoli-integrations-substrate.ts)) with frame snapshotting ([`IntegrationsSnapshotManager`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/integrations/integrations-snapshot-manager.ts)) achieving **$0.002\text{ ms p95}$** rollback latency.
+### 4. allocation-bounded Memory Substrate & Microsecond Rollback
+- Bounded in-memory Broccolidb substrate ([`BroccoliIntegrationsSubstrate`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/integrations/broccoli-integrations-substrate.ts)) with frame snapshotting ([`IntegrationsSnapshotManager`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/integrations/integrations-snapshot-manager.ts)) achieving **$0.002\text{ ms p95}$** rollback latency.
 
 ### 5. Enterprise Integrations Model Tool Suite (18 Model Tools)
 1. `integrations_connect_service`: Authenticates or connects a service provider.

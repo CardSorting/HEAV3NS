@@ -11,7 +11,7 @@ Autonomous browser automation across real-world web environments (`tools/browser
 4. **Session Volatility**: Browser authentication states, cookies, and local storage need profile-scoped persistence across engine frame ticks and restarts without inter-session leakage.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Camoufox Anti-Fingerprinting Stealth Browser Engine, Accessibility Ref Navigation, Loopback Rewriting, and Session Persistence Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Camoufox Anti-Fingerprinting Stealth Browser Engine, Accessibility Ref Navigation, Loopback Rewriting, and Session Persistence Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicStealthBrowser` ([deterministic-stealth-browser.ts](../../src/agents/extensions/stealth_browser/deterministic-stealth-browser.ts))**:
    - **Anti-Fingerprint Profile Generator**: Produces deterministic C++ fingerprint profiles (Canvas noise seed, WebGL vendor/renderer spoofing, AudioContext jitter, Navigator emulation, screen resolution).
@@ -26,7 +26,7 @@ We implemented a zero-GC, typed, frame-perfect Camoufox Anti-Fingerprinting Stea
    - In-memory Broccolidb repository storing active tabs, element maps, cookie stores, localStorage entries, and anti-fingerprint profiles.
 
 4. **`StealthBrowserSnapshotManager` ([stealth-browser-snapshot-manager.ts](../../src/sessions/extensions/stealth_browser/stealth-browser-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`StealthBrowserToolSuite` ([stealth-browser-tool-suite.ts](../../src/tooling/extensions/stealth_browser/stealth-browser-tool-suite.ts))**:
    - Exposes 6 model tools:

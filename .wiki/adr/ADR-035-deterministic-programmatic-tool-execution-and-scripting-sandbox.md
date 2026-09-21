@@ -11,11 +11,11 @@ In ancestral architectures such as `hermes-agent-main` (`tools/code_execution_to
 4. **Lack of Snapshot-Compatible Execution History**: Script execution telemetry, logs, and tool call traces were untracked across session snapshots, preventing rewind.
 
 ## Decision
-We implemented a zero-GC, in-memory **Programmatic Tool Execution, Scripting Sandbox & Code Evaluation Substrate ($\mathcal{K}_{\text{exec}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Programmatic Tool Execution, Scripting Sandbox & Code Evaluation Substrate ($\mathcal{K}_{\text{exec}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicCodeExecutor`** (`src/tooling/extensions/execution/deterministic-code-executor.ts`):
    - In-memory isolated sandbox executing JavaScript/TypeScript expressions and scripts with direct synchronous and asynchronous `tools.<tool_name>(args)` in-process binding.
-   - Zero Unix domain socket overhead, zero disk file polling, and zero external subprocess spawns.
+   - No Unix-domain socket or disk polling in the described code path, with external subprocess use outside that path requiring separate review.
    - Enforces execution timeouts (`timeoutMs`), recursion limits, and max tool calls per script (`maxToolCalls`).
    - Micro-benchmark: 10,000 in-memory sandbox evaluations in $1.15\text{ ms}$ ($0.0001\text{ ms/op}$).
 
@@ -23,7 +23,7 @@ We implemented a zero-GC, in-memory **Programmatic Tool Execution, Scripting San
    - In-memory Broccolidb ledger tracking execution runs, console logs, and tool call traces.
 
 3. **`ExecutionSnapshotManager`** (`src/sessions/extensions/execution/execution-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.002\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.002\text{ ms}$ observed).
 
 4. **`CodeExecutionSupervisor`** (`src/agents/extensions/execution/code-execution-supervisor.ts`):
    - Master supervisor managing script safety, tool bridge binding, output formatting, and telemetry.

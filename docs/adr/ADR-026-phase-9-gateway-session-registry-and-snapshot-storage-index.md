@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing gateway server session pool registries (`packages/server/src/sessions.ts`), server-side snapshot storage indexing (`packages/server/src/snapshots.ts`), and performing Phase 9 master subsystem synthesis (Passes 37–39) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing gateway server session pool registries (`packages/server/src/sessions.ts`), server-side snapshot storage indexing (`packages/server/src/snapshots.ts`), and performing Phase 9 master subsystem synthesis (Passes 37–39) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

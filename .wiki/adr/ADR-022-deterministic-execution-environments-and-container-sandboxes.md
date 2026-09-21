@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's multi-environment execution system (`tools/environments/` ~300 KB across 12 files: `base.py` 66 KB, `docker.py` 91 KB, `local.py` 72 KB, `file_sync.py` 20 KB, `ssh.py` 17 KB) into a typed, deterministic, zero-GC **Execution Environment & Container Sandbox Subsystem ($\mathcal{K}_{\text{env}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 300+ KB of thread-locked subprocess god-files, in-band CWD marker hacks, and scattered secret blocklists with unified secret scrubbing, hardened container sandboxing (`--cap-drop ALL`, `--security-opt no-new-privileges`), zero-GC Broccolidb session tracking, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's multi-environment execution system (`tools/environments/` ~300 KB across 12 files: `base.py` 66 KB, `docker.py` 91 KB, `local.py` 72 KB, `file_sync.py` 20 KB, `ssh.py` 17 KB) into a typed, deterministic, allocation-bounded **Execution Environment & Container Sandbox Subsystem ($\mathcal{K}_{\text{env}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 300+ KB of thread-locked subprocess god-files, in-band CWD marker hacks, and scattered secret blocklists with unified secret scrubbing, hardened container sandboxing (`--cap-drop ALL`, `--security-opt no-new-privileges`), allocation-bounded Broccolidb session tracking, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -16,7 +16,7 @@ Forensic inspection identified critical design and security vulnerabilities:
 2. **Scattered & Brittle Secret Blocklists**: Ad-hoc regex filtering (`_HERMES_PROVIDER_ENV_BLOCKLIST`) across multiple files that failed to catch new API keys and tokens.
 3. **In-Band CWD Marker Hacks**: Injected `echo __HERMES_CWD_MARKER__$PWD` into subprocess stdout, polluting raw output and breaking structured stream parsing.
 4. **Non-Transactional Remote Sync**: Mutated files in place without atomic rollback snapshots, causing inconsistent state on aborted turns.
-5. **No Zero-GC State Tracking**: Active sessions and container metadata were tracked in mutable dictionaries without frame-perfect snapshotting.
+5. **No allocation-bounded State Tracking**: Active sessions and container metadata were tracked in mutable dictionaries without checkpointed snapshotting.
 
 ---
 
@@ -31,10 +31,10 @@ Forensic inspection identified critical design and security vulnerabilities:
 ### 3. Hardened Docker Execution Adapter (`DockerEnvironmentAdapter`)
 - Executes commands in isolated container sandboxes with `--cap-drop ALL`, `--security-opt no-new-privileges`, memory/PID bounds, and sanitized bind mounts.
 
-### 4. Zero-GC In-Memory Environment Substrate (`BroccoliEnvironmentSubstrate`)
-- Tracks active execution sessions, working directories, and execution histories in Broccolidb memory structures with zero-GC overhead.
+### 4. allocation-bounded In-Memory Environment Substrate (`BroccoliEnvironmentSubstrate`)
+- Tracks active execution sessions, working directories, and execution histories in Broccolidb memory structures with allocation-bounded overhead.
 
-### 5. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`EnvironmentSnapshotManager`)
+### 5. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`EnvironmentSnapshotManager`)
 - Captures environment session state at frame $t$ for sub-millisecond restoration ($<0.1\text{ ms}$).
 
 ### 6. High-Level Multi-Backend Supervisor Engine (`EnvironmentSupervisorEngine`)
@@ -60,7 +60,7 @@ src/
 │   └── environment-tool-suite.ts           # Model tools (execute_command, switch_backend, inspect_status)
 ├── sessions/extensions/environments/
 │   ├── broccoli-environment-substrate.ts   # In-memory session & CWD tracking in Broccolidb
-│   └── environment-snapshot-manager.ts     # Frame-perfect binary snapshotting & O(1) state rewind
+│   └── environment-snapshot-manager.ts     # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/environments/
     └── environment-supervisor-engine.ts    # Multi-backend routing & session coordination
 ```

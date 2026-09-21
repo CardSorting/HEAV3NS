@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 46 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 46 completes the zero-dependency Osmosis distillation of CAS-deduplicated scratchpad stores and epistemic context health diagnostic services from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 46 completes the zero-dependency Osmosis distillation of CAS-deduplicated scratchpad stores and epistemic context health diagnostic services from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli CAS Scratchpad Service (`BroccoliCASScratchpadService`)**: Provides CAS-deduplicated persistent scratchpad storage (`.broccolidb/scratchpad`), atomic lock acquisition (`acquireLock`), and section updating without third-party libraries. Directly embedded inside `BroccoliTaskStateEngine`.

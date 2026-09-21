@@ -45,8 +45,8 @@ We implemented a sovereign, deterministic native messaging gateway subsystem fea
 7. `gateway_manage_config`: Configures allowed platforms, rate limits, and fail-closed policies.
 
 ### 6. Substrate & Frame Snapshotting
-- Zero-GC in-memory repository ([`BroccoliGatewaySubstrate`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/gateway/broccoli-gateway-substrate.ts)) with bounded ring buffers.
-- Sub-millisecond snapshot manager ([`GatewaySnapshotManager`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/gateway/gateway-snapshot-manager.ts)) achieving **$0.002\text{ ms p95}$** rollback latency.
+- allocation-bounded in-memory repository ([`BroccoliGatewaySubstrate`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/gateway/broccoli-gateway-substrate.ts)) with bounded ring buffers.
+- Sub-millisecond snapshot manager ([`GatewaySnapshotManager`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/gateway/gateway-snapshot-manager.ts)) achieving **$0.002\text{ ms p95}$** rollback latency.
 
 ## Consequences
 - Complete immunization against timing side-channels and webhook replay attacks.

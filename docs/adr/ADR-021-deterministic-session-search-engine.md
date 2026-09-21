@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's massive SQLite session database and FTS5 search mixin (`hermes_state.py` ~570 KB, 12,664 lines; `hermes_state_search.py` ~114 KB, 2,494 lines; `hermes_state_schema.py` ~64 KB) into a typed, deterministic **Inverted-Index & Session Search Subsystem ($\mathcal{K}_{\text{search}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 15,000 lines of SQLite disk I/O, raw SQL string queries, thread lock contention, and brittle FTS5 syntax errors with Unicode-safe query sanitization, zero-GC Broccolidb posting lists, in-memory BM25 + trigram scoring, contextual snippet extraction, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's massive SQLite session database and FTS5 search mixin (`hermes_state.py` ~570 KB, 12,664 lines; `hermes_state_search.py` ~114 KB, 2,494 lines; `hermes_state_schema.py` ~64 KB) into a typed, deterministic **Inverted-Index & Session Search Subsystem ($\mathcal{K}_{\text{search}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 15,000 lines of SQLite disk I/O, raw SQL string queries, thread lock contention, and brittle FTS5 syntax errors with Unicode-safe query sanitization, allocation-bounded Broccolidb posting lists, in-memory BM25 + trigram scoring, contextual snippet extraction, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -25,12 +25,12 @@ Forensic inspection revealed multiple architectural friction points:
 - Normalizes Unicode (`NFKC`), strips or escapes unsafe FTS5 control characters (`+{}():"^@/#&|~[]<>,;!?$=\'`), detects CJK ideographs, and extracts clean unigram/bigram search tokens without query crashes.
 
 ### 2. In-Memory Broccolidb Search Substrate (`BroccoliSearchSubstrate`)
-- Zero-GC in-memory storage of indexed message records and posting lists in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ term lookup latency.
+- allocation-bounded in-memory storage of indexed message records and posting lists in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ term lookup latency.
 
 ### 3. BM25 & Trigram Relevance Scoring (`DeterministicSessionSearchEngine`)
 - Implements posting-accumulator BM25 ranking, IDF calculation, role/tool/session filters, and contextual match snippet generation.
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`SearchSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`SearchSnapshotManager`)
 - Captures full search index records and posting state at frame $t$ for sub-millisecond restoration ($<0.1\text{ ms}$).
 
 ### 5. Model-Facing Search Tools (`SearchToolSuite`)
@@ -51,15 +51,15 @@ src/
 │   ├── deterministic-session-search-engine.ts # In-memory BM25 relevance scoring engine
 │   └── search-tool-suite.ts                # Model tools (search_history, extract_context, index_status)
 └── sessions/extensions/search/
-    ├── broccoli-search-substrate.ts        # Zero-GC in-memory inverted index & postings
-    └── search-snapshot-manager.ts          # Frame-perfect binary snapshotting & O(1) state rewind
+    ├── broccoli-search-substrate.ts        # allocation-bounded in-memory inverted index & postings
+    └── search-snapshot-manager.ts          # checkpointed binary snapshotting & O(1) state rewind
 ```
 
 ---
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Dedicated Test Suite**: `scripts/validate-session-search.ts` validates all 8 test suites spanning query sanitization, inverted index ingestion, BM25 ranking, snippet extraction, in-memory caching, binary rollback, model tools, and micro-benchmarks.
 - **Performance SLA**: 1,000 multi-token BM25 searches complete in $20.455\text{ ms}$ ($20.455\ \mu\text{s}$ per search / $\approx 48,000$ searches/sec).
 - **Monolith Graduation**: Monolith graduates cleanly from 200 to **205 components**.

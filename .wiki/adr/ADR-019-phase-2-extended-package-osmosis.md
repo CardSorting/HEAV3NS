@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing additional foundational packages from `pi-main` (`packages/snapcompact`, `packages/catalog`, `packages/server`, `packages/evals`) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Passes 15–18).
+- **Technical Story**: Absorbing additional foundational packages from `pi-main` (`packages/snapcompact`, `packages/catalog`, `packages/server`, `packages/evals`) into `repository root` via the **Osmosis Strategy** (Passes 15–18).
 
 ---
 

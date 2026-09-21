@@ -17,7 +17,7 @@ In agentic network tools and web scraping systems (`tools/url_safety.py` in Herm
 6. **In-Memory Substrate & Snapshots**: Tracks blocked SSRF events, custom allow/deny lists, and threat metrics with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect SSRF Defense Firewall and URL Normalizer Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed SSRF Defense Firewall and URL Normalizer Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicUrlSafety` ([deterministic-url-safety.ts](../../src/agents/extensions/url_safety/deterministic-url-safety.ts))**:
    - **Alternative IP Parser**: Decodes integer, hex, octal, and IPv4-mapped IPv6 addresses into standard dot-decimal IPv4.
@@ -32,7 +32,7 @@ We implemented a zero-GC, typed, frame-perfect SSRF Defense Firewall and URL Nor
    - In-memory Broccolidb repository storing blocked SSRF attempts, custom allow/deny lists, and threat metrics.
 
 4. **`UrlSafetySnapshotManager` ([url-safety-snapshot-manager.ts](../../src/sessions/extensions/url_safety/url-safety-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`UrlSafetyToolSuite` ([url-safety-tool-suite.ts](../../src/tooling/extensions/url_safety/url-safety-tool-suite.ts))**:
    - Exposes 5 model tools:
@@ -44,7 +44,7 @@ We implemented a zero-GC, typed, frame-perfect SSRF Defense Firewall and URL Nor
 
 ## Invariants & Guardrails
 1. **Unconditional Cloud Metadata Defense**: Cloud metadata IPs (`169.254.169.254`, etc.) and hostnames (`metadata.google.internal`) are never permitted under any configuration.
-2. **Alternative IP Bypass Immunity**: Integer, hex, octal, and mapped IPv6 strings are decoded and evaluated against subnet boundaries.
+2. **Alternative IP Bypass Checks**: Integer, hex, octal, and mapped IPv6 strings are decoded and evaluated against subnet boundaries in the covered parser paths; this is not a complete SSRF guarantee.
 3. **Zero Barrel Imports (`ADR-012`)**: Direct file imports only.
 4. **Base Class Immutability (`ADR-012`)**: Base classes remain unmodified.
 5. **Sub-Microsecond Latency SLA**: State rollback in $<0.05\text{ ms}$; URL checks $>200,000\text{ checks/sec}$.

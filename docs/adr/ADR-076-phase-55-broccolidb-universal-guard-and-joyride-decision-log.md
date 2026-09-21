@@ -2,18 +2,18 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 55 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 55 completes the zero-dependency Osmosis distillation of unified singleton governance authority and bounded in-process cache decision audit logging from `/Users/bozoegg/Downloads/codemarie-new/src/core/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 55 completes the zero-dependency Osmosis distillation of unified singleton governance authority and bounded in-process cache decision audit logging from `external codemarie-new source workspace/src/core/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Universal Guard (`BroccoliUniversalGuard`)**: Unified singleton governance authority coordinating `BroccoliJoyZoningEngine`, `BroccoliJoyZoningGuard`, `BroccoliAxiomVerifier`, system pressure tracking, and execution mode transitions (`plan` vs `act`) without third-party dependencies. Directly embedded inside `BroccoliAxiomVerifier`.
-2. **Broccoli JoyRide Decision Log (`BroccoliJoyRideDecisionLog`)**: Bounded in-process ring-buffer cache decision audit logger (`recordDecision`, `getDecisionLog`, `explainDecision`) with zero-GC array slicing and microsecond timestamping without third-party libraries. Directly embedded inside `JoyRideHotPathCache`.
+2. **Broccoli JoyRide Decision Log (`BroccoliJoyRideDecisionLog`)**: Bounded in-process ring-buffer cache decision audit logger (`recordDecision`, `getDecisionLog`, `explainDecision`) with allocation-bounded array slicing and microsecond timestamping without third-party libraries. Directly embedded inside `JoyRideHotPathCache`.
 
 ---
 

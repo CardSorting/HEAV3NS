@@ -8,7 +8,7 @@ When orchestrating multi-agent swarms, subagents, and concurrent task workers (e
 1. **Parallel Working Copy Contention**:
    - Multiple subagents editing files simultaneously in a single workspace directory trigger race conditions, corrupted file states, dirty git status conflicts, and overwritten modifications.
 2. **Git Worktree Isolation**:
-   - Creating isolated git worktrees (`.worktrees/subagent-<id>`) branched from `HEAD` (`lumi-subagent/<id>`) guarantees that each child agent operates inside a completely clean, dedicated workspace without touching the parent's working tree.
+   - Creating isolated git worktrees (`.worktrees/subagent-<id>`) branched from `HEAD` (`lumi-subagent/<id>`) is intended to give each child agent a dedicated workspace; host, failure, and concurrent-operator behavior still require verification.
 3. **Workspace Hygiene & Auto-Pruning**:
    - Automatically ensuring `.gitignore` contains the `.worktrees/` directory.
    - Inspecting dirty files, staged modifications, and commit counts.
@@ -17,7 +17,7 @@ When orchestrating multi-agent swarms, subagents, and concurrent task workers (e
    - In-memory Broccolidb repository tracking active worktrees, branch metadata, and merge history with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Git Worktree Isolation and Branch Sandboxing Engine for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Git Worktree Isolation and Branch Sandboxing Engine for **LUMI-JOY**:
 
 1. **`DeterministicGitWorktree` ([deterministic-git-worktree.ts](../../src/agents/extensions/worktree/deterministic-git-worktree.ts))**:
    - **Repo Root Resolver**: Discovers git repository root by traversing upward directory boundaries.
@@ -31,7 +31,7 @@ We implemented a zero-GC, typed, frame-perfect Git Worktree Isolation and Branch
    - In-memory Broccolidb repository storing allocated worktrees, active branches, and merge history.
 
 4. **`WorktreeSnapshotManager` ([worktree-snapshot-manager.ts](../../src/sessions/extensions/worktree/worktree-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`WorktreeToolSuite` ([worktree-tool-suite.ts](../../src/tooling/extensions/worktree/worktree-tool-suite.ts))**:
    - Exposes 5 model tools:

@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 178: Zero-Dependency Broccoli Integrity Protocol
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/IntegrityProtocol.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/IntegrityProtocol.ts.
  * Provides TRIAD AUDIT template generation (The Architect, The Critic, The SRE), section headers,
  * and semantic compliance checking for strategic Plan Mode reviews. Zero external npm dependencies.
  */

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing zombie symbol auditing and module coupling analysis from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/policy/ModuleDecomposer.ts` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 10).
+- **Technical Story**: Absorbing zombie symbol auditing and module coupling analysis from teacher package `external pi-main source workspace/packages/codemarie/src/core/policy/ModuleDecomposer.ts` into `repository root` via the **Osmosis Strategy** (Pass 10).
 
 ---
 

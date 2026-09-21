@@ -11,7 +11,7 @@ When an autonomous AI agent develops, refactors, or investigates software inside
 4. Conversely, safe read-only commands (`git status`, `git diff`, `git log`, `git show`, `git stash list`, `git reset --soft`, `git clean -n`, `git restore --staged`) and mutations targeting external or isolated foreign workspaces (`cd /tmp/other-repo && git checkout main`) must execute freely without impediment.
 
 ## Decision
-We implement a zero-GC, typed, deterministic Self-Repository Mutation Guard in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Self-Repository Mutation Guard in **LUMI-JOY**:
 1. **Core Contracts (`self-repo-guard.contracts.ts`)**:
    - Defines `GitOperationSafety`, `SelfRepoGuardVerdict`, `SelfRepoGuardConfig`, `SelfRepoGuardMetrics`, `SelfRepoGuardIncident`, and constants (`WORKTREE_MUTATING_GIT_COMMANDS`, `SAFE_GIT_BUILTINS`, `RESET_WORKTREE_MODES`, `STASH_SAFE_ACTIONS`, `WORKTREE_TARGET_ACTIONS`).
 2. **In-Memory Substrate & Snapshots (`broccoli-self-repo-guard-substrate.ts`, `self-repo-guard-snapshot-manager.ts`)**:
@@ -33,4 +33,4 @@ We implement a zero-GC, typed, deterministic Self-Repository Mutation Guard in *
 - Total prevention of self-inflicted runtime module skew and corruption of the agent's own brain.
 - Transparent execution of safe Git inspections and foreign repository mutations.
 - Ultra-high-speed shell inspection exceeding $1,000,000\text{ commands/sec}$.
-- Frame-perfect snapshot rollback in $<0.05\text{ ms}$.
+- checkpointed snapshot rollback in $<0.05\text{ ms}$.

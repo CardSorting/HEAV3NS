@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 145: Zero-Dependency Broccoli Execution Trace Recorder
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/ExecutionTrace.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/ExecutionTrace.ts).
  * In-memory telemetry execution trace event stream recorder emitting structured execution events,
  * with ring-buffer FIFO auto-truncation and session ID filtering. Zero external npm dependencies.
  */

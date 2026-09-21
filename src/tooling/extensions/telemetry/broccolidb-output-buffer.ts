@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 191: Zero-Dependency Broccoli Command Output Buffer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/integrations/terminal/CommandOrchestrator.ts buffering logic.
+ * Lifted from external source workspace/codemarie-new/src/integrations/terminal/CommandOrchestrator.ts buffering logic.
  * Bounded terminal output chunking (appendChunk), head/tail summary line retention (SUMMARY_LINES_TO_KEEP),
  * byte/line threshold enforcement, and stream output formatting. Zero external npm dependencies.
  */

@@ -60,4 +60,4 @@ During active structural remediation (marked by `#HEAL`, `#HEALING`, or `#CURE`)
 The **Sovereign Guard** implements "Positive Drift" sensing. If a proposed edit resolves a critical architectural violation (e.g., breaking a cycle) but introduces a minor, non-blocking warning, the guard will approve the turn as a net-positive **Therapeutic Transition**. This prevents the "Healing Deadlock" where complex repairs are blocked by intermediate integrity requirements.
 
 ---
-*For technical integration details, see [SPIDER.md](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/SPIDER.md). For deep-dive performance details, see [PERFORMANCE.md](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/PERFORMANCE.md).*
+*For technical integration details, see [SPIDER.md](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md). For deep-dive performance details, see [PERFORMANCE.md](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md).*

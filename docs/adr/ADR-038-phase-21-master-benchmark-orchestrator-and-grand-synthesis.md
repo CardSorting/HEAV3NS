@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing master benchmark evaluation suite orchestration (`MasterBenchmarkOrchestrator`), 75-pass monolith component synthesizer (`GrandMonolithSynthesizer`), and completing the Phase 21 Grand Synthesis (Passes 73–75) in `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing master benchmark evaluation suite orchestration (`MasterBenchmarkOrchestrator`), 75-pass monolith component synthesizer (`GrandMonolithSynthesizer`), and completing the Phase 21 Grand Synthesis (Passes 73–75) in `repository root` via the **Osmosis Strategy**.
 
 ---
 

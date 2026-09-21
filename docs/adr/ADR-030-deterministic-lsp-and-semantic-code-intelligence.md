@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling LSP client, background event loop daemon, and language server manager (`agent/lsp/client.py` [1,030 LOC] + `agent/lsp/manager.py` [745 LOC] + `agent/lsp/servers.py` [1,000 LOC] + `agent/lsp/protocol.py` [200 LOC] + `agent/lsp/workspace.py` [250 LOC] + `agent/lsp/range_shift.py` [180 LOC] + `agent/lsp/eventlog.py` [220 LOC] + `agent/lsp/cli.py` [300 LOC] — totaling **4,100+ LOC, 175 KB**) into a typed, deterministic, zero-GC **AST Code Intelligence, Language Perception & Semantic Diagnostic Substrate ($\mathcal{K}_{\text{lsp}}$ / Phase 78)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces background daemon threads, untracked language server subprocesses, and external binary dependencies with in-memory zero-GC AST symbol perception, delta diagnostic baselining, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling LSP client, background event loop daemon, and language server manager (`agent/lsp/client.py` [1,030 LOC] + `agent/lsp/manager.py` [745 LOC] + `agent/lsp/servers.py` [1,000 LOC] + `agent/lsp/protocol.py` [200 LOC] + `agent/lsp/workspace.py` [250 LOC] + `agent/lsp/range_shift.py` [180 LOC] + `agent/lsp/eventlog.py` [220 LOC] + `agent/lsp/cli.py` [300 LOC] — totaling **4,100+ LOC, 175 KB**) into a typed, deterministic, allocation-bounded **AST Code Intelligence, Language Perception & Semantic Diagnostic Substrate ($\mathcal{K}_{\text{lsp}}$ / Phase 78)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces background daemon threads, untracked language server subprocesses, and external binary dependencies with in-memory allocation-bounded AST symbol perception, delta diagnostic baselining, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -23,18 +23,18 @@ Forensic inspection revealed critical consistency and isolation issues:
 ## 2. Architectural Decision (The What)
 
 ### 1. Deterministic AST Code Intelligence Engine (`DeterministicLspEngine`)
-- In-memory zero-GC structural AST code perception & TypeScript compiler diagnostic analyzer.
+- In-memory allocation-bounded structural AST code perception & TypeScript compiler diagnostic analyzer.
 - Extracts symbols (classes, interfaces, functions, methods, variables, constants, types) with line and column ranges.
 - Resolves definitions and finds call sites across workspace files.
 - Generates rich Markdown hover cards with type signatures and docstrings.
 - Performs fast in-memory structural diagnostics (unmatched braces, trailing syntax errors).
 - Benchmarked at 1,000 AST extractions in $<5\text{ ms}$ ($<0.005\text{ ms/op}$).
 
-### 2. Zero-GC In-Memory LSP Substrate (`BroccoliLspSubstrate`)
+### 2. allocation-bounded In-Memory LSP Substrate (`BroccoliLspSubstrate`)
 - In-memory Broccolidb storage tracking active document versions, symbol indices, and pre-edit diagnostic baselines.
 - Calculates instant delta diagnostics (`getDeltaDiagnostics(filePath)`) to report only newly introduced issues.
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`LspSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`LspSnapshotManager`)
 - Captures atomic snapshots of LSP documents and symbol tables at frame $t$, restoring state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Master Semantic Code Supervisor (`SemanticCodeSupervisor`)
@@ -57,11 +57,11 @@ src/
 ├── core/contracts/
 │   └── lsp.contracts.ts                   # LspDiagnostic, LspPosition, LspRange, LspSymbolInformation, LspHoverInfo, LspDefinition
 ├── tooling/extensions/lsp/
-│   ├── deterministic-lsp-engine.ts        # Zero-GC structural AST code perception & TypeScript compiler diagnostic analyzer
+│   ├── deterministic-lsp-engine.ts        # allocation-bounded structural AST code perception & TypeScript compiler diagnostic analyzer
 │   └── lsp-code-intelligence-tool-suite.ts # Model tools (lsp_diagnostics, lsp_hover, lsp_definition, lsp_references, lsp_document_symbols, lsp_workspace_symbols)
 ├── sessions/extensions/lsp/
 │   ├── broccoli-lsp-substrate.ts          # In-memory Broccolidb substrate for document versions, diagnostics, and symbol indexes
-│   └── lsp-snapshot-manager.ts            # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── lsp-snapshot-manager.ts            # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/lsp/
     └── semantic-code-supervisor.ts        # Master code intelligence orchestrator with pre-edit/post-edit delta baselining
 ```

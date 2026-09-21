@@ -2,6 +2,15 @@
 
 Thank you for your interest in contributing to **LUMI-JOY**! We welcome contributions from the community. Please review this guide to ensure your contributions align with our architectural standards and workflow.
 
+The current project line is Apache-2.0. Read [the licensing and claim-control
+strategy](docs/LEGAL-STRATEGY.md), [DCO](DCO), [security policy](SECURITY.md),
+[trademark policy](TRADEMARKS.md), and [source provenance record](.wiki/ip/SOURCE-PROVENANCE.md)
+before importing code, documentation, assets, or generated material.
+
+Do not add a dependency or copied component based only on an author name,
+package name, or repository link. Record its exact source, version or commit,
+license, required notices, and the release artifact that will contain it.
+
 ---
 
 ## Architectural Principles & Rules
@@ -19,13 +28,13 @@ Thank you for your interest in contributing to **LUMI-JOY**! We welcome contribu
 - Pure base parent contracts reside in `src/core/contracts/` and `src/core/abstracts/` (`AbstractAgentEngine`, `AbstractSessionStore`, `AbstractHands`, `AbstractEars`, `AbstractToolRegistry`).
 - Specialized capabilities inherit downward (`class Child extends Parent`) in `src/*/extensions/`.
 
-### 4. Mandatory Performance SLAs & Security Guardrails (`ADR-051`)
-- **Current Verified Baseline (2026-08-17T04:06:43.562Z)**: **566/566** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
+### 4. Performance evidence & security guardrails (`ADR-051`)
+- **Recorded baseline (2026-08-17T04:06:43.562Z)**: **566/566** composition manifest, **9/9** smoke checks, **5/5** benchmark cases, **8/8** Flappy assertions, **6/6** guardrails.
 - The current composition manifest expects **566/566** required capabilities.
 - Live baseline metrics ([`docs/LIVE_BASELINE.json`](docs/LIVE_BASELINE.json)) are host-sensitive measurements, not fixed promises.
-- Fast-path mean latency must remain below **1.0 ms**, deterministic throughput must remain at or above **1,000 frames/second**, and warmed state rewind p95 must remain below **0.1 ms**.
+- Performance numbers are workload- and host-specific evidence. A new benchmark claim must link to its command, inputs, host, report date, and current generated baseline; it must not be copied into marketing copy as a universal promise.
 - The full verification suite runs on every PR via [`.github/workflows/repo-protection-ci.yml`](.github/workflows/repo-protection-ci.yml).
-- **Zero-GC Slab Memory Invariant**: `PersistentSessionStore` slab allocation MUST remain fixed at **$16\text{ MB}$** (`16,777,216 bytes`).
+- **Arena Capacity Invariant**: `PersistentSessionStore` slab allocation MUST remain fixed at **$16\text{ MB}$** (`16,777,216 bytes`) where that contract is enabled; this does not claim that the whole Node.js process is allocation-free.
 - **Zero-Barrel Imports (`ADR-012`)**: Intermediate `index.ts` re-export barrel files inside `src/*/extensions/` are strictly prohibited.
 - **Erasable TypeScript Syntax**: Forbidden syntax includes `enum`, `namespace`, parameter properties in constructors (`constructor(public x: string)`), `import =`, `export =`. Use `verbatimModuleSyntax` with top-level explicit type imports.
 
@@ -64,10 +73,11 @@ npm run check
 
 ### 3. Run Automated Repository Guardrail Audit & Performance Test
 
-Execute the mandatory pre-commit protection audit verifying type safety, performance SLAs ($< 1.0\text{ ms}$ latency), zero-GC slab memory invariants, and zero-barrel import compliance:
+Execute the repository protection audit verifying type safety, runtime guardrails, provenance boundaries, and package claims:
 
 ```bash
 npm test
+npm run legal:check
 ```
 
 ### 4. Interactive Tools & Benchmarks
@@ -114,3 +124,11 @@ Examples:
 - `feat(agent): add frame snapshot rewind support`
 - `fix(tooling): correct line-anchored hash verification in hands`
 - `docs(agent): update API reference guide in wiki`
+
+Every contribution must also include a DCO sign-off. Use `git commit -s` so
+the commit contains a `Signed-off-by:` trailer. CI checks every commit in the
+pull request range; a missing or mismatched sign-off blocks the change.
+
+Before opening a pull request, run `npm run legal:check` and inspect the
+package-boundary output. Legal files, source provenance, claim wording, and
+third-party notices are part of the release surface.

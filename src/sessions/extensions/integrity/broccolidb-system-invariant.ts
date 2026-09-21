@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 125: Zero-Dependency Broccoli System Invariant Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/InvariantEngine.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/InvariantEngine.ts).
  * Performs system invariant auditing, scanning workspace disk surfaces and source code text
  * for banned database files, security bypass symbols, and structural compliance violations. Zero external npm dependencies.
  */

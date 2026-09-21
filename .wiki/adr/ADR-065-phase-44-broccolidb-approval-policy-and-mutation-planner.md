@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 44 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 44 completes the zero-dependency Osmosis distillation of mutation approval policies and plan generation engines from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 44 completes the zero-dependency Osmosis distillation of mutation approval policies and plan generation engines from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Approval Policy Engine (`BroccoliApprovalPolicyEngine`)**: Evaluates mutation plans against risk levels (`low`, `medium`, `high`) and policy modes (`readonly`, `production_locked`, `human_approval_required`, `ci_gate_only`, `autonomous_safe`) throwing `PolicyBlockedError` when violated. Directly embedded inside `LumiIgnorePolicyController`.

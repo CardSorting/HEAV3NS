@@ -15,13 +15,13 @@ In prior evolutionary phases, subsystem state (goals, tasks, profiles, reasoning
 While in-memory operation delivers microsecond latency ($<0.5\ \mu\text{s}$), it exhibits critical structural vulnerabilities:
 1. **Crash & Termination Volatility**: An unexpected process crash, system reboot, or SIGKILL results in 100% loss of unexported session state and evolutionary agent milestones.
 2. **Large Artifact Memory Pressure**: Holding multi-megabyte ASTs, tool execution output buffers, and compaction projections directly inside memory object graphs triggers heavy V8 garbage collection pauses, degrading turn tick latency.
-3. **The Danger of Native C++ Addons**: While `/Users/bozoegg/Downloads/codemarie-new/broccolidb` used SQLite, it relied on `better-sqlite3` and `kysely`. Injecting native C++ bindings into LUMI-NEW would violate the **Zero-Dependency Native Substrate Principle**, breaking portability across platforms without build toolchains.
+3. **The Danger of Native C++ Addons**: While `external source workspace/codemarie-new/broccolidb` used SQLite, it relied on `better-sqlite3` and `kysely`. Injecting native C++ bindings into LUMI-NEW would violate the **Zero-Dependency Native Substrate Principle**, breaking portability across platforms without build toolchains.
 
 ---
 
 ## 2. Architectural Decision (The What)
 
-We implement a **Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel ($\mathcal{K}_{\text{broccoli}}$)** using 100% pure TypeScript and Node.js built-ins (`node:fs/promises`, `node:crypto`, `node:path`, `node:zlib`, `node:async_hooks`).
+We implement a **Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel ($\mathcal{K}_{\text{broccoli}}$)** using TypeScript and Node.js built-ins (`node:fs/promises`, `node:crypto`, `node:path`, `node:zlib`, `node:async_hooks`).
 
 ### Multi-Tier Storage Topology
 
@@ -48,12 +48,12 @@ We implement a **Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel (
 │ Tier 4: Time Machine Checkpoint Engine (Immutable Base Snapshots & Time-Travel)                                                 │
 │   ├── Double-Buffered Base State (.broccolidb/checkpoint.db via atomic .tmp rename)                                             │
 │   ├── WAL Truncation & Safe Log Rotation (.broccolidb/wal.log.old)                                                              │
-│   └── Sub-Millisecond Frame-Perfect Rollback Coordinator (<0.1 ms)                                                              │
+│   └── Sub-Millisecond checkpointed Rollback Coordinator (<0.1 ms)                                                              │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Human-Centric Mental Models
-1. **🕒 Time Machine**: Intuitive timeline checkpoints with one-command frame-perfect rollback (`db_rollback_timeline`), mirroring Figma and macOS APFS snapshots.
+1. **🕒 Time Machine**: Intuitive timeline checkpoints with one-command checkpointed rollback (`db_rollback_timeline`), mirroring Figma and macOS APFS snapshots.
 2. **🗄️ Storage Vault**: Content-addressed deduplication with Brotli compression and cryptographic self-healing quarantine (`.broccolidb/cas/corrupt/`), mirroring Obsidian and Turborepo CAS.
 3. **✈️ Flight Recorder**: Zero-data-loss append-only WAL journal with cold-start crash replay, mirroring aviation black-box logs.
 4. **🩺 4-Pillar Vital Dashboard**: High-contrast traffic-light diagnostics for Disk Invariants, CAS Integrity, WAL Journal, and Table Schemas.
@@ -62,20 +62,20 @@ We implement a **Deterministic Hybrid In-Memory + Handrolled BroccoliDB Kernel (
 
 ## 3. Concrete Code Surfaces (The How)
 
-1. **Contracts**: [broccolidb.contracts.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/core/contracts/broccolidb.contracts.ts) defining `IBroccoliDatabaseKernel`, `IDbTable<T>`, `WalFrame`, `DbHealthReport`, and `TimelineCheckpointRecord`.
-2. **Concurrency**: [broccolidb-mutex.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/broccolidb-mutex.ts) providing `ReentrantAsyncMutex` with `AsyncLocalStorage` holder tracking and adaptive Poisson jitter.
-3. **CAS Storage**: [broccolidb-cas.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/broccolidb-cas.ts) providing `BroccoliCASStorageService` with 256-way sharded storage and Brotli compression.
-4. **Write-Ahead Log**: [broccolidb-wal.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/broccolidb-wal.ts) providing `BroccoliWriteAheadLog` with micro-batch coalescing and crash replay.
-5. **Reactive Tables**: [broccolidb-table.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/broccolidb-table.ts) providing `BroccoliDbTable<T>` with secondary index multi-maps and predicate queries.
-6. **Master Kernel**: [broccolidb-kernel.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/extensions/substrate/broccolidb-kernel.ts) providing `BroccoliDatabaseKernel` with 4-pillar health probe.
-7. **Tooling**: [database-tools.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/database/database-tools.ts) providing `DatabaseToolSuite` in `ValidatingToolRegistry`.
-8. **Monolith Composition**: [monolith-factory.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/factories/monolith-factory.ts) and [index.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/src/index.ts).
+1. **Contracts**: [broccolidb.contracts.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/core/contracts/broccolidb.contracts.ts) defining `IBroccoliDatabaseKernel`, `IDbTable<T>`, `WalFrame`, `DbHealthReport`, and `TimelineCheckpointRecord`.
+2. **Concurrency**: [broccolidb-mutex.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/substrate/broccolidb-mutex.ts) providing `ReentrantAsyncMutex` with `AsyncLocalStorage` holder tracking and adaptive Poisson jitter.
+3. **CAS Storage**: [broccolidb-cas.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/substrate/broccolidb-cas.ts) providing `BroccoliCASStorageService` with 256-way sharded storage and Brotli compression.
+4. **Write-Ahead Log**: [broccolidb-wal.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/substrate/broccolidb-wal.ts) providing `BroccoliWriteAheadLog` with micro-batch coalescing and crash replay.
+5. **Reactive Tables**: [broccolidb-table.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/substrate/broccolidb-table.ts) providing `BroccoliDbTable<T>` with secondary index multi-maps and predicate queries.
+6. **Master Kernel**: [broccolidb-kernel.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/extensions/substrate/broccolidb-kernel.ts) providing `BroccoliDatabaseKernel` with 4-pillar health probe.
+7. **Tooling**: [database-tools.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/database/database-tools.ts) providing `DatabaseToolSuite` in `ValidatingToolRegistry`.
+8. **Monolith Composition**: [monolith-factory.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/factories/monolith-factory.ts) and [index.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/index.ts).
 
 ---
 
 ## 4. Verification & Validation
 
-1. **Automated Test Battery**: [scripts/validate-broccolidb-hybrid-kernel.ts](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-broccolidb-hybrid-kernel.ts) verifying all 10 validation points 100% cleanly.
+1. **Automated Test Battery**: [scripts/validate-broccolidb-hybrid-kernel.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-broccolidb-hybrid-kernel.ts) verifying all 10 validation points 100% cleanly.
 2. **Architecture SLAs**:
    - L1 CRUD Mutation Latency: $<1.0\ \mu\text{s}$ ($p99$).
    - L1 Secondary Index Lookup: $<0.5\ \mu\text{s}$ ($p99$).

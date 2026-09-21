@@ -9,10 +9,10 @@ When models (e.g. MiniMax, DeepSeek R1, Claude, Qwen) stream reasoning blocks to
 2. Downstream consumers (CLI streaming feeds, WebSockets, Telegram/Discord messaging gateways, ACP server, TTS engines) leak raw reasoning blocks if tags are stripped incorrectly.
 3. Prose that intentionally mentions tags (e.g. `"use <think> tags here"`) must not be suppressed when not at a block boundary.
 4. If a stream aborts abruptly while inside an open block, the holdback buffer must fail closed by discarding internal thoughts rather than leaking incomplete reasoning chains.
-5. The streaming filter must operate with zero GC overhead, sub-millisecond state rollback ($<0.05\text{ ms SLA}$), and high delta throughput ($>1,000,000\text{ deltas/sec}$).
+5. The streaming filter must operate with allocation-bounded overhead, sub-millisecond state rollback ($<0.05\text{ ms SLA}$), and high delta throughput ($>1,000,000\text{ deltas/sec}$).
 
 ## Decision
-We implement a zero-GC, stateful, deterministic Streaming Reasoning Tag Scrubber in **LUMI-JOY**:
+We implement a allocation-bounded, stateful, deterministic Streaming Reasoning Tag Scrubber in **LUMI-JOY**:
 1. **Core Contracts (`streaming-think-scrubber.contracts.ts`)**:
    - Defines `ReasoningTagName`, `StreamingScrubberState`, `StreamingThinkScrubberConfig`, `StreamingThinkScrubberMetrics`, and `StreamingThinkScrubberWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-streaming-scrubber-substrate.ts`, `streaming-scrubber-snapshot-manager.ts`)**:
@@ -31,6 +31,6 @@ We implement a zero-GC, stateful, deterministic Streaming Reasoning Tag Scrubber
 
 ## Consequences
 - Complete elimination of streamed reasoning tag leaks and split-chunk reasoning exposure across all protocols (CLI, TUI, Gateway, ACP, TTS).
-- Guaranteed protection of intentional Markdown tag mentions in prose.
+- Protects intentional Markdown tag mentions in prose in the covered parser paths and tests.
 - Fail-closed stream termination behavior.
 - High-frequency delta throughput exceeding $2,000,000\text{ deltas/sec}$.

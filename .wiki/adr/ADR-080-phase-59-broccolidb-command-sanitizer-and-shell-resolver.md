@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 59 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 59 completes the zero-dependency Osmosis distillation of command boundary parsing, interactive editor/REPL blocking, and platform-aware shell resolution from `/Users/bozoegg/Downloads/codemarie-new/src/integrations/terminal` and `/src/utils/shell.ts` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 59 completes the zero-dependency Osmosis distillation of command boundary parsing, interactive editor/REPL blocking, and platform-aware shell resolution from `external codemarie-new source workspace/src/integrations/terminal` and `/src/utils/shell.ts` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Command Sanitizer (`BroccoliCommandSanitizer`)**: Command boundary splitting (`splitCommand`), interactive editor/REPL block detection (`validateCommand`), and shell variable assignment parsing without third-party dependencies. Directly embedded inside `CommandPathResolver`.

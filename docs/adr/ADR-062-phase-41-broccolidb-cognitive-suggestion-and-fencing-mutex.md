@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 41 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 41 completes the zero-dependency Osmosis distillation of cognitive prompt suggestions and fencing token distributed lock engines from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 41 completes the zero-dependency Osmosis distillation of cognitive prompt suggestions and fencing token distributed lock engines from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Cognitive Suggestion Engine (`BroccoliCognitiveSuggestionEngine`)**: Context-aware prompt suggestion generation based on active file paths, workspace diagnostics, git status, and MD5 content hashes (`calculateContentHash`). Directly embedded inside `PromptComposer`.

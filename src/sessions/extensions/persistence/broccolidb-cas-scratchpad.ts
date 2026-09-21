@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 148: Zero-Dependency Broccoli CAS Scratchpad Service
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/ScratchpadService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/ScratchpadService.ts).
  * Provides CAS-deduplicated durable task scratchpads with file-based atomic lock handling. Zero external npm dependencies.
  */
 

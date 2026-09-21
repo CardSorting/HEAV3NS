@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's Python credential pool (`agent/credential_pool.py` ~152 KB, 3,196 lines) into a typed, deterministic **Token-Bucket Credential Pool Rotation & Circuit Breaker Subsystem ($\mathcal{K}_{\text{cred}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm (excluding MoA). Replaces disk file locking churn (`auth.json`), brittle error regex matching, non-transactional state mutations, and arbitrary cooldown thrashing with mathematical continuous token bucket tracking (RPM/TPM), typed terminal OAuth error classification (`token_revoked`, `invalid_grant`), zero-GC Broccolidb substrate memory slabs, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's Python credential pool (`agent/credential_pool.py` ~152 KB, 3,196 lines) into a typed, deterministic **Token-Bucket Credential Pool Rotation & Circuit Breaker Subsystem ($\mathcal{K}_{\text{cred}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm (excluding MoA). Replaces disk file locking churn (`auth.json`), brittle error regex matching, non-transactional state mutations, and arbitrary cooldown thrashing with mathematical continuous token bucket tracking (RPM/TPM), typed terminal OAuth error classification (`token_revoked`, `invalid_grant`), allocation-bounded Broccolidb substrate memory slabs, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -31,10 +31,10 @@ Forensic inspection revealed multiple critical inefficiencies:
 - Manages state transitions: `healthy` $\to$ `cooldown` $\to$ `exhausted` $\to$ `dead`.
 - Detects terminal OAuth failures (`token_revoked`, `invalid_grant`, `account_deactivated`) for immediate, permanent eviction.
 
-### 4. Zero-GC Broccolidb Substrate (`BroccoliCredentialSubstrate`)
+### 4. allocation-bounded Broccolidb Substrate (`BroccoliCredentialSubstrate`)
 - Stores credential manifests in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ lookup latency.
 
-### 5. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`CredentialSnapshotManager`)
+### 5. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`CredentialSnapshotManager`)
 - Captures complete pool status, remaining tokens, and failure history into binary snapshots for sub-millisecond restoration ($<0.1\text{ ms}$).
 
 ### 6. Model-Facing Credential Tools (`CredentialToolSuite`)
@@ -56,8 +56,8 @@ src/
 │   ├── deterministic-credential-pool.ts    # Multi-account rotation strategies (round_robin, least_utilized, priority_failover)
 │   └── credential-tool-suite.ts            # Model tools (auth_list_credentials, auth_add_credential, auth_rotate_credential, auth_circuit_status)
 ├── sessions/extensions/credential/
-│   ├── broccoli-credential-substrate.ts    # Zero-GC in-memory cache of accounts and token allocations in Broccolidb
-│   └── credential-snapshot-manager.ts      # Frame-perfect binary snapshotting & O(1) state rewind
+│   ├── broccoli-credential-substrate.ts    # allocation-bounded in-memory cache of accounts and token allocations in Broccolidb
+│   └── credential-snapshot-manager.ts      # checkpointed binary snapshotting & O(1) state rewind
 └── agents/extensions/credential/
     ├── credential-circuit-breaker.ts       # State transitions (healthy -> cooldown -> exhausted -> dead) & terminal OAuth fault detector
     └── monolith-credential-manager.ts      # High-level credential orchestrator & failover dispatcher
@@ -67,6 +67,6 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Dedicated Test Suite**: `scripts/validate-credential-pool.ts` validates all 8 test suites spanning rate limiting, rotation strategies, circuit breakers, terminal errors, in-memory caching, binary rollback, model tools, and micro-benchmarks.
 - **Performance SLA**: 1,000 credential rotations complete in $3.004\text{ ms}$ ($3.004\ \mu\text{s}$ per rotation).

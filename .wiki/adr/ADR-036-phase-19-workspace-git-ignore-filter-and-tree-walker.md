@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing `.gitignore` rule evaluation (`GitIgnoreFilter`), non-blocking workspace directory tree traversal (`WorkspaceTreeWalker`), and performing Phase 19 master subsystem synthesis (Passes 67–69) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing `.gitignore` rule evaluation (`GitIgnoreFilter`), non-blocking workspace directory tree traversal (`WorkspaceTreeWalker`), and performing Phase 19 master subsystem synthesis (Passes 67–69) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

@@ -1,6 +1,6 @@
 # Agent Memory & Workspace Constraints
 
-This document defines non-negotiable architectural and syntax constraints for all agents working in `/Users/bozoegg/Desktop/LUMI-NEW`.
+This document defines non-negotiable architectural and syntax constraints for all agents working in `repository root`.
 
 ## Mandatory Constraints
 

@@ -141,7 +141,7 @@ async function copyFilesInBatches(
  * Copies files matched by .worktreeinclude patterns that are also in .gitignore.
  * Uses optimized strategies for performance:
  * - Native cp -r for entire directories (10-20x faster)
- * - Parallel file copying with batches (5-10x faster)
+ * - Parallel file copying with batches; comparative throughput is workload-specific
  *
  * @param sourceDir The source worktree directory (original repo)
  * @param targetDir The target worktree directory (newly created)

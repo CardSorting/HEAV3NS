@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 128: Zero-Dependency Broccoli Task State Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/TaskService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/TaskService.ts).
  * Manages Sovereign Scratchpad persistence (SOFT_STATE.md), task sidechain outputs (tasks/${taskId}.output),
  * and atomic disk writes using native Node built-ins. Zero external npm dependencies.
  */

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing web content fetching & markdown conversion (`UrlContentFetcher` from `packages/codemarie/src/services/browser`), AST language syntax parsing (`LanguageSyntaxParser` from `packages/codemarie/src/services/tree-sitter`), and performing Phase 23 master subsystem synthesis (Passes 79–81) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing web content fetching & markdown conversion (`UrlContentFetcher` from `packages/codemarie/src/services/browser`), AST language syntax parsing (`LanguageSyntaxParser` from `packages/codemarie/src/services/tree-sitter`), and performing Phase 23 master subsystem synthesis (Passes 79–81) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

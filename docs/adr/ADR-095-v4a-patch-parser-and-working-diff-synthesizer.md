@@ -23,7 +23,7 @@ In automated coding agents (e.g. Codex, Claude, Cline, Aider, and `tools/patch_p
    - Tracks applied V4A patch transactions, diff inspection caches, and patch metrics with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect V4A Multi-File Patch Parser and Working Diff Synthesizer Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed V4A Multi-File Patch Parser and Working Diff Synthesizer Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicV4aPatch` ([deterministic-v4a-patch.ts](../../src/agents/extensions/v4a_patch/deterministic-v4a-patch.ts))**:
    - **V4A Grammar Parser**: Extracts multi-file operations and hunks.
@@ -38,7 +38,7 @@ We implemented a zero-GC, typed, frame-perfect V4A Multi-File Patch Parser and W
    - In-memory Broccolidb repository storing applied patch transactions, file mutation records, and patch metrics.
 
 4. **`V4aPatchSnapshotManager` ([v4a-patch-snapshot-manager.ts](../../src/sessions/extensions/v4a_patch/v4a-patch-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`V4aPatchToolSuite` ([v4a-patch-tool-suite.ts](../../src/tooling/extensions/v4a_patch/v4a-patch-tool-suite.ts))**:
    - Exposes 5 model tools:

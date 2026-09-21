@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling vision analysis, external Python dependencies, and unmanaged temporary disk image files (`tools/vision_tools.py` [2,223 LOC] + `tools/image_generation_tool.py` [1,994 LOC] + `tools/image_source.py` [550 LOC] + `tools/fal_common.py` [250 LOC] + `tools/video_generation_tool.py` [650 LOC] + `tools/flux3_video_tool.py` [1,400 LOC] — totaling **7,500+ LOC, 300+ KB**) into a typed, deterministic, zero-GC **Multimodal Vision, Visual Perception & Image Codec Substrate ($\mathcal{K}_{\text{vision}}$ / Phase 80)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw base64 string bloat, Pillow/subprocess dependencies, and temporary disk files (`/tmp/*.png`) with in-memory zero-GC binary image header decoders, SHA-256 deduplicated media storage, aspect ratio reduction algorithms, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling vision analysis, external Python dependencies, and unmanaged temporary disk image files (`tools/vision_tools.py` [2,223 LOC] + `tools/image_generation_tool.py` [1,994 LOC] + `tools/image_source.py` [550 LOC] + `tools/fal_common.py` [250 LOC] + `tools/video_generation_tool.py` [650 LOC] + `tools/flux3_video_tool.py` [1,400 LOC] — totaling **7,500+ LOC, 300+ KB**) into a typed, deterministic, allocation-bounded **Multimodal Vision, Visual Perception & Image Codec Substrate ($\mathcal{K}_{\text{vision}}$ / Phase 80)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces raw base64 string bloat, Pillow/subprocess dependencies, and temporary disk files (`/tmp/*.png`) with in-memory allocation-bounded binary image header decoders, SHA-256 deduplicated media storage, aspect ratio reduction algorithms, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -23,7 +23,7 @@ Forensic inspection revealed critical consistency and isolation issues:
 ## 2. Architectural Decision (The What)
 
 ### 1. Deterministic Binary Image Codec (`DeterministicImageCodec`)
-- In-memory zero-GC binary image header decoder for PNG (`\x89PNG`), JPEG (`\xFF\xD8`), GIF (`GIF87a`/`GIF89a`), WebP (`RIFF...WEBP`), BMP (`BM`), and SVG (`<svg`).
+- In-memory allocation-bounded binary image header decoder for PNG (`\x89PNG`), JPEG (`\xFF\xD8`), GIF (`GIF87a`/`GIF89a`), WebP (`RIFF...WEBP`), BMP (`BM`), and SVG (`<svg`).
 - Extracts resolution width, height, format, MIME type, and color depth directly from binary magic bytes without external native dependencies.
 - Aspect ratio reduction with GCD simplification (`16:9`, `4:3`, `1:1`, `9:16`, `21:9`).
 - In-memory test image generator (PNG/BMP) without disk I/O.
@@ -33,7 +33,7 @@ Forensic inspection revealed critical consistency and isolation issues:
 - In-memory Broccolidb media ledger and inspection state store.
 - Tracks inspection history and generated image artifacts with SHA-256 deduplicated buffer caching.
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`VisionSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`VisionSnapshotManager`)
 - Captures atomic snapshots of multimodal vision states, inspection logs, and generated assets at frame $t$, restoring state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Master Multimodal Vision Supervisor (`MultimodalVisionSupervisor`)
@@ -54,11 +54,11 @@ src/
 ├── core/contracts/
 │   └── vision.contracts.ts                # ImageFormat, ImageDimensions, ImageMetadata, VisualInspectionResult, ImageGenerationRequest, ImageGenerationResult, VisionSessionState, VisionWorkspaceSnapshot
 ├── tooling/extensions/vision/
-│   ├── deterministic-image-codec.ts       # Zero-GC binary image header decoder (PNG, JPEG, WebP, GIF, BMP, SVG), aspect ratio calculator, and synthetic generator
+│   ├── deterministic-image-codec.ts       # allocation-bounded binary image header decoder (PNG, JPEG, WebP, GIF, BMP, SVG), aspect ratio calculator, and synthetic generator
 │   └── multimodal-vision-tool-suite.ts    # Model tools (vision_inspect, vision_generate, vision_describe, vision_transcode, vision_session_status)
 ├── sessions/extensions/vision/
 │   ├── broccoli-vision-substrate.ts       # In-memory Broccolidb media ledger, SHA-256 deduplicated blob cache, and inspection history
-│   └── vision-snapshot-manager.ts         # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── vision-snapshot-manager.ts         # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/vision/
     └── multimodal-vision-supervisor.ts    # Master visual perception supervisor coordinating analysis, synthesis, and format normalization
 ```

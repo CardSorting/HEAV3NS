@@ -2,7 +2,7 @@
  * [LAYER: AGENT EXTENSION]
  * Pass 179: Zero-Dependency Broccoli Automated Mode Controller
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/ModeController logic.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/ModeController logic.
  * Manages automated state machine transitions between Plan Mode and Act Mode, enforcing read-only
  * research during Plan Mode and active transaction tracking during Act Mode. Zero external npm dependencies.
  */

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Refactoring `/Users/bozoegg/Desktop/LUMI-NEW` to use explicit object-oriented class inheritance (`class Child extends Parent`) for feature additions instead of rewriting base class files.
+- **Technical Story**: Refactoring `repository root` to use explicit object-oriented class inheritance (`class Child extends Parent`) for feature additions instead of rewriting base class files.
 
 ---
 
@@ -20,11 +20,11 @@ Rewriting base class files to append features creates code churn and obscures co
 
 | Tier | Base Class | Extended Child Class | Additional Capabilities |
 |---|---|---|---|
-| **Tier 1 (Agents)** | [BaseAgentEngine](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/agent-engine.ts#L30) | [AgentEngine](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/agent-engine.ts#L61) `extends BaseAgentEngine` | Slash routing, fallback model resolution, memory injection |
-| **Tier 2 (Sessions)** | [BaseSessionStore](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-store.ts#L12) | [PersistentSessionStore](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-store.ts#L39) `extends BaseSessionStore` | `fork()`, `saveToFile()`, `loadFromFile()`, `exportJsonl()` |
-| **Tier 3 (Tooling)** | [BaseHands](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/hands.ts#L22) | [AnchoredHands](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/hands.ts#L57) `extends BaseHands` | `applyAnchoredEdit()` (hashline) & output stream guardrails |
-| **Tier 3 (Tooling)** | [BaseEars](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L22) | [ProtocolEars](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/ears.ts#L57) `extends BaseEars` | Microsecond performance timers & JSON-RPC protocol formatting |
-| **Tier 3 (Tooling)** | [BaseToolRegistry](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/tool-registry.ts#L22) | [ValidatingToolRegistry](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/tool-registry.ts#L173) `extends BaseToolRegistry` | Runtime schema parameter validation (`validateToolArgs`) |
+| **Tier 1 (Agents)** | [BaseAgentEngine](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/agent-engine.ts#L30) | [AgentEngine](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/agent-engine.ts#L61) `extends BaseAgentEngine` | Slash routing, fallback model resolution, memory injection |
+| **Tier 2 (Sessions)** | [BaseSessionStore](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-store.ts#L12) | [PersistentSessionStore](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-store.ts#L39) `extends BaseSessionStore` | `fork()`, `saveToFile()`, `loadFromFile()`, `exportJsonl()` |
+| **Tier 3 (Tooling)** | [BaseHands](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/hands.ts#L22) | [AnchoredHands](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/hands.ts#L57) `extends BaseHands` | `applyAnchoredEdit()` (hashline) & output stream guardrails |
+| **Tier 3 (Tooling)** | [BaseEars](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L22) | [ProtocolEars](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/ears.ts#L57) `extends BaseEars` | Microsecond performance timers & JSON-RPC protocol formatting |
+| **Tier 3 (Tooling)** | [BaseToolRegistry](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/tool-registry.ts#L22) | [ValidatingToolRegistry](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/tool-registry.ts#L173) `extends BaseToolRegistry` | Runtime schema parameter validation (`validateToolArgs`) |
 
 ---
 

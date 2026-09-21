@@ -23,7 +23,7 @@ Historically, substrates interacted directly with `databaseKernel` without bound
 
 2. **Distributed Microsecond Lock Authority (`BroccoliLockAuthority`)**:
    - Implemented reentrant resource locking with `SHARED_READ` and `EXCLUSIVE_WRITE` semantics.
-   - Built atomic multi-resource locking `acquireAll(resourceKeys, ownerId, mode, ttlMs)` with **deterministic alphabetical key sorting**, guaranteeing mathematical immunity to circular wait deadlocks.
+   - Built atomic multi-resource locking `acquireAll(resourceKeys, ownerId, mode, ttlMs)` with **deterministic alphabetical key sorting**, intended to prevent circular waits when all participants follow the lock protocol.
    - Automated TTL-based lock cleanup and owner-scoped batch revocation (`releaseAllForOwner`).
 
 3. **Cost-Based Query Optimizer & Index Router (`BroccoliQueryOptimizer`)**:
@@ -35,12 +35,12 @@ Historically, substrates interacted directly with `databaseKernel` without bound
 
 ## Consequences
 - **Positive**:
-  - Guaranteed starvation and deadlock prevention across concurrent multi-agent executions.
+  - Designed to reduce starvation and deadlock risk in covered concurrent paths; callers must follow the lock protocol.
   - Sub-microsecond query planning and index routing.
   - 100% in-process execution with zero external runtime dependencies.
 - **Negative**:
   - Requires maintaining 3 additional backend components in alphabetical manifest order.
 
 ## Verification & Validation Plan
-- `scripts/validate-broccolidb-backend-zenith.ts`: 8 validation suites covering connection pool leasing, queue timeouts, reentrant locks, atomic multi-key deadlock immunity, query plan optimization, and Grand Monolith baseline.
+- `scripts/validate-broccolidb-backend-zenith.ts`: 8 validation suites covering connection pool leasing, queue timeouts, reentrant locks, ordered multi-key lock checks, query plan optimization, and the Grand Monolith baseline.
 - Full regression validation across all 144 test suites.

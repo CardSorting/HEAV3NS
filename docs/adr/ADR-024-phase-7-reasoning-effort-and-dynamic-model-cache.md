@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing reasoning effort level settings (`packages/catalog/src/effort.ts`), dynamic model metadata caching (`packages/catalog/src/model-cache.ts`), and performing Phase 7 master subsystem synthesis (Passes 31–33) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing reasoning effort level settings (`packages/catalog/src/effort.ts`), dynamic model metadata caching (`packages/catalog/src/model-cache.ts`), and performing Phase 7 master subsystem synthesis (Passes 31–33) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

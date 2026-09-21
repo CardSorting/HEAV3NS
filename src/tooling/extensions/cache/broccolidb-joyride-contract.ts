@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 172: Zero-Dependency Broccoli JoyRide Contract Verifier
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/joyride/JoyRideContract.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/joyride/JoyRideContract.ts.
  * Enforces frozen JoyRide public API contracts, preventing internal implementation detail leakage
  * across export surfaces and verifying integration import boundaries. Zero external npm dependencies.
  */

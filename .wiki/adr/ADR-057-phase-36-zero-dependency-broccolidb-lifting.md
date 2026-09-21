@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 36 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 36 lifts operational substrate, task DAG scheduling, and runtime circuit breaking from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src` under a **Refined Zero-Dependency Osmosis Strategy**.
+Phase 36 lifts operational substrate, task DAG scheduling, and runtime circuit breaking from `external codemarie-new source workspace/broccolidb` into `repository root/src` under a **Refined Zero-Dependency Osmosis Strategy**.
 
 This pass replaces 9 external npm dependencies (`better-sqlite3`, `kysely`, `@modelcontextprotocol/sdk`, `ts-morph`, `simple-git`, `chalk`, `chokidar`, `ignore`, `ora`) with pure native TypeScript modules:
 1. **Broccoli Substrate Store (`BroccoliSubstrateStore`)**: Operational database and key-value store supporting entity query filters, JSON snapshot persistence, and atomic transaction rollback checkpoints (`createCheckpoint` / `rollbackToCheckpoint`).

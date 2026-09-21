@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing machine-anchored environmental lease gatekeeping and stability auditing from teacher package `/Users/bozoegg/Downloads/pi-main/packages/codemarie/src/core/integrity/EnvironmentIntegrity.ts` into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy** (Pass 12).
+- **Technical Story**: Absorbing machine-anchored environmental lease gatekeeping and stability auditing from teacher package `external pi-main source workspace/packages/codemarie/src/core/integrity/EnvironmentIntegrity.ts` into `repository root` via the **Osmosis Strategy** (Pass 12).
 
 ---
 
@@ -11,7 +11,7 @@
 
 Environment drift, missing dependencies (`node_modules`), or unreadable package manifests can cause silent agent execution failures during frame ticks.
 
-To guarantee environmental stability and gatekeep execution safely:
+To check environmental assumptions and gate execution safely:
 1. **Machine-Anchored Leases**: Generates a cryptographic SHA-256 fingerprint (`os.hostname()`, `process.platform`, `process.arch`, `cwd`).
 2. **Forensic Self-Healing**: Detects missing workspace assets and logs automated remediation steps.
 

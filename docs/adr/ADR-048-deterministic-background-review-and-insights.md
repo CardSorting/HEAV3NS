@@ -11,16 +11,16 @@ In ancestral teacher `hermes-agent-main` (`agent/background_review.py` [59 KB], 
 4. Candidate facts and extracted skills could not be tracked or rolled back frame-by-frame during state rewinds.
 
 ## Decision
-We implemented a typed, deterministic, zero-GC **Background Review, Self-Improvement Fork & Session Insights Substrate ($\mathcal{K}_{\text{review}}$)** for LUMI-JOY:
+We implemented a typed, deterministic, allocation-bounded **Background Review, Self-Improvement Fork & Session Insights Substrate ($\mathcal{K}_{\text{review}}$)** for LUMI-JOY:
 
 1. **Contracts** (`src/core/contracts/background-review.contracts.ts`):
    - Defined `ReviewTriggerPolicy`, `CandidateFactItem`, `CandidateSkillItem`, `TurnReviewDigest`, `TurnReviewResult`, `SessionInsightsBreakdown`, `SessionTitleSuggestion`, and `ReviewWorkspaceSnapshot`.
 2. **Deterministic Review Evaluator** (`src/tooling/extensions/review/deterministic-review-evaluator.ts`):
-   - In-memory zero-GC evaluator generating compact turn digests, extracting candidate memory facts/skills, calculating session token & cost distributions, and synthesizing clean session titles.
+   - In-memory allocation-bounded evaluator generating compact turn digests, extracting candidate memory facts/skills, calculating session token & cost distributions, and synthesizing clean session titles.
 3. **Broccoli Review Substrate** (`src/sessions/extensions/review/broccoli-review-substrate.ts`):
    - In-memory Broccolidb repository for completed turn reviews, extracted candidate knowledge, session titles, and telemetry insights.
 4. **Review Snapshot Manager** (`src/sessions/extensions/review/review-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$.
 5. **Background Review Supervisor** (`src/agents/extensions/review/background-review-supervisor.ts`):
    - Master supervisor coordinating post-turn evaluation, candidate fact/skill promotion, title synthesis, and session insights aggregation.
 6. **Background Review Tool Suite** (`src/tooling/extensions/review/background-review-tool-suite.ts`):
@@ -31,5 +31,5 @@ We implemented a typed, deterministic, zero-GC **Background Review, Self-Improve
 ## Consequences
 - Enables continuous self-improvement and background candidate fact/skill extraction without daemon thread overhead or cache invalidations.
 - Computes comprehensive session insights and deterministic topic titles in sub-millisecond in-memory passes.
-- Enables frame-perfect state rollback in $<0.05\text{ ms}$.
+- Enables checkpointed state rollback in $<0.05\text{ ms}$.
 - Preserves full zero-barrel and base-class immutability architectural invariants.

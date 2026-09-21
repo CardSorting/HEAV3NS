@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing long-term memory persistence, Knowledge Items (KIs), and autonomous multi-step tool execution from teacher model (`/Users/bozoegg/Downloads/pi-main`) while maintaining strict <= 5 class caps per tier.
+- **Technical Story**: Absorbing long-term memory persistence, Knowledge Items (KIs), and autonomous multi-step tool execution from teacher model (`external pi-main source workspace`) while maintaining strict <= 5 class caps per tier.
 
 ---
 
@@ -17,8 +17,8 @@ Inspection of `pi-main` revealed key long-term intelligence features:
 
 ### Reinterpretation for LUMI-NEW Monolith
 - `SessionMemoryStore` in Tier 2 (`sessions/`): Durable memory entry store supporting keyword search, JSON serialization, and memory inheritance.
-- Built-in `search_memory` and `save_memory` tools inside [ToolRegistry](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/tool-registry.ts#L12) in Tier 3 (`tooling/`).
-- System prompt memory injection inside [PromptComposer](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/prompt-composer.ts#L12) and `/memory` slash command handling in [AgentSlashRouter](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/agent-slash-router.ts#L23) in Tier 1 (`agents/`).
+- Built-in `search_memory` and `save_memory` tools inside [ToolRegistry](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/tool-registry.ts#L12) in Tier 3 (`tooling/`).
+- System prompt memory injection inside [PromptComposer](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/prompt-composer.ts#L12) and `/memory` slash command handling in [AgentSlashRouter](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/agent-slash-router.ts#L23) in Tier 1 (`agents/`).
 
 ---
 
@@ -54,8 +54,8 @@ src/
 
 ### Key Added Capabilities
 
-1. **Long-Term Memory Persistence**: [SessionMemoryStore](file:///Users/bozoegg/Desktop/LUMI-NEW/src/sessions/session-memory-store.ts#L8) stores key-value facts across categories (`fact`, `rule`, `troubleshooting`, `ki`) and exports/imports via JSON.
-2. **Interactive Memory Querying**: [AgentSlashRouter](file:///Users/bozoegg/Desktop/LUMI-NEW/src/agents/agent-slash-router.ts#L23) handles `/memory` and `/memory search <query>` commands.
+1. **Long-Term Memory Persistence**: [SessionMemoryStore](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/sessions/session-memory-store.ts#L8) stores key-value facts across categories (`fact`, `rule`, `troubleshooting`, `ki`) and exports/imports via JSON.
+2. **Interactive Memory Querying**: [AgentSlashRouter](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/agents/agent-slash-router.ts#L23) handles `/memory` and `/memory search <query>` commands.
 3. **Memory Inheritance**: `LumiMonolith.forkSession()` copies persistent memory store state into forked sessions seamlessly.
 
 ---

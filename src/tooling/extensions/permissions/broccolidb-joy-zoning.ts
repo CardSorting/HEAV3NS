@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 163: Zero-Dependency Broccoli Joy-Zoning Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/utils/joy-zoning.ts.
+ * Lifted from external source workspace/codemarie-new/src/utils/joy-zoning.ts.
  * Implements architectural layer classification (getLayer), layer header tag parsing (parseLayerTag),
  * comment style mapping, and header tag injection across TypeScript, JavaScript, Python, Shell, HTML, Rust, Go, SQL. Zero external npm dependencies.
  */

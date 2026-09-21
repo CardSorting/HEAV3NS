@@ -11,7 +11,7 @@ Hermes Agent introduced:
 2. `agent/estop.py`: A global emergency stop (`ESTOP`) sentinel protocol that halts the dispatch of all new cron jobs, kanban workers, and gateway turns while keeping in-flight tasks safe.
 
 ## Decision
-We implement a zero-GC, typed, deterministic **Unified Deadline Engine, Bounded Execution & Emergency Stop Governance Subsystem** in LUMI-JOY:
+We implement a allocation-bounded, typed, deterministic **Unified Deadline Engine, Bounded Execution & Emergency Stop Governance Subsystem** in LUMI-JOY:
 
 1. **Contracts Layer (`deadline.contracts.ts`)**:
    - Defines `DeadlineOutcome`, `BoundedResult<T>`, `EstopState`, `DeadlineConfig`, `DeadlineMetrics`, and `DeadlineWorkspaceSnapshot`.
@@ -19,7 +19,7 @@ We implement a zero-GC, typed, deterministic **Unified Deadline Engine, Bounded 
 
 2. **Substrate & Snapshots (`broccoli-deadline-substrate.ts`, `deadline-snapshot-manager.ts`)**:
    - In-memory Broccolidb repository tracking ESTOP sentinel state, active leases, timeout counters, and audit trails.
-   - Binary snapshot manager for frame-perfect state rollback in $<0.05\text{ ms}$.
+   - Binary snapshot manager for checkpointed state rollback in $<0.05\text{ ms}$.
 
 3. **Deterministic Engine & Supervisor (`deterministic-deadline-engine.ts`, `deadline-supervisor.ts`)**:
    - `DeterministicDeadlineEngine`: Implements `resolveTimeout()`, `clampTimeout()`, `runBoundedAsync()`, and filesystem sentinel parsing (`checkFsSentinel()`, `writeFsSentinel()`) with fail-safe semantics.

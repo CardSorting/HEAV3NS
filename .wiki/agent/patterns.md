@@ -1,6 +1,6 @@
 # Design Patterns & Workflows
 
-Comprehensive overview of architectural design patterns and sequence workflows in `/Users/bozoegg/Desktop/LUMI-NEW`.
+Comprehensive overview of architectural design patterns and sequence workflows in `repository root`.
 
 ---
 
@@ -79,7 +79,7 @@ Captures complete state frames for zero-drift time travel:
 
 ```typescript
 const snapshot = lumi.createSnapshot(); // Captures messages, VFS buffers, memory facts, metrics
-lumi.rewindToSnapshot(snapshot);        // Rewinds frame index and store state frame-perfectly
+lumi.rewindToSnapshot(snapshot);        // Rewinds frame index and store state checkpointedly
 ```
 
 ---
@@ -231,4 +231,3 @@ sequenceDiagram
 See [ADR-084](../adr/ADR-084-attempt-completion-gate-strategy.md) for detailed specifications.
 
 ---
-

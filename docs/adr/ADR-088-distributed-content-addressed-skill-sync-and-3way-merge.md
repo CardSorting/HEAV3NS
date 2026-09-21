@@ -11,7 +11,7 @@ In distributed multi-agent operations (`tools/skills_sync_client.py`, `tools/ski
 4. **Merge Conflict Impasses**: Divergent edits between upstream enhancements and local modifications require structured 3-way merge resolution (`base` vs `remote` vs `local`) with automated conflict categorization.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Distributed Content-Addressed Skill Sync Protocol, CAS Ref Head Governance, 3-Way Merge Resolution, and Cryptographic Provenance Ledger for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Distributed Content-Addressed Skill Sync Protocol, CAS Ref Head Governance, 3-Way Merge Resolution, and Cryptographic Provenance Ledger for **LUMI-JOY**:
 
 1. **`DeterministicSkillsSyncClient` ([deterministic-skills-sync-client.ts](../../src/agents/extensions/skills_sync/deterministic-skills-sync-client.ts))**:
    - **Content-Addressed Merkle Objects**: Computes canonical SHA-256 hashes for `blob`, `tree`, and `commit` objects with strict lexicographical entry sorting.
@@ -29,7 +29,7 @@ We implemented a zero-GC, typed, frame-perfect Distributed Content-Addressed Ski
    - In-memory Broccolidb repository storing content-addressed objects, ref tables, sync manifests, and active merge conflict ledgers.
 
 4. **`SkillsSyncSnapshotManager` ([skills-sync-snapshot-manager.ts](../../src/sessions/extensions/skills_sync/skills-sync-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshotting and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`SkillsSyncToolSuite` ([skills-sync-tool-suite.ts](../../src/tooling/extensions/skills_sync/skills-sync-tool-suite.ts))**:
    - Exposes 6 model tools:

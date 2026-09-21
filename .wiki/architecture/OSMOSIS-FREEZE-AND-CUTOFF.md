@@ -26,12 +26,14 @@ Before proposing, designing, or implementing any new component, tool, substrate,
 - **Base Class Immutability (`ADR-012`)**: `src/agents/base/agent-config.ts`, `src/sessions/base/session-context.ts`, and `src/tooling/base/eyes.ts` must never be modified.
 - **Zero Barrel Files (`ADR-012`)**: No intermediate `index.ts` barrel files are permitted in extension directories. Direct file imports only.
 
-### 3. Strict Performance SLAs
-Any modification must satisfy the deterministic engine performance SLAs:
-- **Turn Tick Latency**: $< 1.0\text{ ms}$ fast-path mean latency ($< 5.0\text{ ms}$ overall).
-- **Execution Throughput**: $\ge 1,000\text{ frames/second}$ (current baseline: $> 7,000\text{ fps}$).
-- **State Rewind Latency**: $< 0.1\text{ ms p95}$ (current baseline: $< 0.02\text{ ms}$).
-- **Zero-GC Memory Slab**: Fixed 16MB `ArrayBuffer` slab (`ArenaAllocator`) with static UTF-8 encoders.
+### 3. Performance measurement guardrails
+Any modification must preserve the repository's named measurement workloads and
+configured regression checks. Their results are host- and input-sensitive;
+they are not customer-facing SLAs or universal performance promises:
+- **Turn tick latency**: Compare the fast-path mean against the generated baseline.
+- **Execution throughput**: Compare the named workload against its generated baseline.
+- **State rewind**: Verify restoration correctness first, then record timing for the named sample set.
+- **Arena capacity**: Preserve the fixed 16 MB `ArrayBuffer` contract where enabled; do not describe it as whole-process allocation-bounded behavior.
 
 ### 4. Mandatory Forensic Verification Gate
 Every automated test run (`npm test`) executes `scripts/validate-forensic-integrity.ts` before running test suites, verifying:
@@ -50,35 +52,35 @@ The following 74 foundation and edge capabilities have been systematically absor
 
 | Target | Capability Area | Authoritative ADR |
 |---|---|---|
-| **#48** | Runtime Diagnostic Doctor & Subsystem Health Auto-Healer | [ADR-097](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-097-runtime-diagnostic-doctor-and-subsystem-health-healer.md) |
-| **#49** | Multi-Provider Identity Federation & Credential Rotation | [ADR-098](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-098-multi-provider-identity-federation-and-credential-rotation.md) |
-| **#50** | Deterministic Session Archival & FTS5 Search Indexing | [ADR-099](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-099-deterministic-session-archival-and-fts5-search.md) |
-| **#51** | Data-Driven Terminal Skin Engine & Dynamic Themes | [ADR-100](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-100-data-driven-terminal-skin-engine-and-dynamic-themes.md) |
-| **#52** | Dynamic Multi-Model Auxiliary Router & Quota Failover | [ADR-101](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-101-dynamic-multi-model-auxiliary-router-and-quota-failover.md) |
-| **#53** | Adaptive Reasoning Tag Scrubber & Dynamic Timeout Floors | [ADR-102](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-102-adaptive-reasoning-tag-scrubber-and-dynamic-timeout-floors.md) |
-| **#54** | Deterministic Fuzzy File Matcher & Context Pruner | [ADR-089](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-089-deterministic-fuzzy-file-matching-and-context-pruner.md) |
-| **#55** | Conversation Title Generator & Cognitive Insights Synthesizer | [ADR-090](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-090-conversation-title-generator-and-cognitive-insights.md) |
-| **#56** | Shell Heredoc AST Sanitizer & Safe Command Dispatcher | [ADR-091](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-091-shell-heredoc-ast-sanitizer-and-safe-command-dispatch.md) |
-| **#57** | Stealth Headless Browser & Camoufox Fingerprint Firewall | [ADR-092](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-092-stealth-headless-browser-and-camoufox-fingerprint-firewall.md) |
-| **#58** | Merkle-Tree Skills Sync & Origin Hash Verification | [ADR-093](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-093-merkle-tree-skills-sync-and-origin-hash-verification.md) |
-| **#59** | Deterministic Preflight Threat Scanner & Binary Verifier | [ADR-094](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-094-deterministic-preflight-threat-scanner-and-binary-verifier.md) |
-| **#60** | Multi-Format Audio Container Sniffer & ADTS/MP3 Header Repair | [ADR-103](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-103-multi-format-audio-container-sniffer-and-header-repair.md) |
-| **#61** | Speech Normalizer, Phonetic Symbol Expander & TTS Preprocessor | [ADR-104](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-104-speech-normalizer-and-phonetic-symbol-expander.md) |
-| **#62** | Structured Document Extractor, PDF Text Normalizer & Docx Parser | [ADR-105](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-105-structured-document-extractor-and-pdf-normalizer.md) |
-| **#63** | Spill Vault, Context Window Spiller & Large Tool Output Offloader | [ADR-106](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-106-spill-vault-context-window-spiller-and-tool-output-offloader.md) |
-| **#64** | URL Safety Firewall & Threat Classifier | [ADR-107](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-107-url-safety-firewall-and-threat-classifier.md) |
-| **#65** | V4A Patch Parser & Multi-Hunk Staging Engine | [ADR-108](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-108-dollar-denominated-billing-usage-and-topup-rollover.md) |
-| **#66** | Website Policy Engine, Domain Confinement & Robots.txt Parser | [ADR-109](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-109-async-context-propagation-and-fail-closed-approval.md) |
-| **#67** | Wake Word Detector, Phonetic Matcher & Audio Frame Buffer | [ADR-110](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-110-toolchain-environment-diagnostic-prober.md) |
-| **#68** | Media Source Resolver, Video Frame Extractor & Stream Segmenter | [ADR-111](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-111-deterministic-skill-tree-linter.md) |
-| **#69** | Multi-Worktree Manager, Git Sandbox & Branch Isolation | [ADR-112](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-112-terminal-ansi-sanitizer-and-binary-guard.md) |
-| **#70** | Streaming Reasoning Tag Scrubber, Boundary Gated Holdback Buffer & Live Delta Filter | [ADR-113](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-113-streaming-reasoning-tag-scrubber.md) |
-| **#71** | Deterministic Self-Repository Mutation Guard, Shell Worktree Context Tracker & Module-Skew Firewall | [ADR-114](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-114-deterministic-self-repository-mutation-guard.md) |
-| **#72** | Deterministic Tool Parameter Schema Sanitizer, Non-Conforming Key Bidirectional Rewriter & LLM GBNF Grammar Firewall | [ADR-115](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-115-deterministic-tool-schema-sanitizer.md) |
-| **#73** | Native Nous Portal Provider, Attribution Tagging & Tool-Pool Entitlement Subsystem | [ADR-116](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-116-native-nous-portal-provider.md) |
-| **#74** | Persistent Session Goals, Quality Gates & Deterministic Goal Loop Subsystem | [ADR-117](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-117-persistent-session-goals-and-ralph-loop.md) |
-| **#75** | World-Class Kanban Architecture, Task DAG, Typed Blockers & Multi-Agent Issue Orchestration | [ADR-118](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-118-world-class-kanban-architecture.md) |
-| **#76** | Persistent Multi-Profile Isolation, Environment Routing & Persona Cloning Subsystem | [ADR-119](file:///Users/bozoegg/Desktop/LUMI-NEW/.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md) |
+| **#48** | Runtime Diagnostic Doctor & Subsystem Health Auto-Healer | [ADR-097](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-097-runtime-diagnostic-doctor-and-subsystem-health-healer.md) |
+| **#49** | Multi-Provider Identity Federation & Credential Rotation | [ADR-098](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-098-multi-provider-identity-federation-and-credential-rotation.md) |
+| **#50** | Deterministic Session Archival & FTS5 Search Indexing | [ADR-099](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-099-deterministic-session-archival-and-fts5-search.md) |
+| **#51** | Data-Driven Terminal Skin Engine & Dynamic Themes | [ADR-100](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-100-data-driven-terminal-skin-engine-and-dynamic-themes.md) |
+| **#52** | Dynamic Multi-Model Auxiliary Router & Quota Failover | [ADR-101](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-101-dynamic-multi-model-auxiliary-router-and-quota-failover.md) |
+| **#53** | Adaptive Reasoning Tag Scrubber & Dynamic Timeout Floors | [ADR-102](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-102-adaptive-reasoning-tag-scrubber-and-dynamic-timeout-floors.md) |
+| **#54** | Deterministic Fuzzy File Matcher & Context Pruner | [ADR-089](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-089-deterministic-fuzzy-file-matching-and-context-pruner.md) |
+| **#55** | Conversation Title Generator & Cognitive Insights Synthesizer | [ADR-090](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-090-conversation-title-generator-and-cognitive-insights.md) |
+| **#56** | Shell Heredoc AST Sanitizer & Safe Command Dispatcher | [ADR-091](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-091-shell-heredoc-ast-sanitizer-and-safe-command-dispatch.md) |
+| **#57** | Stealth Headless Browser & Camoufox Fingerprint Firewall | [ADR-092](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-092-stealth-headless-browser-and-camoufox-fingerprint-firewall.md) |
+| **#58** | Merkle-Tree Skills Sync & Origin Hash Verification | [ADR-093](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-093-merkle-tree-skills-sync-and-origin-hash-verification.md) |
+| **#59** | Deterministic Preflight Threat Scanner & Binary Verifier | [ADR-094](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-094-deterministic-preflight-threat-scanner-and-binary-verifier.md) |
+| **#60** | Multi-Format Audio Container Sniffer & ADTS/MP3 Header Repair | [ADR-103](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-103-multi-format-audio-container-sniffer-and-header-repair.md) |
+| **#61** | Speech Normalizer, Phonetic Symbol Expander & TTS Preprocessor | [ADR-104](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-104-speech-normalizer-and-phonetic-symbol-expander.md) |
+| **#62** | Structured Document Extractor, PDF Text Normalizer & Docx Parser | [ADR-105](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-105-structured-document-extractor-and-pdf-normalizer.md) |
+| **#63** | Spill Vault, Context Window Spiller & Large Tool Output Offloader | [ADR-106](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-106-spill-vault-context-window-spiller-and-tool-output-offloader.md) |
+| **#64** | URL Safety Firewall & Threat Classifier | [ADR-107](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-107-url-safety-firewall-and-threat-classifier.md) |
+| **#65** | V4A Patch Parser & Multi-Hunk Staging Engine | [ADR-108](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-108-dollar-denominated-billing-usage-and-topup-rollover.md) |
+| **#66** | Website Policy Engine, Domain Confinement & Robots.txt Parser | [ADR-109](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-109-async-context-propagation-and-fail-closed-approval.md) |
+| **#67** | Wake Word Detector, Phonetic Matcher & Audio Frame Buffer | [ADR-110](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-110-toolchain-environment-diagnostic-prober.md) |
+| **#68** | Media Source Resolver, Video Frame Extractor & Stream Segmenter | [ADR-111](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-111-deterministic-skill-tree-linter.md) |
+| **#69** | Multi-Worktree Manager, Git Sandbox & Branch Isolation | [ADR-112](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-112-terminal-ansi-sanitizer-and-binary-guard.md) |
+| **#70** | Streaming Reasoning Tag Scrubber, Boundary Gated Holdback Buffer & Live Delta Filter | [ADR-113](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-113-streaming-reasoning-tag-scrubber.md) |
+| **#71** | Deterministic Self-Repository Mutation Guard, Shell Worktree Context Tracker & Module-Skew Firewall | [ADR-114](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-114-deterministic-self-repository-mutation-guard.md) |
+| **#72** | Deterministic Tool Parameter Schema Sanitizer, Non-Conforming Key Bidirectional Rewriter & LLM GBNF Grammar Firewall | [ADR-115](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-115-deterministic-tool-schema-sanitizer.md) |
+| **#73** | Native Nous Portal Provider, Attribution Tagging & Tool-Pool Entitlement Subsystem | [ADR-116](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-116-native-nous-portal-provider.md) |
+| **#74** | Persistent Session Goals, Quality Gates & Deterministic Goal Loop Subsystem | [ADR-117](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-117-persistent-session-goals-and-ralph-loop.md) |
+| **#75** | World-Class Kanban Architecture, Task DAG, Typed Blockers & Multi-Agent Issue Orchestration | [ADR-118](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-118-world-class-kanban-architecture.md) |
+| **#76** | Persistent Multi-Profile Isolation, Environment Routing & Persona Cloning Subsystem | [ADR-119](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/adr/ADR-119-persistent-multi-profile-isolation-and-routing.md) |
 
 ---
 

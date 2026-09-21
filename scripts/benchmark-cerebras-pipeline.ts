@@ -15,7 +15,7 @@ Follow user directives precisely and maintain extreme code quality standards.
 		{
 			role: "user",
 			content: [
-				{ type: "text", text: "Look at screenshot 1 of UI bug in /Users/bozoegg/Downloads/codemarie-new/src/index.ts" },
+				{ type: "text", text: "Look at screenshot 1 of UI bug in external source workspace/codemarie-new/src/index.ts" },
 				{
 					type: "image",
 					source: {
@@ -28,7 +28,7 @@ Follow user directives precisely and maintain extreme code quality standards.
 		},
 		{
 			role: "assistant",
-			content: "I analyze screenshot 1. Inspecting /Users/bozoegg/Downloads/codemarie-new/src/index.ts",
+			content: "I analyze screenshot 1. Inspecting external source workspace/codemarie-new/src/index.ts",
 		},
 		{
 			role: "user",
@@ -52,7 +52,7 @@ Follow user directives precisely and maintain extreme code quality standards.
 <!-- HTML Comment Header -->
 //# Comment line 1
 ==================================================
-{\n  "tool": "read_file",\n  "path": "/Users/bozoegg/Downloads/codemarie-new/src/index.ts"\n}
+{\n  "tool": "read_file",\n  "path": "external source workspace/codemarie-new/src/index.ts"\n}
 Visual Context Anchor
 Environment State
 Execution Status: Success
@@ -76,7 +76,7 @@ https://example.com/api/v1/search?utm_source=google&session_token=abcdef12345678
 		},
 		{
 			role: "user",
-			content: "Continue debugging /Users/bozoegg/Downloads/codemarie-new/src/core/api/providers/cerebras.ts",
+			content: "Continue debugging external source workspace/codemarie-new/src/core/api/providers/cerebras.ts",
 		},
 		{
 			role: "assistant",

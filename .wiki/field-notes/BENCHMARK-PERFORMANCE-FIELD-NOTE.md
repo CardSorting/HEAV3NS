@@ -1,20 +1,20 @@
 # 📊 Field Note: Monolith Benchmark Performance & Execution Throughput Evaluation
 
-**Document ID**: `FN-2026-08-09-BENCHMARK-01`  
-**Date**: August 9, 2026  
-**System Evaluated**: `LUMI-NEW` Deterministic Game Engine Monolith (`/Users/bozoegg/Desktop/LUMI-NEW`)  
-**Evaluation Harness**: `MasterBenchmarkOrchestrator` & `MonolithBenchmarkEvaluator` (`lumi --benchmark`)  
-**Hardware & OS Substrate**: Apple Silicon (MacBook Pro), macOS ARM64  
+**Document ID**: `FN-2026-08-09-BENCHMARK-01`
+**Date**: August 9, 2026
+**System Evaluated**: `LUMI-NEW` deterministic game-engine-style runtime
+**Evaluation Harness**: `MasterBenchmarkOrchestrator` & `MonolithBenchmarkEvaluator` (`lumi --benchmark`)
+**Hardware & OS Substrate**: Apple Silicon (MacBook Pro), macOS ARM64
 
 ---
 
 ## 📌 Executive Summary
 
-This field note preserves the August 9, 2026 experiment captured after the **105-pass** integration milestone and the **Interactive Model Provider & OAuth Setup Wizard**. It is an archival comparison, not the current repository baseline. The latest Pass 192 + runtime-hardening run verifies **142/142 components**, **9/9 smoke checks**, **5/5 benchmark cases**, **8/8 assertions** for a complete 12-file Flappy Bird React + TypeScript + Vite project, and **6/6 guardrails**. For exact current-worktree measurements, use [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) and its synchronized generated reports; regenerate them with `npm run baseline:update`.
+This field note preserves the August 9, 2026 experiment as an archival comparison, not the current repository baseline. For exact current-worktree measurements, use [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) and its synchronized generated reports; regenerate them with `npm run baseline:update`. The figures below are evidence for the named harness, host, and date only.
 
-Going from **$14.20\text{ ms}$** down to **$0.22\text{ ms}$** turn tick latency, $O(1)$ state pointer rewinds at **$0.04\text{ ms}$** ($7,125\times$ speedup), and an in-memory VFS perception speed of **$0.03\text{ ms}$**—all backed by a pre-allocated **16MB zero-GC contiguous slab**—transforms an LLM agent runtime into a kernel that operates at hardware bus speeds.
+The experiment recorded local differences in turn-tick, rewind, and VFS paths. Those comparisons are not a universal speedup, cost, safety, reliability, or hardware-performance claim, and the pre-allocated arena does not establish whole-process allocation-bounded behavior.
 
-By consolidating a legacy monorepo trapped in microservice RPC queues and 4 different file locks into a single **3-tier monolith** (`agents`, `sessions`, `tooling`), replacing uncoordinated async event loops with a **deterministic game loop** (`tick()`), and allocating state on a contiguous 16MB ArrayBuffer slab (`ArenaAllocator`), **LUMI-NEW** pushes **$4,132.2\text{ turns per second}$** ($247,934\text{ turns/min}$).
+The experiment evaluated a 3-tier monolith (`agents`, `sessions`, `tooling`) with a modeled game loop and contiguous arena allocation. Its observed throughput belongs to that fixture and host; it must be regenerated before being used for capacity planning or product copy.
 
 ---
 
@@ -27,7 +27,7 @@ By consolidating a legacy monorepo trapped in microservice RPC queues and 4 diff
 | **Turns per Minute** | $4,224\text{ tpm}$ | **$247,934\text{ tpm}$** | Continuous non-blocking game loop execution (**$247.9k\text{ turns/min}$**). |
 | **State Snapshot Rewind** | $285.00\text{ ms}$ (Re-parse) | **$0.04\text{ ms}$** | Replaced JSON file re-parsing with $O(1)$ pointer assignment across session snapshots (**$7,125\times$ Speedup**). |
 | **VFS Perception Speed** | $12.40\text{ ms}$ (Disk I/O) | **$0.03\text{ ms}$** | Replaced disk I/O / file-lock checks with an in-memory contiguous VFS overlay (**$413.3\times$ Speedup**). |
-| **Memory Allocation** | Dynamic Heap GC Sweep | **16MB Zero-GC Slab** | Pre-allocated slab allocation eliminates Garbage Collection sweeps during rapid generation passes. |
+| **Memory Allocation** | Dynamic heap allocation | **16MB configured arena** | Selected state paths use pre-allocated capacity; other runtime allocation and garbage collection remain possible. |
 | **Canvas Game Synthesis** | N/A (Seconds) | **$0.43\text{ ms}$** | Contiguous memory template assembly & AST construction without external disk dependency lookups. |
 | **Benchmark Suite Pass Rate**| N/A | **$100\%\text{ (5/5 PASS)}$** | Deterministic game engine reliability & assertion verification. |
 
@@ -119,8 +119,8 @@ The fixed measurements elsewhere in this field note intentionally remain the his
 
 ## 📌 Document Metadata & Sign-off
 
-- **Primary Inventor & Author**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)
-- **Co-Author & Assistant**: Antigravity AI Pair Programming Agent
+- **Document steward**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)
+- **Drafting assistance**: Antigravity AI Pair Programming Agent; no independent co-authorship or inventorship is claimed
 - **Acceptance-Time Subsystem Count**: 82 monolithic subsystems in the August 9 snapshot
 - **Acceptance-Time Verification Status**: **100% EMPIRICAL PASS (5/5)**
 - **Current Verification Pointer**: [`docs/LIVE_BASELINE.json`](../../docs/LIVE_BASELINE.json) (142/142 composition, 9/9 smoke, 5/5 benchmark, 8/8 Flappy assertions, 6/6 guardrails at the latest documented run)

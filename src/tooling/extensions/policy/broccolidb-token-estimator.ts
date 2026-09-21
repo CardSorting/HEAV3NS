@@ -4,7 +4,7 @@ import { estimateMessagesTokens, estimateTextTokens } from "../../../core/utilit
  * [LAYER: TOOLING EXTENSION]
  * Pass 155: Zero-Dependency Broccoli Token Estimator
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/TokenService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/TokenService.ts).
  * Adaptive character-ratio token estimation heuristics (estimateTokens, roughTokenCountEstimation),
  * token budget overflow checking, and message token calculations. Zero external npm dependencies.
  */

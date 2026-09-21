@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's sprawling File Tools, File Operations, V4A Patch Parser, and Fuzzy Match subsystems (`tools/file_tools.py` [2,813 LOC] + `tools/file_operations.py` [3,800 LOC] + `tools/patch_parser.py` [738 LOC] + `tools/fuzzy_match.py` [1,250 LOC] + `tools/read_extract.py` [650 LOC] + `tools/working_diff.py` [150 LOC] — totaling **9,400+ LOC, 392 KB**) into a typed, deterministic, zero-GC **Unified Patch Engine, Atomic Mutation Substrate & VFS Supervisor ($\mathcal{K}_{\text{patch}}$ / Phase 77)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 9,400+ lines of direct blocking filesystem I/O, partial-write file corruption, and loose regex string slicing with typed patch ASTs, in-memory Broccolidb staging substrates, dry-run simulation, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's sprawling File Tools, File Operations, V4A Patch Parser, and Fuzzy Match subsystems (`tools/file_tools.py` [2,813 LOC] + `tools/file_operations.py` [3,800 LOC] + `tools/patch_parser.py` [738 LOC] + `tools/fuzzy_match.py` [1,250 LOC] + `tools/read_extract.py` [650 LOC] + `tools/working_diff.py` [150 LOC] — totaling **9,400+ LOC, 392 KB**) into a typed, deterministic, allocation-bounded **Unified Patch Engine, Atomic Mutation Substrate & VFS Supervisor ($\mathcal{K}_{\text{patch}}$ / Phase 77)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces 9,400+ lines of direct blocking filesystem I/O, partial-write file corruption, and loose regex string slicing with typed patch ASTs, in-memory Broccolidb staging substrates, dry-run simulation, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -28,10 +28,10 @@ Forensic inspection revealed critical consistency and isolation issues:
 - Performs contiguous substring replacements with line boundary validation.
 - Micro-benchmark performance: 10,000 diff operations in $<5\text{ ms}$ ($<0.0005\text{ ms/op}$).
 
-### 2. Zero-GC In-Memory Patch Substrate (`BroccoliPatchSubstrate`)
+### 2. allocation-bounded In-Memory Patch Substrate (`BroccoliPatchSubstrate`)
 - In-memory Broccolidb staging substrate tracking staged files, rollback journals, and transaction metrics.
 
-### 3. Frame-Perfect Binary Snapshotting & $O(1)$ State Rollback (`PatchSnapshotManager`)
+### 3. checkpointed Binary Snapshotting & $O(1)$ State Rollback (`PatchSnapshotManager`)
 - Captures atomic snapshots of staged file modifications at frame $t$, restoring state in $<0.05\text{ ms}$ on turn rewind.
 
 ### 4. Master Atomic Mutation Supervisor (`AtomicMutationSupervisor`)
@@ -58,7 +58,7 @@ src/
 │   └── file-mutation-tool-suite.ts        # Model tools (patch_apply, file_view_paginated, file_replace_content, file_write_atomic)
 ├── sessions/extensions/patch/
 │   ├── broccoli-patch-substrate.ts        # In-memory Broccolidb substrate for staged file mutations, transaction journals, and audit metrics
-│   └── patch-snapshot-manager.ts          # Frame-perfect binary snapshots and O(1) state rollback (<0.05 ms)
+│   └── patch-snapshot-manager.ts          # checkpointed binary snapshots and O(1) state rollback (<0.05 ms)
 └── agents/extensions/patch/
     └── atomic-mutation-supervisor.ts      # Master file mutation orchestrator with transactional commit/rollback and line-budget guards
 ```

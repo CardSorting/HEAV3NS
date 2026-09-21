@@ -1,45 +1,71 @@
-# 🛡️ Defensive Patent Pledge & Anti-Patent-Troll Covenant
+# Defensive patent and prior-art policy
 
-**Project**: `LUMI-JOY` Deterministic Game Engine Monolith  
-**Primary Author & Curator**: **William Andrew Cruz** (`bozoegg` / `CardSorting`)  
-**Community Ideation Attribution**: Open-Source AI Agent Research Community  
-**Date of First Public Disclosure**: August 9, 2026  
-**License**: Apache License, Version 2.0 (with Patent Grant & Defensive Patent Termination)  
+**Project:** HEAV3NS / LUMI-JOY
 
----
+**Policy owner:** William Andrew Cruz (`bozoegg` / `CardSorting`)
 
-## 📌 Permissive Open-Source & Community Ideation Philosophy
+**Last reviewed:** 2026-09-21
 
-**LUMI-NEW** synthesizes the collective research, architectural experiments, and open-source contributions of the global AI agent developer community, refined and implemented into a monolithic game engine kernel by **William Andrew Cruz**.
+This document records project intent and evidence-handling practice. It is not a patent application, patent search, legal opinion, covenant for people who
+did not adopt it, or a substitute for the Apache License 2.0.
 
-### Why No Software Patent Filing Is Required
-**William Andrew Cruz** and the **LUMI-NEW** contributors explicitly choose **NOT** to file restrictive software patents. Software patents create artificial barriers, slow down open-source innovation, and breed predatory litigation.
+## 1. Controlling instruments
 
-Instead, by publishing this complete specification under the **Apache License, Version 2.0**, we achieve the ultimate balance:
-1. **100% Permissive Open Access**: Free for commercial, personal, academic, and open-source use worldwide with zero fees, zero royalties, and zero restrictions.
-2. **Defensive Shield for the Community**: Public prior-art publication irrevocably invalidates any future patent application by patent trolls or bad actors attempting to privatize these collective community breakthroughs.
+The Apache License, Version 2.0 in `LICENSE`, is the controlling copyright and
+patent instrument for the current project line. Its patent grant is made by
+each contributor only to the extent described by Apache-2.0 and only for
+claims that contributor can license. The patent-termination rule in Apache
+Section 3 applies according to the text of that license.
 
----
-**William Andrew Cruz** and the **LUMI-JOY** contributors explicitly choose **NOT** to file restrictive software patents. Software patents create artificial barriers, slow down open-source innovation, and breed predatory litigation.
+This policy does not expand the Apache grant, create a license to a third
+party's patent, change the conditions for a contribution, or add restrictions
+to an Apache-2.0 recipient. `NOTICE` remains informational. `TRADEMARKS.md`
+controls the project-name and branding boundary.
 
-By releasing **LUMI-JOY** under the permissive **Apache License 2.0**, all patents owned or licensable by William Andrew Cruz that cover the software are perpetually and irrevocably licensed to every user, contributor, and organization worldwide.
+## 2. Defensive publication practice
 
----
+The repository preserves dated commits, source references, benchmark inputs,
+and engineering disclosures under `.wiki/ip/`. Those records are intended to
+make the project's development history easier to inspect and search. Their
+legal effect depends on the applicable jurisdiction, publication facts,
+claim scope, and other evidence; no result is promised by this policy.
 
-## 🛑 Defensive Termination & Covenant Not to Sue
+The claim register therefore uses bounded implementation descriptions and
+links each material assertion to a source file or reproducible report. It does
+not state that a feature is new, that a claim is invalid, or that a particular
+document has a specified legal effect.
 
-To protect the open-source community from patent aggression, predatory licensing demands, and corporate patent trolls, the following defensive conditions apply to all usage of **LUMI-JOY**:
+## 3. Non-aggression intent
 
-- **Defensive Patent Termination**: If any corporate entity, patent troll, or non-practicing entity files a patent lawsuit or asserts patent infringement claims against **William Andrew Cruz**, `bozoegg`, `CardSorting`, or any user of LUMI-JOY, **all patent licenses granted to that litigating entity under this work shall immediately terminate as of the filing date**.
-- **Public Prior-Art Publication**: This repository, its commit logs, `.wiki/ip/INVENTION-DISCLOSURE-AND-PRIOR-ART.md`, `.wiki/ip/DEFENSIVE-PRIOR-ART-CLAIMS.md`, and published whitepapers serve as **irrefutable, legally binding public prior-art disclosures** under 35 U.S.C. § 102(a)(1) and international patent law worldwide as of August 9, 2026.
+The steward intends to keep the first-party implementation available under
+Apache-2.0 and to use the license's defensive patent mechanism consistently.
+That intent does not bind independent contributors, downstream distributors,
+employers, assignees, or patent holders who have not separately agreed to it.
 
-In the event that any patent troll or bad actor asserts a patent claim covering any mechanism disclosed in LUMI-JOY, **William Andrew Cruz** (`bozoegg` / `CardSorting`) and the open-source community will provide full prior-art documentation, commit timestamps, and empirical execution traces to petition for **Inter Partes Review (IPR)** and **patent invalidation** before the USPTO, EPO, and international patent offices worldwide.
+If a patent notice or demand concerns this project, preserve the notice and
+its provenance, avoid admissions, and seek qualified counsel. The project may
+publish factual engineering records or participate in a defense, but it does
+not promise a legal outcome, a filing, an inter partes review, or a response in
+any particular forum.
 
----
+## 4. Required diligence for new material
 
-## 📚 Related Protection Documents
+Before adding imported or generated material, contributors should record:
 
-- 📜 [Defensive Prior-Art Claims Specification](.wiki/ip/DEFENSIVE-PRIOR-ART-CLAIMS.md)
-- 📜 [Invention Disclosure Document](.wiki/ip/INVENTION-DISCLOSURE-AND-PRIOR-ART.md)
-- 📄 [Apache License 2.0](LICENSE)
-- 📋 [Attribution NOTICE](NOTICE)
+- the source repository, commit, author, or generator;
+- the applicable license and required attribution;
+- whether the material is copied, modified, generated, or merely inspired; and
+- the release artifacts that will contain it.
+
+Unverified source material is a release blocker. It must be removed, replaced,
+or separately identified until the steward can establish a lawful distribution
+path.
+
+## Related records
+
+- [Apache License 2.0](LICENSE)
+- [Project NOTICE](NOTICE)
+- [Trademarks](TRADEMARKS.md)
+- [Claim register](.wiki/ip/CLAIM-REGISTER.md)
+- [Source provenance](.wiki/ip/SOURCE-PROVENANCE.md)
+- [Licensing and claim-control strategy](docs/LEGAL-STRATEGY.md)

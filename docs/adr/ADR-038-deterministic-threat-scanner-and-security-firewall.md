@@ -8,10 +8,10 @@ In ancestral architectures such as `hermes-agent-main` (`tools/threat_patterns.p
 1. **ReDoS Backtracking Hazards & Loose Regexes**: Scanners matched unbounded strings using unanchored patterns without bounded backtracking guards, causing CPU exhaustion on adversarial payloads.
 2. **External Binary Subprocess Dependencies (`tirith`)**: Shell commands were scanned by launching child subprocesses against external binaries downloaded over HTTP, introducing supply chain hazards and process fork overhead.
 3. **Subprocess Git Query Latency**: The system executed `git config --get alias.<sub>` subprocesses on every command to detect repo worktree mutations, adding tens of milliseconds of process latency.
-4. **Lack of In-Memory Broccolidb Quarantine & Snapshot Rollback**: Threat findings and quarantined payloads were saved to ad-hoc disk JSON files without frame-perfect state rollback.
+4. **Lack of In-Memory Broccolidb Quarantine & Snapshot Rollback**: Threat findings and quarantined payloads were saved to ad-hoc disk JSON files without checkpointed state rollback.
 
 ## Decision
-We implemented a zero-GC, in-memory **Threat Pattern Scanner, Code Safety & Security Firewall Substrate ($\mathcal{K}_{\text{threat}}$)** comprising five single-responsibility components:
+We implemented a allocation-bounded, in-memory **Threat Pattern Scanner, Code Safety & Security Firewall Substrate ($\mathcal{K}_{\text{threat}}$)** comprising five single-responsibility components:
 
 1. **`DeterministicThreatScanner`** (`src/tooling/extensions/threat/deterministic-threat-scanner.ts`):
    - Pre-compiled regular expressions with bounded backtracking filler `(?:\w+\s+){0,8}` and 65,536 character input cap.
@@ -23,7 +23,7 @@ We implemented a zero-GC, in-memory **Threat Pattern Scanner, Code Safety & Secu
    - In-memory Broccolidb ledger tracking security scans, findings, and quarantine entries.
 
 3. **`ThreatSnapshotManager`** (`src/sessions/extensions/threat/threat-snapshot-manager.ts`):
-   - Frame-perfect binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
+   - checkpointed binary snapshots and $O(1)$ state rollback in $<0.05\text{ ms}$ ($0.001\text{ ms}$ observed).
 
 4. **`ThreatFirewallSupervisor`** (`src/agents/extensions/threat/threat-firewall-supervisor.ts`):
    - Master supervisor coordinating pre-execution command checks, skill quarantine, and security audit logs.

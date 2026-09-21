@@ -1,6 +1,6 @@
 # Key Architectural Findings & Osmosis Audit
 
-This document records the foundational research findings and lessons learned during the migration from early multi-agent experiments to the 3-tier monolithic Deterministic Game Engine architecture in `/Users/bozoegg/Desktop/LUMI-NEW`.
+This document records the foundational research findings and lessons learned during the migration from early multi-agent experiments to the 3-tier monolithic Deterministic Game Engine architecture in `repository root`.
 
 ---
 
@@ -19,7 +19,7 @@ Consolidating into a 3-tier monolithic framework (`agents`, `sessions`, `tooling
 
 ## 2. Key Insights Absorbed from `pi-main` (Teacher Model)
 
-By running 5 passes of the **Osmosis Learning Methodology** against `/Users/bozoegg/Downloads/pi-main`, we isolated key production capabilities and discarded framework complexity:
+By running 5 passes of the **Osmosis Learning Methodology** against `external pi-main source workspace`, we isolated key production capabilities and discarded framework complexity:
 
 - **Pass 1 (Context Compaction)**: Compacts turn history dynamically when turn threshold is exceeded ([SessionCompactor](../../src/sessions/extensions/compaction/session-compactor.ts)).
 - **Pass 2 (Model Resolution & Branching)**: Fallback model resolution chain (`gemini-3.6-flash` $\rightarrow$ `gemini-1.5-pro`) and isolated session branching (`fork()`) ([ModelResolver](../../src/agents/extensions/resolution/model-resolver.ts)).
@@ -34,7 +34,7 @@ By running 5 passes of the **Osmosis Learning Methodology** against `/Users/bozo
 Capturing agent turns as frame steps (`tick()`), state transitions as immutable snapshots (`GameStateSnapshot`), and memory as pre-allocated contiguous slabs (`ArenaAllocator`) proved to be the ultimate architecture for AI agent performance and stability.
 
 - **Predictable Frame Cycle**: Every tick follows the invariant lifecycle: `preTick() -> executeTick() -> postTick()`, serializing turn execution without race conditions or state drift.
-- **Zero-GC Arena Memory Substrate**: Pre-allocates a contiguous 16MB ArrayBuffer memory slab (`ArenaAllocator`), eliminating V8 Garbage Collection pauses during live activity streaming and frame ticks.
+- **allocation-bounded Arena Memory Substrate**: Pre-allocates a contiguous 16MB ArrayBuffer memory slab (`ArenaAllocator`), eliminating V8 Garbage Collection pauses during live activity streaming and frame ticks.
 - **Zero-Drift Rewind**: `rewindToSnapshot()` allows instantaneous $O(1)$ time-travel state restoration ($<0.1\text{ ms}$ warmed p95) to any previous frame without side-effect leakage or transcript re-parsing.
 - **Subagent Session Forking**: Spawns isolated child engine instances (`forkSession()`) pre-initialized from parent frame snapshots, allowing multi-agent swarms (`AgentSwarmDispatcher`) to explore complex solution spaces safely.
 - **Guarded Performance SLAs**: Enforces local fast-path mean latency below $1.0\text{ ms}$ and execution throughput of at least $1,000\text{ frames/second}$ on every build.

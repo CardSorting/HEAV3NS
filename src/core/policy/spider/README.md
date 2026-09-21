@@ -6,31 +6,31 @@ The `spider` package is the core diagnostic engine for DietCode's architectural 
 
 The engine is decomposed into specialized sub-engines to ensure performance, testability, and separation of concerns:
 
-### [Facade] [SpiderEngine.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/SpiderEngine.ts)
+### [Facade] [SpiderEngine.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)
 The primary entry point. Orchestrates the sub-engines and provides high-level APIs for:
 - Building and updating the structural graph.
 - Generating integrity violations and entropy reports.
 - Forecasting the impact of proposed changes (Simulation).
 - Exporting structural visualizations (Mermaid diagrams).
 
-### [Logic] [PathResolver.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/PathResolver.ts)
+### [Logic] [PathResolver.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)
 Responsible for mapping spectral imports to physical file IDs:
 - Resolves TypeScript aliases (`@/`, `@core`).
 - Detects architectural layers based on physical location and tags.
 - Maintains a resolution cache to stay within mission-critical performance budgets.
 
-### [Forensics] [ForensicEngine.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/ForensicEngine.ts)
+### [Forensics] [ForensicEngine.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)
 The "Ghost Buster" of the substrate:
 - Detects symbols that are imported but no longer exist in the registry.
 - Provides move-aware analysis to prevent false-positive alarms during large refactors.
 
-### [Metrics] [MetricsEngine.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/MetricsEngine.ts)
+### [Metrics] [MetricsEngine.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)
 The mathematical heart of the system:
 - Calculates **Logic Density**, **I/O Entropy**, and **AST Complexity**.
 - Performs reachability analysis to identify orphaned nodes.
 - Detects circular dependencies within the structural graph.
 
-### [Persistence] [PersistenceManager.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/PersistenceManager.ts)
+### [Persistence] [PersistenceManager.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md)
 Ensures structural truth survives between sessions without workspace pollution:
 - Decommissions local `.spider` directory to ensure zero-noise architecture.
 - Uses high-performance V8 serialization to create memory buffers for the substrate.
@@ -39,7 +39,7 @@ Ensures structural truth survives between sessions without workspace pollution:
 
 ## Data Structures
 
-Shared types and interfaces are defined in [types.ts](file:///Users/bozoegg/Downloads/codemarie-new/src/core/policy/spider/types.ts), ensuring absolute type-safety across the modular suite.
+Shared types and interfaces are defined in [types.ts](https://github.com/CardSorting/LUMI-VSIX/blob/main/.wiki/ip/SOURCE-PROVENANCE.md), ensuring absolute type-safety across the modular suite.
 
 ## Usage
 

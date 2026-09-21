@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 133: Zero-Dependency Broccoli Cognitive Suggestion Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/SuggestionService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/SuggestionService.ts).
  * Generates context-aware prompt suggestions based on active file paths, workspace diagnostics,
  * git status, and MD5 content hashes. Zero external npm dependencies.
  */

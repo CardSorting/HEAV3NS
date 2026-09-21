@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing multi-file batch edit anchoring (`BatchEditAnchorer`), unified diff chunk synthesis (`DiffSynthesizer`), and performing Phase 18 master subsystem synthesis (Passes 64–66) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing multi-file batch edit anchoring (`BatchEditAnchorer`), unified diff chunk synthesis (`DiffSynthesizer`), and performing Phase 18 master subsystem synthesis (Passes 64–66) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

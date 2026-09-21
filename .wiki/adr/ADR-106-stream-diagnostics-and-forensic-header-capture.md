@@ -12,7 +12,7 @@ When an LLM stream drops unexpectedly mid-response or mid-tool-call during high-
 5. Providing instantaneous $O(1)$ state rollback ($<0.05\text{ ms SLA}$) and high-frequency recording ($>500,000\text{ ops/sec}$).
 
 ## Decision
-We implement a zero-GC, deterministic Stream Diagnostics & Upstream Edge Header Forensic Subsystem in **LUMI-JOY**:
+We implement a allocation-bounded, deterministic Stream Diagnostics & Upstream Edge Header Forensic Subsystem in **LUMI-JOY**:
 1. **Core Contracts (`stream-diag.contracts.ts`)**:
    - Defines `StreamDiagnosticAttempt`, `StreamDropEvent`, `StreamDiagConfig`, `StreamDiagMetrics`, and `StreamDiagWorkspaceSnapshot`.
 2. **In-Memory Substrate & Snapshots (`broccoli-stream-diag-substrate.ts`, `stream-diag-snapshot-manager.ts`)**:
@@ -29,4 +29,4 @@ We implement a zero-GC, deterministic Stream Diagnostics & Upstream Edge Header 
 ## Consequences
 - Full visibility into upstream CDN and provider health on streaming disconnects.
 - Clear attribution of subagent retries and failures.
-- Zero impact on message prompt caching and zero GC memory overhead.
+- Zero impact on message prompt caching and allocation-bounded memory overhead.

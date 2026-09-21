@@ -2,7 +2,7 @@
  * [LAYER: AGENTS EXTENSION]
  * Pass 136: Zero-Dependency Broccoli Repair Mutation Executor
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/RepairExecutor.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/RepairExecutor.ts).
  * The sole authorized repair mutation path in engine orchestration. All disk writes for code repairs flow
  * through this transactional executor with trace events and resync tracking. Zero external npm dependencies.
  */

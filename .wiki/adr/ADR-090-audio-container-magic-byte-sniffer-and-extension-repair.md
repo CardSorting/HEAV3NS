@@ -10,7 +10,7 @@ In multimodal conversational agents (`tools/audio_container.py`, `tools/tts_tool
 3. **Magic-Byte Container Sniffing**: Inspecting raw binary header bytes is essential to accurately detect canonical container formats (`ogg`, `flac`, `wav`, `mp3`, `aac`, `m4a`, `mp4`, `webm`), distinguishing RIFF/WAVE from RIFF/WEBP images, ISO `ftyp` audio brands (`M4A `, `M4B `) from video brands, and disambiguating `0xFF 0xFx` sync words between ADTS AAC (`ID=0`, `layer=00`) and MP3 frames.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Audio Container Magic-Byte Sniffer, Streaming Audio Cache, and Voice Extension Repair Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Audio Container Magic-Byte Sniffer, Streaming Audio Cache, and Voice Extension Repair Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicAudioSniffer` ([deterministic-audio-sniffer.ts](../../src/agents/extensions/audio_container/deterministic-audio-sniffer.ts))**:
    - **Canonical Header Detection**: Recognizes `OggS` (`ogg`), `fLaC` (`flac`), `RIFF/WAVE` (`wav`), `ID3` (`mp3`), `\x1a\x45\xdf\xa3` (`webm`).
@@ -26,7 +26,7 @@ We implemented a zero-GC, typed, frame-perfect Audio Container Magic-Byte Sniffe
    - In-memory Broccolidb repository storing audio cache records, payload data, and sniffer telemetry.
 
 4. **`AudioContainerSnapshotManager` ([audio-container-snapshot-manager.ts](../../src/sessions/extensions/audio_container/audio-container-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`AudioContainerToolSuite` ([audio-container-tool-suite.ts](../../src/tooling/extensions/audio_container/audio-container-tool-suite.ts))**:
    - Exposes 5 model tools:

@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 51 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 51 completes the zero-dependency Osmosis distillation of Joy-Zoning architectural layer parsing, header tag synthesis, multi-language comment style registry, and boundary isolation enforcement from `/Users/bozoegg/Downloads/codemarie-new/src/utils/joy-zoning.ts` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 51 completes the zero-dependency Osmosis distillation of Joy-Zoning architectural layer parsing, header tag synthesis, multi-language comment style registry, and boundary isolation enforcement from `external codemarie-new source workspace/src/utils/joy-zoning.ts` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Joy-Zoning Engine (`BroccoliJoyZoningEngine`)**: Layer classification (`getLayer`), tag parsing (`parseLayerTag`), comment style mapping (`CommentStyle`), and header tag injection (`injectOrUpdateLayerTag`) across TypeScript, JavaScript, Python, Shell, HTML, Rust, Go, and SQL files without third-party dependencies.

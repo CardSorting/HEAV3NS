@@ -15,7 +15,7 @@ When processing voice messages across messaging platforms (Telegram, Discord, Sl
    - In-memory Broccolidb repository tracking transcript caches, provider usage metrics, and audio durations with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Multi-Provider Speech-to-Text Transcription and Diarization Engine for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Multi-Provider Speech-to-Text Transcription and Diarization Engine for **LUMI-JOY**:
 
 1. **`DeterministicSpeechTranscriber` ([deterministic-speech-transcriber.ts](../../src/agents/extensions/transcription/deterministic-speech-transcriber.ts))**:
    - **Audio Format Perception**: Validates supported extensions (`mp3`, `mp4`, `mpeg`, `mpga`, `m4a`, `wav`, `webm`, `ogg`, `aac`, `flac`).
@@ -30,7 +30,7 @@ We implemented a zero-GC, typed, frame-perfect Multi-Provider Speech-to-Text Tra
    - In-memory Broccolidb repository storing cached transcript records, provider usage metrics, and audio duration ledgers.
 
 4. **`TranscriptionSnapshotManager` ([transcription-snapshot-manager.ts](../../src/sessions/extensions/transcription/transcription-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`TranscriptionToolSuite` ([transcription-tool-suite.ts](../../src/tooling/extensions/transcription/transcription-tool-suite.ts))**:
    - Exposes 5 model tools:
@@ -44,5 +44,5 @@ We implemented a zero-GC, typed, frame-perfect Multi-Provider Speech-to-Text Tra
 1. **Zero Barrel Imports (`ADR-012`)**: Direct file imports only.
 2. **Base Class Immutability (`ADR-012`)**: Base classes remain unmodified.
 3. **Sub-Microsecond Latency SLA**: State rollback in $<0.05\text{ ms}$; transcription alignment throughput $>250,000\text{ segments/sec}$.
-4. **Cache Integrity**: Hash-keyed transcripts guarantee identical audio inputs return deterministic outputs without redundant compute.
+4. **Cache Integrity**: Hash-keyed transcript entries map identical audio inputs to the same cache key in the covered path; output determinism and compute reuse remain workload-dependent.
 5. **Exact Cohesion Verification**: Monolith component count expands from 459 to 464 components in OPTIMAL cohesion.

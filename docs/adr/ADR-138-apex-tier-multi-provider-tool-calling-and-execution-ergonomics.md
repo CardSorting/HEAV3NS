@@ -66,4 +66,4 @@ Standard AI agent architectures suffer from major tool calling friction:
 
 ## 4. Verification Evidence
 
-- Automated Test Suite: [`scripts/validate-tool-calling-ergonomics.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/scripts/validate-tool-calling-ergonomics.ts) (6/6 tests passing).
+- Automated Test Suite: [`scripts/validate-tool-calling-ergonomics.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/scripts/validate-tool-calling-ergonomics.ts) (6/6 tests passing).

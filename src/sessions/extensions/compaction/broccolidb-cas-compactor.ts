@@ -2,7 +2,7 @@
  * [LAYER: SESSIONS EXTENSION]
  * Pass 121: Zero-Dependency Broccoli CAS & Brotli Compacting Substrate
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/agent-context/ContextCompactionService.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/agent-context/ContextCompactionService.ts).
  * Provides content-addressable SHA-256 blob storage, Brotli compression/decompression via node:zlib,
  * immutable context projection DAGs, and blob hash verification. Zero external npm dependencies.
  */

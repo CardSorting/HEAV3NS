@@ -32,7 +32,7 @@ We implemented the **Apex-Tier Inline Conversational Navigation & Progressive In
 ### 5. Live Quorum Ballots & Voting Ledgers
 - Multi-stakeholder voting ballots with quorum threshold calculation, voter handle tracking, and dynamic visual progress bars.
 
-### 6. Expanded 26 Model Tool Suite ([`gateway-tool-suite.ts`](file:///Users/bozoegg/Desktop/LUMI-NEW/src/tooling/extensions/gateway/gateway-tool-suite.ts))
+### 6. Expanded 26 Model Tool Suite ([`gateway-tool-suite.ts`](https://github.com/CardSorting/LUMI-VSIX/blob/main/src/tooling/extensions/gateway/gateway-tool-suite.ts))
 1. `gateway_send_message`
 2. `gateway_send_interactive_card`
 3. `gateway_send_rich_media`

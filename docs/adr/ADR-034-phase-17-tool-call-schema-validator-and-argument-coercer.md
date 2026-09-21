@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing tool call parameter schema validation (`ToolCallSchemaValidator`), argument type coercion (`ArgumentCoercer`), and performing Phase 17 master subsystem synthesis (Passes 61–63) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing tool call parameter schema validation (`ToolCallSchemaValidator`), argument type coercion (`ArgumentCoercer`), and performing Phase 17 master subsystem synthesis (Passes 61–63) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

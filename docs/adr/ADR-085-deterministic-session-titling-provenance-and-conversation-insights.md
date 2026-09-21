@@ -8,10 +8,10 @@ In ancestral agent systems (`agent/title_generator.py`, `agent/insights.py`, and
 1. **Critical-Path Titling Latency**: Chat session titling previously waited for assistant turns to complete before generating names, resulting in $150\text{s}$ to $1200\text{s}$ (p90) latency where sessions appeared as `"Untitled"` or `"New Chat"` in sidebars and multi-channel gateways.
 2. **Machine Scaffolding & Control-Tag Leakage**: Opening prompts containing slash commands (`/skill`, `/work`), context compaction handoffs (`[CONTEXT COMPACTION]`), task notifications (`<task-notification>`), or IDE file selection wrappers (`<ide_selection>`) leaked raw scaffolding into session titles rather than naming actual user intent.
 3. **Unchecked Provenance Inversions**: Small-model fallback updates frequently overwrote user-specified custom titles or wiped out high-quality summaries when transient errors occurred.
-4. **Lack of Zero-GC In-Memory Epistemic Analytics**: Usage analytics were either missing or tightly bound to disk-blocking SQLite scans without real-time in-memory token burn monitoring, $7\times 24$ activity heatmaps, cache acceleration rates, tool failure rates, or frame-perfect binary snapshot rollbacks.
+4. **Lack of allocation-bounded In-Memory Epistemic Analytics**: Usage analytics were either missing or tightly bound to disk-blocking SQLite scans without real-time in-memory token burn monitoring, $7\times 24$ activity heatmaps, cache acceleration rates, tool failure rates, or checkpointed binary snapshot rollbacks.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect two-stage session titling, strict provenance hierarchy, and multi-dimensional conversation insights engine for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed two-stage session titling, strict provenance hierarchy, and multi-dimensional conversation insights engine for **LUMI-JOY**:
 
 1. **`DeterministicTitleGenerator` ([deterministic-title-generator.ts](../../src/agents/extensions/title_insights/deterministic-title-generator.ts))**:
    - **Stage 1 (Instant Derived Titling)**: Instant, zero-cost derivation ($\le 0.01\text{ ms}$) from the user's opening message, truncating cleanly at word boundaries ($\le 48\text{ chars}$) so sessions are named immediately at creation.
@@ -36,7 +36,7 @@ We implemented a zero-GC, typed, frame-perfect two-stage session titling, strict
    - In-memory Broccolidb repository maintaining title ledgers, provenance metadata, bounded activity event buffers, and cached analytics aggregations.
 
 5. **`TitleInsightsSnapshotManager` ([title-insights-snapshot-manager.ts](../../src/sessions/extensions/title_insights/title-insights-snapshot-manager.ts))**:
-   - Frame-perfect binary serialization and $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary serialization and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 6. **`TitleInsightsSupervisor` ([title-insights-supervisor.ts](../../src/agents/extensions/title_insights/title-insights-supervisor.ts))**:
    - Master supervisor coordinating opening message lifecycle hooks, provenance enforcement, activity event recording, and insights generation.
@@ -48,4 +48,4 @@ We implemented a zero-GC, typed, frame-perfect two-stage session titling, strict
 1. **Zero Barrel Imports (`ADR-012`)**: Direct file imports only.
 2. **Base Class Immutability (`ADR-012`)**: Base classes remain unmodified.
 3. **Sub-Millisecond Latency SLA**: Derived titling completes in $\le 0.01\text{ ms}$; state rollback in $\le 0.05\text{ ms}$.
-4. **Zero-GC Invariant**: All active titling and analytics operations execute within in-memory typed structures without GC slab fragmentation.
+4. **allocation-bounded Invariant**: All active titling and analytics operations execute within in-memory typed structures without GC slab fragmentation.

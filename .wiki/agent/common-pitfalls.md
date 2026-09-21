@@ -1,6 +1,6 @@
 # Common Pitfalls for AI Agents
 
-This document highlights common pitfalls and non-negotiable rules for AI agents operating in `/Users/bozoegg/Desktop/LUMI-NEW`.
+This document highlights common pitfalls and non-negotiable rules for AI agents operating in `repository root`.
 
 ---
 

@@ -15,7 +15,7 @@ In agentic file inspection and model tools (`tools/binary_extensions.py`, `tools
 4. **In-Memory Substrate & Snapshots**: Extracted document representations and opaque write blocks must be tracked in an in-memory substrate with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Binary Extension Perception, Opaque Document Destruction Guard, and Structured Document Extractor Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Binary Extension Perception, Opaque Document Destruction Guard, and Structured Document Extractor Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicDocExtractor` ([deterministic-doc-extractor.ts](../../src/agents/extensions/doc_extractor/deterministic-doc-extractor.ts))**:
    - **Binary Extension Classifier**: Instant zero-I/O extension matching against 80+ binary formats.
@@ -32,7 +32,7 @@ We implemented a zero-GC, typed, frame-perfect Binary Extension Perception, Opaq
    - In-memory Broccolidb repository storing extracted document caches, opaque write blocks, and telemetry.
 
 4. **`DocExtractorSnapshotManager` ([doc-extractor-snapshot-manager.ts](../../src/sessions/extensions/doc_extractor/doc-extractor-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`DocExtractorToolSuite` ([doc-extractor-tool-suite.ts](../../src/tooling/extensions/doc_extractor/doc-extractor-tool-suite.ts))**:
    - Exposes 5 model tools:

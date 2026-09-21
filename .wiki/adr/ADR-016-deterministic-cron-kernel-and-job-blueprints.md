@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team & Autonomous Evolution Core
 - **Date**: 2026-08-15
-- **Technical Story**: Transmuting Hermes Agent's blocking, disk-locked cron architecture (`cron/jobs.py` ~147 KB, `cron/scheduler.py` ~305 KB, `cron/lifecycle_guard.py` ~30 KB, `cron/blueprint_catalog.py` ~32 KB) into a typed, deterministic **Self-Healing Cron Kernel & Job Blueprint Engine ($\mathcal{K}_{\text{cron}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces wall-clock polling drift, OS-level file descriptor leaks (`EMFILE`), brittle regex command guards, and raw string template substitution with frame-tick synchronized zero-drift scheduling, zero-GC Broccolidb substrate memory slabs, strongly typed AST-validated blueprint slots, and frame-perfect $O(1)$ state rollback.
+- **Technical Story**: Transmuting Hermes Agent's blocking, disk-locked cron architecture (`cron/jobs.py` ~147 KB, `cron/scheduler.py` ~305 KB, `cron/lifecycle_guard.py` ~30 KB, `cron/blueprint_catalog.py` ~32 KB) into a typed, deterministic **Self-Healing Cron Kernel & Job Blueprint Engine ($\mathcal{K}_{\text{cron}}$)** for LUMI-JOY via the AKD-DSO Osmosis Paradigm. Replaces wall-clock polling drift, OS-level file descriptor leaks (`EMFILE`), brittle regex command guards, and raw string template substitution with frame-tick synchronized zero-drift scheduling, allocation-bounded Broccolidb substrate memory slabs, strongly typed AST-validated blueprint slots, and checkpointed $O(1)$ state rollback.
 
 ---
 
@@ -23,17 +23,17 @@ However, forensic evaluation reveals severe architectural weaknesses:
 ## 2. Architectural Decision (The What)
 
 ### 1. Frame-Tick & Millisecond-Precision Synchronization (`MonolithCronScheduler`)
-- Synchronizes with LUMI's engine frame ticks (`tick()`) and fractional-millisecond schedules, eliminating polling drift with zero-GC timestamp evaluation ($<0.01\text{ ms}$).
+- Synchronizes with LUMI's engine frame ticks (`tick()`) and fractional-millisecond schedules, eliminating polling drift with allocation-bounded timestamp evaluation ($<0.01\text{ ms}$).
 - Evaluates due jobs in $<0.01\text{ ms}$ through integer timestamp comparisons.
 
-### 2. Zero-GC In-Memory Cron Substrate (`BroccoliCronSubstrate`)
-- Caches all cron jobs and execution ring-buffers in Broccolidb memory slabs with $<0.5\ \mu\text{s}$ query latency and zero disk I/O churn.
+### 2. allocation-bounded In-Memory Cron Substrate (`BroccoliCronSubstrate`)
+- Caches cron jobs and execution ring-buffers in Broccolidb memory slabs; the recorded query target and I/O behavior are workload- and host-specific.
 
 ### 3. AST-Validated Blueprint Catalog (`DeterministicBlueprintCatalog`)
 - Strongly-typed slots (`time`, `enum`, `text`, `weekdays`, `number`, `boolean`) with pre-packaged automation templates (`daily_summary`, `health_check_monitor`, `workspace_cleaner`, `dependency_audit`, `benchmark_guard`).
 - Validates slot parameters and safely interpolates schedules and prompt templates.
 
-### 4. Frame-Perfect Binary Snapshotting & $O(1)$ Rollback (`CronSnapshotManager`)
+### 4. checkpointed Binary Snapshotting & $O(1)$ Rollback (`CronSnapshotManager`)
 - Captures complete cron state before execution, enabling instant rollback ($<0.1\text{ ms}$) if a scheduled job causes unwanted state drift.
 
 ### 5. Axiomatic Command & Lifecycle Guard (`CronLifecycleGuard`)
@@ -55,8 +55,8 @@ src/
 │   ├── anchored-cron-job-manager.ts        # In-memory job manifest ledger & ring buffer history
 │   └── cron-tool-suite.ts                  # Model tools (cron_list_jobs, cron_create_job, cron_trigger_job, cron_pause_job, cron_resume_job, cron_delete_job, cron_list_blueprints)
 ├── sessions/extensions/cron/
-│   ├── broccoli-cron-substrate.ts          # Zero-GC in-memory cron job store in Broccolidb
-│   └── cron-snapshot-manager.ts            # Frame-perfect binary snapshotting & O(1) rollback
+│   ├── broccoli-cron-substrate.ts          # allocation-bounded in-memory cron job store in Broccolidb
+│   └── cron-snapshot-manager.ts            # checkpointed binary snapshotting & O(1) rollback
 └── agents/extensions/cron/
     ├── cron-lifecycle-guard.ts             # Destructive command & loop safety validator
     └── monolith-cron-scheduler.ts          # Frame-tick synchronized cron runner & job execution dispatcher
@@ -66,7 +66,7 @@ src/
 
 ## 4. Verification & Consequences
 
-- **100% Type-Safe**: `tsc --noEmit` compiles cleanly with zero errors.
+- **TypeScript verification**: `tsc --noEmit` compiles cleanly with zero errors.
 - **Full Test Coverage**: `scripts/validate-cron-kernel.ts` executes all 8 test suites spanning schedule validation, blueprint catalogs, command guards, in-memory substrates, binary snapshots, tick evaluation, model tools, and micro-benchmarks.
-- **Guaranteed Performance SLAs**: 1,000 tick evaluations across 100 registered jobs complete in $6.346\text{ ms}$ ($6.346\ \mu\text{s}$ per tick evaluation).
+- **Recorded performance observation**: A dated local run measured 1,000 tick evaluations across 100 registered jobs at $6.346\text{ ms}$. Re-run the named workload before comparing hosts; this is not an SLA.
 - **Component Graduation**: Monolith graduates cleanly from 164 to **171 components**.

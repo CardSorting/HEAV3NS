@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 142: Zero-Dependency Broccoli Approval Policy Engine
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/broccolidb (core/orchestration/ApprovalPolicyEngine.ts).
+ * Lifted from external source workspace/codemarie-new/broccolidb (core/orchestration/ApprovalPolicyEngine.ts).
  * Evaluates mutation plans against risk levels (low, medium, high) and approval policies
  * (readonly, production_locked, human_approval_required, ci_gate_only, autonomous_safe). Zero external npm dependencies.
  */

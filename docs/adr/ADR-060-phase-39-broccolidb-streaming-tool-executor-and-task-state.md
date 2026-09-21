@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 39 Osmosis Distillation (`broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 39 completes the zero-dependency Osmosis distillation of streaming tool execution and task sidechain state engines from `/Users/bozoegg/Downloads/codemarie-new/broccolidb` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 39 completes the zero-dependency Osmosis distillation of streaming tool execution and task sidechain state engines from `external codemarie-new source workspace/broccolidb` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Streaming Tool Executor (`BroccoliStreamingToolExecutor`)**: Multi-phase tool execution lifecycle management (`queued` $\rightarrow$ `validating` $\rightarrow$ `running` $\rightarrow$ `completed`/`failed`/`timeout`), native timeout cancellation via `AbortController`, and progress callbacks (`onProgress`). Directly embedded inside `ValidatingToolRegistry`.

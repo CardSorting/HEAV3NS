@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 170: Zero-Dependency Broccoli JoyRide Diagnostics
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/joyride/JoyRideDiagnostics.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/joyride/JoyRideDiagnostics.ts.
  * Provides structured diagnostic telemetry reporting for JoyRide hot-path caches, tracking hit/miss ratios,
  * degraded mode triggers, pressure trim events, and performance indicators. Zero external npm dependencies.
  */

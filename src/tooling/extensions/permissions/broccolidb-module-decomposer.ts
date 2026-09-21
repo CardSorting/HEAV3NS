@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 167: Zero-Dependency Broccoli Joy-Zoning Module Decomposer
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/core/policy/ModuleDecomposer.ts.
+ * Lifted from external source workspace/codemarie-new/src/core/policy/ModuleDecomposer.ts.
  * Analyzes complex monolithic modules and provides step-by-step Joy-Zoning refactoring recommendations
  * (EXTRACT, MOVE, DECOUPLE, HARDEN), calculating structural integrity scores (0-100) and logic island boundaries. Zero external npm dependencies.
  */

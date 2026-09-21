@@ -2,7 +2,7 @@
  * [LAYER: TOOLING EXTENSION]
  * Pass 190: Zero-Dependency Broccoli Command Diagnostics
  *
- * Lifted from /Users/bozoegg/Downloads/codemarie-new/src/integrations/terminal/commandDiagnostics.ts.
+ * Lifted from external source workspace/codemarie-new/src/integrations/terminal/commandDiagnostics.ts.
  * Analyzes command execution failures (analyzeCommandFailure), detecting port collisions (EADDRINUSE),
  * Git lock contention (.git/index.lock), missing commands (127/9009), missing modules, and permission errors,
  * providing actionable non-destructive recovery guidance. Zero external npm dependencies.

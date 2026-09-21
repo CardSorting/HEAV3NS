@@ -172,7 +172,7 @@ Execution Status: Success
 			const adversarialInput =
 				`
 \x00\xFF\xFE\x00<!-- Unclosed comment block
-/Users/bozoegg/Downloads/codemarie-new/src/core/api/providers/cerebras.ts
+external source workspace/codemarie-new/src/core/api/providers/cerebras.ts
 `.repeat(100) + `[tool:fake_tool path="/etc/passwd"] {"status": 500}`
 
 			const compressed = engine.compressDslText(adversarialInput)
@@ -203,7 +203,7 @@ Execution Status: Success
 			const sampleInput = {
 				systemPrompt: "System instruction prompt \r\n",
 				messages: [
-					{ role: "user", content: "Run test suite on /Users/bozoegg/Downloads/codemarie-new/src/index.ts" },
+					{ role: "user", content: "Run test suite on external source workspace/codemarie-new/src/index.ts" },
 					{ role: "assistant", content: "Executing test suite" },
 					{ role: "tool", content: '{"status": 200, "message": "Success"} \n' + "=".repeat(100) },
 				],

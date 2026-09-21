@@ -12,7 +12,7 @@ Modern AI agent tool orchestration interacts with diverse cloud providers (Anthr
 5. **Bidirectional Argument Loss**: If property keys are sanitized for LLM visibility without reverse mapping, model-emitted arguments cannot be dispatched to underlying services that expect original wire names.
 
 ## Decision
-We implement a zero-GC, typed, deterministic Tool Parameter Schema Sanitizer in **LUMI-JOY**:
+We implement a allocation-bounded, typed, deterministic Tool Parameter Schema Sanitizer in **LUMI-JOY**:
 1. **Core Contracts (`schema-sanitizer.contracts.ts`)**:
    - Defines `SchemaSanitizerConfig`, `SchemaSanitizationResult`, `SchemaSanitizerMetrics`, `SchemaSanitizerWorkspaceSnapshot`, and constants (`PROPERTY_KEY_REGEX`, `FORBIDDEN_REF_SIBLING_KEYWORDS`, `TOP_LEVEL_FORBIDDEN_COMBINATORS`).
 2. **In-Memory Substrate & Snapshots (`broccoli-schema-sanitizer-substrate.ts`, `schema-sanitizer-snapshot-manager.ts`)**:
@@ -20,7 +20,7 @@ We implement a zero-GC, typed, deterministic Tool Parameter Schema Sanitizer in 
 3. **Deterministic Engine (`deterministic-schema-sanitizer-engine.ts`)**:
    - Walks JSON Schema ASTs and resolves non-conforming property keys (`sanitizePropertyKey()`, `computePropertyKeyRenames()`).
    - Collapses nullable unions (`anyOf: [{type: "string"}, {type: "null"}]` $\rightarrow$ `type: "string", nullable: true`).
-   - Guarantees object schemas contain explicit `properties: {}`.
+   - Normalizes object schemas to include explicit `properties: {}` in the covered sanitizer path.
    - Strips forbidden `$ref` siblings and top-level combinators.
    - Provides bidirectional reverse-mapping (`unrenameToolArgs()`) from sanitized model arguments back to exact wire names.
 4. **Supervisor (`schema-sanitizer-supervisor.ts`)**:
@@ -32,6 +32,6 @@ We implement a zero-GC, typed, deterministic Tool Parameter Schema Sanitizer in 
 
 ## Consequences
 - 100% elimination of HTTP 400 schema validation errors across Anthropic, Bedrock, Vertex, Codex, llama.cpp GBNF, and Fireworks.
-- Transparent bidirectional key unrenaming guaranteeing zero data loss or parameter mutation for underlying tools.
+- Transparent bidirectional key unrenaming with tests covering key preservation and parameter stability for the underlying tools.
 - High-throughput schema processing exceeding $1,000,000\text{ schemas/sec}$.
 - Instant state rollback in $<0.05\text{ ms}$.

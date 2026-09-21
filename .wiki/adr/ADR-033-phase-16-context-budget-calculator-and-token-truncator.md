@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Deciders**: LUMI Architectural Team
 - **Date**: 2026-08-09
-- **Technical Story**: Absorbing dynamic context token budget estimation (`ContextBudgetCalculator`), history truncation (`TokenTruncator`), and performing Phase 16 master subsystem synthesis (Passes 58–60) into `/Users/bozoegg/Desktop/LUMI-NEW` via the **Osmosis Strategy**.
+- **Technical Story**: Absorbing dynamic context token budget estimation (`ContextBudgetCalculator`), history truncation (`TokenTruncator`), and performing Phase 16 master subsystem synthesis (Passes 58–60) into `repository root` via the **Osmosis Strategy**.
 
 ---
 

@@ -11,14 +11,14 @@ In automated terminal-driving agent architectures (`tools/shell_heredoc.py`, `ag
 4. **Opaque Command Failures**: Non-zero exit codes without structured diagnostic heuristics (such as missing Python/Node dependencies, port collisions, permissions, or git conflicts) leave agents stuck without actionable corrective commands.
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect conservative shell heredoc sanitizer, delimiter parser, subshell trap interceptor, multi-line script heredoc generator, and actionable terminal diagnostics subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed conservative shell heredoc sanitizer, delimiter parser, subshell trap interceptor, multi-line script heredoc generator, and actionable terminal diagnostics subsystem for **LUMI-JOY**:
 
 1. **`DeterministicHeredocSanitizer` ([deterministic-heredoc-sanitizer.ts](../../src/agents/extensions/heredoc_terminal/deterministic-heredoc-sanitizer.ts))**:
    - **Fast-Path Scanner**: Instant detection of `<<` markers without state machine overhead for clean commands.
    - **Quoted Delimiter Parser**: Soundly parses `<<'EOF'`, `<<"EOF"`, `<<\EOF`, and tab-stripped `<<-EOF` openers.
    - **Conservative Inert Consumer Filter**: Allowlisted non-shell interpreters (`python`, `python3`, `node`, `osascript`, `cat`) with optional environment variable prefixes and path qualifications.
    - **Nested Shell Scope & Compound Guard**: Blocks masking if the opener contains list operators (`;`, `|`, `&`) or nested executable syntax (`$(...)`, `` ` ``, `<(...)`, `>(...)`).
-   - **Equal-Line Newline Replacement**: Replaces masked inert bodies with exact matching newline sequences so downstream line-anchored tools, error reporters, and diff matchers retain frame-perfect multi-line line numbers and coordinates.
+   - **Equal-Line Newline Replacement**: Replaces masked inert bodies with exact matching newline sequences so downstream line-anchored tools, error reporters, and diff matchers retain checkpointed multi-line line numbers and coordinates.
    - **Fail-Closed Policy**: On any parsing ambiguity, unterminated delimiter, unquoted marker, or unknown interpreter, the command is left completely unmodified for downstream security inspection.
    - **Canonical Multi-Line Script Synthesizer**: Generates safe, quoted heredoc wrappers for Python, Node, Bash, OsaScript, and Shell scripts.
 
@@ -34,7 +34,7 @@ We implemented a zero-GC, typed, frame-perfect conservative shell heredoc saniti
    - In-memory Broccolidb repository tracking sanitization logs, safety verdicts, diagnostic histories, and blocked malicious commands.
 
 4. **`HeredocTerminalSnapshotManager` ([heredoc-terminal-snapshot-manager.ts](../../src/sessions/extensions/heredoc_terminal/heredoc-terminal-snapshot-manager.ts))**:
-   - Frame-perfect binary serialization and $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary serialization and $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`HeredocTerminalSupervisor` ([heredoc-terminal-supervisor.ts](../../src/agents/extensions/heredoc_terminal/heredoc-terminal-supervisor.ts))**:
    - Pre-exec and post-exec lifecycle coordinator auditing shell commands, classifying risk, and logging execution diagnostics.

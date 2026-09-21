@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 57 Osmosis Distillation (`codemarie` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 57 completes the zero-dependency Osmosis distillation of workspace structural migration optimization analysis and evidence verification forensics from `/Users/bozoegg/Downloads/codemarie-new/src/core/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 57 completes the zero-dependency Osmosis distillation of workspace structural migration optimization analysis and evidence verification forensics from `external codemarie-new source workspace/src/core/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Integrity Optimizer (`BroccoliIntegrityOptimizer`)**: Workspace structural migration opportunity analyzer (`findOptimizations`), layer drift detection, and archetypal deadwood filtering without third-party dependencies. Directly embedded inside `BroccoliWorkspaceArchitectureProfiler`.

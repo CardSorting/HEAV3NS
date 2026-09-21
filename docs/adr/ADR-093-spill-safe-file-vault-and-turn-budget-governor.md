@@ -14,7 +14,7 @@ In agentic architectures (`tools/spill_safety.py`, `tools/hook_output_spill.py`,
 4. **In-Memory Substrate & Snapshots**: Tracks persisted results, session spill registries, and budget metrics with sub-millisecond $O(1)$ state rollback ($<0.05\text{ ms SLA}$).
 
 ## Decision
-We implemented a zero-GC, typed, frame-perfect Spill-Safe File Vault, Context-Overflow Result Persistence, and Multi-Tier Turn Budget Governor Subsystem for **LUMI-JOY**:
+We implemented a allocation-bounded, typed, checkpointed Spill-Safe File Vault, Context-Overflow Result Persistence, and Multi-Tier Turn Budget Governor Subsystem for **LUMI-JOY**:
 
 1. **`DeterministicSpillVault` ([deterministic-spill-vault.ts](../../src/agents/extensions/spill_vault/deterministic-spill-vault.ts))**:
    - **Symlink-Safe Exclusive File Operations**: Uses `O_CREAT | O_EXCL`, unlinks existing paths without following symlinks, and enforces `0o700` directory and `0o600` file permissions.
@@ -30,7 +30,7 @@ We implemented a zero-GC, typed, frame-perfect Spill-Safe File Vault, Context-Ov
    - In-memory Broccolidb repository storing persisted descriptors, session-isolated indices, and aggregate budget telemetry.
 
 4. **`SpillVaultSnapshotManager` ([spill-vault-snapshot-manager.ts](../../src/sessions/extensions/spill_vault/spill-vault-snapshot-manager.ts))**:
-   - Frame-perfect binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
+   - checkpointed binary snapshots and sub-millisecond $O(1)$ state rollback in $<0.05\text{ ms}$.
 
 5. **`SpillVaultToolSuite` ([spill-vault-tool-suite.ts](../../src/tooling/extensions/spill_vault/spill-vault-tool-suite.ts))**:
    - Exposes 5 model tools:
@@ -41,7 +41,7 @@ We implemented a zero-GC, typed, frame-perfect Spill-Safe File Vault, Context-Ov
      - `spill_get_governor_metrics`: Retrieves aggregate spill and budget enforcement metrics.
 
 ## Invariants & Guardrails
-1. **Symlink Defense Guarantee**: File writes refuse symlinks and cannot be tricked into overwriting pre-planted target files.
+1. **Symlink Defense Checks**: Covered file writes reject symlink targets; caller, filesystem, and host behavior still require verification.
 2. **Prompt Cache Stability**: Hook output spilling prevents large dynamic strings from invalidating prefix cache tokens.
 3. **Zero Barrel Imports (`ADR-012`)**: Direct file imports only.
 4. **Base Class Immutability (`ADR-012`)**: Base classes remain unmodified.

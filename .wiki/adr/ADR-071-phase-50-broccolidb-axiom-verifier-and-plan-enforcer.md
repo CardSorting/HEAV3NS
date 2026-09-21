@@ -2,14 +2,14 @@
 
 - **Status**: Accepted & Implemented
 - **Date**: 2026-08-12
-- **Author**: William Andrew Cruz & Antigravity
+- **Document steward**: William Andrew Cruz (CardSorting). AI tooling may have assisted with drafting; no independent co-authorship is claimed.
 - **Scope**: Phase 50 Osmosis Distillation (`codemarie` / `broccolidb` $\longrightarrow$ `LUMI-NEW`)
 
 ---
 
 ## Executive Summary
 
-Phase 50 completes the zero-dependency Osmosis distillation of architectural layer header verification and strategic plan mode drafting enforcement from `/Users/bozoegg/Downloads/codemarie-new/src/core/policy/` into `/Users/bozoegg/Desktop/LUMI-NEW/src`.
+Phase 50 completes the zero-dependency Osmosis distillation of architectural layer header verification and strategic plan mode drafting enforcement from `external codemarie-new source workspace/src/core/policy/` into `repository root/src`.
 
 This architectural pass introduces:
 1. **Broccoli Axiom Verifier (`BroccoliAxiomVerifier`)**: Architectural layer header validation (`getFileLayerContext`, `getCorrectionHint`), layer tagging discipline (`[LAYER: DOMAIN/CORE/INFRASTRUCTURE]`), and boundary leak hints without external dependencies. Directly embedded inside `BroccoliApprovalPolicyEngine`.
