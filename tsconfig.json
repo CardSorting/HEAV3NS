@@ -64,11 +64,9 @@
 	"exclude": [
 		"node_modules",
 		".vscode-test",
-		"webview-ui",
 		"src/test/e2e/**/*",
 		"src/test/scenarios/**/*",
 		"src/worker.ts",
 		"src/worker-configuration.d.ts"
 	]
 }
-

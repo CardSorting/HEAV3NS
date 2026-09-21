@@ -268,7 +268,7 @@ LUMI incorporates a multi-pass tool calling and execution substrate intended to 
 ```
 
 ### Core Architectural Capabilities:
-1. **Universal Multi-Provider Portability (ADR-138)**: Losslessly converts tool declarations and wire payloads across OpenAI/OpenRouter (`tool_calls`), Anthropic (`tool_use` / `tool_result`), Google Gemini (`functionCall` / `functionResponse`), and MCP standard tool protocols.
+1. **Universal Multi-Provider Portability (ADR-138)**: Losslessly converts tool declarations and wire payloads across OpenAI-compatible (`tool_calls`), Anthropic (`tool_use` / `tool_result`), Google Gemini (`functionCall` / `functionResponse`), and MCP standard tool protocols.
 2. **Self-Healing Argument Parser (ADR-138)**: Automatically repairs markdown JSON fences, unbalanced braces, single quotes, Python boolean literals (`True`, `False`, `None`), and stringified parameter objects without throwing runtime turn errors.
 3. **Parallel Concurrency Wave Scheduler (ADR-139)**: Partitions independent read operations into parallel execution waves (`Promise.allSettled`). Comparative speed is workload-, host-, and request-mix-dependent and must be established by a dated benchmark.
 4. **Deterministic In-Memory Read Cache (ADR-139)**: Computes deterministic SHA-256 hashes of tool arguments to serve read hits in microsecond latency, automatically invalidating cached paths upon file writes, edits, or deletions.

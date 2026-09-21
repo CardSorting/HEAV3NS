@@ -93,16 +93,16 @@ async function main(): Promise<void> {
     assert.equal(anthropicClassified.category, "context_overflow");
     assert.equal(anthropicClassified.directive, "compress_context");
 
-    // OpenRouter Upstream Model Throttling
-    const openRouterErr = {
+    // Upstream model throttling
+    const upstreamModelErr = {
       status: 429,
       message: "Upstream model provider is currently overloaded for claude-3-5-sonnet",
     };
-    const openRouterClassified = classifier.classify(openRouterErr, { provider: "openrouter" });
-    assert.equal(openRouterClassified.category, "upstream_rate_limit");
-    assert.equal(openRouterClassified.directive, "fallback_model");
+    const upstreamModelClassified = classifier.classify(upstreamModelErr, { provider: "openai-codex" });
+    assert.equal(upstreamModelClassified.category, "upstream_rate_limit");
+    assert.equal(upstreamModelClassified.directive, "fallback_model");
 
-    console.log("\x1b[32m  [✓] Multi-provider (OpenAI, Anthropic, OpenRouter) payload parsing verified.\x1b[0m");
+    console.log("\x1b[32m  [✓] Multi-provider (OpenAI, Anthropic, Codex) payload parsing verified.\x1b[0m");
   }
 
   // ── [Test 3/8] Deterministic Jittered Backoff Calculations ────────────────

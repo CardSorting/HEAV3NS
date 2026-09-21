@@ -157,7 +157,7 @@ export class DeterministicErrorClassifier implements IDeterministicErrorClassifi
       status === 529 ||
       lowerMsg.includes("overloaded") ||
       lowerMsg.includes("internal server error") ||
-      lowerMsg.includes("openrouter mid-stream error") ||
+      lowerMsg.includes("mid-stream error") ||
       lowerMsg.includes("stream terminated with error status")
     ) {
       category = "overloaded_server";

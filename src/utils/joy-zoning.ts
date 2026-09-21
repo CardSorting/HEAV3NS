@@ -139,7 +139,7 @@ export function getLayer(filePath: string, content?: string): Layer {
 						normalized.endsWith("/src/plumbing") ||
 						normalized.includes("src/shared/utils/")
 					? "plumbing"
-					: normalized.includes("src/ui/") || normalized.endsWith("/src/ui") || normalized.includes("webview-ui/")
+				: normalized.includes("src/ui/") || normalized.endsWith("/src/ui")
 						? "ui"
 						: normalized.includes("src/core/") || normalized.endsWith("/src/core")
 							? "core"
@@ -152,8 +152,6 @@ export function getLayer(filePath: string, content?: string): Layer {
 								? "infrastructure"
 								: normalized.includes("src/utils/")
 									? "plumbing"
-									: normalized.includes("webview-ui/")
-										? "ui"
 										: "infrastructure"
 
 	PATH_LAYER_CACHE.set(normalized, layer)

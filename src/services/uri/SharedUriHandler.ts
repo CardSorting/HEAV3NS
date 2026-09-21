@@ -39,10 +39,6 @@ export class SharedUriHandler {
 
 		try {
 			switch (path) {
-				case "/openrouter": {
-					Logger.warn("SharedUriHandler: OpenRouter provider has been removed")
-					return false
-				}
 				case "/requesty": {
 					const code = query.get("code")
 					if (code) {

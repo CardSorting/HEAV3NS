@@ -53,12 +53,12 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------
   console.log("[Test 3/5] Validating Model Catalog specs and curation...");
   const models = monolith.modelCatalog.getAllModels();
-  assert.ok(models.length >= 8, `Expected at least 8 models, got ${models.length}`);
+  assert.ok(models.length >= 1, `Expected at least one model, got ${models.length}`);
 
   const gptTerra = models.find((m) => m.modelName === "gpt-5.6-terra");
   assert.ok(gptTerra, "gpt-5.6-terra must exist in model catalog");
   assert.ok(gptTerra.contextWindowTokens >= 128000, "gpt-5.6-terra must have large context window");
-  console.log(`  [✓] Model catalog contains ${models.length} curated models across OpenAI, OpenRouter, and Ollama.`);
+  console.log(`  [✓] Model catalog contains ${models.length} curated OpenAI Codex models.`);
 
   // ---------------------------------------------------------------------------
   // [Test 4/5] Interactive Slash Commands Autocomplete Coverage

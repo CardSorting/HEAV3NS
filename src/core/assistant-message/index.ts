@@ -105,7 +105,7 @@ export interface ReasoningStreamContent {
 	 */
 	reasoning: string
 	/**
-	 * openrouter has various properties that we can pass back unmodified in api requests to preserve reasoning traces
+	 * Compatible gateways may expose properties that can be passed back unmodified to preserve reasoning traces.
 	 */
 	details?: any
 	/**

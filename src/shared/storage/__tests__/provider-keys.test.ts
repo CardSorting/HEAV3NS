@@ -13,9 +13,9 @@ describe("Provider key mapping", () => {
 		expect(getProviderModelIdKey("moonshot", "plan")).to.equal("planModeApiModelId")
 	})
 
-	it("keeps provider-specific model key behavior for OpenRouter", () => {
-		expect(getProviderModelIdKey("openrouter", "act")).to.equal("actModeOpenRouterModelId")
-		expect(getProviderModelIdKey("openrouter", "plan")).to.equal("planModeOpenRouterModelId")
+	it("uses the generic model key for OpenAI Codex", () => {
+		expect(getProviderModelIdKey("openai-codex", "act")).to.equal("actModeApiModelId")
+		expect(getProviderModelIdKey("openai-codex", "plan")).to.equal("planModeApiModelId")
 	})
 
 	it("uses provider-specific model key behavior for DietCode", () => {

@@ -6,9 +6,8 @@ import { Logger } from "@/shared/services/Logger"
 import { ErrorService } from "../error"
 import { SharedUriHandler } from "./SharedUriHandler"
 
-describe("SharedUriHandler", () => {
+	describe("SharedUriHandler", () => {
 	let sandbox: sinon.SinonSandbox
-	let handleOpenRouterCallbackStub: sinon.SinonStub
 	let handleAuthCallbackStub: sinon.SinonStub
 
 	beforeEach(async () => {
@@ -32,11 +31,9 @@ describe("SharedUriHandler", () => {
 
 		await ErrorService.initialize()
 
-		handleOpenRouterCallbackStub = sandbox.stub().resolves()
 		handleAuthCallbackStub = sandbox.stub().resolves()
 		const mockWebviewProvider = {
 			controller: {
-				handleOpenRouterCallback: handleOpenRouterCallbackStub,
 				handleAuthCallback: handleAuthCallbackStub,
 			},
 		} as any
@@ -48,30 +45,6 @@ describe("SharedUriHandler", () => {
 	})
 
 	describe("handleUri", () => {
-		describe("OpenRouter callback handling", () => {
-			it("should successfully handle OpenRouter callback with code", async () => {
-				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/openrouter?code=test123")
-
-				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleOpenRouterCallbackStub, "test123")
-			})
-
-			it("should return false when OpenRouter code is missing", async () => {
-				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/openrouter")
-
-				expect(result).to.be.false
-				expect(handleOpenRouterCallbackStub.called).to.be.false
-			})
-
-			it("should handle URL with plus signs in code parameter", async () => {
-				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/openrouter?code=test+123+abc")
-
-				expect(result).to.be.true
-				// Plus signs in query params are preserved
-				sinon.assert.calledOnceWithExactly(handleOpenRouterCallbackStub, "test+123+abc")
-			})
-		})
-
 		describe("Auth callback handling", () => {
 			it("should successfully handle auth callback with idToken", async () => {
 				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/auth?idToken=jwt123&provider=google")
@@ -101,15 +74,12 @@ describe("SharedUriHandler", () => {
 
 				expect(result).to.be.false
 				expect(handleAuthCallbackStub.called).to.be.false
-				expect(handleOpenRouterCallbackStub.called).to.be.false
 			})
 		})
 
 		describe("Error handling", () => {
 			it("should catch and log errors from controller methods", async () => {
-				handleOpenRouterCallbackStub.rejects(new Error("Controller error"))
-
-				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/openrouter?code=test123")
+			const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/requesty?code=test123")
 
 				expect(result).to.be.false
 			})
@@ -119,7 +89,6 @@ describe("SharedUriHandler", () => {
 
 				expect(result).to.be.false
 				expect(handleAuthCallbackStub.called).to.be.false
-				expect(handleOpenRouterCallbackStub.called).to.be.false
 			})
 		})
 
@@ -144,20 +113,18 @@ describe("SharedUriHandler", () => {
 			})
 
 			it("should handle empty query string", async () => {
-				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/openrouter")
+				const result = await SharedUriHandler.handleUri("vscode://dietcode.dietcode/requesty")
 
 				expect(result).to.be.false
 				expect(handleAuthCallbackStub.called).to.be.false
-				expect(handleOpenRouterCallbackStub.called).to.be.false
 			})
 		})
 
 		describe("Different URI schemes", () => {
 			it("should handle HTTP scheme URIs", async () => {
-				const result = await SharedUriHandler.handleUri("http://localhost:3000/openrouter?code=test123")
+			const result = await SharedUriHandler.handleUri("http://localhost:3000/requesty?code=test123")
 
 				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleOpenRouterCallbackStub, "test123")
 			})
 
 			it("should handle HTTPS scheme URIs", async () => {

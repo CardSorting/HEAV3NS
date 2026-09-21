@@ -2,10 +2,10 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import {
 	CLAUDE_SONNET_1M_SUFFIX,
 	ModelInfo,
-	openRouterClaudeOpus461mModelId,
-	openRouterClaudeSonnet41mModelId,
-	openRouterClaudeSonnet451mModelId,
-	openRouterClaudeSonnet461mModelId,
+	claudeOpus461mModelId,
+	claudeSonnet41mModelId,
+	claudeSonnet451mModelId,
+	claudeSonnet461mModelId,
 } from "@shared/api"
 import { normalizeOpenaiReasoningEffort } from "@shared/storage/types"
 import { shouldSkipReasoningForModel, supportsReasoningEffortForModel } from "@utils/model-utils"
@@ -31,10 +31,10 @@ export async function createVercelAIGatewayStream(
 	]
 
 	const isClaude1m =
-		model.id === openRouterClaudeSonnet41mModelId ||
-		model.id === openRouterClaudeSonnet451mModelId ||
-		model.id === openRouterClaudeSonnet461mModelId ||
-		model.id === openRouterClaudeOpus461mModelId
+		model.id === claudeSonnet41mModelId ||
+		model.id === claudeSonnet451mModelId ||
+		model.id === claudeSonnet461mModelId ||
+		model.id === claudeOpus461mModelId
 	if (isClaude1m) {
 		// remove the custom :1m suffix, to create the model id the API expects
 		model.id = model.id.slice(0, -CLAUDE_SONNET_1M_SUFFIX.length)
@@ -114,7 +114,7 @@ export async function createVercelAIGatewayStream(
 	const isClaudeThinkingModel = model.id.startsWith("anthropic/claude") && model.info?.thinkingConfig
 
 	if (isClaudeThinkingModel) {
-		// For Claude models, match OpenRouter behavior: check even if thinkingBudgetTokens is 0
+		// For Claude models, check even if thinkingBudgetTokens is 0.
 		const budgetTokens = thinkingBudgetTokens || 0
 		if (budgetTokens !== 0) {
 			temperature = undefined // extended thinking does not support non-1 temperature

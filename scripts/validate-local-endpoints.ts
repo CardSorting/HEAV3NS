@@ -27,16 +27,16 @@ async function testProviderResolution(): Promise<void> {
   const bridge = new CodexProviderBridge(oauthMgr, undefined, envResolver, proxyGateway);
 
   // Model Name -> Provider mapping
-  assert.equal(bridge.resolveProviderName("openrouter/gpt-5.6-terra"), "openrouter");
+  assert.equal(bridge.resolveProviderName("openai-codex/gpt-5.6-terra"), "openai-codex");
   assert.equal(bridge.resolveProviderName("gpt-5.6-terra"), "openai-codex");
-  assert.equal(bridge.resolveProviderName("openrouter/auto"), "openrouter");
+  assert.equal(bridge.resolveProviderName("openai-codex/auto"), "openai-codex");
 
   // Default Endpoints
-  assert.equal(bridge.getDefaultEndpointForModel("openrouter/gpt-5.6-terra"), "https://openrouter.ai/api/v1/chat/completions");
-  assert.equal(bridge.getDefaultEndpointForModel("openrouter/auto"), "https://openrouter.ai/api/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("openai-codex/gpt-5.6-terra"), "https://api.openai.com/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("openai-codex/auto"), "https://api.openai.com/v1/chat/completions");
   assert.equal(bridge.getDefaultEndpointForModel("gpt-5.6-terra"), "https://api.openai.com/v1/chat/completions");
 
-  console.log("  [✓] Provider and endpoint resolution verified across OpenRouter and Codex.");
+  console.log("  [✓] OpenAI Codex provider and endpoint resolution verified.");
 }
 
 async function testUrlNormalizationAndOverrides(): Promise<void> {
@@ -119,18 +119,11 @@ async function testModelCatalogLocalSpecs(): Promise<void> {
   console.log("[Test 4/8] Validating Model Catalog Specifications...");
   const catalog = new ModelCatalog();
 
-  const openRouterSpec = catalog.getModelInfo("openrouter/gpt-5.6-terra");
-  assert.equal(openRouterSpec.provider, "openrouter");
-  assert.equal(openRouterSpec.inputPricePer1M, 2.25);
-
   const codexSpec = catalog.getModelInfo("gpt-5.6-terra");
   assert.equal(codexSpec.provider, "openai-codex");
   assert.equal(codexSpec.inputPricePer1M, 0.0);
 
   // Provider filter
-  const openRouterList = await catalog.getModelsForProvider("openrouter");
-  assert.ok(openRouterList.length >= 1);
-
   const codexList = await catalog.getModelsForProvider("openai-codex");
   assert.ok(codexList.length >= 5);
 
@@ -145,7 +138,7 @@ async function testSetupWizardLocalAuditing(): Promise<void> {
   assert.ok(statuses.length >= 2);
 
   // Connection test for provider
-  const connTest = await monolith.setupWizard.testProviderConnection("openrouter");
+  const connTest = await monolith.setupWizard.testProviderConnection("openai-codex");
   assert.ok(typeof connTest.passed === "boolean");
   assert.ok(typeof connTest.details === "string");
 

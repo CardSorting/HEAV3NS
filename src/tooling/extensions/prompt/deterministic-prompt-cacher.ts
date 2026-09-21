@@ -354,7 +354,7 @@ export class DeterministicPromptCacher {
     }
 
     return {
-      provider: "openrouter",
+      provider: "openai-codex",
       supportsExplicitBreakpoints: true,
       maxBreakpoints: 4,
       minTokenThreshold: 1024,
@@ -1049,5 +1049,4 @@ export class DeterministicPromptCacher {
     return `[PROMPT-ENVELOPE] Static: ${envelope.staticPrefixBytes}B | Total: ${envelope.totalPromptBytes}B | Breakpoints: ${envelope.breakpoints.length} (Hash: ${envelope.systemPromptHash.slice(0, 8)})`;
   }
 }
-
 

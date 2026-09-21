@@ -1,12 +1,12 @@
 import { ApiFormat } from "./proto/dietcode/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
-export type ApiProvider = "openai-codex" | "openrouter" | (string & {})
+export type ApiProvider = "openai-codex" | (string & {})
 
 export {
 	DEFAULT_API_PROVIDER,
-	openRouterDefaultModelId,
-	openRouterDefaultModelInfo,
+	openAiCodexDefaultModelId,
+	openAiCodexDefaultModelInfo,
 	requestyDefaultModelId,
 	requestyDefaultModelInfo,
 } from "./api-defaults"
@@ -792,13 +792,12 @@ export const bedrockModels = {
 	},
 } as const satisfies Record<string, ModelInfo>
 
-// OpenRouter
-// https://openrouter.ai/models?order=newest&supported_parameters=tools
-export const openRouterClaudeSonnet41mModelId = `anthropic/claude-sonnet-4${CLAUDE_SONNET_1M_SUFFIX}`
-export const openRouterClaudeSonnet451mModelId = `anthropic/claude-sonnet-4.5${CLAUDE_SONNET_1M_SUFFIX}`
-export const openRouterClaudeSonnet461mModelId = `anthropic/claude-sonnet-4.6${CLAUDE_SONNET_1M_SUFFIX}`
-export const openRouterClaudeOpus471mModelId = `anthropic/claude-opus-4.7${CLAUDE_SONNET_1M_SUFFIX}`
-export const openRouterClaudeOpus461mModelId = `anthropic/claude-opus-4.6${CLAUDE_SONNET_1M_SUFFIX}`
+// Claude long-context model aliases used by compatible model catalogs.
+export const claudeSonnet41mModelId = `anthropic/claude-sonnet-4${CLAUDE_SONNET_1M_SUFFIX}`
+export const claudeSonnet451mModelId = `anthropic/claude-sonnet-4.5${CLAUDE_SONNET_1M_SUFFIX}`
+export const claudeSonnet461mModelId = `anthropic/claude-sonnet-4.6${CLAUDE_SONNET_1M_SUFFIX}`
+export const claudeOpus471mModelId = `anthropic/claude-opus-4.7${CLAUDE_SONNET_1M_SUFFIX}`
+export const claudeOpus461mModelId = `anthropic/claude-opus-4.6${CLAUDE_SONNET_1M_SUFFIX}`
 // DietCode custom model - Devstral
 export const dietcodeDevstralModelInfo: ModelInfo = {
 	contextWindow: 256000,
@@ -811,7 +810,7 @@ export const dietcodeDevstralModelInfo: ModelInfo = {
 	description: "A stealth model for agentic coding tasks",
 }
 
-export const OPENROUTER_PROVIDER_PREFERENCES: Record<string, { order: string[]; allow_fallbacks: boolean }> = {
+export const MODEL_PROVIDER_PREFERENCES: Record<string, { order: string[]; allow_fallbacks: boolean }> = {
 	// Exacto Providers
 	"moonshotai/kimi-k2:exacto": {
 		order: ["groq", "moonshotai"],
@@ -2010,7 +2009,6 @@ export const openAiNativeModels = {
 		temperature: 0,
 	},
 } as const satisfies Record<string, OpenAiCompatibleModelInfo>
-
 
 // Azure OpenAI
 // https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation

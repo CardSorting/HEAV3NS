@@ -43,7 +43,7 @@ function deriveThinkingConfig(modelId: string, tags?: string[]): ModelInfo["thin
 		return { maxBudget: 32000 }
 	}
 
-	// Qwen QwQ models (specific IDs to match OpenRouter)
+	// Qwen QwQ models with an explicit reasoning configuration
 	if (modelId === "qwen/qwq-32b:free" || modelId === "qwen/qwq-32b") {
 		return { maxBudget: 32000 }
 	}
@@ -58,7 +58,7 @@ function deriveThinkingConfig(modelId: string, tags?: string[]): ModelInfo["thin
  */
 function deriveTemperature(modelId: string): number | undefined {
 	// DeepSeek R1 and similar reasoning models recommend 0.7
-	// Use specific model IDs to match OpenRouter behavior
+	// Use specific model IDs for the gateway's reasoning behavior
 	if (
 		modelId.startsWith("deepseek/deepseek-r1") ||
 		modelId === "perplexity/sonar-reasoning" ||

@@ -1,6 +1,6 @@
 import { Logger } from "@/shared/services/Logger"
 import { withTimeout } from "@/utils/withTimeout"
-import { name, publisher, version } from "../package.json"
+import { name, version } from "../package.json"
 import { HostProvider } from "./hosts/host-provider"
 
 const prefix =
@@ -48,14 +48,12 @@ const DietCodeViewIds = {
 }
 
 /**
- * The registry info for the extension, including its ID, name, version, commands, and views
- * registered for the current host.
+ * The application registry metadata retained for shared host integrations.
  */
 export const ExtensionRegistryInfo = {
-	id: `${publisher}.${name}`,
+	id: name,
 	name,
 	version,
-	publisher,
 	commands: DietCodeCommands,
 	views: DietCodeViewIds,
 }

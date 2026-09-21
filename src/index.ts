@@ -5046,7 +5046,7 @@ if (isDirectCliExecution) {
   heav3ns luna                Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
   heav3ns sol                 Quick-switch default model to Balanced Engine (gpt-5.6-sol)
   heav3ns model <name>        Set active model by name or alias (e.g. heav3ns model luna)
-  heav3ns models [--refresh]  Fetch live models from OpenRouter and display catalog
+  heav3ns models [--refresh]  Fetch live models from OpenAI Codex and display catalog
 \x1b[1;34mAuthentication & Identity:\x1b[0m
   heav3ns login               Sign in with ChatGPT / OpenAI (1-Click browser login)
   heav3ns logout              Sign out and clear local session
@@ -5310,8 +5310,8 @@ if (isDirectCliExecution) {
 		} else if (isModels) {
 			const force = args.includes("--refresh") || args.includes("-r")
 			if (force) {
-				console.log("\n\x1b[33mFetching latest models dynamically from OpenRouter...\x1b[0m")
-				await lumi.modelCatalog.fetchOpenRouterModels(undefined, true)
+				console.log("\n\x1b[33mFetching latest models dynamically from OpenAI Codex...\x1b[0m")
+				await lumi.modelCatalog.fetchCodexModels(undefined, true)
 			}
 			console.log("\n\x1b[1;35m╭─── HEAV3NS Curated & Dynamic Model Catalog ───────────────────╮\x1b[0m")
 			const models = lumi.modelCatalog.getAllModels()

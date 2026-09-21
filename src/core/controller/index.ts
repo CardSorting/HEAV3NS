@@ -9,7 +9,7 @@ import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration"
 import { DietCodeAccountService } from "@services/account/DietCodeAccountService"
 import { McpHub } from "@services/mcp/McpHub"
-import type { ApiProvider, ModelInfo } from "@shared/api"
+import type { ApiProvider } from "@shared/api"
 import type { ChatContent } from "@shared/ChatContent"
 import { isInternalDiagnosticsEnabled, projectMessagesForWebview } from "@shared/diagnostics/webviewDiagnostics"
 import type { ExtensionState, Platform } from "@shared/ExtensionMessage"
@@ -50,7 +50,6 @@ import { getCwd, getDesktopDir } from "@/utils/path"
 import { SpiderEngine } from "../policy/spider/SpiderEngine"
 import { PromptRegistry } from "../prompts/system-prompt"
 import {
-	ensureCacheDirectoryExists,
 	ensureMcpServersDirectoryExists,
 	ensureSettingsDirectoryExists,
 	GlobalFileNames,
@@ -63,7 +62,6 @@ import { Task } from "../task"
 import { TaskState } from "../task/TaskState"
 import { disposeRequestRegistry } from "./grpc-handler"
 import { sendMcpMarketplaceCatalogEvent } from "./mcp/subscribeToMcpMarketplaceCatalog"
-import { appendDietCodeStealthModels } from "./models/refreshOpenRouterModels"
 import { disposeAllPersistentSubscriptionHubs } from "./persistent-subscription-hub"
 import { sendStateUpdate } from "./state/subscribeToState"
 import { sendChatButtonClickedEvent } from "./ui/subscribeToChatButtonClicked"
@@ -262,8 +260,8 @@ export class Controller implements IController {
 			const apiConfiguration = this.stateManager.getApiConfiguration()
 			const updatedConfig = {
 				...apiConfiguration,
-				planModeApiProvider: "openrouter" as ApiProvider,
-				actModeApiProvider: "openrouter" as ApiProvider,
+				planModeApiProvider: "openai-codex" as ApiProvider,
+				actModeApiProvider: "openai-codex" as ApiProvider,
 			}
 			this.stateManager.setApiConfiguration(updatedConfig)
 
@@ -748,12 +746,6 @@ export class Controller implements IController {
 		}
 	}
 
-	// OpenRouter (removed)
-
-	async handleOpenRouterCallback(_code: string) {
-		Logger.warn("OpenRouter provider has been removed. Ignoring callback.")
-	}
-
 	// Requesty
 
 	async handleRequestyCallback(code: string) {
@@ -771,22 +763,6 @@ export class Controller implements IController {
 		if (this.task) {
 			this.task.api = buildApiHandler({ ...updatedConfig, ulid: this.task.ulid }, currentMode)
 		}
-	}
-
-	// Read OpenRouter models from disk cache
-	async readOpenRouterModels(): Promise<Record<string, ModelInfo> | undefined> {
-		const openRouterModelsFilePath = path.join(await ensureCacheDirectoryExists(), GlobalFileNames.openRouterModels)
-		try {
-			if (await fileExistsAtPath(openRouterModelsFilePath)) {
-				const fileContents = await fs.readFile(openRouterModelsFilePath, "utf8")
-				const models = JSON.parse(fileContents)
-				// Append stealth models
-				return appendDietCodeStealthModels(models)
-			}
-		} catch (error) {
-			Logger.error("Error reading cached OpenRouter models:", error)
-		}
-		return undefined
 	}
 
 	// Hicap

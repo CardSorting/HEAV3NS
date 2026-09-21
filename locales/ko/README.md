@@ -47,7 +47,7 @@ Cline을 만나보세요, **CLI** 및 **에디터**를 활용할 수 있는 AI �
 
 ### 어떤 API나 모델이든 사용 가능
 
-Cline은 OpenRouter, Anthropic, OpenAI, Google Gemini, AWS Bedrock, Azure, GCP Vertex 등의 API 제공자를 지원합니다. 또한 OpenAI 호환 API를 설정하거나 LM Studio/Ollama를 통해 로컬 모델을 사용할 수도 있습니다. OpenRouter를 사용하는 경우, 확장 프로그램에서 최신 모델 목록을 가져와 바로 최신 모델을 사용할 수 있게 합니다.
+Cline은 Anthropic, OpenAI, Google Gemini, AWS Bedrock, Azure, GCP Vertex 등의 API 제공자를 지원합니다. 또한 OpenAI 호환 API를 설정하거나 LM Studio/Ollama를 통해 로컬 모델을 사용할 수도 있습니다.
 
 또한, Cline은 전체 작업 루프와 개별 요청별로 토큰 사용량과 API 비용을 추적하여, 진행 중인 작업의 비용을 실시간으로 확인할 수 있도록 도와줍니다.
 

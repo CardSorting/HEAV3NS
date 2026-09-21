@@ -195,7 +195,7 @@ export interface PromptCacheSavingsSimulation {
 }
 
 export interface ProviderCacheDirectives {
-  readonly provider: "anthropic" | "openai" | "deepseek" | "gemini" | "openrouter" | "local";
+  readonly provider: "anthropic" | "openai" | "deepseek" | "gemini" | "openai-codex" | "local";
   readonly supportsExplicitBreakpoints: boolean;
   readonly maxBreakpoints: number;
   readonly minTokenThreshold: number;

@@ -61,7 +61,7 @@ Modern approach where tools are sent to the model via the provider's native API 
 - Requires `enableNativeToolCalls` setting enabled
 - Indicated by `use_native_tools: 1` label in variant config
 
-**Supported providers:** OpenAI, Anthropic, Gemini, OpenRouter, Minimax
+**Supported providers:** OpenAI, Anthropic, Gemini, OpenAI-compatible gateways, Minimax
 
 ### XML (Text-Based) Tool Calling
 Traditional approach where tools are described in the system prompt and the model outputs tool calls as XML tags in text.
@@ -171,7 +171,7 @@ export function isNextGenModelFamily(id: string): boolean {
 export function isNextGenModelProvider(providerInfo: ApiProviderInfo): boolean {
     const providerId = normalize(providerInfo.providerId)
     return [
-        "anthropic", "openai", "gemini", "openrouter",
+        "anthropic", "openai", "gemini", "openai-codex",
         "my-new-provider",  // Add here
     ].some((id) => providerId === id)
 }
@@ -506,7 +506,7 @@ async *createMessage(systemPrompt: string, messages: DietCodeStorageMessage[], t
 |--------|----------|--------------|---------------|------------------|
 | `ANTHROPIC_CHAT` | Anthropic | Native (input_schema) | Content blocks | Caching, thinking |
 | `GEMINI_CHAT` | Gemini/Vertex | Native (function_declarations) | String | Thinking levels |
-| `OPENAI_CHAT` | OpenAI, OpenRouter | Native (function) | String | Reasoning effort |
+| `OPENAI_CHAT` | OpenAI-compatible providers | Native (function) | String | Reasoning effort |
 | `R1_CHAT` | DeepSeek R1 | Limited | String | Reasoning-focused |
 | `OPENAI_RESPONSES` | GPT-5.1+ | Native (strict mode) | String | Structured outputs |
 

@@ -79,5 +79,5 @@ export interface OrganizationUsageTransaction {
 	userId: string
 }
 
-// Used in dietcode.ts provider and in webview-ui/src/components/chat/ChatRow.tsx to display the login button
+// Shared account-auth error text used by the CLI and host integrations.
 export const DIETCODE_ACCOUNT_AUTH_ERROR_MESSAGE = "Unauthorized: Please sign in to DietCode before trying again."

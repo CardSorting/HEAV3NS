@@ -1,10 +1,10 @@
 import type { IController as Controller } from "@core/controller/types"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog } from "@shared/proto/dietcode/models"
 import { StreamingResponseHandler } from "../grpc-handler"
 import { PersistentSubscriptionHub } from "../persistent-subscription-hub"
 
-const hub = new PersistentSubscriptionHub<OpenRouterCompatibleModelInfo>("liteLlmModels")
+const hub = new PersistentSubscriptionHub<ProviderModelCatalog>("liteLlmModels")
 
 /**
  * Subscribe to LiteLLM models events
@@ -16,7 +16,7 @@ const hub = new PersistentSubscriptionHub<OpenRouterCompatibleModelInfo>("liteLl
 export async function subscribeToLiteLlmModels(
 	_controller: Controller,
 	_request: EmptyRequest,
-	responseStream: StreamingResponseHandler<OpenRouterCompatibleModelInfo>,
+	responseStream: StreamingResponseHandler<ProviderModelCatalog>,
 	requestId?: string,
 ): Promise<void> {
 	hub.register(responseStream, requestId, {
@@ -28,6 +28,6 @@ export async function subscribeToLiteLlmModels(
  * Send a LiteLLM models event to all active subscribers
  * @param models The LiteLLM models to send
  */
-export async function sendLiteLlmModelsEvent(models: OpenRouterCompatibleModelInfo): Promise<void> {
+export async function sendLiteLlmModelsEvent(models: ProviderModelCatalog): Promise<void> {
 	await hub.broadcast(models)
 }

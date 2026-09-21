@@ -46,7 +46,7 @@ const WORKSPACE_MANIFESTS = [
 
 const ROOT_CONTINUITY_DOCS = ["AGENT_PLAYBOOK.md", "WIKI.md", "TROUBLESHOOTING.md", "DECISIONS.md", "HANDOFF.md"]
 
-const ARCHITECTURAL_SURFACES = ["src", "webview-ui", "proto", "docs", ".wiki", ".agents"]
+const ARCHITECTURAL_SURFACES = ["src", "proto", "docs", ".wiki", ".agents"]
 
 const TOP_LEVEL_IGNORE = new Set([
 	".DS_Store",
@@ -231,23 +231,6 @@ export class WorkspaceIntelligenceEngine {
 				source: "finalization",
 				observedAt: input.timestamp,
 				status: "needs_review",
-			})
-		}
-
-		if (
-			sourceSnapshot.architecturalSurfaces.includes("src/") &&
-			sourceSnapshot.architecturalSurfaces.includes("webview-ui/")
-		) {
-			addSignal(categories, {
-				id: "predictive.cross-surface-validation-risk",
-				category: "predictive",
-				title: "Cross-surface validation risk",
-				summary: "Extension-host and webview changes can require separate validation paths.",
-				evidence: ["src/", "webview-ui/"],
-				confidence: "confirmed",
-				source: "repository",
-				observedAt: input.timestamp,
-				status: "active",
 			})
 		}
 
@@ -692,7 +675,6 @@ function buildHighRiskSurfaces(snapshot: WorkspaceIntelligenceSourceSnapshot, ch
 		if (file.startsWith("src/core/task/tools/finalization/")) highRisk.add("finalization lifecycle")
 		if (file.startsWith("src/shared/completion/")) highRisk.add("completion receipt contract")
 		if (file.startsWith("src/core/api/")) highRisk.add("provider dispatch")
-		if (file.startsWith("webview-ui/")) highRisk.add("webview UI")
 	}
 	return Array.from(highRisk).sort()
 }
@@ -865,25 +847,6 @@ async function buildFacts(
 	}
 
 	// 5. Recurring Risk Areas
-	if (changedFiles.some((f) => f.startsWith("src/")) && changedFiles.some((f) => f.startsWith("webview-ui/"))) {
-		currentFacts.push({
-			id: `fact-risk-cross-surface`,
-			type: "risk_area",
-			value: { risk: "Cross-surface validation risk (both src/ and webview-ui/ modified)" },
-			confidence: "confirmed",
-			provenance: [
-				{
-					type: "finalization_evidence",
-					runId: input.finalizationRunId,
-					description:
-						"Task modified both the VS Code extension host (src/) and the webview interface (webview-ui/), requiring separate validation pipelines.",
-					timestamp: input.timestamp,
-				},
-			],
-			lifecycle: "active",
-			lastUpdated: input.timestamp,
-		})
-	}
 	for (const finding of driftFindings) {
 		if (finding.severity === "high") {
 			currentFacts.push({

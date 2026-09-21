@@ -30,14 +30,14 @@ async function runSuite(): Promise<void> {
   // ---------------------------------------------------------------------------
   console.log("[Test 1/8] Validating Stream Attempt Lifecycle Initialization...");
 
-  const attempt1 = supervisor.startAttempt("openrouter", "anthropic/claude-3.7-sonnet", {
+  const attempt1 = supervisor.startAttempt("openai-codex", "gpt-5-codex", {
     subagentId: "sub-worker-42",
     delegateDepth: 2,
     midToolCall: false,
   });
 
   assert.ok(attempt1.attemptId.startsWith("stream-"));
-  assert.strictEqual(attempt1.provider, "openrouter");
+  assert.strictEqual(attempt1.provider, "openai-codex");
   assert.strictEqual(attempt1.subagentId, "sub-worker-42");
   assert.strictEqual(attempt1.delegateDepth, 2);
   assert.strictEqual(attempt1.status, "streaming");
@@ -51,9 +51,9 @@ async function runSuite(): Promise<void> {
   const rawHeaders = {
     "CF-Ray": "9123456789abcdef-SJC",
     "cf-cache-status": "DYNAMIC",
-    "X-OpenRouter-Provider": "Anthropic",
-    "x-openrouter-model": "claude-3.7-sonnet",
-    "x-openrouter-id": "gen-abc-12345",
+    "x-provider": "OpenAI",
+    "x-model": "gpt-5-codex",
+    "x-generation-id": "gen-abc-12345",
     "X-Request-ID": "req-999-000",
     "Server": "cloudflare",
     "untracked-custom-header": "ignore-this-payload",
@@ -65,7 +65,7 @@ async function runSuite(): Promise<void> {
   assert.ok(updatedAttempt1);
   assert.strictEqual(updatedAttempt1.httpStatus, 200);
   assert.strictEqual(updatedAttempt1.headers["cf-ray"], "9123456789abcdef-SJC");
-  assert.strictEqual(updatedAttempt1.headers["x-openrouter-provider"], "Anthropic");
+  assert.strictEqual(updatedAttempt1.headers["x-provider"], "OpenAI");
   assert.strictEqual(updatedAttempt1.headers["server"], "cloudflare");
   assert.strictEqual(updatedAttempt1.headers["untracked-custom-header"], undefined);
   console.log("  [✓] Upstream edge diagnostic headers captured and normalized.");
@@ -110,11 +110,11 @@ async function runSuite(): Promise<void> {
   (midCause as any).cause = innerCause;
 
   const topError = new Error("Provider request failed");
-  (topError as any).name = "OpenRouterAPIError";
+  (topError as any).name = "ProviderAPIError";
   (topError as any).cause = midCause;
 
   const flattenedChain = engine.flattenExceptionChain(topError);
-  assert.ok(flattenedChain.includes("OpenRouterAPIError"));
+  assert.ok(flattenedChain.includes("ProviderAPIError"));
   assert.ok(flattenedChain.includes("APIConnectionError"));
   assert.ok(flattenedChain.includes("RemoteProtocolError"));
   assert.ok(flattenedChain.includes("<-"));

@@ -244,7 +244,7 @@ export class AgentEngine extends AbstractAgentEngine {
       const targetPath = promptText.substring(5).trim();
       responseText = `Read file content from ${targetPath}`;
     } else {
-      // Attempt live LLM dispatch through OpenRouter.
+      // Attempt live LLM dispatch through OpenAI Codex.
       let liveResponse: string | null = null;
       let liveError: string | null = null;
       let liveFailureKind: "cancelled" | "timeout" | "provider" | null = null;
@@ -253,16 +253,16 @@ export class AgentEngine extends AbstractAgentEngine {
       const nextProgressSequence = (): number => ++liveProgressSequence;
       const liveStartedAt = Date.now();
 
-      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      const openAiApiKey = process.env.OPENAI_API_KEY;
       const activeModel = this.modelResolver.getActiveModel();
 
-      if (openRouterKey || this.proxyGateway) {
+      if (openAiApiKey || this.proxyGateway) {
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             const preparedContext = this.prepareProviderContext(activeModel, promptText);
-            const defaultUrl = "https://openrouter.ai/api/v1/chat/completions";
+            const defaultUrl = "https://api.openai.com/v1/chat/completions";
             const requestStartedAt = Date.now();
-            const endpoint = this.proxyGateway?.getEffectiveEndpoint("openrouter", defaultUrl) ?? {
+            const endpoint = this.proxyGateway?.getEffectiveEndpoint("openai-codex", defaultUrl) ?? {
               url: defaultUrl,
               headers: {},
               timeoutMs: 30000,
@@ -277,10 +277,10 @@ export class AgentEngine extends AbstractAgentEngine {
               phase: "connecting",
               status: attempt === 0 ? "started" : "in_progress",
               message: attempt === 0 ? `Connecting to ${activeModel}` : `Retrying with ${activeModel}`,
-              detail: "Sending authenticated model request to OpenRouter",
+              detail: "Sending authenticated model request to OpenAI Codex",
               timestamp: requestStartedAt,
               sequence: nextProgressSequence(),
-              metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
+              metadata: { source: "openai-codex-api", scope: "turn", attempt: attempt + 1 },
             });
 
             const allRegisteredTools = this.toolRegistry ? this.toolRegistry.listTools() : [];
@@ -326,10 +326,10 @@ export class AgentEngine extends AbstractAgentEngine {
                 phase: "thinking",
                 status: "in_progress",
                 message: `[${activeModel}] Deliberating action (step ${stepCount}/${maxToolSteps})`,
-                detail: `Sending request to OpenRouter...`,
+                detail: `Sending request to OpenAI Codex...`,
                 timestamp: Date.now(),
                 sequence: nextProgressSequence(),
-                metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
+                metadata: { source: "openai-codex-api", scope: "turn", attempt: attempt + 1 },
               });
 
               const stepStartedAt = Date.now();
@@ -342,18 +342,18 @@ export class AgentEngine extends AbstractAgentEngine {
                     phase: "thinking",
                     status: "in_progress",
                     message: "Model deliberation in progress",
-                    detail: `Quiet for ${sec}s · Awaiting response from OpenRouter`,
+                    detail: `Quiet for ${sec}s · Awaiting response from OpenAI Codex`,
                     timestamp: Date.now(),
                     sequence: nextProgressSequence(),
-                    metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
+                    metadata: { source: "openai-codex-api", scope: "turn", attempt: attempt + 1 },
                   });
                 }
               }, 10_000);
               stepHeartbeat.unref?.();
 
               const authHeaders: Record<string, string> = {};
-              if (openRouterKey) {
-                authHeaders.Authorization = `Bearer ${openRouterKey}`;
+              if (openAiApiKey) {
+                authHeaders.Authorization = `Bearer ${openAiApiKey}`;
               }
 
               let res: Response;
@@ -467,11 +467,11 @@ export class AgentEngine extends AbstractAgentEngine {
                 phase: "completed",
                 status: "completed",
                 message: "Agent turn completed successfully",
-                detail: "Tokens processed via OpenRouter",
+                detail: "Tokens processed via OpenAI Codex",
                 timestamp: Date.now(),
                 elapsedMs: Date.now() - liveStartedAt,
                 sequence: nextProgressSequence(),
-                metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
+                metadata: { source: "openai-codex-api", scope: "turn", attempt: attempt + 1 },
               });
             }
             break;
@@ -515,7 +515,7 @@ export class AgentEngine extends AbstractAgentEngine {
               timestamp: Date.now(),
               elapsedMs: Date.now() - liveStartedAt,
               sequence: nextProgressSequence(),
-              metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
+              metadata: { source: "openai-codex-api", scope: "turn", attempt: attempt + 1 },
             });
             break;
           }
@@ -532,12 +532,12 @@ export class AgentEngine extends AbstractAgentEngine {
         responseText = `[Timed out] ${liveError}. You can retry with a narrower request.`;
       } else if (liveError) {
         turnOutcome = "failed";
-        const actionHint = "[Check OpenRouter credentials: Set OPENROUTER_API_KEY in the environment or configure Settings.]";
+        const actionHint = "[Check OpenAI credentials: Set OPENAI_API_KEY in the environment or run /setup.]";
         responseText = `Live model request failed for ${activeModel}: ${liveError}\n${actionHint}`;
       } else {
         turnOutcome = "failed";
         responseText = `Processed turn prompt: "${promptText}".\n` +
-          `[Note: Configure \x1b[33mOPENROUTER_API_KEY\x1b[0m or run \x1b[33m/setup\x1b[0m for live OpenRouter responses.]`;
+          `[Note: Configure \x1b[33mOPENAI_API_KEY\x1b[0m or run \x1b[33m/setup\x1b[0m for live OpenAI Codex responses.]`;
       }
     }
 

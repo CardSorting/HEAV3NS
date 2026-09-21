@@ -3943,7 +3943,7 @@ export class Task {
 					}
 
 					// Interrupt stream if a tool was used and parallel calling is disabled
-					// PREV: we need to let the request finish for openrouter to get generation details
+					// Preserve the completed request long enough to collect generation details.
 					// UPDATE: it's better UX to interrupt the request at the cost of the api cost not being retrieved
 					if (turnControl.toolBudgetExhausted) {
 						assistantMessage +=
@@ -4043,7 +4043,7 @@ export class Task {
 
 			const assistantHasContent = assistantMessage.length > 0 || this.useNativeToolCalls
 			try {
-				// OpenRouter/DietCode may not return token usage as part of the stream (since it may abort early), so we fetch after the stream is finished
+				// Some providers may not return token usage as part of the stream, so fetch it after the stream finishes.
 				// (updateApiReq below will update the api_req_started message with the usage details. we do this async so it updates the api_req_started message in the background)
 				if (!didReceiveUsageChunk) {
 					this.api.getApiStreamUsage?.().then(async (apiStreamUsage) => {
@@ -4142,7 +4142,7 @@ export class Task {
 						assistantContent.push({
 							type: "text",
 							text: assistantTextOnly,
-							// reasoning_details only exists for dietcode/openrouter providers
+							// reasoning_details is only present for providers that expose it.
 							reasoning_details: thinkingBlock?.summary as DietCodeReasoningDetailParam[],
 							signature: assistantTextSignature,
 							call_id: assistantMessageId,

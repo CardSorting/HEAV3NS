@@ -217,7 +217,7 @@ const ARCHITECTURE_SIGNAL_PATTERNS: Array<{ label: string; pattern: RegExp }> = 
 	{ label: "circular_dependency", pattern: /\b(circular dependency|dependency cycle|cycle detected)\b/i },
 	{ label: "architecture_boundary", pattern: /\b(architecture boundary|boundary violation|cross-layer coupling)\b/i },
 ]
-const REFERENCED_PATH_PATTERN = /\b(?:src|cli|webview-ui|packages|plugins|scripts|test|tests)\/[^\s'"`()<>[\]{}]+/g
+const REFERENCED_PATH_PATTERN = /\b(?:src|cli|packages|plugins|scripts|test|tests)\/[^\s'"`()<>[\]{}]+/g
 
 export class AgentOrchestrator {
 	private auditHooks: AuditHook[] = []

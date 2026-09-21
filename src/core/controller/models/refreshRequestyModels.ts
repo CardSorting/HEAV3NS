@@ -1,6 +1,6 @@
 import type { IController as Controller } from "@core/controller/types"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog, ProviderModelInfo } from "@shared/proto/dietcode/models"
 import axios from "axios"
 import { toRequestyServiceUrl } from "@/shared/clients/requesty"
 import { getAxiosSettings } from "@/shared/net"
@@ -12,7 +12,7 @@ import { Logger } from "@/shared/services/Logger"
  * @param request Empty request object
  * @returns Response containing the Requesty models
  */
-export async function refreshRequestyModels(controller: Controller, _: EmptyRequest): Promise<OpenRouterCompatibleModelInfo> {
+export async function refreshRequestyModels(controller: Controller, _: EmptyRequest): Promise<ProviderModelCatalog> {
 	const parsePrice = (price: unknown) => {
 		if (price && (typeof price === "string" || typeof price === "number")) {
 			const num = typeof price === "number" ? price : Number.parseFloat(price)
@@ -21,7 +21,7 @@ export async function refreshRequestyModels(controller: Controller, _: EmptyRequ
 		return undefined
 	}
 
-	const models: Record<string, OpenRouterModelInfo> = {}
+	const models: Record<string, ProviderModelInfo> = {}
 	try {
 		const apiKey = controller.stateManager.getSecretKey("requestyApiKey")
 		const baseUrl = controller.stateManager.getGlobalSettingsKey("requestyBaseUrl")
@@ -39,7 +39,7 @@ export async function refreshRequestyModels(controller: Controller, _: EmptyRequ
 		const response = await axios.get(url, { headers, ...getAxiosSettings() })
 		if (response.data?.data) {
 			for (const model of response.data.data) {
-				const modelInfo: OpenRouterModelInfo = OpenRouterModelInfo.create({
+				const modelInfo: ProviderModelInfo = ProviderModelInfo.create({
 					maxTokens: model.max_output_tokens || undefined,
 					contextWindow: model.context_window,
 					supportsImages: model.supports_vision || undefined,
@@ -60,5 +60,5 @@ export async function refreshRequestyModels(controller: Controller, _: EmptyRequ
 		Logger.error("Error fetching Requesty models:", error)
 	}
 
-	return OpenRouterCompatibleModelInfo.create({ models })
+	return ProviderModelCatalog.create({ models })
 }

@@ -29,7 +29,7 @@ export class HostProvider {
 	logToChannel: LogToChannel
 
 	// Returns a callback URL that will redirect to DietCode.
-	// The path parameter specifies the route for the callback (e.g., "/auth", "/openrouter").
+	// The path parameter specifies the route for the callback (e.g., "/auth").
 	getCallbackUrl: (path: string) => Promise<string>
 
 	// Returns the location of the binary `name`.

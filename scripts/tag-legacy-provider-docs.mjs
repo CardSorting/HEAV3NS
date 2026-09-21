@@ -8,11 +8,11 @@ import { fileURLToPath } from "node:url"
 
 const docsRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "docs", "provider-config")
 
-const ACTIVE = new Set(["README.mdx", "openrouter.mdx", "openai-codex.mdx", "nousresearch.mdx", "cloudflare.mdx"])
+const ACTIVE = new Set(["README.mdx", "openai-codex.mdx", "nousresearch.mdx", "cloudflare.mdx"])
 
 const NOTICE = `
 <Note>
-**Legacy reference:** This provider handler exists in the repo but is **not wired** in \`buildApiHandler\` for the current LUMI build. See [Providers overview](/provider-config/README) for the four active providers.
+**Legacy reference:** This provider handler exists in the repo but is **not wired** in \`buildApiHandler\` for the current LUMI build. See [Providers overview](/provider-config/README) for supported provider configuration.
 </Note>
 `
 

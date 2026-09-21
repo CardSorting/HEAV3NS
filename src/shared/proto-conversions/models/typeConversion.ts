@@ -1,6 +1,6 @@
 import type { LiteLLMModelInfo, ModelInfo, OcaModelInfo, OpenAiCompatibleModelInfo } from "@shared/api"
 import {
-	OpenRouterModelInfo,
+	ProviderModelInfo,
 	LiteLLMModelInfo as ProtoLiteLLMModelInfo,
 	OcaModelInfo as ProtoOcaModelInfo,
 	OpenAiCompatibleModelInfo as ProtoOpenAiCompatibleModelInfo,
@@ -40,9 +40,9 @@ function toProtobufThinkingConfig(appConfig: ModelInfo["thinkingConfig"] | undef
 }
 
 /**
- * Convert protobuf OpenRouterModelInfo to application ModelInfo
+ * Convert protobuf ProviderModelInfo to application ModelInfo
  */
-export function fromProtobufModelInfo(protoInfo: OpenRouterModelInfo): ModelInfo {
+export function fromProtobufModelInfo(protoInfo: ProviderModelInfo): ModelInfo {
 	return {
 		name: protoInfo.name,
 		maxTokens: protoInfo.maxTokens,
@@ -63,10 +63,10 @@ export function fromProtobufModelInfo(protoInfo: OpenRouterModelInfo): ModelInfo
 }
 
 /**
- * Convert application ModelInfo to protobuf OpenRouterModelInfo
+ * Convert application ModelInfo to protobuf ProviderModelInfo
  */
-export function toProtobufModelInfo(modelInfo: ModelInfo): OpenRouterModelInfo {
-	return OpenRouterModelInfo.create({
+export function toProtobufModelInfo(modelInfo: ModelInfo): ProviderModelInfo {
+	return ProviderModelInfo.create({
 		name: modelInfo.name,
 		maxTokens: modelInfo.maxTokens,
 		contextWindow: modelInfo.contextWindow,
@@ -158,7 +158,7 @@ export function fromProtobufOcaModelInfo(protoInfo: ProtoOcaModelInfo): OcaModel
 /**
  * Convert a record of protobuf models to application models
  */
-export function fromProtobufModels(protoModels: Record<string, OpenRouterModelInfo>): Record<string, ModelInfo> {
+export function fromProtobufModels(protoModels: Record<string, ProviderModelInfo>): Record<string, ModelInfo> {
 	const result: Record<string, ModelInfo> = {}
 	for (const [key, value] of Object.entries(protoModels)) {
 		result[key] = fromProtobufModelInfo(value)
@@ -169,8 +169,8 @@ export function fromProtobufModels(protoModels: Record<string, OpenRouterModelIn
 /**
  * Convert a record of application models to protobuf models
  */
-export function toProtobufModels(models: Record<string, ModelInfo>): Record<string, OpenRouterModelInfo> {
-	const result: Record<string, OpenRouterModelInfo> = {}
+export function toProtobufModels(models: Record<string, ModelInfo>): Record<string, ProviderModelInfo> {
+	const result: Record<string, ProviderModelInfo> = {}
 	for (const [key, value] of Object.entries(models)) {
 		result[key] = toProtobufModelInfo(value)
 	}

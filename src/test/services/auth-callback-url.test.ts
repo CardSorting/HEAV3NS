@@ -63,7 +63,7 @@ describe("Auth Callback URL", () => {
 			// callback_url is truncated.
 			const webCallback = "https://codespace-abc.github.dev/callback?tkn=secret123&extra=val"
 
-			const authUrl = new URL("https://openrouter.ai/auth")
+			const authUrl = new URL("https://auth.example.test/authorize")
 			authUrl.searchParams.set("callback_url", webCallback)
 
 			// The callback_url value must round-trip intact
@@ -78,9 +78,9 @@ describe("Auth Callback URL", () => {
 		})
 
 		it("should encode vscode:// callback URLs correctly", () => {
-			const desktopCallback = "vscode://saoudrizwan.claude-dev/openrouter"
+			const desktopCallback = "vscode://heav3ns.cli/codex"
 
-			const authUrl = new URL("https://openrouter.ai/auth")
+			const authUrl = new URL("https://auth.example.test/authorize")
 			authUrl.searchParams.set("callback_url", desktopCallback)
 
 			const parsed = new URL(authUrl.toString())

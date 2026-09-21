@@ -1,6 +1,6 @@
 import type { IController as Controller } from "@core/controller/types"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog } from "@shared/proto/dietcode/models"
 import { toProtobufModels } from "../../../shared/proto-conversions/models/typeConversion"
 import { refreshNousResearchModels } from "./refreshNousResearchModels"
 
@@ -13,9 +13,9 @@ import { refreshNousResearchModels } from "./refreshNousResearchModels"
 export async function refreshNousResearchModelsRpc(
 	controller: Controller,
 	_request: EmptyRequest,
-): Promise<OpenRouterCompatibleModelInfo> {
+): Promise<ProviderModelCatalog> {
 	const models = await refreshNousResearchModels(controller)
-	return OpenRouterCompatibleModelInfo.create({
+	return ProviderModelCatalog.create({
 		models: toProtobufModels(models),
 	})
 }

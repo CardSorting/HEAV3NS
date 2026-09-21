@@ -10,7 +10,7 @@ import { Logger } from "@/shared/services/Logger"
  * For models which don't support images, will not allow them to be selected
  */
 export async function selectFiles(imagesAllowed: boolean): Promise<{ images: string[]; files: string[] }> {
-	const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"] // supported by anthropic and openrouter
+	const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"] // supported by image-capable providers
 	const OTHER_FILE_EXTENSIONS = ["xml", "json", "txt", "log", "md", "docx", "ipynb", "pdf", "xlsx", "csv"]
 
 	const showDialogueResponse = await HostProvider.window.showOpenDialogue({

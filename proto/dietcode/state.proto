@@ -58,7 +58,6 @@ message AutoApprovalSettings {
 message Secrets {
   optional string api_key = 1;
   optional string dietcode_account_id = 2;
-  optional string open_router_api_key = 3;
   optional string aws_access_key = 4;
   optional string aws_secret_key = 5;
   optional string aws_session_token = 6;
@@ -106,25 +105,20 @@ message Secrets {
   optional string cline_api_key = 96;
   optional string qwen_token_plan_api_key = 112;
   optional string openai_codex_oauth_credentials = 130;
-  optional string xai_oauth_credentials = 131;
+  optional string xai_oauth_credentials = 132;
 }
 
 // NOTE: Add new fields under API_HANDLER_SETTINGS_FIELDS or USER_SETTINGS_FIELDS
 // in src/shared/storage/state-keys.ts and use the scripts/generate-state-proto.mjs
 // script to regenerate this list.
 message Settings {
-  optional string open_router_provider_sorting = 5;
   optional string plan_mode_api_model_id = 44;
   optional int64 plan_mode_thinking_budget_tokens = 45;
   optional string plan_mode_reasoning_effort = 47;
-  optional string plan_mode_open_router_model_id = 52;
-  optional OpenRouterModelInfo plan_mode_open_router_model_info = 53;
   optional string plan_mode_nous_research_model_id = 81;
   optional string act_mode_api_model_id = 84;
   optional int64 act_mode_thinking_budget_tokens = 85;
   optional string act_mode_reasoning_effort = 87;
-  optional string act_mode_open_router_model_id = 92;
-  optional OpenRouterModelInfo act_mode_open_router_model_info = 93;
   optional string act_mode_nous_research_model_id = 121;
   optional ApiProvider plan_mode_api_provider = 124;
   optional ApiProvider act_mode_api_provider = 125;
@@ -233,7 +227,7 @@ message Settings {
   optional bool plan_mode_aws_bedrock_custom_selected = 266;
   optional string plan_mode_aws_bedrock_custom_model_base_id = 267;
   optional string plan_mode_diet_code_model_id = 268;
-  optional OpenRouterModelInfo plan_mode_diet_code_model_info = 269;
+  optional ProviderModelInfo plan_mode_diet_code_model_info = 269;
   optional string plan_mode_open_ai_model_id = 270;
   optional OpenAiCompatibleModelInfo plan_mode_open_ai_model_info = 271;
   optional string plan_mode_ollama_model_id = 272;
@@ -241,35 +235,35 @@ message Settings {
   optional string plan_mode_lite_llm_model_id = 274;
   optional LiteLLMModelInfo plan_mode_lite_llm_model_info = 275;
   optional string plan_mode_requesty_model_id = 276;
-  optional OpenRouterModelInfo plan_mode_requesty_model_info = 277;
+  optional ProviderModelInfo plan_mode_requesty_model_info = 277;
   optional string plan_mode_together_model_id = 278;
   optional string plan_mode_fireworks_model_id = 279;
   optional string plan_mode_sap_ai_core_model_id = 280;
   optional string plan_mode_sap_ai_core_deployment_id = 281;
   optional string plan_mode_groq_model_id = 282;
-  optional OpenRouterModelInfo plan_mode_groq_model_info = 283;
+  optional ProviderModelInfo plan_mode_groq_model_info = 283;
   optional string plan_mode_baseten_model_id = 284;
-  optional OpenRouterModelInfo plan_mode_baseten_model_info = 285;
+  optional ProviderModelInfo plan_mode_baseten_model_info = 285;
   optional string plan_mode_hugging_face_model_id = 286;
-  optional OpenRouterModelInfo plan_mode_hugging_face_model_info = 287;
+  optional ProviderModelInfo plan_mode_hugging_face_model_info = 287;
   optional string plan_mode_huawei_cloud_maas_model_id = 288;
-  optional OpenRouterModelInfo plan_mode_huawei_cloud_maas_model_info = 289;
+  optional ProviderModelInfo plan_mode_huawei_cloud_maas_model_info = 289;
   optional string plan_mode_oca_model_id = 290;
   optional OcaModelInfo plan_mode_oca_model_info = 291;
   optional string plan_mode_oca_reasoning_effort = 292;
   optional string plan_mode_aihubmix_model_id = 293;
   optional OpenAiCompatibleModelInfo plan_mode_aihubmix_model_info = 294;
   optional string plan_mode_hicap_model_id = 295;
-  optional OpenRouterModelInfo plan_mode_hicap_model_info = 296;
+  optional ProviderModelInfo plan_mode_hicap_model_info = 296;
   optional string plan_mode_vercel_ai_gateway_model_id = 297;
-  optional OpenRouterModelInfo plan_mode_vercel_ai_gateway_model_info = 298;
+  optional ProviderModelInfo plan_mode_vercel_ai_gateway_model_info = 298;
   optional string gemini_act_mode_thinking_level = 299;
   optional string act_mode_verbosity = 300;
   optional LanguageModelChatSelector act_mode_vs_code_lm_model_selector = 301;
   optional bool act_mode_aws_bedrock_custom_selected = 302;
   optional string act_mode_aws_bedrock_custom_model_base_id = 303;
   optional string act_mode_diet_code_model_id = 304;
-  optional OpenRouterModelInfo act_mode_diet_code_model_info = 305;
+  optional ProviderModelInfo act_mode_diet_code_model_info = 305;
   optional string act_mode_open_ai_model_id = 306;
   optional OpenAiCompatibleModelInfo act_mode_open_ai_model_info = 307;
   optional string act_mode_ollama_model_id = 308;
@@ -277,41 +271,41 @@ message Settings {
   optional string act_mode_lite_llm_model_id = 310;
   optional LiteLLMModelInfo act_mode_lite_llm_model_info = 311;
   optional string act_mode_requesty_model_id = 312;
-  optional OpenRouterModelInfo act_mode_requesty_model_info = 313;
+  optional ProviderModelInfo act_mode_requesty_model_info = 313;
   optional string act_mode_together_model_id = 314;
   optional string act_mode_fireworks_model_id = 315;
   optional string act_mode_sap_ai_core_model_id = 316;
   optional string act_mode_sap_ai_core_deployment_id = 317;
   optional string act_mode_groq_model_id = 318;
-  optional OpenRouterModelInfo act_mode_groq_model_info = 319;
+  optional ProviderModelInfo act_mode_groq_model_info = 319;
   optional string act_mode_baseten_model_id = 320;
-  optional OpenRouterModelInfo act_mode_baseten_model_info = 321;
+  optional ProviderModelInfo act_mode_baseten_model_info = 321;
   optional string act_mode_hugging_face_model_id = 322;
-  optional OpenRouterModelInfo act_mode_hugging_face_model_info = 323;
+  optional ProviderModelInfo act_mode_hugging_face_model_info = 323;
   optional string act_mode_huawei_cloud_maas_model_id = 324;
-  optional OpenRouterModelInfo act_mode_huawei_cloud_maas_model_info = 325;
+  optional ProviderModelInfo act_mode_huawei_cloud_maas_model_info = 325;
   optional string act_mode_oca_model_id = 326;
   optional OcaModelInfo act_mode_oca_model_info = 327;
   optional string act_mode_oca_reasoning_effort = 328;
   optional string act_mode_aihubmix_model_id = 329;
   optional OpenAiCompatibleModelInfo act_mode_aihubmix_model_info = 330;
   optional string act_mode_hicap_model_id = 331;
-  optional OpenRouterModelInfo act_mode_hicap_model_info = 332;
+  optional ProviderModelInfo act_mode_hicap_model_info = 332;
   optional string act_mode_vercel_ai_gateway_model_id = 333;
-  optional OpenRouterModelInfo act_mode_vercel_ai_gateway_model_info = 334;
+  optional ProviderModelInfo act_mode_vercel_ai_gateway_model_info = 334;
   optional string hicap_model_id = 335;
   optional string lm_studio_model_id = 336;
   optional string plan_mode_cline_pass_model_id = 338;
-  optional OpenRouterModelInfo plan_mode_cline_pass_model_info = 339;
+  optional ProviderModelInfo plan_mode_cline_pass_model_info = 339;
   optional string act_mode_cline_pass_model_id = 340;
-  optional OpenRouterModelInfo act_mode_cline_pass_model_info = 341;
+  optional ProviderModelInfo act_mode_cline_pass_model_info = 341;
   optional bool mod_enabled = 343;
   optional string mod_outcome = 344;
-  optional OpenRouterModelInfo plan_mode_nous_research_model_info = 346;
-  optional OpenRouterModelInfo act_mode_nous_research_model_info = 347;
-  map<string, string> open_ai_headers = 354;
+  optional ProviderModelInfo plan_mode_nous_research_model_info = 346;
+  optional ProviderModelInfo act_mode_nous_research_model_info = 347;
   optional bool token_compression_enabled = 355;
   optional bool joy_zoning_steering_enabled = 356;
+  map<string, string> open_ai_headers = 357;
 }
 
 message State {

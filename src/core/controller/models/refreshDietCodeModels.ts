@@ -13,15 +13,14 @@ import {
 	ANTHROPIC_MAX_THINKING_BUDGET,
 	CLAUDE_OPUS_1M_TIERS,
 	CLAUDE_SONNET_1M_TIERS,
-	openRouterClaudeOpus461mModelId,
-	openRouterClaudeSonnet41mModelId,
-	openRouterClaudeSonnet451mModelId,
-	openRouterClaudeSonnet461mModelId,
+	claudeOpus461mModelId,
+	claudeSonnet41mModelId,
+	claudeSonnet451mModelId,
+	claudeSonnet461mModelId,
 } from "@/shared/api"
 import { getAxiosSettings } from "@/shared/net"
 import { FeatureFlag } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
-import { refreshOpenRouterModels } from "./refreshOpenRouterModels"
 
 type DietCodeSupportedParams =
 	| "frequency_penalty"
@@ -104,7 +103,7 @@ export async function refreshDietCodeModels(controller: Controller): Promise<Rec
 		FeatureFlag.EXTENSION_DIETCODE_MODELS_ENDPOINT,
 	)
 	if (!shouldUseDietCodeEndpointSource) {
-		return refreshOpenRouterModels(controller)
+		Logger.warn("DietCode model endpoint feature flag is disabled; using the same catalog source without provider fallback")
 	}
 
 	// Check in-memory cache first
@@ -256,13 +255,13 @@ async function fetchAndCacheDietCodeModels(): Promise<Record<string, ModelInfo>>
 				claudeSonnet1mModelInfo.tiers = CLAUDE_SONNET_1M_TIERS
 
 				if (rawModel.id === "anthropic/claude-sonnet-4") {
-					models[openRouterClaudeSonnet41mModelId] = claudeSonnet1mModelInfo
+					models[claudeSonnet41mModelId] = claudeSonnet1mModelInfo
 				}
 				if (rawModel.id === "anthropic/claude-sonnet-4.5") {
-					models[openRouterClaudeSonnet451mModelId] = claudeSonnet1mModelInfo
+					models[claudeSonnet451mModelId] = claudeSonnet1mModelInfo
 				}
 				if (rawModel.id === "anthropic/claude-sonnet-4.6" || rawModel.id === "anthropic/claude-4.6-sonnet") {
-					models[openRouterClaudeSonnet461mModelId] = claudeSonnet1mModelInfo
+					models[claudeSonnet461mModelId] = claudeSonnet1mModelInfo
 				}
 			}
 
@@ -271,7 +270,7 @@ async function fetchAndCacheDietCodeModels(): Promise<Record<string, ModelInfo>>
 				const claudeOpus1mModelInfo = cloneDeep(modelInfo)
 				claudeOpus1mModelInfo.contextWindow = 1_000_000
 				claudeOpus1mModelInfo.tiers = CLAUDE_OPUS_1M_TIERS
-				models[openRouterClaudeOpus461mModelId] = claudeOpus1mModelInfo
+				models[claudeOpus461mModelId] = claudeOpus1mModelInfo
 			}
 		}
 		if (Object.keys(models).length === 0) {

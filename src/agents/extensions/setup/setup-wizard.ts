@@ -29,7 +29,7 @@ export interface SetupWizardOptions {
   proxyGateway: LlmProxyGateway;
 }
 
-export type ApiKeyProviderId = "openrouter";
+export type ApiKeyProviderId = "openai-codex";
 
 export function writeAtomicJsonFile(filePath: string, data: unknown): void {
   const dir = path.dirname(filePath);
@@ -43,7 +43,7 @@ export function writeAtomicJsonFile(filePath: string, data: unknown): void {
 
 /**
  * SetupWizard.
- * Interactive configuration wizard for OpenRouter API Keys and Local On-Premises Endpoints.
+ * Interactive configuration wizard for OpenAI Codex credentials and Local On-Premises Endpoints.
  */
 export class SetupWizard {
   private readonly envKeyResolver: EnvironmentKeyResolver;
@@ -108,11 +108,11 @@ export class SetupWizard {
     console.log("\n\x1b[1;35m╭─── LUMI Account & Active Session ─────────────────────────────╮\x1b[0m");
 
     if (who.authenticated) {
-      console.log(`│  \x1b[1;32m● Connected to OpenRouter\x1b[0m`);
-      console.log(`│    \x1b[90mProvider:\x1b[0m   \x1b[32mOpenRouter (Active)\x1b[0m`);
+      console.log(`│  \x1b[1;32m● Connected to OpenAI Codex\x1b[0m`);
+      console.log(`│    \x1b[90mProvider:\x1b[0m   \x1b[32mOpenAI Codex (Active)\x1b[0m`);
     } else {
       console.log(`│  \x1b[1;33m○ No active API key\x1b[0m`);
-      console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mExport OPENROUTER_API_KEY or configure in Settings\x1b[0m`);
+      console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mExport OPENAI_API_KEY or configure in Settings\x1b[0m`);
     }
 
     console.log(`│`);
@@ -131,7 +131,7 @@ export class SetupWizard {
     this.saveConfigToDisk();
   }
 
-  /** Signs out of OpenRouter and clears all stored credentials. */
+  /** Signs out and clears all stored credentials. */
   logout(): boolean {
     try {
       this.clearAllCredentials();
@@ -141,7 +141,7 @@ export class SetupWizard {
     }
   }
 
-  /** Interactive login — runs the setup wizard to configure an OpenRouter API key. */
+  /** Interactive login — runs the setup wizard to configure OpenAI Codex credentials. */
   async loginInteractive(providedReadLine?: readline.Interface): Promise<void> {
     await this.runInteractiveWizard(providedReadLine);
   }
@@ -166,15 +166,15 @@ export class SetupWizard {
     const statuses = this.auditStatus();
     const activeProviders = statuses.filter((s) => s.configured);
 
-    // Check 1: OpenRouter
+    // Check 1: OpenAI Codex
     if (activeProviders.length > 0) {
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenRouter (${activeProviders.length} key active)\x1b[0m`);
+      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenAI Codex (${activeProviders.length} credential(s) active)\x1b[0m`);
       for (const p of activeProviders) {
         console.log(`         - ${p.provider}: ${p.maskedValue}`);
       }
     } else {
-      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo OPENROUTER_API_KEY Configured\x1b[0m`);
-      console.log(`         Set OPENROUTER_API_KEY in your environment or Settings.`);
+      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo OPENAI_API_KEY Configured\x1b[0m`);
+      console.log(`         Set OPENAI_API_KEY in your environment or run /setup.`);
     }
 
     // Check 2: Host System Hardware & VRAM Capacity
@@ -218,7 +218,7 @@ export class SetupWizard {
       let exitWizard = false;
       while (!exitWizard) {
         console.log("\x1b[1;34mOptions:\x1b[0m");
-        console.log("  [1] Configure OpenRouter API Key");
+        console.log("  [1] Configure OpenAI Codex API Key");
         console.log("  [2] Select Model (gpt-5.6-terra)");
         console.log("  [3] Run System Health & Diagnostics (Doctor)");
         console.log("  [4] Display Identity & Session Details");
@@ -230,7 +230,7 @@ export class SetupWizard {
             await this.configureApiKeys(rl);
             break;
           case "2": {
-            console.log("\n\x1b[1;34mModel Selection (OpenRouter):\x1b[0m");
+            console.log("\n\x1b[1;34mModel Selection (OpenAI Codex):\x1b[0m");
             console.log("  [1] gpt-5.6-terra (Flagship Frontier Reasoning Engine · 900k Context · 128k Output)");
             this.setSavedModel("gpt-5.6-terra");
             console.log("\x1b[32m[✓] Active model configured to gpt-5.6-terra\x1b[0m\n");
@@ -261,22 +261,22 @@ export class SetupWizard {
   }
 
   async configureApiKeys(rl: readline.Interface): Promise<void> {
-    console.log("\n\x1b[1;36m--- OpenRouter API Key Setup ---\x1b[0m");
-    const existing = this.authStorageVault.getToken("openrouter") || process.env.OPENROUTER_API_KEY;
+    console.log("\n\x1b[1;36m--- OpenAI Codex API Key Setup ---\x1b[0m");
+    const existing = this.authStorageVault.getToken("openai-codex") || process.env.OPENAI_API_KEY;
     const masked = existing ? `${existing.substring(0, 4)}...${existing.slice(-4)}` : "not set";
-    console.log(`\nCurrent OpenRouter status: \x1b[33m${masked}\x1b[0m`);
+    console.log(`\nCurrent OpenAI Codex status: \x1b[33m${masked}\x1b[0m`);
 
-    const keyInput = await this.askQuestion(rl, "Enter OpenRouter API Key (Press Enter to keep current): ");
+    const keyInput = await this.askQuestion(rl, "Enter OpenAI API Key (Press Enter to keep current): ");
     const cleaned = keyInput.trim();
 
     if (cleaned.length > 0) {
-      this.configureProviderApiKey("openrouter", cleaned);
-      console.log("\x1b[32m[✓] Updated OpenRouter API key in vault!\x1b[0m\n");
+      this.configureProviderApiKey("openai-codex", cleaned);
+      console.log("\x1b[32m[✓] Updated OpenAI Codex API key in vault!\x1b[0m\n");
     }
   }
 
   configureProviderApiKey(provider: ApiKeyProviderId, apiKey: string): void {
-    if (provider !== "openrouter") {
+    if (provider !== "openai-codex") {
       throw new Error(`Unsupported API key provider: ${provider}`);
     }
 
@@ -461,7 +461,7 @@ export class SetupWizard {
         const content = fs.readFileSync(cwdDotEnv, "utf-8");
         const lines = content.split(/\r?\n/);
         const envMap: Record<string, string> = {
-          OPENROUTER_API_KEY: "openrouter",
+          OPENAI_API_KEY: "openai-codex",
           OLLAMA_API_KEY: "ollama",
           LLAMACPP_API_KEY: "llamacpp",
           LMSTUDIO_API_KEY: "lmstudio",
@@ -491,16 +491,6 @@ export class SetupWizard {
 
   async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
     const p = providerName.toLowerCase();
-    if (p === "openrouter") {
-      const key = this.authStorageVault.getToken("openrouter") || this.envKeyResolver.resolveKey("openrouter");
-      const passed = Boolean(key);
-      return {
-        passed,
-        details: passed
-          ? `OpenRouter API Key verified (${key?.substring(0, 4)}...${key?.slice(-4)})`
-          : "No OpenRouter API key configured. Set OPENROUTER_API_KEY in environment or run /setup.",
-      };
-    }
     const token = this.authStorageVault.getToken(p) || this.envKeyResolver.resolveKey(p);
     const passed = Boolean(token);
     return {

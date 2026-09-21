@@ -26,7 +26,6 @@ import { Empty, EmptyRequest, Metadata as Metadata1, StringArray, StringRequest 
 /** API Provider enumeration */
 export enum ApiProvider {
   ANTHROPIC = 0,
-  OPENROUTER = 1,
   BEDROCK = 2,
   VERTEX = 3,
   OPENAI = 4,
@@ -80,9 +79,6 @@ export function apiProviderFromJSON(object: any): ApiProvider {
     case 0:
     case "ANTHROPIC":
       return ApiProvider.ANTHROPIC;
-    case 1:
-    case "OPENROUTER":
-      return ApiProvider.OPENROUTER;
     case 2:
     case "BEDROCK":
       return ApiProvider.BEDROCK;
@@ -226,8 +222,6 @@ export function apiProviderToJSON(object: ApiProvider): string {
   switch (object) {
     case ApiProvider.ANTHROPIC:
       return "ANTHROPIC";
-    case ApiProvider.OPENROUTER:
-      return "OPENROUTER";
     case ApiProvider.BEDROCK:
       return "BEDROCK";
     case ApiProvider.VERTEX:
@@ -423,8 +417,8 @@ export interface ModelTier {
   cacheReadsPrice?: number | undefined;
 }
 
-/** For OpenRouterCompatibleModelInfo structure in OpenRouterModels */
-export interface OpenRouterModelInfo {
+/** Shared provider model metadata used by the model catalog responses. */
+export interface ProviderModelInfo {
   maxTokens?: number | undefined;
   contextWindow?: number | undefined;
   supportsImages?: boolean | undefined;
@@ -444,13 +438,13 @@ export interface OpenRouterModelInfo {
 }
 
 /** Shared response message for model information */
-export interface OpenRouterCompatibleModelInfo {
-  models: { [key: string]: OpenRouterModelInfo };
+export interface ProviderModelCatalog {
+  models: { [key: string]: ProviderModelInfo };
 }
 
-export interface OpenRouterCompatibleModelInfo_ModelsEntry {
+export interface ProviderModelCatalog_ModelsEntry {
   key: string;
-  value: OpenRouterModelInfo | undefined;
+  value: ProviderModelInfo | undefined;
 }
 
 export interface DietCodeRecommendedModel {
@@ -499,7 +493,6 @@ export interface ModelsApiSecrets {
   apiKey?: string | undefined;
   dietcodeApiKey?: string | undefined;
   liteLlmApiKey?: string | undefined;
-  openRouterApiKey?: string | undefined;
   awsAccessKey?: string | undefined;
   awsSecretKey?: string | undefined;
   awsSessionToken?: string | undefined;
@@ -548,7 +541,6 @@ export interface ModelsApiOptions {
   liteLlmUsePromptCache?: boolean | undefined;
   openAiHeaders: { [key: string]: string };
   anthropicBaseUrl?: string | undefined;
-  openRouterProviderSorting?: string | undefined;
   awsRegion?: string | undefined;
   awsUseCrossRegionInference?: boolean | undefined;
   awsBedrockUsePromptCache?: boolean | undefined;
@@ -601,8 +593,6 @@ export interface ModelsApiOptions {
   planModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
   planModeAwsBedrockCustomSelected?: boolean | undefined;
   planModeAwsBedrockCustomModelBaseId?: string | undefined;
-  planModeOpenRouterModelId?: string | undefined;
-  planModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   planModeOpenAiModelId?: string | undefined;
   planModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeOllamaModelId?: string | undefined;
@@ -610,28 +600,28 @@ export interface ModelsApiOptions {
   planModeLiteLlmModelId?: string | undefined;
   planModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   planModeRequestyModelId?: string | undefined;
-  planModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  planModeRequestyModelInfo?: ProviderModelInfo | undefined;
   planModeTogetherModelId?: string | undefined;
   planModeFireworksModelId?: string | undefined;
   planModeSapAiCoreModelId?: string | undefined;
   planModeSapAiCoreDeploymentId?: string | undefined;
   planModeGroqModelId?: string | undefined;
-  planModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  planModeGroqModelInfo?: ProviderModelInfo | undefined;
   planModeHuggingFaceModelId?: string | undefined;
-  planModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   planModeHuaweiCloudMaasModelId?: string | undefined;
-  planModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   planModeBasetenModelId?: string | undefined;
-  planModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  planModeBasetenModelInfo?: ProviderModelInfo | undefined;
   planModeVercelAiGatewayModelId?: string | undefined;
-  planModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  planModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   planModeOcaModelId?: string | undefined;
   planModeOcaModelInfo?: OcaModelInfo | undefined;
   planModeAihubmixModelId?: string | undefined;
   planModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeDietcodeModelId?: string | undefined;
   planModeDietcodeModelInfo?:
-    | OpenRouterModelInfo
+    | ProviderModelInfo
     | undefined;
   /** Act mode configurations */
   actModeApiProvider?: ApiProvider | undefined;
@@ -641,8 +631,6 @@ export interface ModelsApiOptions {
   actModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
   actModeAwsBedrockCustomSelected?: boolean | undefined;
   actModeAwsBedrockCustomModelBaseId?: string | undefined;
-  actModeOpenRouterModelId?: string | undefined;
-  actModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   actModeOpenAiModelId?: string | undefined;
   actModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeOllamaModelId?: string | undefined;
@@ -650,27 +638,27 @@ export interface ModelsApiOptions {
   actModeLiteLlmModelId?: string | undefined;
   actModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   actModeRequestyModelId?: string | undefined;
-  actModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  actModeRequestyModelInfo?: ProviderModelInfo | undefined;
   actModeTogetherModelId?: string | undefined;
   actModeFireworksModelId?: string | undefined;
   actModeSapAiCoreModelId?: string | undefined;
   actModeSapAiCoreDeploymentId?: string | undefined;
   actModeGroqModelId?: string | undefined;
-  actModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  actModeGroqModelInfo?: ProviderModelInfo | undefined;
   actModeHuggingFaceModelId?: string | undefined;
-  actModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   actModeHuaweiCloudMaasModelId?: string | undefined;
-  actModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   actModeBasetenModelId?: string | undefined;
-  actModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  actModeBasetenModelInfo?: ProviderModelInfo | undefined;
   actModeVercelAiGatewayModelId?: string | undefined;
-  actModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  actModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   actModeOcaModelId?: string | undefined;
   actModeOcaModelInfo?: OcaModelInfo | undefined;
   actModeAihubmixModelId?: string | undefined;
   actModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeDietcodeModelId?: string | undefined;
-  actModeDietcodeModelInfo?: OpenRouterModelInfo | undefined;
+  actModeDietcodeModelInfo?: ProviderModelInfo | undefined;
 }
 
 export interface ModelsApiOptions_OpenAiHeadersEntry {
@@ -702,7 +690,6 @@ export interface UpdateApiConfigurationRequestNew {
    * - "options.ulid" (for options fields)
    * - "options.openAiHeaders" (for options fields)
    * - "secrets.apiKey" (for secrets fields)
-   * - "secrets.openRouterApiKey" (for secrets fields)
    */
   updateMask: string[];
 }
@@ -871,8 +858,6 @@ export interface ModelsApiConfiguration {
   liteLlmUsePromptCache?: boolean | undefined;
   openAiHeaders: { [key: string]: string };
   anthropicBaseUrl?: string | undefined;
-  openRouterApiKey?: string | undefined;
-  openRouterProviderSorting?: string | undefined;
   awsAccessKey?: string | undefined;
   awsSecretKey?: string | undefined;
   awsSessionToken?: string | undefined;
@@ -967,8 +952,6 @@ export interface ModelsApiConfiguration {
   planModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
   planModeAwsBedrockCustomSelected?: boolean | undefined;
   planModeAwsBedrockCustomModelBaseId?: string | undefined;
-  planModeOpenRouterModelId?: string | undefined;
-  planModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   planModeOpenAiModelId?: string | undefined;
   planModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeOllamaModelId?: string | undefined;
@@ -976,36 +959,36 @@ export interface ModelsApiConfiguration {
   planModeLiteLlmModelId?: string | undefined;
   planModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   planModeRequestyModelId?: string | undefined;
-  planModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  planModeRequestyModelInfo?: ProviderModelInfo | undefined;
   planModeTogetherModelId?: string | undefined;
   planModeFireworksModelId?: string | undefined;
   planModeSapAiCoreModelId?: string | undefined;
   planModeSapAiCoreDeploymentId?: string | undefined;
   planModeGroqModelId?: string | undefined;
-  planModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  planModeGroqModelInfo?: ProviderModelInfo | undefined;
   planModeHuggingFaceModelId?: string | undefined;
-  planModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   planModeHuaweiCloudMaasModelId?: string | undefined;
-  planModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   planModeBasetenModelId?: string | undefined;
-  planModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  planModeBasetenModelInfo?: ProviderModelInfo | undefined;
   planModeVercelAiGatewayModelId?: string | undefined;
-  planModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  planModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   planModeOcaModelId?: string | undefined;
   planModeOcaModelInfo?: OcaModelInfo | undefined;
   planModeOcaReasoningEffort?: string | undefined;
   planModeHicapModelId?: string | undefined;
-  planModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHicapModelInfo?: ProviderModelInfo | undefined;
   planModeAihubmixModelId?: string | undefined;
   planModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeNousResearchModelId?: string | undefined;
-  planModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
+  planModeNousResearchModelInfo?: ProviderModelInfo | undefined;
   geminiPlanModeThinkingLevel?: string | undefined;
   planModeDietcodeModelId?: string | undefined;
-  planModeDietcodeModelInfo?: OpenRouterModelInfo | undefined;
+  planModeDietcodeModelInfo?: ProviderModelInfo | undefined;
   planModeClinePassModelId?: string | undefined;
   planModeClinePassModelInfo?:
-    | OpenRouterModelInfo
+    | ProviderModelInfo
     | undefined;
   /** Act mode configurations */
   actModeApiProvider?: ApiProvider | undefined;
@@ -1015,8 +998,6 @@ export interface ModelsApiConfiguration {
   actModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
   actModeAwsBedrockCustomSelected?: boolean | undefined;
   actModeAwsBedrockCustomModelBaseId?: string | undefined;
-  actModeOpenRouterModelId?: string | undefined;
-  actModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   actModeOpenAiModelId?: string | undefined;
   actModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeOllamaModelId?: string | undefined;
@@ -1024,35 +1005,35 @@ export interface ModelsApiConfiguration {
   actModeLiteLlmModelId?: string | undefined;
   actModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   actModeRequestyModelId?: string | undefined;
-  actModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  actModeRequestyModelInfo?: ProviderModelInfo | undefined;
   actModeTogetherModelId?: string | undefined;
   actModeFireworksModelId?: string | undefined;
   actModeSapAiCoreModelId?: string | undefined;
   actModeSapAiCoreDeploymentId?: string | undefined;
   actModeGroqModelId?: string | undefined;
-  actModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  actModeGroqModelInfo?: ProviderModelInfo | undefined;
   actModeHuggingFaceModelId?: string | undefined;
-  actModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   actModeHuaweiCloudMaasModelId?: string | undefined;
-  actModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   actModeBasetenModelId?: string | undefined;
-  actModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  actModeBasetenModelInfo?: ProviderModelInfo | undefined;
   actModeVercelAiGatewayModelId?: string | undefined;
-  actModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  actModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   actModeOcaModelId?: string | undefined;
   actModeOcaModelInfo?: OcaModelInfo | undefined;
   actModeOcaReasoningEffort?: string | undefined;
   actModeHicapModelId?: string | undefined;
-  actModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHicapModelInfo?: ProviderModelInfo | undefined;
   actModeAihubmixModelId?: string | undefined;
   actModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeNousResearchModelId?: string | undefined;
-  actModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
+  actModeNousResearchModelInfo?: ProviderModelInfo | undefined;
   geminiActModeThinkingLevel?: string | undefined;
   actModeDietcodeModelId?: string | undefined;
-  actModeDietcodeModelInfo?: OpenRouterModelInfo | undefined;
+  actModeDietcodeModelInfo?: ProviderModelInfo | undefined;
   actModeClinePassModelId?: string | undefined;
-  actModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
+  actModeClinePassModelInfo?: ProviderModelInfo | undefined;
 }
 
 export interface ModelsApiConfiguration_OpenAiHeadersEntry {
@@ -1609,7 +1590,7 @@ export const ModelTier: MessageFns<ModelTier> = {
   },
 };
 
-function createBaseOpenRouterModelInfo(): OpenRouterModelInfo {
+function createBaseProviderModelInfo(): ProviderModelInfo {
   return {
     maxTokens: undefined,
     contextWindow: undefined,
@@ -1630,8 +1611,8 @@ function createBaseOpenRouterModelInfo(): OpenRouterModelInfo {
   };
 }
 
-export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
-  encode(message: OpenRouterModelInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const ProviderModelInfo: MessageFns<ProviderModelInfo> = {
+  encode(message: ProviderModelInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.maxTokens !== undefined) {
       writer.uint32(8).int64(message.maxTokens);
     }
@@ -1683,7 +1664,7 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): OpenRouterModelInfo {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderModelInfo {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
     if (previousRecursionDepth >= 100) {
@@ -1692,7 +1673,7 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
     (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
     try {
       const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseOpenRouterModelInfo();
+      const message = createBaseProviderModelInfo();
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
@@ -1836,7 +1817,7 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
     }
   },
 
-  fromJSON(object: any): OpenRouterModelInfo {
+  fromJSON(object: any): ProviderModelInfo {
     return {
       maxTokens: isSet(object.maxTokens)
         ? globalThis.Number(object.maxTokens)
@@ -1907,7 +1888,7 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
     };
   },
 
-  toJSON(message: OpenRouterModelInfo): unknown {
+  toJSON(message: ProviderModelInfo): unknown {
     const obj: any = {};
     if (message.maxTokens !== undefined) {
       obj.maxTokens = Math.round(message.maxTokens);
@@ -1960,11 +1941,11 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<OpenRouterModelInfo>, I>>(base?: I): OpenRouterModelInfo {
-    return OpenRouterModelInfo.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<ProviderModelInfo>, I>>(base?: I): ProviderModelInfo {
+    return ProviderModelInfo.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<OpenRouterModelInfo>, I>>(object: I): OpenRouterModelInfo {
-    const message = createBaseOpenRouterModelInfo();
+  fromPartial<I extends Exact<DeepPartial<ProviderModelInfo>, I>>(object: I): ProviderModelInfo {
+    const message = createBaseProviderModelInfo();
     message.maxTokens = object.maxTokens ?? undefined;
     message.contextWindow = object.contextWindow ?? undefined;
     message.supportsImages = object.supportsImages ?? undefined;
@@ -1987,19 +1968,19 @@ export const OpenRouterModelInfo: MessageFns<OpenRouterModelInfo> = {
   },
 };
 
-function createBaseOpenRouterCompatibleModelInfo(): OpenRouterCompatibleModelInfo {
+function createBaseProviderModelCatalog(): ProviderModelCatalog {
   return { models: {} };
 }
 
-export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModelInfo> = {
-  encode(message: OpenRouterCompatibleModelInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    globalThis.Object.entries(message.models).forEach(([key, value]: [string, OpenRouterModelInfo]) => {
-      OpenRouterCompatibleModelInfo_ModelsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+export const ProviderModelCatalog: MessageFns<ProviderModelCatalog> = {
+  encode(message: ProviderModelCatalog, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    globalThis.Object.entries(message.models).forEach(([key, value]: [string, ProviderModelInfo]) => {
+      ProviderModelCatalog_ModelsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
     });
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): OpenRouterCompatibleModelInfo {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderModelCatalog {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
     if (previousRecursionDepth >= 100) {
@@ -2008,7 +1989,7 @@ export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModel
     (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
     try {
       const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseOpenRouterCompatibleModelInfo();
+      const message = createBaseProviderModelCatalog();
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
@@ -2017,7 +1998,7 @@ export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModel
               break;
             }
 
-            const entry1 = OpenRouterCompatibleModelInfo_ModelsEntry.decode(reader, reader.uint32());
+            const entry1 = ProviderModelCatalog_ModelsEntry.decode(reader, reader.uint32());
             if (entry1.value !== undefined) {
               message.models[entry1.key] = entry1.value;
             }
@@ -2035,13 +2016,13 @@ export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModel
     }
   },
 
-  fromJSON(object: any): OpenRouterCompatibleModelInfo {
+  fromJSON(object: any): ProviderModelCatalog {
     return {
       models: isObject(object.models)
         ? (globalThis.Object.entries(object.models) as [string, any][]).reduce(
-          (acc: { [key: string]: OpenRouterModelInfo }, [key, value]: [string, any]) => {
+          (acc: { [key: string]: ProviderModelInfo }, [key, value]: [string, any]) => {
             globalThis.Object.defineProperty(acc, key, {
-              value: OpenRouterModelInfo.fromJSON(value),
+              value: ProviderModelInfo.fromJSON(value),
               enumerable: true,
               configurable: true,
               writable: true,
@@ -2054,31 +2035,29 @@ export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModel
     };
   },
 
-  toJSON(message: OpenRouterCompatibleModelInfo): unknown {
+  toJSON(message: ProviderModelCatalog): unknown {
     const obj: any = {};
     if (message.models) {
-      const entries = globalThis.Object.entries(message.models) as [string, OpenRouterModelInfo][];
+      const entries = globalThis.Object.entries(message.models) as [string, ProviderModelInfo][];
       if (entries.length > 0) {
         obj.models = {};
         entries.forEach(([k, v]) => {
-          obj.models[k] = OpenRouterModelInfo.toJSON(v);
+          obj.models[k] = ProviderModelInfo.toJSON(v);
         });
       }
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<OpenRouterCompatibleModelInfo>, I>>(base?: I): OpenRouterCompatibleModelInfo {
-    return OpenRouterCompatibleModelInfo.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<ProviderModelCatalog>, I>>(base?: I): ProviderModelCatalog {
+    return ProviderModelCatalog.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<OpenRouterCompatibleModelInfo>, I>>(
-    object: I,
-  ): OpenRouterCompatibleModelInfo {
-    const message = createBaseOpenRouterCompatibleModelInfo();
-    message.models = (globalThis.Object.entries(object.models ?? {}) as [string, OpenRouterModelInfo][]).reduce(
-      (acc: { [key: string]: OpenRouterModelInfo }, [key, value]: [string, OpenRouterModelInfo]) => {
+  fromPartial<I extends Exact<DeepPartial<ProviderModelCatalog>, I>>(object: I): ProviderModelCatalog {
+    const message = createBaseProviderModelCatalog();
+    message.models = (globalThis.Object.entries(object.models ?? {}) as [string, ProviderModelInfo][]).reduce(
+      (acc: { [key: string]: ProviderModelInfo }, [key, value]: [string, ProviderModelInfo]) => {
         if (value !== undefined) {
-          acc[key] = OpenRouterModelInfo.fromPartial(value);
+          acc[key] = ProviderModelInfo.fromPartial(value);
         }
         return acc;
       },
@@ -2088,22 +2067,22 @@ export const OpenRouterCompatibleModelInfo: MessageFns<OpenRouterCompatibleModel
   },
 };
 
-function createBaseOpenRouterCompatibleModelInfo_ModelsEntry(): OpenRouterCompatibleModelInfo_ModelsEntry {
+function createBaseProviderModelCatalog_ModelsEntry(): ProviderModelCatalog_ModelsEntry {
   return { key: "", value: undefined };
 }
 
-export const OpenRouterCompatibleModelInfo_ModelsEntry: MessageFns<OpenRouterCompatibleModelInfo_ModelsEntry> = {
-  encode(message: OpenRouterCompatibleModelInfo_ModelsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const ProviderModelCatalog_ModelsEntry: MessageFns<ProviderModelCatalog_ModelsEntry> = {
+  encode(message: ProviderModelCatalog_ModelsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      OpenRouterModelInfo.encode(message.value, writer.uint32(18).fork()).join();
+      ProviderModelInfo.encode(message.value, writer.uint32(18).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): OpenRouterCompatibleModelInfo_ModelsEntry {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderModelCatalog_ModelsEntry {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
     if (previousRecursionDepth >= 100) {
@@ -2112,7 +2091,7 @@ export const OpenRouterCompatibleModelInfo_ModelsEntry: MessageFns<OpenRouterCom
     (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
     try {
       const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseOpenRouterCompatibleModelInfo_ModelsEntry();
+      const message = createBaseProviderModelCatalog_ModelsEntry();
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
@@ -2129,7 +2108,7 @@ export const OpenRouterCompatibleModelInfo_ModelsEntry: MessageFns<OpenRouterCom
               break;
             }
 
-            message.value = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.value = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
         }
@@ -2144,36 +2123,36 @@ export const OpenRouterCompatibleModelInfo_ModelsEntry: MessageFns<OpenRouterCom
     }
   },
 
-  fromJSON(object: any): OpenRouterCompatibleModelInfo_ModelsEntry {
+  fromJSON(object: any): ProviderModelCatalog_ModelsEntry {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? OpenRouterModelInfo.fromJSON(object.value) : undefined,
+      value: isSet(object.value) ? ProviderModelInfo.fromJSON(object.value) : undefined,
     };
   },
 
-  toJSON(message: OpenRouterCompatibleModelInfo_ModelsEntry): unknown {
+  toJSON(message: ProviderModelCatalog_ModelsEntry): unknown {
     const obj: any = {};
     if (message.key !== "") {
       obj.key = message.key;
     }
     if (message.value !== undefined) {
-      obj.value = OpenRouterModelInfo.toJSON(message.value);
+      obj.value = ProviderModelInfo.toJSON(message.value);
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<OpenRouterCompatibleModelInfo_ModelsEntry>, I>>(
+  create<I extends Exact<DeepPartial<ProviderModelCatalog_ModelsEntry>, I>>(
     base?: I,
-  ): OpenRouterCompatibleModelInfo_ModelsEntry {
-    return OpenRouterCompatibleModelInfo_ModelsEntry.fromPartial(base ?? ({} as any));
+  ): ProviderModelCatalog_ModelsEntry {
+    return ProviderModelCatalog_ModelsEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<OpenRouterCompatibleModelInfo_ModelsEntry>, I>>(
+  fromPartial<I extends Exact<DeepPartial<ProviderModelCatalog_ModelsEntry>, I>>(
     object: I,
-  ): OpenRouterCompatibleModelInfo_ModelsEntry {
-    const message = createBaseOpenRouterCompatibleModelInfo_ModelsEntry();
+  ): ProviderModelCatalog_ModelsEntry {
+    const message = createBaseProviderModelCatalog_ModelsEntry();
     message.key = object.key ?? "";
     message.value = (object.value !== undefined && object.value !== null)
-      ? OpenRouterModelInfo.fromPartial(object.value)
+      ? ProviderModelInfo.fromPartial(object.value)
       : undefined;
     return message;
   },
@@ -2860,7 +2839,6 @@ function createBaseModelsApiSecrets(): ModelsApiSecrets {
     apiKey: undefined,
     dietcodeApiKey: undefined,
     liteLlmApiKey: undefined,
-    openRouterApiKey: undefined,
     awsAccessKey: undefined,
     awsSecretKey: undefined,
     awsSessionToken: undefined,
@@ -2912,9 +2890,6 @@ export const ModelsApiSecrets: MessageFns<ModelsApiSecrets> = {
     }
     if (message.liteLlmApiKey !== undefined) {
       writer.uint32(26).string(message.liteLlmApiKey);
-    }
-    if (message.openRouterApiKey !== undefined) {
-      writer.uint32(34).string(message.openRouterApiKey);
     }
     if (message.awsAccessKey !== undefined) {
       writer.uint32(42).string(message.awsAccessKey);
@@ -3068,14 +3043,6 @@ export const ModelsApiSecrets: MessageFns<ModelsApiSecrets> = {
             }
 
             message.liteLlmApiKey = reader.string();
-            continue;
-          }
-          case 4: {
-            if (tag !== 34) {
-              break;
-            }
-
-            message.openRouterApiKey = reader.string();
             continue;
           }
           case 5: {
@@ -3411,11 +3378,6 @@ export const ModelsApiSecrets: MessageFns<ModelsApiSecrets> = {
         : isSet(object.lite_llm_api_key)
         ? globalThis.String(object.lite_llm_api_key)
         : undefined,
-      openRouterApiKey: isSet(object.openRouterApiKey)
-        ? globalThis.String(object.openRouterApiKey)
-        : isSet(object.open_router_api_key)
-        ? globalThis.String(object.open_router_api_key)
-        : undefined,
       awsAccessKey: isSet(object.awsAccessKey)
         ? globalThis.String(object.awsAccessKey)
         : isSet(object.aws_access_key)
@@ -3620,9 +3582,6 @@ export const ModelsApiSecrets: MessageFns<ModelsApiSecrets> = {
     if (message.liteLlmApiKey !== undefined) {
       obj.liteLlmApiKey = message.liteLlmApiKey;
     }
-    if (message.openRouterApiKey !== undefined) {
-      obj.openRouterApiKey = message.openRouterApiKey;
-    }
     if (message.awsAccessKey !== undefined) {
       obj.awsAccessKey = message.awsAccessKey;
     }
@@ -3748,7 +3707,6 @@ export const ModelsApiSecrets: MessageFns<ModelsApiSecrets> = {
     message.apiKey = object.apiKey ?? undefined;
     message.dietcodeApiKey = object.dietcodeApiKey ?? undefined;
     message.liteLlmApiKey = object.liteLlmApiKey ?? undefined;
-    message.openRouterApiKey = object.openRouterApiKey ?? undefined;
     message.awsAccessKey = object.awsAccessKey ?? undefined;
     message.awsSecretKey = object.awsSecretKey ?? undefined;
     message.awsSessionToken = object.awsSessionToken ?? undefined;
@@ -3798,7 +3756,6 @@ function createBaseModelsApiOptions(): ModelsApiOptions {
     liteLlmUsePromptCache: undefined,
     openAiHeaders: {},
     anthropicBaseUrl: undefined,
-    openRouterProviderSorting: undefined,
     awsRegion: undefined,
     awsUseCrossRegionInference: undefined,
     awsBedrockUsePromptCache: undefined,
@@ -3848,8 +3805,6 @@ function createBaseModelsApiOptions(): ModelsApiOptions {
     planModeVsCodeLmModelSelector: undefined,
     planModeAwsBedrockCustomSelected: undefined,
     planModeAwsBedrockCustomModelBaseId: undefined,
-    planModeOpenRouterModelId: undefined,
-    planModeOpenRouterModelInfo: undefined,
     planModeOpenAiModelId: undefined,
     planModeOpenAiModelInfo: undefined,
     planModeOllamaModelId: undefined,
@@ -3885,8 +3840,6 @@ function createBaseModelsApiOptions(): ModelsApiOptions {
     actModeVsCodeLmModelSelector: undefined,
     actModeAwsBedrockCustomSelected: undefined,
     actModeAwsBedrockCustomModelBaseId: undefined,
-    actModeOpenRouterModelId: undefined,
-    actModeOpenRouterModelInfo: undefined,
     actModeOpenAiModelId: undefined,
     actModeOpenAiModelInfo: undefined,
     actModeOllamaModelId: undefined,
@@ -3934,9 +3887,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     });
     if (message.anthropicBaseUrl !== undefined) {
       writer.uint32(42).string(message.anthropicBaseUrl);
-    }
-    if (message.openRouterProviderSorting !== undefined) {
-      writer.uint32(50).string(message.openRouterProviderSorting);
     }
     if (message.awsRegion !== undefined) {
       writer.uint32(58).string(message.awsRegion);
@@ -4085,12 +4035,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
       writer.uint32(850).string(message.planModeAwsBedrockCustomModelBaseId);
     }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      writer.uint32(858).string(message.planModeOpenRouterModelId);
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeOpenRouterModelInfo, writer.uint32(866).fork()).join();
-    }
     if (message.planModeOpenAiModelId !== undefined) {
       writer.uint32(874).string(message.planModeOpenAiModelId);
     }
@@ -4113,7 +4057,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(922).string(message.planModeRequestyModelId);
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(930).fork()).join();
+      ProviderModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(930).fork()).join();
     }
     if (message.planModeTogetherModelId !== undefined) {
       writer.uint32(938).string(message.planModeTogetherModelId);
@@ -4131,31 +4075,31 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(970).string(message.planModeGroqModelId);
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(978).fork()).join();
+      ProviderModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(978).fork()).join();
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       writer.uint32(986).string(message.planModeHuggingFaceModelId);
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(994).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(994).fork()).join();
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(1002).string(message.planModeHuaweiCloudMaasModelId);
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(1010).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(1010).fork()).join();
     }
     if (message.planModeBasetenModelId !== undefined) {
       writer.uint32(1018).string(message.planModeBasetenModelId);
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(1026).fork()).join();
+      ProviderModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(1026).fork()).join();
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(1034).string(message.planModeVercelAiGatewayModelId);
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(1042).fork()).join();
+      ProviderModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(1042).fork()).join();
     }
     if (message.planModeOcaModelId !== undefined) {
       writer.uint32(1050).string(message.planModeOcaModelId);
@@ -4173,7 +4117,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(1082).string(message.planModeDietcodeModelId);
     }
     if (message.planModeDietcodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeDietcodeModelInfo, writer.uint32(1090).fork()).join();
+      ProviderModelInfo.encode(message.planModeDietcodeModelInfo, writer.uint32(1090).fork()).join();
     }
     if (message.actModeApiProvider !== undefined) {
       writer.uint32(1600).int32(message.actModeApiProvider);
@@ -4195,12 +4139,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     }
     if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
       writer.uint32(1650).string(message.actModeAwsBedrockCustomModelBaseId);
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      writer.uint32(1658).string(message.actModeOpenRouterModelId);
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeOpenRouterModelInfo, writer.uint32(1666).fork()).join();
     }
     if (message.actModeOpenAiModelId !== undefined) {
       writer.uint32(1674).string(message.actModeOpenAiModelId);
@@ -4224,7 +4162,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(1722).string(message.actModeRequestyModelId);
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(1730).fork()).join();
+      ProviderModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(1730).fork()).join();
     }
     if (message.actModeTogetherModelId !== undefined) {
       writer.uint32(1738).string(message.actModeTogetherModelId);
@@ -4242,31 +4180,31 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(1770).string(message.actModeGroqModelId);
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(1778).fork()).join();
+      ProviderModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(1778).fork()).join();
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       writer.uint32(1786).string(message.actModeHuggingFaceModelId);
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(1794).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(1794).fork()).join();
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(1802).string(message.actModeHuaweiCloudMaasModelId);
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(1810).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(1810).fork()).join();
     }
     if (message.actModeBasetenModelId !== undefined) {
       writer.uint32(1818).string(message.actModeBasetenModelId);
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(1826).fork()).join();
+      ProviderModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(1826).fork()).join();
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(1834).string(message.actModeVercelAiGatewayModelId);
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(1842).fork()).join();
+      ProviderModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(1842).fork()).join();
     }
     if (message.actModeOcaModelId !== undefined) {
       writer.uint32(1850).string(message.actModeOcaModelId);
@@ -4284,7 +4222,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       writer.uint32(1882).string(message.actModeDietcodeModelId);
     }
     if (message.actModeDietcodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeDietcodeModelInfo, writer.uint32(1890).fork()).join();
+      ProviderModelInfo.encode(message.actModeDietcodeModelInfo, writer.uint32(1890).fork()).join();
     }
     return writer;
   },
@@ -4343,14 +4281,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
             }
 
             message.anthropicBaseUrl = reader.string();
-            continue;
-          }
-          case 6: {
-            if (tag !== 50) {
-              break;
-            }
-
-            message.openRouterProviderSorting = reader.string();
             continue;
           }
           case 7: {
@@ -4745,22 +4675,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
             message.planModeAwsBedrockCustomModelBaseId = reader.string();
             continue;
           }
-          case 107: {
-            if (tag !== 858) {
-              break;
-            }
-
-            message.planModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 108: {
-            if (tag !== 866) {
-              break;
-            }
-
-            message.planModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
           case 109: {
             if (tag !== 874) {
               break;
@@ -4822,7 +4736,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 117: {
@@ -4870,7 +4784,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 123: {
@@ -4886,7 +4800,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 125: {
@@ -4902,7 +4816,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 127: {
@@ -4918,7 +4832,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 129: {
@@ -4934,7 +4848,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 131: {
@@ -4982,7 +4896,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.planModeDietcodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeDietcodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 200: {
@@ -5039,22 +4953,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
             }
 
             message.actModeAwsBedrockCustomModelBaseId = reader.string();
-            continue;
-          }
-          case 207: {
-            if (tag !== 1658) {
-              break;
-            }
-
-            message.actModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 208: {
-            if (tag !== 1666) {
-              break;
-            }
-
-            message.actModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 209: {
@@ -5118,7 +5016,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 217: {
@@ -5166,7 +5064,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 223: {
@@ -5182,7 +5080,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 225: {
@@ -5198,7 +5096,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 227: {
@@ -5214,7 +5112,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 229: {
@@ -5230,7 +5128,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 231: {
@@ -5278,7 +5176,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
               break;
             }
 
-            message.actModeDietcodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeDietcodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
         }
@@ -5337,11 +5235,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.anthropicBaseUrl)
         : isSet(object.anthropic_base_url)
         ? globalThis.String(object.anthropic_base_url)
-        : undefined,
-      openRouterProviderSorting: isSet(object.openRouterProviderSorting)
-        ? globalThis.String(object.openRouterProviderSorting)
-        : isSet(object.open_router_provider_sorting)
-        ? globalThis.String(object.open_router_provider_sorting)
         : undefined,
       awsRegion: isSet(object.awsRegion)
         ? globalThis.String(object.awsRegion)
@@ -5588,16 +5481,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         : isSet(object.plan_mode_aws_bedrock_custom_model_base_id)
         ? globalThis.String(object.plan_mode_aws_bedrock_custom_model_base_id)
         : undefined,
-      planModeOpenRouterModelId: isSet(object.planModeOpenRouterModelId)
-        ? globalThis.String(object.planModeOpenRouterModelId)
-        : isSet(object.plan_mode_open_router_model_id)
-        ? globalThis.String(object.plan_mode_open_router_model_id)
-        : undefined,
-      planModeOpenRouterModelInfo: isSet(object.planModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeOpenRouterModelInfo)
-        : isSet(object.plan_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_open_router_model_info)
-        : undefined,
       planModeOpenAiModelId: isSet(object.planModeOpenAiModelId)
         ? globalThis.String(object.planModeOpenAiModelId)
         : isSet(object.plan_mode_open_ai_model_id)
@@ -5634,9 +5517,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_requesty_model_id)
         : undefined,
       planModeRequestyModelInfo: isSet(object.planModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeRequestyModelInfo)
         : isSet(object.plan_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_requesty_model_info)
         : undefined,
       planModeTogetherModelId: isSet(object.planModeTogetherModelId)
         ? globalThis.String(object.planModeTogetherModelId)
@@ -5664,9 +5547,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_groq_model_id)
         : undefined,
       planModeGroqModelInfo: isSet(object.planModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeGroqModelInfo)
         : isSet(object.plan_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_groq_model_info)
         : undefined,
       planModeHuggingFaceModelId: isSet(object.planModeHuggingFaceModelId)
         ? globalThis.String(object.planModeHuggingFaceModelId)
@@ -5674,9 +5557,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_hugging_face_model_id)
         : undefined,
       planModeHuggingFaceModelInfo: isSet(object.planModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
         : isSet(object.plan_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
         : undefined,
       planModeHuaweiCloudMaasModelId: isSet(object.planModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.planModeHuaweiCloudMaasModelId)
@@ -5684,9 +5567,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_huawei_cloud_maas_model_id)
         : undefined,
       planModeHuaweiCloudMaasModelInfo: isSet(object.planModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
         : isSet(object.plan_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
         : undefined,
       planModeBasetenModelId: isSet(object.planModeBasetenModelId)
         ? globalThis.String(object.planModeBasetenModelId)
@@ -5694,9 +5577,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_baseten_model_id)
         : undefined,
       planModeBasetenModelInfo: isSet(object.planModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeBasetenModelInfo)
         : isSet(object.plan_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_baseten_model_info)
         : undefined,
       planModeVercelAiGatewayModelId: isSet(object.planModeVercelAiGatewayModelId)
         ? globalThis.String(object.planModeVercelAiGatewayModelId)
@@ -5704,9 +5587,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_vercel_ai_gateway_model_id)
         : undefined,
       planModeVercelAiGatewayModelInfo: isSet(object.planModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
         : isSet(object.plan_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
         : undefined,
       planModeOcaModelId: isSet(object.planModeOcaModelId)
         ? globalThis.String(object.planModeOcaModelId)
@@ -5734,9 +5617,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.plan_mode_dietcode_model_id)
         : undefined,
       planModeDietcodeModelInfo: isSet(object.planModeDietcodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeDietcodeModelInfo)
         : isSet(object.plan_mode_dietcode_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_dietcode_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_dietcode_model_info)
         : undefined,
       actModeApiProvider: isSet(object.actModeApiProvider)
         ? apiProviderFromJSON(object.actModeApiProvider)
@@ -5772,16 +5655,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.actModeAwsBedrockCustomModelBaseId)
         : isSet(object.act_mode_aws_bedrock_custom_model_base_id)
         ? globalThis.String(object.act_mode_aws_bedrock_custom_model_base_id)
-        : undefined,
-      actModeOpenRouterModelId: isSet(object.actModeOpenRouterModelId)
-        ? globalThis.String(object.actModeOpenRouterModelId)
-        : isSet(object.act_mode_open_router_model_id)
-        ? globalThis.String(object.act_mode_open_router_model_id)
-        : undefined,
-      actModeOpenRouterModelInfo: isSet(object.actModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeOpenRouterModelInfo)
-        : isSet(object.act_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_open_router_model_info)
         : undefined,
       actModeOpenAiModelId: isSet(object.actModeOpenAiModelId)
         ? globalThis.String(object.actModeOpenAiModelId)
@@ -5819,9 +5692,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_requesty_model_id)
         : undefined,
       actModeRequestyModelInfo: isSet(object.actModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeRequestyModelInfo)
         : isSet(object.act_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_requesty_model_info)
         : undefined,
       actModeTogetherModelId: isSet(object.actModeTogetherModelId)
         ? globalThis.String(object.actModeTogetherModelId)
@@ -5849,9 +5722,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_groq_model_id)
         : undefined,
       actModeGroqModelInfo: isSet(object.actModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeGroqModelInfo)
         : isSet(object.act_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_groq_model_info)
         : undefined,
       actModeHuggingFaceModelId: isSet(object.actModeHuggingFaceModelId)
         ? globalThis.String(object.actModeHuggingFaceModelId)
@@ -5859,9 +5732,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_hugging_face_model_id)
         : undefined,
       actModeHuggingFaceModelInfo: isSet(object.actModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
         : isSet(object.act_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
         : undefined,
       actModeHuaweiCloudMaasModelId: isSet(object.actModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.actModeHuaweiCloudMaasModelId)
@@ -5869,9 +5742,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_huawei_cloud_maas_model_id)
         : undefined,
       actModeHuaweiCloudMaasModelInfo: isSet(object.actModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
         : isSet(object.act_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
         : undefined,
       actModeBasetenModelId: isSet(object.actModeBasetenModelId)
         ? globalThis.String(object.actModeBasetenModelId)
@@ -5879,9 +5752,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_baseten_model_id)
         : undefined,
       actModeBasetenModelInfo: isSet(object.actModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeBasetenModelInfo)
         : isSet(object.act_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_baseten_model_info)
         : undefined,
       actModeVercelAiGatewayModelId: isSet(object.actModeVercelAiGatewayModelId)
         ? globalThis.String(object.actModeVercelAiGatewayModelId)
@@ -5889,9 +5762,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_vercel_ai_gateway_model_id)
         : undefined,
       actModeVercelAiGatewayModelInfo: isSet(object.actModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
         : isSet(object.act_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
         : undefined,
       actModeOcaModelId: isSet(object.actModeOcaModelId)
         ? globalThis.String(object.actModeOcaModelId)
@@ -5919,9 +5792,9 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         ? globalThis.String(object.act_mode_dietcode_model_id)
         : undefined,
       actModeDietcodeModelInfo: isSet(object.actModeDietcodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeDietcodeModelInfo)
         : isSet(object.act_mode_dietcode_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_dietcode_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_dietcode_model_info)
         : undefined,
     };
   },
@@ -5948,9 +5821,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     }
     if (message.anthropicBaseUrl !== undefined) {
       obj.anthropicBaseUrl = message.anthropicBaseUrl;
-    }
-    if (message.openRouterProviderSorting !== undefined) {
-      obj.openRouterProviderSorting = message.openRouterProviderSorting;
     }
     if (message.awsRegion !== undefined) {
       obj.awsRegion = message.awsRegion;
@@ -6099,12 +5969,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
       obj.planModeAwsBedrockCustomModelBaseId = message.planModeAwsBedrockCustomModelBaseId;
     }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      obj.planModeOpenRouterModelId = message.planModeOpenRouterModelId;
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      obj.planModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.planModeOpenRouterModelInfo);
-    }
     if (message.planModeOpenAiModelId !== undefined) {
       obj.planModeOpenAiModelId = message.planModeOpenAiModelId;
     }
@@ -6127,7 +5991,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.planModeRequestyModelId = message.planModeRequestyModelId;
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      obj.planModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.planModeRequestyModelInfo);
+      obj.planModeRequestyModelInfo = ProviderModelInfo.toJSON(message.planModeRequestyModelInfo);
     }
     if (message.planModeTogetherModelId !== undefined) {
       obj.planModeTogetherModelId = message.planModeTogetherModelId;
@@ -6145,31 +6009,31 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.planModeGroqModelId = message.planModeGroqModelId;
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      obj.planModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.planModeGroqModelInfo);
+      obj.planModeGroqModelInfo = ProviderModelInfo.toJSON(message.planModeGroqModelInfo);
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       obj.planModeHuggingFaceModelId = message.planModeHuggingFaceModelId;
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      obj.planModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
+      obj.planModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       obj.planModeHuaweiCloudMaasModelId = message.planModeHuaweiCloudMaasModelId;
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
+      obj.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
     }
     if (message.planModeBasetenModelId !== undefined) {
       obj.planModeBasetenModelId = message.planModeBasetenModelId;
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      obj.planModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.planModeBasetenModelInfo);
+      obj.planModeBasetenModelInfo = ProviderModelInfo.toJSON(message.planModeBasetenModelInfo);
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       obj.planModeVercelAiGatewayModelId = message.planModeVercelAiGatewayModelId;
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      obj.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
+      obj.planModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
     }
     if (message.planModeOcaModelId !== undefined) {
       obj.planModeOcaModelId = message.planModeOcaModelId;
@@ -6187,7 +6051,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.planModeDietcodeModelId = message.planModeDietcodeModelId;
     }
     if (message.planModeDietcodeModelInfo !== undefined) {
-      obj.planModeDietcodeModelInfo = OpenRouterModelInfo.toJSON(message.planModeDietcodeModelInfo);
+      obj.planModeDietcodeModelInfo = ProviderModelInfo.toJSON(message.planModeDietcodeModelInfo);
     }
     if (message.actModeApiProvider !== undefined) {
       obj.actModeApiProvider = apiProviderToJSON(message.actModeApiProvider);
@@ -6209,12 +6073,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     }
     if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
       obj.actModeAwsBedrockCustomModelBaseId = message.actModeAwsBedrockCustomModelBaseId;
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      obj.actModeOpenRouterModelId = message.actModeOpenRouterModelId;
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      obj.actModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.actModeOpenRouterModelInfo);
     }
     if (message.actModeOpenAiModelId !== undefined) {
       obj.actModeOpenAiModelId = message.actModeOpenAiModelId;
@@ -6238,7 +6096,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.actModeRequestyModelId = message.actModeRequestyModelId;
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      obj.actModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.actModeRequestyModelInfo);
+      obj.actModeRequestyModelInfo = ProviderModelInfo.toJSON(message.actModeRequestyModelInfo);
     }
     if (message.actModeTogetherModelId !== undefined) {
       obj.actModeTogetherModelId = message.actModeTogetherModelId;
@@ -6256,31 +6114,31 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.actModeGroqModelId = message.actModeGroqModelId;
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      obj.actModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.actModeGroqModelInfo);
+      obj.actModeGroqModelInfo = ProviderModelInfo.toJSON(message.actModeGroqModelInfo);
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       obj.actModeHuggingFaceModelId = message.actModeHuggingFaceModelId;
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      obj.actModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
+      obj.actModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       obj.actModeHuaweiCloudMaasModelId = message.actModeHuaweiCloudMaasModelId;
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
+      obj.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
     }
     if (message.actModeBasetenModelId !== undefined) {
       obj.actModeBasetenModelId = message.actModeBasetenModelId;
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      obj.actModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.actModeBasetenModelInfo);
+      obj.actModeBasetenModelInfo = ProviderModelInfo.toJSON(message.actModeBasetenModelInfo);
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       obj.actModeVercelAiGatewayModelId = message.actModeVercelAiGatewayModelId;
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      obj.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
+      obj.actModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
     }
     if (message.actModeOcaModelId !== undefined) {
       obj.actModeOcaModelId = message.actModeOcaModelId;
@@ -6298,7 +6156,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       obj.actModeDietcodeModelId = message.actModeDietcodeModelId;
     }
     if (message.actModeDietcodeModelInfo !== undefined) {
-      obj.actModeDietcodeModelInfo = OpenRouterModelInfo.toJSON(message.actModeDietcodeModelInfo);
+      obj.actModeDietcodeModelInfo = ProviderModelInfo.toJSON(message.actModeDietcodeModelInfo);
     }
     return obj;
   },
@@ -6321,7 +6179,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
       {},
     );
     message.anthropicBaseUrl = object.anthropicBaseUrl ?? undefined;
-    message.openRouterProviderSorting = object.openRouterProviderSorting ?? undefined;
     message.awsRegion = object.awsRegion ?? undefined;
     message.awsUseCrossRegionInference = object.awsUseCrossRegionInference ?? undefined;
     message.awsBedrockUsePromptCache = object.awsBedrockUsePromptCache ?? undefined;
@@ -6374,11 +6231,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         : undefined;
     message.planModeAwsBedrockCustomSelected = object.planModeAwsBedrockCustomSelected ?? undefined;
     message.planModeAwsBedrockCustomModelBaseId = object.planModeAwsBedrockCustomModelBaseId ?? undefined;
-    message.planModeOpenRouterModelId = object.planModeOpenRouterModelId ?? undefined;
-    message.planModeOpenRouterModelInfo =
-      (object.planModeOpenRouterModelInfo !== undefined && object.planModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeOpenRouterModelInfo)
-        : undefined;
     message.planModeOpenAiModelId = object.planModeOpenAiModelId ?? undefined;
     message.planModeOpenAiModelInfo =
       (object.planModeOpenAiModelInfo !== undefined && object.planModeOpenAiModelInfo !== null)
@@ -6394,7 +6246,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.planModeRequestyModelId = object.planModeRequestyModelId ?? undefined;
     message.planModeRequestyModelInfo =
       (object.planModeRequestyModelInfo !== undefined && object.planModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeRequestyModelInfo)
         : undefined;
     message.planModeTogetherModelId = object.planModeTogetherModelId ?? undefined;
     message.planModeFireworksModelId = object.planModeFireworksModelId ?? undefined;
@@ -6403,27 +6255,27 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.planModeGroqModelId = object.planModeGroqModelId ?? undefined;
     message.planModeGroqModelInfo =
       (object.planModeGroqModelInfo !== undefined && object.planModeGroqModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeGroqModelInfo)
         : undefined;
     message.planModeHuggingFaceModelId = object.planModeHuggingFaceModelId ?? undefined;
     message.planModeHuggingFaceModelInfo =
       (object.planModeHuggingFaceModelInfo !== undefined && object.planModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
         : undefined;
     message.planModeHuaweiCloudMaasModelId = object.planModeHuaweiCloudMaasModelId ?? undefined;
     message.planModeHuaweiCloudMaasModelInfo =
       (object.planModeHuaweiCloudMaasModelInfo !== undefined && object.planModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.planModeBasetenModelId = object.planModeBasetenModelId ?? undefined;
     message.planModeBasetenModelInfo =
       (object.planModeBasetenModelInfo !== undefined && object.planModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeBasetenModelInfo)
         : undefined;
     message.planModeVercelAiGatewayModelId = object.planModeVercelAiGatewayModelId ?? undefined;
     message.planModeVercelAiGatewayModelInfo =
       (object.planModeVercelAiGatewayModelInfo !== undefined && object.planModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
         : undefined;
     message.planModeOcaModelId = object.planModeOcaModelId ?? undefined;
     message.planModeOcaModelInfo = (object.planModeOcaModelInfo !== undefined && object.planModeOcaModelInfo !== null)
@@ -6437,7 +6289,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.planModeDietcodeModelId = object.planModeDietcodeModelId ?? undefined;
     message.planModeDietcodeModelInfo =
       (object.planModeDietcodeModelInfo !== undefined && object.planModeDietcodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeDietcodeModelInfo)
         : undefined;
     message.actModeApiProvider = object.actModeApiProvider ?? undefined;
     message.actModeApiModelId = object.actModeApiModelId ?? undefined;
@@ -6449,11 +6301,6 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
         : undefined;
     message.actModeAwsBedrockCustomSelected = object.actModeAwsBedrockCustomSelected ?? undefined;
     message.actModeAwsBedrockCustomModelBaseId = object.actModeAwsBedrockCustomModelBaseId ?? undefined;
-    message.actModeOpenRouterModelId = object.actModeOpenRouterModelId ?? undefined;
-    message.actModeOpenRouterModelInfo =
-      (object.actModeOpenRouterModelInfo !== undefined && object.actModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeOpenRouterModelInfo)
-        : undefined;
     message.actModeOpenAiModelId = object.actModeOpenAiModelId ?? undefined;
     message.actModeOpenAiModelInfo =
       (object.actModeOpenAiModelInfo !== undefined && object.actModeOpenAiModelInfo !== null)
@@ -6469,7 +6316,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.actModeRequestyModelId = object.actModeRequestyModelId ?? undefined;
     message.actModeRequestyModelInfo =
       (object.actModeRequestyModelInfo !== undefined && object.actModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeRequestyModelInfo)
         : undefined;
     message.actModeTogetherModelId = object.actModeTogetherModelId ?? undefined;
     message.actModeFireworksModelId = object.actModeFireworksModelId ?? undefined;
@@ -6477,27 +6324,27 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.actModeSapAiCoreDeploymentId = object.actModeSapAiCoreDeploymentId ?? undefined;
     message.actModeGroqModelId = object.actModeGroqModelId ?? undefined;
     message.actModeGroqModelInfo = (object.actModeGroqModelInfo !== undefined && object.actModeGroqModelInfo !== null)
-      ? OpenRouterModelInfo.fromPartial(object.actModeGroqModelInfo)
+      ? ProviderModelInfo.fromPartial(object.actModeGroqModelInfo)
       : undefined;
     message.actModeHuggingFaceModelId = object.actModeHuggingFaceModelId ?? undefined;
     message.actModeHuggingFaceModelInfo =
       (object.actModeHuggingFaceModelInfo !== undefined && object.actModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
         : undefined;
     message.actModeHuaweiCloudMaasModelId = object.actModeHuaweiCloudMaasModelId ?? undefined;
     message.actModeHuaweiCloudMaasModelInfo =
       (object.actModeHuaweiCloudMaasModelInfo !== undefined && object.actModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.actModeBasetenModelId = object.actModeBasetenModelId ?? undefined;
     message.actModeBasetenModelInfo =
       (object.actModeBasetenModelInfo !== undefined && object.actModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeBasetenModelInfo)
         : undefined;
     message.actModeVercelAiGatewayModelId = object.actModeVercelAiGatewayModelId ?? undefined;
     message.actModeVercelAiGatewayModelInfo =
       (object.actModeVercelAiGatewayModelInfo !== undefined && object.actModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
         : undefined;
     message.actModeOcaModelId = object.actModeOcaModelId ?? undefined;
     message.actModeOcaModelInfo = (object.actModeOcaModelInfo !== undefined && object.actModeOcaModelInfo !== null)
@@ -6511,7 +6358,7 @@ export const ModelsApiOptions: MessageFns<ModelsApiOptions> = {
     message.actModeDietcodeModelId = object.actModeDietcodeModelId ?? undefined;
     message.actModeDietcodeModelInfo =
       (object.actModeDietcodeModelInfo !== undefined && object.actModeDietcodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeDietcodeModelInfo)
         : undefined;
     return message;
   },
@@ -8400,8 +8247,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     liteLlmUsePromptCache: undefined,
     openAiHeaders: {},
     anthropicBaseUrl: undefined,
-    openRouterApiKey: undefined,
-    openRouterProviderSorting: undefined,
     awsAccessKey: undefined,
     awsSecretKey: undefined,
     awsSessionToken: undefined,
@@ -8493,8 +8338,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     planModeVsCodeLmModelSelector: undefined,
     planModeAwsBedrockCustomSelected: undefined,
     planModeAwsBedrockCustomModelBaseId: undefined,
-    planModeOpenRouterModelId: undefined,
-    planModeOpenRouterModelInfo: undefined,
     planModeOpenAiModelId: undefined,
     planModeOpenAiModelInfo: undefined,
     planModeOllamaModelId: undefined,
@@ -8538,8 +8381,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     actModeVsCodeLmModelSelector: undefined,
     actModeAwsBedrockCustomSelected: undefined,
     actModeAwsBedrockCustomModelBaseId: undefined,
-    actModeOpenRouterModelId: undefined,
-    actModeOpenRouterModelInfo: undefined,
     actModeOpenAiModelId: undefined,
     actModeOpenAiModelInfo: undefined,
     actModeOllamaModelId: undefined,
@@ -8604,12 +8445,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     });
     if (message.anthropicBaseUrl !== undefined) {
       writer.uint32(66).string(message.anthropicBaseUrl);
-    }
-    if (message.openRouterApiKey !== undefined) {
-      writer.uint32(74).string(message.openRouterApiKey);
-    }
-    if (message.openRouterProviderSorting !== undefined) {
-      writer.uint32(82).string(message.openRouterProviderSorting);
     }
     if (message.awsAccessKey !== undefined) {
       writer.uint32(90).string(message.awsAccessKey);
@@ -8884,12 +8719,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
       writer.uint32(850).string(message.planModeAwsBedrockCustomModelBaseId);
     }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      writer.uint32(858).string(message.planModeOpenRouterModelId);
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeOpenRouterModelInfo, writer.uint32(866).fork()).join();
-    }
     if (message.planModeOpenAiModelId !== undefined) {
       writer.uint32(874).string(message.planModeOpenAiModelId);
     }
@@ -8912,7 +8741,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(922).string(message.planModeRequestyModelId);
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(930).fork()).join();
+      ProviderModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(930).fork()).join();
     }
     if (message.planModeTogetherModelId !== undefined) {
       writer.uint32(938).string(message.planModeTogetherModelId);
@@ -8930,31 +8759,31 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(970).string(message.planModeGroqModelId);
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(978).fork()).join();
+      ProviderModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(978).fork()).join();
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       writer.uint32(986).string(message.planModeHuggingFaceModelId);
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(994).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(994).fork()).join();
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(1002).string(message.planModeHuaweiCloudMaasModelId);
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(1010).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(1010).fork()).join();
     }
     if (message.planModeBasetenModelId !== undefined) {
       writer.uint32(1018).string(message.planModeBasetenModelId);
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(1026).fork()).join();
+      ProviderModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(1026).fork()).join();
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(1034).string(message.planModeVercelAiGatewayModelId);
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(1042).fork()).join();
+      ProviderModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(1042).fork()).join();
     }
     if (message.planModeOcaModelId !== undefined) {
       writer.uint32(1050).string(message.planModeOcaModelId);
@@ -8969,7 +8798,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1074).string(message.planModeHicapModelId);
     }
     if (message.planModeHicapModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHicapModelInfo, writer.uint32(1082).fork()).join();
+      ProviderModelInfo.encode(message.planModeHicapModelInfo, writer.uint32(1082).fork()).join();
     }
     if (message.planModeAihubmixModelId !== undefined) {
       writer.uint32(1090).string(message.planModeAihubmixModelId);
@@ -8981,7 +8810,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1106).string(message.planModeNousResearchModelId);
     }
     if (message.planModeNousResearchModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeNousResearchModelInfo, writer.uint32(1154).fork()).join();
+      ProviderModelInfo.encode(message.planModeNousResearchModelInfo, writer.uint32(1154).fork()).join();
     }
     if (message.geminiPlanModeThinkingLevel !== undefined) {
       writer.uint32(1114).string(message.geminiPlanModeThinkingLevel);
@@ -8990,13 +8819,13 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1122).string(message.planModeDietcodeModelId);
     }
     if (message.planModeDietcodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeDietcodeModelInfo, writer.uint32(1130).fork()).join();
+      ProviderModelInfo.encode(message.planModeDietcodeModelInfo, writer.uint32(1130).fork()).join();
     }
     if (message.planModeClinePassModelId !== undefined) {
       writer.uint32(1138).string(message.planModeClinePassModelId);
     }
     if (message.planModeClinePassModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(1146).fork()).join();
+      ProviderModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(1146).fork()).join();
     }
     if (message.actModeApiProvider !== undefined) {
       writer.uint32(1600).int32(message.actModeApiProvider);
@@ -9018,12 +8847,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     }
     if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
       writer.uint32(1650).string(message.actModeAwsBedrockCustomModelBaseId);
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      writer.uint32(1658).string(message.actModeOpenRouterModelId);
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeOpenRouterModelInfo, writer.uint32(1666).fork()).join();
     }
     if (message.actModeOpenAiModelId !== undefined) {
       writer.uint32(1674).string(message.actModeOpenAiModelId);
@@ -9047,7 +8870,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1722).string(message.actModeRequestyModelId);
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(1730).fork()).join();
+      ProviderModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(1730).fork()).join();
     }
     if (message.actModeTogetherModelId !== undefined) {
       writer.uint32(1738).string(message.actModeTogetherModelId);
@@ -9065,31 +8888,31 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1770).string(message.actModeGroqModelId);
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(1778).fork()).join();
+      ProviderModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(1778).fork()).join();
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       writer.uint32(1786).string(message.actModeHuggingFaceModelId);
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(1794).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(1794).fork()).join();
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(1802).string(message.actModeHuaweiCloudMaasModelId);
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(1810).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(1810).fork()).join();
     }
     if (message.actModeBasetenModelId !== undefined) {
       writer.uint32(1818).string(message.actModeBasetenModelId);
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(1826).fork()).join();
+      ProviderModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(1826).fork()).join();
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(1834).string(message.actModeVercelAiGatewayModelId);
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(1842).fork()).join();
+      ProviderModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(1842).fork()).join();
     }
     if (message.actModeOcaModelId !== undefined) {
       writer.uint32(1850).string(message.actModeOcaModelId);
@@ -9104,7 +8927,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1874).string(message.actModeHicapModelId);
     }
     if (message.actModeHicapModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHicapModelInfo, writer.uint32(1882).fork()).join();
+      ProviderModelInfo.encode(message.actModeHicapModelInfo, writer.uint32(1882).fork()).join();
     }
     if (message.actModeAihubmixModelId !== undefined) {
       writer.uint32(1890).string(message.actModeAihubmixModelId);
@@ -9116,7 +8939,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1906).string(message.actModeNousResearchModelId);
     }
     if (message.actModeNousResearchModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(1954).fork()).join();
+      ProviderModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(1954).fork()).join();
     }
     if (message.geminiActModeThinkingLevel !== undefined) {
       writer.uint32(1914).string(message.geminiActModeThinkingLevel);
@@ -9125,13 +8948,13 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       writer.uint32(1922).string(message.actModeDietcodeModelId);
     }
     if (message.actModeDietcodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeDietcodeModelInfo, writer.uint32(1930).fork()).join();
+      ProviderModelInfo.encode(message.actModeDietcodeModelInfo, writer.uint32(1930).fork()).join();
     }
     if (message.actModeClinePassModelId !== undefined) {
       writer.uint32(1938).string(message.actModeClinePassModelId);
     }
     if (message.actModeClinePassModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(1946).fork()).join();
+      ProviderModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(1946).fork()).join();
     }
     return writer;
   },
@@ -9214,22 +9037,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             }
 
             message.anthropicBaseUrl = reader.string();
-            continue;
-          }
-          case 9: {
-            if (tag !== 74) {
-              break;
-            }
-
-            message.openRouterApiKey = reader.string();
-            continue;
-          }
-          case 10: {
-            if (tag !== 82) {
-              break;
-            }
-
-            message.openRouterProviderSorting = reader.string();
             continue;
           }
           case 11: {
@@ -9960,22 +9767,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             message.planModeAwsBedrockCustomModelBaseId = reader.string();
             continue;
           }
-          case 107: {
-            if (tag !== 858) {
-              break;
-            }
-
-            message.planModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 108: {
-            if (tag !== 866) {
-              break;
-            }
-
-            message.planModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
           case 109: {
             if (tag !== 874) {
               break;
@@ -10037,7 +9828,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 117: {
@@ -10085,7 +9876,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 123: {
@@ -10101,7 +9892,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 125: {
@@ -10117,7 +9908,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 127: {
@@ -10133,7 +9924,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 129: {
@@ -10149,7 +9940,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 131: {
@@ -10189,7 +9980,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHicapModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 136: {
@@ -10221,7 +10012,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeNousResearchModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 139: {
@@ -10245,7 +10036,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeDietcodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeDietcodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 142: {
@@ -10261,7 +10052,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.planModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeClinePassModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 200: {
@@ -10318,22 +10109,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             }
 
             message.actModeAwsBedrockCustomModelBaseId = reader.string();
-            continue;
-          }
-          case 207: {
-            if (tag !== 1658) {
-              break;
-            }
-
-            message.actModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 208: {
-            if (tag !== 1666) {
-              break;
-            }
-
-            message.actModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 209: {
@@ -10397,7 +10172,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 217: {
@@ -10445,7 +10220,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 223: {
@@ -10461,7 +10236,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 225: {
@@ -10477,7 +10252,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 227: {
@@ -10493,7 +10268,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 229: {
@@ -10509,7 +10284,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 231: {
@@ -10549,7 +10324,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHicapModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 236: {
@@ -10581,7 +10356,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeNousResearchModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 239: {
@@ -10605,7 +10380,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeDietcodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeDietcodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 242: {
@@ -10621,7 +10396,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
               break;
             }
 
-            message.actModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeClinePassModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
         }
@@ -10695,16 +10470,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.anthropicBaseUrl)
         : isSet(object.anthropic_base_url)
         ? globalThis.String(object.anthropic_base_url)
-        : undefined,
-      openRouterApiKey: isSet(object.openRouterApiKey)
-        ? globalThis.String(object.openRouterApiKey)
-        : isSet(object.open_router_api_key)
-        ? globalThis.String(object.open_router_api_key)
-        : undefined,
-      openRouterProviderSorting: isSet(object.openRouterProviderSorting)
-        ? globalThis.String(object.openRouterProviderSorting)
-        : isSet(object.open_router_provider_sorting)
-        ? globalThis.String(object.open_router_provider_sorting)
         : undefined,
       awsAccessKey: isSet(object.awsAccessKey)
         ? globalThis.String(object.awsAccessKey)
@@ -11161,16 +10926,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         : isSet(object.plan_mode_aws_bedrock_custom_model_base_id)
         ? globalThis.String(object.plan_mode_aws_bedrock_custom_model_base_id)
         : undefined,
-      planModeOpenRouterModelId: isSet(object.planModeOpenRouterModelId)
-        ? globalThis.String(object.planModeOpenRouterModelId)
-        : isSet(object.plan_mode_open_router_model_id)
-        ? globalThis.String(object.plan_mode_open_router_model_id)
-        : undefined,
-      planModeOpenRouterModelInfo: isSet(object.planModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeOpenRouterModelInfo)
-        : isSet(object.plan_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_open_router_model_info)
-        : undefined,
       planModeOpenAiModelId: isSet(object.planModeOpenAiModelId)
         ? globalThis.String(object.planModeOpenAiModelId)
         : isSet(object.plan_mode_open_ai_model_id)
@@ -11207,9 +10962,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_requesty_model_id)
         : undefined,
       planModeRequestyModelInfo: isSet(object.planModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeRequestyModelInfo)
         : isSet(object.plan_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_requesty_model_info)
         : undefined,
       planModeTogetherModelId: isSet(object.planModeTogetherModelId)
         ? globalThis.String(object.planModeTogetherModelId)
@@ -11237,9 +10992,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_groq_model_id)
         : undefined,
       planModeGroqModelInfo: isSet(object.planModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeGroqModelInfo)
         : isSet(object.plan_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_groq_model_info)
         : undefined,
       planModeHuggingFaceModelId: isSet(object.planModeHuggingFaceModelId)
         ? globalThis.String(object.planModeHuggingFaceModelId)
@@ -11247,9 +11002,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_hugging_face_model_id)
         : undefined,
       planModeHuggingFaceModelInfo: isSet(object.planModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
         : isSet(object.plan_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
         : undefined,
       planModeHuaweiCloudMaasModelId: isSet(object.planModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.planModeHuaweiCloudMaasModelId)
@@ -11257,9 +11012,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_huawei_cloud_maas_model_id)
         : undefined,
       planModeHuaweiCloudMaasModelInfo: isSet(object.planModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
         : isSet(object.plan_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
         : undefined,
       planModeBasetenModelId: isSet(object.planModeBasetenModelId)
         ? globalThis.String(object.planModeBasetenModelId)
@@ -11267,9 +11022,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_baseten_model_id)
         : undefined,
       planModeBasetenModelInfo: isSet(object.planModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeBasetenModelInfo)
         : isSet(object.plan_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_baseten_model_info)
         : undefined,
       planModeVercelAiGatewayModelId: isSet(object.planModeVercelAiGatewayModelId)
         ? globalThis.String(object.planModeVercelAiGatewayModelId)
@@ -11277,9 +11032,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_vercel_ai_gateway_model_id)
         : undefined,
       planModeVercelAiGatewayModelInfo: isSet(object.planModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
         : isSet(object.plan_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
         : undefined,
       planModeOcaModelId: isSet(object.planModeOcaModelId)
         ? globalThis.String(object.planModeOcaModelId)
@@ -11302,9 +11057,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_hicap_model_id)
         : undefined,
       planModeHicapModelInfo: isSet(object.planModeHicapModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHicapModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHicapModelInfo)
         : isSet(object.plan_mode_hicap_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hicap_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_hicap_model_info)
         : undefined,
       planModeAihubmixModelId: isSet(object.planModeAihubmixModelId)
         ? globalThis.String(object.planModeAihubmixModelId)
@@ -11322,9 +11077,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_nous_research_model_id)
         : undefined,
       planModeNousResearchModelInfo: isSet(object.planModeNousResearchModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeNousResearchModelInfo)
         : isSet(object.plan_mode_nous_research_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_nous_research_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_nous_research_model_info)
         : undefined,
       geminiPlanModeThinkingLevel: isSet(object.geminiPlanModeThinkingLevel)
         ? globalThis.String(object.geminiPlanModeThinkingLevel)
@@ -11337,9 +11092,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_dietcode_model_id)
         : undefined,
       planModeDietcodeModelInfo: isSet(object.planModeDietcodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeDietcodeModelInfo)
         : isSet(object.plan_mode_dietcode_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_dietcode_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_dietcode_model_info)
         : undefined,
       planModeClinePassModelId: isSet(object.planModeClinePassModelId)
         ? globalThis.String(object.planModeClinePassModelId)
@@ -11347,9 +11102,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.plan_mode_cline_pass_model_id)
         : undefined,
       planModeClinePassModelInfo: isSet(object.planModeClinePassModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeClinePassModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeClinePassModelInfo)
         : isSet(object.plan_mode_cline_pass_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
         : undefined,
       actModeApiProvider: isSet(object.actModeApiProvider)
         ? apiProviderFromJSON(object.actModeApiProvider)
@@ -11385,16 +11140,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.actModeAwsBedrockCustomModelBaseId)
         : isSet(object.act_mode_aws_bedrock_custom_model_base_id)
         ? globalThis.String(object.act_mode_aws_bedrock_custom_model_base_id)
-        : undefined,
-      actModeOpenRouterModelId: isSet(object.actModeOpenRouterModelId)
-        ? globalThis.String(object.actModeOpenRouterModelId)
-        : isSet(object.act_mode_open_router_model_id)
-        ? globalThis.String(object.act_mode_open_router_model_id)
-        : undefined,
-      actModeOpenRouterModelInfo: isSet(object.actModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeOpenRouterModelInfo)
-        : isSet(object.act_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_open_router_model_info)
         : undefined,
       actModeOpenAiModelId: isSet(object.actModeOpenAiModelId)
         ? globalThis.String(object.actModeOpenAiModelId)
@@ -11432,9 +11177,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_requesty_model_id)
         : undefined,
       actModeRequestyModelInfo: isSet(object.actModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeRequestyModelInfo)
         : isSet(object.act_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_requesty_model_info)
         : undefined,
       actModeTogetherModelId: isSet(object.actModeTogetherModelId)
         ? globalThis.String(object.actModeTogetherModelId)
@@ -11462,9 +11207,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_groq_model_id)
         : undefined,
       actModeGroqModelInfo: isSet(object.actModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeGroqModelInfo)
         : isSet(object.act_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_groq_model_info)
         : undefined,
       actModeHuggingFaceModelId: isSet(object.actModeHuggingFaceModelId)
         ? globalThis.String(object.actModeHuggingFaceModelId)
@@ -11472,9 +11217,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_hugging_face_model_id)
         : undefined,
       actModeHuggingFaceModelInfo: isSet(object.actModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
         : isSet(object.act_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
         : undefined,
       actModeHuaweiCloudMaasModelId: isSet(object.actModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.actModeHuaweiCloudMaasModelId)
@@ -11482,9 +11227,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_huawei_cloud_maas_model_id)
         : undefined,
       actModeHuaweiCloudMaasModelInfo: isSet(object.actModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
         : isSet(object.act_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
         : undefined,
       actModeBasetenModelId: isSet(object.actModeBasetenModelId)
         ? globalThis.String(object.actModeBasetenModelId)
@@ -11492,9 +11237,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_baseten_model_id)
         : undefined,
       actModeBasetenModelInfo: isSet(object.actModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeBasetenModelInfo)
         : isSet(object.act_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_baseten_model_info)
         : undefined,
       actModeVercelAiGatewayModelId: isSet(object.actModeVercelAiGatewayModelId)
         ? globalThis.String(object.actModeVercelAiGatewayModelId)
@@ -11502,9 +11247,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_vercel_ai_gateway_model_id)
         : undefined,
       actModeVercelAiGatewayModelInfo: isSet(object.actModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
         : isSet(object.act_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
         : undefined,
       actModeOcaModelId: isSet(object.actModeOcaModelId)
         ? globalThis.String(object.actModeOcaModelId)
@@ -11527,9 +11272,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_hicap_model_id)
         : undefined,
       actModeHicapModelInfo: isSet(object.actModeHicapModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHicapModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHicapModelInfo)
         : isSet(object.act_mode_hicap_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_hicap_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_hicap_model_info)
         : undefined,
       actModeAihubmixModelId: isSet(object.actModeAihubmixModelId)
         ? globalThis.String(object.actModeAihubmixModelId)
@@ -11547,9 +11292,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_nous_research_model_id)
         : undefined,
       actModeNousResearchModelInfo: isSet(object.actModeNousResearchModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeNousResearchModelInfo)
         : isSet(object.act_mode_nous_research_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_nous_research_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_nous_research_model_info)
         : undefined,
       geminiActModeThinkingLevel: isSet(object.geminiActModeThinkingLevel)
         ? globalThis.String(object.geminiActModeThinkingLevel)
@@ -11562,9 +11307,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_dietcode_model_id)
         : undefined,
       actModeDietcodeModelInfo: isSet(object.actModeDietcodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeDietcodeModelInfo)
         : isSet(object.act_mode_dietcode_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_dietcode_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_dietcode_model_info)
         : undefined,
       actModeClinePassModelId: isSet(object.actModeClinePassModelId)
         ? globalThis.String(object.actModeClinePassModelId)
@@ -11572,9 +11317,9 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? globalThis.String(object.act_mode_cline_pass_model_id)
         : undefined,
       actModeClinePassModelInfo: isSet(object.actModeClinePassModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeClinePassModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeClinePassModelInfo)
         : isSet(object.act_mode_cline_pass_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
         : undefined,
     };
   },
@@ -11610,12 +11355,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     }
     if (message.anthropicBaseUrl !== undefined) {
       obj.anthropicBaseUrl = message.anthropicBaseUrl;
-    }
-    if (message.openRouterApiKey !== undefined) {
-      obj.openRouterApiKey = message.openRouterApiKey;
-    }
-    if (message.openRouterProviderSorting !== undefined) {
-      obj.openRouterProviderSorting = message.openRouterProviderSorting;
     }
     if (message.awsAccessKey !== undefined) {
       obj.awsAccessKey = message.awsAccessKey;
@@ -11890,12 +11629,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.planModeAwsBedrockCustomModelBaseId !== undefined) {
       obj.planModeAwsBedrockCustomModelBaseId = message.planModeAwsBedrockCustomModelBaseId;
     }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      obj.planModeOpenRouterModelId = message.planModeOpenRouterModelId;
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      obj.planModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.planModeOpenRouterModelInfo);
-    }
     if (message.planModeOpenAiModelId !== undefined) {
       obj.planModeOpenAiModelId = message.planModeOpenAiModelId;
     }
@@ -11918,7 +11651,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.planModeRequestyModelId = message.planModeRequestyModelId;
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      obj.planModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.planModeRequestyModelInfo);
+      obj.planModeRequestyModelInfo = ProviderModelInfo.toJSON(message.planModeRequestyModelInfo);
     }
     if (message.planModeTogetherModelId !== undefined) {
       obj.planModeTogetherModelId = message.planModeTogetherModelId;
@@ -11936,31 +11669,31 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.planModeGroqModelId = message.planModeGroqModelId;
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      obj.planModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.planModeGroqModelInfo);
+      obj.planModeGroqModelInfo = ProviderModelInfo.toJSON(message.planModeGroqModelInfo);
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       obj.planModeHuggingFaceModelId = message.planModeHuggingFaceModelId;
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      obj.planModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
+      obj.planModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       obj.planModeHuaweiCloudMaasModelId = message.planModeHuaweiCloudMaasModelId;
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
+      obj.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
     }
     if (message.planModeBasetenModelId !== undefined) {
       obj.planModeBasetenModelId = message.planModeBasetenModelId;
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      obj.planModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.planModeBasetenModelInfo);
+      obj.planModeBasetenModelInfo = ProviderModelInfo.toJSON(message.planModeBasetenModelInfo);
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       obj.planModeVercelAiGatewayModelId = message.planModeVercelAiGatewayModelId;
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      obj.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
+      obj.planModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
     }
     if (message.planModeOcaModelId !== undefined) {
       obj.planModeOcaModelId = message.planModeOcaModelId;
@@ -11975,7 +11708,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.planModeHicapModelId = message.planModeHicapModelId;
     }
     if (message.planModeHicapModelInfo !== undefined) {
-      obj.planModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.planModeHicapModelInfo);
+      obj.planModeHicapModelInfo = ProviderModelInfo.toJSON(message.planModeHicapModelInfo);
     }
     if (message.planModeAihubmixModelId !== undefined) {
       obj.planModeAihubmixModelId = message.planModeAihubmixModelId;
@@ -11987,7 +11720,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.planModeNousResearchModelId = message.planModeNousResearchModelId;
     }
     if (message.planModeNousResearchModelInfo !== undefined) {
-      obj.planModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.planModeNousResearchModelInfo);
+      obj.planModeNousResearchModelInfo = ProviderModelInfo.toJSON(message.planModeNousResearchModelInfo);
     }
     if (message.geminiPlanModeThinkingLevel !== undefined) {
       obj.geminiPlanModeThinkingLevel = message.geminiPlanModeThinkingLevel;
@@ -11996,13 +11729,13 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.planModeDietcodeModelId = message.planModeDietcodeModelId;
     }
     if (message.planModeDietcodeModelInfo !== undefined) {
-      obj.planModeDietcodeModelInfo = OpenRouterModelInfo.toJSON(message.planModeDietcodeModelInfo);
+      obj.planModeDietcodeModelInfo = ProviderModelInfo.toJSON(message.planModeDietcodeModelInfo);
     }
     if (message.planModeClinePassModelId !== undefined) {
       obj.planModeClinePassModelId = message.planModeClinePassModelId;
     }
     if (message.planModeClinePassModelInfo !== undefined) {
-      obj.planModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.planModeClinePassModelInfo);
+      obj.planModeClinePassModelInfo = ProviderModelInfo.toJSON(message.planModeClinePassModelInfo);
     }
     if (message.actModeApiProvider !== undefined) {
       obj.actModeApiProvider = apiProviderToJSON(message.actModeApiProvider);
@@ -12024,12 +11757,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     }
     if (message.actModeAwsBedrockCustomModelBaseId !== undefined) {
       obj.actModeAwsBedrockCustomModelBaseId = message.actModeAwsBedrockCustomModelBaseId;
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      obj.actModeOpenRouterModelId = message.actModeOpenRouterModelId;
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      obj.actModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.actModeOpenRouterModelInfo);
     }
     if (message.actModeOpenAiModelId !== undefined) {
       obj.actModeOpenAiModelId = message.actModeOpenAiModelId;
@@ -12053,7 +11780,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.actModeRequestyModelId = message.actModeRequestyModelId;
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      obj.actModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.actModeRequestyModelInfo);
+      obj.actModeRequestyModelInfo = ProviderModelInfo.toJSON(message.actModeRequestyModelInfo);
     }
     if (message.actModeTogetherModelId !== undefined) {
       obj.actModeTogetherModelId = message.actModeTogetherModelId;
@@ -12071,31 +11798,31 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.actModeGroqModelId = message.actModeGroqModelId;
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      obj.actModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.actModeGroqModelInfo);
+      obj.actModeGroqModelInfo = ProviderModelInfo.toJSON(message.actModeGroqModelInfo);
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       obj.actModeHuggingFaceModelId = message.actModeHuggingFaceModelId;
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      obj.actModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
+      obj.actModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       obj.actModeHuaweiCloudMaasModelId = message.actModeHuaweiCloudMaasModelId;
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
+      obj.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
     }
     if (message.actModeBasetenModelId !== undefined) {
       obj.actModeBasetenModelId = message.actModeBasetenModelId;
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      obj.actModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.actModeBasetenModelInfo);
+      obj.actModeBasetenModelInfo = ProviderModelInfo.toJSON(message.actModeBasetenModelInfo);
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       obj.actModeVercelAiGatewayModelId = message.actModeVercelAiGatewayModelId;
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      obj.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
+      obj.actModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
     }
     if (message.actModeOcaModelId !== undefined) {
       obj.actModeOcaModelId = message.actModeOcaModelId;
@@ -12110,7 +11837,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.actModeHicapModelId = message.actModeHicapModelId;
     }
     if (message.actModeHicapModelInfo !== undefined) {
-      obj.actModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.actModeHicapModelInfo);
+      obj.actModeHicapModelInfo = ProviderModelInfo.toJSON(message.actModeHicapModelInfo);
     }
     if (message.actModeAihubmixModelId !== undefined) {
       obj.actModeAihubmixModelId = message.actModeAihubmixModelId;
@@ -12122,7 +11849,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.actModeNousResearchModelId = message.actModeNousResearchModelId;
     }
     if (message.actModeNousResearchModelInfo !== undefined) {
-      obj.actModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.actModeNousResearchModelInfo);
+      obj.actModeNousResearchModelInfo = ProviderModelInfo.toJSON(message.actModeNousResearchModelInfo);
     }
     if (message.geminiActModeThinkingLevel !== undefined) {
       obj.geminiActModeThinkingLevel = message.geminiActModeThinkingLevel;
@@ -12131,13 +11858,13 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       obj.actModeDietcodeModelId = message.actModeDietcodeModelId;
     }
     if (message.actModeDietcodeModelInfo !== undefined) {
-      obj.actModeDietcodeModelInfo = OpenRouterModelInfo.toJSON(message.actModeDietcodeModelInfo);
+      obj.actModeDietcodeModelInfo = ProviderModelInfo.toJSON(message.actModeDietcodeModelInfo);
     }
     if (message.actModeClinePassModelId !== undefined) {
       obj.actModeClinePassModelId = message.actModeClinePassModelId;
     }
     if (message.actModeClinePassModelInfo !== undefined) {
-      obj.actModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.actModeClinePassModelInfo);
+      obj.actModeClinePassModelInfo = ProviderModelInfo.toJSON(message.actModeClinePassModelInfo);
     }
     return obj;
   },
@@ -12163,8 +11890,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       {},
     );
     message.anthropicBaseUrl = object.anthropicBaseUrl ?? undefined;
-    message.openRouterApiKey = object.openRouterApiKey ?? undefined;
-    message.openRouterProviderSorting = object.openRouterProviderSorting ?? undefined;
     message.awsAccessKey = object.awsAccessKey ?? undefined;
     message.awsSecretKey = object.awsSecretKey ?? undefined;
     message.awsSessionToken = object.awsSessionToken ?? undefined;
@@ -12259,11 +11984,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         : undefined;
     message.planModeAwsBedrockCustomSelected = object.planModeAwsBedrockCustomSelected ?? undefined;
     message.planModeAwsBedrockCustomModelBaseId = object.planModeAwsBedrockCustomModelBaseId ?? undefined;
-    message.planModeOpenRouterModelId = object.planModeOpenRouterModelId ?? undefined;
-    message.planModeOpenRouterModelInfo =
-      (object.planModeOpenRouterModelInfo !== undefined && object.planModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeOpenRouterModelInfo)
-        : undefined;
     message.planModeOpenAiModelId = object.planModeOpenAiModelId ?? undefined;
     message.planModeOpenAiModelInfo =
       (object.planModeOpenAiModelInfo !== undefined && object.planModeOpenAiModelInfo !== null)
@@ -12279,7 +11999,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.planModeRequestyModelId = object.planModeRequestyModelId ?? undefined;
     message.planModeRequestyModelInfo =
       (object.planModeRequestyModelInfo !== undefined && object.planModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeRequestyModelInfo)
         : undefined;
     message.planModeTogetherModelId = object.planModeTogetherModelId ?? undefined;
     message.planModeFireworksModelId = object.planModeFireworksModelId ?? undefined;
@@ -12288,27 +12008,27 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.planModeGroqModelId = object.planModeGroqModelId ?? undefined;
     message.planModeGroqModelInfo =
       (object.planModeGroqModelInfo !== undefined && object.planModeGroqModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeGroqModelInfo)
         : undefined;
     message.planModeHuggingFaceModelId = object.planModeHuggingFaceModelId ?? undefined;
     message.planModeHuggingFaceModelInfo =
       (object.planModeHuggingFaceModelInfo !== undefined && object.planModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
         : undefined;
     message.planModeHuaweiCloudMaasModelId = object.planModeHuaweiCloudMaasModelId ?? undefined;
     message.planModeHuaweiCloudMaasModelInfo =
       (object.planModeHuaweiCloudMaasModelInfo !== undefined && object.planModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.planModeBasetenModelId = object.planModeBasetenModelId ?? undefined;
     message.planModeBasetenModelInfo =
       (object.planModeBasetenModelInfo !== undefined && object.planModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeBasetenModelInfo)
         : undefined;
     message.planModeVercelAiGatewayModelId = object.planModeVercelAiGatewayModelId ?? undefined;
     message.planModeVercelAiGatewayModelInfo =
       (object.planModeVercelAiGatewayModelInfo !== undefined && object.planModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
         : undefined;
     message.planModeOcaModelId = object.planModeOcaModelId ?? undefined;
     message.planModeOcaModelInfo = (object.planModeOcaModelInfo !== undefined && object.planModeOcaModelInfo !== null)
@@ -12318,7 +12038,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.planModeHicapModelId = object.planModeHicapModelId ?? undefined;
     message.planModeHicapModelInfo =
       (object.planModeHicapModelInfo !== undefined && object.planModeHicapModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHicapModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHicapModelInfo)
         : undefined;
     message.planModeAihubmixModelId = object.planModeAihubmixModelId ?? undefined;
     message.planModeAihubmixModelInfo =
@@ -12328,18 +12048,18 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.planModeNousResearchModelId = object.planModeNousResearchModelId ?? undefined;
     message.planModeNousResearchModelInfo =
       (object.planModeNousResearchModelInfo !== undefined && object.planModeNousResearchModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeNousResearchModelInfo)
         : undefined;
     message.geminiPlanModeThinkingLevel = object.geminiPlanModeThinkingLevel ?? undefined;
     message.planModeDietcodeModelId = object.planModeDietcodeModelId ?? undefined;
     message.planModeDietcodeModelInfo =
       (object.planModeDietcodeModelInfo !== undefined && object.planModeDietcodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeDietcodeModelInfo)
         : undefined;
     message.planModeClinePassModelId = object.planModeClinePassModelId ?? undefined;
     message.planModeClinePassModelInfo =
       (object.planModeClinePassModelInfo !== undefined && object.planModeClinePassModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeClinePassModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeClinePassModelInfo)
         : undefined;
     message.actModeApiProvider = object.actModeApiProvider ?? undefined;
     message.actModeApiModelId = object.actModeApiModelId ?? undefined;
@@ -12351,11 +12071,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         : undefined;
     message.actModeAwsBedrockCustomSelected = object.actModeAwsBedrockCustomSelected ?? undefined;
     message.actModeAwsBedrockCustomModelBaseId = object.actModeAwsBedrockCustomModelBaseId ?? undefined;
-    message.actModeOpenRouterModelId = object.actModeOpenRouterModelId ?? undefined;
-    message.actModeOpenRouterModelInfo =
-      (object.actModeOpenRouterModelInfo !== undefined && object.actModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeOpenRouterModelInfo)
-        : undefined;
     message.actModeOpenAiModelId = object.actModeOpenAiModelId ?? undefined;
     message.actModeOpenAiModelInfo =
       (object.actModeOpenAiModelInfo !== undefined && object.actModeOpenAiModelInfo !== null)
@@ -12371,7 +12086,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.actModeRequestyModelId = object.actModeRequestyModelId ?? undefined;
     message.actModeRequestyModelInfo =
       (object.actModeRequestyModelInfo !== undefined && object.actModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeRequestyModelInfo)
         : undefined;
     message.actModeTogetherModelId = object.actModeTogetherModelId ?? undefined;
     message.actModeFireworksModelId = object.actModeFireworksModelId ?? undefined;
@@ -12379,27 +12094,27 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.actModeSapAiCoreDeploymentId = object.actModeSapAiCoreDeploymentId ?? undefined;
     message.actModeGroqModelId = object.actModeGroqModelId ?? undefined;
     message.actModeGroqModelInfo = (object.actModeGroqModelInfo !== undefined && object.actModeGroqModelInfo !== null)
-      ? OpenRouterModelInfo.fromPartial(object.actModeGroqModelInfo)
+      ? ProviderModelInfo.fromPartial(object.actModeGroqModelInfo)
       : undefined;
     message.actModeHuggingFaceModelId = object.actModeHuggingFaceModelId ?? undefined;
     message.actModeHuggingFaceModelInfo =
       (object.actModeHuggingFaceModelInfo !== undefined && object.actModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
         : undefined;
     message.actModeHuaweiCloudMaasModelId = object.actModeHuaweiCloudMaasModelId ?? undefined;
     message.actModeHuaweiCloudMaasModelInfo =
       (object.actModeHuaweiCloudMaasModelInfo !== undefined && object.actModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.actModeBasetenModelId = object.actModeBasetenModelId ?? undefined;
     message.actModeBasetenModelInfo =
       (object.actModeBasetenModelInfo !== undefined && object.actModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeBasetenModelInfo)
         : undefined;
     message.actModeVercelAiGatewayModelId = object.actModeVercelAiGatewayModelId ?? undefined;
     message.actModeVercelAiGatewayModelInfo =
       (object.actModeVercelAiGatewayModelInfo !== undefined && object.actModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
         : undefined;
     message.actModeOcaModelId = object.actModeOcaModelId ?? undefined;
     message.actModeOcaModelInfo = (object.actModeOcaModelInfo !== undefined && object.actModeOcaModelInfo !== null)
@@ -12409,7 +12124,7 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.actModeHicapModelId = object.actModeHicapModelId ?? undefined;
     message.actModeHicapModelInfo =
       (object.actModeHicapModelInfo !== undefined && object.actModeHicapModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHicapModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHicapModelInfo)
         : undefined;
     message.actModeAihubmixModelId = object.actModeAihubmixModelId ?? undefined;
     message.actModeAihubmixModelInfo =
@@ -12419,18 +12134,18 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.actModeNousResearchModelId = object.actModeNousResearchModelId ?? undefined;
     message.actModeNousResearchModelInfo =
       (object.actModeNousResearchModelInfo !== undefined && object.actModeNousResearchModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeNousResearchModelInfo)
         : undefined;
     message.geminiActModeThinkingLevel = object.geminiActModeThinkingLevel ?? undefined;
     message.actModeDietcodeModelId = object.actModeDietcodeModelId ?? undefined;
     message.actModeDietcodeModelInfo =
       (object.actModeDietcodeModelInfo !== undefined && object.actModeDietcodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeDietcodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeDietcodeModelInfo)
         : undefined;
     message.actModeClinePassModelId = object.actModeClinePassModelId ?? undefined;
     message.actModeClinePassModelInfo =
       (object.actModeClinePassModelInfo !== undefined && object.actModeClinePassModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeClinePassModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeClinePassModelInfo)
         : undefined;
     return message;
   },
@@ -12558,15 +12273,6 @@ export const ModelsServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** Refreshes and returns OpenRouter models */
-    refreshOpenRouterModelsRpc: {
-      name: "refreshOpenRouterModelsRpc",
-      requestType: EmptyRequest as typeof EmptyRequest,
-      requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
-      responseStream: false,
-      options: {},
-    },
     /** Refreshes and returns recommended and free DietCode models */
     refreshDietCodeRecommendedModelsRpc: {
       name: "refreshDietCodeRecommendedModelsRpc",
@@ -12581,7 +12287,7 @@ export const ModelsServiceDefinition = {
       name: "refreshDietCodeModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12590,7 +12296,7 @@ export const ModelsServiceDefinition = {
       name: "refreshHuggingFaceModels",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12608,7 +12314,7 @@ export const ModelsServiceDefinition = {
       name: "refreshOpenAiCodexModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12617,7 +12323,7 @@ export const ModelsServiceDefinition = {
       name: "refreshRequestyModels",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12626,7 +12332,7 @@ export const ModelsServiceDefinition = {
       name: "refreshHicapModels",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12635,17 +12341,8 @@ export const ModelsServiceDefinition = {
       name: "refreshLiteLlmModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
-      options: {},
-    },
-    /** Subscribe to OpenRouter models updates */
-    subscribeToOpenRouterModels: {
-      name: "subscribeToOpenRouterModels",
-      requestType: EmptyRequest as typeof EmptyRequest,
-      requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
-      responseStream: true,
       options: {},
     },
     /** Subscribe to LiteLLM models updates */
@@ -12653,7 +12350,7 @@ export const ModelsServiceDefinition = {
       name: "subscribeToLiteLlmModels",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: true,
       options: {},
     },
@@ -12689,7 +12386,7 @@ export const ModelsServiceDefinition = {
       name: "refreshGroqModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12698,7 +12395,7 @@ export const ModelsServiceDefinition = {
       name: "refreshBasetenModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12725,7 +12422,7 @@ export const ModelsServiceDefinition = {
       name: "getAihubmixModels",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12734,7 +12431,7 @@ export const ModelsServiceDefinition = {
       name: "refreshVercelAiGatewayModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12743,7 +12440,7 @@ export const ModelsServiceDefinition = {
       name: "refreshNousResearchModelsRpc",
       requestType: EmptyRequest as typeof EmptyRequest,
       requestStream: false,
-      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseType: ProviderModelCatalog as typeof ProviderModelCatalog,
       responseStream: false,
       options: {},
     },
@@ -12783,17 +12480,6 @@ export const ModelsServiceService = {
     responseSerialize: (value: VsCodeLmModelsArray): Buffer => Buffer.from(VsCodeLmModelsArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): VsCodeLmModelsArray => VsCodeLmModelsArray.decode(value),
   },
-  /** Refreshes and returns OpenRouter models */
-  refreshOpenRouterModelsRpc: {
-    path: "/dietcode.ModelsService/refreshOpenRouterModelsRpc" as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
-  },
   /** Refreshes and returns recommended and free DietCode models */
   refreshDietCodeRecommendedModelsRpc: {
     path: "/dietcode.ModelsService/refreshDietCodeRecommendedModelsRpc" as const,
@@ -12813,9 +12499,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns Hugging Face models */
   refreshHuggingFaceModels: {
@@ -12824,9 +12510,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns OpenAI models */
   refreshOpenAiModels: {
@@ -12845,9 +12531,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns Requesty models */
   refreshRequestyModels: {
@@ -12856,9 +12542,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns Hicap models */
   refreshHicapModels: {
@@ -12867,9 +12553,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns LiteLLM models */
   refreshLiteLlmModelsRpc: {
@@ -12878,20 +12564,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
-  },
-  /** Subscribe to OpenRouter models updates */
-  subscribeToOpenRouterModels: {
-    path: "/dietcode.ModelsService/subscribeToOpenRouterModels" as const,
-    requestStream: false as const,
-    responseStream: true as const,
-    requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Subscribe to LiteLLM models updates */
   subscribeToLiteLlmModels: {
@@ -12900,9 +12575,9 @@ export const ModelsServiceService = {
     responseStream: true as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Updates API configuration (legacy - uses combined configuration) */
   updateApiConfigurationProto: {
@@ -12946,9 +12621,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns Baseten models */
   refreshBasetenModelsRpc: {
@@ -12957,9 +12632,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Fetches available models from SAP AI Core */
   getSapAiCoreModels: {
@@ -12991,9 +12666,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns Vercel AI Gateway models */
   refreshVercelAiGatewayModelsRpc: {
@@ -13002,9 +12677,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
   /** Refreshes and returns NousResearch models */
   refreshNousResearchModelsRpc: {
@@ -13013,9 +12688,9 @@ export const ModelsServiceService = {
     responseStream: false as const,
     requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
-      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
-    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+    responseSerialize: (value: ProviderModelCatalog): Buffer =>
+      Buffer.from(ProviderModelCatalog.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderModelCatalog => ProviderModelCatalog.decode(value),
   },
 } as const;
 
@@ -13026,28 +12701,24 @@ export interface ModelsServiceServer extends UntypedServiceImplementation {
   getLmStudioModels: handleUnaryCall<StringRequest, StringArray>;
   /** Fetches available models from VS Code LM API */
   getVsCodeLmModels: handleUnaryCall<EmptyRequest, VsCodeLmModelsArray>;
-  /** Refreshes and returns OpenRouter models */
-  refreshOpenRouterModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
   /** Refreshes and returns recommended and free DietCode models */
   refreshDietCodeRecommendedModelsRpc: handleUnaryCall<EmptyRequest, DietCodeRecommendedModelsResponse>;
   /** Refreshes and returns DietCode provider models */
-  refreshDietCodeModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshDietCodeModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns Hugging Face models */
-  refreshHuggingFaceModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshHuggingFaceModels: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns OpenAI models */
   refreshOpenAiModels: handleUnaryCall<OpenAiModelsRequest, StringArray>;
   /** Refreshes and returns models from the authenticated OpenAI Codex session */
-  refreshOpenAiCodexModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshOpenAiCodexModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns Requesty models */
-  refreshRequestyModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshRequestyModels: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns Hicap models */
-  refreshHicapModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshHicapModels: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns LiteLLM models */
-  refreshLiteLlmModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
-  /** Subscribe to OpenRouter models updates */
-  subscribeToOpenRouterModels: handleServerStreamingCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshLiteLlmModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Subscribe to LiteLLM models updates */
-  subscribeToLiteLlmModels: handleServerStreamingCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  subscribeToLiteLlmModels: handleServerStreamingCall<EmptyRequest, ProviderModelCatalog>;
   /** Updates API configuration (legacy - uses combined configuration) */
   updateApiConfigurationProto: handleUnaryCall<UpdateApiConfigurationRequest, Empty>;
   /** Updates API configuration (new - uses separate options and secrets) */
@@ -13055,19 +12726,19 @@ export interface ModelsServiceServer extends UntypedServiceImplementation {
   /** Updates API configuration with partial values (only updates fields that are explicitly set) */
   updateApiConfigurationPartial: handleUnaryCall<UpdateApiConfigurationPartialRequest, Empty>;
   /** Refreshes and returns Groq models */
-  refreshGroqModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshGroqModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns Baseten models */
-  refreshBasetenModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshBasetenModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Fetches available models from SAP AI Core */
   getSapAiCoreModels: handleUnaryCall<SapAiCoreModelsRequest, SapAiCoreModelsResponse>;
   /** Fetches available models from OCA */
   refreshOcaModels: handleUnaryCall<StringRequest, OcaCompatibleModelInfo>;
   /** Fetches available models from AIhubmix */
-  getAihubmixModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  getAihubmixModels: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns Vercel AI Gateway models */
-  refreshVercelAiGatewayModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshVercelAiGatewayModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
   /** Refreshes and returns NousResearch models */
-  refreshNousResearchModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
+  refreshNousResearchModelsRpc: handleUnaryCall<EmptyRequest, ProviderModelCatalog>;
 }
 
 export interface ModelsServiceClient extends Client {
@@ -13119,22 +12790,6 @@ export interface ModelsServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: VsCodeLmModelsArray) => void,
   ): ClientUnaryCall;
-  /** Refreshes and returns OpenRouter models */
-  refreshOpenRouterModelsRpc(
-    request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
-  ): ClientUnaryCall;
-  refreshOpenRouterModelsRpc(
-    request: EmptyRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
-  ): ClientUnaryCall;
-  refreshOpenRouterModelsRpc(
-    request: EmptyRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
-  ): ClientUnaryCall;
   /** Refreshes and returns recommended and free DietCode models */
   refreshDietCodeRecommendedModelsRpc(
     request: EmptyRequest,
@@ -13154,34 +12809,34 @@ export interface ModelsServiceClient extends Client {
   /** Refreshes and returns DietCode provider models */
   refreshDietCodeModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshDietCodeModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshDietCodeModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Hugging Face models */
   refreshHuggingFaceModels(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshHuggingFaceModels(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshHuggingFaceModels(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns OpenAI models */
   refreshOpenAiModels(
@@ -13202,87 +12857,77 @@ export interface ModelsServiceClient extends Client {
   /** Refreshes and returns models from the authenticated OpenAI Codex session */
   refreshOpenAiCodexModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshOpenAiCodexModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshOpenAiCodexModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Requesty models */
   refreshRequestyModels(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshRequestyModels(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshRequestyModels(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Hicap models */
   refreshHicapModels(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshHicapModels(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshHicapModels(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns LiteLLM models */
   refreshLiteLlmModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshLiteLlmModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshLiteLlmModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
-  /** Subscribe to OpenRouter models updates */
-  subscribeToOpenRouterModels(
-    request: EmptyRequest,
-    options?: Partial<CallOptions>,
-  ): ClientReadableStream<OpenRouterCompatibleModelInfo>;
-  subscribeToOpenRouterModels(
-    request: EmptyRequest,
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientReadableStream<OpenRouterCompatibleModelInfo>;
   /** Subscribe to LiteLLM models updates */
   subscribeToLiteLlmModels(
     request: EmptyRequest,
     options?: Partial<CallOptions>,
-  ): ClientReadableStream<OpenRouterCompatibleModelInfo>;
+  ): ClientReadableStream<ProviderModelCatalog>;
   subscribeToLiteLlmModels(
     request: EmptyRequest,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
-  ): ClientReadableStream<OpenRouterCompatibleModelInfo>;
+  ): ClientReadableStream<ProviderModelCatalog>;
   /** Updates API configuration (legacy - uses combined configuration) */
   updateApiConfigurationProto(
     request: UpdateApiConfigurationRequest,
@@ -13334,34 +12979,34 @@ export interface ModelsServiceClient extends Client {
   /** Refreshes and returns Groq models */
   refreshGroqModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshGroqModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshGroqModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Baseten models */
   refreshBasetenModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshBasetenModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshBasetenModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Fetches available models from SAP AI Core */
   getSapAiCoreModels(
@@ -13398,50 +13043,50 @@ export interface ModelsServiceClient extends Client {
   /** Fetches available models from AIhubmix */
   getAihubmixModels(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   getAihubmixModels(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   getAihubmixModels(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Vercel AI Gateway models */
   refreshVercelAiGatewayModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshVercelAiGatewayModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshVercelAiGatewayModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns NousResearch models */
   refreshNousResearchModelsRpc(
     request: EmptyRequest,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshNousResearchModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
   refreshNousResearchModelsRpc(
     request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+    callback: (error: ServiceError | null, response: ProviderModelCatalog) => void,
   ): ClientUnaryCall;
 }
 

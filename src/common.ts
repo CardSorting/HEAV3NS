@@ -80,7 +80,6 @@ export async function initialize(storageContext: StorageContext): Promise<Webvie
 		stateManager.setGlobalState("nativeToolCallEnabled", false)
 		// Fixture workspaces are not git repos; checkpoint commit blocks file tools on first request.
 		stateManager.setGlobalState("enableCheckpointsSetting", false)
-		stateManager.setSecret("openRouterApiKey", "test-api-key")
 	}
 	// Non-blocking announcement check and display
 	showVersionUpdateAnnouncement(stateManager)

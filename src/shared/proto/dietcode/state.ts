@@ -17,7 +17,7 @@ import {
   ModelsApiConfiguration,
   OcaModelInfo,
   OpenAiCompatibleModelInfo,
-  OpenRouterModelInfo,
+  ProviderModelInfo,
 } from "./models";
 
 export enum PlanActMode {
@@ -195,7 +195,6 @@ export interface AutoApprovalSettings {
 export interface Secrets {
   apiKey?: string | undefined;
   dietcodeAccountId?: string | undefined;
-  openRouterApiKey?: string | undefined;
   awsAccessKey?: string | undefined;
   awsSecretKey?: string | undefined;
   awsSessionToken?: string | undefined;
@@ -252,18 +251,13 @@ export interface Secrets {
  * script to regenerate this list.
  */
 export interface Settings {
-  openRouterProviderSorting?: string | undefined;
   planModeApiModelId?: string | undefined;
   planModeThinkingBudgetTokens?: number | undefined;
   planModeReasoningEffort?: string | undefined;
-  planModeOpenRouterModelId?: string | undefined;
-  planModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   planModeNousResearchModelId?: string | undefined;
   actModeApiModelId?: string | undefined;
   actModeThinkingBudgetTokens?: number | undefined;
   actModeReasoningEffort?: string | undefined;
-  actModeOpenRouterModelId?: string | undefined;
-  actModeOpenRouterModelInfo?: OpenRouterModelInfo | undefined;
   actModeNousResearchModelId?: string | undefined;
   planModeApiProvider?: ApiProvider | undefined;
   actModeApiProvider?: ApiProvider | undefined;
@@ -372,7 +366,7 @@ export interface Settings {
   planModeAwsBedrockCustomSelected?: boolean | undefined;
   planModeAwsBedrockCustomModelBaseId?: string | undefined;
   planModeDietCodeModelId?: string | undefined;
-  planModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
+  planModeDietCodeModelInfo?: ProviderModelInfo | undefined;
   planModeOpenAiModelId?: string | undefined;
   planModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeOllamaModelId?: string | undefined;
@@ -380,35 +374,35 @@ export interface Settings {
   planModeLiteLlmModelId?: string | undefined;
   planModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   planModeRequestyModelId?: string | undefined;
-  planModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  planModeRequestyModelInfo?: ProviderModelInfo | undefined;
   planModeTogetherModelId?: string | undefined;
   planModeFireworksModelId?: string | undefined;
   planModeSapAiCoreModelId?: string | undefined;
   planModeSapAiCoreDeploymentId?: string | undefined;
   planModeGroqModelId?: string | undefined;
-  planModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  planModeGroqModelInfo?: ProviderModelInfo | undefined;
   planModeBasetenModelId?: string | undefined;
-  planModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  planModeBasetenModelInfo?: ProviderModelInfo | undefined;
   planModeHuggingFaceModelId?: string | undefined;
-  planModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   planModeHuaweiCloudMaasModelId?: string | undefined;
-  planModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   planModeOcaModelId?: string | undefined;
   planModeOcaModelInfo?: OcaModelInfo | undefined;
   planModeOcaReasoningEffort?: string | undefined;
   planModeAihubmixModelId?: string | undefined;
   planModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   planModeHicapModelId?: string | undefined;
-  planModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  planModeHicapModelInfo?: ProviderModelInfo | undefined;
   planModeVercelAiGatewayModelId?: string | undefined;
-  planModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  planModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   geminiActModeThinkingLevel?: string | undefined;
   actModeVerbosity?: string | undefined;
   actModeVsCodeLmModelSelector?: LanguageModelChatSelector | undefined;
   actModeAwsBedrockCustomSelected?: boolean | undefined;
   actModeAwsBedrockCustomModelBaseId?: string | undefined;
   actModeDietCodeModelId?: string | undefined;
-  actModeDietCodeModelInfo?: OpenRouterModelInfo | undefined;
+  actModeDietCodeModelInfo?: ProviderModelInfo | undefined;
   actModeOpenAiModelId?: string | undefined;
   actModeOpenAiModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeOllamaModelId?: string | undefined;
@@ -416,41 +410,41 @@ export interface Settings {
   actModeLiteLlmModelId?: string | undefined;
   actModeLiteLlmModelInfo?: LiteLLMModelInfo | undefined;
   actModeRequestyModelId?: string | undefined;
-  actModeRequestyModelInfo?: OpenRouterModelInfo | undefined;
+  actModeRequestyModelInfo?: ProviderModelInfo | undefined;
   actModeTogetherModelId?: string | undefined;
   actModeFireworksModelId?: string | undefined;
   actModeSapAiCoreModelId?: string | undefined;
   actModeSapAiCoreDeploymentId?: string | undefined;
   actModeGroqModelId?: string | undefined;
-  actModeGroqModelInfo?: OpenRouterModelInfo | undefined;
+  actModeGroqModelInfo?: ProviderModelInfo | undefined;
   actModeBasetenModelId?: string | undefined;
-  actModeBasetenModelInfo?: OpenRouterModelInfo | undefined;
+  actModeBasetenModelInfo?: ProviderModelInfo | undefined;
   actModeHuggingFaceModelId?: string | undefined;
-  actModeHuggingFaceModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuggingFaceModelInfo?: ProviderModelInfo | undefined;
   actModeHuaweiCloudMaasModelId?: string | undefined;
-  actModeHuaweiCloudMaasModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHuaweiCloudMaasModelInfo?: ProviderModelInfo | undefined;
   actModeOcaModelId?: string | undefined;
   actModeOcaModelInfo?: OcaModelInfo | undefined;
   actModeOcaReasoningEffort?: string | undefined;
   actModeAihubmixModelId?: string | undefined;
   actModeAihubmixModelInfo?: OpenAiCompatibleModelInfo | undefined;
   actModeHicapModelId?: string | undefined;
-  actModeHicapModelInfo?: OpenRouterModelInfo | undefined;
+  actModeHicapModelInfo?: ProviderModelInfo | undefined;
   actModeVercelAiGatewayModelId?: string | undefined;
-  actModeVercelAiGatewayModelInfo?: OpenRouterModelInfo | undefined;
+  actModeVercelAiGatewayModelInfo?: ProviderModelInfo | undefined;
   hicapModelId?: string | undefined;
   lmStudioModelId?: string | undefined;
   planModeClinePassModelId?: string | undefined;
-  planModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
+  planModeClinePassModelInfo?: ProviderModelInfo | undefined;
   actModeClinePassModelId?: string | undefined;
-  actModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
+  actModeClinePassModelInfo?: ProviderModelInfo | undefined;
   modEnabled?: boolean | undefined;
   modOutcome?: string | undefined;
-  planModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
-  actModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
-  openAiHeaders: { [key: string]: string };
+  planModeNousResearchModelInfo?: ProviderModelInfo | undefined;
+  actModeNousResearchModelInfo?: ProviderModelInfo | undefined;
   tokenCompressionEnabled?: boolean | undefined;
   joyZoningSteeringEnabled?: boolean | undefined;
+  openAiHeaders: { [key: string]: string };
 }
 
 export interface Settings_OpenAiHeadersEntry {
@@ -947,7 +941,6 @@ function createBaseSecrets(): Secrets {
   return {
     apiKey: undefined,
     dietcodeAccountId: undefined,
-    openRouterApiKey: undefined,
     awsAccessKey: undefined,
     awsSecretKey: undefined,
     awsSessionToken: undefined,
@@ -1006,9 +999,6 @@ export const Secrets: MessageFns<Secrets> = {
     }
     if (message.dietcodeAccountId !== undefined) {
       writer.uint32(18).string(message.dietcodeAccountId);
-    }
-    if (message.openRouterApiKey !== undefined) {
-      writer.uint32(26).string(message.openRouterApiKey);
     }
     if (message.awsAccessKey !== undefined) {
       writer.uint32(34).string(message.awsAccessKey);
@@ -1152,7 +1142,7 @@ export const Secrets: MessageFns<Secrets> = {
       writer.uint32(1042).string(message.openaiCodexOauthCredentials);
     }
     if (message.xaiOauthCredentials !== undefined) {
-      writer.uint32(1050).string(message.xaiOauthCredentials);
+      writer.uint32(1058).string(message.xaiOauthCredentials);
     }
     return writer;
   },
@@ -1184,14 +1174,6 @@ export const Secrets: MessageFns<Secrets> = {
             }
 
             message.dietcodeAccountId = reader.string();
-            continue;
-          }
-          case 3: {
-            if (tag !== 26) {
-              break;
-            }
-
-            message.openRouterApiKey = reader.string();
             continue;
           }
           case 4: {
@@ -1570,8 +1552,8 @@ export const Secrets: MessageFns<Secrets> = {
             message.openaiCodexOauthCredentials = reader.string();
             continue;
           }
-          case 131: {
-            if (tag !== 1050) {
+          case 132: {
+            if (tag !== 1058) {
               break;
             }
 
@@ -1601,11 +1583,6 @@ export const Secrets: MessageFns<Secrets> = {
         ? globalThis.String(object.dietcodeAccountId)
         : isSet(object.dietcode_account_id)
         ? globalThis.String(object.dietcode_account_id)
-        : undefined,
-      openRouterApiKey: isSet(object.openRouterApiKey)
-        ? globalThis.String(object.openRouterApiKey)
-        : isSet(object.open_router_api_key)
-        ? globalThis.String(object.open_router_api_key)
         : undefined,
       awsAccessKey: isSet(object.awsAccessKey)
         ? globalThis.String(object.awsAccessKey)
@@ -1858,9 +1835,6 @@ export const Secrets: MessageFns<Secrets> = {
     if (message.dietcodeAccountId !== undefined) {
       obj.dietcodeAccountId = message.dietcodeAccountId;
     }
-    if (message.openRouterApiKey !== undefined) {
-      obj.openRouterApiKey = message.openRouterApiKey;
-    }
     if (message.awsAccessKey !== undefined) {
       obj.awsAccessKey = message.awsAccessKey;
     }
@@ -2015,7 +1989,6 @@ export const Secrets: MessageFns<Secrets> = {
     const message = createBaseSecrets();
     message.apiKey = object.apiKey ?? undefined;
     message.dietcodeAccountId = object.dietcodeAccountId ?? undefined;
-    message.openRouterApiKey = object.openRouterApiKey ?? undefined;
     message.awsAccessKey = object.awsAccessKey ?? undefined;
     message.awsSecretKey = object.awsSecretKey ?? undefined;
     message.awsSessionToken = object.awsSessionToken ?? undefined;
@@ -2070,18 +2043,13 @@ export const Secrets: MessageFns<Secrets> = {
 
 function createBaseSettings(): Settings {
   return {
-    openRouterProviderSorting: undefined,
     planModeApiModelId: undefined,
     planModeThinkingBudgetTokens: undefined,
     planModeReasoningEffort: undefined,
-    planModeOpenRouterModelId: undefined,
-    planModeOpenRouterModelInfo: undefined,
     planModeNousResearchModelId: undefined,
     actModeApiModelId: undefined,
     actModeThinkingBudgetTokens: undefined,
     actModeReasoningEffort: undefined,
-    actModeOpenRouterModelId: undefined,
-    actModeOpenRouterModelInfo: undefined,
     actModeNousResearchModelId: undefined,
     planModeApiProvider: undefined,
     actModeApiProvider: undefined,
@@ -2266,17 +2234,14 @@ function createBaseSettings(): Settings {
     modOutcome: undefined,
     planModeNousResearchModelInfo: undefined,
     actModeNousResearchModelInfo: undefined,
-    openAiHeaders: {},
     tokenCompressionEnabled: undefined,
     joyZoningSteeringEnabled: undefined,
+    openAiHeaders: {},
   };
 }
 
 export const Settings: MessageFns<Settings> = {
   encode(message: Settings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.openRouterProviderSorting !== undefined) {
-      writer.uint32(42).string(message.openRouterProviderSorting);
-    }
     if (message.planModeApiModelId !== undefined) {
       writer.uint32(354).string(message.planModeApiModelId);
     }
@@ -2285,12 +2250,6 @@ export const Settings: MessageFns<Settings> = {
     }
     if (message.planModeReasoningEffort !== undefined) {
       writer.uint32(378).string(message.planModeReasoningEffort);
-    }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      writer.uint32(418).string(message.planModeOpenRouterModelId);
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeOpenRouterModelInfo, writer.uint32(426).fork()).join();
     }
     if (message.planModeNousResearchModelId !== undefined) {
       writer.uint32(650).string(message.planModeNousResearchModelId);
@@ -2303,12 +2262,6 @@ export const Settings: MessageFns<Settings> = {
     }
     if (message.actModeReasoningEffort !== undefined) {
       writer.uint32(698).string(message.actModeReasoningEffort);
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      writer.uint32(738).string(message.actModeOpenRouterModelId);
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeOpenRouterModelInfo, writer.uint32(746).fork()).join();
     }
     if (message.actModeNousResearchModelId !== undefined) {
       writer.uint32(970).string(message.actModeNousResearchModelId);
@@ -2635,7 +2588,7 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2146).string(message.planModeDietCodeModelId);
     }
     if (message.planModeDietCodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeDietCodeModelInfo, writer.uint32(2154).fork()).join();
+      ProviderModelInfo.encode(message.planModeDietCodeModelInfo, writer.uint32(2154).fork()).join();
     }
     if (message.planModeOpenAiModelId !== undefined) {
       writer.uint32(2162).string(message.planModeOpenAiModelId);
@@ -2659,7 +2612,7 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2210).string(message.planModeRequestyModelId);
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(2218).fork()).join();
+      ProviderModelInfo.encode(message.planModeRequestyModelInfo, writer.uint32(2218).fork()).join();
     }
     if (message.planModeTogetherModelId !== undefined) {
       writer.uint32(2226).string(message.planModeTogetherModelId);
@@ -2677,25 +2630,25 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2258).string(message.planModeGroqModelId);
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(2266).fork()).join();
+      ProviderModelInfo.encode(message.planModeGroqModelInfo, writer.uint32(2266).fork()).join();
     }
     if (message.planModeBasetenModelId !== undefined) {
       writer.uint32(2274).string(message.planModeBasetenModelId);
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(2282).fork()).join();
+      ProviderModelInfo.encode(message.planModeBasetenModelInfo, writer.uint32(2282).fork()).join();
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       writer.uint32(2290).string(message.planModeHuggingFaceModelId);
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(2298).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuggingFaceModelInfo, writer.uint32(2298).fork()).join();
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(2306).string(message.planModeHuaweiCloudMaasModelId);
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(2314).fork()).join();
+      ProviderModelInfo.encode(message.planModeHuaweiCloudMaasModelInfo, writer.uint32(2314).fork()).join();
     }
     if (message.planModeOcaModelId !== undefined) {
       writer.uint32(2322).string(message.planModeOcaModelId);
@@ -2716,13 +2669,13 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2362).string(message.planModeHicapModelId);
     }
     if (message.planModeHicapModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeHicapModelInfo, writer.uint32(2370).fork()).join();
+      ProviderModelInfo.encode(message.planModeHicapModelInfo, writer.uint32(2370).fork()).join();
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(2378).string(message.planModeVercelAiGatewayModelId);
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(2386).fork()).join();
+      ProviderModelInfo.encode(message.planModeVercelAiGatewayModelInfo, writer.uint32(2386).fork()).join();
     }
     if (message.geminiActModeThinkingLevel !== undefined) {
       writer.uint32(2394).string(message.geminiActModeThinkingLevel);
@@ -2743,7 +2696,7 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2434).string(message.actModeDietCodeModelId);
     }
     if (message.actModeDietCodeModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeDietCodeModelInfo, writer.uint32(2442).fork()).join();
+      ProviderModelInfo.encode(message.actModeDietCodeModelInfo, writer.uint32(2442).fork()).join();
     }
     if (message.actModeOpenAiModelId !== undefined) {
       writer.uint32(2450).string(message.actModeOpenAiModelId);
@@ -2767,7 +2720,7 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2498).string(message.actModeRequestyModelId);
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(2506).fork()).join();
+      ProviderModelInfo.encode(message.actModeRequestyModelInfo, writer.uint32(2506).fork()).join();
     }
     if (message.actModeTogetherModelId !== undefined) {
       writer.uint32(2514).string(message.actModeTogetherModelId);
@@ -2785,25 +2738,25 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2546).string(message.actModeGroqModelId);
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(2554).fork()).join();
+      ProviderModelInfo.encode(message.actModeGroqModelInfo, writer.uint32(2554).fork()).join();
     }
     if (message.actModeBasetenModelId !== undefined) {
       writer.uint32(2562).string(message.actModeBasetenModelId);
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(2570).fork()).join();
+      ProviderModelInfo.encode(message.actModeBasetenModelInfo, writer.uint32(2570).fork()).join();
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       writer.uint32(2578).string(message.actModeHuggingFaceModelId);
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(2586).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuggingFaceModelInfo, writer.uint32(2586).fork()).join();
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       writer.uint32(2594).string(message.actModeHuaweiCloudMaasModelId);
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(2602).fork()).join();
+      ProviderModelInfo.encode(message.actModeHuaweiCloudMaasModelInfo, writer.uint32(2602).fork()).join();
     }
     if (message.actModeOcaModelId !== undefined) {
       writer.uint32(2610).string(message.actModeOcaModelId);
@@ -2824,13 +2777,13 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2650).string(message.actModeHicapModelId);
     }
     if (message.actModeHicapModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeHicapModelInfo, writer.uint32(2658).fork()).join();
+      ProviderModelInfo.encode(message.actModeHicapModelInfo, writer.uint32(2658).fork()).join();
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       writer.uint32(2666).string(message.actModeVercelAiGatewayModelId);
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(2674).fork()).join();
+      ProviderModelInfo.encode(message.actModeVercelAiGatewayModelInfo, writer.uint32(2674).fork()).join();
     }
     if (message.hicapModelId !== undefined) {
       writer.uint32(2682).string(message.hicapModelId);
@@ -2842,13 +2795,13 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2706).string(message.planModeClinePassModelId);
     }
     if (message.planModeClinePassModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(2714).fork()).join();
+      ProviderModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(2714).fork()).join();
     }
     if (message.actModeClinePassModelId !== undefined) {
       writer.uint32(2722).string(message.actModeClinePassModelId);
     }
     if (message.actModeClinePassModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(2730).fork()).join();
+      ProviderModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(2730).fork()).join();
     }
     if (message.modEnabled !== undefined) {
       writer.uint32(2744).bool(message.modEnabled);
@@ -2857,20 +2810,20 @@ export const Settings: MessageFns<Settings> = {
       writer.uint32(2754).string(message.modOutcome);
     }
     if (message.planModeNousResearchModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeNousResearchModelInfo, writer.uint32(2770).fork()).join();
+      ProviderModelInfo.encode(message.planModeNousResearchModelInfo, writer.uint32(2770).fork()).join();
     }
     if (message.actModeNousResearchModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(2778).fork()).join();
+      ProviderModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(2778).fork()).join();
     }
-    globalThis.Object.entries(message.openAiHeaders).forEach(([key, value]: [string, string]) => {
-      Settings_OpenAiHeadersEntry.encode({ key: key as any, value }, writer.uint32(2834).fork()).join();
-    });
     if (message.tokenCompressionEnabled !== undefined) {
       writer.uint32(2840).bool(message.tokenCompressionEnabled);
     }
     if (message.joyZoningSteeringEnabled !== undefined) {
       writer.uint32(2848).bool(message.joyZoningSteeringEnabled);
     }
+    globalThis.Object.entries(message.openAiHeaders).forEach(([key, value]: [string, string]) => {
+      Settings_OpenAiHeadersEntry.encode({ key: key as any, value }, writer.uint32(2858).fork()).join();
+    });
     return writer;
   },
 
@@ -2887,14 +2840,6 @@ export const Settings: MessageFns<Settings> = {
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
-          case 5: {
-            if (tag !== 42) {
-              break;
-            }
-
-            message.openRouterProviderSorting = reader.string();
-            continue;
-          }
           case 44: {
             if (tag !== 354) {
               break;
@@ -2917,22 +2862,6 @@ export const Settings: MessageFns<Settings> = {
             }
 
             message.planModeReasoningEffort = reader.string();
-            continue;
-          }
-          case 52: {
-            if (tag !== 418) {
-              break;
-            }
-
-            message.planModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 53: {
-            if (tag !== 426) {
-              break;
-            }
-
-            message.planModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 81: {
@@ -2965,22 +2894,6 @@ export const Settings: MessageFns<Settings> = {
             }
 
             message.actModeReasoningEffort = reader.string();
-            continue;
-          }
-          case 92: {
-            if (tag !== 738) {
-              break;
-            }
-
-            message.actModeOpenRouterModelId = reader.string();
-            continue;
-          }
-          case 93: {
-            if (tag !== 746) {
-              break;
-            }
-
-            message.actModeOpenRouterModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 121: {
@@ -3852,7 +3765,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeDietCodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeDietCodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 270: {
@@ -3916,7 +3829,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 278: {
@@ -3964,7 +3877,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 284: {
@@ -3980,7 +3893,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 286: {
@@ -3996,7 +3909,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 288: {
@@ -4012,7 +3925,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 290: {
@@ -4068,7 +3981,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeHicapModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 297: {
@@ -4084,7 +3997,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 299: {
@@ -4140,7 +4053,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeDietCodeModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeDietCodeModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 306: {
@@ -4204,7 +4117,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeRequestyModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeRequestyModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 314: {
@@ -4252,7 +4165,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeGroqModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeGroqModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 320: {
@@ -4268,7 +4181,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeBasetenModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeBasetenModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 322: {
@@ -4284,7 +4197,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeHuggingFaceModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuggingFaceModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 324: {
@@ -4300,7 +4213,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 326: {
@@ -4356,7 +4269,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeHicapModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeHicapModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 333: {
@@ -4372,7 +4285,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeVercelAiGatewayModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 335: {
@@ -4404,7 +4317,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeClinePassModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 340: {
@@ -4420,7 +4333,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.actModeClinePassModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 343: {
@@ -4444,7 +4357,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.planModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
+            message.planModeNousResearchModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 347: {
@@ -4452,18 +4365,7 @@ export const Settings: MessageFns<Settings> = {
               break;
             }
 
-            message.actModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
-          case 354: {
-            if (tag !== 2834) {
-              break;
-            }
-
-            const entry354 = Settings_OpenAiHeadersEntry.decode(reader, reader.uint32());
-            if (entry354.value !== undefined) {
-              message.openAiHeaders[entry354.key] = entry354.value;
-            }
+            message.actModeNousResearchModelInfo = ProviderModelInfo.decode(reader, reader.uint32());
             continue;
           }
           case 355: {
@@ -4482,6 +4384,17 @@ export const Settings: MessageFns<Settings> = {
             message.joyZoningSteeringEnabled = reader.bool();
             continue;
           }
+          case 357: {
+            if (tag !== 2858) {
+              break;
+            }
+
+            const entry357 = Settings_OpenAiHeadersEntry.decode(reader, reader.uint32());
+            if (entry357.value !== undefined) {
+              message.openAiHeaders[entry357.key] = entry357.value;
+            }
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -4496,11 +4409,6 @@ export const Settings: MessageFns<Settings> = {
 
   fromJSON(object: any): Settings {
     return {
-      openRouterProviderSorting: isSet(object.openRouterProviderSorting)
-        ? globalThis.String(object.openRouterProviderSorting)
-        : isSet(object.open_router_provider_sorting)
-        ? globalThis.String(object.open_router_provider_sorting)
-        : undefined,
       planModeApiModelId: isSet(object.planModeApiModelId)
         ? globalThis.String(object.planModeApiModelId)
         : isSet(object.plan_mode_api_model_id)
@@ -4515,16 +4423,6 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.planModeReasoningEffort)
         : isSet(object.plan_mode_reasoning_effort)
         ? globalThis.String(object.plan_mode_reasoning_effort)
-        : undefined,
-      planModeOpenRouterModelId: isSet(object.planModeOpenRouterModelId)
-        ? globalThis.String(object.planModeOpenRouterModelId)
-        : isSet(object.plan_mode_open_router_model_id)
-        ? globalThis.String(object.plan_mode_open_router_model_id)
-        : undefined,
-      planModeOpenRouterModelInfo: isSet(object.planModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeOpenRouterModelInfo)
-        : isSet(object.plan_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_open_router_model_info)
         : undefined,
       planModeNousResearchModelId: isSet(object.planModeNousResearchModelId)
         ? globalThis.String(object.planModeNousResearchModelId)
@@ -4545,16 +4443,6 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.actModeReasoningEffort)
         : isSet(object.act_mode_reasoning_effort)
         ? globalThis.String(object.act_mode_reasoning_effort)
-        : undefined,
-      actModeOpenRouterModelId: isSet(object.actModeOpenRouterModelId)
-        ? globalThis.String(object.actModeOpenRouterModelId)
-        : isSet(object.act_mode_open_router_model_id)
-        ? globalThis.String(object.act_mode_open_router_model_id)
-        : undefined,
-      actModeOpenRouterModelInfo: isSet(object.actModeOpenRouterModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeOpenRouterModelInfo)
-        : isSet(object.act_mode_open_router_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_open_router_model_info)
         : undefined,
       actModeNousResearchModelId: isSet(object.actModeNousResearchModelId)
         ? globalThis.String(object.actModeNousResearchModelId)
@@ -5093,9 +4981,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_diet_code_model_id)
         : undefined,
       planModeDietCodeModelInfo: isSet(object.planModeDietCodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeDietCodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeDietCodeModelInfo)
         : isSet(object.plan_mode_diet_code_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_diet_code_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_diet_code_model_info)
         : undefined,
       planModeOpenAiModelId: isSet(object.planModeOpenAiModelId)
         ? globalThis.String(object.planModeOpenAiModelId)
@@ -5133,9 +5021,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_requesty_model_id)
         : undefined,
       planModeRequestyModelInfo: isSet(object.planModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeRequestyModelInfo)
         : isSet(object.plan_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_requesty_model_info)
         : undefined,
       planModeTogetherModelId: isSet(object.planModeTogetherModelId)
         ? globalThis.String(object.planModeTogetherModelId)
@@ -5163,9 +5051,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_groq_model_id)
         : undefined,
       planModeGroqModelInfo: isSet(object.planModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeGroqModelInfo)
         : isSet(object.plan_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_groq_model_info)
         : undefined,
       planModeBasetenModelId: isSet(object.planModeBasetenModelId)
         ? globalThis.String(object.planModeBasetenModelId)
@@ -5173,9 +5061,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_baseten_model_id)
         : undefined,
       planModeBasetenModelInfo: isSet(object.planModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeBasetenModelInfo)
         : isSet(object.plan_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_baseten_model_info)
         : undefined,
       planModeHuggingFaceModelId: isSet(object.planModeHuggingFaceModelId)
         ? globalThis.String(object.planModeHuggingFaceModelId)
@@ -5183,9 +5071,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_hugging_face_model_id)
         : undefined,
       planModeHuggingFaceModelInfo: isSet(object.planModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuggingFaceModelInfo)
         : isSet(object.plan_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_hugging_face_model_info)
         : undefined,
       planModeHuaweiCloudMaasModelId: isSet(object.planModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.planModeHuaweiCloudMaasModelId)
@@ -5193,9 +5081,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_huawei_cloud_maas_model_id)
         : undefined,
       planModeHuaweiCloudMaasModelInfo: isSet(object.planModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHuaweiCloudMaasModelInfo)
         : isSet(object.plan_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_huawei_cloud_maas_model_info)
         : undefined,
       planModeOcaModelId: isSet(object.planModeOcaModelId)
         ? globalThis.String(object.planModeOcaModelId)
@@ -5228,9 +5116,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_hicap_model_id)
         : undefined,
       planModeHicapModelInfo: isSet(object.planModeHicapModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeHicapModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeHicapModelInfo)
         : isSet(object.plan_mode_hicap_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_hicap_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_hicap_model_info)
         : undefined,
       planModeVercelAiGatewayModelId: isSet(object.planModeVercelAiGatewayModelId)
         ? globalThis.String(object.planModeVercelAiGatewayModelId)
@@ -5238,9 +5126,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_vercel_ai_gateway_model_id)
         : undefined,
       planModeVercelAiGatewayModelInfo: isSet(object.planModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeVercelAiGatewayModelInfo)
         : isSet(object.plan_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_vercel_ai_gateway_model_info)
         : undefined,
       geminiActModeThinkingLevel: isSet(object.geminiActModeThinkingLevel)
         ? globalThis.String(object.geminiActModeThinkingLevel)
@@ -5273,9 +5161,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_diet_code_model_id)
         : undefined,
       actModeDietCodeModelInfo: isSet(object.actModeDietCodeModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeDietCodeModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeDietCodeModelInfo)
         : isSet(object.act_mode_diet_code_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_diet_code_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_diet_code_model_info)
         : undefined,
       actModeOpenAiModelId: isSet(object.actModeOpenAiModelId)
         ? globalThis.String(object.actModeOpenAiModelId)
@@ -5313,9 +5201,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_requesty_model_id)
         : undefined,
       actModeRequestyModelInfo: isSet(object.actModeRequestyModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeRequestyModelInfo)
         : isSet(object.act_mode_requesty_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_requesty_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_requesty_model_info)
         : undefined,
       actModeTogetherModelId: isSet(object.actModeTogetherModelId)
         ? globalThis.String(object.actModeTogetherModelId)
@@ -5343,9 +5231,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_groq_model_id)
         : undefined,
       actModeGroqModelInfo: isSet(object.actModeGroqModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeGroqModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeGroqModelInfo)
         : isSet(object.act_mode_groq_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_groq_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_groq_model_info)
         : undefined,
       actModeBasetenModelId: isSet(object.actModeBasetenModelId)
         ? globalThis.String(object.actModeBasetenModelId)
@@ -5353,9 +5241,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_baseten_model_id)
         : undefined,
       actModeBasetenModelInfo: isSet(object.actModeBasetenModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeBasetenModelInfo)
         : isSet(object.act_mode_baseten_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_baseten_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_baseten_model_info)
         : undefined,
       actModeHuggingFaceModelId: isSet(object.actModeHuggingFaceModelId)
         ? globalThis.String(object.actModeHuggingFaceModelId)
@@ -5363,9 +5251,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_hugging_face_model_id)
         : undefined,
       actModeHuggingFaceModelInfo: isSet(object.actModeHuggingFaceModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuggingFaceModelInfo)
         : isSet(object.act_mode_hugging_face_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_hugging_face_model_info)
         : undefined,
       actModeHuaweiCloudMaasModelId: isSet(object.actModeHuaweiCloudMaasModelId)
         ? globalThis.String(object.actModeHuaweiCloudMaasModelId)
@@ -5373,9 +5261,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_huawei_cloud_maas_model_id)
         : undefined,
       actModeHuaweiCloudMaasModelInfo: isSet(object.actModeHuaweiCloudMaasModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHuaweiCloudMaasModelInfo)
         : isSet(object.act_mode_huawei_cloud_maas_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_huawei_cloud_maas_model_info)
         : undefined,
       actModeOcaModelId: isSet(object.actModeOcaModelId)
         ? globalThis.String(object.actModeOcaModelId)
@@ -5408,9 +5296,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_hicap_model_id)
         : undefined,
       actModeHicapModelInfo: isSet(object.actModeHicapModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeHicapModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeHicapModelInfo)
         : isSet(object.act_mode_hicap_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_hicap_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_hicap_model_info)
         : undefined,
       actModeVercelAiGatewayModelId: isSet(object.actModeVercelAiGatewayModelId)
         ? globalThis.String(object.actModeVercelAiGatewayModelId)
@@ -5418,9 +5306,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_vercel_ai_gateway_model_id)
         : undefined,
       actModeVercelAiGatewayModelInfo: isSet(object.actModeVercelAiGatewayModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeVercelAiGatewayModelInfo)
         : isSet(object.act_mode_vercel_ai_gateway_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_vercel_ai_gateway_model_info)
         : undefined,
       hicapModelId: isSet(object.hicapModelId)
         ? globalThis.String(object.hicapModelId)
@@ -5438,9 +5326,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.plan_mode_cline_pass_model_id)
         : undefined,
       planModeClinePassModelInfo: isSet(object.planModeClinePassModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeClinePassModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeClinePassModelInfo)
         : isSet(object.plan_mode_cline_pass_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
         : undefined,
       actModeClinePassModelId: isSet(object.actModeClinePassModelId)
         ? globalThis.String(object.actModeClinePassModelId)
@@ -5448,9 +5336,9 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.act_mode_cline_pass_model_id)
         : undefined,
       actModeClinePassModelInfo: isSet(object.actModeClinePassModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeClinePassModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeClinePassModelInfo)
         : isSet(object.act_mode_cline_pass_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
         : undefined,
       modEnabled: isSet(object.modEnabled)
         ? globalThis.Boolean(object.modEnabled)
@@ -5463,14 +5351,24 @@ export const Settings: MessageFns<Settings> = {
         ? globalThis.String(object.mod_outcome)
         : undefined,
       planModeNousResearchModelInfo: isSet(object.planModeNousResearchModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromJSON(object.planModeNousResearchModelInfo)
         : isSet(object.plan_mode_nous_research_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_nous_research_model_info)
+        ? ProviderModelInfo.fromJSON(object.plan_mode_nous_research_model_info)
         : undefined,
       actModeNousResearchModelInfo: isSet(object.actModeNousResearchModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromJSON(object.actModeNousResearchModelInfo)
         : isSet(object.act_mode_nous_research_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_nous_research_model_info)
+        ? ProviderModelInfo.fromJSON(object.act_mode_nous_research_model_info)
+        : undefined,
+      tokenCompressionEnabled: isSet(object.tokenCompressionEnabled)
+        ? globalThis.Boolean(object.tokenCompressionEnabled)
+        : isSet(object.token_compression_enabled)
+        ? globalThis.Boolean(object.token_compression_enabled)
+        : undefined,
+      joyZoningSteeringEnabled: isSet(object.joyZoningSteeringEnabled)
+        ? globalThis.Boolean(object.joyZoningSteeringEnabled)
+        : isSet(object.joy_zoning_steering_enabled)
+        ? globalThis.Boolean(object.joy_zoning_steering_enabled)
         : undefined,
       openAiHeaders: isObject(object.openAiHeaders)
         ? (globalThis.Object.entries(object.openAiHeaders) as [string, any][]).reduce(
@@ -5499,24 +5397,11 @@ export const Settings: MessageFns<Settings> = {
           {},
         )
         : {},
-      tokenCompressionEnabled: isSet(object.tokenCompressionEnabled)
-        ? globalThis.Boolean(object.tokenCompressionEnabled)
-        : isSet(object.token_compression_enabled)
-        ? globalThis.Boolean(object.token_compression_enabled)
-        : undefined,
-      joyZoningSteeringEnabled: isSet(object.joyZoningSteeringEnabled)
-        ? globalThis.Boolean(object.joyZoningSteeringEnabled)
-        : isSet(object.joy_zoning_steering_enabled)
-        ? globalThis.Boolean(object.joy_zoning_steering_enabled)
-        : undefined,
     };
   },
 
   toJSON(message: Settings): unknown {
     const obj: any = {};
-    if (message.openRouterProviderSorting !== undefined) {
-      obj.openRouterProviderSorting = message.openRouterProviderSorting;
-    }
     if (message.planModeApiModelId !== undefined) {
       obj.planModeApiModelId = message.planModeApiModelId;
     }
@@ -5525,12 +5410,6 @@ export const Settings: MessageFns<Settings> = {
     }
     if (message.planModeReasoningEffort !== undefined) {
       obj.planModeReasoningEffort = message.planModeReasoningEffort;
-    }
-    if (message.planModeOpenRouterModelId !== undefined) {
-      obj.planModeOpenRouterModelId = message.planModeOpenRouterModelId;
-    }
-    if (message.planModeOpenRouterModelInfo !== undefined) {
-      obj.planModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.planModeOpenRouterModelInfo);
     }
     if (message.planModeNousResearchModelId !== undefined) {
       obj.planModeNousResearchModelId = message.planModeNousResearchModelId;
@@ -5543,12 +5422,6 @@ export const Settings: MessageFns<Settings> = {
     }
     if (message.actModeReasoningEffort !== undefined) {
       obj.actModeReasoningEffort = message.actModeReasoningEffort;
-    }
-    if (message.actModeOpenRouterModelId !== undefined) {
-      obj.actModeOpenRouterModelId = message.actModeOpenRouterModelId;
-    }
-    if (message.actModeOpenRouterModelInfo !== undefined) {
-      obj.actModeOpenRouterModelInfo = OpenRouterModelInfo.toJSON(message.actModeOpenRouterModelInfo);
     }
     if (message.actModeNousResearchModelId !== undefined) {
       obj.actModeNousResearchModelId = message.actModeNousResearchModelId;
@@ -5875,7 +5748,7 @@ export const Settings: MessageFns<Settings> = {
       obj.planModeDietCodeModelId = message.planModeDietCodeModelId;
     }
     if (message.planModeDietCodeModelInfo !== undefined) {
-      obj.planModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(message.planModeDietCodeModelInfo);
+      obj.planModeDietCodeModelInfo = ProviderModelInfo.toJSON(message.planModeDietCodeModelInfo);
     }
     if (message.planModeOpenAiModelId !== undefined) {
       obj.planModeOpenAiModelId = message.planModeOpenAiModelId;
@@ -5899,7 +5772,7 @@ export const Settings: MessageFns<Settings> = {
       obj.planModeRequestyModelId = message.planModeRequestyModelId;
     }
     if (message.planModeRequestyModelInfo !== undefined) {
-      obj.planModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.planModeRequestyModelInfo);
+      obj.planModeRequestyModelInfo = ProviderModelInfo.toJSON(message.planModeRequestyModelInfo);
     }
     if (message.planModeTogetherModelId !== undefined) {
       obj.planModeTogetherModelId = message.planModeTogetherModelId;
@@ -5917,25 +5790,25 @@ export const Settings: MessageFns<Settings> = {
       obj.planModeGroqModelId = message.planModeGroqModelId;
     }
     if (message.planModeGroqModelInfo !== undefined) {
-      obj.planModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.planModeGroqModelInfo);
+      obj.planModeGroqModelInfo = ProviderModelInfo.toJSON(message.planModeGroqModelInfo);
     }
     if (message.planModeBasetenModelId !== undefined) {
       obj.planModeBasetenModelId = message.planModeBasetenModelId;
     }
     if (message.planModeBasetenModelInfo !== undefined) {
-      obj.planModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.planModeBasetenModelInfo);
+      obj.planModeBasetenModelInfo = ProviderModelInfo.toJSON(message.planModeBasetenModelInfo);
     }
     if (message.planModeHuggingFaceModelId !== undefined) {
       obj.planModeHuggingFaceModelId = message.planModeHuggingFaceModelId;
     }
     if (message.planModeHuggingFaceModelInfo !== undefined) {
-      obj.planModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
+      obj.planModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.planModeHuggingFaceModelInfo);
     }
     if (message.planModeHuaweiCloudMaasModelId !== undefined) {
       obj.planModeHuaweiCloudMaasModelId = message.planModeHuaweiCloudMaasModelId;
     }
     if (message.planModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.planModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
+      obj.planModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.planModeHuaweiCloudMaasModelInfo);
     }
     if (message.planModeOcaModelId !== undefined) {
       obj.planModeOcaModelId = message.planModeOcaModelId;
@@ -5956,13 +5829,13 @@ export const Settings: MessageFns<Settings> = {
       obj.planModeHicapModelId = message.planModeHicapModelId;
     }
     if (message.planModeHicapModelInfo !== undefined) {
-      obj.planModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.planModeHicapModelInfo);
+      obj.planModeHicapModelInfo = ProviderModelInfo.toJSON(message.planModeHicapModelInfo);
     }
     if (message.planModeVercelAiGatewayModelId !== undefined) {
       obj.planModeVercelAiGatewayModelId = message.planModeVercelAiGatewayModelId;
     }
     if (message.planModeVercelAiGatewayModelInfo !== undefined) {
-      obj.planModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
+      obj.planModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.planModeVercelAiGatewayModelInfo);
     }
     if (message.geminiActModeThinkingLevel !== undefined) {
       obj.geminiActModeThinkingLevel = message.geminiActModeThinkingLevel;
@@ -5983,7 +5856,7 @@ export const Settings: MessageFns<Settings> = {
       obj.actModeDietCodeModelId = message.actModeDietCodeModelId;
     }
     if (message.actModeDietCodeModelInfo !== undefined) {
-      obj.actModeDietCodeModelInfo = OpenRouterModelInfo.toJSON(message.actModeDietCodeModelInfo);
+      obj.actModeDietCodeModelInfo = ProviderModelInfo.toJSON(message.actModeDietCodeModelInfo);
     }
     if (message.actModeOpenAiModelId !== undefined) {
       obj.actModeOpenAiModelId = message.actModeOpenAiModelId;
@@ -6007,7 +5880,7 @@ export const Settings: MessageFns<Settings> = {
       obj.actModeRequestyModelId = message.actModeRequestyModelId;
     }
     if (message.actModeRequestyModelInfo !== undefined) {
-      obj.actModeRequestyModelInfo = OpenRouterModelInfo.toJSON(message.actModeRequestyModelInfo);
+      obj.actModeRequestyModelInfo = ProviderModelInfo.toJSON(message.actModeRequestyModelInfo);
     }
     if (message.actModeTogetherModelId !== undefined) {
       obj.actModeTogetherModelId = message.actModeTogetherModelId;
@@ -6025,25 +5898,25 @@ export const Settings: MessageFns<Settings> = {
       obj.actModeGroqModelId = message.actModeGroqModelId;
     }
     if (message.actModeGroqModelInfo !== undefined) {
-      obj.actModeGroqModelInfo = OpenRouterModelInfo.toJSON(message.actModeGroqModelInfo);
+      obj.actModeGroqModelInfo = ProviderModelInfo.toJSON(message.actModeGroqModelInfo);
     }
     if (message.actModeBasetenModelId !== undefined) {
       obj.actModeBasetenModelId = message.actModeBasetenModelId;
     }
     if (message.actModeBasetenModelInfo !== undefined) {
-      obj.actModeBasetenModelInfo = OpenRouterModelInfo.toJSON(message.actModeBasetenModelInfo);
+      obj.actModeBasetenModelInfo = ProviderModelInfo.toJSON(message.actModeBasetenModelInfo);
     }
     if (message.actModeHuggingFaceModelId !== undefined) {
       obj.actModeHuggingFaceModelId = message.actModeHuggingFaceModelId;
     }
     if (message.actModeHuggingFaceModelInfo !== undefined) {
-      obj.actModeHuggingFaceModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
+      obj.actModeHuggingFaceModelInfo = ProviderModelInfo.toJSON(message.actModeHuggingFaceModelInfo);
     }
     if (message.actModeHuaweiCloudMaasModelId !== undefined) {
       obj.actModeHuaweiCloudMaasModelId = message.actModeHuaweiCloudMaasModelId;
     }
     if (message.actModeHuaweiCloudMaasModelInfo !== undefined) {
-      obj.actModeHuaweiCloudMaasModelInfo = OpenRouterModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
+      obj.actModeHuaweiCloudMaasModelInfo = ProviderModelInfo.toJSON(message.actModeHuaweiCloudMaasModelInfo);
     }
     if (message.actModeOcaModelId !== undefined) {
       obj.actModeOcaModelId = message.actModeOcaModelId;
@@ -6064,13 +5937,13 @@ export const Settings: MessageFns<Settings> = {
       obj.actModeHicapModelId = message.actModeHicapModelId;
     }
     if (message.actModeHicapModelInfo !== undefined) {
-      obj.actModeHicapModelInfo = OpenRouterModelInfo.toJSON(message.actModeHicapModelInfo);
+      obj.actModeHicapModelInfo = ProviderModelInfo.toJSON(message.actModeHicapModelInfo);
     }
     if (message.actModeVercelAiGatewayModelId !== undefined) {
       obj.actModeVercelAiGatewayModelId = message.actModeVercelAiGatewayModelId;
     }
     if (message.actModeVercelAiGatewayModelInfo !== undefined) {
-      obj.actModeVercelAiGatewayModelInfo = OpenRouterModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
+      obj.actModeVercelAiGatewayModelInfo = ProviderModelInfo.toJSON(message.actModeVercelAiGatewayModelInfo);
     }
     if (message.hicapModelId !== undefined) {
       obj.hicapModelId = message.hicapModelId;
@@ -6082,13 +5955,13 @@ export const Settings: MessageFns<Settings> = {
       obj.planModeClinePassModelId = message.planModeClinePassModelId;
     }
     if (message.planModeClinePassModelInfo !== undefined) {
-      obj.planModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.planModeClinePassModelInfo);
+      obj.planModeClinePassModelInfo = ProviderModelInfo.toJSON(message.planModeClinePassModelInfo);
     }
     if (message.actModeClinePassModelId !== undefined) {
       obj.actModeClinePassModelId = message.actModeClinePassModelId;
     }
     if (message.actModeClinePassModelInfo !== undefined) {
-      obj.actModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.actModeClinePassModelInfo);
+      obj.actModeClinePassModelInfo = ProviderModelInfo.toJSON(message.actModeClinePassModelInfo);
     }
     if (message.modEnabled !== undefined) {
       obj.modEnabled = message.modEnabled;
@@ -6097,10 +5970,16 @@ export const Settings: MessageFns<Settings> = {
       obj.modOutcome = message.modOutcome;
     }
     if (message.planModeNousResearchModelInfo !== undefined) {
-      obj.planModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.planModeNousResearchModelInfo);
+      obj.planModeNousResearchModelInfo = ProviderModelInfo.toJSON(message.planModeNousResearchModelInfo);
     }
     if (message.actModeNousResearchModelInfo !== undefined) {
-      obj.actModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.actModeNousResearchModelInfo);
+      obj.actModeNousResearchModelInfo = ProviderModelInfo.toJSON(message.actModeNousResearchModelInfo);
+    }
+    if (message.tokenCompressionEnabled !== undefined) {
+      obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
+    }
+    if (message.joyZoningSteeringEnabled !== undefined) {
+      obj.joyZoningSteeringEnabled = message.joyZoningSteeringEnabled;
     }
     if (message.openAiHeaders) {
       const entries = globalThis.Object.entries(message.openAiHeaders) as [string, string][];
@@ -6111,12 +5990,6 @@ export const Settings: MessageFns<Settings> = {
         });
       }
     }
-    if (message.tokenCompressionEnabled !== undefined) {
-      obj.tokenCompressionEnabled = message.tokenCompressionEnabled;
-    }
-    if (message.joyZoningSteeringEnabled !== undefined) {
-      obj.joyZoningSteeringEnabled = message.joyZoningSteeringEnabled;
-    }
     return obj;
   },
 
@@ -6125,24 +5998,13 @@ export const Settings: MessageFns<Settings> = {
   },
   fromPartial<I extends Exact<DeepPartial<Settings>, I>>(object: I): Settings {
     const message = createBaseSettings();
-    message.openRouterProviderSorting = object.openRouterProviderSorting ?? undefined;
     message.planModeApiModelId = object.planModeApiModelId ?? undefined;
     message.planModeThinkingBudgetTokens = object.planModeThinkingBudgetTokens ?? undefined;
     message.planModeReasoningEffort = object.planModeReasoningEffort ?? undefined;
-    message.planModeOpenRouterModelId = object.planModeOpenRouterModelId ?? undefined;
-    message.planModeOpenRouterModelInfo =
-      (object.planModeOpenRouterModelInfo !== undefined && object.planModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeOpenRouterModelInfo)
-        : undefined;
     message.planModeNousResearchModelId = object.planModeNousResearchModelId ?? undefined;
     message.actModeApiModelId = object.actModeApiModelId ?? undefined;
     message.actModeThinkingBudgetTokens = object.actModeThinkingBudgetTokens ?? undefined;
     message.actModeReasoningEffort = object.actModeReasoningEffort ?? undefined;
-    message.actModeOpenRouterModelId = object.actModeOpenRouterModelId ?? undefined;
-    message.actModeOpenRouterModelInfo =
-      (object.actModeOpenRouterModelInfo !== undefined && object.actModeOpenRouterModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeOpenRouterModelInfo)
-        : undefined;
     message.actModeNousResearchModelId = object.actModeNousResearchModelId ?? undefined;
     message.planModeApiProvider = object.planModeApiProvider ?? undefined;
     message.actModeApiProvider = object.actModeApiProvider ?? undefined;
@@ -6262,7 +6124,7 @@ export const Settings: MessageFns<Settings> = {
     message.planModeDietCodeModelId = object.planModeDietCodeModelId ?? undefined;
     message.planModeDietCodeModelInfo =
       (object.planModeDietCodeModelInfo !== undefined && object.planModeDietCodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeDietCodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeDietCodeModelInfo)
         : undefined;
     message.planModeOpenAiModelId = object.planModeOpenAiModelId ?? undefined;
     message.planModeOpenAiModelInfo =
@@ -6279,7 +6141,7 @@ export const Settings: MessageFns<Settings> = {
     message.planModeRequestyModelId = object.planModeRequestyModelId ?? undefined;
     message.planModeRequestyModelInfo =
       (object.planModeRequestyModelInfo !== undefined && object.planModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeRequestyModelInfo)
         : undefined;
     message.planModeTogetherModelId = object.planModeTogetherModelId ?? undefined;
     message.planModeFireworksModelId = object.planModeFireworksModelId ?? undefined;
@@ -6288,22 +6150,22 @@ export const Settings: MessageFns<Settings> = {
     message.planModeGroqModelId = object.planModeGroqModelId ?? undefined;
     message.planModeGroqModelInfo =
       (object.planModeGroqModelInfo !== undefined && object.planModeGroqModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeGroqModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeGroqModelInfo)
         : undefined;
     message.planModeBasetenModelId = object.planModeBasetenModelId ?? undefined;
     message.planModeBasetenModelInfo =
       (object.planModeBasetenModelInfo !== undefined && object.planModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeBasetenModelInfo)
         : undefined;
     message.planModeHuggingFaceModelId = object.planModeHuggingFaceModelId ?? undefined;
     message.planModeHuggingFaceModelInfo =
       (object.planModeHuggingFaceModelInfo !== undefined && object.planModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuggingFaceModelInfo)
         : undefined;
     message.planModeHuaweiCloudMaasModelId = object.planModeHuaweiCloudMaasModelId ?? undefined;
     message.planModeHuaweiCloudMaasModelInfo =
       (object.planModeHuaweiCloudMaasModelInfo !== undefined && object.planModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.planModeOcaModelId = object.planModeOcaModelId ?? undefined;
     message.planModeOcaModelInfo = (object.planModeOcaModelInfo !== undefined && object.planModeOcaModelInfo !== null)
@@ -6318,12 +6180,12 @@ export const Settings: MessageFns<Settings> = {
     message.planModeHicapModelId = object.planModeHicapModelId ?? undefined;
     message.planModeHicapModelInfo =
       (object.planModeHicapModelInfo !== undefined && object.planModeHicapModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeHicapModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeHicapModelInfo)
         : undefined;
     message.planModeVercelAiGatewayModelId = object.planModeVercelAiGatewayModelId ?? undefined;
     message.planModeVercelAiGatewayModelInfo =
       (object.planModeVercelAiGatewayModelInfo !== undefined && object.planModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeVercelAiGatewayModelInfo)
         : undefined;
     message.geminiActModeThinkingLevel = object.geminiActModeThinkingLevel ?? undefined;
     message.actModeVerbosity = object.actModeVerbosity ?? undefined;
@@ -6336,7 +6198,7 @@ export const Settings: MessageFns<Settings> = {
     message.actModeDietCodeModelId = object.actModeDietCodeModelId ?? undefined;
     message.actModeDietCodeModelInfo =
       (object.actModeDietCodeModelInfo !== undefined && object.actModeDietCodeModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeDietCodeModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeDietCodeModelInfo)
         : undefined;
     message.actModeOpenAiModelId = object.actModeOpenAiModelId ?? undefined;
     message.actModeOpenAiModelInfo =
@@ -6353,7 +6215,7 @@ export const Settings: MessageFns<Settings> = {
     message.actModeRequestyModelId = object.actModeRequestyModelId ?? undefined;
     message.actModeRequestyModelInfo =
       (object.actModeRequestyModelInfo !== undefined && object.actModeRequestyModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeRequestyModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeRequestyModelInfo)
         : undefined;
     message.actModeTogetherModelId = object.actModeTogetherModelId ?? undefined;
     message.actModeFireworksModelId = object.actModeFireworksModelId ?? undefined;
@@ -6361,22 +6223,22 @@ export const Settings: MessageFns<Settings> = {
     message.actModeSapAiCoreDeploymentId = object.actModeSapAiCoreDeploymentId ?? undefined;
     message.actModeGroqModelId = object.actModeGroqModelId ?? undefined;
     message.actModeGroqModelInfo = (object.actModeGroqModelInfo !== undefined && object.actModeGroqModelInfo !== null)
-      ? OpenRouterModelInfo.fromPartial(object.actModeGroqModelInfo)
+      ? ProviderModelInfo.fromPartial(object.actModeGroqModelInfo)
       : undefined;
     message.actModeBasetenModelId = object.actModeBasetenModelId ?? undefined;
     message.actModeBasetenModelInfo =
       (object.actModeBasetenModelInfo !== undefined && object.actModeBasetenModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeBasetenModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeBasetenModelInfo)
         : undefined;
     message.actModeHuggingFaceModelId = object.actModeHuggingFaceModelId ?? undefined;
     message.actModeHuggingFaceModelInfo =
       (object.actModeHuggingFaceModelInfo !== undefined && object.actModeHuggingFaceModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuggingFaceModelInfo)
         : undefined;
     message.actModeHuaweiCloudMaasModelId = object.actModeHuaweiCloudMaasModelId ?? undefined;
     message.actModeHuaweiCloudMaasModelInfo =
       (object.actModeHuaweiCloudMaasModelInfo !== undefined && object.actModeHuaweiCloudMaasModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHuaweiCloudMaasModelInfo)
         : undefined;
     message.actModeOcaModelId = object.actModeOcaModelId ?? undefined;
     message.actModeOcaModelInfo = (object.actModeOcaModelInfo !== undefined && object.actModeOcaModelInfo !== null)
@@ -6391,35 +6253,37 @@ export const Settings: MessageFns<Settings> = {
     message.actModeHicapModelId = object.actModeHicapModelId ?? undefined;
     message.actModeHicapModelInfo =
       (object.actModeHicapModelInfo !== undefined && object.actModeHicapModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeHicapModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeHicapModelInfo)
         : undefined;
     message.actModeVercelAiGatewayModelId = object.actModeVercelAiGatewayModelId ?? undefined;
     message.actModeVercelAiGatewayModelInfo =
       (object.actModeVercelAiGatewayModelInfo !== undefined && object.actModeVercelAiGatewayModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeVercelAiGatewayModelInfo)
         : undefined;
     message.hicapModelId = object.hicapModelId ?? undefined;
     message.lmStudioModelId = object.lmStudioModelId ?? undefined;
     message.planModeClinePassModelId = object.planModeClinePassModelId ?? undefined;
     message.planModeClinePassModelInfo =
       (object.planModeClinePassModelInfo !== undefined && object.planModeClinePassModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeClinePassModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeClinePassModelInfo)
         : undefined;
     message.actModeClinePassModelId = object.actModeClinePassModelId ?? undefined;
     message.actModeClinePassModelInfo =
       (object.actModeClinePassModelInfo !== undefined && object.actModeClinePassModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeClinePassModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeClinePassModelInfo)
         : undefined;
     message.modEnabled = object.modEnabled ?? undefined;
     message.modOutcome = object.modOutcome ?? undefined;
     message.planModeNousResearchModelInfo =
       (object.planModeNousResearchModelInfo !== undefined && object.planModeNousResearchModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromPartial(object.planModeNousResearchModelInfo)
         : undefined;
     message.actModeNousResearchModelInfo =
       (object.actModeNousResearchModelInfo !== undefined && object.actModeNousResearchModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.actModeNousResearchModelInfo)
+        ? ProviderModelInfo.fromPartial(object.actModeNousResearchModelInfo)
         : undefined;
+    message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
+    message.joyZoningSteeringEnabled = object.joyZoningSteeringEnabled ?? undefined;
     message.openAiHeaders = (globalThis.Object.entries(object.openAiHeaders ?? {}) as [string, string][]).reduce(
       (acc: { [key: string]: string }, [key, value]: [string, string]) => {
         if (value !== undefined) {
@@ -6429,8 +6293,6 @@ export const Settings: MessageFns<Settings> = {
       },
       {},
     );
-    message.tokenCompressionEnabled = object.tokenCompressionEnabled ?? undefined;
-    message.joyZoningSteeringEnabled = object.joyZoningSteeringEnabled ?? undefined;
     return message;
   },
 };

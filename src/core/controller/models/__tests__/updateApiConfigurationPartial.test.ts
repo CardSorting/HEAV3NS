@@ -8,8 +8,8 @@ import { updateApiConfigurationPartial } from "../updateApiConfigurationPartial"
 describe("updateApiConfigurationPartial", () => {
 	it("does not revert xai-oauth when a later credential update omits provider fields", async () => {
 		let configuration: ApiConfiguration = {
-			planModeApiProvider: "openrouter",
-			actModeApiProvider: "openrouter",
+			planModeApiProvider: "anthropic",
+			actModeApiProvider: "anthropic",
 		}
 
 		const controller = {
@@ -117,8 +117,8 @@ describe("updateApiConfigurationPartial", () => {
 
 	it("normalizes Cerebras credentials and honors the proto immediate-flush flag", async () => {
 		let configuration: ApiConfiguration = {
-			planModeApiProvider: "openrouter",
-			actModeApiProvider: "openrouter",
+			planModeApiProvider: "anthropic",
+			actModeApiProvider: "anthropic",
 		}
 		let flushCount = 0
 

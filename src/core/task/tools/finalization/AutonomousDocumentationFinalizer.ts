@@ -825,9 +825,6 @@ function buildCommonPitfallsSection(snapshot: AgentPlaybookWorkspaceSnapshot): s
 		snapshot.workspaces.length
 			? "Do not assume a single-package layout; this workspace declares package workspaces."
 			: undefined,
-		snapshot.topLevelEntries.includes("webview-ui/")
-			? "Do not assume extension-host and webview validation are the same; `webview-ui/` has its own surface."
-			: undefined,
 		snapshot.hasRoadmap ? "Do not make long-horizon steering changes without checking `ROADMAP.md`." : undefined,
 		"Do not add generic troubleshooting. Tie every pitfall to this workspace's files, scripts, or observed failures.",
 	].filter((item): item is string => Boolean(item))

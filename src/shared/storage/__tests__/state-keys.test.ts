@@ -248,7 +248,7 @@ describe("State Keys Type Safety", () => {
 
 		it("should correctly identify Secret keys", () => {
 			// Sample known secret keys
-			const knownSecretKeys = ["apiKey", "openRouterApiKey", "awsAccessKey"]
+			const knownSecretKeys = ["apiKey", "dietcodeAccountId", "awsAccessKey"]
 
 			for (const key of knownSecretKeys) {
 				expect(isSecretKey(key), `${key} should be a SecretKey`).to.be.true

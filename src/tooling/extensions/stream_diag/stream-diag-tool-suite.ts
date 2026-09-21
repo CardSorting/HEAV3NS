@@ -47,7 +47,7 @@ export class StreamDiagToolSuite {
         parameters: {
           provider: {
             type: "string",
-            description: "Inference provider name (e.g. 'openrouter', 'anthropic').",
+            description: "Inference provider name (e.g. 'openai-codex', 'anthropic').",
             required: true,
           },
           model: {
@@ -74,7 +74,7 @@ export class StreamDiagToolSuite {
 
           const attempt = this.supervisor.startAttempt(provider, model);
           this.supervisor.captureResponse(attempt.attemptId, 200, {
-            "x-openrouter-provider": provider,
+            "x-provider": provider,
             "cf-ray": "mock-cf-ray-12345",
           });
 

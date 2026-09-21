@@ -11,7 +11,7 @@ export interface TokenBufferOptions {
 
 /**
  * TokenIngestionBufferEngine: A centralized context and token optimization engine
- * shared across all LLM providers (Cerebras, Anthropic, OpenRouter, OpenAI, Gemini, Bedrock, etc.).
+ * shared across all LLM providers (Cerebras, Anthropic, OpenAI, Gemini, Bedrock, etc.).
  *
  * Responsibilities:
  * 1. Single-Turn Vision Payload Eviction (pruneHistoricalVisionPayloads)
@@ -269,7 +269,7 @@ export class TokenIngestionBufferEngine {
 
 	/**
 	 * Automatically applies ephemeral prompt cache control markers ({ cache_control: { type: "ephemeral" } })
-	 * to the last two user messages for providers supporting explicit prompt caching (Anthropic, OpenRouter, MiniMax).
+	 * to the last two user messages for providers supporting explicit prompt caching (Anthropic, MiniMax).
 	 */
 	public applyEphemeralCacheControl<T extends { role?: string; content?: unknown }>(messages: T[]): T[] {
 		const userIndices: number[] = []
@@ -529,7 +529,7 @@ export const TokenBufferProfiles = {
 		enableDslCompression: true,
 		maxToolOutputLength: 700,
 	}),
-	/** Profile optimized for explicit ephemeral prompt caching (Anthropic, OpenRouter, MiniMax) */
+	/** Profile optimized for explicit ephemeral prompt caching (Anthropic, MiniMax) */
 	EPHEMERAL_PROMPT_CACHE: new TokenIngestionBufferEngine({
 		activeVisionWindow: 1,
 		keepFullToolTurns: 2,

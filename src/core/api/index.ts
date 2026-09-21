@@ -2,7 +2,6 @@ import { ApiConfiguration } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { Logger } from "@/shared/services/Logger"
 import { OpenAiCodexHandler } from "./providers/openai-codex"
-import { OpenRouterHandler } from "./providers/openrouter"
 import { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, SingleCompletionHandler } from "./types"
 
 // Re-export the API handler contract for backward compatibility.
@@ -10,29 +9,19 @@ import { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, 
 export type { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, SingleCompletionHandler }
 
 function createHandlerForProvider(
-	apiProvider: string | undefined,
+	_apiProvider: string | undefined,
 	options: Omit<ApiConfiguration, "apiProvider">,
 	mode: Mode,
 ): ApiHandler {
-	if (apiProvider === "openai-codex") {
-		return new OpenAiCodexHandler({
-			onRetryAttempt: options.onRetryAttempt,
-			openAiCodexOauthCredentials: options.openaiCodexOauthCredentials,
-			openAiCodexModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-			thinkingBudgetTokens:
-				mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-		})
-	}
-
-	return new OpenRouterHandler({
+	// OpenAI Codex is the only supported runtime provider. Persisted provider
+	// values from older installations are intentionally ignored here so a stale
+	// provider selection can never route a turn to an unsupported transport.
+	return new OpenAiCodexHandler({
 		onRetryAttempt: options.onRetryAttempt,
-		openRouterApiKey: options.openRouterApiKey,
-		openRouterModelId: mode === "plan" ? options.planModeOpenRouterModelId : options.actModeOpenRouterModelId,
-		openRouterModelInfo: mode === "plan" ? options.planModeOpenRouterModelInfo : options.actModeOpenRouterModelInfo,
+		openAiCodexOauthCredentials: options.openaiCodexOauthCredentials,
+		openAiCodexModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
 		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-		thinkingBudgetTokens:
-			mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
+		thinkingBudgetTokens: mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
 	})
 }
 
@@ -69,7 +58,8 @@ export function buildApiHandler(configuration: ApiConfiguration, mode: Mode): Ap
 		return createHandlerForProvider(apiProvider, options, mode)
 	} catch (error) {
 		Logger.error("buildApiHandler: CRITICAL failure in createHandlerForProvider", error)
-		// Fallback to the supported OpenRouter handler.
-		return createHandlerForProvider("openrouter", options, mode)
+		// Retry with the sole supported provider rather than reviving a legacy
+		// provider as a fallback.
+		return createHandlerForProvider("openai-codex", options, mode)
 	}
 }

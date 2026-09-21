@@ -2,7 +2,6 @@ import type { Anthropic } from "@anthropic-ai/sdk"
 import { SpiderEngine } from "@core/policy/spider/SpiderEngine"
 import { StateManager } from "@core/storage/StateManager"
 import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
-import type { ModelInfo } from "@shared/api"
 import { ChatContent } from "@shared/ChatContent"
 import type { ExtensionState } from "@shared/ExtensionMessage"
 import type { HistoryItem } from "@shared/HistoryItem"
@@ -86,7 +85,6 @@ export interface IController {
 
 	// ─── Workspace / models / marketplace ───
 	ensureWorkspaceManager(): Promise<WorkspaceRootManager | undefined>
-	readOpenRouterModels(): Promise<Record<string, ModelInfo> | undefined>
 	refreshMcpMarketplace(sendCatalogEvent: boolean): Promise<McpMarketplaceCatalog | undefined>
 
 	// ─── Auth ───

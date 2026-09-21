@@ -1,7 +1,7 @@
 import type { IController as Controller } from "@core/controller/types"
 import { huggingFaceModels } from "@shared/api"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog, ProviderModelInfo } from "@shared/proto/dietcode/models"
 import { fileExistsAtPath } from "@utils/fs"
 import axios from "axios"
 import fs from "fs/promises"
@@ -16,13 +16,10 @@ import { Logger } from "@/shared/services/Logger"
  * @param request Empty request object
  * @returns Response containing the Hugging Face models
  */
-export async function refreshHuggingFaceModels(
-	_controller: Controller,
-	_request: EmptyRequest,
-): Promise<OpenRouterCompatibleModelInfo> {
+export async function refreshHuggingFaceModels(_controller: Controller, _request: EmptyRequest): Promise<ProviderModelCatalog> {
 	const huggingFaceModelsFilePath = path.join(await ensureCacheDirectoryExists(), "huggingface_models.json")
 
-	let models: Record<string, OpenRouterModelInfo> = {}
+	let models: Record<string, ProviderModelInfo> = {}
 
 	try {
 		// Fetch models from Hugging Face API
@@ -34,10 +31,10 @@ export async function refreshHuggingFaceModels(
 		if (response.data?.data) {
 			const rawModels = response.data.data
 
-			// Transform HF models to OpenRouter-compatible format
+			// Transform HF models to the shared provider catalog format
 			for (const rawModel of rawModels) {
 				const providersList = rawModel.providers?.map((provider: { provider: string }) => provider.provider)?.join(", ")
-				const modelInfo = OpenRouterModelInfo.create({
+				const modelInfo = ProviderModelInfo.create({
 					maxTokens: 8192, // HF doesn't provide max_tokens, use default
 					contextWindow: 128_000, // FIXME: HF doesn't provide context window, use default
 					supportsImages: false, // Most models don't support images
@@ -84,7 +81,7 @@ export async function refreshHuggingFaceModels(
 		// If no cache available, use static models as fallback
 		if (Object.keys(models).length === 0) {
 			for (const [modelId, modelInfo] of Object.entries(huggingFaceModels)) {
-				models[modelId] = OpenRouterModelInfo.create({
+				models[modelId] = ProviderModelInfo.create({
 					maxTokens: modelInfo.maxTokens,
 					contextWindow: modelInfo.contextWindow,
 					supportsImages: modelInfo.supportsImages,
@@ -99,5 +96,5 @@ export async function refreshHuggingFaceModels(
 		}
 	}
 
-	return OpenRouterCompatibleModelInfo.create({ models })
+	return ProviderModelCatalog.create({ models })
 }

@@ -1944,14 +1944,6 @@ export const AccountServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    openrouterAuthClicked: {
-      name: "openrouterAuthClicked",
-      requestType: EmptyRequest as typeof EmptyRequest,
-      requestStream: false,
-      responseType: Empty as typeof Empty,
-      responseStream: false,
-      options: {},
-    },
     requestyAuthClicked: {
       name: "requestyAuthClicked",
       requestType: StringRequest as typeof StringRequest,
@@ -2138,15 +2130,6 @@ export const AccountServiceService = {
     responseSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer): Empty => Empty.decode(value),
   },
-  openrouterAuthClicked: {
-    path: "/dietcode.AccountService/openrouterAuthClicked" as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
-    responseSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Empty => Empty.decode(value),
-  },
   requestyAuthClicked: {
     path: "/dietcode.AccountService/requestyAuthClicked" as const,
     requestStream: false as const,
@@ -2270,7 +2253,6 @@ export interface AccountServiceServer extends UntypedServiceImplementation {
    */
   getUserOrganizations: handleUnaryCall<EmptyRequest, UserOrganizationsResponse>;
   setUserOrganization: handleUnaryCall<UserOrganizationUpdateRequest, Empty>;
-  openrouterAuthClicked: handleUnaryCall<EmptyRequest, Empty>;
   requestyAuthClicked: handleUnaryCall<StringRequest, Empty>;
   hicapAuthClicked: handleUnaryCall<EmptyRequest, Empty>;
   googleAuthClicked: handleUnaryCall<EmptyRequest, Empty>;
@@ -2421,21 +2403,6 @@ export interface AccountServiceClient extends Client {
   ): ClientUnaryCall;
   setUserOrganization(
     request: UserOrganizationUpdateRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  openrouterAuthClicked(
-    request: EmptyRequest,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  openrouterAuthClicked(
-    request: EmptyRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  openrouterAuthClicked(
-    request: EmptyRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,

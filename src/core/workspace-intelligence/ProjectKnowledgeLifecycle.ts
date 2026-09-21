@@ -3000,7 +3000,7 @@ function knowledgeTerms(text: string): string[] {
 function extractTaskPaths(text: string): string[] {
 	const candidates =
 		text.match(
-			/(?:^|[\s`"'(])(?:\.wiki|src|docs|scripts|tests?|packages|webview-ui)\/[A-Za-z0-9_.*{}[\]-]+(?:\/[A-Za-z0-9_.*{}[\]-]+)*/g,
+			/(?:^|[\s`"'(])(?:\.wiki|src|docs|scripts|tests?|packages)\/[A-Za-z0-9_.*{}[\]-]+(?:\/[A-Za-z0-9_.*{}[\]-]+)*/g,
 		) ?? []
 	return Array.from(
 		new Set(

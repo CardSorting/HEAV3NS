@@ -22,7 +22,7 @@ npm install && npm run build
 ```
 
 ### Step 2: Configure Your Provider (Guided Wizard)
-Set up your LLM credentials (OpenAI Codex with OAuth PKCE, OpenRouter, Anthropic, or local endpoints):
+Set up your LLM credentials (OpenAI Codex with OAuth PKCE, Anthropic, or local endpoints):
 ```bash
 npx tsx src/index.ts --setup
 ```
@@ -213,10 +213,10 @@ Exposing verbose JSON schemas can consume context. LUMI's `ToolSchemaCompressor`
 ## 🌐 Model Providers (FAQ)
 
 ### Q: Which LLM provider is supported in LUMI?
-LUMI uses **OpenRouter** (`openrouter`) as its supported API provider, with OpenAI Codex OAuth retained for compatible account flows.
+LUMI currently focuses on **OpenAI Codex** with OAuth PKCE, plus configured local or custom endpoints.
 
-### Q: How do I configure my OpenRouter API key?
-Run `npx tsx src/index.ts --setup` (or press `Ctrl+P` / type `/setup` inside the TUI), or set `export OPENROUTER_API_KEY="your-key"` in your shell.
+### Q: How do I configure credentials?
+Run `npx tsx src/index.ts --setup` (or press `Ctrl+P` / type `/setup` inside the TUI) and follow the guided setup.
 
 ---
 

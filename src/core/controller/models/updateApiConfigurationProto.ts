@@ -48,9 +48,6 @@ export async function updateApiConfigurationProto(
 
 			// Convert ModelInfo objects (empty arrays → undefined)
 			// Plan Mode
-			planModeOpenRouterModelInfo: protoApiConfiguration.planModeOpenRouterModelInfo
-				? fromProtobufModelInfo(protoApiConfiguration.planModeOpenRouterModelInfo)
-				: undefined,
 			planModeDietcodeModelInfo: protoApiConfiguration.planModeDietcodeModelInfo
 				? fromProtobufModelInfo(protoApiConfiguration.planModeDietcodeModelInfo)
 				: undefined,
@@ -86,9 +83,6 @@ export async function updateApiConfigurationProto(
 				: undefined,
 
 			// Act Mode
-			actModeOpenRouterModelInfo: protoApiConfiguration.actModeOpenRouterModelInfo
-				? fromProtobufModelInfo(protoApiConfiguration.actModeOpenRouterModelInfo)
-				: undefined,
 			actModeDietcodeModelInfo: protoApiConfiguration.actModeDietcodeModelInfo
 				? fromProtobufModelInfo(protoApiConfiguration.actModeDietcodeModelInfo)
 				: undefined,

@@ -10,7 +10,7 @@ export type { DietCodeToolSpec, DietCodeToolSpecParameter }
 
 /**
  * Converts a DietCodeToolSpec into an OpenAI ChatCompletionTool definition
- * Docs: https://openrouter.ai/docs/features/tool-calling#step-1-inference-request-with-tools
+ * Uses the OpenAI Chat Completions tool-calling schema.
  */
 export function toolSpecFunctionDefinition(tool: DietCodeToolSpec, context: SystemPromptContext): OpenAITool {
 	// Check if the tool should be included based on context requirements

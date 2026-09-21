@@ -138,7 +138,8 @@ export function convertToOpenAiMessages(
 				// "Messages following `tool_use` blocks must begin with a matching number of `tool_result` blocks."
 				// Therefore we need to send these images after the tool result messages
 				// NOTE: it's actually okay to have multiple user messages in a row, the model will treat them as a continuation of the same input (this way works better than combining them into one message, since the tool result specifically mentions (see following user message for image)
-				// UPDATE v2.0: we don't use tools anymore, but if we did it's important to note that the openrouter prompt caching mechanism requires one user message at a time, so we would need to add these images to the user content array instead.
+				// Keep image content in a separate user message so compatible gateways receive
+				// the same message shape as the preceding tool result.
 				if (toolResultImages.length > 0) {
 					openAiMessages.push({
 						role: "user",
@@ -223,7 +224,7 @@ export function convertToOpenAiMessages(
 					if (toolDetails) {
 						if (Array.isArray(toolDetails)) {
 							// For Gemini: reasoning details must be linkable back to the tool call.
-							// Sometimes OpenRouter/Gemini returns entries without `id`; those poison the next request.
+							// Some compatible gateways return entries without `id`; those poison the next request.
 							// Keep only entries with an id matching the tool call id.
 							// See: https://github.com/dietcode/dietcode/issues/8214
 							const validDetails = toolDetails.filter((detail: any) => detail?.id === toolId)
@@ -275,10 +276,8 @@ export function convertToOpenAiMessages(
 	return openAiMessages
 }
 
-// Type for OpenRouter's reasoning detail elements
-// https://openrouter.ai/docs/use-cases/reasoning-tokens#streaming-response
+// Type for OpenAI-compatible reasoning detail elements.
 type ReasoningDetail = {
-	// https://openrouter.ai/docs/use-cases/reasoning-tokens#reasoning-detail-types
 	type: string // "reasoning.summary" | "reasoning.encrypted" | "reasoning.text"
 	text?: string
 	data?: string // Encrypted reasoning data
@@ -294,7 +293,7 @@ type ReasoningDetail = {
 	index?: number // Sequential index of the reasoning detail
 }
 
-// Helper function to convert reasoning_details array to the format OpenRouter API expects
+// Helper function to normalize reasoning_details arrays for OpenAI-compatible APIs
 // Takes an array of reasoning detail objects and consolidates them by index
 function consolidateReasoningDetails(reasoningDetails: ReasoningDetail[]): ReasoningDetail[] {
 	if (!reasoningDetails || reasoningDetails.length === 0) {

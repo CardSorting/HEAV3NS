@@ -295,14 +295,6 @@ export async function migrateLegacyApiConfigurationToModeSpecific(context: vscod
 				await context.globalState.update("planModeAwsBedrockCustomModelBaseId", awsBedrockCustomModelBaseId)
 				await context.globalState.update("actModeAwsBedrockCustomModelBaseId", awsBedrockCustomModelBaseId)
 			}
-			if (openRouterModelId !== undefined) {
-				await context.globalState.update("planModeOpenRouterModelId", openRouterModelId)
-				await context.globalState.update("actModeOpenRouterModelId", openRouterModelId)
-			}
-			if (openRouterModelInfo !== undefined) {
-				await context.globalState.update("planModeOpenRouterModelInfo", openRouterModelInfo)
-				await context.globalState.update("actModeOpenRouterModelInfo", openRouterModelInfo)
-			}
 			if (openAiModelId !== undefined) {
 				await context.globalState.update("planModeOpenAiModelId", openAiModelId)
 				await context.globalState.update("actModeOpenAiModelId", openAiModelId)
@@ -387,12 +379,6 @@ export async function migrateLegacyApiConfigurationToModeSpecific(context: vscod
 			}
 			if (awsBedrockCustomModelBaseId !== undefined) {
 				await context.globalState.update("planModeAwsBedrockCustomModelBaseId", awsBedrockCustomModelBaseId)
-			}
-			if (openRouterModelId !== undefined) {
-				await context.globalState.update("planModeOpenRouterModelId", openRouterModelId)
-			}
-			if (openRouterModelInfo !== undefined) {
-				await context.globalState.update("planModeOpenRouterModelInfo", openRouterModelInfo)
 			}
 			if (openAiModelId !== undefined) {
 				await context.globalState.update("planModeOpenAiModelId", openAiModelId)
@@ -483,14 +469,6 @@ export async function migrateLegacyApiConfigurationToModeSpecific(context: vscod
 			}
 
 			// For fields without previous variants, use current values for act mode
-			if (previousModeModelInfo !== undefined) {
-				await context.globalState.update("actModeOpenRouterModelInfo", previousModeModelInfo)
-			} else if (openRouterModelInfo !== undefined) {
-				await context.globalState.update("actModeOpenRouterModelInfo", openRouterModelInfo)
-			}
-			if (openRouterModelId !== undefined) {
-				await context.globalState.update("actModeOpenRouterModelId", openRouterModelId)
-			}
 			if (openAiModelId !== undefined) {
 				await context.globalState.update("actModeOpenAiModelId", openAiModelId)
 			}

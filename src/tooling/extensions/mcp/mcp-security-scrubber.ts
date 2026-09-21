@@ -21,7 +21,6 @@ export class McpSecurityScrubber {
     "MYSQL_PWD",
     "HERMES_API_KEY",
     "LUMI_AUTH_TOKEN",
-    "OPENROUTER_API_KEY",
     "GROQ_API_KEY",
     "COHERE_API_KEY",
     "TAVILY_API_KEY",

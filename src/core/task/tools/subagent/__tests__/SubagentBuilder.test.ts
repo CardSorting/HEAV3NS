@@ -38,7 +38,6 @@ function createTaskConfig(
 					actModeApiModelId: "act-default",
 					planModeApiModelId: "plan-default",
 					actModeOpenAiModelId: "openai-act-default",
-					planModeOpenRouterModelId: "openrouter-plan-default",
 				}),
 			},
 		},
@@ -156,15 +155,15 @@ describe("SubagentBuilder", () => {
 		assert.doesNotMatch(prompt, /Every file you modify must respect|DOMAIN-FIRST|src\/domain\//)
 	})
 
-	it("applies plan-mode openrouter model override fields", () => {
+	it("applies plan-mode model override fields", () => {
 		sinon.stub(AgentConfigLoader, "getInstance").returns({
 			getCachedConfig: (subagentName?: string) =>
-				subagentName === "openrouter-agent"
+				subagentName === "codex-agent"
 					? {
-							name: "openrouter-agent",
-							description: "openrouter plan agent",
+							name: "codex-agent",
+							description: "Codex plan agent",
 							tools: [DietCodeDefaultTool.FILE_READ],
-							modelId: "openrouter/custom-model",
+							modelId: "gpt-5-codex",
 							systemPrompt: "plan system",
 						}
 					: undefined,
@@ -175,12 +174,11 @@ describe("SubagentBuilder", () => {
 			createMessage: sinon.stub(),
 		} as never)
 
-		new SubagentBuilder(createTaskConfig("plan", "openrouter"), "openrouter-agent")
+		new SubagentBuilder(createTaskConfig("plan", "openai-codex"), "codex-agent")
 
 		const [effectiveApiConfig, selectedMode] = buildApiHandlerStub.firstCall.args
 		assert.equal(selectedMode, "plan")
-		assert.equal((effectiveApiConfig as Record<string, unknown>).planModeOpenRouterModelId, "openrouter/custom-model")
-		assert.equal((effectiveApiConfig as Record<string, unknown>).planModeApiModelId, "plan-default")
+		assert.equal((effectiveApiConfig as Record<string, unknown>).planModeApiModelId, "gpt-5-codex")
 		assert.equal((effectiveApiConfig as Record<string, unknown>).actModeApiModelId, "act-default")
 	})
 

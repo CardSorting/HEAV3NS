@@ -153,7 +153,6 @@ export function extractProviderFromFieldName(fieldName) {
 	// Pattern 4: Provider name in the middle (e.g., openAiNativeApiKey) - check before generic pattern
 	const providerPatterns = [
 		{ pattern: "openainative", providerId: "openai-native" },
-		{ pattern: "openrouter", providerId: "openrouter" },
 		{ pattern: "openai", providerId: "openai" },
 		{ pattern: "gemini", providerId: "gemini" },
 		{ pattern: "deepseek", providerId: "deepseek" },
@@ -211,7 +210,6 @@ function normalizeProviderName(providerPart) {
 
 	// Handle special cases
 	const specialCases = {
-		"open-router": "openrouter",
 		"open-ai-native": "openai-native",
 		"open-ai": "openai",
 		"lite-llm": "litellm",
@@ -290,7 +288,6 @@ export function generateApiKeyDisplayName(fieldName) {
 		awsSessionToken: "AWS Session Token",
 		awsRegion: "AWS Region",
 		awsBedrockApiKey: "AWS Bedrock API Key",
-		openRouterApiKey: "OpenRouter API Key",
 		openAiApiKey: "OpenAI API Key",
 		openAiNativeApiKey: "OpenAI Native API Key",
 		geminiApiKey: "Gemini API Key",

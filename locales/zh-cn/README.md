@@ -47,7 +47,7 @@
 
 ### 使用任何 API 和模型
 
-Cline 支持 OpenRouter、Anthropic、OpenAI、Google Gemini、AWS Bedrock、Azure 和 GCP Vertex 等 API 提供商。你还可以配置任何兼容 OpenAI 的 API，或通过 LM Studio/Ollama 使用本地模型。如果你使用 OpenRouter，扩展会获取他们的最新模型列表，让你在新模型可用时立即使用。
+Cline 支持 Anthropic、OpenAI、Google Gemini、AWS Bedrock、Azure 和 GCP Vertex 等 API 提供商。你还可以配置任何兼容 OpenAI 的 API，或通过 LM Studio/Ollama 使用本地模型。
 
 此外，该扩展还会记录整个任务流程中以及每次请求的总 token 数和 API 使用费用，确保你在每一步都能清楚了解花费情况。
 
@@ -159,4 +159,3 @@ Cline 所做的所有更改都会记录在你的文件时间轴中，提供了�
 ## 许可证
 
 [Apache 2.0 © 2025 Cline Bot Inc.](./LICENSE)
-

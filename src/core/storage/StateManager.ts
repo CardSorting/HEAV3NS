@@ -1,4 +1,5 @@
-import type { ApiConfiguration, ModelInfo } from "@shared/api"
+import type { ApiConfiguration, ApiProvider, ModelInfo } from "@shared/api"
+import { DEFAULT_API_PROVIDER } from "@shared/api-defaults"
 import {
 	ApiHandlerSettingsKeys,
 	type GlobalState,
@@ -108,7 +109,6 @@ export class StateManager {
 	// These are for dynamic providers that fetch models from APIs
 	private modelInfoCache: {
 		dietcodeModels: { data: Record<string, ModelInfo>; timestamp: number } | null
-		openRouterModels: { data: Record<string, ModelInfo>; timestamp: number } | null
 		groqModels: { data: Record<string, ModelInfo>; timestamp: number } | null
 		basetenModels: { data: Record<string, ModelInfo>; timestamp: number } | null
 		huggingFaceModels: { data: Record<string, ModelInfo>; timestamp: number } | null
@@ -121,7 +121,6 @@ export class StateManager {
 		nousResearchModels: { data: Record<string, ModelInfo>; timestamp: number } | null
 	} = {
 		dietcodeModels: null,
-		openRouterModels: null,
 		groqModels: null,
 		basetenModels: null,
 		huggingFaceModels: null,
@@ -638,7 +637,6 @@ export class StateManager {
 	setModelsCache(
 		provider:
 			| "dietcode"
-			| "openRouter"
 			| "groq"
 			| "baseten"
 			| "huggingFace"
@@ -672,7 +670,6 @@ export class StateManager {
 	getModelsCache(
 		provider:
 			| "dietcode"
-			| "openRouter"
 			| "groq"
 			| "baseten"
 			| "huggingFace"
@@ -700,7 +697,6 @@ export class StateManager {
 	 */
 	getModelInfo(
 		provider:
-			| "openRouter"
 			| "groq"
 			| "baseten"
 			| "huggingFace"
@@ -800,8 +796,20 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
+		// OpenRouter is no longer supported. Migrate only that legacy selection at
+		// the persistence boundary while keeping unrelated legacy settings intact.
+		const normalizedApiConfiguration: ApiConfiguration = {
+			...apiConfiguration,
+			planModeApiProvider:
+				apiConfiguration.planModeApiProvider === "openrouter"
+					? DEFAULT_API_PROVIDER
+					: apiConfiguration.planModeApiProvider,
+			actModeApiProvider:
+				apiConfiguration.actModeApiProvider === "openrouter" ? DEFAULT_API_PROVIDER : apiConfiguration.actModeApiProvider,
+		}
+
 		// Automatically categorize the API configuration keys
-		const { settingsUpdates, secretsUpdates } = Object.entries(apiConfiguration).reduce(
+		const { settingsUpdates, secretsUpdates } = Object.entries(normalizedApiConfiguration).reduce(
 			(acc, [key, value]) => {
 				if (key === undefined || value === undefined) {
 					return acc // Skip undefined values
@@ -1381,8 +1389,19 @@ export class StateManager {
 
 		// Build API handler settings object with task override support
 		const settings = Object.fromEntries(ApiHandlerSettingsKeys.map((key) => [key, this.getSettingWithOverride(key)]))
+		const normalizeApiProvider = (provider: unknown): ApiProvider | undefined => {
+			if (typeof provider !== "string") {
+				return undefined
+			}
+			return provider === "openrouter" ? DEFAULT_API_PROVIDER : provider
+		}
 
-		return { ...settings, ...secrets } satisfies ApiConfiguration
+		return {
+			...settings,
+			planModeApiProvider: normalizeApiProvider(settings.planModeApiProvider),
+			actModeApiProvider: normalizeApiProvider(settings.actModeApiProvider),
+			...secrets,
+		} satisfies ApiConfiguration
 	}
 
 	/**

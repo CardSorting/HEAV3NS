@@ -77,8 +77,8 @@ function inferProtoType(typeText, fieldName) {
 		["OpenAiCompatibleModelInfo", "OpenAiCompatibleModelInfo"],
 		["LiteLLMModelInfo", "LiteLLMModelInfo"],
 		["OcaModelInfo", "OcaModelInfo"],
-		// Generic ModelInfo last (catches OpenRouterModelInfo, etc.)
-		["ModelInfo", "OpenRouterModelInfo"],
+		// Generic ModelInfo last.
+		["ModelInfo", "ProviderModelInfo"],
 		// Other types - order matters for substring matching
 		["AutoApprovalSettings", "AutoApprovalSettings"],
 		["BrowserSettings", "BrowserSettings"],

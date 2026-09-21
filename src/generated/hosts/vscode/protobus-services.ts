@@ -11,7 +11,6 @@ import { getUserCredits } from "@core/controller/account/getUserCredits"
 import { getOrganizationCredits } from "@core/controller/account/getOrganizationCredits"
 import { getUserOrganizations } from "@core/controller/account/getUserOrganizations"
 import { setUserOrganization } from "@core/controller/account/setUserOrganization"
-import { openrouterAuthClicked } from "@core/controller/account/openrouterAuthClicked"
 import { requestyAuthClicked } from "@core/controller/account/requestyAuthClicked"
 import { hicapAuthClicked } from "@core/controller/account/hicapAuthClicked"
 import { googleAuthClicked } from "@core/controller/account/googleAuthClicked"
@@ -95,7 +94,6 @@ import { subscribeToMcpServers } from "@core/controller/mcp/subscribeToMcpServer
 import { getOllamaModels } from "@core/controller/models/getOllamaModels"
 import { getLmStudioModels } from "@core/controller/models/getLmStudioModels"
 import { getVsCodeLmModels } from "@core/controller/models/getVsCodeLmModels"
-import { refreshOpenRouterModelsRpc } from "@core/controller/models/refreshOpenRouterModelsRpc"
 import { refreshDietCodeRecommendedModelsRpc } from "@core/controller/models/refreshDietCodeRecommendedModelsRpc"
 import { refreshDietCodeModelsRpc } from "@core/controller/models/refreshDietCodeModelsRpc"
 import { refreshHuggingFaceModels } from "@core/controller/models/refreshHuggingFaceModels"
@@ -104,7 +102,6 @@ import { refreshOpenAiCodexModelsRpc } from "@core/controller/models/refreshOpen
 import { refreshRequestyModels } from "@core/controller/models/refreshRequestyModels"
 import { refreshHicapModels } from "@core/controller/models/refreshHicapModels"
 import { refreshLiteLlmModelsRpc } from "@core/controller/models/refreshLiteLlmModelsRpc"
-import { subscribeToOpenRouterModels } from "@core/controller/models/subscribeToOpenRouterModels"
 import { subscribeToLiteLlmModels } from "@core/controller/models/subscribeToLiteLlmModels"
 import { updateApiConfigurationProto } from "@core/controller/models/updateApiConfigurationProto"
 import { updateApiConfiguration } from "@core/controller/models/updateApiConfiguration"
@@ -216,7 +213,6 @@ const AccountServiceHandlers: serviceTypes.AccountServiceHandlers = {
     getOrganizationCredits: getOrganizationCredits,
     getUserOrganizations: getUserOrganizations,
     setUserOrganization: setUserOrganization,
-    openrouterAuthClicked: openrouterAuthClicked,
     requestyAuthClicked: requestyAuthClicked,
     hicapAuthClicked: hicapAuthClicked,
     googleAuthClicked: googleAuthClicked,
@@ -307,7 +303,6 @@ const ModelsServiceHandlers: serviceTypes.ModelsServiceHandlers = {
     getOllamaModels: getOllamaModels,
     getLmStudioModels: getLmStudioModels,
     getVsCodeLmModels: getVsCodeLmModels,
-    refreshOpenRouterModelsRpc: refreshOpenRouterModelsRpc,
     refreshDietCodeRecommendedModelsRpc: refreshDietCodeRecommendedModelsRpc,
     refreshDietCodeModelsRpc: refreshDietCodeModelsRpc,
     refreshHuggingFaceModels: refreshHuggingFaceModels,
@@ -316,7 +311,6 @@ const ModelsServiceHandlers: serviceTypes.ModelsServiceHandlers = {
     refreshRequestyModels: refreshRequestyModels,
     refreshHicapModels: refreshHicapModels,
     refreshLiteLlmModelsRpc: refreshLiteLlmModelsRpc,
-    subscribeToOpenRouterModels: subscribeToOpenRouterModels,
     subscribeToLiteLlmModels: subscribeToLiteLlmModels,
     updateApiConfigurationProto: updateApiConfigurationProto,
     updateApiConfiguration: updateApiConfiguration,

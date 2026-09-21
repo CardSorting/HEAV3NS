@@ -1,8 +1,0 @@
-{
-	"vscode": {
-		"messageEncoding": "none",
-		"showNavbar": false,
-		"postMessageHandler": "vscode",
-		"supportsTerminalMentions": true
-	}
-}

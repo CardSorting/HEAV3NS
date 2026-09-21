@@ -56,7 +56,7 @@ LUMI resolves these challenges with a **5-Layer Deterministic Tool Execution Eng
 Every tool in LUMI is defined using a clean, typed `ToolDefinition` interface. The `ToolSchemaSerializer` and `UniversalToolCallAdapter` translate declarations and wire payloads losslessly across all major LLM providers:
 
 ### Supported Provider Formats
-- **OpenAI & OpenRouter**: Serializes into `{ type: "function", function: { name, description, parameters, strict: true } }`. Invocations parse from `tool_calls: [{ id, function: { name, arguments } }]`.
+- **OpenAI-compatible providers**: Serializes into `{ type: "function", function: { name, description, parameters, strict: true } }`. Invocations parse from `tool_calls: [{ id, function: { name, arguments } }]`.
 - **Anthropic Claude**: Serializes into `{ name, description, input_schema }`. Invocations parse from `content: [{ type: "tool_use", id, name, input }]`.
 - **Google Gemini**: Serializes into `{ functionDeclarations: [{ name, description, parameters }] }`. Invocations parse from `functionCalls: [{ name, args }]`.
 - **Model Context Protocol (MCP)**: Serializes into standard `{ name, description, inputSchema }`.

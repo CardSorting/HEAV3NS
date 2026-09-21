@@ -1927,14 +1927,6 @@ export const AccountServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    openrouterAuthClicked: {
-      name: "openrouterAuthClicked",
-      requestType: EmptyRequest as typeof EmptyRequest,
-      requestStream: false,
-      responseType: Empty as typeof Empty,
-      responseStream: false,
-      options: {},
-    },
     requestyAuthClicked: {
       name: "requestyAuthClicked",
       requestType: StringRequest as typeof StringRequest,
@@ -2065,7 +2057,6 @@ export interface AccountServiceImplementation<CallContextExt = {}> {
     request: UserOrganizationUpdateRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<Empty>>;
-  openrouterAuthClicked(request: EmptyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
   requestyAuthClicked(request: StringRequest, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
   hicapAuthClicked(request: EmptyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
   googleAuthClicked(request: EmptyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
@@ -2132,7 +2123,6 @@ export interface AccountServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<UserOrganizationUpdateRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<Empty>;
-  openrouterAuthClicked(request: DeepPartial<EmptyRequest>, options?: CallOptions & CallOptionsExt): Promise<Empty>;
   requestyAuthClicked(request: DeepPartial<StringRequest>, options?: CallOptions & CallOptionsExt): Promise<Empty>;
   hicapAuthClicked(request: DeepPartial<EmptyRequest>, options?: CallOptions & CallOptionsExt): Promise<Empty>;
   googleAuthClicked(request: DeepPartial<EmptyRequest>, options?: CallOptions & CallOptionsExt): Promise<Empty>;

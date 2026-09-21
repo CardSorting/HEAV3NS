@@ -256,7 +256,7 @@ LUMI's tool infrastructure unifies multi-provider serialization, self-healing ar
 ```mermaid
 flowchart TD
     subgraph "1. Multi-Provider Model Invocations"
-        M1[OpenAI / OpenRouter: tool_calls]
+        M1[OpenAI-compatible: tool_calls]
         M2[Anthropic: tool_use]
         M3[Google Gemini: functionCall]
         M4[Model Context Protocol: mcp_request]

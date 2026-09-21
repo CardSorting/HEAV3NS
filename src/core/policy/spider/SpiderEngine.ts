@@ -70,7 +70,6 @@ export class SpiderEngine {
 			"@hosts/": "src/hosts/",
 			"@shared/": "src/shared/",
 			"@utils/": "src/utils/",
-			"@frontend/": "webview-ui/src/",
 			"@shared-utils/": "src/shared/utils/",
 		}
 	}

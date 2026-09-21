@@ -1,6 +1,6 @@
 import type { IController as Controller } from "@core/controller/types"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog } from "@shared/proto/dietcode/models"
 import { toProtobufModels } from "../../../shared/proto-conversions/models/typeConversion"
 import { refreshBasetenModels } from "./refreshBasetenModels"
 
@@ -10,12 +10,9 @@ import { refreshBasetenModels } from "./refreshBasetenModels"
  * @param request Empty request object
  * @returns Response containing Baseten models (protobuf types)
  */
-export async function refreshBasetenModelsRpc(
-	controller: Controller,
-	_request: EmptyRequest,
-): Promise<OpenRouterCompatibleModelInfo> {
+export async function refreshBasetenModelsRpc(controller: Controller, _request: EmptyRequest): Promise<ProviderModelCatalog> {
 	const models = await refreshBasetenModels(controller)
-	return OpenRouterCompatibleModelInfo.create({
+	return ProviderModelCatalog.create({
 		models: toProtobufModels(models),
 	})
 }

@@ -1930,14 +1930,6 @@ export const AccountServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    openrouterAuthClicked: {
-      name: "openrouterAuthClicked",
-      requestType: EmptyRequest as typeof EmptyRequest,
-      requestStream: false,
-      responseType: Empty as typeof Empty,
-      responseStream: false,
-      options: {},
-    },
     requestyAuthClicked: {
       name: "requestyAuthClicked",
       requestType: StringRequest as typeof StringRequest,

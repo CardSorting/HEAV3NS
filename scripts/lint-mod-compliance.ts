@@ -78,7 +78,7 @@ export function runMoDComplianceCheck(targetDir: string): { totalFilesScanned: n
 const isMainModule = process.argv[1] ? path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) : false
 
 if (isMainModule) {
-	const targetDirs = process.argv.slice(2).length > 0 ? process.argv.slice(2) : ["webview-ui/src"]
+	const targetDirs = process.argv.slice(2).length > 0 ? process.argv.slice(2) : ["src"]
 	console.log(`🔍 [MoD Compliance Linter] Scanning directories: ${targetDirs.join(", ")}...`)
 
 	let totalScanned = 0

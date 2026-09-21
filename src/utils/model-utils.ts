@@ -13,7 +13,6 @@ export function isNextGenModelProvider(providerInfo: ApiProviderInfo): boolean {
 		"bedrock",
 		"gemini",
 		"vertex",
-		"openrouter",
 		"openai",
 		"minimax",
 		"openai-native",
@@ -148,7 +147,7 @@ export function isMiMoModelFamily(id: string): boolean {
 
 export function isTrinityModelFamily(id: string): boolean {
 	const modelId = normalize(id)
-	// OpenRouter: arcee-ai/trinity-large-preview:free and other trinity variants
+	// Trinity model variants.
 	return modelId.includes("arcee-ai/trinity") || modelId.includes("trinity")
 }
 

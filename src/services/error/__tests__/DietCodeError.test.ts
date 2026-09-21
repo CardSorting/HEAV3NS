@@ -11,7 +11,7 @@ describe("DietCodeError", () => {
 			},
 		})
 
-		const error = new DietCodeError(new Error(rawPayload), "gpt-5.6-sol", "openrouter")
+		const error = new DietCodeError(new Error(rawPayload), "gpt-5.6-sol", "openai-codex")
 		should(error.message).equal(
 			"Compute capacity is temporarily constrained for this model. Automatic failover active. Please retry shortly.",
 		)
@@ -22,7 +22,7 @@ describe("DietCodeError", () => {
 	})
 
 	it("should strip HTTP status prefixes from raw error strings", () => {
-		const error = new DietCodeError(new Error("500 Server encountered a transient constraint"), "gpt-5.6-sol", "openrouter")
+		const error = new DietCodeError(new Error("500 Server encountered a transient constraint"), "gpt-5.6-sol", "openai-codex")
 		should(error.message).equal("Server encountered a transient constraint")
 	})
 
@@ -30,7 +30,7 @@ describe("DietCodeError", () => {
 		const error = new DietCodeError(
 			new Error('500 {"error":{"message":"Resource temporarily constrained","code":"capacity_constrained"}}'),
 			"gpt-5.6-sol",
-			"openrouter",
+			"openai-codex",
 		)
 		should(error.message).equal("Resource temporarily constrained")
 		should(error._error.code).equal("capacity_constrained")

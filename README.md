@@ -80,7 +80,7 @@ npx tsx src/index.ts --profile coder
 | **Typos in function or variable names** | Typo-Friendly Smart Matching | Finds what you're looking for even if you or the AI misspell the name. |
 | **Ghost servers locking a port** | Port Diagnostics | Reports and, where permitted, helps resolve port conflicts; it does not bypass host policy. |
 | **Expensive AI bills on long chats** | Context and Cache Telemetry | Exposes context behavior and cache signals; provider pricing and savings vary. |
-| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch between Claude (via OpenRouter) or ChatGPT (Codex) without losing context. |
+| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch among the supported OpenAI Codex models without losing context. |
 | **Want a custom AI teammate** | Drag & Drop Customization | Drop any notes or script files into a folder to create a personalized AI assistant. |
 
 ---

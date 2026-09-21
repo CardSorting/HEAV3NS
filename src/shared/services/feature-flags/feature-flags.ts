@@ -12,8 +12,7 @@ export enum FeatureFlag {
 	REMOTE_WELCOME_BANNERS = "remote-welcome-banners",
 	// Feature flag for upstream DietCode recommended model cards
 	DIETCODE_RECOMMENDED_MODELS_UPSTREAM = "dietcode-recommended-models-upstream",
-	// Rollout flag for DietCode provider model sourcing:
-	// off => OpenRouter model list, on => DietCode endpoint model list.
+	// Rollout flag for DietCode provider model sourcing.
 	EXTENSION_DIETCODE_MODELS_ENDPOINT = "extension_dietcode_models_endpoint",
 	// Use the websocket mode for OpenAI native Responses API format
 	OPENAI_RESPONSES_WEBSOCKET_MODE = "openai-responses-websocket-mode",

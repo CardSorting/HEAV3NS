@@ -311,18 +311,18 @@ describe("Storage & Memory Optimizations", () => {
 				"model-a": { name: "Model A" } as ModelInfo,
 			}
 
-			manager.setModelsCache("openRouter", sampleModelInfo)
-			expect(manager.getModelsCache("openRouter")).to.not.equal(null)
+			manager.setModelsCache("dietcode", sampleModelInfo)
+			expect(manager.getModelsCache("dietcode")).to.not.equal(null)
 
 			// Fast-forward timestamp to simulate expiration (> 1 hour)
 			const privateState = manager as unknown as { modelInfoCache: Record<string, { timestamp: number } | null> }
-			const cacheObj = privateState.modelInfoCache.openRouterModels
+			const cacheObj = privateState.modelInfoCache.dietcodeModels
 			if (cacheObj) {
 				cacheObj.timestamp = Date.now() - (60 * 60 * 1000 + 5000)
 			}
 
 			manager.purgeExpiredCaches()
-			expect(manager.getModelsCache("openRouter")).to.equal(null)
+			expect(manager.getModelsCache("dietcode")).to.equal(null)
 		})
 	})
 

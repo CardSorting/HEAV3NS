@@ -176,7 +176,7 @@ async function main(): Promise<void> {
     // Rollback to frame 10 (warm-up & best of 5 for multi-worker resilience)
     let bestRollbackDuration = Infinity;
     for (let i = 0; i < 5; i++) {
-      pool.addAccount({ id: "temp-1", provider: "openrouter", accountLabel: "T1", apiKeyMasked: "sk-...", priority: 1, weight: 1 });
+      pool.addAccount({ id: "temp-1", provider: "openai-codex", accountLabel: "Codex", apiKeyMasked: "sk-...", priority: 1, weight: 1 });
       const startRollback = performance.now();
       snapshotManager.restoreSnapshot(snapshot10);
       const dur = performance.now() - startRollback;

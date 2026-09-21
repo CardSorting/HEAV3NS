@@ -3,10 +3,6 @@
 		{
 			"value": "openai-codex",
 			"label": "OpenAI Codex"
-		},
-		{
-			"value": "openrouter",
-			"label": "OpenRouter"
 		}
 	]
 }

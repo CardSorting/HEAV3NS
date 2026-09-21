@@ -17,28 +17,24 @@ service ModelsService {
   rpc getLmStudioModels(StringRequest) returns (StringArray);
   // Fetches available models from VS Code LM API
   rpc getVsCodeLmModels(EmptyRequest) returns (VsCodeLmModelsArray);
-  // Refreshes and returns OpenRouter models
-  rpc refreshOpenRouterModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns recommended and free DietCode models
   rpc refreshDietCodeRecommendedModelsRpc(EmptyRequest) returns (DietCodeRecommendedModelsResponse);
   // Refreshes and returns DietCode provider models
-  rpc refreshDietCodeModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshDietCodeModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns Hugging Face models
-  rpc refreshHuggingFaceModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshHuggingFaceModels(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns OpenAI models
   rpc refreshOpenAiModels(OpenAiModelsRequest) returns (StringArray);
   // Refreshes and returns models from the authenticated OpenAI Codex session
-  rpc refreshOpenAiCodexModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshOpenAiCodexModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns Requesty models
-  rpc refreshRequestyModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshRequestyModels(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns Hicap models
-  rpc refreshHicapModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshHicapModels(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns LiteLLM models
-  rpc refreshLiteLlmModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
-  // Subscribe to OpenRouter models updates
-  rpc subscribeToOpenRouterModels(EmptyRequest) returns (stream OpenRouterCompatibleModelInfo);
+  rpc refreshLiteLlmModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Subscribe to LiteLLM models updates
-  rpc subscribeToLiteLlmModels(EmptyRequest) returns (stream OpenRouterCompatibleModelInfo);
+  rpc subscribeToLiteLlmModels(EmptyRequest) returns (stream ProviderModelCatalog);
   // Updates API configuration (legacy - uses combined configuration)
   rpc updateApiConfigurationProto(UpdateApiConfigurationRequest) returns (Empty);
   // Updates API configuration (new - uses separate options and secrets)
@@ -46,19 +42,19 @@ service ModelsService {
   // Updates API configuration with partial values (only updates fields that are explicitly set)
   rpc updateApiConfigurationPartial(UpdateApiConfigurationPartialRequest) returns (Empty);
   // Refreshes and returns Groq models
-  rpc refreshGroqModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshGroqModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns Baseten models
-  rpc refreshBasetenModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshBasetenModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Fetches available models from SAP AI Core
   rpc getSapAiCoreModels(SapAiCoreModelsRequest) returns (SapAiCoreModelsResponse);
   // Fetches available models from OCA
   rpc refreshOcaModels(StringRequest) returns (OcaCompatibleModelInfo);
   // Fetches available models from AIhubmix
-  rpc getAihubmixModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc getAihubmixModels(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns Vercel AI Gateway models
-  rpc refreshVercelAiGatewayModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshVercelAiGatewayModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
   // Refreshes and returns NousResearch models
-  rpc refreshNousResearchModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  rpc refreshNousResearchModelsRpc(EmptyRequest) returns (ProviderModelCatalog);
 }
 
 // List of VS Code LM models
@@ -96,8 +92,8 @@ message ModelTier {
   optional double cache_reads_price = 5;
 }
 
-// For OpenRouterCompatibleModelInfo structure in OpenRouterModels
-message OpenRouterModelInfo {
+// Shared provider model metadata used by the model catalog responses.
+message ProviderModelInfo {
   optional int64 max_tokens = 1;
   optional int64 context_window = 2;
   optional bool supports_images = 3;
@@ -117,8 +113,8 @@ message OpenRouterModelInfo {
 }
 
 // Shared response message for model information
-message OpenRouterCompatibleModelInfo {
-  map<string, OpenRouterModelInfo> models = 1;
+message ProviderModelCatalog {
+  map<string, ProviderModelInfo> models = 1;
 }
 
 message DietCodeRecommendedModel {
@@ -167,7 +163,7 @@ message ModelsApiSecrets {
   optional string api_key = 1;
   optional string dietcode_api_key = 2;
   optional string lite_llm_api_key = 3;
-  optional string open_router_api_key = 4;
+  reserved 4;
   optional string aws_access_key = 5;
   optional string aws_secret_key = 6;
   optional string aws_session_token = 7;
@@ -216,7 +212,7 @@ message ModelsApiOptions {
   optional bool lite_llm_use_prompt_cache = 3;
   map<string, string> open_ai_headers = 4;
   optional string anthropic_base_url = 5;
-  optional string open_router_provider_sorting = 6;
+  reserved 6;
   optional string aws_region = 7;
   optional bool aws_use_cross_region_inference = 8;
   optional bool aws_bedrock_use_prompt_cache = 9;
@@ -268,8 +264,7 @@ message ModelsApiOptions {
   optional LanguageModelChatSelector plan_mode_vs_code_lm_model_selector = 104;
   optional bool plan_mode_aws_bedrock_custom_selected = 105;
   optional string plan_mode_aws_bedrock_custom_model_base_id = 106;
-  optional string plan_mode_open_router_model_id = 107;
-  optional OpenRouterModelInfo plan_mode_open_router_model_info = 108;
+  reserved 107, 108;
   optional string plan_mode_open_ai_model_id = 109;
   optional OpenAiCompatibleModelInfo plan_mode_open_ai_model_info = 110;
   optional string plan_mode_ollama_model_id = 111;
@@ -277,27 +272,27 @@ message ModelsApiOptions {
   optional string plan_mode_lite_llm_model_id = 113;
   optional LiteLLMModelInfo plan_mode_lite_llm_model_info = 114;
   optional string plan_mode_requesty_model_id = 115;
-  optional OpenRouterModelInfo plan_mode_requesty_model_info = 116;
+  optional ProviderModelInfo plan_mode_requesty_model_info = 116;
   optional string plan_mode_together_model_id = 117;
   optional string plan_mode_fireworks_model_id = 118;
   optional string plan_mode_sap_ai_core_model_id = 119;
   optional string plan_mode_sap_ai_core_deployment_id = 120;
   optional string plan_mode_groq_model_id = 121;
-  optional OpenRouterModelInfo plan_mode_groq_model_info = 122;
+  optional ProviderModelInfo plan_mode_groq_model_info = 122;
   optional string plan_mode_hugging_face_model_id = 123;
-  optional OpenRouterModelInfo plan_mode_hugging_face_model_info = 124;
+  optional ProviderModelInfo plan_mode_hugging_face_model_info = 124;
   optional string plan_mode_huawei_cloud_maas_model_id = 125;
-  optional OpenRouterModelInfo plan_mode_huawei_cloud_maas_model_info = 126;
+  optional ProviderModelInfo plan_mode_huawei_cloud_maas_model_info = 126;
   optional string plan_mode_baseten_model_id = 127;
-  optional OpenRouterModelInfo plan_mode_baseten_model_info = 128;
+  optional ProviderModelInfo plan_mode_baseten_model_info = 128;
   optional string plan_mode_vercel_ai_gateway_model_id = 129;
-  optional OpenRouterModelInfo plan_mode_vercel_ai_gateway_model_info = 130;
+  optional ProviderModelInfo plan_mode_vercel_ai_gateway_model_info = 130;
   optional string plan_mode_oca_model_id = 131;
   optional OcaModelInfo plan_mode_oca_model_info = 132;
   optional string plan_mode_aihubmix_model_id = 133;
   optional OpenAiCompatibleModelInfo plan_mode_aihubmix_model_info = 134;
   optional string plan_mode_dietcode_model_id = 135;
-  optional OpenRouterModelInfo plan_mode_dietcode_model_info = 136;
+  optional ProviderModelInfo plan_mode_dietcode_model_info = 136;
 
   // Act mode configurations
   optional ApiProvider act_mode_api_provider = 200;
@@ -307,8 +302,7 @@ message ModelsApiOptions {
   optional LanguageModelChatSelector act_mode_vs_code_lm_model_selector = 204;
   optional bool act_mode_aws_bedrock_custom_selected = 205;
   optional string act_mode_aws_bedrock_custom_model_base_id = 206;
-  optional string act_mode_open_router_model_id = 207;
-  optional OpenRouterModelInfo act_mode_open_router_model_info = 208;
+  reserved 207, 208;
   optional string act_mode_open_ai_model_id = 209;
   optional OpenAiCompatibleModelInfo act_mode_open_ai_model_info = 210;
   optional string act_mode_ollama_model_id = 211;
@@ -316,27 +310,27 @@ message ModelsApiOptions {
   optional string act_mode_lite_llm_model_id = 213;
   optional LiteLLMModelInfo act_mode_lite_llm_model_info = 214;
   optional string act_mode_requesty_model_id = 215;
-  optional OpenRouterModelInfo act_mode_requesty_model_info = 216;
+  optional ProviderModelInfo act_mode_requesty_model_info = 216;
   optional string act_mode_together_model_id = 217;
   optional string act_mode_fireworks_model_id = 218;
   optional string act_mode_sap_ai_core_model_id = 219;
   optional string act_mode_sap_ai_core_deployment_id = 220;
   optional string act_mode_groq_model_id = 221;
-  optional OpenRouterModelInfo act_mode_groq_model_info = 222;
+  optional ProviderModelInfo act_mode_groq_model_info = 222;
   optional string act_mode_hugging_face_model_id = 223;
-  optional OpenRouterModelInfo act_mode_hugging_face_model_info = 224;
+  optional ProviderModelInfo act_mode_hugging_face_model_info = 224;
   optional string act_mode_huawei_cloud_maas_model_id = 225;
-  optional OpenRouterModelInfo act_mode_huawei_cloud_maas_model_info = 226;
+  optional ProviderModelInfo act_mode_huawei_cloud_maas_model_info = 226;
   optional string act_mode_baseten_model_id = 227;
-  optional OpenRouterModelInfo act_mode_baseten_model_info = 228;
+  optional ProviderModelInfo act_mode_baseten_model_info = 228;
   optional string act_mode_vercel_ai_gateway_model_id = 229;
-  optional OpenRouterModelInfo act_mode_vercel_ai_gateway_model_info = 230;
+  optional ProviderModelInfo act_mode_vercel_ai_gateway_model_info = 230;
   optional string act_mode_oca_model_id = 231;
   optional OcaModelInfo act_mode_oca_model_info = 232;
   optional string act_mode_aihubmix_model_id = 233;
   optional OpenAiCompatibleModelInfo act_mode_aihubmix_model_info = 234;
   optional string act_mode_dietcode_model_id = 235;
-  optional OpenRouterModelInfo act_mode_dietcode_model_info = 236;
+  optional ProviderModelInfo act_mode_dietcode_model_info = 236;
 }
 
 // Request for updating API configuration (legacy - uses combined configuration)
@@ -361,7 +355,6 @@ message UpdateApiConfigurationRequestNew {
   // - "options.ulid" (for options fields)
   // - "options.openAiHeaders" (for options fields)
   // - "secrets.apiKey" (for secrets fields)
-  // - "secrets.openRouterApiKey" (for secrets fields)
   repeated string update_mask = 3;
 }
 
@@ -435,7 +428,7 @@ message OcaCompatibleModelInfo {
 // API Provider enumeration
 enum ApiProvider {
   ANTHROPIC = 0;
-  OPENROUTER = 1;
+  reserved 1;
   BEDROCK = 2;
   VERTEX = 3;
   OPENAI = 4;
@@ -541,8 +534,7 @@ message ModelsApiConfiguration {
   optional bool lite_llm_use_prompt_cache = 6;
   map<string, string> open_ai_headers = 7;
   optional string anthropic_base_url = 8;
-  optional string open_router_api_key = 9;
-  optional string open_router_provider_sorting = 10;
+  reserved 9, 10;
   optional string aws_access_key = 11;
   optional string aws_secret_key = 12;
   optional string aws_session_token = 13;
@@ -636,8 +628,7 @@ message ModelsApiConfiguration {
   optional LanguageModelChatSelector plan_mode_vs_code_lm_model_selector = 104;
   optional bool plan_mode_aws_bedrock_custom_selected = 105;
   optional string plan_mode_aws_bedrock_custom_model_base_id = 106;
-  optional string plan_mode_open_router_model_id = 107;
-  optional OpenRouterModelInfo plan_mode_open_router_model_info = 108;
+  reserved 107, 108;
   optional string plan_mode_open_ai_model_id = 109;
   optional OpenAiCompatibleModelInfo plan_mode_open_ai_model_info = 110;
   optional string plan_mode_ollama_model_id = 111;
@@ -645,35 +636,35 @@ message ModelsApiConfiguration {
   optional string plan_mode_lite_llm_model_id = 113;
   optional LiteLLMModelInfo plan_mode_lite_llm_model_info = 114;
   optional string plan_mode_requesty_model_id = 115;
-  optional OpenRouterModelInfo plan_mode_requesty_model_info = 116;
+  optional ProviderModelInfo plan_mode_requesty_model_info = 116;
   optional string plan_mode_together_model_id = 117;
   optional string plan_mode_fireworks_model_id = 118;
   optional string plan_mode_sap_ai_core_model_id = 119;
   optional string plan_mode_sap_ai_core_deployment_id = 120;
   optional string plan_mode_groq_model_id = 121;
-  optional OpenRouterModelInfo plan_mode_groq_model_info = 122;
+  optional ProviderModelInfo plan_mode_groq_model_info = 122;
   optional string plan_mode_hugging_face_model_id = 123;
-  optional OpenRouterModelInfo plan_mode_hugging_face_model_info = 124;
+  optional ProviderModelInfo plan_mode_hugging_face_model_info = 124;
   optional string plan_mode_huawei_cloud_maas_model_id = 125;
-  optional OpenRouterModelInfo plan_mode_huawei_cloud_maas_model_info = 126;
+  optional ProviderModelInfo plan_mode_huawei_cloud_maas_model_info = 126;
   optional string plan_mode_baseten_model_id = 127;
-  optional OpenRouterModelInfo plan_mode_baseten_model_info = 128;
+  optional ProviderModelInfo plan_mode_baseten_model_info = 128;
   optional string plan_mode_vercel_ai_gateway_model_id = 129;
-  optional OpenRouterModelInfo plan_mode_vercel_ai_gateway_model_info = 130;
+  optional ProviderModelInfo plan_mode_vercel_ai_gateway_model_info = 130;
   optional string plan_mode_oca_model_id = 131;
   optional OcaModelInfo plan_mode_oca_model_info = 132;
   optional string plan_mode_oca_reasoning_effort = 133;
   optional string plan_mode_hicap_model_id = 134;
-  optional OpenRouterModelInfo plan_mode_hicap_model_info = 135;
+  optional ProviderModelInfo plan_mode_hicap_model_info = 135;
   optional string plan_mode_aihubmix_model_id = 136;
   optional OpenAiCompatibleModelInfo plan_mode_aihubmix_model_info = 137;
   optional string plan_mode_nous_research_model_id = 138;
-  optional OpenRouterModelInfo plan_mode_nous_research_model_info = 144;
+  optional ProviderModelInfo plan_mode_nous_research_model_info = 144;
   optional string gemini_plan_mode_thinking_level = 139;
   optional string plan_mode_dietcode_model_id = 140;
-  optional OpenRouterModelInfo plan_mode_dietcode_model_info = 141;
+  optional ProviderModelInfo plan_mode_dietcode_model_info = 141;
   optional string plan_mode_cline_pass_model_id = 142;
-  optional OpenRouterModelInfo plan_mode_cline_pass_model_info = 143;
+  optional ProviderModelInfo plan_mode_cline_pass_model_info = 143;
 
   // Act mode configurations
   optional ApiProvider act_mode_api_provider = 200;
@@ -683,8 +674,7 @@ message ModelsApiConfiguration {
   optional LanguageModelChatSelector act_mode_vs_code_lm_model_selector = 204;
   optional bool act_mode_aws_bedrock_custom_selected = 205;
   optional string act_mode_aws_bedrock_custom_model_base_id = 206;
-  optional string act_mode_open_router_model_id = 207;
-  optional OpenRouterModelInfo act_mode_open_router_model_info = 208;
+  reserved 207, 208;
   optional string act_mode_open_ai_model_id = 209;
   optional OpenAiCompatibleModelInfo act_mode_open_ai_model_info = 210;
   optional string act_mode_ollama_model_id = 211;
@@ -692,33 +682,33 @@ message ModelsApiConfiguration {
   optional string act_mode_lite_llm_model_id = 213;
   optional LiteLLMModelInfo act_mode_lite_llm_model_info = 214;
   optional string act_mode_requesty_model_id = 215;
-  optional OpenRouterModelInfo act_mode_requesty_model_info = 216;
+  optional ProviderModelInfo act_mode_requesty_model_info = 216;
   optional string act_mode_together_model_id = 217;
   optional string act_mode_fireworks_model_id = 218;
   optional string act_mode_sap_ai_core_model_id = 219;
   optional string act_mode_sap_ai_core_deployment_id = 220;
   optional string act_mode_groq_model_id = 221;
-  optional OpenRouterModelInfo act_mode_groq_model_info = 222;
+  optional ProviderModelInfo act_mode_groq_model_info = 222;
   optional string act_mode_hugging_face_model_id = 223;
-  optional OpenRouterModelInfo act_mode_hugging_face_model_info = 224;
+  optional ProviderModelInfo act_mode_hugging_face_model_info = 224;
   optional string act_mode_huawei_cloud_maas_model_id = 225;
-  optional OpenRouterModelInfo act_mode_huawei_cloud_maas_model_info = 226;
+  optional ProviderModelInfo act_mode_huawei_cloud_maas_model_info = 226;
   optional string act_mode_baseten_model_id = 227;
-  optional OpenRouterModelInfo act_mode_baseten_model_info = 228;
+  optional ProviderModelInfo act_mode_baseten_model_info = 228;
   optional string act_mode_vercel_ai_gateway_model_id = 229;
-  optional OpenRouterModelInfo act_mode_vercel_ai_gateway_model_info = 230;
+  optional ProviderModelInfo act_mode_vercel_ai_gateway_model_info = 230;
   optional string act_mode_oca_model_id = 231;
   optional OcaModelInfo act_mode_oca_model_info = 232;
   optional string act_mode_oca_reasoning_effort = 233;
   optional string act_mode_hicap_model_id = 234;
-  optional OpenRouterModelInfo act_mode_hicap_model_info = 235;
+  optional ProviderModelInfo act_mode_hicap_model_info = 235;
   optional string act_mode_aihubmix_model_id = 236;
   optional OpenAiCompatibleModelInfo act_mode_aihubmix_model_info = 237;
   optional string act_mode_nous_research_model_id = 238;
-  optional OpenRouterModelInfo act_mode_nous_research_model_info = 244;
+  optional ProviderModelInfo act_mode_nous_research_model_info = 244;
   optional string gemini_act_mode_thinking_level = 239;
   optional string act_mode_dietcode_model_id = 240;
-  optional OpenRouterModelInfo act_mode_dietcode_model_info = 241;
+  optional ProviderModelInfo act_mode_dietcode_model_info = 241;
   optional string act_mode_cline_pass_model_id = 242;
-  optional OpenRouterModelInfo act_mode_cline_pass_model_info = 243;
+  optional ProviderModelInfo act_mode_cline_pass_model_info = 243;
 }

@@ -47,7 +47,7 @@ Gracias a las [habilidades de codificación agencial de Claude 4 Sonnet](https:/
 
 ### Use cualquier API y modelo
 
-Cline admite proveedores de API como OpenRouter, Anthropic, OpenAI, Google Gemini, AWS Bedrock, Azure y GCP Vertex. También puede configurar cualquier API compatible con OpenAI o usar un modelo local a través de LM Studio/Ollama. Si usa OpenRouter, la extensión recupera su lista de modelos más reciente, para que pueda usar los modelos más nuevos tan pronto como estén disponibles.
+Cline admite proveedores de API como Anthropic, OpenAI, Google Gemini, AWS Bedrock, Azure y GCP Vertex. También puede configurar cualquier API compatible con OpenAI o usar un modelo local a través de LM Studio/Ollama.
 
 La extensión también rastrea el uso total de tokens y costos de API para todo el ciclo de tareas y solicitudes individuales, para que esté informado sobre los gastos en cada paso.
 

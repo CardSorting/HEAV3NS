@@ -1,10 +1,11 @@
 import {
-	OpenRouterModelInfo,
+	ProviderModelInfo,
 	ModelsApiConfiguration as ProtoApiConfiguration,
 	ApiProvider as ProtoApiProvider,
 	ThinkingConfig,
 } from "@shared/proto/dietcode/models"
 import { ApiConfiguration, ApiProvider, ModelInfo } from "../../api"
+import { DEFAULT_API_PROVIDER } from "../../api-defaults"
 
 // Convert application ThinkingConfig to proto ThinkingConfig
 function convertThinkingConfigToProto(config: ModelInfo["thinkingConfig"]): ThinkingConfig | undefined {
@@ -32,8 +33,8 @@ function convertProtoToThinkingConfig(config: ThinkingConfig | undefined): Model
 	}
 }
 
-// Convert application ModelInfo to proto OpenRouterModelInfo
-function convertModelInfoToProtoOpenRouter(info: ModelInfo | undefined): OpenRouterModelInfo | undefined {
+// Convert application ModelInfo to the shared compatible model-info proto.
+function convertModelInfoToProto(info: ModelInfo | undefined): ProviderModelInfo | undefined {
 	if (!info) {
 		return undefined
 	}
@@ -57,8 +58,8 @@ function convertModelInfoToProtoOpenRouter(info: ModelInfo | undefined): OpenRou
 	}
 }
 
-// Convert proto OpenRouterModelInfo to application ModelInfo
-function convertProtoToModelInfo(info: OpenRouterModelInfo | undefined): ModelInfo | undefined {
+// Convert the shared compatible model-info proto to application ModelInfo.
+function convertProtoToModelInfo(info: ProviderModelInfo | undefined): ModelInfo | undefined {
 	if (!info) {
 		return undefined
 	}
@@ -85,8 +86,6 @@ function convertProtoToModelInfo(info: OpenRouterModelInfo | undefined): ModelIn
 // Convert application ApiProvider to proto ApiProvider
 function convertApiProviderToProto(provider: string | undefined): ProtoApiProvider {
 	switch (provider) {
-		case "openrouter":
-			return ProtoApiProvider.OPENROUTER
 		case "openai":
 			return ProtoApiProvider.OPENAI
 		case "gemini":
@@ -108,15 +107,13 @@ function convertApiProviderToProto(provider: string | undefined): ProtoApiProvid
 		case "zai":
 			return ProtoApiProvider.ZAI
 		default:
-			return ProtoApiProvider.OPENROUTER
+			return ProtoApiProvider.OPENAI_CODEX
 	}
 }
 
 // Convert proto ApiProvider to application ApiProvider
 export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvider {
 	switch (provider) {
-		case ProtoApiProvider.OPENROUTER:
-			return "openrouter"
 		case ProtoApiProvider.OPENAI:
 			return "openai"
 		case ProtoApiProvider.GEMINI:
@@ -138,7 +135,7 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 		case ProtoApiProvider.ZAI:
 			return "zai"
 		default:
-			return "openrouter"
+			return DEFAULT_API_PROVIDER
 	}
 }
 
@@ -150,8 +147,6 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		dietcodeAccountId: config.dietcodeAccountId,
 		ulid: config.ulid,
 		openAiHeaders: config.openAiHeaders || {},
-		openRouterApiKey: config.openRouterApiKey,
-		openRouterProviderSorting: config.openRouterProviderSorting,
 		xaiApiKey: config.xaiApiKey,
 		nousResearchApiKey: config.nousResearchApiKey,
 		cloudflareAccountId: config.cloudflareAccountId,
@@ -171,24 +166,20 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		planModeApiModelId: config.planModeApiModelId,
 		planModeThinkingBudgetTokens: config.planModeThinkingBudgetTokens,
 		planModeReasoningEffort: config.planModeReasoningEffort,
-		planModeOpenRouterModelId: config.planModeOpenRouterModelId,
-		planModeOpenRouterModelInfo: convertModelInfoToProtoOpenRouter(config.planModeOpenRouterModelInfo),
 		planModeNousResearchModelId: config.planModeNousResearchModelId,
-		planModeNousResearchModelInfo: convertModelInfoToProtoOpenRouter(config.planModeNousResearchModelInfo),
+		planModeNousResearchModelInfo: convertModelInfoToProto(config.planModeNousResearchModelInfo),
 		planModeClinePassModelId: config.planModeClinePassModelId,
-		planModeClinePassModelInfo: convertModelInfoToProtoOpenRouter(config.planModeClinePassModelInfo),
+		planModeClinePassModelInfo: convertModelInfoToProto(config.planModeClinePassModelInfo),
 
 		// Act mode configurations
 		actModeApiProvider: config.actModeApiProvider ? convertApiProviderToProto(config.actModeApiProvider) : undefined,
 		actModeApiModelId: config.actModeApiModelId,
 		actModeThinkingBudgetTokens: config.actModeThinkingBudgetTokens,
 		actModeReasoningEffort: config.actModeReasoningEffort,
-		actModeOpenRouterModelId: config.actModeOpenRouterModelId,
-		actModeOpenRouterModelInfo: convertModelInfoToProtoOpenRouter(config.actModeOpenRouterModelInfo),
 		actModeNousResearchModelId: config.actModeNousResearchModelId,
-		actModeNousResearchModelInfo: convertModelInfoToProtoOpenRouter(config.actModeNousResearchModelInfo),
+		actModeNousResearchModelInfo: convertModelInfoToProto(config.actModeNousResearchModelInfo),
 		actModeClinePassModelId: config.actModeClinePassModelId,
-		actModeClinePassModelInfo: convertModelInfoToProtoOpenRouter(config.actModeClinePassModelInfo),
+		actModeClinePassModelInfo: convertModelInfoToProto(config.actModeClinePassModelInfo),
 	}
 }
 
@@ -200,8 +191,6 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		dietcodeAccountId: protoConfig.dietcodeAccountId,
 		ulid: protoConfig.ulid,
 		openAiHeaders: Object.keys(protoConfig.openAiHeaders || {}).length > 0 ? protoConfig.openAiHeaders : undefined,
-		openRouterApiKey: protoConfig.openRouterApiKey,
-		openRouterProviderSorting: protoConfig.openRouterProviderSorting,
 		xaiApiKey: protoConfig.xaiApiKey,
 		nousResearchApiKey: protoConfig.nousResearchApiKey,
 		cloudflareAccountId: protoConfig.cloudflareAccountId,
@@ -225,8 +214,6 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		planModeApiModelId: protoConfig.planModeApiModelId,
 		planModeThinkingBudgetTokens: protoConfig.planModeThinkingBudgetTokens,
 		planModeReasoningEffort: protoConfig.planModeReasoningEffort,
-		planModeOpenRouterModelId: protoConfig.planModeOpenRouterModelId,
-		planModeOpenRouterModelInfo: convertProtoToModelInfo(protoConfig.planModeOpenRouterModelInfo),
 		planModeNousResearchModelId: protoConfig.planModeNousResearchModelId,
 		planModeNousResearchModelInfo: convertProtoToModelInfo(protoConfig.planModeNousResearchModelInfo),
 		planModeClinePassModelId: protoConfig.planModeClinePassModelId,
@@ -238,8 +225,6 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		actModeApiModelId: protoConfig.actModeApiModelId,
 		actModeThinkingBudgetTokens: protoConfig.actModeThinkingBudgetTokens,
 		actModeReasoningEffort: protoConfig.actModeReasoningEffort,
-		actModeOpenRouterModelId: protoConfig.actModeOpenRouterModelId,
-		actModeOpenRouterModelInfo: convertProtoToModelInfo(protoConfig.actModeOpenRouterModelInfo),
 		actModeNousResearchModelId: protoConfig.actModeNousResearchModelId,
 		actModeNousResearchModelInfo: convertProtoToModelInfo(protoConfig.actModeNousResearchModelInfo),
 		actModeClinePassModelId: protoConfig.actModeClinePassModelId,

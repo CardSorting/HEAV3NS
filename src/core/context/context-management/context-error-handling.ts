@@ -3,7 +3,7 @@ import LengthFinishReasonError, { APIError } from "openai"
 export function checkContextWindowExceededError(error: unknown): boolean {
 	return (
 		checkIsOpenAIContextWindowError(error) ||
-		checkIsOpenRouterContextWindowError(error) ||
+		checkIsOpenAICompatibleContextWindowError(error) ||
 		checkIsAnthropicContextWindowError(error) ||
 		checkIsCerebrasContextWindowError(error) ||
 		checkIsBedrockContextWindowError(error) ||
@@ -11,7 +11,7 @@ export function checkContextWindowExceededError(error: unknown): boolean {
 	)
 }
 
-function checkIsOpenRouterContextWindowError(error: any): boolean {
+function checkIsOpenAICompatibleContextWindowError(error: any): boolean {
 	try {
 		const status = error?.status ?? error?.code ?? error?.error?.status ?? error?.response?.status
 		const message: string = String(error?.message || error?.error?.message || "")
@@ -20,7 +20,7 @@ function checkIsOpenRouterContextWindowError(error: any): boolean {
 		const statusFromMessage = message.match(/"code":\s*(\d+)/)?.[1]
 		const finalStatus = statusFromMessage || status
 
-		// Known OpenAI/OpenRouter-style signal (code 400 and message includes "context length")
+		// Known OpenAI-compatible signal (code 400 and message includes "context length")
 		const CONTEXT_ERROR_PATTERNS = [
 			/\bcontext\s*(?:length|window)\b/i,
 			/\bmaximum\s*context\b/i,

@@ -24,7 +24,7 @@ export class CredentialToolSuite {
           provider: {
             type: "string",
             required: false,
-            description: "Optional provider filter (e.g. 'openai', 'anthropic', 'openrouter').",
+            description: "Optional provider filter (e.g. 'openai', 'anthropic', 'openai-codex').",
           },
         },
         execute: async (args: Record<string, unknown>) => {

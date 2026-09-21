@@ -11,7 +11,6 @@ const __dirname = path.dirname(__filename)
 
 const production = process.argv.includes("--production") || process.env.IS_DEBUG_BUILD === "false"
 const watch = process.argv.includes("--watch")
-const e2eBuild = process.argv.includes("--e2e-build")
 const destDir = "dist"
 
 /**
@@ -121,7 +120,7 @@ const copyWasmFiles = {
 
 const buildEnvVars = {
 	"import.meta.url": "_importMetaUrl",
-	"process.env.IS_STANDALONE": JSON.stringify("false"),
+	"process.env.IS_STANDALONE": JSON.stringify("true"),
 	"process.env.GOOGLE_OAUTH_CLIENT_ID": JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
 	"process.env.GOOGLE_OAUTH_CLIENT_SECRET": JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_SECRET || ""),
 }
@@ -170,7 +169,7 @@ if (process.env.OTEL_EXPORTER_OTLP_HEADERS) {
 if (process.env.OTEL_METRIC_EXPORT_INTERVAL) {
 	buildEnvVars["process.env.OTEL_METRIC_EXPORT_INTERVAL"] = JSON.stringify(process.env.OTEL_METRIC_EXPORT_INTERVAL)
 }
-// Base configuration shared by extension builds
+// Base configuration shared by CLI builds
 const baseConfig = {
 	bundle: true,
 	minify: production,
@@ -187,34 +186,19 @@ const baseConfig = {
 		/* add to the end of plugins array */
 		esbuildProblemMatcherPlugin,
 	],
-	format: "cjs",
+	format: "esm",
 	sourcesContent: false,
 	platform: "node",
-	banner: {
-		js: "const _importMetaUrl=require('url').pathToFileURL(__filename)",
-	},
 }
 
-// Extension-specific configuration
-const extensionConfig = {
+const cliConfig = {
 	...baseConfig,
-	entryPoints: ["src/extension.ts"],
-	outfile: `${destDir}/extension.cjs`,
-	external: ["vscode"],
-}
-
-// E2E build script configuration
-const e2eBuildConfig = {
-	...baseConfig,
-	entryPoints: ["src/test/e2e/utils/build.ts"],
-	outfile: `${destDir}/e2e-build.mjs`,
-	external: ["@vscode/test-electron", "execa"],
-	sourcemap: false,
-	plugins: [aliasResolverPlugin, esbuildProblemMatcherPlugin],
+	entryPoints: ["src/index.ts"],
+	outfile: `${destDir}/index.js`,
 }
 
 async function main() {
-	const config = e2eBuild ? e2eBuildConfig : extensionConfig
+	const config = cliConfig
 	const extensionCtx = await esbuild.context(config)
 	if (watch) {
 		await extensionCtx.watch()

@@ -23,8 +23,8 @@ export interface ApiStreamUsageChunk {
 	outputTokens: number
 	cacheWriteTokens?: number
 	cacheReadTokens?: number
-	thoughtsTokenCount?: number // openrouter
-	totalCost?: number // openrouter
+	thoughtsTokenCount?: number
+	totalCost?: number
 	/**
 	 * The response ID associated with this response
 	 */
@@ -77,7 +77,7 @@ export interface ApiStreamThinkingChunk {
 	 */
 	reasoning: string
 	/**
-	 * openrouter has various properties that we can pass back unmodified in api requests to preserve reasoning traces
+	 * Some OpenAI-compatible providers have properties that can be passed back unmodified
 	 * This is also where we store the summary details for OpenAI.
 	 */
 	details?: unknown

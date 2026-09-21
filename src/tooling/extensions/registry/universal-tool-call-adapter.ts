@@ -3,14 +3,14 @@
  *
  * Universal Provider Wire Format Adapter.
  * Translates incoming tool calls and outgoing execution results across
- * OpenAI, Anthropic, Gemini, OpenRouter, and Ollama envelope standards into
+ * OpenAI, Anthropic, Gemini, and Ollama envelope standards into
  * unified LUMI tool executions.
  */
 
 import type { ToolExecutionRecord } from "../../../core/contracts/tooling.contracts.js";
 import type { ScheduledToolCall } from "../execution/tool-execution-scheduler.js";
 
-export type SupportedModelProvider = "openai" | "openrouter" | "anthropic" | "gemini" | "custom";
+export type SupportedModelProvider = "openai" | "openai-codex" | "anthropic" | "gemini" | "custom";
 
 export class UniversalToolCallAdapter {
   /**
@@ -64,7 +64,7 @@ export class UniversalToolCallAdapter {
       return calls;
     }
 
-    // OpenAI / OpenRouter / Custom standard tool call envelope
+    // OpenAI / Codex / Custom standard tool call envelope
     const choice = (rawPayload.choices as Array<Record<string, unknown>>)?.[0];
     const message = choice?.message as Record<string, unknown> | undefined;
     const toolCalls = (message?.tool_calls || rawPayload.tool_calls) as Array<{

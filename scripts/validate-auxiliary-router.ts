@@ -116,7 +116,7 @@ async function runValidationSuite() {
     // ---------------------------------------------------------------------------
     console.log("[Suite 4/8] Free-Only Mode Filtering (:free SKUs)...");
     router.registerProvider({
-      provider: "openrouter-free",
+      provider: "user-free-gateway",
       model: "google/gemini-2.0-flash-exp:free",
       priority: 1,
       isFreeOnly: true,

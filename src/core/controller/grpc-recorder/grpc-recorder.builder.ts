@@ -95,14 +95,9 @@ function testFilters(): GrpcRequestFilter[] {
 		(req) => req.is_streaming,
 		(req) => ["dietcode.UiService", "dietcode.McpService", "dietcode.WebService"].includes(req.service),
 		(req) =>
-			[
-				"refreshOpenRouterModels",
-				"getAvailableTerminalProfiles",
-				"showTaskWithId",
-				"deleteTasksWithIds",
-				"getTotalTasksSize",
-				"cancelTask",
-			].includes(req.method),
+			["getAvailableTerminalProfiles", "showTaskWithId", "deleteTasksWithIds", "getTotalTasksSize", "cancelTask"].includes(
+				req.method,
+			),
 	]
 }
 

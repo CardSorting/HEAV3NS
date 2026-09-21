@@ -38,8 +38,6 @@ service AccountService {
 
   rpc setUserOrganization(UserOrganizationUpdateRequest) returns (Empty);
 
-  rpc openrouterAuthClicked(EmptyRequest) returns (Empty);
-
   rpc requestyAuthClicked(StringRequest) returns (Empty);
 
   rpc hicapAuthClicked(EmptyRequest) returns (Empty);

@@ -1,5 +1,5 @@
 import type { ModelInfo } from "@shared/api"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog } from "@shared/proto/dietcode/models"
 import { StateManager } from "@/core/storage/StateManager"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
 import { fetch } from "@/shared/net"
@@ -120,7 +120,7 @@ export async function refreshLiteLlmModels(): Promise<Record<string, ModelInfo>>
 	// Send event to subscribers
 	try {
 		await sendLiteLlmModelsEvent(
-			OpenRouterCompatibleModelInfo.create({
+			ProviderModelCatalog.create({
 				models: toProtobufModels(models),
 			}),
 		)

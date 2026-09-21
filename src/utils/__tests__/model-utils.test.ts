@@ -6,7 +6,7 @@ describe("shouldSkipReasoningForModel", () => {
 	it("should return true for grok-4 models", () => {
 		shouldSkipReasoningForModel("grok-4").should.equal(true)
 		shouldSkipReasoningForModel("x-ai/grok-4").should.equal(true)
-		shouldSkipReasoningForModel("openrouter/grok-4-turbo").should.equal(true)
+		shouldSkipReasoningForModel("provider/grok-4-turbo").should.equal(true)
 		shouldSkipReasoningForModel("some-provider/grok-4-mini").should.equal(true)
 	})
 

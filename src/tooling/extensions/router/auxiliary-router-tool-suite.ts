@@ -98,7 +98,7 @@ export class AuxiliaryRouterToolSuite {
           },
           provider: {
             type: "string",
-            description: "User-selected provider identifier (e.g. 'custom-openai', 'anthropic', 'openrouter', 'ollama')",
+            description: "User-selected provider identifier (e.g. 'custom-openai', 'anthropic', 'openai-codex', 'ollama')",
             required: true,
           },
           model: {

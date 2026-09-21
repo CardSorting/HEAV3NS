@@ -1,7 +1,7 @@
 import type { IController as Controller } from "@core/controller/types"
 import { GlobalFileNames } from "@core/storage/disk"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog, ProviderModelInfo } from "@shared/proto/dietcode/models"
 import { fileExistsAtPath } from "@utils/fs"
 import axios from "axios"
 import fs from "fs/promises"
@@ -20,12 +20,12 @@ interface HicapRawModelInfo {
  * Refreshes the Hicap models and returns the updated model list
  * @param controller The controller instance
  * @param request Empty request object
- * @returns Response containing the OpenRouter models
+ * @returns Response containing the Hicap model catalog
  */
-export async function refreshHicapModels(controller: Controller, _request: EmptyRequest): Promise<OpenRouterCompatibleModelInfo> {
+export async function refreshHicapModels(controller: Controller, _request: EmptyRequest): Promise<ProviderModelCatalog> {
 	const hicapModelsFilePath = path.join(await ensureCacheDirectoryExists(controller), GlobalFileNames.hicapModels)
 
-	const models: Record<string, OpenRouterModelInfo> = {}
+	const models: Record<string, ProviderModelInfo> = {}
 	try {
 		// Get the Hicap API key from the controller's state
 		const hicapApiKey = controller.stateManager.getSecretKey("hicapApiKey")
@@ -64,13 +64,13 @@ export async function refreshHicapModels(controller: Controller, _request: Empty
 		} */
 	}
 
-	return OpenRouterCompatibleModelInfo.create({ models })
+	return ProviderModelCatalog.create({ models })
 }
 
 /**
- * Reads cached OpenRouter models from disk
+ * Reads cached Hicap models from disk
  */
-async function _readHicapModels(controller: Controller): Promise<Record<string, OpenRouterModelInfo> | undefined> {
+async function _readHicapModels(controller: Controller): Promise<Record<string, ProviderModelInfo> | undefined> {
 	const hicapModelsFilePath = path.join(await ensureCacheDirectoryExists(controller), GlobalFileNames.hicapModels)
 	const fileExists = await fileExistsAtPath(hicapModelsFilePath)
 	if (fileExists) {

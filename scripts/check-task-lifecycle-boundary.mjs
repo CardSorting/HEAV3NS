@@ -81,7 +81,6 @@ const IGNORED_DIRS = new Set([
 	"coverage",
 	".nyc_output",
 	"test_workspace",
-	"webview-ui",
 	".vscode-test",
 	".vscode-test-global",
 	".vscode-test-storage",

@@ -1,6 +1,6 @@
 import type { IController as Controller } from "@core/controller/types"
 import { EmptyRequest } from "@shared/proto/dietcode/common"
-import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/dietcode/models"
+import { ProviderModelCatalog, ProviderModelInfo } from "@shared/proto/dietcode/models"
 import axios from "axios"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
@@ -11,13 +11,13 @@ import { Logger } from "@/shared/services/Logger"
  * @param request Empty request object
  * @returns Response containing the AIhubmix models
  */
-export async function getAihubmixModels(_controller: Controller, _request: EmptyRequest): Promise<OpenRouterCompatibleModelInfo> {
+export async function getAihubmixModels(_controller: Controller, _request: EmptyRequest): Promise<ProviderModelCatalog> {
 	try {
 		const response = await axios.get("https://aihubmix.com/call/mdl_info_platform?tag=coding", getAxiosSettings())
 
 		if (!response.data?.success || !Array.isArray(response.data?.data)) {
 			Logger.error("Invalid response from AIhubmix API:", response.data)
-			return OpenRouterCompatibleModelInfo.create({ models: {} })
+			return ProviderModelCatalog.create({ models: {} })
 		}
 		interface AIhubmixModelData {
 			model?: string
@@ -38,7 +38,7 @@ export async function getAihubmixModels(_controller: Controller, _request: Empty
 			supports_global_endpoint?: boolean
 		}
 		const modelsArray = response.data.data as AIhubmixModelData[]
-		const modelsMap: Record<string, OpenRouterModelInfo> = {}
+		const modelsMap: Record<string, ProviderModelInfo> = {}
 
 		for (const modelData of modelsArray) {
 			if (!modelData.model || typeof modelData.model !== "string") {
@@ -62,7 +62,7 @@ export async function getAihubmixModels(_controller: Controller, _request: Empty
 				(pricing.cache_read !== undefined && pricing.input !== undefined && pricing.cache_read !== pricing.input)
 
 			const modelId = modelData.model
-			modelsMap[modelId] = OpenRouterModelInfo.create({
+			modelsMap[modelId] = ProviderModelInfo.create({
 				maxTokens: modelData.max_output ?? 8192,
 				contextWindow: modelData.context_window ?? 128000,
 				supportsImages: supportsImages,
@@ -83,9 +83,9 @@ export async function getAihubmixModels(_controller: Controller, _request: Empty
 		}
 
 		Logger.log(`Fetched ${Object.keys(modelsMap).length} AIhubmix models`)
-		return OpenRouterCompatibleModelInfo.create({ models: modelsMap })
+		return ProviderModelCatalog.create({ models: modelsMap })
 	} catch (error) {
 		Logger.error("Failed to fetch AIhubmix models:", error)
-		return OpenRouterCompatibleModelInfo.create({ models: {} })
+		return ProviderModelCatalog.create({ models: {} })
 	}
 }

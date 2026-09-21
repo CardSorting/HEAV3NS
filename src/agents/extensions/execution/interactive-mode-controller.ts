@@ -243,7 +243,7 @@ export class InteractiveModeController {
         `*Press \`?\` or type \`/help\` anytime for keyboard shortcuts.*`;
     } else {
       const identityStr = who.authenticated
-        ? `Signed in with **${who.configuredProviders.length}** provider(s) active (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenRouter"})`
+        ? `Signed in with **${who.configuredProviders.length}** provider(s) active (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenAI Codex"})`
         : "**Unauthenticated** *(Offline)*";
 
       const engineNote = "";
@@ -544,7 +544,7 @@ export class InteractiveModeController {
             closeFn();
             const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
             let diagText = `### Live Provider Diagnostic Audit\n\n`;
-            const providers = ["openai-codex", "openrouter"];
+            const providers = ["openai-codex"];
             for (const p of providers) {
               const res = await monolith.setupWizard.testProviderConnection(p);
               const icon = res.passed ? "`[PASS]`" : "`[FAIL]`";
@@ -638,11 +638,11 @@ export class InteractiveModeController {
       if (activeInlineView || isLoadingInlineView) return;
       isLoadingInlineView = true;
       try {
-        const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
+        const codexModels = await monolith.modelCatalog.fetchCodexModels();
         const catalogModels = monolith.modelCatalog.getAllModels();
 
         const combined = [
-          ...openRouterModels,
+          ...codexModels,
           ...catalogModels,
         ];
         const modelMap = new Map<string, ModelSpecs>();
@@ -1143,7 +1143,7 @@ export class InteractiveModeController {
           const lines = [
             "### ✦ LUMI Active Session & Identity",
             who.authenticated
-              ? `- **Auth Status**: \`Authenticated\` (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenRouter"})`
+              ? `- **Auth Status**: \`Authenticated\` (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenAI Codex"})`
               : "- **Auth Status**: `Unauthenticated / Offline`",
             `- **Active Model**: \`${who.activeModel}\``,
           ];
@@ -1571,7 +1571,7 @@ export class InteractiveModeController {
 
         if (input === "/providers") {
           console.log("\x1b[1;36mTesting provider connections...\x1b[0m");
-          const providers = ["openai-codex", "openrouter"];
+          const providers = ["openai-codex"];
           for (const p of providers) {
             const res = await monolith.setupWizard.testProviderConnection(p);
             const icon = res.passed ? "\x1b[32m[PASS]\x1b[0m" : "\x1b[31m[FAIL]\x1b[0m";

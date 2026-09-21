@@ -79,9 +79,9 @@ export interface StreamDiagWorkspaceSnapshot {
 export const STREAM_DIAG_DEFAULT_HEADERS = [
   "cf-ray",
   "cf-cache-status",
-  "x-openrouter-provider",
-  "x-openrouter-model",
-  "x-openrouter-id",
+  "x-provider",
+  "x-model",
+  "x-generation-id",
   "x-request-id",
   "x-vercel-id",
   "via",
