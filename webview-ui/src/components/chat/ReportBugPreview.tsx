@@ -65,7 +65,7 @@ const ReportBugPreview: React.FC<ReportBugPreviewProps> = ({ data }) => {
 
 				{bugData.dietcode_version && (
 					<div>
-						<div className="font-semibold">LUMI Version</div>
+						<div className="font-semibold">HEAV3NS Version</div>
 						<MarkdownBlock markdown={bugData.dietcode_version} />
 					</div>
 				)}

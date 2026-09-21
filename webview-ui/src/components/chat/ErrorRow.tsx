@@ -4,7 +4,7 @@ import CreditLimitError from "@/components/chat/CreditLimitError"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icons"
 import { useDietCodeAuth, useDietCodeSignIn } from "@/context/DietCodeAuthContext"
-import { pickRecoveryLine } from "@/copy/lumiVoice"
+import { pickRecoveryLine } from "@/copy/heav3nsVoice"
 import { DietCodeError, DietCodeErrorType } from "../../../../src/services/error/DietCodeError"
 
 const _errorColor = "var(--vscode-errorForeground)"
@@ -91,7 +91,7 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 							{/* Display raw API error if different from parsed error message */}
 							{errorMessage !== rawApiError && <div>{rawApiError}</div>}
 
-							{/* Display Login button for non-logged in users using the LUMI provider */}
+							{/* Display Login button for non-logged in users using the HEAV3NS provider */}
 							<div>
 								{/* The user is signed in or not using dietcode provider */}
 								{isDietCodeProvider && !dietcodeUser ? (

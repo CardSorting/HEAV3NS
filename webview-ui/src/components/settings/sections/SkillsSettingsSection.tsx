@@ -71,7 +71,7 @@ const SkillsSettingsSection = ({ renderSectionHeader }: SkillsSettingsSectionPro
 			<Section>
 				<div className="flex flex-col gap-4">
 					<p className="text-xs text-(--vscode-descriptionForeground)">
-						Skills are executable playbooks LUMI loads automatically when a task matches. Configure, toggle, or add
+						Skills are executable playbooks HEAV3NS loads automatically when a task matches. Configure, toggle, or add
 						new skills below.
 					</p>
 

@@ -2,18 +2,15 @@ import { ApiProvider } from "@shared/api"
 import { BooleanRequest } from "@shared/proto/dietcode/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { ChangeEvent, memo, useState } from "react"
-import DietCodeLogoWhite from "@/assets/DietCodeLogoWhite"
-import { LumiAmbientOrb } from "@/components/common/LumiAmbientOrb"
+import { Heav3nsSignalMark } from "@/assets/Heav3nsSignalMark"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { VscIcon } from "@/components/ui/vsc-icon"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { resolveOrbMood, useLumiSessionComfort } from "@/hooks/useLumiSessionComfort"
 import { StateServiceClient } from "@/services/grpc-client"
 
 const WelcomeView = memo(() => {
 	const { apiConfiguration, mode } = useExtensionState()
 	const [isSaving, setIsSaving] = useState(false)
-	const { isStill, calmTier } = useLumiSessionComfort()
 	const { handleModeFieldChange, handleFieldChange } = useApiConfigurationHandlers()
 
 	const [galxKey, setGalxKey] = useState(apiConfiguration?.galxApiKey || "")
@@ -57,13 +54,17 @@ const WelcomeView = memo(() => {
 
 	return (
 		<div className="fixed inset-0 p-0 flex flex-col items-center justify-center bg-background overflow-y-auto">
-			<div className="max-w-[420px] w-[90%] my-8 glass-panel p-8 rounded-3xl flex flex-col gap-6 shadow-2xl animate-fade-slide-in">
+			<div className="heav3ns-welcome-panel max-w-[420px] w-[90%] my-8 p-7 flex flex-col gap-6 animate-fade-slide-in">
 				<div className="flex flex-col items-center gap-3">
-					<h2 className="text-2xl font-bold tracking-tight text-foreground">Hi, I'm LUMI</h2>
-					<p className="text-description text-center text-sm m-0">Your calm coding companion.</p>
-					<LumiAmbientOrb calmTier={calmTier} mood={resolveOrbMood("idle", isStill)}>
-						<DietCodeLogoWhite className="size-20 drop-shadow-lg" />
-					</LumiAmbientOrb>
+					<div className="heav3ns-signal-stage" aria-hidden="true">
+						<Heav3nsSignalMark accentColor="var(--color-heav3ns-cyan)" className="h-auto w-36 text-heav3ns-active" />
+						<div className="heav3ns-signal-readout">
+							<span>CHANNEL 01</span>
+							<span className="heav3ns-signal-status">READY</span>
+						</div>
+					</div>
+					<h2 className="text-2xl font-bold tracking-[0.16em] text-foreground uppercase">HEAV3NS</h2>
+					<p className="text-description text-center text-sm m-0">Clear signal for complex work.</p>
 				</div>
 
 				<p className="text-sm leading-relaxed text-center text-foreground m-0">
@@ -76,9 +77,9 @@ const WelcomeView = memo(() => {
 					</p>
 
 					{/* GALX AI Key Card */}
-					<div className="flex flex-col gap-3 p-4 rounded-2xl border bg-lumi/10 border-lumi shadow-[0_4px_16px_rgba(99,102,160,0.15)]">
+					<div className="heav3ns-key-card flex flex-col gap-3 p-4">
 						<div className="flex items-center gap-3">
-							<div className="p-2 rounded-lg bg-lumi text-lumi-foreground">
+							<div className="heav3ns-key-icon p-2">
 								<VscIcon className="size-5" name="key" />
 							</div>
 							<div className="flex flex-col">
@@ -90,7 +91,7 @@ const WelcomeView = memo(() => {
 						</div>
 
 						<div className="mt-2 pt-2 border-t border-border-panel/40 flex flex-col gap-2">
-							<div className="flex items-center gap-2 bg-muted/40 border border-border rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-lumi focus-within:border-transparent">
+							<div className="flex items-center gap-2 bg-muted/40 border border-border rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-heav3ns focus-within:border-transparent">
 								<input
 									className="bg-transparent border-none text-foreground text-xs w-full focus:outline-none placeholder:text-muted-foreground"
 									onChange={handleGalxKeyChange}
@@ -120,12 +121,12 @@ const WelcomeView = memo(() => {
 
 				<div className="flex flex-col gap-2 mt-2">
 					<VSCodeButton
-						className="btn-premium-lumi w-full h-10 rounded-xl font-medium"
+						className="btn-premium-heav3ns w-full h-10"
 						disabled={!isProceedEnabled || isSaving}
 						onClick={handleProceed}>
 						{isSaving ? "Connecting..." : "Get Started"}
 					</VSCodeButton>
-					<VSCodeButton appearance="secondary" className="w-full h-9 rounded-xl" onClick={handleSkip}>
+					<VSCodeButton appearance="secondary" className="w-full h-9 rounded-lg" onClick={handleSkip}>
 						Configure Later
 					</VSCodeButton>
 				</div>

@@ -1245,9 +1245,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		const composerDescription =
 			composerMode === "steering"
-				? "LUMI is working. This message will steer the active execution."
+				? "HEAV3NS is working. This message will steer the active execution."
 				: composerMode === "recovering"
-					? "LUMI is recovering. Guidance is optional and will be applied to the next safe step."
+					? "HEAV3NS is recovering. Guidance is optional and will be applied to the next safe step."
 					: composerMode === "resume"
 						? "Execution is stopped. This message will resume the task with updated guidance."
 						: composerMode === "approval"
@@ -1272,7 +1272,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const sendIsSecondary = composerMode === "approval" || composerMode === "recovering" || composerMode === "completion"
 		const effectivePlaceholder =
 			mode === "auto"
-				? "Click 'Proceed with Defaults' above or select an option to steer LUMI..."
+				? "Click 'Proceed with Defaults' above or select an option to steer HEAV3NS..."
 				: composerMode === "resume"
 					? "Describe what to change before resuming…"
 					: placeholderText
@@ -1356,7 +1356,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					<div className="chat-writing-zone">
 						<DynamicTextArea
 							aria-describedby="lumi-composer-description"
-							aria-label="Message LUMI"
+							aria-label="Message HEAV3NS"
 							autoFocus={true}
 							className={cn(
 								"chat-input-textarea block w-full resize-none border-0 bg-transparent shadow-none focus:outline-none focus:ring-0 text-[#faf9f7] placeholder:text-description/40",

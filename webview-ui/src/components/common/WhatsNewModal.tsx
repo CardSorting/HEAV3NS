@@ -28,7 +28,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 
 	const navigateToModelPicker = useCallback(
 		(initialModelTab: "recommended" | "free", modelId?: string) => {
-			// Switch to LUMI provider first so the model picker tab works
+			// Switch to the HEAV3NS provider first so the model picker tab works
 			// Optionally also set the model if provided
 			const updates: Record<string, any> = {
 				planModeApiProvider: "dietcode",
@@ -134,7 +134,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 
 						{/* GitHub Star CTA */}
 						<p className="text-sm text-center" style={{ color: "var(--vscode-descriptionForeground)" }}>
-							Please support LUMI by{" "}
+							Please support HEAV3NS by{" "}
 							<a
 								href="https://github.com/dietcode/dietcode"
 								rel="noopener noreferrer"

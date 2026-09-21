@@ -79,7 +79,7 @@ export const ContextWindowSummary: React.FC<TaskContextWindowButtonsProps> = ({
 		<div className="flex flex-col gap-1 w-full">
 			{autoCompactThreshold > 0 ? (
 				<DetailsSection title="Auto shorten chats" value={`${(autoCompactThreshold * 100).toFixed(0)}%`}>
-					<p className="m-0 leading-snug">When the chat gets long, LUMI tidies it up so things stay comfortable.</p>
+					<p className="m-0 leading-snug">When the chat gets long, HEAV3NS tidies it up so things stay comfortable.</p>
 				</DetailsSection>
 			) : null}
 

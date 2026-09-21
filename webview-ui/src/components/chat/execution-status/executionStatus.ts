@@ -101,7 +101,7 @@ function getApprovalDetail(message: DietCodeMessage): string {
 		case "command":
 			return "A terminal command is staged and will not run until you approve it."
 		case "command_output":
-			return "A command is still running and needs a decision before LUMI continues."
+			return "A command is still running and needs a decision before HEAV3NS continues."
 		case "browser_action_launch":
 			return "External browser activity is staged for your review."
 		case "use_mcp_server":
@@ -229,7 +229,7 @@ export function deriveExecutionStatus({
 			detail: "Some governed execution evidence is missing, so the receipt is not sealed.",
 			nextAction: receipt.retrySafe
 				? "Review the missing evidence, then use the safe recovery path."
-				: "Review the receipt. Do not retry until LUMI marks recovery safe.",
+				: "Review the receipt. Do not retry until HEAV3NS marks recovery safe.",
 		}
 	} else if (
 		receipt.incident &&
@@ -276,7 +276,7 @@ export function deriveExecutionStatus({
 		status = {
 			state: "recovering",
 			title: "Recovering execution",
-			detail: "LUMI is restoring a safe execution path and preserving completed work.",
+			detail: "HEAV3NS is restoring a safe execution path and preserving completed work.",
 			nextAction: "No action required. Wait for the current recovery step to settle.",
 		}
 	} else if (
@@ -289,7 +289,7 @@ export function deriveExecutionStatus({
 			detail:
 				lastMessage.ask === "api_req_failed"
 					? "The model request failed before the task could continue."
-					: "LUMI stopped after repeated unsuccessful attempts.",
+					: "HEAV3NS stopped after repeated unsuccessful attempts.",
 			nextAction: "Choose a recovery action below.",
 		}
 	} else if (lastMessage?.type === "say" && (lastMessage.say === "error" || lastMessage.say === "command_permission_denied")) {
@@ -327,7 +327,7 @@ export function deriveExecutionStatus({
 		status = {
 			state: "input",
 			title: lastMessage.ask === "resume_task" ? "Ready to resume" : "Input required",
-			detail: "LUMI is paused at a decision point and will not continue without you.",
+			detail: "HEAV3NS is paused at a decision point and will not continue without you.",
 			nextAction: "Respond below to continue or choose another path.",
 		}
 	} else if (lastMessage?.say === "subagent" && lastMessage.text && tryParseModStage(lastMessage.text)) {
@@ -347,14 +347,14 @@ export function deriveExecutionStatus({
 		status = {
 			state: "running",
 			title: "Execution in progress",
-			detail: "LUMI is working through the current step. You can steer or stop it at any time.",
+			detail: "HEAV3NS is working through the current step. You can steer or stop it at any time.",
 			nextAction: "No action required. Monitor the timeline or add guidance.",
 		}
 	} else {
 		status = {
 			state: "ready",
 			title: "Ready for direction",
-			detail: "The current execution step is settled and LUMI can accept follow-up guidance.",
+			detail: "The current execution step is settled and HEAV3NS can accept follow-up guidance.",
 			nextAction: "Add a follow-up or inspect the execution timeline.",
 		}
 	}

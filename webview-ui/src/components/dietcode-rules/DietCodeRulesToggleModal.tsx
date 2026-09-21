@@ -201,7 +201,7 @@ const DietCodeRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling LUMI rule:", error)
+				console.error("Error toggling HEAV3NS rule:", error)
 			})
 	}
 
@@ -418,7 +418,7 @@ const DietCodeRulesToggleModal: React.FC = () => {
 						<div className="text-xs text-description mb-4">
 							{currentView === "rules" ? (
 								<p>
-									Rules are gentle nudges for how you'd like LUMI to work — project notes, preferences, or
+									Rules are gentle nudges for how you'd like HEAV3NS to work — project notes, preferences, or
 									habits you want to keep across chats.{" "}
 									<VSCodeLink
 										className="text-xs"
@@ -439,7 +439,7 @@ const DietCodeRulesToggleModal: React.FC = () => {
 								</p>
 							) : (
 								<p>
-									Hooks run little scripts at certain moments — useful if you want to wire LUMI into your own
+									Hooks run little scripts at certain moments — useful if you want to wire HEAV3NS into your own
 									tools.
 								</p>
 							)}

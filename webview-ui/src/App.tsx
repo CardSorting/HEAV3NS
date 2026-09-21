@@ -13,7 +13,7 @@ const SettingsView = lazy(() => import("./components/settings/SettingsView"))
 const WelcomeView = lazy(() => import("./components/welcome/WelcomeView"))
 const WorktreesView = lazy(() => import("./components/worktrees/WorktreesView"))
 
-const AppLoadingState = ({ label = "Starting LUMI…" }: { label?: string }) => (
+const AppLoadingState = ({ label = "Starting HEAV3NS…" }: { label?: string }) => (
 	<div
 		aria-busy="true"
 		aria-live="polite"
@@ -21,7 +21,7 @@ const AppLoadingState = ({ label = "Starting LUMI…" }: { label?: string }) => 
 	>
 		<div className="flex items-center justify-between border-b border-border/40 pb-3">
 			<div className="flex items-center gap-2">
-				<span aria-hidden="true" className="size-2.5 animate-pulse rounded-full bg-lumi shadow-[0_0_8px_var(--glow-lumi-subtle)]" />
+				<span aria-hidden="true" className="size-2.5 animate-pulse rounded-full bg-heav3ns shadow-[0_0_8px_var(--glow-heav3ns-subtle)]" />
 				<span className="text-xs font-medium tracking-tight text-foreground/80">{label}</span>
 			</div>
 			<div className="size-4 rounded-md bg-muted/30 animate-pulse" />
@@ -186,7 +186,7 @@ const AppContent = () => {
 		<div className="flex h-screen w-full flex-col bg-background">
 			<a
 				className="sr-only z-50 rounded bg-button-background px-3 py-2 text-button-foreground focus:not-sr-only focus:absolute focus:left-2 focus:top-2"
-				href="#lumi-main-content">
+				href="#heav3ns-main-content">
 				Skip to content
 			</a>
 			{showWelcome ? (
@@ -195,7 +195,7 @@ const AppContent = () => {
 				</Suspense>
 			) : (
 				<AppShell onRequestNewChat={handleRequestNewChat}>
-					<div className="relative min-h-0 w-full flex-1 overflow-hidden" id="lumi-main-content" tabIndex={-1}>
+					<div className="relative min-h-0 w-full flex-1 overflow-hidden" id="heav3ns-main-content" tabIndex={-1}>
 						<Suspense fallback={<AppLoadingState label="Loading view…" />}>
 							{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
 							{showWorktrees && <WorktreesView onDone={hideWorktrees} />}

@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 	public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
 		this.setState({ errorInfo })
-		console.error("[LUMI ErrorBoundary] Uncaught UI error:", error, errorInfo)
+		console.error("[HEAV3NS ErrorBoundary] Uncaught UI error:", error, errorInfo)
 	}
 
 	private handleRetry = () => {
@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
 	private handleCopyDetails = async () => {
 		const { error, errorInfo } = this.state
 		const details = [
-			"=== LUMI UI CRASH DIAGNOSTIC ===",
+			"=== HEAV3NS UI CRASH DIAGNOSTIC ===",
 			`Time: ${new Date().toISOString()}`,
 			`Message: ${error?.message || "Unknown error"}`,
 			`Stack: ${error?.stack || "No stack trace available"}`,
@@ -99,7 +99,7 @@ export class ErrorBoundary extends Component<Props, State> {
 									Something went wrong
 								</h2>
 								<p className="text-xs text-muted-foreground">
-									LUMI encountered an unexpected UI error
+									HEAV3NS encountered an unexpected UI error
 								</p>
 							</div>
 						</div>

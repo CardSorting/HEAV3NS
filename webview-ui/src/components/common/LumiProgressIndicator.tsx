@@ -1,8 +1,8 @@
-/** Gentle loading indicator — rests beside the user while thinking. */
+/** Compact signal readout — the execution state stays visible without a mascot. */
 export const LumiProgressIndicator = () => (
-	<span aria-hidden className="inline-flex items-center gap-1 mr-2 h-3">
-		<span className="size-1 rounded-full bg-lumi/30 animate-lumi-dot-pulse-slow [animation-delay:0ms]" />
-		<span className="size-1 rounded-full bg-lumi/30 animate-lumi-dot-pulse-slow [animation-delay:320ms]" />
-		<span className="size-1 rounded-full bg-lumi/30 animate-lumi-dot-pulse-slow [animation-delay:640ms]" />
+	<span aria-hidden className="heav3ns-progress-signal">
+		<span className="heav3ns-progress-tick [animation-delay:0ms]" />
+		<span className="heav3ns-progress-tick [animation-delay:180ms]" />
+		<span className="heav3ns-progress-tick [animation-delay:360ms]" />
 	</span>
 )

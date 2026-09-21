@@ -130,7 +130,7 @@ export const VoiceDictationCapsule: React.FC<VoiceDictationCapsuleProps> = ({
 					</span>
 				) : (
 					<span className="text-description/70 italic text-[11px]">
-						Listening... Speak your request naturally (LUMI will type what you say)
+						Listening... Speak your request naturally (HEAV3NS will type what you say)
 					</span>
 				)}
 			</div>

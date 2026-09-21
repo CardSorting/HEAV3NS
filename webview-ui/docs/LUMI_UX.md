@@ -1,9 +1,9 @@
-# LUMI UX — Webview Developer Reference
+# HEAV3NS UX — Webview Developer Reference
 
-The sidebar presents as **LUMI** to users. This file is a quick reference for engineers working in `webview-ui/`. Full documentation lives in the repo docs site:
+The sidebar presents as **HEAV3NS** to users. This file is a quick reference for engineers working in `webview-ui/`. Full documentation lives in the repo docs site:
 
 - **[User Interface Design](../../docs/USER_INTERFACE_DESIGN.md)** — product philosophy, terminology, contributor guidelines
-- **[LUMI UX Implementation](../../docs/MIRA_UX_IMPLEMENTATION.md)** — APIs, file map, wiring checklist
+- **[HEAV3NS UX Implementation](../../docs/MIRA_UX_IMPLEMENTATION.md)** — APIs, file map, wiring checklist
 
 ---
 
@@ -27,10 +27,10 @@ Secondary filter: **Does this interface reduce tension?**
 
 | Task | File |
 | :--- | :--- |
-| Add conversational copy | `src/copy/lumiVoice.ts` |
+| Add conversational copy | `src/copy/heav3nsVoice.ts` |
 | Placeholders / completion silence | `pickChatPlaceholder`, `pickCompletionPresentation` |
-| Long-session behavior | `src/hooks/useLumiSessionComfort.ts` |
-| Orb presence | `src/components/common/LumiAmbientOrb.tsx` |
+| Long-session behavior | `src/hooks/useHeav3nsSessionComfort.ts` |
+| Signal presence | `src/assets/Heav3nsSignalMark.tsx`, `src/index.css` |
 | Audit styling | `src/components/chat/audit/auditUiStyles.ts` |
 | Theme / motion | `src/theme.css`, `src/index.css` |
 
@@ -49,18 +49,18 @@ Secondary filter: **Does this interface reduce tension?**
 ## Session signals
 
 ```typescript
-const { sessionMinutes, isNightDesk, isStill, serenityLevel, calmTier } = useLumiSessionComfort()
+const { sessionMinutes, isNightDesk, isStill, serenityLevel, calmTier } = useHeav3nsSessionComfort()
 ```
 
 - **90 min** → long session, placeholder "Still here."
-- **15 min idle** → night desk, placeholder "…", orb dims
+- **15 min idle** → night desk, placeholder "…", signal surfaces quiet down
 - **Serenity 0–3** → progressive `.lumi-serenity-fade` cooling
 
 Layout attributes: `data-night-desk`, `data-serenity-level`.
 
 ---
 
-## Orb moods
+## Signal modes
 
 `idle` | `waiting` | `success` | `still` | `held`
 

@@ -12,9 +12,9 @@ Storybook is a frontend workshop for building UI components and pages in isolati
 
 In DietCode's webview, Storybook helps us develop and test React components that make up the chat interface, settings panels, and other UI elements in isolation from the VSCode extension environment.
 
-## LUMI design principles
+## HEAV3NS design principles
 
-The sidebar presents as **LUMI** to users. When building or reviewing stories, apply these filters:
+The sidebar presents as **HEAV3NS** to users. When building or reviewing stories, apply these filters:
 
 1. **Can someone keep this open all day without feeling managed by it?**
 2. **Does this interface reduce tension?**
@@ -34,9 +34,9 @@ The sidebar presents as **LUMI** to users. When building or reviewing stories, a
 
 ### Scope
 
-LUMI changes are **webview presentation only**. Internal prop names, proto types, and mock state keys may still use `dietcode` naming.
+HEAV3NS changes are **webview presentation only**. Internal prop names, proto types, and mock state keys may still use `dietcode` naming.
 
-Full documentation: [User Interface Design](../../docs/USER_INTERFACE_DESIGN.md) · [LUMI UX Implementation](../../docs/MIRA_UX_IMPLEMENTATION.md)
+Full documentation: [User Interface Design](../../docs/USER_INTERFACE_DESIGN.md) · [HEAV3NS UX Implementation](../../docs/MIRA_UX_IMPLEMENTATION.md)
 
 ## Getting Started
 

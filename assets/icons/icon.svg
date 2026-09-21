@@ -1,9 +1,9 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LUMI">
-  <title>LUMI</title>
-  <circle cx="50" cy="50" r="40" fill="currentColor" opacity="0.18"/>
-  <circle cx="50" cy="50" r="32" fill="currentColor" opacity="0.28"/>
-  <circle cx="50" cy="50" r="22" fill="currentColor" opacity="0.72"/>
-  <circle cx="50" cy="51" r="12" fill="currentColor" opacity="0.45"/>
-  <path d="M41 46Q43.5 44 46 46" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
-  <path d="M54 46Q56.5 44 59 46" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+<svg aria-label="HEAV3NS signal mark" fill="none" height="100" role="img" viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg" >
+  <title>HEAV3NS signal mark</title>
+  <path d="M15 22H43L55 34L43 46H15V39H40L45 34L40 29H15V22Z" fill="#d8ff5e" />
+  <path d="M15 54H43L55 66L43 78H15V71H40L45 66L40 61H15V54Z" fill="#d8ff5e" />
+  <rect fill="#77e6ff" height="7" width="19" x="66" y="22" />
+  <rect fill="#77e6ff" height="7" width="13" x="66" y="47" />
+  <rect fill="#77e6ff" height="7" width="19" x="66" y="71" />
+  <rect fill="#77e6ff" height="12" width="12" x="66" y="44" />
 </svg>

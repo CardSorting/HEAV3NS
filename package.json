@@ -1,7 +1,7 @@
 {
-	"name": "lumi-vscode",
-	"displayName": "LUMI",
-	"description": "LUMI is your calm coding companion — comfort-first developer tooling for long sessions.",
+	"name": "heav3ns-vscode",
+	"displayName": "HEAV3NS",
+	"description": "HEAV3NS is your calm coding companion — comfort-first developer tooling for long sessions.",
 	"version": "12.6.0",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
@@ -29,7 +29,7 @@
 		"Testing"
 	],
 	"keywords": [
-		"lumi",
+		"heav3ns",
 		"dietcode",
 		"claude",
 		"dev",
@@ -52,8 +52,8 @@
 	"main": "./dist/extension.js",
 	"contributes": {
 		"icons": {
-			"lumi-icon": {
-				"description": "LUMI",
+			"heav3ns-icon": {
+				"description": "HEAV3NS",
 				"default": {
 					"fontPath": "assets/icons/mira-bot.woff",
 					"fontCharacter": "\\e900"
@@ -63,21 +63,21 @@
 		"walkthroughs": [
 			{
 				"id": "LUMIWalkthrough",
-				"title": "Meet LUMI, your calm coding companion",
-				"description": "LUMI codes like a developer because it thinks like one. Here are 5 ways to put it to work:",
+				"title": "Meet HEAV3NS, your calm coding companion",
+				"description": "HEAV3NS codes like a developer because it thinks like one. Here are 5 ways to put it to work:",
 				"steps": [
 					{
 						"id": "welcome",
 						"title": "Start with a Goal, Not Just a Prompt",
-						"description": "Tell LUMI what you want to achieve. It plans, asks, and then codes, like a true partner.",
+						"description": "Tell HEAV3NS what you want to achieve. It plans, asks, and then codes, like a true partner.",
 						"media": {
 							"markdown": "walkthrough/step1.md"
 						}
 					},
 					{
 						"id": "learn",
-						"title": "Let LUMI learn your codebase",
-						"description": "Point LUMI to your project. It builds understanding to make smart, context-aware changes.",
+						"title": "Let HEAV3NS learn your codebase",
+						"description": "Point HEAV3NS to your project. It builds understanding to make smart, context-aware changes.",
 						"media": {
 							"markdown": "walkthrough/step2.md"
 						}
@@ -85,7 +85,7 @@
 					{
 						"id": "advanced-features",
 						"title": "Always Use the Best AI Models",
-						"description": "LUMI connects you with State-of-the-Art AI, connecting to top models (Anthropic, Gemini, OpenAI & more).",
+						"description": "HEAV3NS connects you with State-of-the-Art AI, connecting to top models (Anthropic, Gemini, OpenAI & more).",
 						"media": {
 							"markdown": "walkthrough/step3.md"
 						}
@@ -101,7 +101,7 @@
 					{
 						"id": "getting-started",
 						"title": "You're Always in Control",
-						"description": "Review LUMI's plans and diffs. Approve changes before they happen. No surprises.",
+						"description": "Review HEAV3NS's plans and diffs. Approve changes before they happen. No surprises.",
 						"media": {
 							"markdown": "walkthrough/step5.md"
 						},
@@ -116,7 +116,7 @@
 			"activitybar": [
 				{
 					"id": "lumi-ActivityBar",
-					"title": "LUMI",
+					"title": "HEAV3NS",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
@@ -126,7 +126,7 @@
 				{
 					"type": "webview",
 					"id": "lumi.SidebarProvider",
-					"name": "LUMI",
+					"name": "HEAV3NS",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
@@ -160,108 +160,108 @@
 			{
 				"command": "lumi.joyZoningAudit",
 				"title": "Run JoyZoning Audit",
-				"category": "LUMI",
+				"category": "HEAV3NS",
 				"icon": "$(shield)"
 			},
 			{
 				"command": "lumi.dev.createTestTasks",
 				"title": "Create Test Tasks",
-				"category": "LUMI",
+				"category": "HEAV3NS",
 				"when": "dietcode.isDevMode"
 			},
 			{
 				"command": "lumi.dev.expireMcpOAuthTokens",
 				"title": "Expire MCP OAuth Tokens (for testing)",
-				"category": "LUMI",
+				"category": "HEAV3NS",
 				"when": "dietcode.isDevMode"
 			},
 			{
 				"command": "lumi.addToChat",
-				"title": "Add to LUMI",
-				"category": "LUMI"
+				"title": "Add to HEAV3NS",
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.addTerminalOutputToChat",
-				"title": "Add to LUMI",
-				"category": "LUMI"
+				"title": "Add to HEAV3NS",
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.focusChatInput",
 				"title": "Jump to Chat Input",
-				"category": "LUMI"
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.generateGitCommitMessage",
-				"title": "Generate Commit Message with LUMI",
-				"category": "LUMI",
-				"icon": "$(lumi-icon)"
+				"title": "Generate Commit Message with HEAV3NS",
+				"category": "HEAV3NS",
+				"icon": "$(heav3ns-icon)"
 			},
 			{
 				"command": "lumi.abortGitCommitMessage",
-				"title": "Generate Commit Message with LUMI - Stop",
-				"category": "LUMI",
+				"title": "Generate Commit Message with HEAV3NS - Stop",
+				"category": "HEAV3NS",
 				"icon": "$(debug-stop)"
 			},
 			{
 				"command": "lumi.explainCode",
-				"title": "Explain with LUMI",
-				"category": "LUMI"
+				"title": "Explain with HEAV3NS",
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.improveCode",
-				"title": "Improve with LUMI",
-				"category": "LUMI"
+				"title": "Improve with HEAV3NS",
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.jupyterGenerateCell",
-				"title": "Generate Jupyter Cell with LUMI",
-				"category": "LUMI",
+				"title": "Generate Jupyter Cell with HEAV3NS",
+				"category": "HEAV3NS",
 				"icon": "$(sparkle)"
 			},
 			{
 				"command": "lumi.jupyterExplainCell",
-				"title": "Explain Jupyter Cell with LUMI",
-				"category": "LUMI",
+				"title": "Explain Jupyter Cell with HEAV3NS",
+				"category": "HEAV3NS",
 				"icon": "$(question)"
 			},
 			{
 				"command": "lumi.jupyterImproveCell",
-				"title": "Improve Jupyter Cell with LUMI",
-				"category": "LUMI",
+				"title": "Improve Jupyter Cell with HEAV3NS",
+				"category": "HEAV3NS",
 				"icon": "$(lightbulb)"
 			},
 			{
 				"command": "lumi.openWalkthrough",
 				"title": "Open Walkthrough",
-				"category": "LUMI"
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.runHealthCheck",
-				"title": "Check LUMI Installation",
-				"category": "LUMI",
+				"title": "Check HEAV3NS Installation",
+				"category": "HEAV3NS",
 				"icon": "$(heart)"
 			},
 			{
 				"command": "lumi.reconstructTaskHistory",
 				"title": "Reconstruct Task History",
-				"category": "LUMI"
+				"category": "HEAV3NS"
 			},
 			{
 				"command": "lumi.clearCache",
 				"title": "Clear Cache & Optimize Storage",
-				"category": "LUMI",
+				"category": "HEAV3NS",
 				"icon": "$(trash)"
 			},
 			{
 				"command": "lumi.reviewComment.reply",
 				"title": "Reply",
-				"category": "LUMI",
+				"category": "HEAV3NS",
 				"enablement": "!commentIsEmpty"
 			},
 			{
 				"command": "lumi.reviewComment.addToChat",
-				"title": "Add to LUMI Chat",
-				"category": "LUMI",
+				"title": "Add to HEAV3NS Chat",
+				"category": "HEAV3NS",
 				"icon": "$(link-external)"
 			},
 			{
@@ -351,7 +351,7 @@
 			"commandPalette": [
 				{
 					"command": "lumi.runHealthCheck",
-					"title": "LUMI: Check Installation (Health Check)"
+					"title": "HEAV3NS: Check Installation (Health Check)"
 				},
 				{
 					"command": "lumi.generateGitCommitMessage",
@@ -382,7 +382,7 @@
 			]
 		},
 		"configuration": {
-			"title": "LUMI",
+			"title": "HEAV3NS",
 			"properties": {
 				"lumi.roadmap.enabled": {
 					"type": "boolean",
@@ -761,6 +761,8 @@
 		"exclude-after-remap": true
 	},
 	"bin": {
+		"heav3ns": "dist/index.js",
+		"heav3ns-joy": "dist/index.js",
 		"lumi": "dist/index.js",
 		"lumi-joy": "dist/index.js"
 	},

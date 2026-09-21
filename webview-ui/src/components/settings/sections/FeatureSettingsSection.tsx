@@ -61,7 +61,7 @@ const featureToggles: FeatureToggle[] = [
 	{
 		id: "strict-plan-mode",
 		label: "Planning stays read-only",
-		description: "During the automatic planning phase, LUMI won't edit files until it begins implementation.",
+	description: "During the automatic planning phase, HEAV3NS won't edit files until it begins implementation.",
 		stateKey: "strictPlanModeEnabled",
 		settingKey: "strictPlanModeEnabled",
 	},
@@ -69,7 +69,7 @@ const featureToggles: FeatureToggle[] = [
 		id: "joy-zoning-steering",
 		label: "Follow workspace patterns",
 		description:
-			"Let LUMI use your repository's existing boundaries and conventions during planning. Turn it off for a fully native workflow; individual tasks can override this default.",
+			"Let HEAV3NS use your repository's existing boundaries and conventions during planning. Turn it off for a fully native workflow; individual tasks can override this default.",
 		stateKey: "joyZoningSteeringDefaultEnabled",
 		settingKey: "joyZoningSteeringEnabled",
 	},
@@ -120,14 +120,14 @@ const featureToggles: FeatureToggle[] = [
 	{
 		id: "dietcode-web-tools",
 		label: "Browse the web",
-		description: "Let LUMI search the web and open pages when you need outside info.",
+		 description: "Let HEAV3NS search the web and open pages when you need outside info.",
 		stateKey: "dietcodeWebToolsEnabled",
 		settingKey: "dietcodeWebToolsEnabled",
 	},
 	{
 		id: "worktrees",
 		label: "Worktrees",
-		description: "Run a few LUMI tasks side by side with git worktrees.",
+		 description: "Run a few HEAV3NS tasks side by side with git worktrees.",
 		stateKey: "worktreesEnabled",
 		settingKey: "worktreesEnabled",
 	},
@@ -135,7 +135,7 @@ const featureToggles: FeatureToggle[] = [
 	{
 		id: "double-check-completion",
 		label: "Double-check my work",
-		description: "Before saying we're done, LUMI takes a second look at what you originally asked for.",
+		 description: "Before saying we're done, HEAV3NS takes a second look at what you originally asked for.",
 		stateKey: "doubleCheckCompletionEnabled",
 		settingKey: "doubleCheckCompletionEnabled",
 	},

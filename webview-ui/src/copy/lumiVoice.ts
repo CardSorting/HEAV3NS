@@ -1,5 +1,5 @@
 /**
- * LUMI voice helpers — warm, collaborative microcopy.
+ * HEAV3NS voice helpers — warm, collaborative microcopy.
  *
  * Design principles:
  * - Can someone keep this open all day without feeling managed by it?
@@ -44,7 +44,7 @@ export function pickCompletionCloser(seed: number): string | null {
 }
 
 /** Stable placeholders — no rotation; quiet availability. */
-const PLACEHOLDER_WITH_TASK = "Message LUMI or tap Voice to speak…"
+const PLACEHOLDER_WITH_TASK = "Message HEAV3NS or tap Voice to speak…"
 const PLACEHOLDER_STEERING = "Add a follow-up or steer the task…"
 const PLACEHOLDER_IDLE_GAP = "Still working — add a follow-up anytime…"
 const PLACEHOLDER_EMPTY = "Ask anything or tap Voice to speak…"
@@ -93,7 +93,7 @@ export function pickRecoveryLine(seed: number): string {
 	return RECOVERY_LINES[Math.abs(seed) % RECOVERY_LINES.length]
 }
 
-/** Calm copy when LUMI is uncertain or stuck. */
+/** Calm copy when HEAV3NS is uncertain or stuck. */
 export const STUCK_LINES = [
 	"This one's a little tricky.",
 	"I'm not fully sure yet.",

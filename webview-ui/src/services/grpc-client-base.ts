@@ -83,11 +83,11 @@ export abstract class ProtoBusClient {
 					// Special handling for host actions like showing messages
 					const { method, args } = message.host_action;
 					if (method === "showInformationMessage") {
-						console.info(`[LUMI Host Info]`, args[0]);
+						console.info(`[HEAV3NS Host Info]`, args[0]);
 					} else if (method === "showWarningMessage") {
-						console.warn(`[LUMI Host Warning]`, args[0]);
+						console.warn(`[HEAV3NS Host Warning]`, args[0]);
 					} else if (method === "showErrorMessage") {
-						console.error(`[LUMI Host Error]`, args[0]);
+						console.error(`[HEAV3NS Host Error]`, args[0]);
 					}
 					return;
 				}
@@ -245,11 +245,11 @@ export abstract class ProtoBusClient {
 				// Special handling for host actions like showing messages
 				const { method, args } = message.host_action;
 				if (method === "showInformationMessage") {
-					console.info(`[LUMI Host Info]`, args[0]);
+					console.info(`[HEAV3NS Host Info]`, args[0]);
 				} else if (method === "showWarningMessage") {
-					console.warn(`[LUMI Host Warning]`, args[0]);
+					console.warn(`[HEAV3NS Host Warning]`, args[0]);
 				} else if (method === "showErrorMessage") {
-					console.error(`[LUMI Host Error]`, args[0]);
+					console.error(`[HEAV3NS Host Error]`, args[0]);
 				}
 				return;
 			}

@@ -61,7 +61,7 @@ const meta: Meta<typeof MockApp> = {
 		docs: {
 			description: {
 				component: `
-The ChatView component is the main interface for interacting with LUMI. It provides a comprehensive chat experience with AI assistance, task management, and various tools.
+The ChatView component is the main interface for interacting with HEAV3NS. It provides a comprehensive chat experience with AI assistance, task management, and various tools.
 
 **Key Features:**
 - **Task Management**: Create, resume, and manage AI-assisted tasks
@@ -333,7 +333,7 @@ export const ActiveConversation: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "An active conversation showing a typical interaction with LUMI, including task creation, tool usage, and AI responses.",
+				story: "An active conversation showing a typical interaction with HEAV3NS, including task creation, tool usage, and AI responses.",
 			},
 		},
 	},
@@ -455,7 +455,7 @@ export const ErrorState: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "Shows how LUMI handles and displays error messages, helping users understand and resolve issues.",
+				story: "Shows how HEAV3NS handles and displays error messages, helping users understand and resolve issues.",
 			},
 		},
 	},
@@ -473,7 +473,7 @@ export const AutoApprovalEnabled: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "Shows the interface with auto-approval enabled, allowing LUMI to execute certain actions automatically without user confirmation.",
+				story: "Shows the interface with auto-approval enabled, allowing HEAV3NS to execute certain actions automatically without user confirmation.",
 			},
 		},
 	},
@@ -506,7 +506,7 @@ export const PlanMode: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "Shows LUMI in Plan mode, where it focuses on creating detailed plans and discussing approaches before implementation.",
+				story: "Shows HEAV3NS in Plan mode, where it focuses on creating detailed plans and discussing approaches before implementation.",
 			},
 		},
 	},
@@ -542,7 +542,7 @@ export const BrowserAutomation: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "Shows LUMI performing browser automation tasks, including launching browsers, clicking elements, and testing web applications.",
+				story: "Shows HEAV3NS performing browser automation tasks, including launching browsers, clicking elements, and testing web applications.",
 			},
 		},
 	},
@@ -714,7 +714,7 @@ export const Followup = quickStory(
 	"Follow-up",
 	"followup",
 	"What would you like me to work on next?",
-	"Shows followup question state where LUMI asks for next steps.",
+	"Shows followup question state where HEAV3NS asks for next steps.",
 )
 export const ResumeTask = quickStory(
 	"Resume Task",
@@ -780,8 +780,8 @@ export const ReportBug = quickStory(
 	"Report Bug",
 	"report_bug",
 	JSON.stringify({
-		steps_to_reproduce: "1. Open LUMI\n2. Start a new task\n3. Observe the error",
-		what_happened: "LUMI crashes unexpectedly",
+		steps_to_reproduce: "1. Open HEAV3NS\n2. Start a new task\n3. Observe the error",
+		what_happened: "HEAV3NS crashes unexpectedly",
 	}),
 	"Shows utility action to report bugs to the GitHub repository.",
 )

@@ -109,7 +109,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 							))}
 						</VSCodeDropdown>
 						<p className="text-xs text-(--vscode-descriptionForeground) mt-1">
-							Choose the terminal type LUMI will open. 'Default' automatically matches your active VS Code profile.
+							Choose the terminal type HEAV3NS will open. 'Default' automatically matches your active VS Code profile.
 						</p>
 					</div>
 
@@ -128,7 +128,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 							{inputError && <div className="text-(--vscode-errorForeground) text-xs mt-1">{inputError}</div>}
 						</div>
 						<p className="text-xs text-(--vscode-descriptionForeground)">
-							How long LUMI waits for VS Code shell integration to activate. If it fails or is disabled, LUMI uses
+							How long HEAV3NS waits for VS Code shell integration to activate. If it fails or is disabled, HEAV3NS uses
 							an automatic backup command runner. Lowering this speeds up starts on slow shell setups.
 						</p>
 					</div>
@@ -142,7 +142,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 							</VSCodeCheckbox>
 						</div>
 						<p className="text-xs text-(--vscode-descriptionForeground)">
-							When enabled, LUMI will reuse open terminal windows to execute new commands, automatically navigating
+							When enabled, HEAV3NS will reuse open terminal windows to execute new commands, automatically navigating
 							to the correct directory. Uncheck this if you experience command lockouts or process conflicts.
 						</p>
 					</div>

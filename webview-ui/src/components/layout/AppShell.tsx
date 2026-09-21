@@ -2,6 +2,7 @@ import { StringArrayRequest, StringRequest } from "@shared/proto/dietcode/common
 import { TaskFavoriteRequest } from "@shared/proto/dietcode/task"
 import { GitBranch, History, Menu, MessageSquare, MoreHorizontal, Plus, Search, Settings, Star, Trash2, X } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Heav3nsSignalMark } from "@/assets/Heav3nsSignalMark"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
@@ -126,11 +127,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 	)
 
 	const renderSidebarContent = () => (
-		<div className="flex h-full w-full flex-col bg-[#16161d] text-[#faf9f7] select-none border-r border-[#20202a]">
+		<div className="flex h-full w-full flex-col bg-heav3ns-bg-dark text-heav3ns-text-primary select-none border-r border-heav3ns-border">
 			{/* New chat button */}
 			<div className="px-4 pt-4 pb-2">
 				<button
-					className="flex w-full items-center justify-between rounded-xl bg-lumi px-4 py-3 text-sm font-semibold text-[#faf9f7] transition-all hover:bg-lumi/85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumi"
+					className="flex w-full items-center justify-between rounded-lg bg-heav3ns-active px-4 py-3 text-sm font-semibold text-heav3ns-foreground transition-all hover:bg-heav3ns-active/85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-heav3ns"
 					onClick={() => {
 						onRequestNewChat()
 						setIsMobileSidebarOpen(false)
@@ -147,9 +148,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 			{/* Search input */}
 			<div className="px-4 py-2">
 				<div className="relative flex items-center">
-					<Search className="absolute left-3 size-4 text-[#8a8996]/65" />
+					<Search className="absolute left-3 size-4 text-heav3ns-text-secondary/65" />
 					<input
-						className="w-full rounded-xl bg-[#1e1e26] border border-[#272730] py-2.5 pl-10 pr-4 text-xs text-[#faf9f7] placeholder:text-[#8a8996]/55 focus:outline-none focus:ring-1 focus:ring-lumi/70"
+						className="w-full rounded-lg bg-heav3ns-panel-raised border border-heav3ns-border py-2.5 pl-10 pr-4 text-xs text-heav3ns-text-primary placeholder:text-heav3ns-text-secondary/55 focus:outline-none focus:ring-1 focus:ring-heav3ns/70"
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder="Search chats..."
 						ref={searchInputRef}
@@ -158,7 +159,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 					/>
 					{searchQuery && (
 						<button
-							className="absolute right-3 text-[#8a8996]/65 hover:text-[#faf9f7]"
+							className="absolute right-3 text-heav3ns-text-secondary/65 hover:text-heav3ns-text-primary"
 							onClick={() => setSearchQuery("")}
 							type="button">
 							<X className="size-3.5" />
@@ -169,7 +170,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 
 			{/* Recent chats section */}
 			<div className="flex-1 overflow-y-auto px-2 py-2">
-				<div className="flex items-center justify-between px-2.5 pb-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-[#8a8996]/65">
+				<div className="flex items-center justify-between px-2.5 pb-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-heav3ns-text-secondary/65">
 					<span>Recent chats</span>
 				</div>
 
@@ -186,25 +187,25 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 								className={cn(
 									"group relative flex min-h-12 w-full cursor-pointer items-start gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors",
 									isSelected
-										? "bg-lumi/15 border border-lumi/30"
-										: "hover:bg-[#1e1e26] border border-transparent",
+										? "bg-heav3ns-active/10 border border-heav3ns-active/30"
+										: "hover:bg-heav3ns-panel-raised border border-transparent",
 								)}
 								key={item.id}
 								onClick={() => handleOpenTask(item.id)}>
 								<MessageSquare
-									className={cn("size-4 mt-0.5 shrink-0 text-[#8a8996]/65", isSelected && "text-lumi-lavender")}
+									className={cn("size-4 mt-0.5 shrink-0 text-heav3ns-text-secondary/65", isSelected && "text-heav3ns-cyan")}
 								/>
 								<div className="flex-1 min-w-0 pr-6">
 									<div className="flex items-baseline justify-between gap-1.5">
-										<p className="truncate text-xs font-semibold leading-tight text-[#faf9f7]">{title}</p>
+										<p className="truncate text-xs font-semibold leading-tight text-heav3ns-text-primary">{title}</p>
 									</div>
 									<div className="flex items-center gap-1.5 mt-1">
 										{subtitle && (
-											<p className="truncate text-[10px] leading-tight text-[#8a8996]/65 flex-1">
+											<p className="truncate text-[10px] leading-tight text-heav3ns-text-secondary/65 flex-1">
 												{subtitle}
 											</p>
 										)}
-										<span className="text-[10px] leading-tight text-[#8a8996]/45 whitespace-nowrap">
+										<span className="text-[10px] leading-tight text-heav3ns-text-secondary/45 whitespace-nowrap">
 											{formatRelativeTime(item.ts)}
 										</span>
 									</div>
@@ -215,20 +216,20 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 									<Popover>
 										<PopoverTrigger asChild>
 											<button
-												className="flex size-6 items-center justify-center rounded-lg hover:bg-white/10 text-[#8a8996]/65 hover:text-[#faf9f7]"
+												className="flex size-6 items-center justify-center rounded-lg hover:bg-heav3ns-panel-raised text-heav3ns-text-secondary/65 hover:text-heav3ns-text-primary"
 												onClick={(e) => e.stopPropagation()}
 												type="button">
 												<MoreHorizontal className="size-3.5" />
 											</button>
 										</PopoverTrigger>
-										<PopoverContent align="end" className="w-36 p-1 bg-[#1e1e26] border-[#272730] rounded-xl">
+										<PopoverContent align="end" className="w-36 p-1 bg-heav3ns-panel-raised border-heav3ns-border rounded-lg">
 											<button
-												className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs hover:bg-[#272730] text-[#faf9f7]"
+												className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs hover:bg-heav3ns-panel-raised text-heav3ns-text-primary"
 												onClick={(e) => handleToggleFavorite(item.id, !!item.isFavorited, e)}
 												type="button">
-												<Star
-													className={cn(
-														"size-3.5 text-[#8a8996]/70",
+													<Star
+														className={cn(
+															"size-3.5 text-heav3ns-text-secondary/70",
 														item.isFavorited && "fill-yellow-500 text-yellow-500",
 													)}
 												/>
@@ -248,7 +249,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 						)
 					})}
 					{filteredHistory.length === 0 && (
-						<p className="px-3 py-4 text-center text-xs text-[#8a8996]/55">No chats found</p>
+						<p className="px-3 py-4 text-center text-xs text-heav3ns-text-secondary/55">No chats found</p>
 					)}
 				</div>
 			</div>
@@ -256,7 +257,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 	)
 
 	return (
-		<div className="flex h-screen w-full overflow-hidden bg-[#0f0f12]">
+		<div className="flex h-screen w-full overflow-hidden bg-heav3ns-bg-dark">
 			{/* Desktop Sidebar (Left) */}
 			<aside className="hidden md:block w-[300px] shrink-0 h-full">{renderSidebarContent()}</aside>
 
@@ -266,11 +267,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 					{/* Overlay */}
 					<div className="fixed inset-0 bg-black/60 transition-opacity" onClick={() => setIsMobileSidebarOpen(false)} />
 					{/* Drawer Panel */}
-					<div className="relative flex w-[280px] max-w-[80%] flex-col bg-[#16161d] h-full shadow-2xl animate-in slide-in-from-left duration-200">
+					<div className="relative flex w-[280px] max-w-[80%] flex-col bg-heav3ns-bg-dark h-full shadow-2xl animate-in slide-in-from-left duration-200">
 						{renderSidebarContent()}
 						{/* Close button inside drawer */}
 						<button
-							className="absolute top-4 right-[-44px] flex size-9 items-center justify-center rounded-xl bg-[#16161d] border border-[#20202a] text-[#faf9f7] shadow-lg"
+							className="absolute top-4 right-[-44px] flex size-9 items-center justify-center rounded-lg bg-heav3ns-bg-dark border border-heav3ns-border text-heav3ns-text-primary shadow-lg"
 							onClick={() => setIsMobileSidebarOpen(false)}
 							type="button">
 							<X className="size-4" />
@@ -282,12 +283,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 			{/* Main Workspace Area (Right) */}
 			<div className="flex flex-1 flex-col min-w-0 h-full relative">
 				{/* Top application bar */}
-				<header className="flex h-16 items-center justify-between border-b border-[#20202a] bg-[#16161d]/85 backdrop-blur-md px-4 select-none shrink-0 z-20">
+				<header className="flex h-16 items-center justify-between border-b border-heav3ns-border bg-heav3ns-bg-dark/90 px-4 select-none shrink-0 z-20">
 					{/* Left: Back button (if in sub-view) or Hamburger menu + Brand Identity */}
 					<div className="flex items-center gap-3">
 						{activeTab !== "chat" ? (
 							<button
-								className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#20202a] hover:bg-[#272730] text-xs font-semibold text-[#faf9f7] transition-all cursor-pointer border border-[#2d2d38] active:scale-[0.98]"
+								className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-heav3ns-panel-raised hover:bg-heav3ns-graphite text-xs font-semibold text-heav3ns-text-primary transition-all cursor-pointer border border-heav3ns-border active:scale-[0.98]"
 								onClick={() => handleNav("chat")}
 								type="button">
 								<svg className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -299,7 +300,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 							<>
 								<button
 									aria-label="Open sidebar"
-									className="flex md:hidden size-9 items-center justify-center rounded-lg hover:bg-[#20202a] text-[#faf9f7] transition-colors"
+									className="flex md:hidden size-9 items-center justify-center rounded-lg hover:bg-heav3ns-panel-raised text-heav3ns-text-primary transition-colors"
 									onClick={() => setIsMobileSidebarOpen(true)}
 									type="button">
 									<Menu className="size-5" />
@@ -307,14 +308,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 								<div
 									className="flex items-center gap-2.5 cursor-pointer active:opacity-85"
 									onClick={() => handleNav("chat")}>
-									{/* Star shape logo element */}
-									<div className="flex size-7 items-center justify-center rounded-lg bg-lumi/25 text-lumi-lavender">
-										<svg className="size-4 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
-											<path d="M12 2L14.7 9.3L22 12L14.7 14.7L12 22L9.3 14.7L2 12L9.3 9.3L12 2Z" />
-										</svg>
+									<div className="heav3ns-shell-mark" aria-hidden="true">
+										<Heav3nsSignalMark accentColor="var(--color-heav3ns-cyan)" className="h-auto w-5 text-heav3ns-active" />
 									</div>
-									<span className="text-sm font-bold tracking-wider text-[#faf9f7] uppercase font-mono">
-										Lumi
+									<span className="text-sm font-bold tracking-wider text-heav3ns-text-primary uppercase font-mono">
+										HEAV3NS
 									</span>
 								</div>
 							</>
@@ -326,10 +324,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 						{/* History Button */}
 						<button
 							className={cn(
-								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lumi",
+								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-heav3ns",
 								activeTab === "history"
-									? "bg-[#20202a] text-[#faf9f7]"
-									: "text-[#8a8996]/85 hover:bg-[#20202a]/60 hover:text-[#faf9f7]",
+									? "bg-heav3ns-panel-raised text-heav3ns-text-primary"
+									: "text-heav3ns-text-secondary/85 hover:bg-heav3ns-panel-raised/60 hover:text-heav3ns-text-primary",
 							)}
 							onClick={() => handleNav("history")}
 							title="Chat history"
@@ -340,10 +338,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 						{/* Worktrees / Branches */}
 						<button
 							className={cn(
-								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lumi",
+								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-heav3ns",
 								activeTab === "worktrees"
-									? "bg-[#20202a] text-[#faf9f7]"
-									: "text-[#8a8996]/85 hover:bg-[#20202a]/60 hover:text-[#faf9f7]",
+									? "bg-heav3ns-panel-raised text-heav3ns-text-primary"
+									: "text-heav3ns-text-secondary/85 hover:bg-heav3ns-panel-raised/60 hover:text-heav3ns-text-primary",
 							)}
 							onClick={() => handleNav("worktrees")}
 							title="Branch workspaces"
@@ -354,10 +352,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children, onRequestNewChat }
 						{/* Settings */}
 						<button
 							className={cn(
-								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lumi",
+								"flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-heav3ns",
 								activeTab === "settings"
-									? "bg-[#20202a] text-[#faf9f7]"
-									: "text-[#8a8996]/85 hover:bg-[#20202a]/60 hover:text-[#faf9f7]",
+									? "bg-heav3ns-panel-raised text-heav3ns-text-primary"
+									: "text-heav3ns-text-secondary/85 hover:bg-heav3ns-panel-raised/60 hover:text-heav3ns-text-primary",
 							)}
 							onClick={() => handleNav("settings")}
 							title="Settings"

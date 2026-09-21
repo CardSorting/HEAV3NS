@@ -208,7 +208,7 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({
 							Select hook type to create
 						</label>
 						<span className="sr-only" id="hook-select-description">
-							Choose a hook type to create. Hooks execute at specific points in LUMI's lifecycle. Available:{" "}
+							Choose a hook type to create. Hooks execute at specific points in HEAV3NS's lifecycle. Available:{" "}
 							{availableHookTypes.map((h) => h.name).join(", ")}
 						</span>
 						<select

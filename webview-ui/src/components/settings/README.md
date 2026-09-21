@@ -2,7 +2,7 @@
 
 This directory contains the refactored API Options components for the DietCode extension. The refactoring aims to improve maintainability, code organization, and reduce complexity by separating provider-specific code into modular components.
 
-For **user-facing copy** in settings labels and descriptions, follow [LUMI UX guidelines](../../../docs/USER_INTERFACE_DESIGN.md) and add conversational strings to `src/copy/lumiVoice.ts` when appropriate.
+For **user-facing copy** in settings labels and descriptions, follow [HEAV3NS UX guidelines](../../../docs/USER_INTERFACE_DESIGN.md) and add conversational strings to `src/copy/heav3nsVoice.ts` when appropriate.
 
 ## Directory Structure
 

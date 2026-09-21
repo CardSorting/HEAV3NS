@@ -1,7 +1,7 @@
 {
-	"name": "lumi-webview-ui",
+	"name": "heav3ns-webview-ui",
 	"version": "0.3.0",
-	"description": "LUMI sidebar webview — React UI for the VS Code extension",
+	"description": "HEAV3NS sidebar webview — React UI for the VS Code extension",
 	"private": true,
 	"type": "module",
 	"scripts": {

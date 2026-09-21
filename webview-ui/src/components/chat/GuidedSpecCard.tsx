@@ -340,7 +340,7 @@ export const GuidedSpecCard: React.FC<GuidedSpecCardProps> = memo(({ specState, 
 											{isCompleted
 												? "Completed and locked."
 												: isInProgress
-													? "Currently being executed by LUMI."
+											? "Currently being executed by HEAV3NS."
 													: "Queued for next phase execution."}
 										</p>
 									</div>

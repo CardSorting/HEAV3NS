@@ -23,13 +23,13 @@ import { GuidedSpecCard } from "@/components/chat/GuidedSpecCard"
 import { OptionsButtons } from "@/components/chat/OptionsButtons"
 import { CheckmarkControl } from "@/components/common/CheckmarkControl"
 import { WithCopyButton } from "@/components/common/CopyButton"
-import { LumiProgressIndicator } from "@/components/common/LumiProgressIndicator"
+import { Heav3nsProgressIndicator } from "@/components/common/Heav3nsProgressIndicator"
 import McpResourceRow from "@/components/mcp/chat-display/McpResourceRow"
 import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay"
 import McpToolRow from "@/components/mcp/chat-display/McpToolRow"
 import { Icon } from "@/components/ui/icons"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { APPROVAL, pickRecoveryLine, pickStuckLine } from "@/copy/lumiVoice"
+import { APPROVAL, pickRecoveryLine, pickStuckLine } from "@/copy/heav3nsVoice"
 import { cn } from "@/lib/utils"
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
 import { findMatchingResourceOrTemplate, getMcpServerDisplayName } from "@/utils/mcp"
@@ -77,7 +77,7 @@ interface ChatRowProps {
 
 interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange"> {}
 
-export const ProgressIndicator = LumiProgressIndicator
+export const ProgressIndicator = Heav3nsProgressIndicator
 const InvisibleSpacer = () => <div aria-hidden className="h-px" />
 
 const ChatRow = memo(

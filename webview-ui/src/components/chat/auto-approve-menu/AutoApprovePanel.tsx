@@ -19,7 +19,7 @@ const AutoApprovePanel: React.FC<AutoApprovePanelProps> = ({ ACTION_METADATA }) 
 	return (
 		<div className="overflow-y-auto pb-2 px-2 overscroll-contain max-h-[40vh]">
 			<p className="mb-2 text-muted-foreground text-[11px] m-0 leading-snug">
-				Choose what LUMI can do without asking you first.{" "}
+				Choose what HEAV3NS can do without asking you first.{" "}
 				<a
 					className="text-link hover:text-link-hover"
 					href="https://docs.dietcode.bot/features/auto-approve#auto-approve"

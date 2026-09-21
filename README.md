@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ LUMI-JOY
+# ⚡ HEAV3NS-JOY
 
 ### **The Lightning-Fast, Zero-Lag AI Coding Assistant**
 
@@ -40,7 +40,7 @@
 | 🔍 **Fast Code Search** | Finds any file, function, or word instantly without freezing your screen. | **5–10x faster than normal search** |
 | ⏪ **1-Click Undo** | Made a bad edit? One command snaps all your files back to how they were. | **Instant time-travel undo** |
 | 💸 **90% Cheaper Bills** | Remembers your project so you only pay for your new questions. | **Cuts API bills up to 90%** |
-| 🛡️ **No Stuck Ports** | If a background server is stuck on port 3000, LUMI unlocks it automatically. | **Zero "port in use" headaches** |
+| 🛡️ **No Stuck Ports** | If a background server is stuck on port 3000, HEAV3NS unlocks it automatically. | **Zero "port in use" headaches** |
 | 🚀 **Smooth & Reliable** | Dedicated memory management ensures your screen never stutters or crashes. | **Over 6,800 actions every second** |
 
 ---
@@ -61,10 +61,10 @@ npx tsx src/index.ts --profile coder
 
 ```text
 ╔══════════════════════════════════════════════════════════════════════════════════════════╗
-║ ⚡ LUMI-JOY v1.0.0 │ 👤 [💻 Coder] │ 🧠 [gpt-5.6-luna] │ ⏱️ 0.12ms │ 💰 $0.0018 │ ⭐ Fav ║
+║ ⚡ HEAV3NS-JOY v1.0.0 │ 👤 [💻 Coder] │ 🧠 [gpt-5.6-luna] │ ⏱️ 0.12ms │ 💰 $0.0018 │ ⭐ Fav ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════╣
 ║  👤 You: Refactor auth.ts to add expiration checks                                        ║
-║  ⚡ LUMI (Coder): Checked auth.ts and applied clean edits with unit tests (0.04ms)         ║
+║  ⚡ HEAV3NS (Coder): Checked auth.ts and applied clean edits with unit tests (0.04ms)      ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════╣
 ║ 💡 Shortcuts: [Ctrl+M] Switch Model  [Ctrl+P] Setup  [/profile] Change Role  [Ctrl+C] Quit ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════╝
@@ -74,7 +74,7 @@ npx tsx src/index.ts --profile coder
 
 ## 🎯 What You Get (Everyday Superpowers)
 
-| The Common Problem | How LUMI Solves It | Your Real-World Benefit |
+| The Common Problem | How HEAV3NS Solves It | Your Real-World Benefit |
 |---|---|---|
 | **Accidental bad edits or AI mistakes** | 1-Click Instant Undo | Snap all files, memory, and chat history back instantly with zero lost work. |
 | **Fear of AI breaking working code** | Safe Preview Sandbox | Look over proposed edits visually before anything is saved to your computer. |

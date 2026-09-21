@@ -9,7 +9,7 @@ const meta: Meta<typeof Button> = {
 		docs: {
 			description: {
 				component:
-					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and dietcodeignore errors. Handles special error parsing for LUMI provider errors and provides appropriate user actions.",
+					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and dietcodeignore errors. Handles special error parsing for HEAV3NS provider errors and provides appropriate user actions.",
 			},
 		},
 	},

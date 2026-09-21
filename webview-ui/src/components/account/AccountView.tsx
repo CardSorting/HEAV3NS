@@ -404,7 +404,7 @@ export const DietCodeAccountView = ({
 				{isDietCodeTester && environment !== "selfHosted" && (
 					<div className="w-full gap-1 items-end">
 						<VSCodeDivider className="w-full my-3" />
-						<div className="text-sm font-semibold">LUMI Environment</div>
+						<div className="text-sm font-semibold">HEAV3NS Environment</div>
 						<VSCodeDropdown
 							className="w-full mt-1"
 							currentValue={dietcodeEnv}

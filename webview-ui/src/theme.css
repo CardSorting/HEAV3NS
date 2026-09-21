@@ -1,57 +1,76 @@
 :root {
 	/* Default fallbacks for VSCode theme variables in standalone browser mode */
-	--vscode-foreground: #faf9f7;
-	--vscode-descriptionForeground: #8a8996;
-	--vscode-sideBar-background: #0f0f12;
-	--vscode-sideBar-foreground: #faf9f7;
-	--vscode-panel-background: #121216;
-	--vscode-panel-border: #20202a;
-	--vscode-focusBorder: #6366a0;
-	--vscode-editor-background: #16161d;
-	--vscode-editor-foreground: #faf9f7;
-	--vscode-input-background: #1a1a22;
-	--vscode-input-foreground: #faf9f7;
-	--vscode-input-border: #20202a;
-	--vscode-input-placeholderForeground: #8a8996;
-	--vscode-button-background: #6366a0;
-	--vscode-button-foreground: #ffffff;
-	--vscode-button-hoverBackground: #7a7db4;
-	--vscode-button-secondaryBackground: #272730;
-	--vscode-button-secondaryForeground: #faf9f7;
-	--vscode-button-secondaryHoverBackground: #32323e;
-	--vscode-list-hoverBackground: rgba(255, 255, 255, 0.05);
-	--vscode-list-activeSelectionBackground: #6366a0;
-	--vscode-list-activeSelectionForeground: #ffffff;
-	--vscode-textLink-foreground: #6bb5c9;
-	--vscode-textLink-activeForeground: #8a8996;
-	--vscode-editorGroup-border: #20202a;
-	--vscode-editorWidget-border: #20202a;
-	--vscode-textCodeBlock-background: #1a1a22;
-	--vscode-textBlockQuote-background: #1a1a22;
-	--vscode-textBlockQuote-foreground: #faf9f7;
+	--vscode-foreground: #eef2e8;
+	--vscode-descriptionForeground: #8b9ba2;
+	--vscode-sideBar-background: #0a0f14;
+	--vscode-sideBar-foreground: #eef2e8;
+	--vscode-panel-background: #101820;
+	--vscode-panel-border: #23313a;
+	--vscode-focusBorder: #d8ff5e;
+	--vscode-editor-background: #080c11;
+	--vscode-editor-foreground: #eef2e8;
+	--vscode-input-background: #0d141b;
+	--vscode-input-foreground: #eef2e8;
+	--vscode-input-border: #283a44;
+	--vscode-input-placeholderForeground: #71818a;
+	--vscode-button-background: #d8ff5e;
+	--vscode-button-foreground: #080c11;
+	--vscode-button-hoverBackground: #e5ff8a;
+	--vscode-button-secondaryBackground: #18232c;
+	--vscode-button-secondaryForeground: #eef2e8;
+	--vscode-button-secondaryHoverBackground: #22313b;
+	--vscode-list-hoverBackground: rgba(216, 255, 94, 0.07);
+	--vscode-list-activeSelectionBackground: #263525;
+	--vscode-list-activeSelectionForeground: #eef2e8;
+	--vscode-textLink-foreground: #77e6ff;
+	--vscode-textLink-activeForeground: #b7f2ff;
+	--vscode-editorGroup-border: #23313a;
+	--vscode-editorWidget-border: #283a44;
+	--vscode-textCodeBlock-background: #0d141b;
+	--vscode-textBlockQuote-background: #101820;
+	--vscode-textBlockQuote-foreground: #eef2e8;
 }
 
 /* Editor theme mapping */
 @theme {
-	/* LUMI brand palette — calm, technical, approachable */
-	--color-lumi: #6366a0;
-	--color-lumi-cyan: #6bb5c9;
-	--color-lumi-bg-dark: #121216;
-	--color-lumi-bg-sidebar: #1a1a22;
-	--color-lumi-panel: #1e1e26;
-	--color-lumi-border: rgba(255, 255, 255, 0.08);
-	--color-lumi-text-primary: #faf9f7;
-	--color-lumi-text-secondary: #8a8996;
-	--color-lumi-lavender: #b8b5d6;
-	--color-lumi-graphite: #3d4451;
-	--color-lumi-slate: #64748b;
-	--color-lumi-warm: #faf9f7;
-	--color-lumi-foreground: #faf9f7;
-	--color-fg-lumi: #6366a0;
-	/* Legacy aliases — keep existing utility class names working */
-	--color-dietcode: var(--color-lumi);
-	--color-dietcode-foreground: var(--color-lumi-foreground);
-	--color-fg-dietcode: var(--color-fg-lumi);
+	/* HEAV3NS signal-grid palette: graphite field, phosphor action, cyan readout. */
+	--color-heav3ns: #d8ff5e;
+	--color-heav3ns-active: #d8ff5e;
+	--color-heav3ns-cyan: #77e6ff;
+	--color-heav3ns-signal: #77e6ff;
+	--color-heav3ns-ink: #080c11;
+	--color-heav3ns-bg-dark: #080c11;
+	--color-heav3ns-bg-sidebar: #0a0f14;
+	--color-heav3ns-panel: #101820;
+	--color-heav3ns-panel-raised: #151f28;
+	--color-heav3ns-border: #23313a;
+	--color-heav3ns-text-primary: #eef2e8;
+	--color-heav3ns-text-secondary: #8b9ba2;
+	--color-heav3ns-lavender: #a7d9ff;
+	--color-heav3ns-graphite: #26343e;
+	--color-heav3ns-slate: #71818a;
+	--color-heav3ns-warm: #eef2e8;
+	--color-heav3ns-foreground: #080c11;
+	--color-fg-heav3ns: #d8ff5e;
+	/* Backward-compatible aliases for existing utility classes and persisted UI styles. */
+	--color-lumi: var(--color-heav3ns);
+	--color-lumi-cyan: var(--color-heav3ns-cyan);
+	--color-lumi-bg-dark: var(--color-heav3ns-bg-dark);
+	--color-lumi-bg-sidebar: var(--color-heav3ns-bg-sidebar);
+	--color-lumi-panel: var(--color-heav3ns-panel);
+	--color-lumi-border: var(--color-heav3ns-border);
+	--color-lumi-text-primary: var(--color-heav3ns-text-primary);
+	--color-lumi-text-secondary: var(--color-heav3ns-text-secondary);
+	--color-lumi-lavender: var(--color-heav3ns-lavender);
+	--color-lumi-graphite: var(--color-heav3ns-graphite);
+	--color-lumi-slate: var(--color-heav3ns-slate);
+	--color-lumi-warm: var(--color-heav3ns-warm);
+	--color-lumi-foreground: var(--color-heav3ns-foreground);
+	--color-fg-lumi: var(--color-fg-heav3ns);
+	/* Legacy DietCode aliases remain for provider-specific components. */
+	--color-dietcode: var(--color-heav3ns);
+	--color-dietcode-foreground: var(--color-heav3ns-foreground);
+	--color-fg-dietcode: var(--color-fg-heav3ns);
 	--color-background: var(--vscode-sideBar-background);
 	--color-border: var(--vscode-focusBorder);
 	--color-border-panel: var(--vscode-panel-border);
@@ -212,6 +231,36 @@
 		}
 	}
 
+	--animate-heav3ns-scan: heav3nsScan 2.8s steps(5, end) infinite;
+	@keyframes heav3nsScan {
+		0%,
+		15% {
+			transform: translateX(-135%);
+			opacity: 0;
+		}
+		28% {
+			opacity: 0.9;
+		}
+		72% {
+			opacity: 0.35;
+		}
+		100% {
+			transform: translateX(360%);
+			opacity: 0;
+		}
+	}
+
+	--animate-heav3ns-pulse: heav3nsPulse 1.2s steps(2, end) infinite;
+	@keyframes heav3nsPulse {
+		0%,
+		100% {
+			opacity: 0.25;
+		}
+		50% {
+			opacity: 1;
+		}
+	}
+
 	--animate-lumi-breathe: lumiBreathe 5s ease-in-out infinite;
 	--animate-lumi-breathe-slow: lumiBreathe 7s ease-in-out infinite;
 	--animate-lumi-breathe-rest: lumiBreatheRest 8.5s ease-in-out infinite;
@@ -308,16 +357,24 @@
 		}
 	}
 
-	/* LUMI brand gradients & glow */
-	--gradient-lumi: linear-gradient(135deg, #7a7eb8 0%, #8ec4d4 100%);
-	--gradient-cola: var(--gradient-lumi);
-	--gradient-silver: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
-	--shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 10px 15px -3px rgb(0 0 0 / 0.1);
-	--glow-lumi: 0 0 16px rgba(99, 102, 160, 0.12);
-	--glow-lumi-soft: 0 0 12px rgba(99, 102, 160, 0.07);
-	--glow-lumi-intense: 0 0 24px rgba(184, 181, 214, 0.2);
-	--glow-dietcode: var(--glow-lumi);
-	--glow-dietcode-intense: var(--glow-lumi-intense);
+	/* HEAV3NS signal treatments. The gradient remains only for legacy utility compatibility. */
+	--gradient-heav3ns: linear-gradient(90deg, #d8ff5e 0%, #c4f56d 100%);
+	--gradient-lumi: var(--gradient-heav3ns);
+	--gradient-cola: var(--gradient-heav3ns);
+	--gradient-silver: linear-gradient(90deg, #71818a 0%, #3b4b55 100%);
+	--shadow-premium: 0 12px 28px rgba(0, 0, 0, 0.28);
+	--shadow-heav3ns: 0 12px 28px rgba(0, 0, 0, 0.28);
+	--glow-heav3ns: 0 8px 24px rgba(216, 255, 94, 0.18);
+	--glow-heav3ns-soft: 0 8px 18px rgba(216, 255, 94, 0.1);
+	--glow-heav3ns-intense: 0 10px 28px rgba(119, 230, 255, 0.18);
+	--glow-heav3ns-subtle: 0 4px 12px rgba(216, 255, 94, 0.12);
+	/* Legacy glow aliases keep existing utility classes stable across upgrades. */
+	--glow-lumi: var(--glow-heav3ns);
+	--glow-lumi-soft: var(--glow-heav3ns-soft);
+	--glow-lumi-intense: var(--glow-heav3ns-intense);
+	--glow-lumi-subtle: var(--glow-heav3ns-subtle);
+	--glow-dietcode: var(--glow-heav3ns);
+	--glow-dietcode-intense: var(--glow-heav3ns-intense);
 }
 
 @theme inline {

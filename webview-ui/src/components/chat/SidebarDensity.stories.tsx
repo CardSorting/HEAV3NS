@@ -32,7 +32,7 @@ const meta: Meta<typeof DensityMockApp> = {
 		layout: "fullscreen",
 		docs: {
 			description: {
-				component: "Tests LUMI sidebar webview responsiveness under constrained widths and heights.",
+				component: "Tests HEAV3NS sidebar webview responsiveness under constrained widths and heights.",
 			},
 		},
 	},

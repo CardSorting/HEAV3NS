@@ -21,11 +21,11 @@ import { useMount } from "react-use"
 import { isChatInputEnabled } from "@/components/chat/chat-view/shared/chatInputPolicy"
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useChatMessages, useExtensionState } from "@/context/ExtensionStateContext"
-import { pickChatPlaceholder } from "@/copy/lumiVoice"
+import { pickChatPlaceholder } from "@/copy/heav3nsVoice"
 import { useAuditAutoScrollPolicy } from "@/hooks/useAuditAutoScrollPolicy"
 import { useAuditGateConfig } from "@/hooks/useAuditGateConfig"
 import { useGrpcSubscription } from "@/hooks/useGrpcSubscription"
-import { useLumiSessionComfort } from "@/hooks/useLumiSessionComfort"
+import { useHeav3nsSessionComfort } from "@/hooks/useHeav3nsSessionComfort"
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
 import { ChatFooter } from "./chat-view/components/layout/ChatFooter"
 import { ChatLayout } from "./chat-view/components/layout/ChatLayout"
@@ -90,7 +90,7 @@ const ActiveChatView = memo<ActiveChatViewProps>(
 			hideHistory,
 		} = useExtensionState()
 		//const task = messages.length > 0 ? (messages[0].say === "task" ? messages[0] : undefined) : undefined) : undefined
-		const task = useMemo(() => messages.at(0), [messages]) // leaving this less safe version here since if the first message is not a task, then the extension is in a bad state and needs to be debugged (see LUMI.abort)
+		const task = useMemo(() => messages.at(0), [messages]) // leaving this less safe version here since if the first message is not a task, then the extension is in a bad state and needs to be debugged (see the abort command)
 		const modifiedMessages = useMemo(() => {
 			const slicedMessages = renderMessages.slice(1)
 			// Only combine hook sequences if hooks are enabled
@@ -139,7 +139,7 @@ const ActiveChatView = memo<ActiveChatViewProps>(
 			textAreaRef,
 		} = chatState
 
-		const { sessionMinutes, isNightDesk, serenityLevel } = useLumiSessionComfort()
+		const { sessionMinutes, isNightDesk, serenityLevel } = useHeav3nsSessionComfort()
 
 		useEffect(() => {
 			const handleCopy = async (e: ClipboardEvent) => {

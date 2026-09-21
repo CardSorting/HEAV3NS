@@ -433,7 +433,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		refreshLiteLlmModels,
 	])
 
-	// Refresh LUMI models function
+	// Refresh HEAV3NS models function
 	const refreshDietCodeModels = useCallback(() => {
 		loadModelsServiceClient()
 			.then((client) => client.refreshDietCodeModelsRpc(EmptyRequest.create({})))
@@ -441,10 +441,10 @@ export const ExtensionStateContextProvider: React.FC<{
 			.then((models) => {
 				setDietCodeModels((prev) => (Object.keys(models).length > 0 ? models : (prev ?? null)))
 			})
-			.catch((error: Error) => console.error("Failed to refresh LUMI models:", error))
+			.catch((error: Error) => console.error("Failed to refresh HEAV3NS models:", error))
 	}, [])
 
-	// Auto-refresh LUMI models when provider is dietcode
+	// Auto-refresh HEAV3NS models when provider is dietcode
 	useEffect(() => {
 		const hasDietCodeProvider =
 			state.apiConfiguration?.actModeApiProvider === "dietcode" ||

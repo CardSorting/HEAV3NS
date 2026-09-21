@@ -62,7 +62,7 @@ export function getActionPresentation(
 	if (!message) {
 		return {
 			kind: "other",
-			summary: "Choose how LUMI should continue",
+			summary: "Choose how HEAV3NS should continue",
 			risk: "low",
 			riskLabel: "Low risk",
 			riskDetail: "No external action is pending.",
@@ -88,7 +88,7 @@ export function getActionPresentation(
 	if (message.type === "ask" && message.ask === "mistake_limit_reached") {
 		return {
 			kind: "recovery",
-			summary: "LUMI paused after repeated attempts",
+			summary: "HEAV3NS paused after repeated attempts",
 			risk: "medium",
 			riskLabel: "Review first",
 			riskDetail: "Continuing may repeat the unsuccessful approach.",
@@ -251,7 +251,7 @@ export function getActionPresentation(
 
 	return {
 		kind: message.type === "ask" && APPROVAL_ASKS.has(message.ask) ? "approval" : "other",
-		summary: "Choose how LUMI should continue",
+		summary: "Choose how HEAV3NS should continue",
 		risk: "medium",
 		riskLabel: "Review required",
 		riskDetail: "Inspect the request before continuing.",

@@ -32,7 +32,8 @@ function computeSerenityLevel(sessionMinutes: number, isNightDesk: boolean, isLo
 }
 
 /** Long-session comfort: stillness, calmer pacing, progressive visual cooling. */
-export function useLumiSessionComfort() {
+/** Canonical HEAV3NS session comfort hook; the legacy export below preserves existing consumers. */
+export function useHeav3nsSessionComfort() {
 	const sessionStart = useMemo(() => getSessionStart(), [])
 	const [lastActivity, setLastActivity] = useState(Date.now())
 	const [now, setNow] = useState(Date.now())
@@ -74,6 +75,9 @@ export function useLumiSessionComfort() {
 		calmTier,
 	}
 }
+
+/** @deprecated Use useHeav3nsSessionComfort for new frontend code. */
+export const useLumiSessionComfort = useHeav3nsSessionComfort
 
 export function resolveOrbMood(companionMood: LumiOrbMood, isStill: boolean): LumiOrbMood {
 	if (companionMood === "held" || companionMood === "waiting" || companionMood === "success") {

@@ -1,10 +1,8 @@
 import { SVGProps } from "react"
-import { LumiOrbPaths } from "./LumiOrbIcon"
+import { Heav3nsSignalMark } from "./Heav3nsSignalMark"
 
 const DietCodeLogoWhite = (props: SVGProps<SVGSVGElement>) => (
-	<svg fill="none" height="50" viewBox="0 0 100 100" width="50" xmlns="http://www.w3.org/2000/svg" {...props}>
-		<LumiOrbPaths accentColor="#6bb5c9" coreColor="#faf9f7" />
-	</svg>
+	<Heav3nsSignalMark accentColor="#d8ff5e" {...props} />
 )
 
 export default DietCodeLogoWhite

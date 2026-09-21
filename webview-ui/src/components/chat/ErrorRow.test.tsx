@@ -177,7 +177,7 @@ describe("ErrorRow", () => {
 
 			render(<ErrorRow apiRequestFailedMessage="Some API error" errorType="error" message={mockMessage} />)
 
-			// When DietCodeError.parse returns null, we display the raw error message for non-LUMI providers
+			// When DietCodeError.parse returns null, we display the raw error message for non-HEAV3NS providers
 			// Since dietcodeError is undefined, isDietCodeProvider is false, so we show the raw apiRequestFailedMessage
 			expect(screen.getByText("Some API error")).toBeInTheDocument()
 		})

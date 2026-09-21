@@ -5068,50 +5068,50 @@ if (isDirectCliExecution) {
 
 	if (isHelp) {
 		console.log(`
-\x1b[1;35m❖ LUMI Agent OS — Command Line Interface\x1b[0m
+\x1b[1;35m❖ HEAV3NS Agent OS — Command Line Interface\x1b[0m
 
 \x1b[1;34mInteractive Mode:\x1b[0m
-  lumi                        Start interactive terminal TUI session
-  lumi --model <name>         Start interactive session with active model (e.g. luna, terra, sol)
+  heav3ns                     Start interactive terminal TUI session
+  heav3ns --model <name>      Start interactive session with active model (e.g. luna, terra, sol)
 
 \x1b[1;34mModel Swapping & Catalog:\x1b[0m
-  lumi terra                  Quick-switch default model to Flagship Reasoning Engine (gpt-5.6-terra)
-  lumi luna                   Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
-  lumi sol                    Quick-switch default model to Balanced Engine (gpt-5.6-sol)
-  lumi model <name>           Set active model by name or alias (e.g. lumi model luna)
-  lumi models [--refresh]     Fetch live models from GALX AI and display catalog
+  heav3ns terra               Quick-switch default model to Flagship Reasoning Engine (gpt-5.6-terra)
+  heav3ns luna                Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
+  heav3ns sol                 Quick-switch default model to Balanced Engine (gpt-5.6-sol)
+  heav3ns model <name>        Set active model by name or alias (e.g. heav3ns model luna)
+  heav3ns models [--refresh]  Fetch live models from GALX AI and display catalog
 \x1b[1;34mAuthentication & Identity:\x1b[0m
-  lumi login                  Sign in with ChatGPT / OpenAI (1-Click browser login)
-  lumi logout                 Sign out and clear local session
-  lumi whoami                 Display active account, subscription tier, and model
-  lumi doctor                 Run system health and connectivity check
-  lumi setup                  Interactive account and model settings
+  heav3ns login               Sign in with ChatGPT / OpenAI (1-Click browser login)
+  heav3ns logout              Sign out and clear local session
+  heav3ns whoami              Display active account, subscription tier, and model
+  heav3ns doctor              Run system health and connectivity check
+  heav3ns setup               Interactive account and model settings
 
 \x1b[1;34mLocal On-Premises & Models:\x1b[0m
-  lumi local                  Auto-sense and probe local LLM servers (Ollama, LM Studio, llama.cpp)
-  lumi local --hardware       Display host RAM, GPU / Apple Silicon VRAM compatibility report
-  lumi local --benchmark      Run Tokens-Per-Second (TPS) speed benchmark on local models
-  lumi local --unload [model] Purge model from GPU memory to reclaim VRAM
-  lumi local --ps             List models currently loaded in GPU VRAM
-  lumi pull <model>           Stream and download an open-weight Ollama model (e.g. lumi pull llama3.2)
+  heav3ns local               Auto-sense and probe local LLM servers (Ollama, LM Studio, llama.cpp)
+  heav3ns local --hardware    Display host RAM, GPU / Apple Silicon VRAM compatibility report
+  heav3ns local --benchmark   Run Tokens-Per-Second (TPS) speed benchmark on local models
+  heav3ns local --unload [model] Purge model from GPU memory to reclaim VRAM
+  heav3ns local --ps          List models currently loaded in GPU VRAM
+  heav3ns pull <model>        Stream and download an open-weight Ollama model (e.g. heav3ns pull llama3.2)
 
 \x1b[1;34mSystem & Configuration:\x1b[0m
-  lumi doctor                 Run system health, permissions, hardware, and connectivity diagnostic audit
-  lumi setup                  Launch step-by-step interactive configuration wizard
+  heav3ns doctor              Run system health, permissions, hardware, and connectivity diagnostic audit
+  heav3ns setup               Launch step-by-step interactive configuration wizard
 
 \x1b[1;34mWorkload & Benchmarks:\x1b[0m
-  lumi "your prompt"          Execute a single non-interactive prompt turn
-  lumi benchmark (-b)         Run automated engine throughput and latency benchmark suite
-  lumi baseline               Run smoke + benchmark + guardrails to update live baseline
-  lumi smoke (-s)             Run runtime capability smoke verification suite
-  lumi help (-h)              Show this help message
+  heav3ns "your prompt"       Execute a single non-interactive prompt turn
+  heav3ns benchmark (-b)      Run automated engine throughput and latency benchmark suite
+  heav3ns baseline            Run smoke + benchmark + guardrails to update live baseline
+  heav3ns smoke (-s)          Run runtime capability smoke verification suite
+  heav3ns help (-h)           Show this help message
 `)
 		process.exit(0)
 	}
 
 	const runSmokeTest = async (lumi: LumiMonolith): Promise<RuntimeSmokeReport> => {
 		console.log("\x1b[1;36m========================================================\x1b[0m")
-		console.log("\x1b[1;36m   LUMI Current Runtime Capability Smoke Suite          \x1b[0m")
+		console.log("\x1b[1;36m   HEAV3NS Current Runtime Capability Smoke Suite       \x1b[0m")
 		console.log("\x1b[1;36m========================================================\x1b[0m\n")
 
 		const report = await new RuntimeSmokeSuite().run(lumi)
@@ -5133,7 +5133,7 @@ if (isDirectCliExecution) {
 
 	const runBenchmarkSuite = async (lumi: LumiMonolith): Promise<GrandBenchmarkResult> => {
 		console.log("\x1b[1;36m========================================================\x1b[0m")
-		console.log("\x1b[1;36m   LUMI Monolith Benchmark & Throughput Test Suite      \x1b[0m")
+		console.log("\x1b[1;36m   HEAV3NS Monolith Benchmark & Throughput Test Suite   \x1b[0m")
 		console.log("\x1b[1;36m========================================================\x1b[0m\n")
 
 		const rewindSnapshot = lumi.createSnapshot()
@@ -5239,7 +5239,7 @@ if (isDirectCliExecution) {
 		} else if (isLogout) {
 			lumi.setupWizard.logout()
 			console.log("\n\x1b[1;32m[✓] Successfully signed out of GALX AI.\x1b[0m")
-			console.log("\x1b[90mRun \x1b[36mlumi login\x1b[90m anytime to reconnect.\x1b[0m\n")
+			console.log("\x1b[90mRun \x1b[36mheav3ns login\x1b[90m anytime to reconnect.\x1b[0m\n")
 		} else if (isWhoAmI) {
 			lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel())
 		} else if (isDoctor) {
@@ -5296,7 +5296,7 @@ if (isDirectCliExecution) {
 				const res = await lumi.proxyGateway.getLocalEngine().startLocalServer("ollama")
 				console.log(res.started ? `\x1b[32m[✓] ${res.message}\x1b[0m\n` : `\x1b[31m[✗] ${res.message}\x1b[0m\n`)
 			} else {
-				console.log("\n\x1b[1;35m╭─── LUMI Local & On-Premises Engine Fleet Probe ───────────────╮\x1b[0m")
+				console.log("\n\x1b[1;35m╭─── HEAV3NS Local & On-Premises Engine Fleet Probe ────────────╮\x1b[0m")
 				const report = await lumi.proxyGateway.getLocalEngine().probeAllServers()
 				console.log(
 					`│  Active Servers Online: \x1b[1;36m${report.activeServers}/${report.totalServersChecked}\x1b[0m · Total Discovered Models: \x1b[1;33m${report.totalLocalModelsDiscovered}\x1b[0m`,
@@ -5318,7 +5318,7 @@ if (isDirectCliExecution) {
 				}
 				console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m")
 				console.log(
-					`\x1b[90mStart local models with \x1b[36mollama run llama3.2\x1b[90m, pull with \x1b[36mlumi pull <model>\x1b[90m, or connect in TUI with \x1b[36m/local\x1b[90m.\x1b[0m\n`,
+					`\x1b[90mStart local models with \x1b[36mollama run llama3.2\x1b[90m, pull with \x1b[36mheav3ns pull <model>\x1b[90m, or connect in TUI with \x1b[36m/local\x1b[90m.\x1b[0m\n`,
 				)
 			}
 		} else if (isTerra) {
@@ -5346,7 +5346,7 @@ if (isDirectCliExecution) {
 				console.log("\n\x1b[33mFetching latest models dynamically from GALX AI...\x1b[0m")
 				await lumi.modelCatalog.fetchGalxModels(undefined, true)
 			}
-			console.log("\n\x1b[1;35m╭─── LUMI Curated & Dynamic Model Catalog ──────────────────────╮\x1b[0m")
+			console.log("\n\x1b[1;35m╭─── HEAV3NS Curated & Dynamic Model Catalog ───────────────────╮\x1b[0m")
 			const models = lumi.modelCatalog.getAllModels()
 			const active = lumi.modelResolver.getActiveModel()
 			for (const m of models) {
@@ -5358,7 +5358,7 @@ if (isDirectCliExecution) {
 			}
 			console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m")
 			console.log(
-				`\x1b[90mSwitch models instantly with \x1b[36mlumi terra\x1b[90m, \x1b[36mlumi luna\x1b[90m, \x1b[36mlumi sol\x1b[90m, or in TUI with \x1b[36m/model <name>\x1b[90m.\x1b[0m\n`,
+				`\x1b[90mSwitch models instantly with \x1b[36mheav3ns terra\x1b[90m, \x1b[36mheav3ns luna\x1b[90m, \x1b[36mheav3ns sol\x1b[90m, or in TUI with \x1b[36m/model <name>\x1b[90m.\x1b[0m\n`,
 			)
 		} else if (isBaseline) {
 			const passed = await updateLiveBaseline(lumi)
@@ -5375,14 +5375,14 @@ if (isDirectCliExecution) {
 			const color =
 				result.outcome === "completed" ? "\x1b[1;32m" : result.outcome === "cancelled" ? "\x1b[1;33m" : "\x1b[1;31m"
 			console.log(
-				`${color}[${result.outcome.toUpperCase()} · LUMI Frame #${result.frameIndex}]\x1b[0m (${result.durationMs}ms)`,
+				`${color}[${result.outcome.toUpperCase()} · HEAV3NS Frame #${result.frameIndex}]\x1b[0m (${result.durationMs}ms)`,
 			)
 			console.log(result.response)
 		} else {
 			await startRepl(lumi)
 		}
 	})().catch((err) => {
-		console.error("LUMI CLI execution failed:", err)
+		console.error("HEAV3NS CLI execution failed:", err)
 		process.exitCode = 1
 	})
 }

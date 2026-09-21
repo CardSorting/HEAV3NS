@@ -213,7 +213,7 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 		}
 	}, [mergeWorktree, getMainBranch, deleteAfterMerge, loadWorktrees])
 
-	// Ask LUMI to resolve conflicts
+	// Ask HEAV3NS to resolve conflicts
 	const handleAskDietCodeToResolve = useCallback(async () => {
 		if (!mergeResult || !mergeResult.hasConflicts) return
 
@@ -229,7 +229,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 			// Close worktrees view to show the chat with the new task
 			onDone()
 		} catch (err) {
-			setMergeError(err instanceof Error ? err.message : "Failed to create task for LUMI")
+			setMergeError(err instanceof Error ? err.message : "Failed to create task for HEAV3NS")
 		}
 	}, [mergeResult, mergeWorktree, closeMergeModal, onDone])
 
@@ -240,7 +240,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 				{/* Description */}
 				<p className="text-sm text-[var(--vscode-descriptionForeground)] m-0 mb-4">
 					Git worktrees let you work on multiple branches at the same time, each in its own folder. Open worktrees in
-					their own windows so LUMI can work on multiple tasks in parallel.{" "}
+				their own windows so HEAV3NS can work on multiple tasks in parallel.{" "}
 					<a
 						className="text-[var(--vscode-textLink-foreground)] hover:text-[var(--vscode-textLink-activeForeground)]"
 						href="https://docs.dietcode.bot/features/worktrees"
@@ -598,7 +598,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 
 								<div className="flex flex-col gap-2">
 									<VSCodeButton onClick={handleAskDietCodeToResolve} style={{ width: "100%" }}>
-										Ask LUMI to Resolve
+										Ask HEAV3NS to Resolve
 									</VSCodeButton>
 									<VSCodeButton appearance="secondary" onClick={closeMergeModal} style={{ width: "100%" }}>
 										I'll Resolve Manually

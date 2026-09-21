@@ -70,14 +70,14 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: "features",
 		name: "Preferences",
-		tooltipText: "How LUMI behaves",
+		tooltipText: "How HEAV3NS behaves",
 		headerText: "Preferences",
 		icon: CheckCheck,
 	},
 	{
 		id: "skills",
 		name: "Skills",
-		tooltipText: "Manage LUMI skills",
+		tooltipText: "Manage HEAV3NS skills",
 		headerText: "Skills",
 		icon: Sparkles,
 	},
@@ -114,7 +114,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: "about",
 		name: "About",
-		tooltipText: "About LUMI",
+		tooltipText: "About HEAV3NS",
 		headerText: "About",
 		icon: Info,
 	},

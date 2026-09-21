@@ -1,7 +1,5 @@
-import { LumiOrbPaths } from "./LumiOrbIcon"
+import { Heav3nsSignalMark } from "./Heav3nsSignalMark"
 
 export const DietCodeCompactIcon = () => (
-	<svg height="16" viewBox="0 0 100 100" width="16">
-		<LumiOrbPaths />
-	</svg>
+	<Heav3nsSignalMark aria-label="HEAV3NS" height="16" width="30" />
 )
