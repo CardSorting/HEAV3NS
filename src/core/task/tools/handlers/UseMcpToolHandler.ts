@@ -88,8 +88,8 @@ export class UseMcpToolHandler implements IToolHandler, IPartialBlockHandler {
 			const toolResult = await executionFunnel.executeReliableAction(
 				config.taskId,
 				config.taskState.executionGeneration,
-				() => config.services.mcpHub.callTool(server_name, tool_name, parsedArguments, config.ulid),
-				{ concurrencyGroup: "mcp" },
+				(signal) => config.services.mcpHub.callTool(server_name, tool_name, parsedArguments, config.ulid, signal),
+				{ concurrencyGroup: "mcp", retryPolicy: "at_most_once" },
 			)
 
 			// Check for any pending notifications after the tool call

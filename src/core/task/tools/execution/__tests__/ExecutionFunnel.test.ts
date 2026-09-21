@@ -670,6 +670,35 @@ describe("ExecutionFunnel approval authority", () => {
 		assert.equal(outcome.event.stages.filter((stage) => stage.stage === "approval.decision").length, 1)
 	})
 
+	it("does not replay an at-most-once operation after a retryable failure", async () => {
+		const funnel = new ExecutionFunnel()
+		const taskConfig = config()
+		let attempts = 0
+		const toolHandler = handler(
+			DietCodeDefaultTool.FILE_READ,
+			async () =>
+				funnel.executeReliableAction(
+					taskConfig.taskId,
+					taskConfig.taskState.executionGeneration,
+					async () => {
+						attempts++
+						throw new Error("UNAVAILABLE after remote side effect")
+					},
+					{ maxRetries: 3, backoffMs: 0, retryPolicy: "at_most_once" },
+				),
+			readIntent,
+		)
+
+		const outcome = await run(
+			funnel,
+			taskConfig,
+			block(DietCodeDefaultTool.FILE_READ, "at-most-once", { path: "a.ts" }),
+			toolHandler,
+		)
+		assert.equal(attempts, 1)
+		assert.equal(outcome.event.phase, "failed")
+	})
+
 	it("does not let compatibility flags override the modern event", async () => {
 		const state = new TaskState()
 		const funnel = new ExecutionFunnel()

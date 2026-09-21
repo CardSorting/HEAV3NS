@@ -39,13 +39,13 @@ import type { SpiderEngine } from "@/core/policy/spider/SpiderEngine"
 import { getTaskLifecycleAuthority } from "@/core/task/lifecycle/TaskLifecycleFunnel"
 import { processFilesIntoText } from "@/integrations/misc/extract-text"
 import { Logger } from "@/shared/services/Logger"
+import { getLayer, getTargetPath } from "@/utils/joy-zoning"
 import type { TaskState } from "../../TaskState"
 import { showNotificationForApproval } from "../../utils"
 import { getToolInvocationContext, resolveInvocationResultTarget } from "../siblings/ToolInvocationContext"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { IToolHandler, ToolResponse } from "../types/ToolContracts"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
-import { getLayer, getTargetPath } from "@/utils/joy-zoning"
 
 /** Local read/diagnostic tools with workspace I/O authority. */
 export const IO_AUTHORITY_TOOLS = new Set<DietCodeDefaultTool>([
@@ -192,7 +192,15 @@ export interface ExecuteOptions {
 	maxRetries?: number
 	backoffMs?: number
 	concurrencyGroup?: string
+	/**
+	 * Controls whether a failed operation may be replayed. Mutations without an
+	 * end-to-end idempotency key should use at_most_once so a timeout cannot
+	 * duplicate a side effect that may already have reached its target.
+	 */
+	retryPolicy?: "idempotent" | "at_most_once"
 }
+
+type ReliableOperation<T> = (signal: AbortSignal) => Promise<T>
 
 interface ReliabilityContext {
 	taskId: string
@@ -257,7 +265,7 @@ class ExecutionReliability {
 	async execute<T>(
 		taskId: string,
 		taskGeneration: string,
-		operation: () => Promise<T>,
+		operation: ReliableOperation<T>,
 		options: ExecuteOptions = {},
 	): Promise<T> {
 		const context = this.storage.getStore()
@@ -278,6 +286,7 @@ class ExecutionReliability {
 		const maxRetries = options.maxRetries ?? 3
 		const backoffMs = options.backoffMs ?? 500
 		const concurrencyGroup = options.concurrencyGroup ?? "default"
+		const retryPolicy = options.retryPolicy ?? "idempotent"
 		const circuitKey = `${taskId}:${concurrencyGroup}`
 		let attempts = 0
 
@@ -289,12 +298,13 @@ class ExecutionReliability {
 				context?.stages.push(fail("reliability.circuit", `Task-scoped ${concurrencyGroup} circuit is open`, true))
 				throw new Error(`[ExecutionFunnel] Circuit is OPEN for task ${taskId} (${concurrencyGroup}).`)
 			}
+			const attemptSignal = this.createAttemptSignal(context.signal)
 			try {
 				const result = await this.withConcurrency(
 					concurrencyGroup,
 					() => {
-						const running = operation()
-						return timeoutMs > 0 ? this.withTimeout(taskId, running, timeoutMs) : running
+						const running = operation(attemptSignal.controller.signal)
+						return timeoutMs > 0 ? this.withTimeout(taskId, running, timeoutMs, attemptSignal.controller) : running
 					},
 					context?.signal,
 				)
@@ -303,7 +313,7 @@ class ExecutionReliability {
 				return result
 			} catch (error) {
 				attempts++
-				const retryable = this.isRetryableError(error)
+				const retryable = retryPolicy === "idempotent" && this.isRetryableError(error)
 				if (attempts >= maxRetries || !retryable) {
 					this.onFailure(circuitKey)
 					Logger.error(`[ExecutionFunnel] Task ${taskId} failed permanently after ${attempts} attempts:`, error)
@@ -315,20 +325,29 @@ class ExecutionReliability {
 				const delay = backoffMs * 2 ** (attempts - 1)
 				context?.stages.push(pass("reliability.retry", `Retry ${attempts}/${maxRetries} after ${delay}ms`))
 				await new Promise<void>((resolve, reject) => {
+					let timeoutId: ReturnType<typeof setTimeout> | undefined
+					const cleanup = () => {
+						if (timeoutId) clearTimeout(timeoutId)
+						context?.signal?.removeEventListener("abort", onAbort)
+					}
 					const onAbort = () => {
-						clearTimeout(timeoutId)
+						cleanup()
 						reject(new Error("Reliability execution aborted during retry backoff: task cancellation active."))
 					}
-					const timeoutId = setTimeout(() => {
-						context?.signal?.removeEventListener("abort", onAbort)
-						resolve()
-					}, delay)
+					if (context?.signal) {
+						context.signal.addEventListener("abort", onAbort, { once: true })
+					}
 					if (context?.signal?.aborted) {
 						onAbort()
-					} else {
-						context?.signal?.addEventListener("abort", onAbort)
+						return
 					}
+					timeoutId = setTimeout(() => {
+						cleanup()
+						resolve()
+					}, delay)
 				})
+			} finally {
+				attemptSignal.dispose()
 			}
 		}
 		throw new Error(`[ExecutionFunnel] Task ${taskId} failed after max retries`)
@@ -369,13 +388,38 @@ class ExecutionReliability {
 		}
 	}
 
-	private async withTimeout<T>(taskId: string, promise: Promise<T>, timeoutMs: number): Promise<T> {
+	private createAttemptSignal(parentSignal?: AbortSignal): {
+		controller: AbortController
+		dispose: () => void
+	} {
+		const controller = new AbortController()
+		if (!parentSignal) return { controller, dispose: () => undefined }
+
+		const forwardAbort = () => controller.abort(parentSignal.reason)
+		if (parentSignal.aborted) {
+			forwardAbort()
+		} else {
+			parentSignal.addEventListener("abort", forwardAbort, { once: true })
+		}
+		return {
+			controller,
+			dispose: () => parentSignal.removeEventListener("abort", forwardAbort),
+		}
+	}
+
+	private async withTimeout<T>(
+		taskId: string,
+		promise: Promise<T>,
+		timeoutMs: number,
+		controller: AbortController,
+	): Promise<T> {
 		let timeoutId: ReturnType<typeof setTimeout> | undefined
 		const timeout = new Promise<never>((_, reject) => {
-			timeoutId = setTimeout(
-				() => reject(new Error(`[ExecutionFunnel] Task ${taskId} timed out after ${timeoutMs}ms`)),
-				timeoutMs,
-			)
+			timeoutId = setTimeout(() => {
+				const timeoutError = new Error(`[ExecutionFunnel] Task ${taskId} timed out after ${timeoutMs}ms`)
+				controller.abort(timeoutError)
+				reject(timeoutError)
+			}, timeoutMs)
 		})
 		try {
 			return await Promise.race([promise, timeout])
@@ -538,7 +582,7 @@ export class ExecutionFunnel {
 	executeReliableAction<T>(
 		taskId: string,
 		taskGeneration: string,
-		operation: () => Promise<T>,
+		operation: ReliableOperation<T>,
 		options: ExecuteOptions = {},
 	): Promise<T> {
 		return this.reliability.execute(taskId, taskGeneration, operation, options)
@@ -831,15 +875,16 @@ export class ExecutionFunnel {
 			decision.stages.push(pass("cancellation.initial", "Task and invocation signals are active"))
 
 			const steeringEnabled = config.universalGuard?.isJoyZoningSteeringEnabled?.() ?? true
-			const canonicalSteeringEnabled =
-				config.universalGuard?.isCanonicalJoyZoningEnabled?.() ?? steeringEnabled
+			const canonicalSteeringEnabled = config.universalGuard?.isCanonicalJoyZoningEnabled?.() ?? steeringEnabled
 			if (canonicalSteeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
 				block.layer = getLayer(path.resolve(config.cwd, block.params.path))
 				decision.stages.push(pass("target.layer", `Resolved target layer as ${block.layer || "unknown"}`))
 			} else if (!steeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
 				decision.stages.push(na("target.layer", "Architecture guidance is disabled; preserving workspace-native context"))
 			} else if (!canonicalSteeringEnabled && !isIoAuthorityTool(block.name) && block.params.path) {
-				decision.stages.push(na("target.layer", "Workspace-native architecture; preserving the repository's target boundary"))
+				decision.stages.push(
+					na("target.layer", "Workspace-native architecture; preserving the repository's target boundary"),
+				)
 			} else {
 				decision.stages.push(na("target.layer", "Layer injection is unnecessary for this invocation"))
 			}
@@ -1762,7 +1807,9 @@ export class ExecutionFunnel {
 			targetPath = block.params.path
 		}
 		const canonicalSteeringEnabled =
-			config.universalGuard?.isCanonicalJoyZoningEnabled?.() ?? config.universalGuard?.isJoyZoningSteeringEnabled?.() ?? true
+			config.universalGuard?.isCanonicalJoyZoningEnabled?.() ??
+			config.universalGuard?.isJoyZoningSteeringEnabled?.() ??
+			true
 		const layer = canonicalSteeringEnabled && targetPath ? config.universalGuard?.getLayerForPath(targetPath) : undefined
 		const layerRestricted =
 			(layer === "domain" || layer === "core") &&

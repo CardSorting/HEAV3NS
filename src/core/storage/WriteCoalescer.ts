@@ -8,6 +8,20 @@ type PendingWrite = {
 	lastEnqueued: number
 }
 
+export interface WriteFlushOptions {
+	/**
+	 * Reject when the underlying write fails. Background flushes keep the
+	 * historical best-effort behavior; lifecycle barriers should opt in so a
+	 * caller never mistakes a failed write for durable state.
+	 */
+	throwOnError?: boolean
+	/**
+	 * Maximum number of quiescence passes for flushAll. A producer that keeps
+	 * enqueueing writes must not hold extension shutdown indefinitely.
+	 */
+	maxDrainPasses?: number
+}
+
 function calculateFastHash(content: string): string {
 	let hash = 0x811c9dc5
 	for (let i = 0; i < content.length; i++) {
@@ -25,7 +39,9 @@ function calculateFastHash(content: string): string {
  */
 export class WriteCoalescer {
 	private static instance: WriteCoalescer | null = null
+	private static readonly DEFAULT_MAX_DRAIN_PASSES = 100
 	private pendingWrites = new Map<string, PendingWrite>()
+	private inFlightWrites = new Map<string, Promise<void>>()
 	private lastWrittenHashes = new Map<string, string>()
 
 	public static getInstance(): WriteCoalescer {
@@ -35,16 +51,6 @@ export class WriteCoalescer {
 		return WriteCoalescer.instance
 	}
 
-	/**
-	 * Schedule a debounced write with payload content-hash deduplication.
-	 * If the generated payload is identical to what was last written to disk, the write is cleanly skipped.
-	 *
-	 * @param filePath The absolute target file path
-	 * @param dataSupplier Function returning the latest serialized content payload
-	 * @param writeFn Async write function executing the disk write
-	 * @param debounceMs Debounce window in ms (default 500ms)
-	 * @param maxDelayMs Maximum delay before forcing a write flush (default 3000ms)
-	 */
 	/**
 	 * Schedule a debounced write with payload content-hash deduplication.
 	 * If the generated payload is identical to what was last written to disk, the write is cleanly skipped.
@@ -78,7 +84,9 @@ export class WriteCoalescer {
 			clearTimeout(existing.timer)
 			if (now - existing.lastEnqueued >= maxDelayMs) {
 				this.pendingWrites.delete(filePath)
-				this.executeWriteWithPrecomputedPayload(filePath, payload, hash, writeFn).catch((err) => {
+				this.enqueueWrite(filePath, () =>
+					this.executeWriteWithPrecomputedPayload(filePath, payload, hash, writeFn),
+				).catch((err) => {
 					Logger.error(`[WriteCoalescer] Forced flush failed for ${filePath}:`, err)
 				})
 				return
@@ -88,9 +96,11 @@ export class WriteCoalescer {
 		const lastEnqueued = existing ? existing.lastEnqueued : now
 		const timer = setTimeout(() => {
 			this.pendingWrites.delete(filePath)
-			this.executeWriteWithPrecomputedPayload(filePath, payload, hash, writeFn).catch((err) => {
-				Logger.error(`[WriteCoalescer] Debounced write failed for ${filePath}:`, err)
-			})
+			this.enqueueWrite(filePath, () => this.executeWriteWithPrecomputedPayload(filePath, payload, hash, writeFn)).catch(
+				(err) => {
+					Logger.error(`[WriteCoalescer] Debounced write failed for ${filePath}:`, err)
+				},
+			)
 		}, debounceMs)
 
 		this.pendingWrites.set(filePath, {
@@ -113,7 +123,7 @@ export class WriteCoalescer {
 			clearTimeout(existing.timer)
 			if (now - existing.lastEnqueued >= maxDelayMs) {
 				this.pendingWrites.delete(filePath)
-				void writeFn().catch((err) => {
+				void this.enqueueWrite(filePath, writeFn).catch((err) => {
 					Logger.error(`[WriteCoalescer] Forced flush failed for ${filePath}:`, err)
 				})
 				return
@@ -123,7 +133,7 @@ export class WriteCoalescer {
 		const lastEnqueued = existing ? existing.lastEnqueued : now
 		const timer = setTimeout(() => {
 			this.pendingWrites.delete(filePath)
-			void writeFn().catch((err) => {
+			void this.enqueueWrite(filePath, writeFn).catch((err) => {
 				Logger.error(`[WriteCoalescer] Debounced write failed for ${filePath}:`, err)
 			})
 		}, debounceMs)
@@ -165,9 +175,33 @@ export class WriteCoalescer {
 	}
 
 	/**
+	 * Serialize writes for each target file. A new payload can be queued while an
+	 * older atomic write is still running; without this queue, the older write can
+	 * finish last and overwrite the newer payload.
+	 */
+	private enqueueWrite(filePath: string, operation: () => Promise<void>): Promise<void> {
+		const previous = this.inFlightWrites.get(filePath) ?? Promise.resolve()
+		const current = previous.catch(() => undefined).then(operation)
+		this.inFlightWrites.set(filePath, current)
+		void current.then(
+			() => {
+				if (this.inFlightWrites.get(filePath) === current) {
+					this.inFlightWrites.delete(filePath)
+				}
+			},
+			() => {
+				if (this.inFlightWrites.get(filePath) === current) {
+					this.inFlightWrites.delete(filePath)
+				}
+			},
+		)
+		return current
+	}
+
+	/**
 	 * Immediately flush any pending write for a specific file path.
 	 */
-	public async flush(filePath: string): Promise<void> {
+	public async flush(filePath: string, options: WriteFlushOptions = {}): Promise<void> {
 		const pending = this.pendingWrites.get(filePath)
 		if (pending) {
 			clearTimeout(pending.timer)
@@ -175,13 +209,27 @@ export class WriteCoalescer {
 			try {
 				if (pending.dataSupplier) {
 					const payload = pending.dataSupplier()
-					await pending.writeFn(payload)
-					this.recordWrittenHash(filePath, calculateFastHash(payload))
+					const hash = calculateFastHash(payload)
+					await this.enqueueWrite(filePath, () =>
+						this.executeWriteWithPrecomputedPayload(filePath, payload, hash, (data) => pending.writeFn(data)),
+					)
 				} else {
-					await pending.writeFn()
+					await this.enqueueWrite(filePath, () => pending.writeFn())
 				}
 			} catch (err) {
 				Logger.error(`[WriteCoalescer] Immediate flush failed for ${filePath}:`, err)
+				if (options.throwOnError) {
+					throw err
+				}
+			}
+		} else {
+			try {
+				await this.inFlightWrites.get(filePath)
+			} catch (err) {
+				Logger.error(`[WriteCoalescer] Immediate flush failed for ${filePath}:`, err)
+				if (options.throwOnError) {
+					throw err
+				}
 			}
 		}
 	}
@@ -189,26 +237,38 @@ export class WriteCoalescer {
 	/**
 	 * Immediately flush all pending writes across all target files.
 	 */
-	public async flushAll(): Promise<void> {
-		const promises: Promise<void>[] = []
-		for (const [filePath, pending] of Array.from(this.pendingWrites.entries())) {
-			clearTimeout(pending.timer)
-			this.pendingWrites.delete(filePath)
-			promises.push(
-				(async () => {
-					if (pending.dataSupplier) {
-						const payload = pending.dataSupplier()
-						await pending.writeFn(payload)
-						this.recordWrittenHash(filePath, calculateFastHash(payload))
-					} else {
-						await pending.writeFn()
-					}
-				})().catch((err) => {
-					Logger.error(`[WriteCoalescer] FlushAll failed for ${filePath}:`, err)
-				}),
-			)
+	public async flushAll(options: WriteFlushOptions = {}): Promise<void> {
+		let firstFailure: { reason: unknown } | undefined
+		const configuredMaxDrainPasses = options.maxDrainPasses ?? WriteCoalescer.DEFAULT_MAX_DRAIN_PASSES
+		const maxDrainPasses = Number.isFinite(configuredMaxDrainPasses)
+			? Math.max(1, Math.floor(configuredMaxDrainPasses))
+			: WriteCoalescer.DEFAULT_MAX_DRAIN_PASSES
+		let drainPasses = 0
+		do {
+			if (drainPasses >= maxDrainPasses) {
+				const quiescenceError = new Error(
+					`[WriteCoalescer] flushAll did not quiesce after ${maxDrainPasses} drain passes.`,
+				)
+				Logger.warn(quiescenceError.message)
+				if (options.throwOnError && !firstFailure) {
+					firstFailure = { reason: quiescenceError }
+				}
+				break
+			}
+			drainPasses++
+			const filePaths = new Set([...this.pendingWrites.keys(), ...this.inFlightWrites.keys()])
+			if (filePaths.size === 0) break
+
+			const results = await Promise.allSettled(Array.from(filePaths, (filePath) => this.flush(filePath, options)))
+			if (options.throwOnError && !firstFailure) {
+				const failure = results.find((result): result is PromiseRejectedResult => result.status === "rejected")
+				if (failure) firstFailure = { reason: failure.reason }
+			}
+		} while (this.pendingWrites.size > 0 || this.inFlightWrites.size > 0)
+
+		if (firstFailure) {
+			throw firstFailure.reason
 		}
-		await Promise.all(promises)
 	}
 
 	/**
@@ -216,6 +276,24 @@ export class WriteCoalescer {
 	 */
 	public hasPending(filePath: string): boolean {
 		return this.pendingWrites.has(filePath)
+	}
+
+	/**
+	 * Report whether a file still has work queued or executing. Storage adapters
+	 * use this to requeue a failed write without racing an already-running
+	 * atomic rename.
+	 */
+	public hasPendingOrInFlight(filePath: string): boolean {
+		return this.pendingWrites.has(filePath) || this.inFlightWrites.has(filePath)
+	}
+
+	/**
+	 * Forget the dedupe state for a file removed outside the coalescer. The next
+	 * write must not be skipped merely because the deleted file had the same
+	 * payload before it was removed.
+	 */
+	public invalidateHash(filePath: string): void {
+		this.lastWrittenHashes.delete(filePath)
 	}
 
 	/**

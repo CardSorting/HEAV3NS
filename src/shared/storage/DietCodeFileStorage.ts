@@ -1,6 +1,7 @@
 import * as crypto from "node:crypto"
 import * as fs from "node:fs"
 import * as path from "node:path"
+import deepEqual from "fast-deep-equal"
 import { writeCoalescer } from "../../core/storage/WriteCoalescer"
 import { Logger } from "../services/Logger"
 import { DietCodeSyncStorage } from "./DietCodeStorage"
@@ -23,6 +24,8 @@ export class DietCodeFileStorage<T = unknown> extends DietCodeSyncStorage<T> {
 	private data: Record<string, T>
 	private readonly fsPath: string
 	private readonly fileMode?: number
+	private changeVersion = 0
+	private persistedVersion = 0
 
 	constructor(filePath: string, name = "DietCodeFileStorage", options?: DietCodeFileStorageOptions) {
 		super()
@@ -67,19 +70,51 @@ export class DietCodeFileStorage<T = unknown> extends DietCodeSyncStorage<T> {
 					changedKeys.push(key)
 				}
 			} else {
-				if (this.data[key] !== value) {
+				if (!deepEqual(this.data[key], value)) {
 					this.data[key] = value
 					changedKeys.push(key)
 				}
 			}
 		}
 		if (changedKeys.length > 0) {
+			this.changeVersion++
 			this.writeToDisk()
 			for (const key of changedKeys) {
 				this.fireChange(key)
 			}
 		}
 		return Promise.resolve()
+	}
+
+	/**
+	 * Wait for this file's queued or in-flight write to reach disk.
+	 * StateManager uses this for lifecycle boundaries such as reloads and worktree
+	 * switches where returning before the write-behind queue drains can lose state.
+	 */
+	public async flush(): Promise<void> {
+		// An earlier write may have failed after the in-memory value was updated.
+		// Requeue that latest snapshot so a later lifecycle barrier can recover.
+		if (this.changeVersion > this.persistedVersion && !writeCoalescer.hasPendingOrInFlight(this.fsPath)) {
+			this.writeToDisk()
+		}
+		await writeCoalescer.flush(this.fsPath, { throwOnError: true })
+		if (!writeCoalescer.hasPendingOrInFlight(this.fsPath)) {
+			this.persistedVersion = this.changeVersion
+		}
+	}
+
+	/**
+	 * Reset the in-memory adapter after its backing file was deleted by an
+	 * external lifecycle operation. Callers must drain queued writes first.
+	 */
+	public clearAfterExternalDeletion(): void {
+		if (writeCoalescer.hasPendingOrInFlight(this.fsPath)) {
+			throw new Error(`[${this.name}] cannot clear storage while a write is still queued or in flight`)
+		}
+		this.data = {}
+		this.changeVersion++
+		this.persistedVersion = this.changeVersion
+		writeCoalescer.invalidateHash(this.fsPath)
 	}
 
 	protected _keys(): readonly string[] {
@@ -108,18 +143,31 @@ export class DietCodeFileStorage<T = unknown> extends DietCodeSyncStorage<T> {
 	}
 
 	private writeToDisk(): void {
+		const versionAtSchedule = this.changeVersion
 		writeCoalescer.coalesceWriteWithPayload(
 			this.fsPath,
 			() => JSON.stringify(this.data),
 			async (content) => {
+				let tmpPath: string | undefined
 				try {
 					const dir = path.dirname(this.fsPath)
 					await fs.promises.mkdir(dir, { recursive: true })
-					const tmpPath = `${this.fsPath}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`
+					tmpPath = `${this.fsPath}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`
 					await fs.promises.writeFile(tmpPath, content, { encoding: "utf-8", mode: this.fileMode })
 					await fs.promises.rename(tmpPath, this.fsPath)
+					if (versionAtSchedule === this.changeVersion) {
+						this.persistedVersion = versionAtSchedule
+					}
 				} catch (error) {
 					Logger.error(`[${this.name}] failed to write to ${this.fsPath}:`, error)
+					if (tmpPath) {
+						try {
+							await fs.promises.unlink(tmpPath)
+						} catch (cleanupError) {
+							Logger.warn(`[${this.name}] failed to clean up temporary write ${tmpPath}:`, cleanupError)
+						}
+					}
+					throw error
 				}
 			},
 			500,

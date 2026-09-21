@@ -78,6 +78,11 @@ const LANE_LEASE_SECONDS = 600
 const ORCHESTRATION_LEASE_SECONDS = 1200
 const LANE_MUTEX_MS = LANE_LEASE_SECONDS * 1000
 
+type LaneReleaseResult = {
+	released: boolean
+	error?: string
+}
+
 export class GovernedSwarmCoordinator {
 	private readonly lockAuthority: LockAuthority
 	private readonly laneDag: LaneDAG
@@ -376,50 +381,67 @@ export class GovernedSwarmCoordinator {
 	}
 
 	/** Release governed locks without changing DAG state — used during retry backoff. */
-	async releaseLaneLocks(claim: WorkLaneClaim): Promise<void> {
-		await this.releaseLockClaims(claim)
-		claim.lockClaim = undefined
-		claim.roadmapLockClaims = undefined
-	}
-
-	async releaseLane(claim: WorkLaneClaim, sealed: boolean, failed = false, error?: string): Promise<void> {
-		await this.releaseLockClaims(claim)
-
-		if (sealed) {
-			this.laneDag.markSealed(claim.index)
-		} else if (failed) {
-			this.laneDag.markFailed(claim.index, error)
+	async releaseLaneLocks(claim: WorkLaneClaim): Promise<LaneReleaseResult> {
+		const result = await this.releaseLockClaims(claim)
+		if (result.released) {
+			claim.lockClaim = undefined
+			claim.roadmapLockClaims = undefined
 		}
+		return result
 	}
 
-	private async releaseLockClaims(claim: WorkLaneClaim): Promise<void> {
+	async releaseLane(claim: WorkLaneClaim, sealed: boolean, failed = false, error?: string): Promise<LaneReleaseResult> {
+		const releaseResult = await this.releaseLockClaims(claim)
+
+		if (sealed && releaseResult.released) {
+			this.laneDag.markSealed(claim.index)
+		} else if (failed || !releaseResult.released) {
+			this.laneDag.markFailed(
+				claim.index,
+				error || releaseResult.error || (releaseResult.released ? undefined : "Lane claim release was not confirmed."),
+			)
+		}
+		return releaseResult
+	}
+
+	private async releaseLockClaims(claim: WorkLaneClaim): Promise<LaneReleaseResult> {
+		const errors: string[] = []
+		const releaseClaim = async (lockClaim: NonNullable<WorkLaneClaim["lockClaim"]>): Promise<void> => {
+			// A multi-backend release can succeed for one projection and fail for a
+			// sibling projection. Preserve the claim object for retry, but never turn
+			// an already-committed release into a false owner-mismatch on the next
+			// cleanup attempt.
+			if (lockClaim.releasedAt) return
+			try {
+				const verify = await this.lockAuthority.verify(lockClaim, this.workspace)
+				if (!verify.valid && verify.reason === "stale_owner") {
+					this.claimHistory.push(lockClaimToHistoryEntry(lockClaim, claim.laneId, "stale_detected", verify.reason))
+				}
+				const releaseResult = await releaseGovernedLock(this.lockAuthority, lockClaim, this.workspace)
+				if (!releaseResult.ok) {
+					errors.push(releaseResult.error)
+					this.claimHistory.push(lockClaimToHistoryEntry(lockClaim, claim.laneId, "rejected", releaseResult.error))
+				} else {
+					this.claimHistory.push(lockClaimToHistoryEntry(lockClaim, claim.laneId, "released"))
+				}
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				errors.push(message)
+				this.claimHistory.push(lockClaimToHistoryEntry(lockClaim, claim.laneId, "rejected", message))
+			}
+		}
+
 		if (claim.roadmapLockClaims?.length) {
 			for (const roadmapClaim of claim.roadmapLockClaims) {
-				const verify = await this.lockAuthority.verify(roadmapClaim, this.workspace)
-				if (!verify.valid && verify.reason === "stale_owner") {
-					this.claimHistory.push(lockClaimToHistoryEntry(roadmapClaim, claim.laneId, "stale_detected", verify.reason))
-				}
-				const releaseResult = await releaseGovernedLock(this.lockAuthority, roadmapClaim, this.workspace)
-				if (!releaseResult.ok) {
-					this.claimHistory.push(lockClaimToHistoryEntry(roadmapClaim, claim.laneId, "rejected", releaseResult.error))
-				} else {
-					this.claimHistory.push(lockClaimToHistoryEntry(roadmapClaim, claim.laneId, "released"))
-				}
+				await releaseClaim(roadmapClaim)
 			}
 		}
 
 		if (claim.lockClaim) {
-			const verify = await this.lockAuthority.verify(claim.lockClaim, this.workspace)
-			if (!verify.valid && verify.reason === "stale_owner") {
-				this.claimHistory.push(lockClaimToHistoryEntry(claim.lockClaim, claim.laneId, "stale_detected", verify.reason))
-			}
-			const releaseResult = await releaseGovernedLock(this.lockAuthority, claim.lockClaim, this.workspace)
-			if (!releaseResult.ok) {
-				this.claimHistory.push(lockClaimToHistoryEntry(claim.lockClaim, claim.laneId, "rejected", releaseResult.error))
-			} else {
-				this.claimHistory.push(lockClaimToHistoryEntry(claim.lockClaim, claim.laneId, "released"))
-			}
+			await releaseClaim(claim.lockClaim)
 		}
+
+		return { released: errors.length === 0, error: errors.length ? errors.join("; ") : undefined }
 	}
 
 	markLaneSkipped(index: number): void {

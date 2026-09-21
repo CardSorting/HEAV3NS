@@ -180,6 +180,7 @@ export class WriteToFileToolHandler implements IToolHandler, IPartialBlockHandle
 					() => config.services.diffViewProvider.saveChanges(),
 					{
 						concurrencyGroup: "fs",
+						retryPolicy: "at_most_once",
 					},
 				)
 

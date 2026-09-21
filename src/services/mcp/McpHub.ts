@@ -1245,6 +1245,7 @@ export class McpHub {
 		toolName: string,
 		toolArguments: Record<string, unknown> | undefined,
 		ulid: string,
+		signal?: AbortSignal,
 	): Promise<McpToolCallResponse> {
 		const connection = this.connections.find((conn) => conn.server.name === serverName)
 		if (!connection) {
@@ -1288,6 +1289,7 @@ export class McpHub {
 				CallToolResultSchema,
 				{
 					timeout,
+					signal,
 				},
 			)
 

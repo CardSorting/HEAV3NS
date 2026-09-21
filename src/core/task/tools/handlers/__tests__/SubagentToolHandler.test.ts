@@ -775,6 +775,7 @@ describe("SubagentToolHandler", () => {
 			} else if (failed) {
 				this.getLaneDAG().markFailed(claim.index, error)
 			}
+			return { released: true }
 		})
 
 		sinon.stub(SubagentRunner.prototype, "run").callsFake(async (prompt: string) => {

@@ -452,6 +452,9 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 			let swarmInterrupted = false
 			let swarmCrashPhase: GovernedCrashPhase = "parent_before_merge_gate"
 			let swarmArtifactPath = `subagent_executions/${swarmId}.json`
+			// Once terminalization starts, late runner callbacks must not mutate the
+			// receipt, status projection, or lane results being sealed.
+			let swarmFinalizationClosed = false
 
 			const emitStatus = async (
 				status: DietCodeSaySubagentStatus["status"],
@@ -554,6 +557,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 			statusEmitter = activeStatusEmitter
 			let lastProgressFingerprint = ""
 			const queueStatusUpdate = (status: DietCodeSaySubagentStatus["status"], partial: boolean): void => {
+				if (swarmFinalizationClosed) return
 				if (status === "running") {
 					const fingerprint = entries
 						.map((entry) => `${entry.status}:${entry.toolCalls}:${Math.round((entry.totalCost || 0) * 10_000)}`)
@@ -626,14 +630,14 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				runner.setLaneExecutionMode(laneIntents[index].executionMode)
 				return runner
 			}
-			const activeRunners = new Map<number, SubagentRunner>()
+			const activeRunners = new Set<SubagentRunner>()
 			const retryingLanes = new Set<number>()
 			const retryDeadlines = new Map<number, number>()
 			let schedulerStateVersion = 0
 			let swarmStopReason: string | undefined
 			const swarmStopController = new AbortController()
 			const abortAllRunners = async (): Promise<void> => {
-				await Promise.allSettled([...activeRunners.values()].map((runner) => runner.abort()))
+				await Promise.allSettled([...activeRunners].map((runner) => runner.abort()))
 			}
 			abortActiveRunners = abortAllRunners
 			const requestSwarmStop = (reason: string): void => {
@@ -681,6 +685,10 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 			)
 			const maxInFlightLanes = computeMaxInFlightLanes(DEFAULT_SUBAGENT_CONCURRENCY)
 			const schedulerWake = createSwarmSchedulerWake()
+			let releaseSwarmFinalizationWait: () => void = () => undefined
+			const swarmFinalizationSignal = new Promise<void>((resolve) => {
+				releaseSwarmFinalizationWait = resolve
+			})
 			let activeLaneExecutions = 0
 			const swarmGateOptionsPromise = resolveCompletionGateOptions(config, config.cwd, {
 				lastAdvisoryAudit: config.taskState.lastAdvisoryAudit,
@@ -715,6 +723,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 			})
 
 			const runSubagent = async (index: number) => {
+				if (swarmFinalizationClosed) return
 				if (resumePlan) {
 					const entry = entries[index]
 					const reused = resumePlan.reuseAgents.find((agent) => agent.index === entry.index)
@@ -794,7 +803,15 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				const laneIntent = laneIntents[index]
 				const laneNecessity = laneNecessities[index]
 				const swarmGateOptions = await swarmGateOptionsPromise
+				if (swarmFinalizationClosed) return
 				let activeClaim: WorkLaneClaim | undefined
+				let deferredClaimRelease:
+					| {
+							claim: WorkLaneClaim
+							attempt: Promise<SubagentRunResult>
+							error: string
+					  }
+					| undefined
 
 				try {
 					let accumulatedStats = emptySubagentRunStats()
@@ -802,6 +819,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 					let finalError: Error | undefined
 
 					for (let attempt = 1; attempt <= DEFAULT_SUBAGENT_MAX_ATTEMPTS; attempt++) {
+						if (swarmFinalizationClosed) return
 						if (swarmStopReason || config.taskState.abort) {
 							finalError = new Error(swarmStopReason || "Subagent swarm cancelled by parent task.")
 							break
@@ -816,11 +834,16 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						const releaseExecutionSlot = await executionSlots.acquire(
 							laneExecutionPriority(index),
 							isNonMutatingMode(laneIntent.executionMode),
+							swarmStopController.signal,
 						)
 						if (swarmStopReason || config.taskState.abort) {
 							releaseExecutionSlot()
 							finalError = new Error(swarmStopReason || "Subagent swarm cancelled by parent task.")
 							break
+						}
+						if (swarmFinalizationClosed) {
+							releaseExecutionSlot()
+							return
 						}
 
 						activeLaneExecutions++
@@ -831,6 +854,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						let attemptPromise: Promise<SubagentRunResult> | undefined
 						let attemptResult: SubagentRunResult | undefined
 						let attemptError: Error | undefined
+						let attemptSettled = false
 						let shouldRetry = false
 						let retryDelayMs = 0
 
@@ -845,9 +869,10 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 								)
 							}
 							activeClaim = laneClaimResult.claim
+							if (swarmFinalizationClosed) return
 
 							runner = createRunner(index)
-							activeRunners.set(index, runner)
+							activeRunners.add(runner)
 							current.status = "running"
 							current.error = undefined
 
@@ -866,6 +891,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 								attemptPromise = runner.runWithEnvelope(
 									prompts[index],
 									async (update) => {
+										if (swarmFinalizationClosed) return
 										if (update.stats?.totalCost !== undefined) {
 											attemptLatestStats = update.stats
 											recordAttemptCost(update.stats.totalCost)
@@ -953,6 +979,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 									milliseconds: Math.min(SUBAGENT_ATTEMPT_TIMEOUT_MS, remainingSwarmMs),
 									message: `Subagent lane ${index} execution timed out.`,
 								})
+								attemptSettled = true
 							} catch (error) {
 								attemptError = new Error(errorMessage(error))
 								const timedOut = /timed out/i.test(attemptError.message)
@@ -964,14 +991,45 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 									current.result = partialResult
 									current.warnings = [...(current.warnings ?? []), "degraded_complete: advisory lane timeout"]
 									current.laneRuntimeState = "degraded_complete"
-									governedCoordinator.getLaneDAG().markSealed(index)
-									if (config.taskState.swarmRuntime) {
-										config.taskState.swarmRuntime.lanesDegraded++
-										config.taskState.swarmRuntime.lanesComplete++
-									}
 									attemptLatestStats = accumulatedStats
-									finalResult = { status: "completed", result: partialResult, stats: accumulatedStats }
-									finalError = undefined
+									await runner?.abort().catch(() => undefined)
+									if (attemptPromise) {
+										attemptSettled = await waitForSettlement(attemptPromise, SUBAGENT_ABORT_GRACE_MS)
+									} else {
+										attemptSettled = true
+									}
+									if (!attemptSettled) {
+										const nonCooperativeError = `Advisory lane ${index} did not stop after its degraded timeout.`
+										current.status = "failed"
+										current.error = nonCooperativeError
+										current.laneRuntimeState = mapEntryStatusToLaneState({
+											entryStatus: current.status,
+											hasPartialResult: Boolean(current.result?.trim()),
+											hasHardError: true,
+											hasAdvisoryWarnings: (current.warnings?.length ?? 0) > 0,
+											degraded: false,
+										})
+										finalResult = failedRunResult(nonCooperativeError, accumulatedStats)
+										finalError = new Error(nonCooperativeError)
+										governedCoordinator.getLaneDAG().markFailed(index, nonCooperativeError)
+										deferredClaimRelease = activeClaim
+											? {
+													claim: activeClaim,
+													attempt: attemptPromise!,
+													error: nonCooperativeError,
+												}
+											: undefined
+										swarmInterrupted = true
+										requestSwarmStop(nonCooperativeError)
+									} else {
+										governedCoordinator.getLaneDAG().markSealed(index)
+										if (config.taskState.swarmRuntime) {
+											config.taskState.swarmRuntime.lanesDegraded++
+											config.taskState.swarmRuntime.lanesComplete++
+										}
+										finalResult = { status: "completed", result: partialResult, stats: accumulatedStats }
+										finalError = undefined
+									}
 									break
 								}
 								Logger.warn(
@@ -979,16 +1037,30 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 								)
 								await runner?.abort().catch(() => undefined)
 								if (attemptPromise) {
-									const settled = await waitForSettlement(attemptPromise, SUBAGENT_ABORT_GRACE_MS)
-									if (!settled) {
+									attemptSettled = await waitForSettlement(attemptPromise, SUBAGENT_ABORT_GRACE_MS)
+									if (!attemptSettled) {
 										attemptError = new Error(
 											`${attemptError.message} Runner did not stop within the abort grace period.`,
 										)
 										swarmInterrupted = true
 										requestSwarmStop(attemptError.message)
+										if (activeClaim) {
+											// Never release a mutation claim while a non-cooperative
+											// runner may still be touching the workspace. The cleanup
+											// callback below releases it only after settlement.
+											deferredClaimRelease = {
+												claim: activeClaim,
+												attempt: attemptPromise,
+												error: attemptError.message,
+											}
+											governedCoordinator.getLaneDAG().markFailed(index, attemptError.message)
+										}
 									}
+								} else {
+									attemptSettled = true
 								}
 							}
+							if (swarmFinalizationClosed) return
 
 							if (attemptResult) {
 								attemptLatestStats = attemptResult.stats
@@ -1067,7 +1139,17 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 							}
 
 							if (shouldReleaseLaneClaimBetweenAttempts(laneNecessity.lockRequired, true) && activeClaim) {
-								await governedCoordinator.releaseLaneLocks(activeClaim)
+								const claimToRelease = activeClaim
+								const releaseResult = await governedCoordinator.releaseLaneLocks(claimToRelease)
+								if (!releaseResult.released) {
+									const releaseError = releaseResult.error || "Lane claim release was not confirmed."
+									finalError = new Error(`${failure}; ${releaseError}`)
+									finalResult = failedRunResult(finalError.message, accumulatedStats)
+									break
+								}
+								// A retried attempt must never fall back to a released lock
+								// when the next acquisition is rejected.
+								activeClaim = undefined
 							}
 
 							shouldRetry = true
@@ -1081,8 +1163,11 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 									.catch(() => undefined)
 							}
 						} finally {
-							if (runner && activeRunners.get(index) === runner) {
-								activeRunners.delete(index)
+							if (runner && attemptSettled) {
+								activeRunners.delete(runner)
+							} else if (runner && attemptPromise) {
+								const pendingRunner = runner
+								void attemptPromise.finally(() => activeRunners.delete(pendingRunner)).catch(() => undefined)
 							}
 							releaseExecutionSlot()
 							activeLaneExecutions--
@@ -1090,6 +1175,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 							schedulerWake.notify()
 						}
 
+						if (swarmFinalizationClosed) return
 						if (shouldRetry) {
 							Logger.warn(
 								`[SubagentToolHandler] Retrying transient failure on lane ${index} in ${retryDelayMs}ms (attempt ${attempt + 1}/${DEFAULT_SUBAGENT_MAX_ATTEMPTS}).`,
@@ -1118,6 +1204,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						}
 					}
 
+					if (swarmFinalizationClosed) return
 					if (!activeClaim && finalError?.message.includes("Work lane claim rejected")) {
 						laneReceipts.push(
 							governedCoordinator.buildLaneReceipt(
@@ -1177,6 +1264,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 					queueStatusUpdate("running", true)
 					results[index] = { status: "fulfilled", value: resolvedResult }
 				} catch (error) {
+					if (swarmFinalizationClosed) return
 					Logger.error(`[SubagentToolHandler] Subagent ${index} crashed:`, error)
 					current.status = "failed"
 					current.error = errorMessage(error)
@@ -1190,21 +1278,104 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 					results[index] = { status: "fulfilled", value: failedRunResult(current.error) }
 				} finally {
 					if (activeClaim) {
-						const succeeded = current.status === "completed"
-						const failed = current.status === "failed"
-						await governedCoordinator.releaseLane(activeClaim, succeeded, failed, current.error)
-						const lastReceipt = laneReceipts.find(
-							(receipt) => receipt.agentId === current.id && receipt.index === index,
-						)
-						if (lastReceipt) {
-							lastReceipt.claimReleased = true
-							lastReceipt.dagState = governedCoordinator.getLaneDAG().getNode(index)?.state
+						if (deferredClaimRelease?.claim === activeClaim) {
+							const deferred = deferredClaimRelease
+							activeClaim = undefined
+							void deferred.attempt
+								.finally(async () => {
+									const releaseResult = await governedCoordinator.releaseLane(
+										deferred.claim,
+										false,
+										true,
+										deferred.error,
+									)
+									if (!releaseResult.released) {
+										Logger.error(
+											`[SubagentToolHandler] Deferred lane claim release failed for lane ${index}: ${
+												releaseResult.error || "release was not confirmed"
+											}`,
+										)
+									}
+									if (!swarmFinalizationClosed) {
+										const deferredReceipt = laneReceipts.find(
+											(receipt) => receipt.agentId === current.id && receipt.index === index,
+										)
+										if (deferredReceipt) {
+											deferredReceipt.claimReleased = releaseResult.released
+											deferredReceipt.dagState = governedCoordinator.getLaneDAG().getNode(index)?.state
+											if (!releaseResult.released) {
+												deferredReceipt.auditResult = "failed"
+												deferredReceipt.error =
+													releaseResult.error ||
+													deferredReceipt.error ||
+													"Lane claim release was not confirmed."
+											}
+										}
+									}
+								})
+								.catch((error) => {
+									Logger.error(`[SubagentToolHandler] Deferred lane cleanup crashed for lane ${index}:`, error)
+								})
+						} else {
+							const succeeded = current.status === "completed"
+							const failed = current.status === "failed" || (swarmFinalizationClosed && !succeeded)
+							const releaseResult = await governedCoordinator.releaseLane(
+								activeClaim,
+								succeeded,
+								failed,
+								current.error,
+							)
+							const claimReleased = releaseResult.released
+							if (!claimReleased && !swarmFinalizationClosed) {
+								// A lane is not successful until its authority claim is confirmed
+								// released. Convert an otherwise completed result to a durable
+								// failure so the parent cannot continue on an orphaned lock.
+								const releaseError = releaseResult.error || "Lane claim release was not confirmed."
+								current.status = "failed"
+								current.error = current.error ? `${current.error}; ${releaseError}` : releaseError
+								current.laneRuntimeState = mapEntryStatusToLaneState({
+									entryStatus: current.status,
+									hasPartialResult: Boolean(current.result?.trim()),
+									hasHardError: true,
+									hasAdvisoryWarnings: (current.warnings?.length ?? 0) > 0,
+									degraded: false,
+								})
+								const currentResult = results[index]
+								if (currentResult?.status === "fulfilled") {
+									currentResult.value = {
+										...currentResult.value,
+										status: "failed",
+										error: current.error,
+									}
+								} else {
+									results[index] = {
+										status: "fulfilled",
+										value: failedRunResult(current.error),
+									}
+								}
+								queueStatusUpdate("running", true)
+							}
+							if (!swarmFinalizationClosed) {
+								const lastReceipt = laneReceipts.find(
+									(receipt) => receipt.agentId === current.id && receipt.index === index,
+								)
+								if (lastReceipt) {
+									lastReceipt.claimReleased = claimReleased
+									if (!claimReleased) {
+										lastReceipt.auditResult = "failed"
+										lastReceipt.error =
+											releaseResult?.error || lastReceipt.error || "Lane claim release was not confirmed."
+									}
+									lastReceipt.dagState = governedCoordinator.getLaneDAG().getNode(index)?.state
+								}
+							}
 						}
 					}
 				}
 			}
 
 			const failPendingLane = (index: number, reason: string): void => {
+				if (swarmFinalizationClosed) return
 				const entry = entries[index]
 				entry.status = "failed"
 				entry.error = reason
@@ -1237,6 +1408,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				const running = new Map<number, Promise<void>>()
 
 				while (pending.size > 0 || running.size > 0) {
+					if (swarmFinalizationClosed) break
 					if (swarmStopReason || config.taskState.abort) {
 						const reason = swarmStopReason || "Subagent swarm cancelled by parent task."
 						for (const index of pending) {
@@ -1268,6 +1440,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						.getReadyLanesByPriority(laneDispatchWeights)
 						.filter((index) => pending.has(index))
 					for (const index of readyByPriority) {
+						if (swarmFinalizationClosed) break
 						// Count admitted lane lifecycles, not only runners that have acquired a
 						// pool slot. runSubagent yields during setup, so activeLaneExecutions alone
 						// allowed the entire pending set to spill into the queue in one tick.
@@ -1278,6 +1451,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						schedulerStateVersion++
 						const job = runSubagent(index)
 							.catch((error) => {
+								if (swarmFinalizationClosed) return
 								const reason = `Lane execution infrastructure failed: ${errorMessage(error)}`
 								Logger.error(`[SubagentToolHandler] ${reason}`, error)
 								if (!results[index]) {
@@ -1390,11 +1564,11 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 
 					const needsSchedulerWake = pending.size > 0 && activeLaneExecutions >= maxInFlightLanes && running.size > 0
 					if (needsSchedulerWake) {
-						await Promise.race([Promise.race(running.values()), schedulerWake.wait()])
+						await Promise.race([Promise.race(running.values()), schedulerWake.wait(), swarmFinalizationSignal])
 					} else if (running.size > 0) {
-						await Promise.race(running.values())
+						await Promise.race([Promise.race(running.values()), swarmFinalizationSignal])
 					} else if (pending.size > 0 && activeLaneExecutions >= maxInFlightLanes) {
-						await schedulerWake.wait()
+						await Promise.race([schedulerWake.wait(), swarmFinalizationSignal])
 					}
 				}
 			}
@@ -1410,7 +1584,12 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				swarmInterrupted = true
 				requestSwarmStop(errorMessage(err))
 				await abortAllRunners()
-				await waitForSettlement(swarmExecutionPromise, SUBAGENT_ABORT_GRACE_MS)
+				const settled = await waitForSettlement(swarmExecutionPromise, SUBAGENT_ABORT_GRACE_MS)
+				if (!settled) {
+					Logger.warn(
+						"[SubagentToolHandler] Swarm scheduler did not settle during abort grace; terminalizing with a closed publication fence.",
+					)
+				}
 			} finally {
 				stopAbortWatcher?.()
 				stopAbortWatcher = undefined
@@ -1418,6 +1597,11 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 					swarmInterrupted = true
 				}
 			}
+			// Freeze the parent-visible execution boundary before draining status I/O
+			// and sealing artifacts. Any runner that settles later is cleanup-only.
+			swarmFinalizationClosed = true
+			releaseSwarmFinalizationWait()
+			schedulerWake.notify()
 			// Drain parent-visible status writes. Advisory audit preflight is sampled if ready
 			// and never delays receipt sealing or parent continuation.
 			await activeStatusEmitter.stop().catch((error) => {
@@ -1510,36 +1694,42 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				const probeRunner = new SubagentRunner(config, probeBuilder)
 				probeRunner.setRecursionDepth(currentDepth + 1)
 				probeRunner.setLaneExecutionMode("diagnostic_only")
-				activeRunners.set(probeIndex, probeRunner)
+				activeRunners.add(probeRunner)
 
 				let probeResult: SubagentRunResult | undefined
 				let probeError: string | undefined
+				let probePromise: Promise<SubagentRunResult> | undefined
+				let probeSettled = false
 				try {
 					const remainingSwarmMs = Math.max(1, swarmDeadline - Date.now())
-					probeResult = await pTimeout(
-						probeRunner.runWithEnvelope(probeDecision.question, () => undefined, {
-							agentId: probeId,
-							role: "Confidence verification probe",
-							swarmId,
-							taskId: config.taskId,
-							index: probeIndex,
-							depth: currentDepth + 1,
-							parentStreamId,
-							parentExecutionId: resumePlan?.parentExecutionId,
-							resumeAttemptId: resumePlan?.resumeAttemptId,
-							prefetchedParentContext: prefetchedParentContextPromise,
-							swarmGateOptions: await swarmGateOptionsPromise,
-						}),
-						{
-							milliseconds: Math.min(SUBAGENT_ATTEMPT_TIMEOUT_MS, remainingSwarmMs),
-							message: `Confidence probe ${probeId} timed out.`,
-						},
-					)
+					probePromise = probeRunner.runWithEnvelope(probeDecision.question, () => undefined, {
+						agentId: probeId,
+						role: "Confidence verification probe",
+						swarmId,
+						taskId: config.taskId,
+						index: probeIndex,
+						depth: currentDepth + 1,
+						parentStreamId,
+						parentExecutionId: resumePlan?.parentExecutionId,
+						resumeAttemptId: resumePlan?.resumeAttemptId,
+						prefetchedParentContext: prefetchedParentContextPromise,
+						swarmGateOptions: await swarmGateOptionsPromise,
+					})
+					probeResult = await pTimeout(probePromise, {
+						milliseconds: Math.min(SUBAGENT_ATTEMPT_TIMEOUT_MS, remainingSwarmMs),
+						message: `Confidence probe ${probeId} timed out.`,
+					})
+					probeSettled = true
 				} catch (error) {
 					probeError = errorMessage(error)
 					await probeRunner.abort().catch(() => undefined)
+					probeSettled = probePromise ? await waitForSettlement(probePromise, SUBAGENT_ABORT_GRACE_MS) : true
 				} finally {
-					activeRunners.delete(probeIndex)
+					if (probeSettled) {
+						activeRunners.delete(probeRunner)
+					} else if (probePromise) {
+						void probePromise.finally(() => activeRunners.delete(probeRunner)).catch(() => undefined)
+					}
 				}
 
 				if (probeResult) {

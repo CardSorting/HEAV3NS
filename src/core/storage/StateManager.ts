@@ -17,6 +17,7 @@ import {
 } from "@shared/storage/state-keys"
 import type { StorageContext } from "@shared/storage/storage-context"
 import chokidar, { FSWatcher } from "chokidar"
+import deepEqual from "fast-deep-equal"
 import { initializeDistinctId } from "@/services/logging/distinctId"
 import { Logger } from "@/shared/services/Logger"
 import { AgentConfigLoader } from "../task/tools/subagent/AgentConfigLoader"
@@ -36,21 +37,27 @@ export interface PersistenceErrorEvent {
 }
 
 function isValueEqual(a: unknown, b: unknown): boolean {
-	if (a === b) {
-		return true
+	return deepEqual(a, b)
+}
+
+/**
+ * Persistence snapshots must not share mutable object graphs with the live
+ * settings cache. A caller can mutate an object while a write is in flight;
+ * structuredClone keeps the retirement comparison tied to the bytes that were
+ * actually scheduled for disk.
+ */
+function snapshotValue<T>(value: T): T {
+	if (value === undefined || value === null || (typeof value !== "object" && typeof value !== "function")) {
+		return value
 	}
-	if (Array.isArray(a) && Array.isArray(b)) {
-		if (a.length !== b.length) {
-			return false
-		}
-		for (let i = 0; i < a.length; i++) {
-			if (a[i] !== b[i]) {
-				return false
-			}
-		}
-		return true
+	try {
+		return structuredClone(value)
+	} catch {
+		// State is expected to be JSON-serializable. Preserve legacy behavior for
+		// an unsupported value so the storage adapter remains the source of truth
+		// for reporting serialization failures.
+		return value
 	}
-	return false
 }
 
 /**
@@ -139,8 +146,16 @@ export class StateManager {
 	private pendingSecrets = new Set<SecretKey>()
 	private pendingWorkspaceState = new Set<LocalStateKey>()
 	private persistenceTimeout: NodeJS.Timeout | null = null
+	private persistenceScheduleVersion = 0
+	private persistenceInFlight: Promise<void> | null = null
+	private persistenceRetryAttempt = 0
+	/** Last durable value for mutable state objects; detects in-place caller edits. */
+	private persistedGlobalStateSnapshots = new Map<GlobalStateAndSettingsKey, unknown>()
+	private persistedWorkspaceStateSnapshots = new Map<LocalStateKey, unknown>()
 	private autoPurgeTimer: NodeJS.Timeout | null = null
 	private readonly PERSISTENCE_DELAY_MS = 500
+	private readonly MAX_PERSISTENCE_RETRY_DELAY_MS = 30_000
+	private readonly MAX_PERSISTENCE_DRAIN_PASSES = 100
 	private taskHistoryWatcher: FSWatcher | null = null
 
 	// Callback for persistence errors
@@ -248,7 +263,12 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
-		if (isValueEqual(this.globalStateCache[key], value)) {
+		if (
+			!this.pendingGlobalState.has(key) &&
+			isValueEqual(this.globalStateCache[key], value) &&
+			this.persistedGlobalStateSnapshots.has(key) &&
+			isValueEqual(this.persistedGlobalStateSnapshots.get(key), value)
+		) {
 			return
 		}
 
@@ -271,7 +291,12 @@ export class StateManager {
 		let hasChanges = false
 		for (const [key, value] of Object.entries(updates)) {
 			const stateKey = key as GlobalStateAndSettingsKey
-			if (!isValueEqual((this.globalStateCache as any)[stateKey], value)) {
+			if (
+				this.pendingGlobalState.has(stateKey) ||
+				!isValueEqual((this.globalStateCache as any)[stateKey], value) ||
+				!this.persistedGlobalStateSnapshots.has(stateKey) ||
+				!isValueEqual(this.persistedGlobalStateSnapshots.get(stateKey), value)
+			) {
 				;(this.globalStateCache as any)[stateKey] = value
 				this.pendingGlobalState.add(stateKey)
 				hasChanges = true
@@ -418,24 +443,19 @@ export class StateManager {
 	 * Clear task settings cache - ensures pending changes are persisted first
 	 */
 	async clearTaskSettings(): Promise<void> {
-		if (this.persistenceTimeout) {
-			clearTimeout(this.persistenceTimeout)
-			this.persistenceTimeout = null
-		}
+		this.cancelScheduledPersistence()
 
 		// If there are pending task settings, persist them first
 		if (this.pendingTaskState.size > 0) {
 			try {
-				// Persist pending task state immediately
-				await this.persistTaskStateBatch(this.pendingTaskState)
-				// Clear pending set after successful persistence
-				this.pendingTaskState.clear()
-				this.pendingTaskStateValues.clear()
+				// Flush through the shared single-flight path so a debounced persistence
+				// run already in progress cannot race the task cache boundary.
+				await this.persistPendingState()
 			} catch (error) {
 				Logger.error("[StateManager] Failed to persist task settings before clearing:", error)
 				// Keep the snapshots queued so the normal debounced retry can still
 				// persist the user's change after a transient disk failure.
-				this.scheduleDebouncedPersistence()
+				this.schedulePersistenceRetry()
 			}
 		}
 
@@ -506,7 +526,12 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
-		if (this.workspaceStateCache[key] === value) {
+		if (
+			!this.pendingWorkspaceState.has(key) &&
+			isValueEqual(this.workspaceStateCache[key], value) &&
+			this.persistedWorkspaceStateSnapshots.has(key) &&
+			isValueEqual(this.persistedWorkspaceStateSnapshots.get(key), value)
+		) {
 			return
 		}
 
@@ -529,7 +554,12 @@ export class StateManager {
 		let hasChanges = false
 		for (const [key, value] of Object.entries(updates)) {
 			const localKey = key as LocalStateKey
-			if ((this.workspaceStateCache as any)[localKey] !== value) {
+			if (
+				this.pendingWorkspaceState.has(localKey) ||
+				!isValueEqual((this.workspaceStateCache as any)[localKey], value) ||
+				!this.persistedWorkspaceStateSnapshots.has(localKey) ||
+				!isValueEqual(this.persistedWorkspaceStateSnapshots.get(localKey), value)
+			) {
 				;(this.workspaceStateCache as any)[localKey] = value
 				this.pendingWorkspaceState.add(localKey)
 				hasChanges = true
@@ -717,6 +747,7 @@ export class StateManager {
 						(onDisk.length > 0 && (onDisk[0]?.id !== cached[0]?.id || onDisk[0]?.ts !== cached[0]?.ts))
 					) {
 						this.globalStateCache.taskHistory = onDisk
+						this.persistedGlobalStateSnapshots.set("taskHistory", snapshotValue(onDisk))
 						await this.onSyncExternalChange?.()
 					}
 				} catch (err) {
@@ -729,6 +760,7 @@ export class StateManager {
 				.on("change", () => syncTaskHistoryFromDisk())
 				.on("unlink", async () => {
 					this.globalStateCache.taskHistory = []
+					this.persistedGlobalStateSnapshots.set("taskHistory", [])
 					await this.onSyncExternalChange?.()
 				})
 				.on("error", (error) => Logger.error("[StateManager] TaskHistory watcher error:", error))
@@ -864,11 +896,16 @@ export class StateManager {
 	 * Used for error recovery when write operations fail
 	 */
 	async reInitialize(currentTaskId?: string): Promise<void> {
-		if (this.persistenceTimeout) {
+		if (this.hasPendingPersistence() || this.persistenceInFlight) {
 			try {
 				await this.persistPendingState()
 			} catch (error) {
 				Logger.error("[StateManager] Failed to persist pending state during reInitialize:", error)
+				// Do not dispose the only in-memory copy after a failed barrier. Keep
+				// snapshots queued for automatic recovery and make the lifecycle caller
+				// handle the failed reinitialization explicitly.
+				this.schedulePersistenceRetry()
+				throw error
 			}
 		}
 		// Clear all cached data and pending state
@@ -897,16 +934,58 @@ export class StateManager {
 		const workspacesDir = path.join(this.storage.dataDir, "workspaces")
 
 		try {
+			// A reset is a destructive lifecycle boundary. Cancel the debounced
+			// manager write and join any pass that already started before deleting the
+			// directory; otherwise its workspace snapshot can recreate the deleted
+			// file after this method returns.
+			await this.quiescePersistenceForLifecycle()
+
+			// The adapter retains an in-memory view and a content-dedupe hash. Drain
+			// both before deleting the directory so an older write cannot recreate
+			// stale workspace state after the reset, then forget the deleted file.
+			await this.storage.workspaceState.flush()
 			await fs.rm(workspacesDir, { recursive: true, force: true })
 			// Re-create the directory for the current workspace
 			await fs.mkdir(this.storage.workspaceStoragePath, { recursive: true })
 
 			// Clear in-memory workspace cache
+			this.storage.workspaceState.clearAfterExternalDeletion()
 			this.workspaceStateCache = {} as LocalState
 			this.pendingWorkspaceState.clear()
+			this.persistedWorkspaceStateSnapshots.clear()
+			// The lifecycle barrier canceled the shared debounce timer. Preserve
+			// unrelated global/secret/task snapshots instead of stranding them until
+			// another setter happens to schedule persistence.
+			if (this.hasPendingPersistence()) {
+				this.schedulePersistenceRetry()
+			}
 		} catch (error) {
 			Logger.error("[StateManager] Failed to reset all workspaces:", error)
+			if (this.hasPendingPersistence()) {
+				this.schedulePersistenceRetry()
+			}
 			throw error
+		}
+	}
+
+	/**
+	 * Stop scheduled persistence and wait for a pass already in progress. The
+	 * second cancellation closes the small window where a setter schedules a new
+	 * timer while an in-flight pass is settling.
+	 */
+	private async quiescePersistenceForLifecycle(): Promise<void> {
+		this.cancelScheduledPersistence()
+		while (this.persistenceInFlight) {
+			const inFlight = this.persistenceInFlight
+			try {
+				await inFlight
+			} catch (error) {
+				// Reset is destructive by design; a failed write must not prevent the
+				// caller from removing the workspace, but every sibling write has
+				// already settled before this error is surfaced.
+				Logger.warn("[StateManager] Persistence failed while quiescing for workspace reset:", error)
+			}
+			this.cancelScheduledPersistence()
 		}
 	}
 
@@ -914,10 +993,7 @@ export class StateManager {
 	 * Dispose of the state manager
 	 */
 	private dispose(): void {
-		if (this.persistenceTimeout) {
-			clearTimeout(this.persistenceTimeout)
-			this.persistenceTimeout = null
-		}
+		this.cancelScheduledPersistence()
 		if (this.autoPurgeTimer) {
 			clearInterval(this.autoPurgeTimer)
 			this.autoPurgeTimer = null
@@ -933,6 +1009,9 @@ export class StateManager {
 		this.pendingWorkspaceState.clear()
 		this.pendingTaskState.clear()
 		this.pendingTaskStateValues.clear()
+		this.persistenceRetryAttempt = 0
+		this.persistedGlobalStateSnapshots.clear()
+		this.persistedWorkspaceStateSnapshots.clear()
 
 		this.globalStateCache = {} as GlobalStateAndSettings
 		this.secretsCache = {} as Secrets
@@ -950,30 +1029,107 @@ export class StateManager {
 	 * Returns early if nothing is pending
 	 */
 	private async persistPendingState(): Promise<void> {
-		// Early return if nothing to persist
-		if (
-			this.pendingGlobalState.size === 0 &&
-			this.pendingSecrets.size === 0 &&
-			this.pendingWorkspaceState.size === 0 &&
-			this.pendingTaskState.size === 0
-		) {
+		// A timer callback and an explicit flush can arrive at the same time. Keep
+		// one persistence pass active and drain any newer snapshots after it
+		// completes instead of issuing overlapping writes to the same stores.
+		let drainPasses = 0
+		while (true) {
+			const inFlight = this.persistenceInFlight
+			if (inFlight) {
+				await inFlight
+				continue
+			}
+
+			if (!this.hasPendingPersistence()) {
+				return
+			}
+			if (drainPasses >= this.MAX_PERSISTENCE_DRAIN_PASSES) {
+				const quiescenceError = new Error(
+					`[StateManager] Persistence did not quiesce after ${this.MAX_PERSISTENCE_DRAIN_PASSES} drain passes.`,
+				)
+				Logger.warn(quiescenceError.message)
+				throw quiescenceError
+			}
+			drainPasses++
+
+			const persistenceRun = this.persistPendingStatePass()
+			this.persistenceInFlight = persistenceRun
+			try {
+				await persistenceRun
+				this.persistenceRetryAttempt = 0
+			} finally {
+				if (this.persistenceInFlight === persistenceRun) {
+					this.persistenceInFlight = null
+				}
+			}
+		}
+	}
+
+	private hasPendingPersistence(): boolean {
+		return (
+			this.pendingGlobalState.size > 0 ||
+			this.pendingSecrets.size > 0 ||
+			this.pendingWorkspaceState.size > 0 ||
+			Array.from(this.pendingTaskState.values()).some((keys) => keys.size > 0)
+		)
+	}
+
+	private async persistPendingStatePass(): Promise<void> {
+		if (!this.hasPendingPersistence()) {
 			return
 		}
 
-		// Execute all persistence operations in parallel
-		await Promise.all([
-			this.persistGlobalStateBatch(this.pendingGlobalState),
-			this.persistSecretsBatch(this.pendingSecrets),
-			this.persistWorkspaceStateBatch(this.pendingWorkspaceState),
+		// Capture values synchronously before any awaited persistence work. A setter
+		// may run while a slow file write is in flight, and that newer value must not
+		// be mistaken for the snapshot that just completed.
+		const globalSnapshot = new Map<GlobalStateAndSettingsKey, unknown>()
+		for (const key of this.pendingGlobalState) {
+			globalSnapshot.set(key, snapshotValue(this.globalStateCache[key]))
+		}
+		const secretSnapshot = new Map<SecretKey, string | undefined>()
+		for (const key of this.pendingSecrets) {
+			secretSnapshot.set(key, snapshotValue(this.secretsCache[key]))
+		}
+		const workspaceSnapshot = new Map<LocalStateKey, unknown>()
+		for (const key of this.pendingWorkspaceState) {
+			workspaceSnapshot.set(key, snapshotValue(this.workspaceStateCache[key]))
+		}
+
+		// Execute all persistence operations in parallel, but wait for every store
+		// to settle before surfacing the first failure. Promise.all would reject
+		// early and let a sibling write continue past a lifecycle barrier.
+		const persistenceResults = await Promise.allSettled([
+			this.persistGlobalStateBatch(globalSnapshot),
+			this.persistSecretsBatch(secretSnapshot),
+			this.persistWorkspaceStateBatch(workspaceSnapshot),
 			this.persistTaskStateBatch(this.pendingTaskState),
 		])
+		const persistenceFailure = persistenceResults.find(
+			(result): result is PromiseRejectedResult => result.status === "rejected",
+		)
+		if (persistenceFailure) {
+			throw persistenceFailure.reason
+		}
 
-		// Clear pending sets after successful persistence
-		this.pendingGlobalState.clear()
-		this.pendingSecrets.clear()
-		this.pendingWorkspaceState.clear()
-		this.pendingTaskState.clear()
-		this.pendingTaskStateValues.clear()
+		// Retire only entries whose live value still matches the persisted snapshot.
+		// Newer updates remain queued for the next debounced pass.
+		for (const [key, persistedValue] of globalSnapshot) {
+			this.persistedGlobalStateSnapshots.set(key, snapshotValue(persistedValue))
+			if (this.pendingGlobalState.has(key) && isValueEqual(this.globalStateCache[key], persistedValue)) {
+				this.pendingGlobalState.delete(key)
+			}
+		}
+		for (const [key, persistedValue] of secretSnapshot) {
+			if (this.pendingSecrets.has(key) && isValueEqual(this.secretsCache[key], persistedValue)) {
+				this.pendingSecrets.delete(key)
+			}
+		}
+		for (const [key, persistedValue] of workspaceSnapshot) {
+			this.persistedWorkspaceStateSnapshots.set(key, snapshotValue(persistedValue))
+			if (this.pendingWorkspaceState.has(key) && isValueEqual(this.workspaceStateCache[key], persistedValue)) {
+				this.pendingWorkspaceState.delete(key)
+			}
+		}
 	}
 
 	/**
@@ -981,60 +1137,100 @@ export class StateManager {
 	 * Bypasses the debounced persistence and forces immediate writes
 	 */
 	public async flushPendingState(): Promise<void> {
-		// Cancel any pending timeout
+		// Cancel any pending timeout. A callback that is already running keeps its
+		// own generation and cannot clear a newly scheduled timer when it finishes.
+		this.cancelScheduledPersistence()
+
+		// Execute persistence immediately. Keep a retry timer alive if the explicit
+		// barrier fails; otherwise pending snapshots could remain stranded forever.
+		try {
+			await this.persistPendingState()
+		} catch (error) {
+			this.schedulePersistenceRetry()
+			throw error
+		}
+	}
+
+	/**
+	 * Cancel the current debounce generation and timeout.
+	 */
+	private cancelScheduledPersistence(): void {
+		this.persistenceScheduleVersion += 1
 		if (this.persistenceTimeout) {
 			clearTimeout(this.persistenceTimeout)
 			this.persistenceTimeout = null
 		}
-
-		// Execute persistence immediately
-		await this.persistPendingState()
 	}
 
 	/**
-	 * Schedule debounced persistence - simple timeout-based persistence
+	 * Schedule debounced persistence with generation-aware timer ownership.
 	 */
-	private scheduleDebouncedPersistence(): void {
-		// Clear existing timeout if one is pending
-		if (this.persistenceTimeout) {
-			clearTimeout(this.persistenceTimeout)
-		}
+	private scheduleDebouncedPersistence(delayMs = this.PERSISTENCE_DELAY_MS): void {
+		this.cancelScheduledPersistence()
+		const scheduleVersion = this.persistenceScheduleVersion
 
 		// Schedule a new timeout to persist pending changes
 		this.persistenceTimeout = setTimeout(async () => {
 			try {
 				await this.persistPendingState()
-				this.persistenceTimeout = null
 			} catch (error) {
 				Logger.error("[StateManager] Failed to persist pending changes:", error)
-				this.persistenceTimeout = null
+				this.schedulePersistenceRetry()
 
 				// Call persistence error callback for error recovery
-				this.onPersistenceError?.({ error: error })
+				try {
+					void Promise.resolve(this.onPersistenceError?.({ error: error })).catch((callbackError) => {
+						Logger.warn("[StateManager] Persistence error callback failed:", callbackError)
+					})
+				} catch (callbackError) {
+					Logger.warn("[StateManager] Persistence error callback failed:", callbackError)
+				}
+			} finally {
+				// A write may have scheduled a newer timer while this callback was
+				// awaiting disk I/O. Only the current generation owns the handle.
+				if (this.persistenceScheduleVersion === scheduleVersion) {
+					this.persistenceTimeout = null
+				}
 			}
-		}, this.PERSISTENCE_DELAY_MS)
+		}, delayMs)
+	}
+
+	/**
+	 * Re-arm pending snapshots after a failed lifecycle or explicit flush. A
+	 * capped exponential backoff avoids a hot retry loop while still recovering
+	 * automatically when a transient filesystem/coordination failure clears.
+	 */
+	private schedulePersistenceRetry(): void {
+		if (!this.hasPendingPersistence()) return
+		this.persistenceRetryAttempt++
+		const delayMs = Math.min(
+			this.MAX_PERSISTENCE_RETRY_DELAY_MS,
+			this.PERSISTENCE_DELAY_MS * 2 ** Math.max(0, this.persistenceRetryAttempt - 1),
+		)
+		this.scheduleDebouncedPersistence(delayMs)
 	}
 
 	/**
 	 * Persist global state keys to the file-backed store.
 	 * Uses setBatch for efficiency (single disk write).
 	 */
-	private async persistGlobalStateBatch(keys: Set<GlobalStateAndSettingsKey>): Promise<void> {
+	private async persistGlobalStateBatch(entries: Map<GlobalStateAndSettingsKey, unknown>): Promise<void> {
 		// Separate taskHistory (goes to its own file) from regular global state
 		const regularEntries: Record<string, unknown> = {}
 
-		for (const key of keys) {
+		for (const [key, value] of entries) {
 			if (key === "taskHistory") {
 				// Route task history persistence to its own file
-				await writeTaskHistoryToState(this.globalStateCache[key])
+				await writeTaskHistoryToState(value as GlobalState["taskHistory"])
 			} else {
-				regularEntries[key] = this.globalStateCache[key]
+				regularEntries[key] = value
 			}
 		}
 
 		// Batch write all regular keys in a single disk operation
 		if (Object.keys(regularEntries).length > 0) {
-			this.storage.globalStateBackingStore.setBatch(regularEntries)
+			await this.storage.globalStateBackingStore.setBatch(regularEntries)
+			await this.storage.globalStateBackingStore.flush()
 		}
 	}
 
@@ -1045,48 +1241,79 @@ export class StateManager {
 		if (pendingTaskStates.size === 0) {
 			return
 		}
-		// Persist each task's settings
-		await Promise.all(
-			Array.from(pendingTaskStates.entries()).map(([taskId, keys]) => {
-				if (keys.size === 0) {
-					return Promise.resolve()
-				}
+
+		// Freeze both the keys and their values before awaiting disk I/O. The live
+		// pending maps may receive newer writes while this pass is in flight.
+		const snapshot = new Map<string, Map<SettingsKey, unknown>>()
+		for (const [taskId, keys] of pendingTaskStates.entries()) {
+			const taskValues = this.pendingTaskStateValues.get(taskId)
+			const values = new Map<SettingsKey, unknown>()
+			for (const key of keys) {
+				values.set(key, snapshotValue(taskValues?.has(key) ? taskValues.get(key) : this.taskStateCache[key]))
+			}
+			if (values.size > 0) snapshot.set(taskId, values)
+		}
+		// Persist each task's settings, waiting for every task before surfacing a
+		// failure so a lifecycle reset cannot race a sibling task write.
+		const taskWriteResults = await Promise.allSettled(
+			Array.from(snapshot.entries()).map(([taskId, values]) => {
 				const settingsToWrite: Record<string, unknown> = {}
-				const taskSnapshots = this.pendingTaskStateValues.get(taskId)
-				for (const key of keys) {
+				for (const [key, value] of values) {
 					// Keep undefined entries as deletion markers. This lets a task
 					// override return to the saved global default without leaving a
 					// stale value in its settings.json file.
-					settingsToWrite[key] = taskSnapshots?.has(key) ? taskSnapshots.get(key) : this.taskStateCache[key]
+					settingsToWrite[key] = value
 				}
 				return writeTaskSettingsToStorage(taskId, settingsToWrite as Partial<Settings>)
 			}),
 		)
+		const taskWriteFailure = taskWriteResults.find((result): result is PromiseRejectedResult => result.status === "rejected")
+		if (taskWriteFailure) {
+			throw taskWriteFailure.reason
+		}
+
+		// Retire only values that are still identical to the persisted snapshot.
+		// A newer update for the same task/key must remain pending for the next
+		// debounced pass, even if it arrived while the write was in flight.
+		for (const [taskId, values] of snapshot) {
+			const pendingKeys = this.pendingTaskState.get(taskId)
+			const pendingValues = this.pendingTaskStateValues.get(taskId)
+			if (!pendingKeys || !pendingValues) continue
+			for (const [key, persistedValue] of values) {
+				if (pendingValues.has(key) && isValueEqual(pendingValues.get(key), persistedValue)) {
+					pendingKeys.delete(key)
+					pendingValues.delete(key)
+				}
+			}
+			if (pendingKeys.size === 0) this.pendingTaskState.delete(taskId)
+			if (pendingValues.size === 0) this.pendingTaskStateValues.delete(taskId)
+		}
 	}
 
 	/**
 	 * Persist secrets to the file-backed store.
 	 * Uses setBatch for efficiency (single disk write).
 	 */
-	private async persistSecretsBatch(keys: Set<SecretKey>): Promise<void> {
+	private async persistSecretsBatch(entriesToPersist: Map<SecretKey, string | undefined>): Promise<void> {
 		const entries: Record<string, string | undefined> = {}
-		for (const key of keys) {
-			const value = this.secretsCache[key]
+		for (const [key, value] of entriesToPersist) {
 			entries[key] = value || undefined // Convert empty strings to undefined (delete)
 		}
-		this.storage.secrets.setBatch(entries)
+		await this.storage.secrets.setBatch(entries)
+		await this.storage.secrets.flush()
 	}
 
 	/**
 	 * Persist workspace state to the file-backed store.
 	 * Uses setBatch for efficiency (single disk write).
 	 */
-	private async persistWorkspaceStateBatch(keys: Set<LocalStateKey>): Promise<void> {
+	private async persistWorkspaceStateBatch(entriesToPersist: Map<LocalStateKey, unknown>): Promise<void> {
 		const entries: Record<string, unknown> = {}
-		for (const key of keys) {
-			entries[key] = this.workspaceStateCache[key]
+		for (const [key, value] of entriesToPersist) {
+			entries[key] = value
 		}
-		this.storage.workspaceState.setBatch(entries)
+		await this.storage.workspaceState.setBatch(entries)
+		await this.storage.workspaceState.flush()
 	}
 
 	/**
@@ -1097,6 +1324,12 @@ export class StateManager {
 		Object.assign(this.globalStateCache, globalState)
 		Object.assign(this.secretsCache, secrets)
 		Object.assign(this.workspaceStateCache, workspaceState)
+		for (const [key, value] of Object.entries(globalState)) {
+			this.persistedGlobalStateSnapshots.set(key as GlobalStateAndSettingsKey, snapshotValue(value))
+		}
+		for (const [key, value] of Object.entries(workspaceState)) {
+			this.persistedWorkspaceStateSnapshots.set(key as LocalStateKey, snapshotValue(value))
+		}
 	}
 
 	/**

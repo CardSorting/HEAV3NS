@@ -134,6 +134,30 @@ describe("GovernedSwarmCoordinator", () => {
 		assert.equal(coordinator.getLaneDAG().getNode(0)?.state, "sealed")
 	})
 
+	it("keeps a failed lock release visible instead of sealing the lane", async () => {
+		const authority = new InMemoryLockAuthority()
+		const releaseStub = sinon.stub(authority, "release").resolves({
+			ok: false,
+			reason: "durable_backend_unavailable",
+			error: "coordination store unavailable",
+		})
+		const coordinator = new GovernedSwarmCoordinator("/tmp", false, 1, undefined, authority)
+		const acquired = await coordinator.acquireLane("swarm-release-failure", "agent-a", 0, { executionMode: "mutation" })
+		assert.ok(acquired.success && acquired.claim)
+
+		const releaseResult = await coordinator.releaseLane(acquired.claim!, true, false)
+		assert.equal(releaseResult.released, false)
+		assert.equal(coordinator.getLaneDAG().getNode(0)?.state, "failed")
+
+		const receipt = coordinator.buildLaneReceipt(acquired.claim!, undefined, "completed", releaseResult.released)
+		assert.equal(receipt.claimReleased, false)
+		assert.equal(receipt.auditResult, "failed")
+		releaseStub.restore()
+
+		const recoveredRelease = await coordinator.releaseLane(acquired.claim!, false, true, "retry cleanup")
+		assert.equal(recoveredRelease.released, true)
+	})
+
 	it("selects the clean path and reuses immutable validation across crash-safe persistence", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "governed-fast-"))
 		const disk = await import("@core/storage/disk")

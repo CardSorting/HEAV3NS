@@ -56,15 +56,29 @@ export function shouldPersistSwarmProgressArtifact(status: "running" | "complete
 /** Event-driven scheduler wake (mirrors condition variables / Tokio Notify). */
 export function createSwarmSchedulerWake(): { notify: () => void; wait: () => Promise<void> } {
 	let wake: (() => void) | undefined
+	let pendingNotification = false
 	return {
 		notify: () => {
-			wake?.()
-			wake = undefined
+			if (wake) {
+				const resolve = wake
+				wake = undefined
+				resolve()
+				return
+			}
+			// Preserve one notification for a scheduler turn that has not reached
+			// its wait yet. A single permit is sufficient to avoid a lost wake
+			// without allowing rapid lane completions to grow an unbounded queue.
+			pendingNotification = true
 		},
-		wait: () =>
-			new Promise((resolve) => {
+		wait: () => {
+			if (pendingNotification) {
+				pendingNotification = false
+				return Promise.resolve()
+			}
+			return new Promise((resolve) => {
 				wake = resolve
-			}),
+			})
+		},
 	}
 }
 
@@ -371,6 +385,17 @@ type AuthorityPoolWaiter = {
 	sequence: number
 	isFastIo: boolean
 	resolve: (release: () => void) => void
+	reject: (error: Error) => void
+	signal?: AbortSignal
+	onAbort?: () => void
+}
+
+function authorityPoolAbortError(signal?: AbortSignal): Error {
+	const reason = signal?.reason
+	if (reason instanceof Error) return reason
+	const error = new Error(typeof reason === "string" && reason ? reason : "Subagent execution pool acquisition aborted")
+	error.name = "AbortError"
+	return error
 }
 
 /**
@@ -397,10 +422,16 @@ export class AuthorityAwareExecutionPool {
 		}
 	}
 
-	acquire(priority: number, isFastIo: boolean): Promise<() => void> {
+	acquire(priority: number, isFastIo: boolean, signal?: AbortSignal): Promise<() => void> {
+		if (signal?.aborted) return Promise.reject(authorityPoolAbortError(signal))
 		const sequence = this.sequence++
-		return new Promise((resolve) => {
-			this.waiters.push({ priority, sequence, isFastIo, resolve })
+		return new Promise((resolve, reject) => {
+			const waiter: AuthorityPoolWaiter = { priority, sequence, isFastIo, resolve, reject, signal }
+			if (signal) {
+				waiter.onAbort = () => this.cancelWaiter(waiter)
+				signal.addEventListener("abort", waiter.onAbort, { once: true })
+			}
+			this.waiters.push(waiter)
 			this.dispatchWhileCapacity()
 		})
 	}
@@ -475,7 +506,24 @@ export class AuthorityAwareExecutionPool {
 			if (next.isFastIo) {
 				this.activeFastIo++
 			}
+			this.removeAbortListener(next)
 			next.resolve(this.createRelease(next.isFastIo))
+		}
+	}
+
+	private cancelWaiter(waiter: AuthorityPoolWaiter): void {
+		const index = this.waiters.indexOf(waiter)
+		if (index === -1) return
+		this.waiters.splice(index, 1)
+		this.removeAbortListener(waiter)
+		waiter.reject(authorityPoolAbortError(waiter.signal))
+		this.dispatchWhileCapacity()
+	}
+
+	private removeAbortListener(waiter: AuthorityPoolWaiter): void {
+		if (waiter.signal && waiter.onAbort) {
+			waiter.signal.removeEventListener("abort", waiter.onAbort)
+			waiter.onAbort = undefined
 		}
 	}
 

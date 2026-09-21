@@ -836,7 +836,7 @@ export async function deactivate() {
 	}
 	try {
 		const { writeCoalescer } = await import("./core/storage/WriteCoalescer")
-		await writeCoalescer.flushAll()
+		await writeCoalescer.flushAll({ throwOnError: true })
 		const { AuditLogService } = await import("./services/logging/AuditLogService")
 		await AuditLogService.getInstance().flush()
 	} catch (error) {

@@ -293,6 +293,20 @@ describe("ParentAgentFlowControl", () => {
 		assert.equal(pool.getActiveCount(), 0)
 	})
 
+	it("removes an aborted lane from the execution pool queue", async () => {
+		const pool = new AuthorityAwareExecutionPool(1, 0)
+		const releaseActive = await pool.acquire(1, false)
+		const controller = new AbortController()
+		const waiting = pool.acquire(1, false, controller.signal)
+
+		controller.abort()
+		await assert.rejects(waiting, /aborted/i)
+		assert.equal(pool.getPendingCount(), 0)
+
+		releaseActive()
+		assert.equal(pool.getActiveCount(), 0)
+	})
+
 	it("computes bounded in-flight lane capacity from pool size", () => {
 		assert.equal(computeMaxInFlightLanes(3), 4)
 	})
@@ -318,5 +332,17 @@ describe("ParentAgentFlowControl", () => {
 		wake.notify()
 		await waiting
 		assert.equal(notified, true)
+	})
+
+	it("retains one scheduler wake that arrives before the wait is registered", async () => {
+		const wake = createSwarmSchedulerWake()
+		wake.notify()
+
+		let released = false
+		await wake.wait().then(() => {
+			released = true
+		})
+
+		assert.equal(released, true)
 	})
 })
