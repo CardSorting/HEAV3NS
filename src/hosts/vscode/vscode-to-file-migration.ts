@@ -36,9 +36,13 @@ import type * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
 import { GlobalStateAndSettingKeys, LocalStateKeys, SecretKeys } from "@/shared/storage/state-keys"
 import type { StorageContext } from "@/shared/storage/storage-context"
+import { TimeoutError, withTimeout } from "@/utils/withTimeout"
 
 /** Bump this when adding new migration steps. */
 const CURRENT_MIGRATION_VERSION = 1
+
+/** Do not let a stalled editor credential provider block extension activation. */
+const SECRET_MIGRATION_BUDGET_MS = 1500
 
 /** Sentinel key written to both globalState and workspaceState to track migration independently. */
 const MIGRATION_VERSION_KEY = "__vscodeMigrationVersion"
@@ -134,41 +138,69 @@ export async function exportVSCodeStorageToSharedFiles(
 				result.globalStateCount++
 			}
 
-			// Add sentinel to batch
-			globalStateBatch[MIGRATION_VERSION_KEY] = CURRENT_MIGRATION_VERSION
-
-			// Write all global state in one operation
-			storage.globalState.setBatch(globalStateBatch)
-
-			// Batch secrets
-			const secretsBatch: Record<string, string> = {}
+			// Read secrets one at a time with a deadline. Some compatible editors can
+			// leave SecretStorage promises pending indefinitely and the API cannot
+			// cancel them, so don't fan out requests or block the rest of startup.
 			const secretKeysToMigrate = [...new Set([...SecretKeys, ...Object.keys(LEGACY_SECRET_KEY_MIGRATIONS)])]
+			const secretsBatch: Record<string, string> = {}
+			const failedSecretKeys: string[] = []
+			const secretReadDeadline = Date.now() + SECRET_MIGRATION_BUDGET_MS
 			for (const key of secretKeysToMigrate) {
-				try {
-					const vscodeValue = await vscodeContext.secrets.get(key)
-					if (vscodeValue === undefined || vscodeValue === "") {
-						continue
-					}
+				const targetKey = LEGACY_SECRET_KEY_MIGRATIONS[key] || key
+				const existingFileValue = storage.secrets.get(targetKey) || storage.secrets.get(key)
+				if (existingFileValue !== undefined && existingFileValue !== "") {
+					result.skippedExisting++
+					continue
+				}
 
-					const targetKey = LEGACY_SECRET_KEY_MIGRATIONS[key] || key
-					const existingFileValue = storage.secrets.get(targetKey) || storage.secrets.get(key)
-					if (existingFileValue !== undefined && existingFileValue !== "") {
-						result.skippedExisting++
-						continue
-					}
-					if (secretsBatch[targetKey] !== undefined) {
+				const remainingBudgetMs = secretReadDeadline - Date.now()
+				if (remainingBudgetMs <= 0) {
+					failedSecretKeys.push(key)
+					break
+				}
+
+				try {
+					const vscodeValue = await withTimeout(
+						vscodeContext.secrets.get(key),
+						remainingBudgetMs,
+						`VS Code secret read for '${key}'`,
+					)
+					if (vscodeValue === undefined || vscodeValue === "" || secretsBatch[targetKey] !== undefined) {
 						continue
 					}
 
 					secretsBatch[targetKey] = vscodeValue
 					result.secretsCount++
 				} catch (error) {
-					Logger.error(`[Migration] Failed to read secret '${key}' from VSCode:`, error)
+					failedSecretKeys.push(key)
+					if (!(error instanceof TimeoutError)) {
+						// A rejected read has settled and will not leak a pending request,
+						// so preserve the old behavior of migrating later readable keys.
+						Logger.warn(`[Migration] Could not read editor secret '${key}'; continuing with remaining keys.`, error)
+						continue
+					}
+
+					// SecretStorage reads cannot be cancelled. Stop issuing requests to
+					// a stalled provider and retry the remaining keys next activation.
+					break
 				}
 			}
 
-			// Write all secrets in one operation
-			storage.secrets.setBatch(secretsBatch)
+			// Save readable secrets even if one host lookup failed. Without the
+			// sentinel, the next startup retries the missing keys without replacing
+			// values already migrated to the file-backed store.
+			await storage.secrets.setBatch(secretsBatch)
+			if (failedSecretKeys.length > 0) {
+				Logger.warn(
+					`[Migration] ${failedSecretKeys.length} editor secret read(s) did not finish; leaving migration pending for the next startup.`,
+				)
+			} else {
+				globalStateBatch[MIGRATION_VERSION_KEY] = CURRENT_MIGRATION_VERSION
+			}
+
+			// Persist global state only after secret reads have settled, so the
+			// sentinel cannot hide secrets that still need another migration pass.
+			await storage.globalState.setBatch(globalStateBatch)
 		}
 
 		// ─── 2. Migrate workspace state (if needed) ────────────────────
@@ -195,7 +227,7 @@ export async function exportVSCodeStorageToSharedFiles(
 			workspaceStateBatch[MIGRATION_VERSION_KEY] = CURRENT_MIGRATION_VERSION
 
 			// Write all workspace state in one operation
-			storage.workspaceState.setBatch(workspaceStateBatch)
+			await storage.workspaceState.setBatch(workspaceStateBatch)
 		}
 
 		result.migrated = true

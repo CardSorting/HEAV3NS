@@ -199,7 +199,7 @@ const baseConfig = {
 const extensionConfig = {
 	...baseConfig,
 	entryPoints: ["src/extension.ts"],
-	outfile: `${destDir}/extension.js`,
+	outfile: `${destDir}/extension.cjs`,
 	external: ["vscode"],
 }
 

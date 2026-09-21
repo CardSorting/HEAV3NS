@@ -40,7 +40,7 @@ export function nativeTargetForHost(platform = process.platform, arch = process.
 
 export function inferVsixTarget(vsixPath) {
 	const name = path.basename(vsixPath, ".vsix")
-	return NATIVE_VSIX_TARGETS.find((target) => name.endsWith(`-${target}`)) ?? null
+	return NATIVE_VSIX_TARGETS.find((target) => name.endsWith(`-${target}`) || name.endsWith(`@${target}`)) ?? null
 }
 
 function listVsixEntries(vsixPath) {

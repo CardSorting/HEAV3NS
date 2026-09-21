@@ -2,7 +2,7 @@
 	"name": "heav3ns-vscode",
 	"displayName": "HEAV3NS",
 	"description": "HEAV3NS is a calm, local-first coding companion with explicit review and provider choice.",
-	"version": "12.6.0",
+	"version": "12.6.1",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."
@@ -65,12 +65,13 @@
 		"llama"
 	],
 	"activationEvents": [
+		"onView:heav3ns-vscode.SidebarProvider",
 		"onLanguage",
 		"onUri",
 		"onStartupFinished",
 		"workspaceContains:evals.env"
 	],
-	"main": "./dist/extension.js",
+	"main": "./dist/extension.cjs",
 	"contributes": {
 		"icons": {
 			"heav3ns-icon": {
@@ -136,17 +137,17 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "lumi-ActivityBar",
+					"id": "heav3ns-vscode-ActivityBar",
 					"title": "HEAV3NS",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
 		},
 		"views": {
-			"lumi-ActivityBar": [
+			"heav3ns-vscode-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "lumi.SidebarProvider",
+					"id": "heav3ns-vscode.SidebarProvider",
 					"name": "HEAV3NS",
 					"icon": "assets/icons/icon.svg"
 				}
@@ -154,133 +155,133 @@
 		},
 		"commands": [
 			{
-				"command": "lumi.plusButtonClicked",
+				"command": "heav3ns-vscode.plusButtonClicked",
 				"title": "New Task",
 				"icon": "$(add)"
 			},
 			{
-				"command": "lumi.mcpButtonClicked",
+				"command": "heav3ns-vscode.mcpButtonClicked",
 				"title": "MCP Servers",
 				"icon": "$(server)"
 			},
 			{
-				"command": "lumi.historyButtonClicked",
+				"command": "heav3ns-vscode.historyButtonClicked",
 				"title": "History",
 				"icon": "$(history)"
 			},
 			{
-				"command": "lumi.settingsButtonClicked",
+				"command": "heav3ns-vscode.settingsButtonClicked",
 				"title": "Settings",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "lumi.joyZoningButtonClicked",
+				"command": "heav3ns-vscode.joyZoningButtonClicked",
 				"title": "JoyZoning Audit",
 				"icon": "$(shield)"
 			},
 			{
-				"command": "lumi.joyZoningAudit",
+				"command": "heav3ns-vscode.joyZoningAudit",
 				"title": "Run JoyZoning Audit",
 				"category": "HEAV3NS",
 				"icon": "$(shield)"
 			},
 			{
-				"command": "lumi.dev.createTestTasks",
+				"command": "dietcode.dev.createTestTasks",
 				"title": "Create Test Tasks",
 				"category": "HEAV3NS",
 				"when": "dietcode.isDevMode"
 			},
 			{
-				"command": "lumi.dev.expireMcpOAuthTokens",
+				"command": "dietcode.dev.expireMcpOAuthTokens",
 				"title": "Expire MCP OAuth Tokens (for testing)",
 				"category": "HEAV3NS",
 				"when": "dietcode.isDevMode"
 			},
 			{
-				"command": "lumi.addToChat",
+				"command": "heav3ns-vscode.addToChat",
 				"title": "Add to HEAV3NS",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.addTerminalOutputToChat",
+				"command": "heav3ns-vscode.addTerminalOutputToChat",
 				"title": "Add to HEAV3NS",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.focusChatInput",
+				"command": "heav3ns-vscode.focusChatInput",
 				"title": "Jump to Chat Input",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.generateGitCommitMessage",
+				"command": "heav3ns-vscode.generateGitCommitMessage",
 				"title": "Generate Commit Message with HEAV3NS",
 				"category": "HEAV3NS",
 				"icon": "$(heav3ns-icon)"
 			},
 			{
-				"command": "lumi.abortGitCommitMessage",
+				"command": "heav3ns-vscode.abortGitCommitMessage",
 				"title": "Generate Commit Message with HEAV3NS - Stop",
 				"category": "HEAV3NS",
 				"icon": "$(debug-stop)"
 			},
 			{
-				"command": "lumi.explainCode",
+				"command": "heav3ns-vscode.explainCode",
 				"title": "Explain with HEAV3NS",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.improveCode",
+				"command": "heav3ns-vscode.improveCode",
 				"title": "Improve with HEAV3NS",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.jupyterGenerateCell",
+				"command": "heav3ns-vscode.jupyterGenerateCell",
 				"title": "Generate Jupyter Cell with HEAV3NS",
 				"category": "HEAV3NS",
 				"icon": "$(sparkle)"
 			},
 			{
-				"command": "lumi.jupyterExplainCell",
+				"command": "heav3ns-vscode.jupyterExplainCell",
 				"title": "Explain Jupyter Cell with HEAV3NS",
 				"category": "HEAV3NS",
 				"icon": "$(question)"
 			},
 			{
-				"command": "lumi.jupyterImproveCell",
+				"command": "heav3ns-vscode.jupyterImproveCell",
 				"title": "Improve Jupyter Cell with HEAV3NS",
 				"category": "HEAV3NS",
 				"icon": "$(lightbulb)"
 			},
 			{
-				"command": "lumi.openWalkthrough",
+				"command": "heav3ns-vscode.openWalkthrough",
 				"title": "Open Walkthrough",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.runHealthCheck",
+				"command": "heav3ns-vscode.runHealthCheck",
 				"title": "Check HEAV3NS Installation",
 				"category": "HEAV3NS",
 				"icon": "$(heart)"
 			},
 			{
-				"command": "lumi.reconstructTaskHistory",
+				"command": "heav3ns-vscode.reconstructTaskHistory",
 				"title": "Reconstruct Task History",
 				"category": "HEAV3NS"
 			},
 			{
-				"command": "lumi.clearCache",
+				"command": "heav3ns-vscode.clearCache",
 				"title": "Clear Cache & Optimize Storage",
 				"category": "HEAV3NS",
 				"icon": "$(trash)"
 			},
 			{
-				"command": "lumi.reviewComment.reply",
+				"command": "dietcode.reviewComment.reply",
 				"title": "Reply",
 				"category": "HEAV3NS",
 				"enablement": "!commentIsEmpty"
 			},
 			{
-				"command": "lumi.reviewComment.addToChat",
+				"command": "dietcode.reviewComment.addToChat",
 				"title": "Add to HEAV3NS Chat",
 				"category": "HEAV3NS",
 				"icon": "$(link-external)"
@@ -308,7 +309,7 @@
 				"when": "commentEditorFocused && commentController == dietcode-review && !commentIsEmpty"
 			},
 			{
-				"command": "lumi.addToChat",
+				"command": "heav3ns-vscode.addToChat",
 				"key": "cmd+'",
 				"mac": "cmd+'",
 				"win": "ctrl+'",
@@ -316,7 +317,7 @@
 				"when": "editorHasSelection"
 			},
 			{
-				"command": "lumi.focusChatInput",
+				"command": "heav3ns-vscode.focusChatInput",
 				"key": "cmd+'",
 				"mac": "cmd+'",
 				"win": "ctrl+'",
@@ -327,76 +328,76 @@
 		"menus": {
 			"editor/context": [
 				{
-					"command": "lumi.addToChat",
+					"command": "heav3ns-vscode.addToChat",
 					"group": "navigation",
 					"when": "editorHasSelection"
 				}
 			],
 			"terminal/context": [
 				{
-					"command": "lumi.addTerminalOutputToChat",
+					"command": "heav3ns-vscode.addTerminalOutputToChat",
 					"group": "navigation"
 				}
 			],
 			"scm/title": [
 				{
-					"command": "lumi.generateGitCommitMessage",
+					"command": "heav3ns-vscode.generateGitCommitMessage",
 					"group": "navigation",
 					"when": "config.git.enabled && scmProvider == git && !dietcode.isGeneratingCommit"
 				},
 				{
-					"command": "lumi.abortGitCommitMessage",
+					"command": "heav3ns-vscode.abortGitCommitMessage",
 					"group": "navigation",
 					"when": "config.git.enabled && scmProvider == git && dietcode.isGeneratingCommit"
 				}
 			],
 			"notebook/toolbar": [
 				{
-					"command": "lumi.jupyterGenerateCell",
+					"command": "heav3ns-vscode.jupyterGenerateCell",
 					"group": "navigation/add@1",
 					"when": "notebookType == 'jupyter-notebook'"
 				}
 			],
 			"notebook/cell/title": [
 				{
-					"command": "lumi.jupyterExplainCell",
+					"command": "heav3ns-vscode.jupyterExplainCell",
 					"group": "inline@1",
 					"when": "notebookType == 'jupyter-notebook'"
 				},
 				{
-					"command": "lumi.jupyterImproveCell",
+					"command": "heav3ns-vscode.jupyterImproveCell",
 					"group": "inline@2",
 					"when": "notebookType == 'jupyter-notebook'"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "lumi.runHealthCheck",
+					"command": "heav3ns-vscode.runHealthCheck",
 					"title": "HEAV3NS: Check Installation (Health Check)"
 				},
 				{
-					"command": "lumi.generateGitCommitMessage",
+					"command": "heav3ns-vscode.generateGitCommitMessage",
 					"when": "config.git.enabled && !dietcode.isGeneratingCommit"
 				},
 				{
-					"command": "lumi.abortGitCommitMessage",
+					"command": "heav3ns-vscode.abortGitCommitMessage",
 					"when": "config.git.enabled && dietcode.isGeneratingCommit"
 				},
 				{
-					"command": "lumi.reviewComment.reply",
+					"command": "dietcode.reviewComment.reply",
 					"when": "false"
 				}
 			],
 			"comments/commentThread/context": [
 				{
-					"command": "lumi.reviewComment.reply",
+					"command": "dietcode.reviewComment.reply",
 					"group": "inline",
 					"when": "commentController == dietcode-review"
 				}
 			],
 			"comments/commentThread/title": [
 				{
-					"command": "lumi.reviewComment.addToChat",
+					"command": "dietcode.reviewComment.addToChat",
 					"group": "inline",
 					"when": "commentController == dietcode-review"
 				}

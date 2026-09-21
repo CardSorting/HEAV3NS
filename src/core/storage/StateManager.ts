@@ -20,6 +20,7 @@ import chokidar, { FSWatcher } from "chokidar"
 import deepEqual from "fast-deep-equal"
 import { initializeDistinctId } from "@/services/logging/distinctId"
 import { Logger } from "@/shared/services/Logger"
+import { withTimeout } from "@/utils/withTimeout"
 import { AgentConfigLoader } from "../task/tools/subagent/AgentConfigLoader"
 import {
 	getTaskHistoryStateFilePath,
@@ -32,6 +33,8 @@ import { STATE_MANAGER_NOT_INITIALIZED } from "./error-messages"
 import { filterAllowedRemoteConfigFields } from "./remote-config/field-filter"
 import { readGlobalStateFromStorage, readSecretsFromStorage, readWorkspaceStateFromStorage } from "./utils/state-helpers"
 import { writeCoalescer } from "./WriteCoalescer"
+
+const AGENT_CONFIG_READY_TIMEOUT_MS = 1500
 export interface PersistenceErrorEvent {
 	error: Error
 }
@@ -224,7 +227,13 @@ export class StateManager {
 
 			StateManager.instance.isInitialized = true
 
-			await AgentConfigLoader.getInstance().ready()
+			try {
+				await withTimeout(AgentConfigLoader.getInstance().ready(), AGENT_CONFIG_READY_TIMEOUT_MS, "Agent config loading")
+			} catch (error) {
+				// Agent configs are optional at boot and continue loading in the
+				// background; a slow home directory must not hold the editor hostage.
+				Logger.warn("[StateManager] Agent configs are still loading; continuing extension startup.", error)
+			}
 		} catch (error) {
 			Logger.error("[StateManager] Failed to initialize:", error)
 			throw error

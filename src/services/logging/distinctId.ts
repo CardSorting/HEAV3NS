@@ -3,11 +3,13 @@ import { v4 as uuidv4 } from "uuid"
 import { HostRegistryInfo } from "@/registry"
 import { Logger } from "@/shared/services/Logger"
 import { StorageContext } from "@/shared/storage"
+import { withTimeout } from "@/utils/withTimeout"
 
 /*
  * Unique identifier for the current installation.
  */
 let _distinctId = ""
+const MACHINE_ID_TIMEOUT_MS = 1500
 
 /**
  * Some environments don't return a value for the machine ID. For these situations we generated
@@ -46,7 +48,7 @@ async function getMachineId(): Promise<string | undefined> {
 	try {
 		// Get the machine ID using node-machine-id package
 		// This provides a deterministic ID across different operating systems
-		const id = await nodeMachineId.machineId()
+		const id = await withTimeout(nodeMachineId.machineId(), MACHINE_ID_TIMEOUT_MS, "Machine ID lookup")
 		return id
 	} catch (error) {
 		Logger.log("[DistinctId] Failed to get machine ID from node-machine-id", error)

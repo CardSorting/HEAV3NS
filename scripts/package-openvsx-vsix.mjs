@@ -10,49 +10,22 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { assertVsixHasNativeModule, nativeTargetForHost } from "./vsix-native-deps.mjs"
-import { createWorkspaceLinkManager } from "./workspace-link.mjs"
-
-const OPENVSX_EXTENSION_NAME = "lumi"
-const MARKETPLACE_EXTENSION_NAME = "lumi-vscode"
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const packageJsonPath = path.join(repoRoot, "package.json")
-const nodeModulesPath = path.join(repoRoot, "node_modules")
-const workspaceLinks = createWorkspaceLinkManager({ repoRoot, nodeModulesPath })
 
-function restorePackageJson(original) {
-	fs.writeFileSync(packageJsonPath, original)
-	console.log("[openvsx] restored package.json")
-}
-
-function ensureBuildArtifacts(repoRoot) {
-	const extensionJs = path.join(repoRoot, "dist", "extension.js")
-	const webviewBuild = path.join(repoRoot, "webview-ui", "build")
-	const packageJsonPath = path.join(repoRoot, "package.json")
-
-	let needsRebuild = false
-	if (!fs.existsSync(extensionJs) || !fs.existsSync(webviewBuild)) {
-		needsRebuild = true
-	} else {
-		try {
-			const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
-			const extensionJsContent = fs.readFileSync(extensionJs, "utf8")
-			if (!extensionJsContent.includes(`"${pkg.version}"`)) {
-				needsRebuild = true
-			}
-		} catch {
-			needsRebuild = true
-		}
-	}
-
-	if (needsRebuild) {
-		console.log("[openvsx] build artifacts out-of-date or missing; compiling extension and webview via ci:build...")
-		execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "ci:build"], {
-			stdio: "inherit",
-			cwd: repoRoot,
-			shell: process.platform === "win32",
-		})
-	}
+function buildPackageArtifacts(repoRoot) {
+	const npm = process.platform === "win32" ? "npm.cmd" : "npm"
+	console.log("[openvsx] rebuilding extension and webview artifacts before packaging...")
+	execFileSync(npm, ["run", "build:webview"], {
+		stdio: "inherit",
+		cwd: repoRoot,
+		shell: process.platform === "win32",
+	})
+	execFileSync(process.execPath, ["esbuild.mjs", "--production"], {
+		stdio: "inherit",
+		cwd: repoRoot,
+	})
 }
 
 function main() {
@@ -60,32 +33,16 @@ function main() {
 	const pkg = JSON.parse(originalPackageJson)
 	const version = pkg.version
 	const target = nativeTargetForHost()
-	const outPath = path.join(repoRoot, "dist", `lumi-${version}-${target}.vsix`)
-	const didPatchName = false
-	let didReconcileWorkspaceLink = false
+	const outPath = path.join(repoRoot, "dist", `${pkg.publisher}.${pkg.name}-${version}@${target}.vsix`)
 
 	fs.mkdirSync(path.dirname(outPath), { recursive: true })
 
 	try {
-		ensureBuildArtifacts(repoRoot)
-		pkg.name = OPENVSX_EXTENSION_NAME
-		if (
-			fs.existsSync(path.join(repoRoot, "dist", "extension.js")) &&
-			fs.existsSync(path.join(repoRoot, "webview-ui", "build"))
-		) {
-			delete pkg.scripts["vscode:prepublish"]
-		}
-		fs.writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, "\t")}\n`)
-		execFileSync("git", ["add", "package.json"], { cwd: repoRoot })
-		console.log(`[openvsx] patched name → "${OPENVSX_EXTENSION_NAME}" (CardSorting.${OPENVSX_EXTENSION_NAME})`)
-
-		didReconcileWorkspaceLink = workspaceLinks.reconcile({
-			fromName: MARKETPLACE_EXTENSION_NAME,
-			toName: OPENVSX_EXTENSION_NAME,
-		})
-		if (didReconcileWorkspaceLink) {
-			console.log(`[openvsx] renamed workspace self-link: ${MARKETPLACE_EXTENSION_NAME} → ${OPENVSX_EXTENSION_NAME}`)
-		}
+		buildPackageArtifacts(repoRoot)
+		const packageManifest = { ...pkg, scripts: { ...pkg.scripts } }
+		delete packageManifest.files
+		delete packageManifest.scripts["vscode:prepublish"]
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageManifest, null, "\t")}\n`)
 
 		const vsceArgs = ["package", "--target", target, "--allow-package-secrets", "sendgrid", "--out", outPath]
 
@@ -103,22 +60,7 @@ function main() {
 			console.error(`[openvsx] ${error.message}`)
 		}
 	} finally {
-		workspaceLinks.restore({
-			fromName: MARKETPLACE_EXTENSION_NAME,
-			toName: OPENVSX_EXTENSION_NAME,
-			didReconcile: didReconcileWorkspaceLink,
-		})
-		if (didReconcileWorkspaceLink) {
-			console.log(`[openvsx] restored workspace self-link: ${OPENVSX_EXTENSION_NAME} → ${MARKETPLACE_EXTENSION_NAME}`)
-		}
-
-		try {
-			const currentPkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
-			currentPkg.name = MARKETPLACE_EXTENSION_NAME
-			fs.writeFileSync(packageJsonPath, `${JSON.stringify(currentPkg, null, "\t")}\n`)
-			execFileSync("git", ["add", "package.json"], { cwd: repoRoot, stdio: "ignore" })
-			console.log(`[openvsx] restored name → "${MARKETPLACE_EXTENSION_NAME}"`)
-		} catch {}
+		fs.writeFileSync(packageJsonPath, originalPackageJson)
 	}
 }
 

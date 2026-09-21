@@ -5,6 +5,7 @@
 CLAUDE.local.md
 out/
 dist-standalone/
+dist/extension.js
 dist/*.vsix
 node_modules/
 src/**

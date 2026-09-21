@@ -51,7 +51,7 @@ test("auditVsixHealth accepts a readable dependency-free VSIX", () => {
 test("verify packaging configuration and Open VSX rules", () => {
 	assert.equal(summarizeChecks(verifyVscodeignoreWhitelist(repoRoot)).ok, true)
 	assert.equal(summarizeChecks(verifyOpenVsxVscodeignore(repoRoot)).ok, true)
-	assert.equal(summarizeChecks(auditOpenVsxPackaging("extension/dist/extension.js")).ok, true)
+	assert.equal(summarizeChecks(auditOpenVsxPackaging("extension/dist/extension.cjs")).ok, true)
 })
 
 test("doctor scopes packaging separately from installed extensions", () => {

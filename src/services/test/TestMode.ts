@@ -7,7 +7,6 @@
 import * as fs from "fs"
 import * as path from "path"
 import * as vscode from "vscode"
-import { HostProvider } from "@/hosts/host-provider"
 import { Logger } from "@/shared/services/Logger"
 import { createTestServer, shutdownTestServer } from "./TestServer"
 
@@ -34,11 +33,12 @@ export function isInTestMode(): boolean {
  * Check if we're in test mode by looking for evals.env file in workspace folders
  */
 async function checkForTestMode(): Promise<boolean> {
-	// Get all workspace folders
-	const workspaceFolders = await HostProvider.workspace.getWorkspacePaths({})
+	// This VS Code-only module can read its workspace folders directly. Avoid a
+	// host RPC round-trip during activation and file watcher callbacks.
+	const workspacePaths = vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? []
 
 	// Check each workspace folder for an evals.env file
-	for (const folder of workspaceFolders.paths) {
+	for (const folder of workspacePaths) {
 		const evalsEnvPath = path.join(folder, "evals.env")
 		if (fs.existsSync(evalsEnvPath)) {
 			Logger.log(`Found evals.env file at ${evalsEnvPath}, activating test mode`)
@@ -86,7 +86,8 @@ export async function initializeTestMode(webviewProvider?: any): Promise<vscode.
 	evalsEnvWatcher.onDidDelete(async (uri) => {
 		Logger.log(`evals.env file deleted at ${uri.fsPath}`)
 		// Only deactivate if this was the last evals.env file
-		if (!checkForTestMode()) {
+		const hasTestMode = await checkForTestMode()
+		if (!hasTestMode) {
 			setTestMode(false)
 			vscode.commands.executeCommand("setContext", "dietcode.isTestMode", false)
 			shutdownTestServer()

@@ -16,51 +16,33 @@ import { assertVsixHasNativeModule, nativeTargetForHost } from "./vsix-native-de
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const packageJsonPath = path.join(repoRoot, "package.json")
 
-function ensureBuildArtifacts(repoRoot) {
-	const extensionJs = path.join(repoRoot, "dist", "extension.js")
-	const webviewBuild = path.join(repoRoot, "webview-ui", "build")
-	const packageJsonPath = path.join(repoRoot, "package.json")
-
-	let needsRebuild = false
-	if (!fs.existsSync(extensionJs) || !fs.existsSync(webviewBuild)) {
-		needsRebuild = true
-	} else {
-		try {
-			const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
-			const extensionJsContent = fs.readFileSync(extensionJs, "utf8")
-			if (!extensionJsContent.includes(`"${pkg.version}"`)) {
-				needsRebuild = true
-			}
-		} catch {
-			needsRebuild = true
-		}
-	}
-
-	if (needsRebuild) {
-		console.log("[vscode] build artifacts out-of-date or missing; compiling extension and webview via ci:build...")
-		execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "ci:build"], {
-			stdio: "inherit",
-			cwd: repoRoot,
-			shell: process.platform === "win32",
-		})
-	}
+function buildPackageArtifacts(repoRoot) {
+	const npm = process.platform === "win32" ? "npm.cmd" : "npm"
+	console.log("[vscode] rebuilding extension and webview artifacts before packaging...")
+	execFileSync(npm, ["run", "build:webview"], {
+		stdio: "inherit",
+		cwd: repoRoot,
+		shell: process.platform === "win32",
+	})
+	execFileSync(process.execPath, ["esbuild.mjs", "--production"], {
+		stdio: "inherit",
+		cwd: repoRoot,
+	})
 }
 
 function main() {
 	const originalPackageJson = fs.readFileSync(packageJsonPath, "utf8")
 	const pkg = JSON.parse(originalPackageJson)
 	const target = nativeTargetForHost()
-	const outPath = path.join(repoRoot, "dist", `lumi-vscode-${pkg.version}-${target}.vsix`)
-	const didPatchName = false
+	const outPath = path.join(repoRoot, "dist", `${pkg.name}-${pkg.version}-${target}.vsix`)
 
 	fs.mkdirSync(path.dirname(outPath), { recursive: true })
 
 	try {
-		ensureBuildArtifacts(repoRoot)
-		pkg.name = "lumi-vscode"
-		fs.writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, "\t")}\n`)
-		execFileSync("git", ["add", "package.json"], { cwd: repoRoot })
-		console.log(`[vscode] patched name → "lumi-vscode" (CardSorting.lumi-vscode)`)
+		buildPackageArtifacts(repoRoot)
+		const packageManifest = { ...pkg }
+		delete packageManifest.files
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageManifest, null, "\t")}\n`)
 
 		const vsceArgs = ["package", "--target", target, "--allow-package-secrets", "sendgrid", "--out", outPath]
 
@@ -76,6 +58,8 @@ function main() {
 		if (error instanceof Error) {
 			console.error(`[vscode] ${error.message}`)
 		}
+	} finally {
+		fs.writeFileSync(packageJsonPath, originalPackageJson)
 	}
 }
 

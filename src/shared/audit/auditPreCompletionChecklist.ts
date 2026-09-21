@@ -1,4 +1,4 @@
-import { filterNewViolationsSinceBaseline } from "./auditBaseline"
+import { filterNewViolationsSinceBaseline } from "./auditBaselineUtils"
 import { formatGateReasonLabel } from "./auditGateCatalog"
 import { type CompletionGateOptions, evaluateAuditGate } from "./auditGateReport"
 import { partitionViolationsBySeverity } from "./auditSeverity"

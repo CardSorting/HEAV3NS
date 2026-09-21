@@ -6,6 +6,7 @@ import { PostHogClientProvider } from "@/services/telemetry/providers/posthog/Po
 import { fetch } from "@/shared/net"
 import { Setting } from "@/shared/proto/index.host"
 import { Logger } from "@/shared/services/Logger"
+import { withTimeout } from "@/utils/withTimeout"
 import * as pkg from "../../../../package.json"
 import type { PostHogClientValidConfig } from "../../../shared/services/config/posthog-config"
 import { getErrorLevelFromString } from ".."
@@ -13,6 +14,7 @@ import { DietCodeError } from "../DietCodeError"
 import type { ErrorSettings, IErrorProvider } from "./IErrorProvider"
 
 const isDev = process.env.IS_DEV === "true"
+const HOST_TELEMETRY_SETTINGS_TIMEOUT_MS = 1500
 
 /**
  * PostHog implementation of the error provider interface
@@ -51,12 +53,23 @@ export class PostHogErrorProvider implements IErrorProvider {
 			},
 		)
 
-		const hostSettings = await HostProvider.env.getTelemetrySettings({})
-		if (hostSettings.isEnabled === Setting.DISABLED) {
+		try {
+			const hostSettings = await withTimeout(
+				HostProvider.env.getTelemetrySettings({}),
+				HOST_TELEMETRY_SETTINGS_TIMEOUT_MS,
+				"Editor telemetry settings lookup",
+			)
+			if (hostSettings.isEnabled === Setting.DISABLED) {
+				this.errorSettings.hostEnabled = false
+			}
+			this.errorSettings.level = getErrorLevelFromString(hostSettings.errorLevel)
+		} catch (error) {
+			// Disable error reporting when the editor cannot provide its privacy
+			// preference, while allowing the extension itself to finish startup.
 			this.errorSettings.hostEnabled = false
+			this.errorSettings.level = "off"
+			Logger.warn("[PostHogErrorProvider] Editor telemetry settings unavailable; disabling error reporting.", error)
 		}
-
-		this.errorSettings.level = getErrorLevelFromString(hostSettings.errorLevel)
 
 		return this
 	}

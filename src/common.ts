@@ -22,6 +22,9 @@ import { syncWorker } from "./shared/services/worker/sync"
 import { getBlobStoreSettingsFromEnv } from "./shared/services/worker/worker"
 import { getLatestAnnouncementId } from "./utils/announcements"
 import { arePathsEqual } from "./utils/path"
+import { withTimeout } from "./utils/withTimeout"
+
+const WORKTREE_HOST_CALL_TIMEOUT_MS = 1500
 
 /**
  * Performs intialization for DietCode that is common to all platforms.
@@ -38,11 +41,15 @@ export async function initialize(storageContext: StorageContext): Promise<Webvie
 	// Initialize DietCodeEndpoint configuration (reads bundled and ~/.dietcode/endpoints.json if present)
 	// This must be done before any other code that calls DietCodeEnv.config()
 	// Throws DietCodeConfigurationError if config file exists but is invalid
+	Logger.info("[DietCode startup] Loading endpoint configuration")
 	const { DietCodeEndpoint } = await import("./config")
 	await DietCodeEndpoint.initialize(HostProvider.get().extensionFsPath)
+	Logger.info("[DietCode startup] Endpoint configuration loaded")
 
 	try {
+		Logger.info("[DietCode startup] Loading persisted state")
 		await StateManager.initialize(storageContext)
+		Logger.info("[DietCode startup] Persisted state loaded")
 	} catch (error) {
 		Logger.error("[DietCode] CRITICAL: Failed to initialize StateManager:", error)
 		HostProvider.window.showMessage({
@@ -52,7 +59,9 @@ export async function initialize(storageContext: StorageContext): Promise<Webvie
 	}
 
 	// =============== External services ===============
+	Logger.info("[DietCode startup] Initializing error reporting")
 	await ErrorService.initialize()
+	Logger.info("[DietCode startup] Error reporting initialized")
 	// Initialize PostHog client provider (skip in self-hosted mode)
 	if (!DietCodeEndpoint.isSelfHosted()) {
 		PostHogClientProvider.getInstance()
@@ -139,7 +148,13 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 		}
 
 		// Get current workspace path
-		const workspacePaths = (await HostProvider.workspace.getWorkspacePaths({})).paths
+		const workspacePaths = (
+			await withTimeout(
+				HostProvider.workspace.getWorkspacePaths({}),
+				WORKTREE_HOST_CALL_TIMEOUT_MS,
+				"Workspace path lookup for worktree auto-open",
+			)
+		).paths
 		if (workspacePaths.length === 0) {
 			return
 		}
@@ -151,10 +166,14 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 			// Clear the state first to prevent re-triggering
 			stateManager.setGlobalState("worktreeAutoOpenPath", undefined)
 			// Open the DietCode sidebar
-			await HostProvider.workspace.openDietCodeSidebarPanel({})
+			await withTimeout(
+				HostProvider.workspace.openDietCodeSidebarPanel({}),
+				WORKTREE_HOST_CALL_TIMEOUT_MS,
+				"Sidebar open for worktree auto-open",
+			)
 		}
 	} catch (error) {
-		Logger.error("Error checking worktree auto-open", error)
+		Logger.warn("Skipping worktree auto-open because the editor host did not respond in time.", error)
 	}
 }
 

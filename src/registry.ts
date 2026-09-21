@@ -1,3 +1,5 @@
+import { Logger } from "@/shared/services/Logger"
+import { withTimeout } from "@/utils/withTimeout"
 import { name, publisher, version } from "../package.json"
 import { HostProvider } from "./hosts/host-provider"
 
@@ -88,16 +90,34 @@ export interface HostInfo {
 }
 
 let hostInfo = null as HostInfo | null
+const HOST_INFO_TIMEOUT_MS = 1500
 
 export const HostRegistryInfo = {
 	init: async (distinctId: string) => {
-		const host = await HostProvider.env.getHostVersion({})
-		const hostVersion = host.version
-		const extensionVersion = host.dietcodeVersion || ExtensionRegistryInfo.version
-		const platform = host.platform || "unknown"
-		const os = process.platform || "unknown"
-		const ide = host.dietcodeType || "unknown"
-		hostInfo = { hostVersion, extensionVersion, platform, os, ide, distinctId }
+		try {
+			const host = await withTimeout(
+				HostProvider.env.getHostVersion({}),
+				HOST_INFO_TIMEOUT_MS,
+				"Editor host metadata lookup",
+			)
+			const hostVersion = host.version
+			const extensionVersion = host.dietcodeVersion || ExtensionRegistryInfo.version
+			const platform = host.platform || "unknown"
+			const os = process.platform || "unknown"
+			const ide = host.dietcodeType || "unknown"
+			hostInfo = { hostVersion, extensionVersion, platform, os, ide, distinctId }
+		} catch (error) {
+			// Host metadata is useful for telemetry and banners, but a compatible
+			// editor bridge must not be able to prevent the extension from starting.
+			Logger.warn("[HostRegistryInfo] Host metadata unavailable; continuing with fallback values.", error)
+			hostInfo = {
+				platform: "unknown",
+				os: process.platform || "unknown",
+				ide: "unknown",
+				distinctId,
+				extensionVersion: ExtensionRegistryInfo.version,
+			}
+		}
 	},
 	get: () => hostInfo,
 }

@@ -2,6 +2,8 @@ import fs from "fs/promises"
 import path from "path"
 import type { HardeningGrade, TaskAuditMetadata } from "./types"
 
+export { filterNewViolationsSinceBaseline } from "./auditBaselineUtils"
+
 export const WORKSPACE_BASELINE_FILE = "baseline.json"
 const AUDIT_ARTIFACT_DIR = ".audit"
 
@@ -38,17 +40,6 @@ export function baselineToAuditMetadata(baseline: WorkspaceAuditBaseline): TaskA
 		hardening_score: baseline.hardeningScore,
 		hardening_grade: baseline.hardeningGrade,
 	}
-}
-
-/** Filters violations to those not present in the workspace baseline — SonarQube "new code" pattern. */
-export function filterNewViolationsSinceBaseline(
-	violations: string[] | undefined,
-	baseline: TaskAuditMetadata | undefined,
-): string[] {
-	if (!violations?.length) return []
-	if (!baseline?.violations?.length) return violations
-	const baselineSet = new Set(baseline.violations)
-	return violations.filter((v) => !baselineSet.has(v))
 }
 
 /** Persists baseline on successful completion — used by new-violations-only quality gates. */

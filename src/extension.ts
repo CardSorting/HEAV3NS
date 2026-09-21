@@ -89,7 +89,14 @@ function setupRoadmapFileWatcher(context: vscode.ExtensionContext): void {
 // for all-platform should be registered in common.ts.
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
+	const startupOutput = registerDietCodeOutputChannel(context)
+	const logActivationStep = (message: string) => {
+		const line = `[DietCode startup] ${message}`
+		startupOutput.appendLine(line)
+	}
+	logActivationStep("Activation started")
 
+	logActivationStep("Checking runtime dependencies")
 	const nativeDeps = checkExtensionNativeDeps(context.extensionPath)
 	if (!nativeDeps.ok) {
 		await showNativeDepsFailure(nativeDeps)
@@ -98,7 +105,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// 1. Set up HostProvider for VSCode
 	// IMPORTANT: This must be done before any service can be registered
-	setupHostProvider(context)
+	setupHostProvider(context, startupOutput)
+	logActivationStep("Host services ready")
 	registerHealthOutputChannel(context)
 	setRoadmapExtensionRoot(context.extensionPath)
 	setupRoadmapFileWatcher(context)
@@ -110,20 +118,27 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 2. Clean up legacy data patterns within VSCode's native storage.
 	// Moves workspace→global keys, task history→file, custom instructions→rules, etc.
 	// Must run BEFORE the file export so we copy clean state.
+	logActivationStep("Migrating legacy editor storage")
 	await cleanupLegacyVSCodeStorage(context)
+	logActivationStep("Legacy editor storage migration finished")
 
 	// 3. One-time export of VSCode's native storage to shared file-backed stores.
 	// After this, all platforms (VSCode, CLI, JetBrains) read from ~/.dietcode/data/.
 	const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
 	const storageContext = createStorageContext({ workspacePath })
+	logActivationStep("Importing editor settings and credentials")
 	await exportVSCodeStorageToSharedFiles(context, storageContext)
+	logActivationStep("Editor settings and credentials imported")
 
 	// 4. Register services and perform common initialization
 	// IMPORTANT: Must be done after host provider is setup and migrations are complete
+	logActivationStep("Initializing shared services")
 	const webview = (await initialize(storageContext)) as VscodeWebviewProvider
+	logActivationStep("Shared services initialized")
 
 	// 5. Register services and commands specific to VS Code
 	// Initialize test mode and add disposables to context
+	logActivationStep("Initializing editor integrations")
 	const testModeWatchers = await initializeTestMode(webview)
 	context.subscriptions.push(...testModeWatchers)
 
@@ -685,6 +700,7 @@ ${ctx.cellJson || "{}"}
 	context.subscriptions.push({ dispose: unsubSecrets })
 
 	Logger.log(`[DietCode] extension activated in ${performance.now() - activationStartTime} ms`)
+	logActivationStep(`Activation complete in ${Math.round(performance.now() - activationStartTime)} ms`)
 
 	return createDietCodeAPI(webview.controller)
 }
@@ -735,8 +751,7 @@ async function showJupyterPromptInput(title: string, placeholder: string): Promi
 	})
 }
 
-function setupHostProvider(context: ExtensionContext) {
-	const outputChannel = registerDietCodeOutputChannel(context)
+function setupHostProvider(context: ExtensionContext, outputChannel: vscode.OutputChannel) {
 	outputChannel.appendLine("[DietCode] Setting up VS Code host...")
 
 	const createWebview = () => new VscodeWebviewProvider(context)

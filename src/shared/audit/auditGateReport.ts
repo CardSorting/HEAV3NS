@@ -1,4 +1,4 @@
-import { filterNewViolationsSinceBaseline } from "./auditBaseline"
+import { filterNewViolationsSinceBaseline } from "./auditBaselineUtils"
 import { hasAuditScoreRegression } from "./auditRegression"
 import { shouldEscalateFromAdvisory } from "./auditRollup"
 import { hasCriticalViolations, partitionViolationsBySeverity } from "./auditSeverity"

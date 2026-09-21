@@ -3,7 +3,11 @@ import path from "path"
 import * as vscode from "vscode"
 import { HistoryItem } from "@/shared/HistoryItem"
 import { Logger } from "@/shared/services/Logger"
+import { TimeoutError, withTimeout } from "@/utils/withTimeout"
 import { ensureRulesDirectoryExists, readTaskHistoryFromState, writeTaskHistoryToState } from "./disk"
+
+const LEGACY_SECRET_OPERATION_BUDGET_MS = 1500
+const LEGACY_STORAGE_UPDATE_TIMEOUT_MS = 1500
 
 export async function migrateWorkspaceToGlobalStorage(context: vscode.ExtensionContext) {
 	// Keys to migrate from workspace storage back to global storage
@@ -57,9 +61,17 @@ export async function migrateWorkspaceToGlobalStorage(context: vscode.ExtensionC
 			Logger.log(`[Storage Migration] migrating key: ${key} to global storage. Current value: ${workspaceValue}`)
 
 			// Move to global storage using raw VSCode method to avoid type errors
-			await context.globalState.update(key, workspaceValue)
+			await withTimeout(
+				context.globalState.update(key, workspaceValue),
+				LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+				`Workspace-to-global migration update for '${key}'`,
+			)
 			// Remove from workspace storage
-			await context.workspaceState.update(key, undefined)
+			await withTimeout(
+				context.workspaceState.update(key, undefined),
+				LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+				`Workspace-to-global migration cleanup for '${key}'`,
+			)
 			const newWorkspaceValue = await context.workspaceState.get(key)
 
 			Logger.log(`[Storage Migration] migrated key: ${key} to global storage. Current value: ${newWorkspaceValue}`)
@@ -113,7 +125,11 @@ export async function migrateTaskHistoryToFile(context: vscode.ExtensionContext)
 			return
 		}
 
-		await context.globalState.update("taskHistory", undefined)
+		await withTimeout(
+			context.globalState.update("taskHistory", undefined),
+			LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+			"Task history migration state update",
+		)
 
 		Logger.log(`[Storage Migration] ${migrationAction}`)
 	} catch (error) {
@@ -180,7 +196,11 @@ export async function migrateCustomInstructionsToGlobalRules(context: vscode.Ext
 			}
 
 			// Remove customInstructions from global state only after successful file creation
-			await context.globalState.update("customInstructions", undefined)
+			await withTimeout(
+				context.globalState.update("customInstructions", undefined),
+				LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+				"Custom instructions migration state update",
+			)
 			Logger.log("Successfully migrated custom instructions to global DietCode rules")
 		}
 	} catch (error) {
@@ -566,32 +586,6 @@ export async function migrateWelcomeViewCompleted(context: vscode.ExtensionConte
 		if (welcomeViewCompleted === undefined) {
 			Logger.log("Migrating welcomeViewCompleted setting...")
 
-			// Fetch API keys directly from secrets
-			const apiKey = await context.secrets.get("apiKey")
-			const openRouterApiKey = await context.secrets.get("openRouterApiKey")
-			const dietcodeAccountId = await context.secrets.get("dietcodeAccountId")
-			const openAiApiKey = await context.secrets.get("openAiApiKey")
-			const ollamaApiKey = await context.secrets.get("ollamaApiKey")
-			const liteLlmApiKey = await context.secrets.get("liteLlmApiKey")
-			const geminiApiKey = await context.secrets.get("geminiApiKey")
-			const openAiNativeApiKey = await context.secrets.get("openAiNativeApiKey")
-			const deepSeekApiKey = await context.secrets.get("deepSeekApiKey")
-			const requestyApiKey = await context.secrets.get("requestyApiKey")
-			const togetherApiKey = await context.secrets.get("togetherApiKey")
-			const qwenApiKey = await context.secrets.get("qwenApiKey")
-			const doubaoApiKey = await context.secrets.get("doubaoApiKey")
-			const mistralApiKey = await context.secrets.get("mistralApiKey")
-			const asksageApiKey = await context.secrets.get("asksageApiKey")
-			const xaiApiKey = await context.secrets.get("xaiApiKey")
-			const sambanovaApiKey = await context.secrets.get("sambanovaApiKey")
-			const sapAiCoreClientId = await context.secrets.get("sapAiCoreClientId")
-			const difyApiKey = await context.secrets.get("difyApiKey")
-			const hicapApiKey = await context.secrets.get("hicapApiKey")
-			// OpenAI Codex OAuth credentials
-			const openAiCodexCredentials =
-				(await context.secrets.get("openaiCodexOauthCredentials")) ||
-				(await context.secrets.get("openai-codex-oauth-credentials"))
-
 			// Fetch configuration values from global state
 			const awsRegion = context.globalState.get("awsRegion")
 			const planModeOllamaModelId = context.globalState.get("planModeOllamaModelId")
@@ -601,41 +595,94 @@ export async function migrateWelcomeViewCompleted(context: vscode.ExtensionConte
 			const planModeVsCodeLmModelSelector = context.globalState.get("planModeVsCodeLmModelSelector")
 			const actModeVsCodeLmModelSelector = context.globalState.get("actModeVsCodeLmModelSelector")
 
-			// This is the original logic used for checking if the welcome view should be shown
-			// It was located in the ExtensionStateContextProvider
-			const hasKey = [
-				apiKey,
-				openRouterApiKey,
+			// Preserve the original "any configured provider" check. A configuration
+			// value is enough to complete this migration, so avoid touching secrets.
+			let hasKey = [
 				awsRegion,
-				openAiApiKey,
-				ollamaApiKey,
 				planModeOllamaModelId,
 				planModeLmStudioModelId,
 				actModeOllamaModelId,
 				actModeLmStudioModelId,
-				liteLlmApiKey,
-				geminiApiKey,
-				openAiNativeApiKey,
-				deepSeekApiKey,
-				requestyApiKey,
-				togetherApiKey,
-				qwenApiKey,
-				doubaoApiKey,
-				mistralApiKey,
 				planModeVsCodeLmModelSelector,
 				actModeVsCodeLmModelSelector,
-				dietcodeAccountId,
-				asksageApiKey,
-				xaiApiKey,
-				sambanovaApiKey,
-				sapAiCoreClientId,
-				difyApiKey,
-				hicapApiKey,
-				openAiCodexCredentials,
 			].some((key) => key !== undefined)
 
+			if (!hasKey) {
+				// Read sequentially with a deadline. A compatible editor can leave a
+				// SecretStorage promise pending forever, and it cannot be cancelled.
+				// Stop at the first configured secret or stalled read; never fan out a
+				// queue of orphaned requests into a provider that is not responding.
+				const secretKeys = [
+					"apiKey",
+					"openRouterApiKey",
+					"dietcodeAccountId",
+					"openAiApiKey",
+					"ollamaApiKey",
+					"liteLlmApiKey",
+					"geminiApiKey",
+					"openAiNativeApiKey",
+					"deepSeekApiKey",
+					"requestyApiKey",
+					"togetherApiKey",
+					"qwenApiKey",
+					"doubaoApiKey",
+					"mistralApiKey",
+					"asksageApiKey",
+					"xaiApiKey",
+					"sambanovaApiKey",
+					"sapAiCoreClientId",
+					"difyApiKey",
+					"hicapApiKey",
+					"openaiCodexOauthCredentials",
+					"openai-codex-oauth-credentials",
+				] as const
+				const secretReadDeadline = Date.now() + LEGACY_SECRET_OPERATION_BUDGET_MS
+				let secretReadFailed = false
+
+				for (const key of secretKeys) {
+					const remainingBudgetMs = secretReadDeadline - Date.now()
+					if (remainingBudgetMs <= 0) {
+						Logger.warn("Welcome-view migration secret read budget expired; will retry next activation.")
+						return
+					}
+
+					let value: string | undefined
+					try {
+						value = await withTimeout(
+							context.secrets.get(key),
+							remainingBudgetMs,
+							`Welcome migration secret read for '${key}'`,
+						)
+					} catch (error) {
+						secretReadFailed = true
+						Logger.warn(`Could not read secret '${key}' for welcome-view migration.`, error)
+						if (error instanceof TimeoutError) {
+							// A timed-out SecretStorage call cannot be cancelled. Stop issuing
+							// requests; the migration will retry next activation.
+							return
+						}
+						continue
+					}
+
+					if (value !== undefined && !(key === "openaiCodexOauthCredentials" && value === "")) {
+						hasKey = true
+						break
+					}
+				}
+
+				if (secretReadFailed && !hasKey) {
+					// A rejected lookup may have contained the only credential. Avoid
+					// committing a false negative and retry the migration next startup.
+					return
+				}
+			}
+
 			// Set welcomeViewCompleted based on whether user has keys
-			await context.globalState.update("welcomeViewCompleted", hasKey)
+			await withTimeout(
+				context.globalState.update("welcomeViewCompleted", hasKey),
+				LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+				"Welcome migration state update",
+			)
 
 			Logger.log(`Migration: Set welcomeViewCompleted to ${hasKey} based on existing API keys`)
 		}
@@ -654,7 +701,11 @@ export async function cleanupMcpMarketplaceCatalogFromGlobalState(context: vscod
 			Logger.log("Cleaning up mcpMarketplaceCatalog from global state...")
 
 			// Delete it from global state
-			await context.globalState.update("mcpMarketplaceCatalog", undefined)
+			await withTimeout(
+				context.globalState.update("mcpMarketplaceCatalog", undefined),
+				LEGACY_STORAGE_UPDATE_TIMEOUT_MS,
+				"MCP marketplace cleanup state update",
+			)
 
 			Logger.log("Successfully removed mcpMarketplaceCatalog from global state")
 		}
@@ -669,8 +720,8 @@ export async function cleanupOldApiKey(context: vscode.ExtensionContext) {
 		// Old API Keys were introduced in March 2025 and later replaced with tokens
 		// Now that we have new API keys that are prefixed with `sk_`,
 		// we need to clean up the old ones to free the secret storage
-		await context.secrets.delete("dietcodeApiKey")
+		await withTimeout(context.secrets.delete("dietcodeApiKey"), LEGACY_SECRET_OPERATION_BUDGET_MS, "Legacy API key cleanup")
 	} catch (error) {
-		Logger.error("Failed to cleanup old dietcodeApiKey", error)
+		Logger.warn("Skipped legacy API key cleanup so extension startup can continue", error)
 	}
 }
