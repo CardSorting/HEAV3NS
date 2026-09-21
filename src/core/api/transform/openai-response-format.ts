@@ -101,7 +101,18 @@ export function convertToOpenAIResponsesInput(
 
 	for (const m of messages) {
 		if (typeof m.content === "string") {
-			allItems.push({ role: m.role, content: [{ type: "input_text", text: m.content }] })
+			if (m.role === "assistant") {
+				// Assistant text is output history, not user input. In particular,
+				// this matters after an interrupted/retried turn: Responses rejects an
+				// assistant message whose content is encoded as `input_text`.
+				allItems.push({
+					type: "message",
+					role: "assistant",
+					content: [{ type: "output_text", text: m.content }],
+				})
+			} else {
+				allItems.push({ role: m.role, content: [{ type: "input_text", text: m.content }] })
+			}
 			continue
 		}
 
@@ -110,6 +121,26 @@ export function convertToOpenAIResponsesInput(
 			// by their corresponding message or function_call. Process the entire assistant
 			// turn and ensure proper pairing.
 			const assistantItems: any[] = []
+			const reasoningIndexById = new Map<string, number>()
+
+			const appendReasoning = (id: string, reasoningItem: any) => {
+				const existingIndex = reasoningIndexById.get(id)
+				if (existingIndex === undefined) {
+					reasoningIndexById.set(id, assistantItems.length)
+					assistantItems.push(reasoningItem)
+					return
+				}
+
+				// Responses streaming can expose one reasoning item twice: once with
+				// encrypted content and once with its summary. Recombine the pair before
+				// sending stateless history; two items with the same response id can be
+				// rejected as an invalid transcript.
+				const existing = assistantItems[existingIndex]
+				if (reasoningItem.encrypted_content) existing.encrypted_content = reasoningItem.encrypted_content
+				if (reasoningItem.summary?.length) {
+					existing.summary = [...(existing.summary ?? []), ...reasoningItem.summary]
+				}
+			}
 
 			for (const part of m.content) {
 				switch (part.type) {
@@ -135,7 +166,7 @@ export function convertToOpenAIResponsesInput(
 								]
 							}
 
-							assistantItems.push({
+							appendReasoning(part.call_id, {
 								id: part.call_id,
 								type: "reasoning",
 								summary,
@@ -155,7 +186,7 @@ export function convertToOpenAIResponsesInput(
 							if (part.data) {
 								reasoningItem.encrypted_content = part.data
 							}
-							assistantItems.push(reasoningItem as ResponseReasoningItem)
+							appendReasoning(part.call_id, reasoningItem as ResponseReasoningItem)
 						}
 						break
 					case "text":

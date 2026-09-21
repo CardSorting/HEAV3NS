@@ -75,7 +75,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ task, messages, ch
 			if (isProcessing) return
 			setIsProcessing(true)
 
-			void messageHandlers.executeButtonAction(action, text, images, files).catch(() => setIsProcessing(false))
+			// Always unlock the controls when the RPC settles. The handler presents
+			// its own inline error, so a rejected action must not leave this panel
+			// permanently disabled while the message state stays unchanged.
+			void messageHandlers
+				.executeButtonAction(action, text, images, files)
+				.catch(() => undefined)
+				.finally(() => setIsProcessing(false))
 		},
 		[messageHandlers, isProcessing],
 	)
@@ -167,7 +173,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ task, messages, ch
 
 	const sectionLabel =
 		presentation.kind === "recovery"
-			? "Something went wrong"
+			? "Recovery available"
 			: presentation.kind === "completion"
 				? "Task completed"
 				: presentation.kind === "other"

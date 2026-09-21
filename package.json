@@ -2,7 +2,7 @@
 	"name": "heav3ns-vscode",
 	"displayName": "HEAV3NS",
 	"description": "HEAV3NS is a calm, local-first coding companion with explicit review and provider choice.",
-	"version": "13.0.0",
+	"version": "13.0.1",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."

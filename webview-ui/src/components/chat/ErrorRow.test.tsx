@@ -1,5 +1,5 @@
 import type { DietCodeMessage } from "@shared/ExtensionMessage"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import ErrorRow from "./ErrorRow"
 
@@ -110,7 +110,38 @@ describe("ErrorRow", () => {
 			render(<ErrorRow apiRequestFailedMessage="Rate limit exceeded" errorType="error" message={mockMessage} />)
 
 			expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument()
-			expect(screen.getByText("Request ID: req_123456")).toBeInTheDocument()
+			fireEvent.click(screen.getByText("Show technical details"))
+			expect(screen.getByText(/Request ID: req_123456/)).toBeInTheDocument()
+		})
+
+		it("turns an opaque provider 400 into an actionable error without raw JSON", async () => {
+			const rawError = JSON.stringify({
+				message: "status code (no body)",
+				status: 400,
+				modelId: "gpt-5.6-luna",
+				providerId: "openai-codex",
+			})
+			const mockDietCodeError = {
+				message: "status code (no body)",
+				modelId: "gpt-5.6-luna",
+				providerId: "openai-codex",
+				isErrorType: vi.fn(() => false),
+				_error: {
+					message: "status code (no body)",
+					status: 400,
+					modelId: "gpt-5.6-luna",
+					providerId: "openai-codex",
+				},
+			}
+
+			const { DietCodeError } = await import("../../../../src/services/error/DietCodeError")
+			vi.mocked(DietCodeError.parse).mockReturnValue(mockDietCodeError as any)
+
+			render(<ErrorRow apiRequestFailedMessage={rawError} errorType="error" message={mockMessage} />)
+
+			expect(screen.getByText("The model request was rejected")).toBeInTheDocument()
+			expect(screen.getByText(/HTTP status: 400/)).toBeInTheDocument()
+			expect(screen.queryByText(rawError)).not.toBeInTheDocument()
 		})
 
 		it("renders auth error with sign in button when user is not signed in", async () => {

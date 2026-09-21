@@ -95,7 +95,14 @@ export class OpenAiCodexHandler implements ApiHandler {
 			}
 			model = this.getModel()
 		}
-		const { input, previousResponseId } = convertToOpenAIResponsesInput(messages, { usePreviousResponseId: true })
+		// Keep Codex turns stateless. The ChatGPT-backed Codex endpoint does not
+		// reliably retain a response when `store` is false, so sending a
+		// `previous_response_id` alongside `store: false` can produce a body-less
+		// HTTP 400 as soon as the model returns a tool call and the next turn sends
+		// its result. The converter preserves the complete Responses transcript,
+		// including encrypted reasoning items, which is the supported stateless
+		// continuation path.
+		const { input } = convertToOpenAIResponsesInput(messages, { usePreviousResponseId: false })
 		const responseTools = (tools || []).filter(isOpenAiTool).map((tool) => toOpenAIResponsesAPITool(tool))
 
 		const requestParams: OpenAI.Responses.ResponseCreateParamsStreaming = {
@@ -105,10 +112,7 @@ export class OpenAiCodexHandler implements ApiHandler {
 			stream: true,
 			store: false,
 			include: ["reasoning.encrypted_content"],
-		}
-
-		if (previousResponseId) {
-			requestParams.previous_response_id = previousResponseId
+			parallel_tool_calls: false,
 		}
 		if (responseTools.length > 0) {
 			requestParams.tools = responseTools

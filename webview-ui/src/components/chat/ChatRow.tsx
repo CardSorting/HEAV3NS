@@ -41,6 +41,7 @@ import { CommandOutputContent, CommandOutputRow } from "./CommandOutputRow"
 import { CompletionOutputRow } from "./CompletionOutputRow"
 import { DiffEditRow } from "./DiffEditRow"
 import ErrorRow from "./ErrorRow"
+import { getRetryStatusMessage } from "./errorRecovery"
 import { GroundingHeader } from "./GroundingHeader"
 import HookMessage from "./HookMessage"
 import { IntentDecomposition } from "./IntentDecomposition"
@@ -1108,37 +1109,55 @@ export const ChatRowContent = memo(
 						)
 					case "error_retry":
 						try {
-							const retryInfo = JSON.parse(message.text || "{}")
-							const { attempt, maxAttempts, delaySeconds, failed, errorMessage } = retryInfo
-							const isFailed = failed === true
+							const retryInfo = JSON.parse(message.text || "{}") as {
+								attempt?: unknown
+								maxAttempts?: unknown
+								delaySeconds?: unknown
+								failed?: unknown
+								errorMessage?: unknown
+							}
+							const attempt = typeof retryInfo.attempt === "number" ? retryInfo.attempt : undefined
+							const maxAttempts = typeof retryInfo.maxAttempts === "number" ? retryInfo.maxAttempts : undefined
+							const delaySeconds = typeof retryInfo.delaySeconds === "number" ? retryInfo.delaySeconds : undefined
+							const errorMessage = typeof retryInfo.errorMessage === "string" ? retryInfo.errorMessage : undefined
+							const isFailed = retryInfo.failed === true
+							const retryMessage = getRetryStatusMessage(errorMessage)
+							const attemptsLabel = maxAttempts ? `${maxAttempts} attempt${maxAttempts === 1 ? "" : "s"}` : "several attempts"
 
 							return (
-								<div className="flex flex-col gap-3 rounded-lg border border-description/10 bg-black/[0.02] dark:bg-white/[0.02] p-3.5 animate-lumi-reveal [animation-duration:1.2s]">
-									{errorMessage && (
+								<div
+									aria-live={isFailed ? "assertive" : "polite"}
+									className="flex flex-col gap-3 rounded-lg border border-description/10 bg-black/[0.02] p-3.5 dark:bg-white/[0.02] animate-lumi-reveal [animation-duration:1.2s]"
+									data-retry-state={isFailed ? "failed" : "retrying"}
+									role={isFailed ? "alert" : "status"}>
+									{retryMessage && (
 										<p className="m-0 whitespace-pre-wrap text-description/90 wrap-anywhere text-xs leading-relaxed">
-											{errorMessage}
+											{retryMessage}
 										</p>
 									)}
 									<div className="flex flex-col gap-1.5">
 										<div className="flex items-center gap-2">
 											{(!isFailed || isRequestInProgress) && <ProgressIndicator />}
 											<span className="font-medium text-foreground/90 text-xs">
-												{isFailed ? "That didn't quite work" : "Taking another look…"}
+												{isFailed ? "The request could not finish" : "Retrying automatically"}
 											</span>
 										</div>
 										<div className="text-description text-xs leading-relaxed">
 											{isFailed ? (
 												<span>
-													I tried{" "}
-													<strong className="font-medium text-foreground/80">{maxAttempts}</strong>{" "}
-													times. {pickRecoveryLine(message.ts)}
+													Tried <strong className="font-medium text-foreground/80">{attemptsLabel}</strong>. {pickRecoveryLine(message.ts)}
 												</span>
 											) : (
 												<span>
-													Giving it another go (
-													<strong className="font-medium text-foreground/80">{attempt}</strong> of{" "}
-													<strong className="font-medium text-foreground/80">{maxAttempts}</strong>) in{" "}
-													{delaySeconds}s…
+													{attempt && maxAttempts ? (
+														<>
+															Attempt <strong className="font-medium text-foreground/80">{attempt}</strong> of{" "}
+															<strong className="font-medium text-foreground/80">{maxAttempts}</strong>
+															{delaySeconds !== undefined ? ` · trying again in ${delaySeconds}s…` : " · starting again…"}
+														</>
+													) : (
+														"The request will be tried again shortly…"
+													)}
 												</span>
 											)}
 										</div>

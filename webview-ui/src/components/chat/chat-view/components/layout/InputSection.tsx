@@ -94,6 +94,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 			{messageHandlers.sendError && (
 				<div
 					aria-atomic="true"
+					aria-live="assertive"
 					className="mx-3 mb-2 flex min-w-0 items-center gap-2 rounded-md border border-error/30 bg-error/[0.06] px-2.5 py-2 text-xs text-foreground"
 					role="alert">
 					<AlertCircle aria-hidden className="size-3.5 shrink-0 text-error" />
@@ -104,11 +105,11 @@ export const InputSection: React.FC<InputSectionProps> = ({
 							disabled={messageHandlers.isSending}
 							onClick={() => void messageHandlers.retryLastSend()}
 							type="button">
-							Retry
+							Try again
 						</button>
 					)}
 					<button
-						aria-label="Dismiss message"
+						aria-label="Dismiss send error"
 						className="flex size-6 shrink-0 items-center justify-center rounded text-description transition-colors hover:bg-foreground/[0.07] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						onClick={messageHandlers.clearSendError}
 						type="button">

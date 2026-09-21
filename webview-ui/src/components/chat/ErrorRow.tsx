@@ -1,19 +1,54 @@
 import { DietCodeMessage } from "@shared/ExtensionMessage"
+import { AlertCircle, ChevronDown } from "lucide-react"
 import { memo } from "react"
 import CreditLimitError from "@/components/chat/CreditLimitError"
+import { CopyButton } from "@/components/common/CopyButton"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icons"
 import { useDietCodeAuth, useDietCodeSignIn } from "@/context/DietCodeAuthContext"
 import { pickRecoveryLine } from "@/copy/heav3nsVoice"
 import { DietCodeError, DietCodeErrorType } from "../../../../src/services/error/DietCodeError"
-
-const _errorColor = "var(--vscode-errorForeground)"
+import {
+	buildRecoveryDiagnostics,
+	getRecoveryCopy,
+	hasDiagnosticMetadata,
+	isOpaqueRecoveryError,
+	parseRecoveryError,
+	type RecoveryErrorInfo,
+} from "./errorRecovery"
 
 interface ErrorRowProps {
 	message: DietCodeMessage
 	errorType: "error" | "mistake_limit_reached" | "diff_error" | "dietcodeignore_error"
 	apiRequestFailedMessage?: string
 	apiReqStreamingFailedMessage?: string
+}
+
+const ErrorDiagnostics = ({ error }: { error: RecoveryErrorInfo | undefined }) => {
+	if (!hasDiagnosticMetadata(error)) return null
+
+	const diagnostics = buildRecoveryDiagnostics(error)
+	return (
+		<details className="lumi-inline-disclosure rounded-md border border-description/15 bg-background/30">
+			<summary className="flex cursor-pointer items-center gap-1.5 px-2.5 py-1.5 text-[10px] text-description/80 hover:text-foreground">
+				<ChevronDown
+					aria-hidden
+					className="size-3 shrink-0 -rotate-90 transition-transform [[open]>&]:rotate-0"
+					strokeWidth={1.8}
+				/>
+				<span>Show technical details</span>
+				<span className="ml-auto text-[9px] text-description/55">No chat content included</span>
+			</summary>
+			<div className="border-t border-description/10 px-2.5 pb-2 pt-1.5">
+				<div className="flex items-start justify-between gap-2">
+					<pre className="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-[9px] leading-relaxed text-description/85">
+						{diagnostics}
+					</pre>
+					<CopyButton ariaLabel="Copy technical details" textToCopy={diagnostics} />
+				</div>
+			</div>
+		</details>
+	)
 }
 
 const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStreamingFailedMessage }: ErrorRowProps) => {
@@ -39,9 +74,11 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 				// Handle API request errors with special error parsing
 				if (rawApiError) {
 					const dietcodeError = DietCodeError.parse(rawApiError)
-					const errorMessage = dietcodeError?._error?.message || dietcodeError?.message || rawApiError
-					const requestId = dietcodeError?._error?.request_id
-					const providerId = dietcodeError?.providerId || dietcodeError?._error?.providerId
+					const errorInfo = parseRecoveryError(rawApiError, dietcodeError)
+					const errorMessage = errorInfo?.message || rawApiError
+					const recoveryCopy = getRecoveryCopy(errorInfo)
+					const providerMessage = errorInfo && !isOpaqueRecoveryError(errorInfo) ? errorInfo.message : undefined
+					const providerId = errorInfo?.providerId
 					const isDietCodeProvider = providerId === "dietcode"
 
 					if (dietcodeError?.isErrorType(DietCodeErrorType.Balance)) {
@@ -57,26 +94,28 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 						)
 					}
 
-					if (dietcodeError?.isErrorType(DietCodeErrorType.RateLimit)) {
-						return (
-							<div className="m-0 whitespace-pre-wrap text-description/90 wrap-anywhere leading-relaxed">
-								{errorMessage}
-								{requestId && <div className="text-description/70 text-xs mt-1">Request ID: {requestId}</div>}
-							</div>
-						)
-					}
-
 					return (
-						<div className="m-0 whitespace-pre-wrap text-description/90 wrap-anywhere flex flex-col gap-3 leading-relaxed">
-							{/* Display the well-formatted error extracted from the DietCodeError instance */}
-
-							<header>
-								{errorMessage}
-								{requestId && <div>Request ID: {requestId}</div>}
-							</header>
+						<div className="flex flex-col gap-3 rounded-lg border border-error/30 bg-error/[0.035] p-3 text-description/90">
+							<div className="flex items-start gap-2">
+								<AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0 text-error" strokeWidth={1.9} />
+								<div className="min-w-0 flex-1">
+									<p className="m-0 text-sm font-semibold leading-tight text-foreground">{recoveryCopy.title}</p>
+									<p className="m-0 mt-1 text-xs leading-relaxed text-description">{recoveryCopy.detail}</p>
+									{providerMessage && providerMessage !== recoveryCopy.detail && (
+										<p className="m-0 mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-description/90">
+											{providerMessage}
+										</p>
+									)}
+									{!errorInfo && (
+										<p className="m-0 mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-description/90">
+											{rawApiError}
+										</p>
+									)}
+								</div>
+							</div>
 
 							{/* Windows Powershell Issue */}
-							{errorMessage?.toLowerCase()?.includes("powershell") && (
+							{errorMessage.toLowerCase().includes("powershell") && (
 								<div>
 									It seems like you're having Windows PowerShell issues, please see this{" "}
 									<a
@@ -87,9 +126,6 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 									.
 								</div>
 							)}
-
-							{/* Display raw API error if different from parsed error message */}
-							{errorMessage !== rawApiError && <div>{rawApiError}</div>}
 
 							{/* Display Login button for non-logged in users using the HEAV3NS provider */}
 							<div>
@@ -104,9 +140,11 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 										)}
 									</Button>
 								) : (
-									<span className="mb-4 text-description">{pickRecoveryLine(message.ts)}</span>
+									<span className="text-xs text-description">{pickRecoveryLine(message.ts)}</span>
 								)}
 							</div>
+
+							<ErrorDiagnostics error={errorInfo} />
 						</div>
 					)
 				}
