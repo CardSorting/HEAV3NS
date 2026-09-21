@@ -109,7 +109,14 @@ describe("WorkspaceKnowledgeContext", () => {
 			const playbookAfter = await fs.readFile(path.join(root, ".wiki/agent/playbook.md"), "utf-8")
 			const context = await loadWorkspaceKnowledgeContext(root, "Inspect the copper intake flow")
 
-			expect(first.created).to.deep.equal([".wiki/index.md", ".wiki/agent/playbook.md"])
+			expect(first.created).to.deep.equal([
+				".wiki/index.md",
+				".wiki/agent/playbook.md",
+				".wiki/adr/lifecycle.json",
+				".wiki/knowledge/source-map.json",
+				".wiki/incidents/register.json",
+				".wiki/incidents/events.jsonl",
+			])
 			expect(second.created).to.deep.equal([])
 			expect(indexAfter).to.equal(indexBefore)
 			expect(playbookAfter).to.equal(playbookBefore)
@@ -136,7 +143,12 @@ describe("WorkspaceKnowledgeContext", () => {
 
 			const result = await bootstrapWorkspaceKnowledge(root)
 
-			expect(result.created).to.deep.equal([])
+			expect(result.created).to.deep.equal([
+				".wiki/adr/lifecycle.json",
+				".wiki/knowledge/source-map.json",
+				".wiki/incidents/register.json",
+				".wiki/incidents/events.jsonl",
+			])
 			expect(await fs.readFile(path.join(root, ".wiki/index.md"), "utf-8")).to.equal("# Human index\n\nKeep this text.\n")
 			expect(await fs.readFile(path.join(root, ".wiki/agent/playbook.md"), "utf-8")).to.equal(
 				"# Human playbook\n\nKeep these instructions.\n",
@@ -279,6 +291,32 @@ describe("WorkspaceKnowledgeContext", () => {
 			const sessionCEntry = await loadWorkspaceKnowledgeContext(root, "Inspect the copper intake implementation")
 			expect(priorHandoff?.lifecycle).to.equal("superseded")
 			expect(sessionCEntry).to.include("historical, not current")
+		} finally {
+			await fs.rm(root, { recursive: true, force: true })
+		}
+	})
+
+	it("does not promote legacy DECISIONS.md entries into confirmed authority facts", async () => {
+		const root = await createWorkspace()
+		try {
+			await fs.writeFile(
+				path.join(root, "DECISIONS.md"),
+				"## ADR-001: Legacy copper boundary\n\n**Status:** Accepted\n\nThe old ledger claims this boundary is active.\n",
+				"utf8",
+			)
+			const engine = new WorkspaceIntelligenceEngine({ cwd: root, services: undefined } as unknown as TaskConfig)
+			const result = await engine.learnFromFinalization({
+				taskId: "legacy-audit",
+				finalizationRunId: "legacy-run",
+				timestamp: "2026-09-20T15:00:00.000Z",
+				impactSummary: "Changed file: src/copper.ts",
+			})
+			const legacyFact = result.model.facts.find(
+				(fact) => fact.type === "architecture_decision" && (fact.value as { id?: string }).id === "ADR-001",
+			)
+
+			expect(legacyFact?.confidence).to.equal("needs_verification")
+			expect(legacyFact?.lifecycle).to.equal("disputed")
 		} finally {
 			await fs.rm(root, { recursive: true, force: true })
 		}

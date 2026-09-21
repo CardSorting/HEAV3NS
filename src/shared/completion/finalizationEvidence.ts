@@ -13,6 +13,10 @@ export interface FinalizationEvidence {
 	workspaceIntelligenceArtifacts?: string[]
 	workspaceKnowledgeCategories?: Record<string, number>
 	handoffSummaryHash?: string
+	projectKnowledgeValidated?: boolean
+	projectKnowledgeImpactSummary?: string
+	projectKnowledgeDiagnostics?: string[]
+	projectKnowledgeMutationHash?: string
 	completedAt?: number
 	accessDeniedReason?: string
 }

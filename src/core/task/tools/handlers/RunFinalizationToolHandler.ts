@@ -17,7 +17,7 @@ export class RunFinalizationToolHandler implements IToolHandler {
 					capability: "workspace_write",
 					path: ".wiki",
 					risk: "high",
-					requestedSideEffects: ["update Agent Playbook documentation"],
+					requestedSideEffects: ["update project-local knowledge handoff, decision, incident, and evidence records"],
 					autoApprovalEligible: true,
 				},
 				{
@@ -50,7 +50,9 @@ export class RunFinalizationToolHandler implements IToolHandler {
 		}
 
 		const handoffSummary = typeof block.params.summary === "string" ? block.params.summary : undefined
-		const result = await runner.run(handoffSummary)
+		const projectKnowledgeUpdates =
+			typeof block.params.project_knowledge === "string" ? block.params.project_knowledge : undefined
+		const result = await runner.run(handoffSummary, projectKnowledgeUpdates)
 		if (!result.success) {
 			return formatResponse.toolError(result.message)
 		}

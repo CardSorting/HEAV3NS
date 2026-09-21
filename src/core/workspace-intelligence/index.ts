@@ -1,3 +1,4 @@
+export * from "./ProjectKnowledgeLifecycle"
 export * from "./types"
 export { WorkspaceIntelligenceEngine } from "./WorkspaceIntelligenceEngine"
 export { WorkspaceIntelligenceReader } from "./WorkspaceIntelligenceReader"

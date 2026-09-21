@@ -2,6 +2,16 @@ import { createHash } from "node:crypto"
 import { access, appendFile, lstat, mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises"
 import path from "node:path"
 import {
+	applyProjectKnowledgeMutation,
+	bootstrapProjectKnowledge,
+	discoverKnowledgeImpactFromData,
+	fingerprintNewProjectEvidence,
+	getProjectChangedFiles,
+	renderProjectKnowledgeImpact,
+	syncProjectKnowledgeViews,
+	validateProjectKnowledge,
+} from "@core/workspace-intelligence/ProjectKnowledgeLifecycle"
+import {
 	normalizeAgentHandoffSummary,
 	WorkspaceIntelligenceEngine,
 } from "@core/workspace-intelligence/WorkspaceIntelligenceEngine"
@@ -90,7 +100,7 @@ const PREFERRED_SCRIPT_ORDER = [
 export class AutonomousDocumentationFinalizer {
 	constructor(private readonly config: TaskConfig) {}
 
-	async run(existingRunId?: string, handoffSummary?: string): Promise<FinalizationRunResult> {
+	async run(existingRunId?: string, handoffSummary?: string, projectKnowledgeUpdates?: string): Promise<FinalizationRunResult> {
 		const runId = existingRunId ?? uuidv4()
 		const cwd = this.config.cwd
 		const wikiDir = path.join(cwd, ".wiki")
@@ -98,6 +108,12 @@ export class AutonomousDocumentationFinalizer {
 		const migrationStatePath = path.join(wikiDir, "migration-state.md")
 		const docsUpdated: string[] = []
 		const artifactPaths: string[] = []
+		let projectKnowledgeValidated = false
+		let projectKnowledgeImpactSummary = "Project knowledge impact was not calculated."
+		let projectKnowledgeDiagnostics: string[] = []
+		const projectKnowledgeMutationHash = projectKnowledgeUpdates?.trim()
+			? createHash("sha256").update(projectKnowledgeUpdates).digest("hex")
+			: undefined
 
 		try {
 			const normalizedHandoffSummary = normalizeAgentHandoffSummary(handoffSummary)
@@ -106,9 +122,54 @@ export class AutonomousDocumentationFinalizer {
 			await assertLocalWorkspaceFile(cwd, ".wiki/changelog.md")
 			await mkdir(wikiDir, { recursive: true })
 
+			const lifecycleArtifacts: string[] = []
+			try {
+				const bootstrap = await bootstrapProjectKnowledge(cwd)
+				if (bootstrap.warning) throw new Error(bootstrap.warning)
+				lifecycleArtifacts.push(...bootstrap.created)
+				lifecycleArtifacts.push(...(await applyProjectKnowledgeMutation(cwd, projectKnowledgeUpdates)))
+				lifecycleArtifacts.push(...(await fingerprintNewProjectEvidence(cwd)))
+				const generatedViews = await syncProjectKnowledgeViews(cwd)
+				lifecycleArtifacts.push(...generatedViews.written)
+				const validation = await validateProjectKnowledge(cwd, { checkTransitions: true, checkAppendOnly: true })
+				projectKnowledgeValidated =
+					validation.valid && !generatedViews.diagnostics.some((item) => item.severity === "error")
+				projectKnowledgeDiagnostics = [...generatedViews.diagnostics, ...validation.diagnostics]
+					.filter((item) => item.severity === "error")
+					.slice(0, 24)
+					.map((item) => `${item.code}${item.path ? ` (${item.path})` : ""}: ${item.message}`)
+				const changedFiles = await getProjectChangedFiles(cwd)
+				const impact = discoverKnowledgeImpactFromData(
+					validation.decisions,
+					validation.incidents,
+					validation.followUps,
+					validation.sourceMap,
+					changedFiles,
+					"",
+					validation.events,
+				)
+				impact.invalidatedEvidence = Array.from(
+					new Map(
+						[...impact.invalidatedEvidence, ...validation.impact.invalidatedEvidence].map((item) => [
+							`${item.recordId}\0${item.path}\0${item.reason}`,
+							item,
+						]),
+					).values(),
+				)
+				projectKnowledgeImpactSummary = renderProjectKnowledgeImpact(impact)
+			} catch (failure) {
+				projectKnowledgeValidated = false
+				projectKnowledgeDiagnostics = [`PROJECT_KNOWLEDGE_FINALIZATION_FAILED: ${errorMessage(failure)}`]
+			}
+			for (const relPath of Array.from(new Set(lifecycleArtifacts))) {
+				const absPath = path.join(cwd, relPath)
+				docsUpdated.push(relPath)
+				artifactPaths.push(absPath)
+			}
+
 			const impactSummary = this.config.universalGuard?.getSessionImpactSummary() ?? "_No session impact recorded._"
 			const timestamp = new Date().toISOString()
-			const entry = `\n\n## Session Finalization (${timestamp})\n\nTask: \`${this.config.taskId}\`\n\n### Changed files\n${impactSummary}\n`
+			const entry = `\n\n## Session Finalization (${timestamp})\n\nTask: \`${this.config.taskId}\`\n\n### Changed files\n${impactSummary}\n\n### Project knowledge impact review\n\n${projectKnowledgeImpactSummary}\n\n### Lifecycle validation\n\n${projectKnowledgeValidated ? "No structural or evidence-reference errors detected. This does not establish semantic correctness." : projectKnowledgeDiagnostics.map((item) => `- ${item}`).join("\n") || "- Validation failed without diagnostics."}\n`
 
 			let changelogExisted = true
 			try {
@@ -198,7 +259,7 @@ export class AutonomousDocumentationFinalizer {
 			artifactPaths.push(migrationStatePath)
 
 			let roadmapValidated = false
-			let schemaValidationPassed = true
+			let schemaValidationPassed = projectKnowledgeValidated
 			try {
 				const roadmapResult = await remediateRoadmapGatesInternally(cwd)
 				roadmapValidated = roadmapResult.steps.length >= 0
@@ -220,7 +281,7 @@ export class AutonomousDocumentationFinalizer {
 
 			const evidence: FinalizationEvidence = {
 				finalizationRunId: runId,
-				status: compliance.compliant ? "passed" : "passed",
+				status: schemaValidationPassed ? "passed" : "failed",
 				docsUpdated,
 				ledgerStamped: true,
 				roadmapValidated,
@@ -231,6 +292,10 @@ export class AutonomousDocumentationFinalizer {
 				workspaceIntelligenceArtifacts: intelligenceResult.records.map((record) => record.relPath),
 				workspaceKnowledgeCategories: intelligenceResult.categoryCounts,
 				handoffSummaryHash: AutonomousDocumentationFinalizer.handoffSummaryHash(normalizedHandoffSummary),
+				projectKnowledgeValidated,
+				projectKnowledgeImpactSummary,
+				projectKnowledgeDiagnostics,
+				projectKnowledgeMutationHash,
 				completedAt: Date.now(),
 			}
 
@@ -274,6 +339,16 @@ export class AutonomousDocumentationFinalizer {
 	}
 
 	async validate(evidence: FinalizationEvidence): Promise<{ valid: boolean; reason?: string }> {
+		if (!evidence.schemaValidationPassed) {
+			return {
+				valid: false,
+				reason: evidence.projectKnowledgeDiagnostics?.length
+					? `Project knowledge lifecycle validation failed: ${evidence.projectKnowledgeDiagnostics.slice(0, 5).join("; ")}`
+					: "Project knowledge lifecycle validation failed",
+			}
+		}
+		if (evidence.projectKnowledgeValidated === false)
+			return { valid: false, reason: "Project knowledge lifecycle validation failed" }
 		if (!evidence.artifactPaths.length) {
 			return { valid: false, reason: "No artifact paths recorded" }
 		}
@@ -310,6 +385,7 @@ export class AutonomousDocumentationFinalizer {
 			ledger: evidence.ledgerStamped,
 			paths: evidence.artifactPaths,
 			handoffSummaryHash: evidence.handoffSummaryHash,
+			projectKnowledgeMutationHash: evidence.projectKnowledgeMutationHash,
 		})
 	}
 
@@ -320,6 +396,10 @@ export class AutonomousDocumentationFinalizer {
 	static handoffSummaryHash(summary: string | undefined): string | undefined {
 		const normalized = normalizeAgentHandoffSummary(summary)
 		return normalized ? createHash("sha256").update(normalized).digest("hex") : undefined
+	}
+
+	static projectKnowledgeMutationHash(serialized: string): string {
+		return createHash("sha256").update(serialized).digest("hex")
 	}
 
 	private async writeAgentPlaybook(args: {
@@ -792,4 +872,8 @@ function detectPackageManager(manifests: string[]): string | undefined {
 	if (manifests.includes("bun.lock")) return "Bun"
 	if (manifests.includes("package-lock.json") || manifests.includes("package.json")) return "npm"
 	return undefined
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error)
 }

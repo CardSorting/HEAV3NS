@@ -72,6 +72,7 @@ export const toolParamNames = [
 	"full_reference",
 	"verb",
 	"payload",
+	"project_knowledge",
 ] as const
 
 export type ToolParamName = (typeof toolParamNames)[number]

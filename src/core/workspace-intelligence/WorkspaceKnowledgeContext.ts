@@ -1,6 +1,7 @@
 import type { Dirent } from "node:fs"
 import { lstat, mkdir, open, readdir, realpath, writeFile } from "node:fs/promises"
 import path from "node:path"
+import { bootstrapProjectKnowledge, buildProjectLifecycleContext } from "./ProjectKnowledgeLifecycle"
 import { WorkspaceIntelligenceReader } from "./WorkspaceIntelligenceReader"
 import { WorkspaceIntelligenceStore } from "./WorkspaceIntelligenceStore"
 
@@ -115,7 +116,9 @@ export async function bootstrapWorkspaceKnowledge(cwd: string): Promise<Workspac
 		for (const file of files) {
 			if (await writeNewWorkspaceFile(root, file.path, file.content)) created.push(file.path)
 		}
-		return { created }
+		const lifecycle = await bootstrapProjectKnowledge(root)
+		created.push(...lifecycle.created)
+		return { created, warning: lifecycle.warning }
 	} catch (error) {
 		return {
 			created,
@@ -133,6 +136,7 @@ export async function loadWorkspaceKnowledgeContext(cwd: string, taskDescription
 	const bootstrap = await bootstrapWorkspaceKnowledge(root)
 	const tokens = searchTerms(taskDescription)
 	const sections: Array<{ title: string; body: string; limit: number }> = []
+	let lifecycleDecisionIds: string[] = []
 
 	sections.push({
 		title: "Entry status",
@@ -149,13 +153,29 @@ export async function loadWorkspaceKnowledgeContext(cwd: string, taskDescription
 
 	sections.push({
 		title: "Base project orientation",
-		limit: 1_500,
+		limit: 1_000,
 		body: await buildOrientationSection(root),
 	})
 
+	try {
+		const lifecycle = await buildProjectLifecycleContext(root, taskDescription)
+		lifecycleDecisionIds = lifecycle.validation.decisions.map((decision) => decision.id)
+		sections.push({
+			title: "Task-scoped ADR and incident lifecycle",
+			limit: 3_600,
+			body: lifecycle.text,
+		})
+	} catch (error) {
+		sections.push({
+			title: "Task-scoped ADR and incident lifecycle",
+			limit: 900,
+			body: `Lifecycle registries could not be safely read. Treat decision and incident state as unresolved; inspect project-local .wiki/adr/lifecycle.json, .wiki/incidents/register.json, .wiki/incidents/events.jsonl, and supporting project files. ${errorMessage(error)}`,
+		})
+	}
+
 	sections.push({
 		title: "Project instructions and knowledge entry points",
-		limit: 3_000,
+		limit: 2_000,
 		body: await buildInstructionSection(root),
 	})
 
@@ -164,35 +184,35 @@ export async function loadWorkspaceKnowledgeContext(cwd: string, taskDescription
 		try {
 			sections.push({
 				title: "Task-relevant local model",
-				limit: 3_400,
+				limit: 2_300,
 				body: new WorkspaceIntelligenceReader(model, root).getTaskScopedSummary(taskDescription),
 			})
 		} catch {
 			sections.push({
 				title: "Task-relevant local model",
-				limit: 900,
+				limit: 700,
 				body: "A workspace model file exists but could not be safely interpreted. Treat its claims as unresolved and inspect the local JSON, sources, tests, and project instructions before relying on it.",
 			})
 		}
 	} else {
 		sections.push({
 			title: "Current-state coverage",
-			limit: 900,
+			limit: 700,
 			body: "No readable `.wiki/intelligence/workspace-intelligence.json` exists yet. This session has a bootstrapped local entry map, but current state, decisions, and evidence coverage remain unresolved until verified and recorded.",
 		})
 	}
 
-	const relevantDocuments = await findRelevantDocuments(root, tokens)
+	const relevantDocuments = await findRelevantDocuments(root, tokens, lifecycleDecisionIds)
 	sections.push({
 		title: "Task-relevant project knowledge",
-		limit: 3_800,
+		limit: 2_400,
 		body: relevantDocuments.length
 			? relevantDocuments.map((document) => `Source: ${document.path}\n${excerpt(document.text, 1_050)}`).join("\n\n")
 			: "No task-matched decision or guide excerpts were found in the bounded project knowledge scan. Follow the local source pointers above and verify directly.",
 	})
 
 	const rendered = sections.map(({ title, body, limit }) => `## ${title}\n${excerpt(body, limit)}`).join("\n\n")
-	return `PROJECT-LOCAL KNOWLEDGE\n\n${excerpt(rendered, MAX_CONTEXT_CHARS)}\n\nAfter substantive changes, call run_finalization with a concise handoff covering changed behavior, supporting project-local files or checks, affected decisions or constraints, and unresolved uncertainty. The stored handoff is an unverified agent report.\n\nEnd of bounded knowledge context. Open the cited local files before relying on an excerpt.`
+	return `PROJECT-LOCAL KNOWLEDGE\n\n${excerpt(rendered, MAX_CONTEXT_CHARS)}\n\nAfter substantive changes, call run_finalization with a concise handoff covering changed behavior, supporting project-local files or checks, affected decisions/constraints/incidents, and uncertainty. If a consequential decision or qualifying incident changed, also submit complete structured project_knowledge JSON records. Never infer canonical ADR/incident state from handoff prose. Preserve append-only incident events and unresolved follow-ups; do not create ADRs for trivial choices, incidents for ordinary bugs, or claim verification/closure without evidence. The stored handoff remains an unverified agent report.\n\nEnd of bounded knowledge context. Open the cited local files before relying on an excerpt.`
 }
 
 async function buildOrientationSection(root: string): Promise<string> {
@@ -243,9 +263,26 @@ async function buildInstructionSection(root: string): Promise<string> {
 		: "No project-specific AGENTS.md or agent guide was found. The bootstrap index records observed local entry paths only."
 }
 
-async function findRelevantDocuments(root: string, terms: string[]): Promise<ScannedDocument[]> {
+async function findRelevantDocuments(
+	root: string,
+	terms: string[],
+	lifecycleDecisionIds: string[] = [],
+): Promise<ScannedDocument[]> {
 	if (!terms.length) return []
 	const candidates = new Set(await listKnowledgeDocuments(root))
+	const registeredDecisionIds = new Set(lifecycleDecisionIds.map((id) => id.toUpperCase()))
+	for (const relPath of Array.from(candidates)) {
+		const legacyId = path
+			.basename(relPath)
+			.match(/^(ADR-\d+)(?:[-_.]|$)/i)?.[1]
+			?.toUpperCase()
+		if (
+			relPath.startsWith(".wiki/adr/managed/") ||
+			relPath === ".wiki/adr/LIFECYCLE.md" ||
+			(legacyId && registeredDecisionIds.has(legacyId))
+		)
+			candidates.delete(relPath)
+	}
 	for (const relPath of [
 		"CONTRIBUTING.md",
 		"PRODUCT.md",
@@ -448,11 +485,11 @@ function buildBootstrapIndex(packageName: string | undefined, entrySources: stri
 	const sources = entrySources.length
 		? entrySources.map((source) => `- \`${source}\``).join("\n")
 		: "- No standard orientation documents or decision directories were observed."
-	return `# Project-local knowledge index\n\nThis small entry map was created from files observed in this workspace. It records paths, not semantic approval or current correctness.\n\n${packageName ? `Observed package identity: \`${packageName}\` in \`package.json\`.\n\n` : ""}## Existing orientation and constraint sources\n\n${sources}\n\n## Durable knowledge maintained by task finalization\n\n- Current workspace model: \`.wiki/intelligence/workspace-intelligence.json\` (project-local derived claims with provenance).\n- Human-readable model: \`.wiki/intelligence/workspace-intelligence.md\`.\n- Historical completion entries: \`.wiki/changelog.md\` (history, not current instructions).\n\nVerify current source, tests, runtime evidence, and explicit project instructions before treating a model entry as truth. Preserve unresolved conflicts for review.`
+	return `# Project-local knowledge index\n\nThis small entry map was created from files observed in this workspace. It records paths, not semantic approval or current correctness.\n\n${packageName ? `Observed package identity: \`${packageName}\` in \`package.json\`.\n\n` : ""}## Existing orientation and constraint sources\n\n${sources}\n\n## Durable knowledge maintained by task finalization\n\n- Current workspace model: \`.wiki/intelligence/workspace-intelligence.json\` (project-local derived claims with provenance).\n- Human-readable model: \`.wiki/intelligence/workspace-intelligence.md\`.\n- ADR lifecycle: \`.wiki/adr/lifecycle.json\` with generated views under \`.wiki/adr/managed/\`; registered states distinguish decisions from delivery and verification.\n- Incident register: \`.wiki/incidents/register.json\`; append-only events: \`.wiki/incidents/events.jsonl\`; generated postmortems under \`.wiki/incidents/records/\`.\n- Source-to-knowledge map: \`.wiki/knowledge/source-map.json\`.\n- Historical completion entries: \`.wiki/changelog.md\` (history, not current instructions).\n\nLegacy ADR documents outside the lifecycle registry are unregistered claims until reviewed. Verify current source, tests, runtime evidence, and explicit project instructions before treating a model entry as truth. Preserve unresolved conflicts for review.`
 }
 
 function buildBootstrapPlaybook(): string {
-	return `# Project knowledge handoff\n\nThis page was created only when the project had no agent playbook. It points future sessions to project-local evidence and the existing task finalization path.\n\n- Start with \`.wiki/index.md\`, root \`AGENTS.md\` when present, and the orientation source relevant to the task.\n- Load only task-relevant guides and decisions; do not copy the whole wiki into the prompt.\n- Treat model facts as dated claims. Check their evidence paths, confidence, and lifecycle against current source, tests, runtime evidence, and project instructions.\n- Classify documentation drift, implementation regression, stale tests, invariant violations, and insufficient evidence. Do not silently choose a winner.\n- After substantive work, use the existing completion finalizer to update project-local \`.wiki\` records. Keep decisions, evidence, and history in their existing project surfaces.\n\nThe task runtime refreshes this entry on later sessions without replacing human-authored files.`
+	return `# Project knowledge handoff\n\nThis page was created only when the project had no agent playbook. It points future sessions to project-local evidence and the existing task finalization path.\n\n- Start with \`.wiki/index.md\`, root \`AGENTS.md\` when present, and the orientation source relevant to the task.\n- Load only task-relevant guides, active ADRs, and relevant open incidents; do not copy the whole wiki or history into the prompt.\n- Treat \`.wiki/adr/lifecycle.json\` and \`.wiki/incidents/register.json\` as the project-local lifecycle authorities; their Markdown views are generated. Legacy ADR files remain unregistered until explicitly curated.\n- Keep decision status separate from implementation delivery and verification evidence. Do not accept, supersede, or verify a decision without its required authority/evidence.\n- Keep incident observations append-only. Record follow-ups in the register and do not close incidents until required actions and closure evidence are complete.\n- Treat model facts as dated claims. Check their evidence paths, confidence, and lifecycle against current source, tests, runtime evidence, and project instructions.\n- Classify documentation drift, implementation regression, stale tests, invariant violations, and insufficient evidence. Do not silently choose a winner.\n- After substantive work, use the existing completion finalizer to update project-local \`.wiki\` records. Keep decisions, evidence, and history in their existing project surfaces.\n\nThe task runtime refreshes this entry on later sessions without replacing human-authored files.`
 }
 
 function summarizeIndex(text: string): string {

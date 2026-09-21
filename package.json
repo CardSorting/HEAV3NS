@@ -459,6 +459,8 @@
 		"baseline:update": "node --import tsx src/index.ts --baseline",
 		"guardrail": "node --import tsx scripts/validate-repo.ts",
 		"validate:adr": "node --import tsx scripts/validate-adr-workspace.ts",
+		"validate:project-knowledge": "node --import tsx scripts/validate-project-knowledge.ts",
+		"knowledge:bootstrap": "node --import tsx scripts/validate-project-knowledge.ts --bootstrap",
 		"validate:cache": "node --import tsx scripts/validate-prompt-cache.ts",
 		"token:add": "node --import tsx scripts/add-token.ts",
 		"login": "node --import tsx scripts/login.ts",

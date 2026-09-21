@@ -196,7 +196,8 @@ export class WorkspaceIntelligenceEngine {
 				id: "historical.decision-ledger",
 				category: "historical",
 				title: "Decision ledger available",
-				summary: "Architectural rationale should be preserved in DECISIONS.md or ADR entries rather than buried in chat.",
+				summary:
+					"Legacy DECISIONS.md exists; its entries are unregistered claims that require reconciliation with the project-local ADR lifecycle.",
 				evidence: ["DECISIONS.md"],
 				confidence: "confirmed",
 				source: "documentation",
@@ -824,17 +825,17 @@ async function buildFacts(
 			id: `fact-adr-${sanitizeId(dec.id)}`,
 			type: "architecture_decision",
 			value: dec,
-			confidence: "confirmed",
+			confidence: "needs_verification",
 			provenance: [
 				{
 					type: "adr",
 					path: "DECISIONS.md",
 					ref: dec.id,
-					description: `Architectural Decision Record ${dec.id} parsed from DECISIONS.md.`,
+					description: `Legacy architectural decision ${dec.id} was parsed from DECISIONS.md; it is not a lifecycle-managed authority record.`,
 					timestamp: input.timestamp,
 				},
 			],
-			lifecycle: "active",
+			lifecycle: "disputed",
 			lastUpdated: input.timestamp,
 		})
 	}
@@ -1130,7 +1131,7 @@ async function parseArchitectureDecisions(cwd: string): Promise<Array<{ id: stri
 	if (!decisionsText) return []
 
 	const decisions: Array<{ id: string; title: string; status: string }> = []
-	const sections = decisionsText.split(/\n##\s+/)
+	const sections = decisionsText.split(/(?:^|\n)##\s+/)
 	for (const section of sections) {
 		const match = section.match(/^(ADR-\d+):\s*([^\n]+)/)
 		if (match) {
