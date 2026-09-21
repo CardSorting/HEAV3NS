@@ -377,6 +377,26 @@ export function isTaskLifecycleEvent(value: unknown): value is TaskLifecycleEven
 	)
 }
 
+/** Rebuilds the record projection committed by an event in the lifecycle journal. */
+export function taskLifecycleRecordFromEvent(value: unknown): TaskLifecycleRecord | undefined {
+	if (!isTaskLifecycleEvent(value)) return undefined
+	const record: TaskLifecycleRecord = {
+		schemaVersion: value.schemaVersion,
+		taskId: value.taskId,
+		generationId: value.committed.generationId,
+		lifecycleRevision: value.committed.lifecycleRevision,
+		state: value.committed.state,
+		terminalOutcome: value.committed.terminalOutcome,
+		cancellation: value.committed.cancellation,
+		cause: value.cause,
+		parent: value.parent,
+		lastEventId: value.eventId,
+		committedAt: value.committedAt,
+		monotonicSequence: value.monotonicSequence,
+	}
+	return isTaskLifecycleRecord(record) ? record : undefined
+}
+
 /** Proves that a restored event is the exact immutable event referenced by a record. */
 export function isTaskLifecycleEventForRecord(event: unknown, record: TaskLifecycleRecord): event is TaskLifecycleEvent {
 	if (!isTaskLifecycleEvent(event)) return false

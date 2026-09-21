@@ -256,6 +256,8 @@ export class Task {
 
 	taskState: TaskState
 	private taskRuntimeReady = false
+	/** Retains the first start promise so a retried RPC cannot append/run the task twice. */
+	private initialTaskStartPromise?: Promise<void>
 
 	/** True while initiateTaskLoop is running (prevents parallel agent loops). */
 	private taskLoopActive = false
@@ -1312,6 +1314,10 @@ export class Task {
 		return this.requireLifecycleCommit(result, "New task activation").record
 	}
 
+	public async prepareNewTaskLifecycle(): Promise<void> {
+		await this.activateNewTaskLifecycle()
+	}
+
 	private async prepareResumeLifecycle(): Promise<TaskLifecycleRecord> {
 		const authority = this.lifecycleAuthority()
 		let record = await authority.restore(this.taskState, this.taskId)
@@ -1457,8 +1463,20 @@ export class Task {
 		).record
 	}
 
-	public async startTask(task?: string, images?: string[], files?: string[]): Promise<void> {
-		await this.activateNewTaskLifecycle()
+	public startTask(task?: string, images?: string[], files?: string[], lifecyclePrepared = false): Promise<void> {
+		if (!this.initialTaskStartPromise) {
+			this.initialTaskStartPromise = this.startTaskInternal(task, images, files, lifecyclePrepared)
+		}
+		return this.initialTaskStartPromise
+	}
+
+	private async startTaskInternal(
+		task?: string,
+		images?: string[],
+		files?: string[],
+		lifecyclePrepared = false,
+	): Promise<void> {
+		if (!lifecyclePrepared) await this.activateNewTaskLifecycle()
 		if (process.env.E2E_TEST === "true" || this.stateManager.getGlobalSettingsKey("yoloModeToggled")) {
 			await this.controller.toggleActModeForYoloMode()
 		} else {

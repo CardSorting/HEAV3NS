@@ -22,10 +22,11 @@ import {
 	isTaskLifecycleRecord,
 	TASK_LIFECYCLE_SCHEMA_VERSION,
 } from "@shared/lifecycle/taskLifecycleEvent"
+import { Logger } from "@/shared/services/Logger"
 import type { TaskState } from "../TaskState"
 import {
-	InMemoryTaskLifecyclePersistence,
 	BroccoliTaskLifecyclePersistence,
+	InMemoryTaskLifecyclePersistence,
 	type TaskLifecyclePersistence,
 } from "./TaskLifecyclePersistence"
 
@@ -172,7 +173,9 @@ export class TaskLifecycleFunnel {
 			// Parent settlement and child settlement are separate generation-bound
 			// commits. Replaying propagation on restore closes the process-crash
 			// window without inventing state or publishing an uncommitted event.
-			await this.propagateToAttachedChildren(record, event)
+			await this.propagateToAttachedChildren(record, event).catch((error) => {
+				Logger.warn(`[TaskLifecycleFunnel] Parent propagation retry deferred for '${taskId}':`, error)
+			})
 		}
 		return record
 	}
@@ -419,42 +422,48 @@ export class TaskLifecycleFunnel {
 		const expectation = current
 			? { generationId: current.generationId, lifecycleRevision: current.lifecycleRevision }
 			: { absent: true as const }
+		let committed: Awaited<ReturnType<TaskLifecyclePersistence["commit"]>>
 		try {
-			const committed = await this.persistence.commit(expectation, transition.record, transition.event)
-			if (committed.kind === "duplicate_intent") {
-				return rejected(
-					"duplicate_intent",
-					`Lifecycle intent '${intent.intentId}' was already committed as '${committed.event.eventId}'.`,
-					committed.record,
-				)
-			}
-			if (committed.kind === "compare_and_swap_failed") {
-				return rejected(
-					"compare_and_swap_failed",
-					"The authoritative lifecycle revision changed before this transition could commit.",
-					committed.current,
-				)
-			}
-			if (committed.kind === "constraint_failed") {
-				return rejected("parent_constraint", committed.reason, committed.current)
-			}
-
-			const record = immutable(committed.record)
-			const event = immutable(committed.event)
-			this.authoritativeRecords.set(record.taskId, record)
-			if (taskState) this.project(taskState, record, event)
-			for (const listener of this.listeners) {
-				try {
-					await listener(event)
-				} catch {
-					// Publication consumers cannot roll back or reinterpret a commit.
-				}
-			}
-			await this.propagateToAttachedChildren(record, event)
-			return { kind: "committed", record, event }
+			committed = await this.persistence.commit(expectation, transition.record, transition.event)
 		} catch (error) {
 			return rejected("persistence_failed", `Lifecycle commit failed: ${String(error)}`, current)
 		}
+		if (committed.kind === "duplicate_intent") {
+			return rejected(
+				"duplicate_intent",
+				`Lifecycle intent '${intent.intentId}' was already committed as '${committed.event.eventId}'.`,
+				committed.record,
+			)
+		}
+		if (committed.kind === "compare_and_swap_failed") {
+			return rejected(
+				"compare_and_swap_failed",
+				"The authoritative lifecycle revision changed before this transition could commit.",
+				committed.current,
+			)
+		}
+		if (committed.kind === "constraint_failed") {
+			return rejected("parent_constraint", committed.reason, committed.current)
+		}
+
+		const record = immutable(committed.record)
+		const event = immutable(committed.event)
+		this.authoritativeRecords.set(record.taskId, record)
+		if (taskState) this.project(taskState, record, event)
+		for (const listener of this.listeners) {
+			try {
+				await listener(event)
+			} catch {
+				// Publication consumers cannot roll back or reinterpret a commit.
+			}
+		}
+		await this.propagateToAttachedChildren(record, event).catch((error) => {
+			Logger.warn(
+				`[TaskLifecycleFunnel] Parent propagation deferred after '${event.eventId}' committed for '${record.taskId}':`,
+				error,
+			)
+		})
+		return { kind: "committed", record, event }
 	}
 
 	private evaluate(
@@ -757,11 +766,16 @@ export class TaskLifecycleFunnel {
 							originatingEventId: event.eventId,
 						},
 					})
-					if (request.kind === "rejected") continue
+					if (request.kind === "rejected") {
+						Logger.warn(
+							`[TaskLifecycleFunnel] Parent cancellation was not propagated to child '${current.taskId}': ${request.reason}`,
+						)
+						continue
+					}
 					current = request.record
 				}
 				if (record.terminalOutcome === "cancelled" && current.cancellation.status === "requested") {
-					await this.submit(taskState, {
+					const settlement = await this.submit(taskState, {
 						type: "SettleCancellation",
 						intentId: createTaskLifecycleIntentId(),
 						taskId: current.taskId,
@@ -772,11 +786,16 @@ export class TaskLifecycleFunnel {
 							originatingEventId: event.eventId,
 						},
 					})
+					if (settlement.kind === "rejected") {
+						Logger.warn(
+							`[TaskLifecycleFunnel] Parent cancellation settlement was not propagated to child '${current.taskId}': ${settlement.reason}`,
+						)
+					}
 				}
 				continue
 			}
 			if (record.terminalOutcome === "failed" || record.terminalOutcome === "timed_out") {
-				await this.submit(taskState, {
+				const termination = await this.submit(taskState, {
 					type: "PropagateParentTermination",
 					intentId: createTaskLifecycleIntentId(),
 					taskId: child.taskId,
@@ -789,6 +808,11 @@ export class TaskLifecycleFunnel {
 						originatingEventId: event.eventId,
 					},
 				})
+				if (termination.kind === "rejected") {
+					Logger.warn(
+						`[TaskLifecycleFunnel] Parent termination was not propagated to child '${child.taskId}': ${termination.reason}`,
+					)
+				}
 			}
 		}
 	}

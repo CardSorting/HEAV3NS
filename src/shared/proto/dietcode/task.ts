@@ -24,7 +24,11 @@ export interface NewTaskRequest {
   text: string;
   images: string[];
   files: string[];
-  taskSettings?: Settings | undefined;
+  taskSettings?:
+    | Settings
+    | undefined;
+  /** Stable client key used to make task-start retries idempotent. */
+  requestId: string;
 }
 
 /** Request message for toggling task favorite status */
@@ -110,7 +114,7 @@ export interface ExplainChangesRequest {
 }
 
 function createBaseNewTaskRequest(): NewTaskRequest {
-  return { metadata: undefined, text: "", images: [], files: [], taskSettings: undefined };
+  return { metadata: undefined, text: "", images: [], files: [], taskSettings: undefined, requestId: "" };
 }
 
 export const NewTaskRequest: MessageFns<NewTaskRequest> = {
@@ -129,6 +133,9 @@ export const NewTaskRequest: MessageFns<NewTaskRequest> = {
     }
     if (message.taskSettings !== undefined) {
       Settings.encode(message.taskSettings, writer.uint32(42).fork()).join();
+    }
+    if (message.requestId !== "") {
+      writer.uint32(50).string(message.requestId);
     }
     return writer;
   },
@@ -186,6 +193,14 @@ export const NewTaskRequest: MessageFns<NewTaskRequest> = {
             message.taskSettings = Settings.decode(reader, reader.uint32());
             continue;
           }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
+
+            message.requestId = reader.string();
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -209,6 +224,11 @@ export const NewTaskRequest: MessageFns<NewTaskRequest> = {
         : isSet(object.task_settings)
         ? Settings.fromJSON(object.task_settings)
         : undefined,
+      requestId: isSet(object.requestId)
+        ? globalThis.String(object.requestId)
+        : isSet(object.request_id)
+        ? globalThis.String(object.request_id)
+        : "",
     };
   },
 
@@ -229,6 +249,9 @@ export const NewTaskRequest: MessageFns<NewTaskRequest> = {
     if (message.taskSettings !== undefined) {
       obj.taskSettings = Settings.toJSON(message.taskSettings);
     }
+    if (message.requestId !== "") {
+      obj.requestId = message.requestId;
+    }
     return obj;
   },
 
@@ -246,6 +269,7 @@ export const NewTaskRequest: MessageFns<NewTaskRequest> = {
     message.taskSettings = (object.taskSettings !== undefined && object.taskSettings !== null)
       ? Settings.fromPartial(object.taskSettings)
       : undefined;
+    message.requestId = object.requestId ?? "";
     return message;
   },
 };

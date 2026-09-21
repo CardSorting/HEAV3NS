@@ -57,6 +57,7 @@ export interface IController {
 		historyItem?: HistoryItem,
 		taskSettings?: Partial<Settings>,
 		initialTaskState?: Partial<TaskState>,
+		requestId?: string,
 	): Promise<string>
 	cancelTask(): Promise<void>
 	clearTask(): Promise<void>

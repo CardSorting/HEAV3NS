@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import type { Anthropic } from "@anthropic-ai/sdk"
 import { buildApiHandler } from "@core/api"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
@@ -67,6 +68,14 @@ import { disposeAllPersistentSubscriptionHubs } from "./persistent-subscription-
 import { sendStateUpdate } from "./state/subscribeToState"
 import { sendChatButtonClickedEvent } from "./ui/subscribeToChatButtonClicked"
 
+function normalizeTaskRequestId(requestId?: string): string | undefined {
+	return requestId && /^\d{10,16}-[a-f\d]{32}$/i.test(requestId) ? requestId : undefined
+}
+
+function createTaskId(): string {
+	return `${Date.now()}-${randomUUID()}`
+}
+
 /*
 https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
 
@@ -91,6 +100,8 @@ export class Controller implements IController {
 
 	/** Coalesces duplicate UI requests; lifecycle truth remains in TaskLifecycleFunnel. */
 	private activeCancellation?: Promise<void>
+	/** Coalesces retries carrying the same durable new-task request key. */
+	private readonly taskInitializationRequests = new Map<string, Promise<string>>()
 
 	// Timer for periodic remote config fetching
 	private remoteConfigTimer?: NodeJS.Timeout
@@ -297,7 +308,32 @@ export class Controller implements IController {
 		historyItem?: HistoryItem,
 		taskSettings?: Partial<Settings>,
 		initialTaskState?: Partial<TaskState>,
+		requestId?: string,
 	) {
+		const taskId = historyItem?.id || normalizeTaskRequestId(requestId) || createTaskId()
+		const pendingInitialization = this.taskInitializationRequests.get(taskId)
+		if (pendingInitialization) return pendingInitialization
+
+		const initialization = this.initializeTask(task, images, files, historyItem, taskSettings, initialTaskState, taskId)
+		this.taskInitializationRequests.set(taskId, initialization)
+		try {
+			return await initialization
+		} finally {
+			if (this.taskInitializationRequests.get(taskId) === initialization) {
+				this.taskInitializationRequests.delete(taskId)
+			}
+		}
+	}
+
+	private async initializeTask(
+		task: string | undefined,
+		images: string[] | undefined,
+		files: string[] | undefined,
+		historyItem: HistoryItem | undefined,
+		taskSettings: Partial<Settings> | undefined,
+		initialTaskState: Partial<TaskState> | undefined,
+		taskId: string,
+	): Promise<string> {
 		const autoApprovalSettings = this.stateManager.getGlobalSettingsKey("autoApprovalSettings")
 		const shellIntegrationTimeout = this.stateManager.getGlobalSettingsKey("shellIntegrationTimeout")
 		const terminalReuseEnabled = this.stateManager.getGlobalStateKey("terminalReuseEnabled")
@@ -305,6 +341,19 @@ export class Controller implements IController {
 		const defaultTerminalProfile = this.stateManager.getGlobalSettingsKey("defaultTerminalProfile")
 		const isNewUser = this.stateManager.getGlobalStateKey("isNewUser")
 		const taskHistory = this.stateManager.getGlobalStateKey("taskHistory")
+
+		// A retry with the same request id must continue through the existing task
+		// instance. Its lifecycle state may have committed even if the first RPC
+		// response was interrupted, so constructing another Task could duplicate
+		// the prompt or create a second generation.
+		if (!historyItem && this.task?.taskId === taskId) {
+			const existingTask = this.task
+			if (task || images || files) {
+				await existingTask.prepareNewTaskLifecycle()
+				this.launchInitialTask(existingTask, task, images, files)
+			}
+			return taskId
+		}
 
 		// Check if the user has completed enough tasks to no longer be considered a "new user"
 		if (isNewUser && !historyItem && taskHistory && taskHistory.length >= 3) {
@@ -327,8 +376,6 @@ export class Controller implements IController {
 		})
 
 		const cwd = this.workspaceManager?.getPrimaryRoot()?.path || (await getCwd(getDesktopDir()))
-
-		const taskId = historyItem?.id || Date.now().toString()
 
 		// Acquire task lock
 		let taskLockAcquired = false
@@ -353,7 +400,7 @@ export class Controller implements IController {
 			this.stateManager.setTaskSettingsBatch(taskId, taskSettings)
 		}
 
-		this.task = new Task({
+		const taskInstance = new Task({
 			controller: this,
 			mcpHub: this.mcpHub,
 			updateTaskHistory: (historyItem) => this.updateTaskHistory(historyItem),
@@ -375,14 +422,41 @@ export class Controller implements IController {
 			taskLockAcquired,
 			initialTaskState,
 		})
+		this.task = taskInstance
 
 		if (historyItem) {
-			this.task.resumeTaskFromHistory()
+			void taskInstance.resumeTaskFromHistory().catch((error) => this.reportTaskBootstrapFailure(taskId, "restore", error))
 		} else if (task || images || files) {
-			this.task.startTask(task, images, files)
+			// Await the lifecycle admission commit so persistence failures return
+			// through the task RPC. The potentially long model loop remains in the
+			// background after the task has been durably admitted.
+			await taskInstance.prepareNewTaskLifecycle()
+			this.launchInitialTask(taskInstance, task, images, files)
 		}
 
-		return this.task.taskId
+		return taskInstance.taskId
+	}
+
+	private launchInitialTask(task: Task, prompt?: string, images?: string[], files?: string[]): void {
+		void task
+			.startTask(prompt, images, files, true)
+			.catch((error) => this.reportTaskBootstrapFailure(task.taskId, "start", error))
+	}
+
+	private reportTaskBootstrapFailure(taskId: string, operation: "restore" | "start", error: unknown): void {
+		Logger.error(`[Task ${taskId}] Background task ${operation} failed:`, error)
+		const message =
+			operation === "restore"
+				? "This task could not be restored. Its saved conversation remains in task history; try opening it again after storage recovers."
+				: "Task startup stopped unexpectedly. Check task history before retrying so the request is not duplicated."
+		void Promise.resolve(HostProvider.window.showMessage({ type: ShowMessageType.ERROR, message })).catch(
+			(notificationError) => {
+				Logger.warn(`[Task ${taskId}] Could not show the task startup error:`, notificationError)
+			},
+		)
+		void this.postStateToWebview().catch((postError) => {
+			Logger.warn(`[Task ${taskId}] Could not refresh state after startup failure:`, postError)
+		})
 	}
 
 	async reinitExistingTaskFromId(taskId: string, initialState?: Partial<TaskState>) {

@@ -69,8 +69,14 @@ export interface ChatState {
  * Message handlers interface
  */
 export interface MessageHandlers {
+	sendError?: string
+	isSending: boolean
+	canRetrySend: boolean
 	executeButtonAction: (action: ButtonActionType, text?: string, images?: string[], files?: string[]) => Promise<void>
 	handleSendMessage: (text: string, images: string[], files: string[]) => Promise<void>
+	retryLastSend: () => Promise<void>
+	handleDraftChanged: () => void
+	clearSendError: () => void
 	handleTaskCloseButtonClick: () => void
 	startNewTask: () => Promise<void>
 }

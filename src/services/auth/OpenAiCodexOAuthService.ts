@@ -6,6 +6,10 @@ import { StateManager } from "@core/storage/StateManager"
 import { ExtensionRegistryInfo } from "@/registry"
 import { fetch as configuredFetch } from "@/shared/net"
 import { openExternal } from "@/utils/env"
+import {
+	writeOpenAiCodexOAuthCallbackResponse,
+	type OpenAiCodexOAuthCallbackPageState,
+} from "./openAiCodexOAuthCallbackPage"
 
 export const OPENAI_CODEX_OAUTH_CREDENTIALS_KEY = "openaiCodexOauthCredentials" as const
 
@@ -24,6 +28,8 @@ const OPENAI_CODEX_CLIENT_HEADERS = {
 const OPENAI_CODEX_CALLBACK_PATH = "/auth/callback"
 const OPENAI_CODEX_CALLBACK_PORTS = [1455, 1457] as const
 const OPENAI_CODEX_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000
+const OPENAI_CODEX_TOKEN_TIMEOUT_MS = 30 * 1000
+const OPENAI_CODEX_CALLBACK_FINISH_TIMEOUT_MS = 30 * 1000
 const OPENAI_CODEX_MODELS_TIMEOUT_MS = 5 * 1000
 const REFRESH_GRACE_PERIOD_MS = 60 * 1000
 
@@ -48,6 +54,7 @@ interface OAuthTokenResponse {
 interface CallbackServerHandle {
 	port: number
 	callback: Promise<string>
+	complete: () => void
 	cancel: (error: Error) => void
 }
 
@@ -285,13 +292,25 @@ async function exchangeAuthorizationCode(
 		code_verifier: verifier,
 	})
 
-	const response = await configuredFetch(OPENAI_CODEX_TOKEN_ENDPOINT, {
-		method: "POST",
-		headers: { ...OPENAI_CODEX_CLIENT_HEADERS, "Content-Type": "application/x-www-form-urlencoded" },
-		body,
-	})
+	const controller = new AbortController()
+	const timeout = setTimeout(() => controller.abort(), OPENAI_CODEX_TOKEN_TIMEOUT_MS)
+	try {
+		const response = await configuredFetch(OPENAI_CODEX_TOKEN_ENDPOINT, {
+			method: "POST",
+			headers: { ...OPENAI_CODEX_CLIENT_HEADERS, "Content-Type": "application/x-www-form-urlencoded" },
+			body,
+			signal: controller.signal,
+		})
 
-	return readTokenResponse(response)
+		return await readTokenResponse(response)
+	} catch (error) {
+		if (controller.signal.aborted) {
+			throw new Error("ChatGPT sign-in timed out before HEAV3NS could finish connecting.")
+		}
+		throw error
+	} finally {
+		clearTimeout(timeout)
+	}
 }
 
 export async function refreshOpenAiCodexOAuthCredentials(
@@ -316,68 +335,122 @@ export async function refreshOpenAiCodexOAuthCredentials(
 	return readTokenResponse(response, credentials)
 }
 
-function writeCallbackResponse(response: http.ServerResponse, statusCode: number, body: string): void {
-	response.statusCode = statusCode
-	response.setHeader("Content-Type", "text/html; charset=utf-8")
-	response.end(`<!doctype html><html><body><p>${body}</p></body></html>`)
-}
-
 async function bindCallbackServer(expectedState: string): Promise<CallbackServerHandle> {
 	for (const port of OPENAI_CODEX_CALLBACK_PORTS) {
 		try {
 			return await new Promise<CallbackServerHandle>((resolve, reject) => {
 				let settled = false
 				let timer: NodeJS.Timeout | undefined
+				let finishTimer: NodeJS.Timeout | undefined
+				let serverClosed = false
+				let awaitingCompletionPage = false
+				let finalPageState: OpenAiCodexOAuthCallbackPageState | undefined
+				let pendingResponse: http.ServerResponse | undefined
 				let resolveCallback!: (code: string) => void
 				let rejectCallback!: (error: Error) => void
+				let server: Server
+
+				const closeServer = () => {
+					if (serverClosed) return
+					serverClosed = true
+					if (timer) clearTimeout(timer)
+					if (finishTimer) clearTimeout(finishTimer)
+					server.close()
+				}
+
+				const redirectToCompletion = (
+					response: http.ServerResponse | undefined,
+					state: OpenAiCodexOAuthCallbackPageState,
+				) => {
+					finalPageState = state
+					const callbackResponse = response || pendingResponse
+					pendingResponse = undefined
+
+					if (!callbackResponse || callbackResponse.destroyed || callbackResponse.writableEnded) {
+					closeServer()
+					return
+					}
+
+					awaitingCompletionPage = true
+					callbackResponse.writeHead(303, {
+						"Cache-Control": "no-store, max-age=0",
+						"Location": `${OPENAI_CODEX_CALLBACK_PATH}/complete`,
+						"Referrer-Policy": "no-referrer",
+					})
+					callbackResponse.end()
+					finishTimer = setTimeout(() => closeServer(), OPENAI_CODEX_CALLBACK_FINISH_TIMEOUT_MS)
+					finishTimer.unref?.()
+				}
 
 				const callback = new Promise<string>((callbackResolve, callbackReject) => {
 					resolveCallback = callbackResolve
 					rejectCallback = callbackReject
 				})
 
-				const server: Server = http.createServer((request, response) => {
+				server = http.createServer((request, response) => {
 					if (request.method !== "GET") {
-						writeCallbackResponse(response, 405, "Method not allowed")
+						writeOpenAiCodexOAuthCallbackResponse(response, 405, "failed")
 						return
 					}
 
-					const requestUrl = new URL(request.url || "/", `http://localhost:${port}`)
+					let requestUrl: URL
+					try {
+						requestUrl = new URL(request.url || "/", `http://localhost:${port}`)
+					} catch {
+						writeOpenAiCodexOAuthCallbackResponse(response, 400, "invalid")
+						return
+					}
+
+					if (requestUrl.pathname === `${OPENAI_CODEX_CALLBACK_PATH}/complete`) {
+						if (!awaitingCompletionPage || !finalPageState) {
+							writeOpenAiCodexOAuthCallbackResponse(response, 404, "invalid")
+							return
+						}
+
+						awaitingCompletionPage = false
+						if (finishTimer) clearTimeout(finishTimer)
+						const statusCode = finalPageState === "success" ? 200 : finalPageState === "failed" ? 502 : 400
+						writeOpenAiCodexOAuthCallbackResponse(response, statusCode, finalPageState)
+						closeServer()
+						return
+					}
+
 					if (requestUrl.pathname !== OPENAI_CODEX_CALLBACK_PATH) {
-						writeCallbackResponse(response, 404, "Not found")
+						writeOpenAiCodexOAuthCallbackResponse(response, 404, "invalid")
+						return
+					}
+
+					if (settled) {
+						writeOpenAiCodexOAuthCallbackResponse(response, 409, "failed")
 						return
 					}
 
 					if (requestUrl.searchParams.get("state") !== expectedState) {
-						writeCallbackResponse(response, 400, "Invalid OAuth state")
+						writeOpenAiCodexOAuthCallbackResponse(response, 400, "invalid")
 						return
 					}
 
 					const oauthError = requestUrl.searchParams.get("error")
 					if (oauthError) {
-						writeCallbackResponse(response, 400, "OpenAI Codex sign-in was cancelled")
-						if (!settled) {
-							settled = true
-							if (timer) clearTimeout(timer)
-							server.close()
-							rejectCallback(new Error(`OpenAI Codex OAuth failed: ${oauthError}`))
-						}
+						settled = true
+						if (timer) clearTimeout(timer)
+						rejectCallback(
+							new Error(oauthError === "access_denied" ? "OpenAI Codex sign-in was cancelled" : "OpenAI Codex could not complete sign-in"),
+						)
+						redirectToCompletion(response, oauthError === "access_denied" ? "cancelled" : "failed")
 						return
 					}
 
 					const code = requestUrl.searchParams.get("code")
 					if (!code) {
-						writeCallbackResponse(response, 400, "Missing OAuth authorization code")
+						writeOpenAiCodexOAuthCallbackResponse(response, 400, "invalid")
 						return
 					}
 
-					writeCallbackResponse(response, 200, "OpenAI Codex sign-in complete. You can return to LUMI.")
-					if (!settled) {
-						settled = true
-						if (timer) clearTimeout(timer)
-						server.close()
-						resolveCallback(code)
-					}
+					settled = true
+					if (timer) clearTimeout(timer)
+					pendingResponse = response
+					resolveCallback(code)
 				})
 
 				const onServerError = (error: NodeJS.ErrnoException) => {
@@ -390,7 +463,7 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 					timer = setTimeout(() => {
 						if (settled) return
 						settled = true
-						server.close()
+						closeServer()
 						rejectCallback(new Error("Timed out waiting for OpenAI Codex sign-in."))
 					}, OPENAI_CODEX_CALLBACK_TIMEOUT_MS)
 					timer.unref?.()
@@ -398,12 +471,18 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 					resolve({
 						port,
 						callback,
+						complete: () => redirectToCompletion(undefined, "success"),
 						cancel: (error) => {
-							if (settled) return
-							settled = true
-							if (timer) clearTimeout(timer)
-							server.close()
-							rejectCallback(error)
+							if (!settled) {
+								settled = true
+								if (timer) clearTimeout(timer)
+								rejectCallback(error)
+							}
+							if (pendingResponse) {
+								redirectToCompletion(undefined, "failed")
+							} else if (!awaitingCompletionPage) {
+								closeServer()
+							}
 						},
 					})
 				})
@@ -528,6 +607,7 @@ export class OpenAiCodexOAuthService {
 			credentialRefreshInFlight = undefined
 			StateManager.get().setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(credentials))
 			await StateManager.get().flushPendingState()
+			callbackServer.complete()
 		} catch (error) {
 			callbackServer.cancel(error instanceof Error ? error : new Error(String(error)))
 			throw error

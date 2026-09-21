@@ -1,7 +1,7 @@
 import type { DietCodeMessage } from "@shared/ExtensionMessage"
 import { EmptyRequest, StringRequest } from "@shared/proto/dietcode/common"
 import { AskResponseRequest, NewTaskRequest } from "@shared/proto/dietcode/task"
-import { useCallback, useMemo, useRef } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client"
 import type { ButtonActionType } from "../shared/buttonConfig"
@@ -14,6 +14,9 @@ import type { ChatState, MessageHandlers } from "../types/chatTypes"
  */
 export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatState): MessageHandlers {
 	const { backgroundCommandRunning, currentTaskItem } = useExtensionState()
+	const [sendError, setSendError] = useState<string>()
+	const [isSending, setIsSending] = useState(false)
+	const [canRetrySend, setCanRetrySend] = useState(false)
 	const messagesRef = useRef(messages)
 	messagesRef.current = messages
 	const chatStateRef = useRef(chatState)
@@ -23,9 +26,32 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 	const taskIdRef = useRef(currentTaskItem?.id)
 	taskIdRef.current = currentTaskItem?.id
 	const cancelInFlightRef = useRef(false)
+	const sendInFlightRef = useRef(false)
+	const pendingNewTaskRequestIdRef = useRef<string>()
+	const failedSendRef = useRef<{ text: string; images: string[]; files: string[] }>()
+
+	const handleDraftChanged = useCallback(() => {
+		pendingNewTaskRequestIdRef.current = undefined
+		failedSendRef.current = undefined
+		setSendError(undefined)
+		setCanRetrySend(false)
+	}, [])
+	const clearSendError = useCallback(() => setSendError(undefined), [])
+
+	const getNewTaskRequestId = useCallback(() => {
+		if (!pendingNewTaskRequestIdRef.current) {
+			const bytes = new Uint8Array(16)
+			if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes)
+			else bytes.forEach((_, index) => (bytes[index] = Math.floor(Math.random() * 256)))
+			const nonce = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
+			pendingNewTaskRequestIdRef.current = `${Date.now()}-${nonce}`
+		}
+		return pendingNewTaskRequestIdRef.current
+	}, [])
 
 	// Handle sending a message
 	const handleSendMessage = useCallback(async (text: string, images: string[], files: string[]) => {
+		if (sendInFlightRef.current) return
 		const currentChatState = chatStateRef.current
 		const currentMessages = messagesRef.current
 		const activeQuote = currentChatState.activeQuote
@@ -42,14 +68,21 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 			messageToSend = `${prefix} ${formattedQuote} ${suffix} ${messageToSend}`
 		}
 
-		if (hasContent) {
-			const sendRoute = resolveChatSendRoute(currentMessages, dietcodeAsk, sendRouteOptions)
+		if (!hasContent) return
+		sendInFlightRef.current = true
+		setIsSending(true)
+		setSendError(undefined)
+		setCanRetrySend(false)
+		let sendRoute: ReturnType<typeof resolveChatSendRoute> | undefined
+		try {
+			sendRoute = resolveChatSendRoute(currentMessages, dietcodeAsk, sendRouteOptions)
 			console.log("[ChatView] handleSendMessage - route:", sendRoute, messageToSend)
 			let messageSent = false
 
 			if (sendRoute === "new_task") {
 				await TaskServiceClient.newTask(
 					NewTaskRequest.create({
+						requestId: getNewTaskRequestId(),
 						text: messageToSend,
 						images,
 						files,
@@ -57,8 +90,6 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 				)
 				messageSent = true
 			} else if (sendRoute === "ask") {
-				// For resume_task and resume_completed_task, use yesButtonClicked to match Resume button behavior
-				// This ensures Enter key and Resume button work identically
 				if (dietcodeAsk === "resume_task" || dietcodeAsk === "resume_completed_task") {
 					await TaskServiceClient.askResponse(
 						AskResponseRequest.create({
@@ -70,7 +101,6 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 					)
 					messageSent = true
 				} else {
-					// All other ask types use messageResponse
 					switch (dietcodeAsk) {
 						case "followup":
 						case "plan_mode_respond":
@@ -115,7 +145,6 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 				})
 			}
 
-			// Only clear input and disable UI if message was actually sent
 			if (messageSent) {
 				const isFollowUpMessage = sendRoute === "follow_up"
 				currentChatState.setInputValue("")
@@ -127,15 +156,47 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 				}
 				currentChatState.setSelectedImages([])
 				currentChatState.setSelectedFiles([])
+				failedSendRef.current = undefined
+				pendingNewTaskRequestIdRef.current = undefined
+				setCanRetrySend(false)
+			} else {
+				throw new Error("No active route can accept this message.")
 			}
+		} catch (error) {
+			console.error("[ChatView] Message submission failed:", error)
+			failedSendRef.current = { text, images, files }
+			setCanRetrySend(true)
+			setSendError(
+				sendRoute === "new_task"
+					? "Couldn't start this task. Your draft and attachments are still here. Try again."
+					: "Couldn't send this message. Your draft and attachments are still here. Try again.",
+			)
+		} finally {
+			sendInFlightRef.current = false
+			setIsSending(false)
 		}
-	}, [])
+	}, [getNewTaskRequestId])
+
+	const retryLastSend = useCallback(async () => {
+		const failedSend = failedSendRef.current
+		if (failedSend) await handleSendMessage(failedSend.text, failedSend.images, failedSend.files)
+	}, [handleSendMessage])
 
 	// Start a new task
 	const startNewTask = useCallback(async () => {
 		chatStateRef.current.setActiveQuote(null)
 		chatStateRef.current.setPendingQuote(null)
-		await TaskServiceClient.clearTask(EmptyRequest.create({}))
+		try {
+			await TaskServiceClient.clearTask(EmptyRequest.create({}))
+			pendingNewTaskRequestIdRef.current = undefined
+			failedSendRef.current = undefined
+			setSendError(undefined)
+			setCanRetrySend(false)
+		} catch (error) {
+			console.error("[ChatView] Failed to clear the current task:", error)
+			setSendError("Couldn't open a new task. Your current conversation is still available; try again.")
+			setCanRetrySend(false)
+		}
 	}, [])
 
 	// Clear input state helper
@@ -146,6 +207,10 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 		currentChatState.setPendingQuote(null)
 		currentChatState.setSelectedImages([])
 		currentChatState.setSelectedFiles([])
+		pendingNewTaskRequestIdRef.current = undefined
+		failedSendRef.current = undefined
+		setSendError(undefined)
+		setCanRetrySend(false)
 	}, [])
 
 	// Execute button action based on type
@@ -157,7 +222,8 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 			const trimmedInput = text?.trim()
 			const hasContent = trimmedInput || (images && images.length > 0) || (files && files.length > 0)
 
-			switch (actionType) {
+			try {
+				switch (actionType) {
 				case "retry":
 					// For API retry (api_req_failed), always send simple approval without content
 					await TaskServiceClient.askResponse(
@@ -231,11 +297,15 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 					if (dietcodeAsk === "new_task") {
 						await TaskServiceClient.newTask(
 							NewTaskRequest.create({
+								requestId: getNewTaskRequestId(),
 								text: lastMessage?.text,
 								images: [],
 								files: [],
 							}),
 						)
+						pendingNewTaskRequestIdRef.current = undefined
+						setSendError(undefined)
+						setCanRetrySend(false)
 					} else {
 						await startNewTask()
 					}
@@ -278,9 +348,14 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 							break
 					}
 					break
+				}
+			} catch (error) {
+				console.error(`[ChatView] Button action '${actionType}' failed:`, error)
+				setSendError("Couldn't complete that action. You can retry it from the same task controls.")
+				setCanRetrySend(false)
 			}
 		},
-		[clearInputState, startNewTask],
+		[clearInputState, getNewTaskRequestId, startNewTask],
 	)
 
 	// Handle task close button click
@@ -290,11 +365,28 @@ export function useMessageHandlers(messages: DietCodeMessage[], chatState: ChatS
 
 	return useMemo(
 		() => ({
+			sendError,
+			isSending,
+			canRetrySend,
 			handleSendMessage,
 			executeButtonAction,
+			retryLastSend,
+			handleDraftChanged,
+			clearSendError,
 			handleTaskCloseButtonClick,
 			startNewTask,
 		}),
-		[handleSendMessage, executeButtonAction, handleTaskCloseButtonClick, startNewTask],
+		[
+			sendError,
+			isSending,
+			canRetrySend,
+			handleSendMessage,
+			executeButtonAction,
+			retryLastSend,
+			handleDraftChanged,
+			clearSendError,
+			handleTaskCloseButtonClick,
+			startNewTask,
+		],
 	)
 }
