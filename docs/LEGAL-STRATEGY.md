@@ -38,6 +38,9 @@ relicense a nested component.
   `Signed-off-by:` trailer.
 - Source and dependency provenance is recorded in
   [`.wiki/ip/SOURCE-PROVENANCE.md`](../.wiki/ip/SOURCE-PROVENANCE.md).
+- The machine-readable release manifest and `npm run provenance:check` fail
+  closed on unresolved historical source markers and external attributions;
+  no environment variable or package flag bypasses that decision.
 - The local BroccoliDB dependency is pinned to a reviewed Git commit rather
   than an unresolvable sibling-directory path.
 - Third-party terms remain separate. A project-wide Apache label never

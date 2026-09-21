@@ -3,6 +3,8 @@ interface MockTerminalOptions {
 	name?: string
 }
 
+const mockTerminals: unknown[] = []
+
 export const env = {
 	machineId: "test-machine-id",
 	isTelemetryEnabled: true,
@@ -37,6 +39,10 @@ export const workspace = {
 
 // Export other commonly used VSCode API mocks as needed
 export const window = {
+	terminals: mockTerminals,
+	onDidCloseTerminal: (_callback: (terminal: unknown) => void) => ({
+		dispose: () => {},
+	}),
 	showErrorMessage: (_message: string) => Promise.resolve(),
 	showWarningMessage: (_message: string) => Promise.resolve(),
 	showInformationMessage: (_message: string) => Promise.resolve(),
@@ -107,6 +113,7 @@ export const window = {
 				}),
 			},
 		}
+		mockTerminals.push(term)
 		return term
 	},
 	onDidChangeTerminalState: (_callback: (terminal: unknown) => unknown) => ({

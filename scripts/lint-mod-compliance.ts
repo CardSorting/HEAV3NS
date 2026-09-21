@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 export interface BannedPattern {
 	pattern: RegExp
@@ -74,7 +75,9 @@ export function runMoDComplianceCheck(targetDir: string): { totalFilesScanned: n
 }
 
 // CLI Execution Entry Point
-if (require.main === module || process.argv[1]?.endsWith("lint-mod-compliance.ts")) {
+const isMainModule = process.argv[1] ? path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) : false
+
+if (isMainModule) {
 	const targetDirs = process.argv.slice(2).length > 0 ? process.argv.slice(2) : ["webview-ui/src"]
 	console.log(`🔍 [MoD Compliance Linter] Scanning directories: ${targetDirs.join(", ")}...`)
 

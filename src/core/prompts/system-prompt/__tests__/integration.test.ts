@@ -20,6 +20,7 @@
 
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
+import { fileURLToPath } from "node:url"
 import { expect } from "chai"
 import type { McpHub } from "@/services/mcp/McpHub"
 import { ModelFamily } from "@/shared/prompts"
@@ -31,6 +32,7 @@ import type { SystemPromptContext } from "../types"
 // ============================================================================
 
 const UPDATE_SNAPSHOTS = process.argv.includes("--update-snapshots") || process.env.UPDATE_SNAPSHOTS === "true"
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const SNAPSHOTS_DIR = path.join(__dirname, "__snapshots__")
 const TEST_TIMEOUT = 30000
 const MAX_DIFF_LINES = 10

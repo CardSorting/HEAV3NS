@@ -1,0 +1,68 @@
+{
+	"documentId": "IP-2026-09-21-LUMI-SOURCE-RELEASE-MANIFEST-01",
+	"schemaVersion": 1,
+	"reviewedAt": "2026-09-21",
+	"releaseStatus": "blocked",
+	"releaseDecision": "deny",
+	"policy": {
+		"unknownProvenance": "deny",
+		"missingLicenseEvidence": "deny",
+		"unverifiedMaterialTreatment": "exclude-or-clear-before-distribution",
+		"noImplicitRelicense": true
+	},
+	"knownSurfaces": [
+		{
+			"id": "historical-codemarie-migrations",
+			"scope": "production source files under src/**",
+			"status": "unverified",
+			"observedEvidence": [
+				"Production source comments identify material as lifted or absorbed from packages/codemarie or external source workspace/codemarie-new.",
+				"The referenced source workspace and its applicable file-level notices are not present in this repository."
+			],
+			"requiredEvidence": [
+				"The exact upstream repository, commit, and affected-file mapping.",
+				"The governing license and all required notices for each affected file.",
+				"A copyright/chain-of-title or permission record covering redistribution and any Apache-2.0 treatment."
+			],
+			"releaseTreatment": "do-not-distribute-until-cleared"
+		},
+		{
+			"id": "external-locale-attribution",
+			"scope": "locales/**",
+			"status": "unverified",
+			"observedEvidence": [
+				"Localized README files attribute Apache 2.0 material to Cline Bot Inc.",
+				"The corresponding source license and permission record are not present in the localized directories."
+			],
+			"requiredEvidence": [
+				"The source repository and exact revision for each translation.",
+				"The applicable license and complete attribution/notice set.",
+				"Permission or a documented compatible license for redistribution in this repository."
+			],
+			"releaseTreatment": "do-not-distribute-until-cleared"
+		}
+	],
+	"clearedSurfaces": [
+		{
+			"scope": "src/core/joyride/**",
+			"license": "MIT",
+			"evidence": "src/core/joyride/LICENSE",
+			"status": "preserve-file-license"
+		},
+		{
+			"scope": "@noorm/broccolidb",
+			"license": "Apache-2.0",
+			"evidence": "reviewed commit pin and dependency notices recorded by license:check",
+			"status": "dependency-boundary-controlled"
+		}
+	],
+	"humanResolution": {
+		"owner": "unassigned",
+		"decision": "required-before-release",
+		"acceptableResolutions": [
+			"attach verifiable upstream license and permission evidence, then update this manifest and preserve notices",
+			"replace or remove the affected material and record the replacement provenance",
+			"quarantine the affected material outside every release artifact"
+		]
+	}
+}

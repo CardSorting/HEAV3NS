@@ -2,7 +2,13 @@
 
 **Document ID:** `IP-2026-09-21-LUMI-PROVENANCE-01`
 
-**Status:** maintained engineering record; review before every release
+**Status:** release-blocked; human evidence review required before distribution
+
+The machine-readable release decision is recorded in
+[`SOURCE-RELEASE-MANIFEST.json`](./SOURCE-RELEASE-MANIFEST.json). The
+repository deliberately fails `npm run provenance:check` while any listed
+surface remains unverified. This is an engineering control, not a legal
+finding or a substitute for a rights holder's permission.
 
 ## First-party repository record
 

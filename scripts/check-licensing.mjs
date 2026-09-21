@@ -30,6 +30,7 @@ for (const relativePath of [
 	"LICENSE-MAP.md",
 	".wiki/ip/CLAIM-REGISTER.md",
 	".wiki/ip/SOURCE-PROVENANCE.md",
+	".wiki/ip/SOURCE-RELEASE-MANIFEST.json",
 	"src/core/joyride/LICENSE",
 ]) requireFile(relativePath)
 
@@ -66,6 +67,7 @@ if (!noticeText.includes("informational") || !noticeText.includes("Apache Licens
 for (const relativePath of [
 	"scripts/check-dco.mjs",
 	"scripts/check-ip-claims.mjs",
+	"scripts/check-provenance.mjs",
 	"scripts/check-licensing.mjs",
 	"scripts/check-package-boundary.mjs",
 ]) {

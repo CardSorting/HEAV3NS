@@ -1,4 +1,4 @@
-import { machineId } from "node-machine-id"
+import nodeMachineId from "node-machine-id"
 import { v4 as uuidv4 } from "uuid"
 import { HostRegistryInfo } from "@/registry"
 import { Logger } from "@/shared/services/Logger"
@@ -46,7 +46,7 @@ async function getMachineId(): Promise<string | undefined> {
 	try {
 		// Get the machine ID using node-machine-id package
 		// This provides a deterministic ID across different operating systems
-		const id = await machineId()
+		const id = await nodeMachineId.machineId()
 		return id
 	} catch (error) {
 		Logger.log("[DistinctId] Failed to get machine ID from node-machine-id", error)

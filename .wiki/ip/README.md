@@ -8,6 +8,8 @@ opinions, ownership assignments, or additional license grants.
   technical statements.
 - [Source provenance](SOURCE-PROVENANCE.md) — first-party, dependency, and
   migration records.
+- [Source release manifest](SOURCE-RELEASE-MANIFEST.json) — machine-readable
+  fail-closed distribution decision and required clearance evidence.
 - [Invention disclosure](INVENTION-DISCLOSURE-AND-PRIOR-ART.md) — dated
   implementation observations retained for historical reference.
 - [Defensive prior-art record](DEFENSIVE-PRIOR-ART-CLAIMS.md) — search-oriented
