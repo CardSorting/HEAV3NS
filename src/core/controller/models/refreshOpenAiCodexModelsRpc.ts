@@ -16,7 +16,8 @@ export async function refreshOpenAiCodexModelsRpc(
 			models: toProtobufModels(models),
 		})
 	} catch (error) {
-		Logger.error("Error fetching OpenAI Codex models:", error)
-		return OpenRouterCompatibleModelInfo.create({ models: {} })
+		const message = error instanceof Error ? error.message : String(error)
+		Logger.error(`Error fetching OpenAI Codex models: ${message}`)
+		throw error instanceof Error ? error : new Error(message)
 	}
 }

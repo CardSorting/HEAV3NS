@@ -14,7 +14,7 @@ const buttonStyle = {
 }
 
 export default function OpenAiCodexAuthControl() {
-	const { openAiCodexIsAuthenticated } = useExtensionState()
+	const { openAiCodexIsAuthenticated, openAiCodexModelsError, openAiCodexModelsLoading } = useExtensionState()
 	const [isBusy, setIsBusy] = useState(false)
 	const [error, setError] = useState<string>()
 
@@ -48,7 +48,13 @@ export default function OpenAiCodexAuthControl() {
 				<div>
 					<div style={{ fontSize: 12, fontWeight: 600 }}>OpenAI Codex OAuth</div>
 					<div style={{ fontSize: 11, color: "var(--vscode-descriptionForeground)" }}>
-						{openAiCodexIsAuthenticated ? "Connected with your ChatGPT subscription" : "Use your ChatGPT Plus or Pro subscription"}
+						{!openAiCodexIsAuthenticated
+							? "Use your ChatGPT Plus or Pro subscription"
+							: openAiCodexModelsLoading
+								? "Signed in; checking Codex model access..."
+								: openAiCodexModelsError
+									? "Signed in; the Codex model catalog is unavailable"
+									: "Connected with your ChatGPT subscription"}
 					</div>
 				</div>
 				<button disabled={isBusy} onClick={openAiCodexIsAuthenticated ? signOut : signIn} style={buttonStyle} type="button">

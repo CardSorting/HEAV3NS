@@ -16,9 +16,15 @@ const OPENAI_CODEX_BASE_URL = "https://chatgpt.com/backend-api/codex"
 const OPENAI_CODEX_CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 const OPENAI_CODEX_SCOPE = "openid profile email offline_access api.connectors.read api.connectors.invoke"
 const OPENAI_CODEX_ORIGINATOR = "codex_cli_rs"
+const OPENAI_CODEX_USER_AGENT = `${ExtensionRegistryInfo.id}/${ExtensionRegistryInfo.version} (${process.platform}; ${process.arch})`
+const OPENAI_CODEX_CLIENT_HEADERS = {
+	originator: OPENAI_CODEX_ORIGINATOR,
+	"User-Agent": OPENAI_CODEX_USER_AGENT,
+}
 const OPENAI_CODEX_CALLBACK_PATH = "/auth/callback"
 const OPENAI_CODEX_CALLBACK_PORTS = [1455, 1457] as const
 const OPENAI_CODEX_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000
+const OPENAI_CODEX_MODELS_TIMEOUT_MS = 5 * 1000
 const REFRESH_GRACE_PERIOD_MS = 60 * 1000
 
 export interface OpenAiCodexOAuthCredentials {
@@ -28,6 +34,9 @@ export interface OpenAiCodexOAuthCredentials {
 	accountId?: string
 	expiresAt?: number
 }
+
+let credentialRefreshInFlight: Promise<OpenAiCodexOAuthCredentials> | undefined
+let credentialGeneration = 0
 
 interface OAuthTokenResponse {
 	access_token?: unknown
@@ -85,7 +94,10 @@ function hasReasoningSupport(value: unknown, defaultReasoningLevel: unknown): bo
 /** Converts the provider's `/models` payload into the application's model metadata shape. */
 export function normalizeOpenAiCodexModels(payload: unknown): Record<string, ModelInfo> {
 	const payloadRecord = asRecord(payload)
-	const rawModels = Array.isArray(payload) ? payload : Array.isArray(payloadRecord?.models) ? payloadRecord.models : []
+	const rawModels = Array.isArray(payload) ? payload : payloadRecord?.models
+	if (!Array.isArray(rawModels)) {
+		throw new Error("OpenAI Codex model catalog response did not contain a models array")
+	}
 
 	const models = rawModels
 		.map((value, index) => {
@@ -275,7 +287,7 @@ async function exchangeAuthorizationCode(
 
 	const response = await configuredFetch(OPENAI_CODEX_TOKEN_ENDPOINT, {
 		method: "POST",
-		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		headers: { ...OPENAI_CODEX_CLIENT_HEADERS, "Content-Type": "application/x-www-form-urlencoded" },
 		body,
 	})
 
@@ -297,7 +309,7 @@ export async function refreshOpenAiCodexOAuthCredentials(
 
 	const response = await configuredFetch(OPENAI_CODEX_TOKEN_ENDPOINT, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		headers: { ...OPENAI_CODEX_CLIENT_HEADERS, "Content-Type": "application/json" },
 		body,
 	})
 
@@ -417,6 +429,69 @@ function getStoredCredentials(rawFallback?: string): OpenAiCodexOAuthCredentials
 	}
 }
 
+async function refreshAndPersistCredentials(
+	credentials: OpenAiCodexOAuthCredentials,
+): Promise<OpenAiCodexOAuthCredentials> {
+	if (!credentials.refreshToken) {
+		throw new Error("OpenAI Codex session expired. Sign out and sign in again.")
+	}
+	if (credentialRefreshInFlight) {
+		return credentialRefreshInFlight
+	}
+
+	// A parallel request may already have rotated this token. Reuse its stored
+	// credentials instead of submitting a single-use refresh token twice.
+	const latestCredentials = getStoredCredentials()
+	if (latestCredentials && latestCredentials.accessToken !== credentials.accessToken) {
+		return latestCredentials
+	}
+
+	const refresh = (async () => {
+		const generation = credentialGeneration
+		const refreshed = await refreshOpenAiCodexOAuthCredentials(credentials)
+		if (generation !== credentialGeneration) {
+			throw new Error("OpenAI Codex sign-in changed while refreshing credentials")
+		}
+		const stateManager = StateManager.get()
+		stateManager.setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(refreshed))
+		await stateManager.flushPendingState()
+		if (generation !== credentialGeneration) {
+			throw new Error("OpenAI Codex sign-in changed while refreshing credentials")
+		}
+		return refreshed
+	})()
+	credentialRefreshInFlight = refresh
+
+	try {
+		return await refresh
+	} finally {
+		if (credentialRefreshInFlight === refresh) {
+			credentialRefreshInFlight = undefined
+		}
+	}
+}
+
+function getSafeErrorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error)
+}
+
+function getModelRequestError(response: Response): Error {
+	const requestId = response.headers.get("x-request-id") || response.headers.get("cf-ray")
+	const requestIdSuffix = requestId ? ` Request ID: ${requestId}.` : ""
+	if (response.status === 401) {
+		return new Error(`OpenAI Codex rejected the session. Sign out and sign in again.${requestIdSuffix}`)
+	}
+	if (response.status === 403) {
+		return new Error(
+			`The signed-in ChatGPT account cannot access the OpenAI Codex model catalog (HTTP 403). Check Codex access for the selected workspace.${requestIdSuffix}`,
+		)
+	}
+	if (response.status === 429) {
+		return new Error(`OpenAI Codex rate-limited the model catalog request. Try again shortly.${requestIdSuffix}`)
+	}
+	return new Error(`OpenAI Codex model catalog request failed (HTTP ${response.status}).${requestIdSuffix}`)
+}
+
 export function hasOpenAiCodexOAuthCredentials(raw: string | undefined): boolean {
 	return Boolean(getStoredCredentials(raw))
 }
@@ -449,6 +524,8 @@ export class OpenAiCodexOAuthService {
 			await openExternal(authorizationUrl.toString())
 			const code = await callbackServer.callback
 			const credentials = await exchangeAuthorizationCode(code, redirectUri, verifier)
+			credentialGeneration += 1
+			credentialRefreshInFlight = undefined
 			StateManager.get().setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(credentials))
 			await StateManager.get().flushPendingState()
 		} catch (error) {
@@ -458,6 +535,8 @@ export class OpenAiCodexOAuthService {
 	}
 
 	static signOut(): void {
+		credentialGeneration += 1
+		credentialRefreshInFlight = undefined
 		StateManager.get().setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, undefined)
 		cachedOpenAiCodexModels = {}
 	}
@@ -473,28 +552,65 @@ export class OpenAiCodexOAuthService {
 			return credentials
 		}
 
-		const refreshed = await refreshOpenAiCodexOAuthCredentials(credentials)
-		StateManager.get().setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(refreshed))
-		return refreshed
+		return refreshAndPersistCredentials(credentials)
 	}
 
 	static async listModels(rawFallback?: string): Promise<Record<string, ModelInfo>> {
+		const credentialsBeforeRefresh = getStoredCredentials(rawFallback)
 		const credentials = await this.getValidCredentials(rawFallback)
+		const wasRefreshedBeforeRequest =
+			credentialsBeforeRefresh !== undefined && credentialsBeforeRefresh.accessToken !== credentials.accessToken
 		const modelsUrl = new URL(`${OPENAI_CODEX_BASE_URL}/models`)
 		modelsUrl.searchParams.set("client_version", ExtensionRegistryInfo.version)
 
-		const response = await configuredFetch(modelsUrl, {
-			headers: {
-				Authorization: `Bearer ${credentials.accessToken}`,
-				originator: OPENAI_CODEX_ORIGINATOR,
-				...(credentials.accountId ? { "ChatGPT-Account-ID": credentials.accountId } : {}),
-			},
-		})
-		if (!response.ok) {
-			throw new Error(`OpenAI Codex model request failed (${response.status})`)
+		const requestModels = async (requestCredentials: OpenAiCodexOAuthCredentials): Promise<Response> => {
+			const controller = new AbortController()
+			const timeout = setTimeout(() => controller.abort(), OPENAI_CODEX_MODELS_TIMEOUT_MS)
+			try {
+				return await configuredFetch(modelsUrl, {
+					headers: {
+						Accept: "application/json",
+						Authorization: `Bearer ${requestCredentials.accessToken}`,
+						...OPENAI_CODEX_CLIENT_HEADERS,
+						...(requestCredentials.accountId ? { "ChatGPT-Account-ID": requestCredentials.accountId } : {}),
+					},
+					signal: controller.signal,
+				})
+			} catch (error) {
+				if (controller.signal.aborted) {
+					throw new Error("OpenAI Codex model catalog request timed out after 5 seconds")
+				}
+				throw new Error(`Could not reach the OpenAI Codex model catalog: ${getSafeErrorMessage(error)}`)
+			} finally {
+				clearTimeout(timeout)
+			}
 		}
 
-		const models = normalizeOpenAiCodexModels(await response.json())
+		let response = await requestModels(credentials)
+		if (response.status === 401 && credentials.refreshToken && !wasRefreshedBeforeRequest) {
+			await response.body?.cancel().catch(() => undefined)
+			let refreshedCredentials: OpenAiCodexOAuthCredentials
+			try {
+				refreshedCredentials = await refreshAndPersistCredentials(credentials)
+			} catch (error) {
+				throw new Error(
+					`OpenAI Codex rejected the session and token refresh failed. Sign out and sign in again. ${getSafeErrorMessage(error)}`,
+				)
+			}
+			response = await requestModels(refreshedCredentials)
+		}
+		if (!response.ok) {
+			await response.body?.cancel().catch(() => undefined)
+			throw getModelRequestError(response)
+		}
+
+		let payload: unknown
+		try {
+			payload = await response.json()
+		} catch {
+			throw new Error("OpenAI Codex returned an invalid JSON model catalog")
+		}
+		const models = normalizeOpenAiCodexModels(payload)
 		cachedOpenAiCodexModels = models
 		return getCachedOpenAiCodexModels()
 	}
@@ -505,4 +621,5 @@ export const openAiCodexProvider = {
 	clientId: OPENAI_CODEX_CLIENT_ID,
 	issuer: OPENAI_CODEX_ISSUER,
 	originator: OPENAI_CODEX_ORIGINATOR,
+	userAgent: OPENAI_CODEX_USER_AGENT,
 }

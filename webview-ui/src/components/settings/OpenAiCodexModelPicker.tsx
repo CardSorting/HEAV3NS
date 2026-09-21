@@ -14,6 +14,8 @@ export default function OpenAiCodexModelPicker({ currentMode, isPopup }: OpenAiC
 		apiConfiguration,
 		openAiCodexIsAuthenticated,
 		openAiCodexModels = {},
+		openAiCodexModelsError,
+		openAiCodexModelsLoading,
 		refreshOpenAiCodexModels,
 	} = useExtensionState()
 	const { handleModeFieldsChange } = useApiConfigurationHandlers()
@@ -59,11 +61,15 @@ export default function OpenAiCodexModelPicker({ currentMode, isPopup }: OpenAiC
 					<option value="">
 						{!openAiCodexIsAuthenticated
 							? "Sign in to load models"
-							: modelOptions.length === 0
+							: openAiCodexModelsLoading
 								? "Loading available models..."
-								: selectedModelId
-									? `Previously selected model is unavailable: ${selectedModelId}`
-									: "Select a model"}
+								: modelOptions.length === 0
+									? openAiCodexModelsError
+										? "Model catalog unavailable"
+										: "No models available"
+									: selectedModelId
+										? `Previously selected model is unavailable: ${selectedModelId}`
+										: "Select a model"}
 					</option>
 					{modelOptions.map(([modelId]) => (
 						<option key={modelId} value={modelId}>
@@ -73,23 +79,34 @@ export default function OpenAiCodexModelPicker({ currentMode, isPopup }: OpenAiC
 				</select>
 			</label>
 			<div style={{ alignItems: "center", display: "flex", gap: 8, justifyContent: "space-between", marginTop: 6 }}>
-				<p style={{ color: "var(--vscode-descriptionForeground)", fontSize: 11, margin: 0 }}>
-					{selectedModelInfo?.description || "Models are loaded from the authenticated OpenAI Codex provider."}
+				<p
+					aria-live="polite"
+					role={openAiCodexModelsError ? "alert" : "status"}
+					style={{
+						color: openAiCodexModelsError ? "var(--vscode-errorForeground)" : "var(--vscode-descriptionForeground)",
+						fontSize: 11,
+						margin: 0,
+					}}>
+					{openAiCodexModelsError
+						? openAiCodexModelsError
+						: selectedModelInfo?.description || "Models are loaded from the authenticated OpenAI Codex provider."}
 				</p>
 				{openAiCodexIsAuthenticated && (
 					<button
+						disabled={openAiCodexModelsLoading}
 						onClick={() => void refreshOpenAiCodexModels()}
 						style={{
 							background: "transparent",
 							border: "1px solid var(--vscode-button-border, var(--vscode-widget-border))",
 							color: "var(--vscode-descriptionForeground)",
-							cursor: "pointer",
+							cursor: openAiCodexModelsLoading ? "wait" : "pointer",
+							opacity: openAiCodexModelsLoading ? 0.6 : 1,
 							fontSize: 11,
 							padding: "2px 6px",
 							whiteSpace: "nowrap",
 						}}
 						type="button">
-						Refresh
+						{openAiCodexModelsLoading ? "Refreshing…" : "Refresh"}
 					</button>
 				)}
 			</div>

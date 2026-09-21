@@ -28,6 +28,8 @@ export interface ExtensionStateContextType extends ExtensionState {
 	dietcodeModels: Record<string, ModelInfo> | null
 	openRouterModels: Record<string, ModelInfo>
 	openAiCodexModels: Record<string, ModelInfo>
+	openAiCodexModelsLoading: boolean
+	openAiCodexModelsError: string | null
 	vercelAiGatewayModels: Record<string, ModelInfo>
 	hicapModels: Record<string, ModelInfo>
 	liteLlmModels: Record<string, ModelInfo>
@@ -268,6 +270,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		[openRouterDefaultModelId]: openRouterDefaultModelInfo,
 	})
 	const [openAiCodexModels, setOpenAiCodexModels] = useState<Record<string, ModelInfo>>({})
+	const [openAiCodexModelsLoading, setOpenAiCodexModelsLoading] = useState(false)
+	const [openAiCodexModelsError, setOpenAiCodexModelsError] = useState<string | null>(null)
 	const [vercelAiGatewayModels, setVercelAiGatewayModels] = useState<Record<string, ModelInfo>>({})
 	const [hicapModels, setHicapModels] = useState<Record<string, ModelInfo>>({})
 	const [liteLlmModels, setLiteLlmModels] = useState<Record<string, ModelInfo>>({})
@@ -291,6 +295,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const autoRefreshBasetenRequested = useRef(false)
 	const autoRefreshLiteLlmRequested = useRef(false)
 	const autoRefreshOpenAiCodexRequested = useRef(false)
+	const openAiCodexRefreshGeneration = useRef(0)
 
 	const relinquishControlCallbacks = useRef<Set<() => void>>(new Set())
 
@@ -332,17 +337,32 @@ export const ExtensionStateContextProvider: React.FC<{
 			.catch((error: Error) => console.error("Failed to refresh OpenRouter models:", error))
 	}, [])
 
-	const refreshOpenAiCodexModels = useCallback(() => {
-		return loadModelsServiceClient()
-			.then((client) => client.refreshOpenAiCodexModelsRpc(EmptyRequest.create({})))
-			.then((response: OpenRouterCompatibleModelInfo) => convertModelResponse(response))
-			.then((models) => {
-				setOpenAiCodexModels(models)
-			})
-			.catch((error: Error) => {
-				console.error("Failed to refresh OpenAI Codex models:", error)
-				setOpenAiCodexModels({})
-			})
+	const refreshOpenAiCodexModels = useCallback(async () => {
+		const generation = ++openAiCodexRefreshGeneration.current
+		setOpenAiCodexModelsLoading(true)
+		setOpenAiCodexModelsError(null)
+
+		try {
+			const client = await loadModelsServiceClient()
+			const response: OpenRouterCompatibleModelInfo = await client.refreshOpenAiCodexModelsRpc(EmptyRequest.create({}))
+			const models = await convertModelResponse(response)
+			if (generation !== openAiCodexRefreshGeneration.current) return
+
+			setOpenAiCodexModels(models)
+			if (Object.keys(models).length === 0) {
+				setOpenAiCodexModelsError("OpenAI Codex returned an empty model catalog. Confirm your account has Codex access and refresh.")
+			}
+		} catch (error) {
+			if (generation !== openAiCodexRefreshGeneration.current) return
+
+			console.error("Failed to refresh OpenAI Codex models:", error)
+			setOpenAiCodexModels({})
+			setOpenAiCodexModelsError(error instanceof Error ? error.message : String(error))
+		} finally {
+			if (generation === openAiCodexRefreshGeneration.current) {
+				setOpenAiCodexModelsLoading(false)
+			}
+		}
 	}, [])
 
 	const refreshHicapModels = useCallback(() => {
@@ -454,7 +474,10 @@ export const ExtensionStateContextProvider: React.FC<{
 		if (!didHydrateState) return
 
 		if (!state.openAiCodexIsAuthenticated) {
+			openAiCodexRefreshGeneration.current += 1
 			setOpenAiCodexModels({})
+			setOpenAiCodexModelsLoading(false)
+			setOpenAiCodexModelsError(null)
 			autoRefreshOpenAiCodexRequested.current = false
 			return
 		}
@@ -504,6 +527,8 @@ export const ExtensionStateContextProvider: React.FC<{
 			dietcodeModels,
 			openRouterModels,
 			openAiCodexModels,
+			openAiCodexModelsLoading,
+			openAiCodexModelsError,
 			vercelAiGatewayModels,
 			hicapModels,
 			liteLlmModels,
@@ -637,6 +662,8 @@ export const ExtensionStateContextProvider: React.FC<{
 			dietcodeModels,
 			openRouterModels,
 			openAiCodexModels,
+			openAiCodexModelsLoading,
+			openAiCodexModelsError,
 			vercelAiGatewayModels,
 			hicapModels,
 			liteLlmModels,

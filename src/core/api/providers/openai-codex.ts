@@ -66,6 +66,7 @@ export class OpenAiCodexHandler implements ApiHandler {
 				defaultHeaders: {
 					...(credentials.accountId ? { "ChatGPT-Account-ID": credentials.accountId } : {}),
 					originator: openAiCodexProvider.originator,
+					"User-Agent": openAiCodexProvider.userAgent,
 				},
 			})
 			this.clientAccessToken = credentials.accessToken

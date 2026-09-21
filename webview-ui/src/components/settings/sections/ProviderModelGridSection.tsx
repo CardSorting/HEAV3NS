@@ -56,7 +56,14 @@ interface ProviderModelGridSectionProps {
  * OpenRouter credential setup and paginated model catalog.
  */
 export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }: ProviderModelGridSectionProps) => {
-	const { apiConfiguration, openAiCodexModels, openRouterModels } = useExtensionState()
+	const {
+		apiConfiguration,
+		openAiCodexIsAuthenticated,
+		openAiCodexModels,
+		openAiCodexModelsError,
+		openAiCodexModelsLoading,
+		openRouterModels,
+	} = useExtensionState()
 	const { handleModeFieldsChange } = useApiConfigurationHandlers()
 	const isOpenAiCodex = providerTabId === "provider-openai-codex"
 
@@ -114,6 +121,16 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 		const start = (currentPage - 1) * ITEMS_PER_PAGE
 		return filteredGridModels.slice(start, start + ITEMS_PER_PAGE)
 	}, [filteredGridModels, currentPage])
+	const emptyStateMessage = isOpenAiCodex
+		? openAiCodexModelsLoading
+			? "Loading the OpenAI Codex model catalog..."
+			: openAiCodexModelsError ||
+			  (Object.keys(providerModelsRecord).length === 0
+					? openAiCodexIsAuthenticated
+						? "No models are available. Use Refresh in the model selector to try again."
+						: "Sign in to load the OpenAI Codex model catalog."
+					: `No models found matching "${searchQuery}"`)
+		: `No models found matching "${searchQuery}"`
 
 	const handleSelectModel = (modelId: string) => {
 		const modelInfo = providerModelsRecord[modelId]
@@ -195,7 +212,15 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 						<Sparkles className="size-4 text-lumi shrink-0" />
 						<TitleText>{providerMeta.name} Model Catalog</TitleText>
 					</TitleWrapper>
-					<BadgeText>{filteredGridModels.length} models available</BadgeText>
+					<BadgeText>
+						{isOpenAiCodex && !openAiCodexIsAuthenticated
+							? "Sign-in required"
+							: isOpenAiCodex && openAiCodexModelsLoading
+							? "Loading models…"
+							: isOpenAiCodex && openAiCodexModelsError
+								? "Catalog unavailable"
+								: `${filteredGridModels.length} models available`}
+					</BadgeText>
 				</HeaderContainer>
 
 				{/* Search & Recency Filter Bar */}
@@ -216,8 +241,18 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 				{/* Models Compact Table */}
 				{filteredGridModels.length === 0 ? (
 					<EmptyStateWrapper>
-						<p style={{ margin: 0, fontSize: 12, color: "var(--vscode-descriptionForeground)" }}>
-							No models found matching "{searchQuery}"
+						<p
+							aria-live="polite"
+							role={isOpenAiCodex && openAiCodexModelsError ? "alert" : "status"}
+							style={{
+								color:
+									isOpenAiCodex && openAiCodexModelsError
+										? "var(--vscode-errorForeground)"
+										: "var(--vscode-descriptionForeground)",
+								fontSize: 12,
+								margin: 0,
+							}}>
+							{emptyStateMessage}
 						</p>
 					</EmptyStateWrapper>
 				) : (
