@@ -27,6 +27,8 @@ service ModelsService {
   rpc refreshHuggingFaceModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns OpenAI models
   rpc refreshOpenAiModels(OpenAiModelsRequest) returns (StringArray);
+  // Refreshes and returns models from the authenticated OpenAI Codex session
+  rpc refreshOpenAiCodexModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns Requesty models
   rpc refreshRequestyModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns Hicap models
@@ -472,6 +474,7 @@ enum ApiProvider {
   HICAP = 37;
   AIHUBMIX = 38;
   NOUSRESEARCH = 39;
+  // ChatGPT subscription-backed OpenAI Responses API via OAuth.
   OPENAI_CODEX = 40;
   CLOUDFLARE = 41;
   GOOGLE_PERSONAL = 42;

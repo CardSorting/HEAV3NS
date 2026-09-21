@@ -1,15 +1,21 @@
-import { ModelInfo, openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
+import {
+	ModelInfo,
+	openRouterDefaultModelId,
+	openRouterDefaultModelInfo,
+} from "@shared/api"
 import { Search, Sparkles } from "lucide-react"
 import { useMemo, useState } from "react"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { getModelBadges, isRecentModel, ModelFilterTabs, type ModelFilterType } from "../common/ModelTypeTab"
+import OpenAiCodexAuthControl from "../OpenAiCodexAuthControl"
+import OpenAiCodexModelPicker from "../OpenAiCodexModelPicker"
 import OpenRouterModelPicker from "../OpenRouterModelPicker"
 import Section from "../Section"
 import { normalizeApiConfiguration } from "../utils/providerUtils"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
 
-export type SupportedProviderTabID = "provider-openrouter"
+export type SupportedProviderTabID = "provider-openrouter" | "provider-openai-codex"
 
 export interface ProviderMeta {
 	id: SupportedProviderTabID
@@ -21,6 +27,14 @@ export interface ProviderMeta {
 }
 
 export const SUPPORTED_PROVIDERS: ProviderMeta[] = [
+	{
+		id: "provider-openai-codex",
+		apiProviderValue: "openai-codex",
+		name: "OpenAI Codex",
+		label: "OpenAI Codex Models",
+		iconName: "Sparkles",
+		description: "ChatGPT subscription access through the OpenAI Codex OAuth strategy.",
+	},
 	{
 		id: "provider-openrouter",
 		apiProviderValue: "openrouter",
@@ -42,8 +56,9 @@ interface ProviderModelGridSectionProps {
  * OpenRouter credential setup and paginated model catalog.
  */
 export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }: ProviderModelGridSectionProps) => {
-	const { apiConfiguration, openRouterModels } = useExtensionState()
+	const { apiConfiguration, openAiCodexModels, openRouterModels } = useExtensionState()
 	const { handleModeFieldsChange } = useApiConfigurationHandlers()
+	const isOpenAiCodex = providerTabId === "provider-openai-codex"
 
 	const [activeFilter, setActiveFilter] = useState<ModelFilterType>("all")
 	const [searchQuery, setSearchQuery] = useState("")
@@ -60,17 +75,22 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 		setCurrentPage(1)
 	}
 
-	const providerMeta = SUPPORTED_PROVIDERS[0]
+	const providerMeta = SUPPORTED_PROVIDERS.find((provider) => provider.id === providerTabId) || SUPPORTED_PROVIDERS[0]
 	const providerModelsRecord: Record<string, ModelInfo> = useMemo(
 		() =>
-			Object.keys(openRouterModels).length > 0
-				? openRouterModels
-				: { [openRouterDefaultModelId]: openRouterDefaultModelInfo },
-		[openRouterModels],
+			isOpenAiCodex
+				? openAiCodexModels
+				: Object.keys(openRouterModels).length > 0
+					? openRouterModels
+					: { [openRouterDefaultModelId]: openRouterDefaultModelInfo },
+		[isOpenAiCodex, openAiCodexModels, openRouterModels],
 	)
 
 	// Active configuration
-	const currentConfig = useMemo(() => normalizeApiConfiguration(apiConfiguration, "plan"), [apiConfiguration])
+	const currentConfig = useMemo(
+		() => normalizeApiConfiguration(apiConfiguration, "plan", { openAiCodexModels, openRouterModels }),
+		[apiConfiguration, openAiCodexModels, openRouterModels],
+	)
 
 	// Filter models array by search and recency filter
 	const filteredGridModels = useMemo(() => {
@@ -97,6 +117,27 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 
 	const handleSelectModel = (modelId: string) => {
 		const modelInfo = providerModelsRecord[modelId]
+		if (isOpenAiCodex) {
+			handleModeFieldsChange(
+				{
+					apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
+					apiModelId: { plan: "planModeApiModelId", act: "actModeApiModelId" },
+				},
+				{ apiProvider: "openai-codex", apiModelId: modelId },
+				"plan",
+			)
+			handleModeFieldsChange(
+				{
+					apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
+					apiModelId: { plan: "planModeApiModelId", act: "actModeApiModelId" },
+				},
+				{ apiProvider: "openai-codex", apiModelId: modelId },
+				"act",
+			)
+			setLastActivatedModelId(modelId)
+			setTimeout(() => setLastActivatedModelId(null), 2500)
+			return
+		}
 
 		handleModeFieldsChange(
 			{
@@ -137,7 +178,14 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 						{providerMeta.description}
 					</p>
 				</div>
-				<OpenRouterModelPicker currentMode="plan" isPopup={false} showProviderRouting={true} />
+				{isOpenAiCodex ? (
+					<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+						<OpenAiCodexAuthControl />
+						<OpenAiCodexModelPicker currentMode="plan" isPopup={false} />
+					</div>
+				) : (
+					<OpenRouterModelPicker currentMode="plan" isPopup={false} showProviderRouting={true} />
+				)}
 			</CredentialsCardWrapper>
 
 			{/* Models Grid & Model Discovery Block */}
@@ -176,11 +224,15 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 					<ModelGridContainer>
 						{paginatedGridModels.map(([modelId, modelInfo]) => {
 							const isPlanActive =
-								currentConfig.selectedProvider === "openrouter" &&
-									(apiConfiguration?.planModeOpenRouterModelId || openRouterDefaultModelId) === modelId
+								currentConfig.selectedProvider === providerMeta.apiProviderValue &&
+									(isOpenAiCodex
+										? apiConfiguration?.planModeApiModelId
+										: apiConfiguration?.planModeOpenRouterModelId || openRouterDefaultModelId) === modelId
 							const isActActive =
-								currentConfig.selectedProvider === "openrouter" &&
-									(apiConfiguration?.actModeOpenRouterModelId || openRouterDefaultModelId) === modelId
+								currentConfig.selectedProvider === providerMeta.apiProviderValue &&
+									(isOpenAiCodex
+										? apiConfiguration?.actModeApiModelId
+										: apiConfiguration?.actModeOpenRouterModelId || openRouterDefaultModelId) === modelId
 							const isSelected = isPlanActive || isActActive
 							const isJustActivated = lastActivatedModelId === modelId
 

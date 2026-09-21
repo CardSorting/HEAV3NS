@@ -67,6 +67,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		icon: Globe,
 	},
 	{
+		id: "provider-openai-codex",
+		name: "OpenAI Codex",
+		tooltipText: "OpenAI Codex ChatGPT OAuth and model access",
+		headerText: "OpenAI Codex Models",
+		icon: Sparkles,
+	},
+	{
 		id: "features",
 		name: "Preferences",
 		tooltipText: "How HEAV3NS behaves",
@@ -133,8 +140,12 @@ interface ProviderSectionProps {
 }
 
 const OpenRouterGridSection = (props: ProviderSectionProps) => <ProviderModelGridSection providerTabId="provider-openrouter" {...props} />
+const OpenAiCodexGridSection = (props: ProviderSectionProps) => (
+	<ProviderModelGridSection providerTabId="provider-openai-codex" {...props} />
+)
 
 const TAB_KEYWORDS: Record<SettingsTabID, string[]> = {
+	"provider-openai-codex": ["openai", "codex", "chatgpt", "oauth", "subscription", "models"],
 	"provider-openrouter": ["openrouter", "models", "api key", "gpt-5.6", "sol", "terra", "luna", "routing"],
 	features: [
 		"preferences",
@@ -159,7 +170,7 @@ const TAB_KEYWORDS: Record<SettingsTabID, string[]> = {
 	debug: ["debug", "reset", "state", "test", "developer"],
 }
 
-const AI_SEARCH_TABS: string[] = ["provider-openrouter"]
+const AI_SEARCH_TABS: string[] = ["provider-openai-codex", "provider-openrouter"]
 const BEHAVIOR_TABS: string[] = ["features", "skills"]
 const INTEGRATION_TABS: string[] = ["browser", "terminal"]
 const GENERAL_TABS: string[] = ["general", "about"]
@@ -190,6 +201,7 @@ const SettingsView = ({ targetSection }: SettingsViewProps) => {
 	// biome-ignore lint/suspicious/noExplicitAny: Components in map take different props
 	const TAB_CONTENT_MAP: Record<SettingsTabID, React.ComponentType<any>> = useMemo(
 		() => ({
+			"provider-openai-codex": OpenAiCodexGridSection,
 			"provider-openrouter": OpenRouterGridSection,
 			general: GeneralSettingsSection,
 			features: FeatureSettingsSection,

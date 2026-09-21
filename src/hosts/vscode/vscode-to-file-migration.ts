@@ -53,6 +53,10 @@ const SKIP_GLOBAL_STATE_KEYS = new Set<string>([
 	"taskHistory", // Already file-based in tasks/taskHistory.json
 ])
 
+const LEGACY_SECRET_KEY_MIGRATIONS: Record<string, string> = {
+	"openai-codex-oauth-credentials": "openaiCodexOauthCredentials",
+}
+
 export interface MigrationResult {
 	migrated: boolean
 	globalStateCount: number
@@ -138,20 +142,25 @@ export async function exportVSCodeStorageToSharedFiles(
 
 			// Batch secrets
 			const secretsBatch: Record<string, string> = {}
-			for (const key of SecretKeys) {
+			const secretKeysToMigrate = [...new Set([...SecretKeys, ...Object.keys(LEGACY_SECRET_KEY_MIGRATIONS)])]
+			for (const key of secretKeysToMigrate) {
 				try {
 					const vscodeValue = await vscodeContext.secrets.get(key)
 					if (vscodeValue === undefined || vscodeValue === "") {
 						continue
 					}
 
-					const existingFileValue = storage.secrets.get(key)
+					const targetKey = LEGACY_SECRET_KEY_MIGRATIONS[key] || key
+					const existingFileValue = storage.secrets.get(targetKey) || storage.secrets.get(key)
 					if (existingFileValue !== undefined && existingFileValue !== "") {
 						result.skippedExisting++
 						continue
 					}
+					if (secretsBatch[targetKey] !== undefined) {
+						continue
+					}
 
-					secretsBatch[key] = vscodeValue
+					secretsBatch[targetKey] = vscodeValue
 					result.secretsCount++
 				} catch (error) {
 					Logger.error(`[Migration] Failed to read secret '${key}' from VSCode:`, error)

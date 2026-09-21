@@ -44,6 +44,7 @@ function toProtobufThinkingConfig(appConfig: ModelInfo["thinkingConfig"] | undef
  */
 export function fromProtobufModelInfo(protoInfo: OpenRouterModelInfo): ModelInfo {
 	return {
+		name: protoInfo.name,
 		maxTokens: protoInfo.maxTokens,
 		contextWindow: protoInfo.contextWindow,
 		supportsImages: protoInfo.supportsImages,
@@ -54,6 +55,7 @@ export function fromProtobufModelInfo(protoInfo: OpenRouterModelInfo): ModelInfo
 		cacheWritesPrice: protoInfo.cacheWritesPrice,
 		cacheReadsPrice: protoInfo.cacheReadsPrice,
 		description: protoInfo.description,
+		apiFormat: protoInfo.apiFormat,
 		thinkingConfig: convertThinkingConfig(protoInfo.thinkingConfig),
 		supportsGlobalEndpoint: protoInfo.supportsGlobalEndpoint,
 		tiers: protoInfo.tiers.length > 0 ? protoInfo.tiers : undefined,
@@ -65,6 +67,7 @@ export function fromProtobufModelInfo(protoInfo: OpenRouterModelInfo): ModelInfo
  */
 export function toProtobufModelInfo(modelInfo: ModelInfo): OpenRouterModelInfo {
 	return OpenRouterModelInfo.create({
+		name: modelInfo.name,
 		maxTokens: modelInfo.maxTokens,
 		contextWindow: modelInfo.contextWindow,
 		supportsImages: modelInfo.supportsImages,
@@ -75,6 +78,7 @@ export function toProtobufModelInfo(modelInfo: ModelInfo): OpenRouterModelInfo {
 		cacheWritesPrice: modelInfo.cacheWritesPrice,
 		cacheReadsPrice: modelInfo.cacheReadsPrice,
 		description: modelInfo.description,
+		apiFormat: modelInfo.apiFormat,
 		thinkingConfig: toProtobufThinkingConfig(modelInfo.thinkingConfig),
 		supportsGlobalEndpoint: modelInfo.supportsGlobalEndpoint,
 		tiers: modelInfo.tiers || [],

@@ -32,6 +32,7 @@ import { dbPool } from "@/infrastructure/db/BufferedDbPool"
 import { getDb, setDbPath } from "@/infrastructure/db/Config"
 import { ExtensionRegistryInfo } from "@/registry"
 import { AuthService } from "@/services/auth/AuthService"
+import { hasOpenAiCodexOAuthCredentials } from "@/services/auth/OpenAiCodexOAuthService"
 import { OcaAuthService } from "@/services/auth/oca/OcaAuthService"
 import { LogoutReason } from "@/services/auth/types"
 import { BannerService } from "@/services/banner/BannerService"
@@ -856,6 +857,9 @@ export class Controller implements IController {
 	async getStateToPostToWebview(): Promise<ExtensionState> {
 		// Get API configuration from cache for immediate access
 		const apiConfiguration = this.stateManager.getApiConfiguration()
+		// OAuth bearer and refresh tokens stay in the extension host; the Webview
+		// only needs the provider's authenticated flag and dynamic model catalog.
+		const apiConfigurationForWebview = { ...apiConfiguration, openaiCodexOauthCredentials: undefined }
 		const lastShownAnnouncementId = this.stateManager.getGlobalStateKey("lastShownAnnouncementId")
 		const taskHistory = this.stateManager.getGlobalStateKey("taskHistory")
 		const autoApprovalSettings = this.stateManager.getGlobalSettingsKey("autoApprovalSettings")
@@ -959,13 +963,15 @@ export class Controller implements IController {
 		const banners = BannerService.get().getActiveBanners() ?? []
 		const welcomeBanners = BannerService.get().getWelcomeBanners() ?? []
 
-		const openAiCodexIsAuthenticated = false
+		const openAiCodexIsAuthenticated = hasOpenAiCodexOAuthCredentials(
+			this.stateManager.getSecretKey("openaiCodexOauthCredentials"),
+		)
 		const xaiOAuthIsAuthenticated = false
 		const googleAuthIsAuthenticated = !!(await this.authService.getAuthToken("google"))
 
 		return {
 			version,
-			apiConfiguration,
+			apiConfiguration: apiConfigurationForWebview,
 			currentTaskItem,
 			taskLifecycleEvent,
 			dietcodeMessages,

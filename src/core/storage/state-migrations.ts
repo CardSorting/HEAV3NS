@@ -588,7 +588,9 @@ export async function migrateWelcomeViewCompleted(context: vscode.ExtensionConte
 			const difyApiKey = await context.secrets.get("difyApiKey")
 			const hicapApiKey = await context.secrets.get("hicapApiKey")
 			// OpenAI Codex OAuth credentials
-			const openAiCodexCredentials = await context.secrets.get("openai-codex-oauth-credentials")
+			const openAiCodexCredentials =
+				(await context.secrets.get("openaiCodexOauthCredentials")) ||
+				(await context.secrets.get("openai-codex-oauth-credentials"))
 
 			// Fetch configuration values from global state
 			const awsRegion = context.globalState.get("awsRegion")

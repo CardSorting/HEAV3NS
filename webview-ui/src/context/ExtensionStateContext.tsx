@@ -27,6 +27,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	showWelcome: boolean
 	dietcodeModels: Record<string, ModelInfo> | null
 	openRouterModels: Record<string, ModelInfo>
+	openAiCodexModels: Record<string, ModelInfo>
 	vercelAiGatewayModels: Record<string, ModelInfo>
 	hicapModels: Record<string, ModelInfo>
 	liteLlmModels: Record<string, ModelInfo>
@@ -82,6 +83,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	// Refresh functions
 	refreshDietCodeModels: () => void
 	refreshOpenRouterModels: () => void
+	refreshOpenAiCodexModels: () => Promise<void>
 	refreshVercelAiGatewayModels: () => void
 	refreshHicapModels: () => void
 	refreshLiteLlmModels: () => Promise<void>
@@ -265,6 +267,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const [openRouterModels, setOpenRouterModels] = useState<Record<string, ModelInfo>>({
 		[openRouterDefaultModelId]: openRouterDefaultModelInfo,
 	})
+	const [openAiCodexModels, setOpenAiCodexModels] = useState<Record<string, ModelInfo>>({})
 	const [vercelAiGatewayModels, setVercelAiGatewayModels] = useState<Record<string, ModelInfo>>({})
 	const [hicapModels, setHicapModels] = useState<Record<string, ModelInfo>>({})
 	const [liteLlmModels, setLiteLlmModels] = useState<Record<string, ModelInfo>>({})
@@ -287,6 +290,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const autoRefreshVercelRequested = useRef(false)
 	const autoRefreshBasetenRequested = useRef(false)
 	const autoRefreshLiteLlmRequested = useRef(false)
+	const autoRefreshOpenAiCodexRequested = useRef(false)
 
 	const relinquishControlCallbacks = useRef<Set<() => void>>(new Set())
 
@@ -326,6 +330,19 @@ export const ExtensionStateContextProvider: React.FC<{
 				})
 			})
 			.catch((error: Error) => console.error("Failed to refresh OpenRouter models:", error))
+	}, [])
+
+	const refreshOpenAiCodexModels = useCallback(() => {
+		return loadModelsServiceClient()
+			.then((client) => client.refreshOpenAiCodexModelsRpc(EmptyRequest.create({})))
+			.then((response: OpenRouterCompatibleModelInfo) => convertModelResponse(response))
+			.then((models) => {
+				setOpenAiCodexModels(models)
+			})
+			.catch((error: Error) => {
+				console.error("Failed to refresh OpenAI Codex models:", error)
+				setOpenAiCodexModels({})
+			})
 	}, [])
 
 	const refreshHicapModels = useCallback(() => {
@@ -433,6 +450,21 @@ export const ExtensionStateContextProvider: React.FC<{
 		refreshLiteLlmModels,
 	])
 
+	useEffect(() => {
+		if (!didHydrateState) return
+
+		if (!state.openAiCodexIsAuthenticated) {
+			setOpenAiCodexModels({})
+			autoRefreshOpenAiCodexRequested.current = false
+			return
+		}
+
+		if (!autoRefreshOpenAiCodexRequested.current) {
+			autoRefreshOpenAiCodexRequested.current = true
+			void refreshOpenAiCodexModels()
+		}
+	}, [didHydrateState, refreshOpenAiCodexModels, state.openAiCodexIsAuthenticated])
+
 	// Refresh HEAV3NS models function
 	const refreshDietCodeModels = useCallback(() => {
 		loadModelsServiceClient()
@@ -471,6 +503,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			showWelcome,
 			dietcodeModels,
 			openRouterModels,
+			openAiCodexModels,
 			vercelAiGatewayModels,
 			hicapModels,
 			liteLlmModels,
@@ -587,6 +620,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			setTotalTasksSize,
 			refreshDietCodeModels,
 			refreshOpenRouterModels,
+			refreshOpenAiCodexModels,
 			refreshVercelAiGatewayModels,
 			refreshHicapModels,
 			refreshLiteLlmModels,
@@ -602,6 +636,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			showWelcome,
 			dietcodeModels,
 			openRouterModels,
+			openAiCodexModels,
 			vercelAiGatewayModels,
 			hicapModels,
 			liteLlmModels,
@@ -633,6 +668,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			hideAnnouncement,
 			refreshDietCodeModels,
 			refreshOpenRouterModels,
+			refreshOpenAiCodexModels,
 			refreshVercelAiGatewayModels,
 			refreshHicapModels,
 			refreshLiteLlmModels,

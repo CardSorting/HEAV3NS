@@ -1,6 +1,7 @@
 import { ApiConfiguration } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { Logger } from "@/shared/services/Logger"
+import { OpenAiCodexHandler } from "./providers/openai-codex"
 import { OpenRouterHandler } from "./providers/openrouter"
 import { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, SingleCompletionHandler } from "./types"
 
@@ -9,10 +10,21 @@ import { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, 
 export type { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, SingleCompletionHandler }
 
 function createHandlerForProvider(
-	_apiProvider: string | undefined,
+	apiProvider: string | undefined,
 	options: Omit<ApiConfiguration, "apiProvider">,
 	mode: Mode,
 ): ApiHandler {
+	if (apiProvider === "openai-codex") {
+		return new OpenAiCodexHandler({
+			onRetryAttempt: options.onRetryAttempt,
+			openAiCodexOauthCredentials: options.openaiCodexOauthCredentials,
+			openAiCodexModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
+			reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
+			thinkingBudgetTokens:
+				mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
+		})
+	}
+
 	return new OpenRouterHandler({
 		onRetryAttempt: options.onRetryAttempt,
 		openRouterApiKey: options.openRouterApiKey,

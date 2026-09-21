@@ -271,6 +271,17 @@ describe("vscode-to-file-migration", () => {
 			storageContext.secrets.get("openRouterApiKey")?.should.equal("or-test-456")
 		})
 
+		it("should migrate the legacy OpenAI Codex OAuth key to its canonical key", async () => {
+			const mockCtx = createMockVSCodeContext()
+			mockCtx._secretsStore.set("openai-codex-oauth-credentials", '{"access_token":"codex-token"}')
+
+			const result = await exportVSCodeStorageToSharedFiles(mockCtx as any, storageContext)
+
+			result.migrated.should.be.true()
+			storageContext.secrets.get("openaiCodexOauthCredentials")?.should.equal('{"access_token":"codex-token"}')
+			;(storageContext.secrets.get("openai-codex-oauth-credentials") === undefined).should.be.true()
+		})
+
 		it("should NOT overwrite existing secrets in file store", async () => {
 			storageContext.secrets.set("apiKey", "existing-key")
 

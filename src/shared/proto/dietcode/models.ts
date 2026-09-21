@@ -51,6 +51,7 @@ export enum ApiProvider {
   HICAP = 37,
   AIHUBMIX = 38,
   NOUSRESEARCH = 39,
+  /** OPENAI_CODEX - ChatGPT subscription-backed OpenAI Responses API via OAuth. */
   OPENAI_CODEX = 40,
   CLOUDFLARE = 41,
   GOOGLE_PERSONAL = 42,
@@ -12585,6 +12586,15 @@ export const ModelsServiceDefinition = {
       requestType: OpenAiModelsRequest as typeof OpenAiModelsRequest,
       requestStream: false,
       responseType: StringArray as typeof StringArray,
+      responseStream: false,
+      options: {},
+    },
+    /** Refreshes and returns models from the authenticated OpenAI Codex session */
+    refreshOpenAiCodexModelsRpc: {
+      name: "refreshOpenAiCodexModelsRpc",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
       responseStream: false,
       options: {},
     },

@@ -52,6 +52,7 @@ export enum ApiProvider {
   HICAP = 37,
   AIHUBMIX = 38,
   NOUSRESEARCH = 39,
+  /** OPENAI_CODEX - ChatGPT subscription-backed OpenAI Responses API via OAuth. */
   OPENAI_CODEX = 40,
   CLOUDFLARE = 41,
   GOOGLE_PERSONAL = 42,
@@ -12561,6 +12562,15 @@ export const ModelsServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** Refreshes and returns models from the authenticated OpenAI Codex session */
+    refreshOpenAiCodexModelsRpc: {
+      name: "refreshOpenAiCodexModelsRpc",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseStream: false,
+      options: {},
+    },
     /** Refreshes and returns Requesty models */
     refreshRequestyModels: {
       name: "refreshRequestyModels",
@@ -12734,6 +12744,11 @@ export interface ModelsServiceImplementation<CallContextExt = {}> {
     request: OpenAiModelsRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<StringArray>>;
+  /** Refreshes and returns models from the authenticated OpenAI Codex session */
+  refreshOpenAiCodexModelsRpc(
+    request: EmptyRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<OpenRouterCompatibleModelInfo>>;
   /** Refreshes and returns Requesty models */
   refreshRequestyModels(
     request: EmptyRequest,
@@ -12846,6 +12861,11 @@ export interface ModelsServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<OpenAiModelsRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<StringArray>;
+  /** Refreshes and returns models from the authenticated OpenAI Codex session */
+  refreshOpenAiCodexModelsRpc(
+    request: DeepPartial<EmptyRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<OpenRouterCompatibleModelInfo>;
   /** Refreshes and returns Requesty models */
   refreshRequestyModels(
     request: DeepPartial<EmptyRequest>,

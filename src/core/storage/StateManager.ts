@@ -211,7 +211,7 @@ export class StateManager {
 
 			// Load all extension state from file-backed stores
 			const globalState = await readGlobalStateFromStorage(storage.globalState)
-			const secrets = readSecretsFromStorage(storage.secrets)
+			const secrets = await readSecretsFromStorage(storage.secrets)
 			const workspaceState = readWorkspaceStateFromStorage(storage.workspaceState)
 
 			// Populate the cache with all extension state and secrets fields

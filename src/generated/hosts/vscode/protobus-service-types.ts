@@ -117,6 +117,7 @@ export type ModelsServiceHandlers = {
      refreshDietCodeModelsRpc:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>
      refreshHuggingFaceModels:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>
      refreshOpenAiModels:(controller: IController, request: proto.dietcode.OpenAiModelsRequest) => Promise<proto.dietcode.StringArray>
+     refreshOpenAiCodexModelsRpc:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>
      refreshRequestyModels:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>
      refreshHicapModels:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>
      refreshLiteLlmModelsRpc:(controller: IController, request: proto.dietcode.EmptyRequest) => Promise<proto.dietcode.OpenRouterCompatibleModelInfo>

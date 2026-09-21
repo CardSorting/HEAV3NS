@@ -39,6 +39,7 @@ function convertModelInfoToProtoOpenRouter(info: ModelInfo | undefined): OpenRou
 	}
 
 	return {
+		name: info.name,
 		maxTokens: info.maxTokens,
 		contextWindow: info.contextWindow,
 		supportsImages: info.supportsImages,
@@ -48,6 +49,8 @@ function convertModelInfoToProtoOpenRouter(info: ModelInfo | undefined): OpenRou
 		cacheWritesPrice: info.cacheWritesPrice,
 		cacheReadsPrice: info.cacheReadsPrice,
 		description: info.description,
+		apiFormat: info.apiFormat,
+		supportsReasoning: info.supportsReasoning,
 		thinkingConfig: convertThinkingConfigToProto(info.thinkingConfig),
 		supportsGlobalEndpoint: info.supportsGlobalEndpoint,
 		tiers: info.tiers || [],
@@ -61,6 +64,7 @@ function convertProtoToModelInfo(info: OpenRouterModelInfo | undefined): ModelIn
 	}
 
 	return {
+		name: info.name,
 		maxTokens: info.maxTokens,
 		contextWindow: info.contextWindow,
 		supportsImages: info.supportsImages,
@@ -70,6 +74,8 @@ function convertProtoToModelInfo(info: OpenRouterModelInfo | undefined): ModelIn
 		cacheWritesPrice: info.cacheWritesPrice,
 		cacheReadsPrice: info.cacheReadsPrice,
 		description: info.description,
+		apiFormat: info.apiFormat,
+		supportsReasoning: info.supportsReasoning,
 		thinkingConfig: convertProtoToThinkingConfig(info.thinkingConfig),
 		supportsGlobalEndpoint: info.supportsGlobalEndpoint,
 		tiers: info.tiers.length > 0 ? info.tiers : undefined,

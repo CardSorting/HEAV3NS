@@ -100,6 +100,7 @@ import { refreshDietCodeRecommendedModelsRpc } from "@core/controller/models/ref
 import { refreshDietCodeModelsRpc } from "@core/controller/models/refreshDietCodeModelsRpc"
 import { refreshHuggingFaceModels } from "@core/controller/models/refreshHuggingFaceModels"
 import { refreshOpenAiModels } from "@core/controller/models/refreshOpenAiModels"
+import { refreshOpenAiCodexModelsRpc } from "@core/controller/models/refreshOpenAiCodexModelsRpc"
 import { refreshRequestyModels } from "@core/controller/models/refreshRequestyModels"
 import { refreshHicapModels } from "@core/controller/models/refreshHicapModels"
 import { refreshLiteLlmModelsRpc } from "@core/controller/models/refreshLiteLlmModelsRpc"
@@ -311,6 +312,7 @@ const ModelsServiceHandlers: serviceTypes.ModelsServiceHandlers = {
     refreshDietCodeModelsRpc: refreshDietCodeModelsRpc,
     refreshHuggingFaceModels: refreshHuggingFaceModels,
     refreshOpenAiModels: refreshOpenAiModels,
+    refreshOpenAiCodexModelsRpc: refreshOpenAiCodexModelsRpc,
     refreshRequestyModels: refreshRequestyModels,
     refreshHicapModels: refreshHicapModels,
     refreshLiteLlmModelsRpc: refreshLiteLlmModelsRpc,

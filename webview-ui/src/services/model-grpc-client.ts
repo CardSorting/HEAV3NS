@@ -7,6 +7,17 @@ import { ProtoBusClient } from "./grpc-client-base";
 export class ModelsServiceClient extends ProtoBusClient {
 	static override serviceName = "dietcode.ModelsService";
 
+	static async refreshOpenAiCodexModelsRpc(
+		request: EmptyRequest,
+	): Promise<OpenRouterCompatibleModelInfo> {
+		return ModelsServiceClient.makeUnaryRequest(
+			"refreshOpenAiCodexModelsRpc",
+			request,
+			EmptyRequest.toJSON,
+			OpenRouterCompatibleModelInfo.fromJSON,
+		);
+	}
+
 	static async refreshOpenRouterModelsRpc(
 		request: EmptyRequest,
 	): Promise<OpenRouterCompatibleModelInfo> {

@@ -15,8 +15,9 @@ export function supportsReasoningEffortForModelId(modelId?: string, _allowShortO
 export function getModelsForProvider(
 	provider: ApiProvider,
 	_dynamicConfiguration?: ApiConfiguration,
-	dynamicModels: { openRouterModels?: Record<string, ModelInfo> } = {},
+	dynamicModels: { openAiCodexModels?: Record<string, ModelInfo>; openRouterModels?: Record<string, ModelInfo> } = {},
 ): Record<string, ModelInfo> | undefined {
+	if (provider === "openai-codex") return dynamicModels.openAiCodexModels
 	return provider === "openrouter" ? dynamicModels.openRouterModels : undefined
 }
 
@@ -26,19 +27,29 @@ export interface NormalizedApiConfig {
 	selectedModelInfo: ModelInfo
 }
 
+const EMPTY_MODEL_INFO: ModelInfo = {
+	supportsPromptCache: false,
+}
+
 export function normalizeApiConfiguration(
 	apiConfiguration: ApiConfiguration | undefined,
 	currentMode: Mode,
+	dynamicModels: { openAiCodexModels?: Record<string, ModelInfo>; openRouterModels?: Record<string, ModelInfo> } = {},
 ): NormalizedApiConfig {
 	const configuredProvider = currentMode === "plan" ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider
 	const provider: ApiProvider = configuredProvider === "openai-codex" ? configuredProvider : "openrouter"
+	const genericModelId = currentMode === "plan" ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
 	const selectedModelId =
-		(currentMode === "plan" ? apiConfiguration?.planModeOpenRouterModelId : apiConfiguration?.actModeOpenRouterModelId) ||
-		(currentMode === "plan" ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId) ||
-		openRouterDefaultModelId
+		provider === "openai-codex"
+			? genericModelId || ""
+			: (currentMode === "plan" ? apiConfiguration?.planModeOpenRouterModelId : apiConfiguration?.actModeOpenRouterModelId) ||
+				genericModelId ||
+				openRouterDefaultModelId
 	const selectedModelInfo =
-		(currentMode === "plan" ? apiConfiguration?.planModeOpenRouterModelInfo : apiConfiguration?.actModeOpenRouterModelInfo) ||
-		openRouterDefaultModelInfo
+		provider === "openai-codex"
+			? dynamicModels.openAiCodexModels?.[selectedModelId] || EMPTY_MODEL_INFO
+			: (currentMode === "plan" ? apiConfiguration?.planModeOpenRouterModelInfo : apiConfiguration?.actModeOpenRouterModelInfo) ||
+				openRouterDefaultModelInfo
 
 	return { selectedProvider: provider, selectedModelId, selectedModelInfo }
 }
@@ -84,6 +95,8 @@ export async function syncModeConfigurations(
 		actModeThinkingBudgetTokens: sourceFields.thinkingBudgetTokens,
 		planModeReasoningEffort: sourceFields.reasoningEffort,
 		actModeReasoningEffort: sourceFields.reasoningEffort,
+		planModeApiModelId: sourceFields.apiModelId,
+		actModeApiModelId: sourceFields.apiModelId,
 		planModeOpenRouterModelId: sourceFields.openRouterModelId,
 		actModeOpenRouterModelId: sourceFields.openRouterModelId,
 		planModeOpenRouterModelInfo: sourceFields.openRouterModelInfo,

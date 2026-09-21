@@ -65,6 +65,7 @@ export enum ApiProvider {
   HICAP = 37,
   AIHUBMIX = 38,
   NOUSRESEARCH = 39,
+  /** OPENAI_CODEX - ChatGPT subscription-backed OpenAI Responses API via OAuth. */
   OPENAI_CODEX = 40,
   CLOUDFLARE = 41,
   GOOGLE_PERSONAL = 42,
@@ -12602,6 +12603,15 @@ export const ModelsServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** Refreshes and returns models from the authenticated OpenAI Codex session */
+    refreshOpenAiCodexModelsRpc: {
+      name: "refreshOpenAiCodexModelsRpc",
+      requestType: EmptyRequest as typeof EmptyRequest,
+      requestStream: false,
+      responseType: OpenRouterCompatibleModelInfo as typeof OpenRouterCompatibleModelInfo,
+      responseStream: false,
+      options: {},
+    },
     /** Refreshes and returns Requesty models */
     refreshRequestyModels: {
       name: "refreshRequestyModels",
@@ -12828,6 +12838,17 @@ export const ModelsServiceService = {
     responseSerialize: (value: StringArray): Buffer => Buffer.from(StringArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StringArray => StringArray.decode(value),
   },
+  /** Refreshes and returns models from the authenticated OpenAI Codex session */
+  refreshOpenAiCodexModelsRpc: {
+    path: "/dietcode.ModelsService/refreshOpenAiCodexModelsRpc" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: EmptyRequest): Buffer => Buffer.from(EmptyRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): EmptyRequest => EmptyRequest.decode(value),
+    responseSerialize: (value: OpenRouterCompatibleModelInfo): Buffer =>
+      Buffer.from(OpenRouterCompatibleModelInfo.encode(value).finish()),
+    responseDeserialize: (value: Buffer): OpenRouterCompatibleModelInfo => OpenRouterCompatibleModelInfo.decode(value),
+  },
   /** Refreshes and returns Requesty models */
   refreshRequestyModels: {
     path: "/dietcode.ModelsService/refreshRequestyModels" as const,
@@ -13015,6 +13036,8 @@ export interface ModelsServiceServer extends UntypedServiceImplementation {
   refreshHuggingFaceModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
   /** Refreshes and returns OpenAI models */
   refreshOpenAiModels: handleUnaryCall<OpenAiModelsRequest, StringArray>;
+  /** Refreshes and returns models from the authenticated OpenAI Codex session */
+  refreshOpenAiCodexModelsRpc: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
   /** Refreshes and returns Requesty models */
   refreshRequestyModels: handleUnaryCall<EmptyRequest, OpenRouterCompatibleModelInfo>;
   /** Refreshes and returns Hicap models */
@@ -13175,6 +13198,22 @@ export interface ModelsServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StringArray) => void,
+  ): ClientUnaryCall;
+  /** Refreshes and returns models from the authenticated OpenAI Codex session */
+  refreshOpenAiCodexModelsRpc(
+    request: EmptyRequest,
+    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+  ): ClientUnaryCall;
+  refreshOpenAiCodexModelsRpc(
+    request: EmptyRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
+  ): ClientUnaryCall;
+  refreshOpenAiCodexModelsRpc(
+    request: EmptyRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: OpenRouterCompatibleModelInfo) => void,
   ): ClientUnaryCall;
   /** Refreshes and returns Requesty models */
   refreshRequestyModels(

@@ -275,6 +275,9 @@ export class ModelsServiceClient extends ProtoBusClient {
     static async refreshOpenAiModels(request: proto.dietcode.OpenAiModelsRequest): Promise<proto.dietcode.StringArray> {
 		return this.makeUnaryRequest("refreshOpenAiModels", request, proto.dietcode.OpenAiModelsRequest.toJSON, proto.dietcode.StringArray.fromJSON)
 	}
+    static async refreshOpenAiCodexModelsRpc(request: proto.dietcode.EmptyRequest): Promise<proto.dietcode.OpenRouterCompatibleModelInfo> {
+		return this.makeUnaryRequest("refreshOpenAiCodexModelsRpc", request, proto.dietcode.EmptyRequest.toJSON, proto.dietcode.OpenRouterCompatibleModelInfo.fromJSON)
+	}
     static async refreshRequestyModels(request: proto.dietcode.EmptyRequest): Promise<proto.dietcode.OpenRouterCompatibleModelInfo> {
 		return this.makeUnaryRequest("refreshRequestyModels", request, proto.dietcode.EmptyRequest.toJSON, proto.dietcode.OpenRouterCompatibleModelInfo.fromJSON)
 	}

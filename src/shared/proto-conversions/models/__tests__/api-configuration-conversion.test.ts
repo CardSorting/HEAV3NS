@@ -4,6 +4,29 @@ import { describe, it } from "mocha"
 import { convertApiConfigurationToProto, convertProtoToApiConfiguration } from "../api-configuration-conversion"
 
 describe("API configuration protobuf conversion", () => {
+	it("round-trips the OpenAI Codex OAuth provider through the Webview proto", () => {
+		const providerReturnedModelId = "provider-returned-codex-model"
+		const proto = convertApiConfigurationToProto({
+			planModeApiProvider: "openai-codex",
+			actModeApiProvider: "openai-codex",
+			planModeApiModelId: providerReturnedModelId,
+			actModeApiModelId: providerReturnedModelId,
+		})
+
+		expect(proto.planModeApiProvider).to.equal(ProtoApiProvider.OPENAI_CODEX)
+		expect(proto.actModeApiProvider).to.equal(ProtoApiProvider.OPENAI_CODEX)
+
+		const wireRoundTrip = ModelsApiConfiguration.fromJSON(ModelsApiConfiguration.toJSON(proto))
+		const restored = convertProtoToApiConfiguration(wireRoundTrip)
+
+		expect(restored).to.include({
+			planModeApiProvider: "openai-codex",
+			actModeApiProvider: "openai-codex",
+			planModeApiModelId: providerReturnedModelId,
+			actModeApiModelId: providerReturnedModelId,
+		})
+	})
+
 	it("round-trips the xai-oauth provider and credential", () => {
 		const proto = convertApiConfigurationToProto({
 			planModeApiProvider: "xai-oauth",

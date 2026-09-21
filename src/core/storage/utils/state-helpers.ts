@@ -21,11 +21,30 @@ import { readTaskHistoryFromState } from "../disk"
 /**
  * Read secrets from a DietCodeFileStorage instance.
  */
-export function readSecretsFromStorage(store: DietCodeFileStorage<string>): Secrets {
-	return SecretKeys.reduce((acc, key) => {
+export async function readSecretsFromStorage(store: DietCodeFileStorage<string>): Promise<Secrets> {
+	const secrets = SecretKeys.reduce((acc, key) => {
 		acc[key] = store.get(key)
 		return acc
 	}, {} as Secrets)
+
+	// The initial Codex scaffolding used a hyphenated storage key. Keep existing
+	// installations signed in while using the camelCase key that matches the
+	// generated Secrets proto and the rest of StateManager.
+	if (!secrets.openaiCodexOauthCredentials) {
+		const legacyCredentials = store.get("openai-codex-oauth-credentials")
+		if (legacyCredentials) {
+			secrets.openaiCodexOauthCredentials = legacyCredentials
+			// Migrate the old key on disk so signing out cannot resurrect the
+			// session on the next startup.
+			await store.setBatch({
+				openaiCodexOauthCredentials: legacyCredentials,
+				"openai-codex-oauth-credentials": undefined,
+			})
+			await store.flush()
+		}
+	}
+
+	return secrets
 }
 
 /**

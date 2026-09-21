@@ -6,6 +6,8 @@ import { normalizeApiConfiguration } from "@/components/settings/utils/providerU
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { ApiKeyField } from "./common/ApiKeyField"
 import { DROPDOWN_Z_INDEX, DropdownContainer } from "./constants"
+import OpenAiCodexAuthControl from "./OpenAiCodexAuthControl"
+import OpenAiCodexModelPicker from "./OpenAiCodexModelPicker"
 import OpenRouterModelPicker from "./OpenRouterModelPicker"
 import { useApiConfigurationHandlers } from "./utils/useApiConfigurationHandlers"
 
@@ -28,7 +30,7 @@ export type { ApiProvider }
 
 const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, isPopup, currentMode }: ApiOptionsProps) => {
 	const { apiConfiguration } = useExtensionState()
-	const { handleFieldChange } = useApiConfigurationHandlers()
+	const { handleFieldChange, handleModeFieldChange } = useApiConfigurationHandlers()
 	const { selectedProvider } = normalizeApiConfiguration(apiConfiguration, currentMode)
 
 	const providerOptions = useMemo(() => {
@@ -39,26 +41,53 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 		return providerOptions.find((option) => option.value === selectedProvider)?.label || "OpenRouter"
 	}, [providerOptions, selectedProvider])
 
+	const handleProviderChange = (value: string) => {
+		void handleModeFieldChange(
+			{ plan: "planModeApiProvider", act: "actModeApiProvider" },
+			value as ApiProvider,
+			currentMode,
+		)
+	}
+
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-1.5">
 				<label className="text-xs font-medium text-foreground">Active AI Provider</label>
-				<div className="px-3 py-2 rounded-lg bg-muted/40 border border-border flex items-center justify-between text-xs text-foreground">
-					<span className="font-semibold text-lumi">{currentProviderLabel}</span>
-					<span className="text-[11px] text-muted-foreground">OpenAI-compatible routing</span>
-				</div>
+				<select
+					aria-label="Active AI Provider"
+					className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-xs text-foreground"
+					onChange={(event) => handleProviderChange(event.target.value)}
+					value={selectedProvider}>
+					{providerOptions.map((option) => (
+						<option key={option.value} value={option.value}>
+							{option.label}
+						</option>
+					))}
+				</select>
+				<span className="text-[11px] text-muted-foreground">
+					{selectedProvider === "openai-codex" ? "ChatGPT subscription OAuth" : `${currentProviderLabel} API routing`}
+				</span>
 			</div>
 
 			{apiConfiguration && (
 				<div className="flex flex-col gap-3">
-					<ApiKeyField
-						initialValue={apiConfiguration.openRouterApiKey || ""}
-						onChange={(value) => handleFieldChange("openRouterApiKey", value)}
-						placeholder="Enter API Key..."
-						providerName="OpenRouter"
-						signupUrl="https://openrouter.ai/keys"
-					/>
-					{showModelOptions && <OpenRouterModelPicker currentMode={currentMode} isPopup={isPopup} showProviderRouting={true} />}
+					{selectedProvider === "openai-codex" ? (
+						<>
+							<OpenAiCodexAuthControl />
+							{showModelOptions && <OpenAiCodexModelPicker currentMode={currentMode} isPopup={isPopup} />}
+						</>
+					) : (
+						<>
+							<ApiKeyField
+								initialValue={apiConfiguration.openRouterApiKey || ""}
+								onChange={(value) => handleFieldChange("openRouterApiKey", value)}
+								placeholder="Enter API Key..."
+								providerName="OpenRouter"
+								signupUrl="https://openrouter.ai/keys"
+							/>
+							{showModelOptions && <OpenRouterModelPicker currentMode={currentMode} isPopup={isPopup} showProviderRouting={true} />}
+						</>
+					)}
 				</div>
 			)}
 
