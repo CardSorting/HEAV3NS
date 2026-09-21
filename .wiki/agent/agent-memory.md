@@ -36,7 +36,7 @@ This document defines non-negotiable architectural and syntax constraints for al
    - Keep `AbortSignal` and callbacks local; do not serialize them across remote session boundaries.
 
 7. **Active LLM Provider Scoping (ADR-147)**:
-   - The runtime provider ecosystem is strictly scoped to `openrouter`, `openai-codex`, and `galx`.
+   - The runtime provider ecosystem is scoped to `openrouter` and `openai-codex`.
    - Do not introduce ad-hoc auxiliary direct vendor drivers (e.g. Anthropic direct, Gemini direct, Groq, local daemons) without formal ADR approval.
    - For all external models, route through OpenRouter (`openrouter/<model>`).
 

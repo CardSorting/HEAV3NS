@@ -21,7 +21,6 @@ import { ModelCatalog } from "../resolution/model-catalog.js";
 import type { SessionVfs } from "../../../sessions/extensions/vfs/session-vfs.js";
 import type { SessionMemoryStore } from "../../../sessions/extensions/memory/session-memory-store.js";
 import type { AgentSlashRouter } from "../resolution/agent-slash-router.js";
-import type { GalxProviderEngine } from "../resolution/galx-provider-engine.js";
 import type { LlmProxyGateway } from "../resolution/llm-proxy-gateway.js";
 import { RoadmapCompletionGate } from "../../../tooling/extensions/policy/roadmap-completion-gate.js";
 import { ToolSchemaSerializer } from "../../../tooling/extensions/registry/tool-schema-serializer.js";
@@ -58,7 +57,6 @@ export class AgentEngine extends AbstractAgentEngine {
   readonly sessionVfs: SessionVfs;
   readonly sessionMemoryStore: SessionMemoryStore;
   readonly slashRouter: AgentSlashRouter;
-  readonly galxEngine?: GalxProviderEngine;
   readonly proxyGateway?: LlmProxyGateway;
   readonly completionGate: RoadmapCompletionGate;
   readonly dynamicToolRouter: DynamicToolRouter;
@@ -86,7 +84,6 @@ export class AgentEngine extends AbstractAgentEngine {
     sessionVfs: SessionVfs,
     sessionMemoryStore: SessionMemoryStore,
     slashRouter: AgentSlashRouter,
-    galxEngine?: GalxProviderEngine,
     proxyGateway?: LlmProxyGateway,
     _unused?: unknown,
     contextServices: AgentContextServices = {}
@@ -98,7 +95,6 @@ export class AgentEngine extends AbstractAgentEngine {
     this.sessionVfs = sessionVfs;
     this.sessionMemoryStore = sessionMemoryStore;
     this.slashRouter = slashRouter;
-    this.galxEngine = galxEngine;
     this.proxyGateway = proxyGateway;
     this.completionGate = contextServices.completionGate ?? new RoadmapCompletionGate();
     this.dynamicToolRouter = new DynamicToolRouter();
@@ -109,7 +105,7 @@ export class AgentEngine extends AbstractAgentEngine {
     this.schemaCompressor = new ToolSchemaCompressor();
     this.dagPlanner = new ToolDependencyGraphPlanner();
     this.choiceOrchestrator = new ToolChoicePolicyOrchestrator();
-    this.runtimeModelCatalog = contextServices.modelCatalog ?? new ModelCatalog(undefined, galxEngine);
+    this.runtimeModelCatalog = contextServices.modelCatalog ?? new ModelCatalog();
     this.runtimeBudgetCalculator = contextServices.budgetCalculator ?? new ContextBudgetCalculator();
     this.runtimeTokenTruncator = contextServices.tokenTruncator ?? new TokenTruncator();
   }
@@ -248,7 +244,7 @@ export class AgentEngine extends AbstractAgentEngine {
       const targetPath = promptText.substring(5).trim();
       responseText = `Read file content from ${targetPath}`;
     } else {
-      // Attempt live LLM Dispatch to GALX AI Clearinghouse
+      // Attempt live LLM dispatch through OpenRouter.
       let liveResponse: string | null = null;
       let liveError: string | null = null;
       let liveFailureKind: "cancelled" | "timeout" | "provider" | null = null;
@@ -257,16 +253,16 @@ export class AgentEngine extends AbstractAgentEngine {
       const nextProgressSequence = (): number => ++liveProgressSequence;
       const liveStartedAt = Date.now();
 
-      const galxKey = process.env.GALX_API_KEY || process.env.GALX_KEY;
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
       const activeModel = this.modelResolver.getActiveModel();
 
-      if (galxKey || this.proxyGateway) {
+      if (openRouterKey || this.proxyGateway) {
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             const preparedContext = this.prepareProviderContext(activeModel, promptText);
-            const defaultUrl = "https://galx.ai/v1/chat/completions";
+            const defaultUrl = "https://openrouter.ai/api/v1/chat/completions";
             const requestStartedAt = Date.now();
-            const endpoint = this.proxyGateway?.getEffectiveEndpoint("galx", defaultUrl) ?? {
+            const endpoint = this.proxyGateway?.getEffectiveEndpoint("openrouter", defaultUrl) ?? {
               url: defaultUrl,
               headers: {},
               timeoutMs: 30000,
@@ -281,10 +277,10 @@ export class AgentEngine extends AbstractAgentEngine {
               phase: "connecting",
               status: attempt === 0 ? "started" : "in_progress",
               message: attempt === 0 ? `Connecting to ${activeModel}` : `Retrying with ${activeModel}`,
-              detail: "Sending authenticated model request to GALX AI",
+              detail: "Sending authenticated model request to OpenRouter",
               timestamp: requestStartedAt,
               sequence: nextProgressSequence(),
-              metadata: { source: "galx-api", scope: "turn", attempt: attempt + 1 },
+              metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
             });
 
             const allRegisteredTools = this.toolRegistry ? this.toolRegistry.listTools() : [];
@@ -330,10 +326,10 @@ export class AgentEngine extends AbstractAgentEngine {
                 phase: "thinking",
                 status: "in_progress",
                 message: `[${activeModel}] Deliberating action (step ${stepCount}/${maxToolSteps})`,
-                detail: `Sending request to GALX AI Clearinghouse...`,
+                detail: `Sending request to OpenRouter...`,
                 timestamp: Date.now(),
                 sequence: nextProgressSequence(),
-                metadata: { source: "galx-api", scope: "turn", attempt: attempt + 1 },
+                metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
               });
 
               const stepStartedAt = Date.now();
@@ -346,21 +342,18 @@ export class AgentEngine extends AbstractAgentEngine {
                     phase: "thinking",
                     status: "in_progress",
                     message: "Model deliberation in progress",
-                    detail: `Quiet for ${sec}s · Awaiting response from GALX AI`,
+                    detail: `Quiet for ${sec}s · Awaiting response from OpenRouter`,
                     timestamp: Date.now(),
                     sequence: nextProgressSequence(),
-                    metadata: { source: "galx-api", scope: "turn", attempt: attempt + 1 },
+                    metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
                   });
                 }
               }, 10_000);
               stepHeartbeat.unref?.();
 
-              const authHeaders: Record<string, string> = {
-                "X-GALX-Client": "LUMI/12.5.1",
-                "X-GALX-Client-ID": "lumi-ide",
-              };
-              if (galxKey) {
-                authHeaders.Authorization = `Bearer ${galxKey}`;
+              const authHeaders: Record<string, string> = {};
+              if (openRouterKey) {
+                authHeaders.Authorization = `Bearer ${openRouterKey}`;
               }
 
               let res: Response;
@@ -474,11 +467,11 @@ export class AgentEngine extends AbstractAgentEngine {
                 phase: "completed",
                 status: "completed",
                 message: "Agent turn completed successfully",
-                detail: "Tokens processed via GALX AI",
+                detail: "Tokens processed via OpenRouter",
                 timestamp: Date.now(),
                 elapsedMs: Date.now() - liveStartedAt,
                 sequence: nextProgressSequence(),
-                metadata: { source: "galx-api", scope: "turn", attempt: attempt + 1 },
+                metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
               });
             }
             break;
@@ -522,7 +515,7 @@ export class AgentEngine extends AbstractAgentEngine {
               timestamp: Date.now(),
               elapsedMs: Date.now() - liveStartedAt,
               sequence: nextProgressSequence(),
-              metadata: { source: "galx-api", scope: "turn", attempt: attempt + 1 },
+              metadata: { source: "openrouter-api", scope: "turn", attempt: attempt + 1 },
             });
             break;
           }
@@ -539,12 +532,12 @@ export class AgentEngine extends AbstractAgentEngine {
         responseText = `[Timed out] ${liveError}. You can retry with a narrower request.`;
       } else if (liveError) {
         turnOutcome = "failed";
-        const actionHint = "[Check GALX AI credentials: Set GALX_API_KEY in environment or configure in Settings.]";
+        const actionHint = "[Check OpenRouter credentials: Set OPENROUTER_API_KEY in the environment or configure Settings.]";
         responseText = `Live model request failed for ${activeModel}: ${liveError}\n${actionHint}`;
       } else {
         turnOutcome = "failed";
         responseText = `Processed turn prompt: "${promptText}".\n` +
-          `[Note: Configure \x1b[33mGALX_API_KEY\x1b[0m or run \x1b[33m/setup\x1b[0m for live GALX AI responses.]`;
+          `[Note: Configure \x1b[33mOPENROUTER_API_KEY\x1b[0m or run \x1b[33m/setup\x1b[0m for live OpenRouter responses.]`;
       }
     }
 

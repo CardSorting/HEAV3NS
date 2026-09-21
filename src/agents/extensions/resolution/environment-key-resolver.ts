@@ -14,7 +14,6 @@ export interface ProviderKeyStatus {
 export class EnvironmentKeyResolver {
   private readonly providerEnvMap: Record<string, string> = {
     "openai-codex": "OPENAI_API_KEY",
-    galx: "GALX_API_KEY",
     openrouter: "OPENROUTER_API_KEY",
   };
 
@@ -23,9 +22,6 @@ export class EnvironmentKeyResolver {
     const envVar = this.providerEnvMap[p];
     if (envVar && process.env[envVar]) {
       return process.env[envVar]!;
-    }
-    if (p === "galx" || p === "galxai") {
-      return process.env.GALX_API_KEY || process.env.GALX_KEY || null;
     }
     if (p === "openai" || p === "codex" || p === "openai-codex" || p.includes("gpt")) {
       return process.env.OPENAI_API_KEY || null;

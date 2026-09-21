@@ -130,6 +130,5 @@ worker.ts
 src/worker.ts
 src/worker-configuration.d.ts
 wrangler.jsonc
-ecosystem.config.cjs
 souls/**
 skills/**

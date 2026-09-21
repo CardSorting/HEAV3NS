@@ -14,7 +14,6 @@ import {
 	SquareMousePointer,
 	SquareTerminal,
 	Wrench,
-	Zap,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEvent } from "react-use"
@@ -61,11 +60,11 @@ interface SettingsTab {
 
 export const SETTINGS_TABS: SettingsTab[] = [
 	{
-		id: "provider-galx",
-		name: "GALXAI",
-		tooltipText: "GALXAI Wholesale Compute Clearinghouse",
-		headerText: "GALXAI Models",
-		icon: Zap,
+		id: "provider-openrouter",
+		name: "OpenRouter",
+		tooltipText: "OpenRouter model routing and API access",
+		headerText: "OpenRouter Models",
+		icon: Globe,
 	},
 	{
 		id: "features",
@@ -133,10 +132,10 @@ interface ProviderSectionProps {
 	renderSectionHeader?: (tabId: string) => JSX.Element | null
 }
 
-const GalxGridSection = (props: ProviderSectionProps) => <ProviderModelGridSection providerTabId="provider-galx" {...props} />
+const OpenRouterGridSection = (props: ProviderSectionProps) => <ProviderModelGridSection providerTabId="provider-openrouter" {...props} />
 
 const TAB_KEYWORDS: Record<SettingsTabID, string[]> = {
-	"provider-galx": ["galx", "galxai", "wholesale", "gpt-5.6", "sol", "terra", "luna", "compute"],
+	"provider-openrouter": ["openrouter", "models", "api key", "gpt-5.6", "sol", "terra", "luna", "routing"],
 	features: [
 		"preferences",
 		"behavior",
@@ -160,7 +159,7 @@ const TAB_KEYWORDS: Record<SettingsTabID, string[]> = {
 	debug: ["debug", "reset", "state", "test", "developer"],
 }
 
-const AI_SEARCH_TABS: string[] = ["provider-galx"]
+const AI_SEARCH_TABS: string[] = ["provider-openrouter"]
 const BEHAVIOR_TABS: string[] = ["features", "skills"]
 const INTEGRATION_TABS: string[] = ["browser", "terminal"]
 const GENERAL_TABS: string[] = ["general", "about"]
@@ -191,7 +190,7 @@ const SettingsView = ({ targetSection }: SettingsViewProps) => {
 	// biome-ignore lint/suspicious/noExplicitAny: Components in map take different props
 	const TAB_CONTENT_MAP: Record<SettingsTabID, React.ComponentType<any>> = useMemo(
 		() => ({
-			"provider-galx": GalxGridSection,
+			"provider-openrouter": OpenRouterGridSection,
 			general: GeneralSettingsSection,
 			features: FeatureSettingsSection,
 			skills: SkillsSettingsSection,

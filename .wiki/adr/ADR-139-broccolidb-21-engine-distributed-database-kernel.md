@@ -11,7 +11,7 @@
 Following the Pass 200 Centennial Landmark, LUMI requires an industrial distributed storage architecture capable of handling multi-tenant memory-pressure mitigation, continuous streaming aggregations, distributed consensus, crash-resilient log compaction, and sub-millisecond semantic similarity search entirely in-process with zero external runtime dependencies.
 
 ## Decision
-We have completed the full port and deep integration of the 12 advanced BroccoliDB distributed database engines from GALXAI, unifying all **21 distributed database engines** directly on `BroccoliDatabaseKernel`:
+We have completed the full port and deep integration of the 12 advanced BroccoliDB distributed database engines, unifying all **21 distributed database engines** directly on `BroccoliDatabaseKernel`:
 
 1. **Adaptive Fixed-Frame Buffer Pool (`BroccoliBufferPoolManager`)**:
    - Implements **LRU-2 (Least Recently Used with K=2 backward distance)** page frame eviction.
@@ -58,7 +58,7 @@ We have completed the full port and deep integration of the 12 advanced Broccoli
 
 ## Consequences
 - **Positive**:
-  - Full parity with GALXAI's 21-engine distributed database kernel.
+  - Full parity across the 21-engine distributed database kernel.
   - Zero external runtime dependencies in pure TypeScript.
   - 100% test passing rate across all 21 distributed database suites.
   - All 621 components verified in `npm run smoke` (26.90 ms).

@@ -1,4 +1,4 @@
-import { galxModels, ModelInfo } from "@shared/api"
+import { ModelInfo } from "@shared/api"
 import { Check, Search, Sparkles, Zap } from "lucide-react"
 import { useMemo, useState } from "react"
 import styled from "styled-components"
@@ -23,13 +23,9 @@ export const ModelCatalogSection = ({ renderSectionHeader }: ModelCatalogSection
 	const [searchQuery, setSearchQuery] = useState("")
 	const [lastActivatedModelId, setLastActivatedModelId] = useState<string | null>(null)
 
-	// Consolidate models from GALXAI and OpenRouter
+	// Consolidate models discovered through OpenRouter.
 	const combinedModels = useMemo(() => {
-		const combined: Record<string, { info: ModelInfo; provider: "openrouter" | "galx" }> = {}
-
-		for (const [id, info] of Object.entries(galxModels)) {
-			combined[id] = { info, provider: "galx" }
-		}
+		const combined: Record<string, { info: ModelInfo; provider: "openrouter" }> = {}
 
 		if (openRouterModels) {
 			const filteredIds = filterOpenRouterModelIds(Object.keys(openRouterModels), "openrouter")
@@ -72,7 +68,7 @@ export const ModelCatalogSection = ({ renderSectionHeader }: ModelCatalogSection
 		return entries
 	}, [combinedModels, searchQuery, activeFilter])
 
-	const handleSelectModel = (modelId: string, provider: "openrouter" | "galx") => {
+	const handleSelectModel = (modelId: string, provider: "openrouter") => {
 		const modelInfo = combinedModels[modelId]?.info
 
 		if (provider === "openrouter") {
@@ -99,29 +95,6 @@ export const ModelCatalogSection = ({ renderSectionHeader }: ModelCatalogSection
 					apiProvider: "openrouter",
 					openRouterModelId: modelId,
 					openRouterModelInfo: modelInfo,
-				},
-				"act",
-			)
-		} else if (provider === "galx") {
-			handleModeFieldsChange(
-				{
-					apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
-					apiModelId: { plan: "planModeApiModelId", act: "actModeApiModelId" },
-				},
-				{
-					apiProvider: "galx",
-					apiModelId: modelId,
-				},
-				"plan",
-			)
-			handleModeFieldsChange(
-				{
-					apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
-					apiModelId: { plan: "planModeApiModelId", act: "actModeApiModelId" },
-				},
-				{
-					apiProvider: "galx",
-					apiModelId: modelId,
 				},
 				"act",
 			)

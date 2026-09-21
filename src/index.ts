@@ -92,7 +92,6 @@ import { AgentSlashRouter } from "./agents/extensions/resolution/agent-slash-rou
 import { AuthStorageVault } from "./agents/extensions/resolution/auth-storage-vault.js"
 import { DynamicModelCache } from "./agents/extensions/resolution/dynamic-model-cache.js"
 import { EnvironmentKeyResolver } from "./agents/extensions/resolution/environment-key-resolver.js"
-import { GalxProviderEngine } from "./agents/extensions/resolution/galx-provider-engine.js"
 import { HttpDispatcherOverlay } from "./agents/extensions/resolution/http-dispatcher.js"
 import { ImageModelRegistry } from "./agents/extensions/resolution/image-model-registry.js"
 import { LlmProxyGateway } from "./agents/extensions/resolution/llm-proxy-gateway.js"
@@ -169,7 +168,6 @@ import type {
 import type { EngineTickInput, EngineTickResult, IAgentEngine } from "./core/contracts/agent.contracts.js"
 import type { GameStateSnapshot } from "./core/contracts/session.contracts.js"
 import { MonolithFactory, type MonolithFactoryOptions } from "./factories/monolith-factory.js"
-import { GalxTransportClient } from "./integrations/galx/GalxTransportClient.js"
 import { SessionContext } from "./sessions/base/session-context.js"
 import { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js"
 import { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js"
@@ -740,7 +738,6 @@ export type { CachedModelList } from "./agents/extensions/resolution/dynamic-mod
 export { DynamicModelCache } from "./agents/extensions/resolution/dynamic-model-cache.js"
 export type { ProviderKeyStatus } from "./agents/extensions/resolution/environment-key-resolver.js"
 export { EnvironmentKeyResolver } from "./agents/extensions/resolution/environment-key-resolver.js"
-export { GalxProviderEngine } from "./agents/extensions/resolution/galx-provider-engine.js"
 export type { DispatcherConfig } from "./agents/extensions/resolution/http-dispatcher.js"
 export { HttpDispatcherOverlay } from "./agents/extensions/resolution/http-dispatcher.js"
 export type { ImageModelSpecs } from "./agents/extensions/resolution/image-model-registry.js"
@@ -1662,30 +1659,6 @@ export type {
 	WorkspacePatchImpactResult,
 	WorkspaceSymbolRenameResult,
 } from "./core/contracts/fuzzy-matcher.contracts.js"
-export type {
-	BroccoliDeliveryReceipt,
-	BroccoliEnvelopePayload,
-	BroccoliSlaMetrics,
-	BroccoliTransportEntry,
-	CircuitBreakerState as GalxCircuitBreakerState,
-	GalxAttributionHeaders,
-	GalxHandlerOptions,
-	GalxIngestPayload,
-	GalxModelInfo,
-	GalxModelSpec,
-	GalxTransportOptions,
-	GalxTransportResponse,
-	TraceContext,
-	TransportAuditReport,
-} from "./core/contracts/galx.contracts.js"
-export {
-	DEFAULT_GALX_BASE_URL,
-	DEFAULT_GALX_CLEARINGHOUSE_URL,
-	DEFAULT_GALX_CLIENT_ID,
-	DEFAULT_GALX_CLIENT_TAG,
-	DEFAULT_GALX_MODEL_ID,
-	GALX_DEFAULT_MODELS,
-} from "./core/contracts/galx.contracts.js"
 export type {
 	ChannelBindingRule,
 	ContactVipTier,
@@ -2985,8 +2958,6 @@ export {
 	GrandMonolithSynthesizer,
 } from "./factories/grand-monolith-synthesizer.js"
 export { MonolithFactory } from "./factories/monolith-factory.js"
-export { BroccoliTransportSubstrate, broccoliTransportSubstrate } from "./integrations/galx/BroccoliTransportSubstrate.js"
-export { GalxTransportClient, galxTransportClient } from "./integrations/galx/GalxTransportClient.js"
 export { SessionContext } from "./sessions/base/session-context.js"
 export { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js"
 export { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js"
@@ -3837,8 +3808,6 @@ export class LumiMonolith implements IAgentEngine {
 	readonly centennialPassMarker: CentennialPassMarker
 	readonly systemHealthAggregator: SystemHealthAggregator
 
-	readonly galxEngine: GalxProviderEngine
-	readonly galxTransportClient: GalxTransportClient
 	readonly setupWizard: SetupWizard
 	readonly slashRouter: AgentSlashRouter
 	readonly mentionResolver: MentionResolver
@@ -4400,8 +4369,6 @@ export class LumiMonolith implements IAgentEngine {
 		this.centennialPassMarker = components.centennialPassMarker
 		this.systemHealthAggregator = components.systemHealthAggregator
 
-		this.galxEngine = components.galxEngine
-		this.galxTransportClient = components.galxTransportClient
 		this.setupWizard = components.setupWizard
 		this.slashRouter = components.slashRouter
 		this.mentionResolver = components.mentionResolver
@@ -5079,7 +5046,7 @@ if (isDirectCliExecution) {
   heav3ns luna                Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
   heav3ns sol                 Quick-switch default model to Balanced Engine (gpt-5.6-sol)
   heav3ns model <name>        Set active model by name or alias (e.g. heav3ns model luna)
-  heav3ns models [--refresh]  Fetch live models from GALX AI and display catalog
+  heav3ns models [--refresh]  Fetch live models from OpenRouter and display catalog
 \x1b[1;34mAuthentication & Identity:\x1b[0m
   heav3ns login               Sign in with ChatGPT / OpenAI (1-Click browser login)
   heav3ns logout              Sign out and clear local session
@@ -5238,7 +5205,7 @@ if (isDirectCliExecution) {
 			await lumi.setupWizard.runInteractiveWizard()
 		} else if (isLogout) {
 			lumi.setupWizard.logout()
-			console.log("\n\x1b[1;32m[✓] Successfully signed out of GALX AI.\x1b[0m")
+			console.log("\n\x1b[1;32m[✓] Successfully signed out of configured providers.\x1b[0m")
 			console.log("\x1b[90mRun \x1b[36mheav3ns login\x1b[90m anytime to reconnect.\x1b[0m\n")
 		} else if (isWhoAmI) {
 			lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel())
@@ -5343,8 +5310,8 @@ if (isDirectCliExecution) {
 		} else if (isModels) {
 			const force = args.includes("--refresh") || args.includes("-r")
 			if (force) {
-				console.log("\n\x1b[33mFetching latest models dynamically from GALX AI...\x1b[0m")
-				await lumi.modelCatalog.fetchGalxModels(undefined, true)
+				console.log("\n\x1b[33mFetching latest models dynamically from OpenRouter...\x1b[0m")
+				await lumi.modelCatalog.fetchOpenRouterModels(undefined, true)
 			}
 			console.log("\n\x1b[1;35m╭─── HEAV3NS Curated & Dynamic Model Catalog ───────────────────╮\x1b[0m")
 			const models = lumi.modelCatalog.getAllModels()

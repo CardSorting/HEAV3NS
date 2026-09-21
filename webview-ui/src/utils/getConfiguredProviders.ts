@@ -11,13 +11,13 @@ export function getConfiguredProviders(
 ): ApiProvider[] {
 	const configured: ApiProvider[] = []
 
-	if (apiConfiguration?.galxApiKey) {
-		configured.push("galx")
+	if (apiConfiguration?.openRouterApiKey) {
+		configured.push("openrouter")
 	}
 
-	// Always ensure GALX is available as the default provider
-	if (!configured.includes("galx")) {
-		configured.push("galx")
+	// Always ensure OpenRouter is available as the default provider.
+	if (!configured.includes("openrouter")) {
+		configured.push("openrouter")
 	}
 
 	return configured
@@ -29,5 +29,5 @@ export function getConfiguredProviders(
  */
 export function getProviderLabel(provider: ApiProvider): string {
 	const providerEntry = PROVIDERS.list.find((p) => p.value === provider)
-	return providerEntry?.label || "GALX AI"
+	return providerEntry?.label || "OpenRouter"
 }

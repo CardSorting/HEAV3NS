@@ -4,9 +4,9 @@
 Accepted
 
 ## Context
-LUMI CLI agent connects to developer workspaces and local environments, authenticating with upstream foundation model providers (OpenAI Codex, xAI Grok). To ensure frictionless, tamper-proof, and low-latency synchronization with the remote GALXAI backend:
+LUMI CLI agent connects to developer workspaces and local environments, authenticating with upstream foundation model providers (OpenAI Codex, xAI Grok). To ensure frictionless, tamper-proof, and low-latency synchronization with a remote backend:
 1. Local credentials must be encrypted and cached in-memory with sub-microsecond retrieval latency.
-2. Synchronous background ingestion to GALXAI must be tamper-evident, idempotent, and resilient against network flapping or replay attacks.
+2. Synchronous background ingestion must be tamper-evident, idempotent, and resilient against network flapping or replay attacks.
 3. Local POSIX credential files (`~/.lumi/codex_oauth.json` and `~/.codex/auth.json`) must be written atomically with `0o600` permissions.
 
 ## Decision
@@ -17,7 +17,7 @@ We implemented a resilient synchronization pipeline in `CodexOAuthManager`:
    - Sub-microsecond lookup benchmarks ($0.27\text{ \mu s}$ per operation).
 
 2. **RFC 9530 Payload Integrity Digest & Idempotency Key**:
-   - `syncToGalx()` attaches `Digest: sha-256=<base64>` computed over the serialized payload.
+   - `syncToRemote()` attaches `Digest: sha-256=<base64>` computed over the serialized payload.
    - Attaches `Idempotency-Key: <unique-session-id>` ensuring remote retries are deduplicated across a 24-hour window.
    - Attaches `X-Request-Timestamp` and `X-Request-Nonce` for replay protection.
 
@@ -40,7 +40,7 @@ flowchart TD
         TokenManager --> DigestCalc["RFC 9530 SHA-256 Digest Calculator"]
     end
 
-    subgraph GALXCloud ["GALXAI Cloud Ingestion Gateway"]
+    subgraph RemoteCloud ["Remote Cloud Ingestion Gateway"]
         DigestCalc -->|POST /api/auth/ingest| Gateway["Ingest Gateway (Constant-Time Verification)"]
         Gateway --> IdemCache["24h Idempotency Cache"]
         Gateway --> Vault["AES-256-GCM Crypto Vault"]
@@ -48,7 +48,7 @@ flowchart TD
     end
 
     style LUMIAgent fill:#111,stroke:#3b82f6,stroke-width:2px
-    style GALXCloud fill:#111,stroke:#10b981,stroke-width:2px
+    style RemoteCloud fill:#111,stroke:#10b981,stroke-width:2px
 ```
 
 ## Consequences
@@ -56,4 +56,4 @@ flowchart TD
 ### Positive
 - Sub-microsecond local token retrieval with zero disk I/O bottlenecks.
 - Complete wire tamper protection and duplicate insert immunity.
-- Verified by 10 automated enterprise resilience test suites (`validate-codex-oauth-resilience.ts`).
+- Verified by automated enterprise resilience test suites.

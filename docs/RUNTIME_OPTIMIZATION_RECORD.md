@@ -112,12 +112,6 @@ The optimization passes transformed LUMI from a raw game-engine prototype into a
 - **Semantic Error Output Summarizer (`src/tooling/extensions/execution/tool-output-summarizer.ts`)**: Extracts critical compiler errors and stack traces from verbose build logs while compressing progress noise. Exposes built-in `summarize_tool_output`.
 - **Deterministic Mock Sandbox & Replay Harness (`src/tooling/extensions/execution/tool-mock-harness.ts`)**: Enables offline unit testing and benchmark evaluations with programmable mocks and recorded fixtures.
 
-### 3.12 Always-On Relay Live Wire Codex WebSocket Visual Synthesis Gateway (ADR-150 / `src/relay/relay-server.ts`)
-- **Native Codex WebSocket Gateway (`POST /v1/images/generations`)**: Bypasses OpenAI REST `missing_scope: api.model.images.request` 401 errors by utilizing native WebSocket `tool: image_generation` on ChatGPT OAuth tokens.
-- **Dual-Dispatch Engine**: Automatically routes OpenAI Platform API keys (`sk-...`) over HTTPS REST and ChatGPT OAuth session tokens over native WebSocket wire.
-- **Watchdog Pong Supervision**: Emits 15-second protocol ping frames to defeat edge idle timeouts during 20–40s neural diffusion steps.
-- **Zero-Egress Base64 Rendering Pipeline**: Intercepts `response.output_item.done` containing master lossless PNG renders and dispatches to downstream Cloudflare R2 session media storage.
-
 ---
 
 ## 4. Complete Verification Results

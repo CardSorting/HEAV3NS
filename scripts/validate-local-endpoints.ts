@@ -27,16 +27,16 @@ async function testProviderResolution(): Promise<void> {
   const bridge = new CodexProviderBridge(oauthMgr, undefined, envResolver, proxyGateway);
 
   // Model Name -> Provider mapping
-  assert.equal(bridge.resolveProviderName("galx/gpt-5.6-sol"), "galx");
+  assert.equal(bridge.resolveProviderName("openrouter/gpt-5.6-terra"), "openrouter");
   assert.equal(bridge.resolveProviderName("gpt-5.6-terra"), "openai-codex");
   assert.equal(bridge.resolveProviderName("openrouter/auto"), "openrouter");
 
   // Default Endpoints
-  assert.equal(bridge.getDefaultEndpointForModel("galx/gpt-5.6-sol"), "https://galx.ai/v1/chat/completions");
+  assert.equal(bridge.getDefaultEndpointForModel("openrouter/gpt-5.6-terra"), "https://openrouter.ai/api/v1/chat/completions");
   assert.equal(bridge.getDefaultEndpointForModel("openrouter/auto"), "https://openrouter.ai/api/v1/chat/completions");
   assert.equal(bridge.getDefaultEndpointForModel("gpt-5.6-terra"), "https://api.openai.com/v1/chat/completions");
 
-  console.log("  [✓] Provider and endpoint resolution verified across GALX, Codex, and OpenRouter.");
+  console.log("  [✓] Provider and endpoint resolution verified across OpenRouter and Codex.");
 }
 
 async function testUrlNormalizationAndOverrides(): Promise<void> {
@@ -119,17 +119,17 @@ async function testModelCatalogLocalSpecs(): Promise<void> {
   console.log("[Test 4/8] Validating Model Catalog Specifications...");
   const catalog = new ModelCatalog();
 
-  const galxSpec = catalog.getModelInfo("galx/gpt-5.6-sol");
-  assert.equal(galxSpec.provider, "galx");
-  assert.equal(galxSpec.inputPricePer1M, 3.75);
+  const openRouterSpec = catalog.getModelInfo("openrouter/gpt-5.6-terra");
+  assert.equal(openRouterSpec.provider, "openrouter");
+  assert.equal(openRouterSpec.inputPricePer1M, 2.25);
 
   const codexSpec = catalog.getModelInfo("gpt-5.6-terra");
   assert.equal(codexSpec.provider, "openai-codex");
   assert.equal(codexSpec.inputPricePer1M, 0.0);
 
   // Provider filter
-  const galxList = await catalog.getModelsForProvider("galx");
-  assert.ok(galxList.length >= 3);
+  const openRouterList = await catalog.getModelsForProvider("openrouter");
+  assert.ok(openRouterList.length >= 1);
 
   const codexList = await catalog.getModelsForProvider("openai-codex");
   assert.ok(codexList.length >= 5);
@@ -145,7 +145,7 @@ async function testSetupWizardLocalAuditing(): Promise<void> {
   assert.ok(statuses.length >= 2);
 
   // Connection test for provider
-  const connTest = await monolith.setupWizard.testProviderConnection("galx");
+  const connTest = await monolith.setupWizard.testProviderConnection("openrouter");
   assert.ok(typeof connTest.passed === "boolean");
   assert.ok(typeof connTest.details === "string");
 

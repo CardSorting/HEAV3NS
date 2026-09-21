@@ -101,8 +101,6 @@ function convertApiProviderToProto(provider: string | undefined): ProtoApiProvid
 			return ProtoApiProvider.QWEN_TOKEN_PLAN
 		case "zai":
 			return ProtoApiProvider.ZAI
-		case "galx":
-			return ProtoApiProvider.GALX
 		default:
 			return ProtoApiProvider.OPENROUTER
 	}
@@ -133,8 +131,6 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 			return "qwen-token-plan"
 		case ProtoApiProvider.ZAI:
 			return "zai"
-		case ProtoApiProvider.GALX:
-			return "galx"
 		default:
 			return "openrouter"
 	}
@@ -150,8 +146,6 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		openAiHeaders: config.openAiHeaders || {},
 		openRouterApiKey: config.openRouterApiKey,
 		openRouterProviderSorting: config.openRouterProviderSorting,
-		galxApiKey: config.galxApiKey,
-		galxBaseUrl: config.galxBaseUrl,
 		xaiApiKey: config.xaiApiKey,
 		nousResearchApiKey: config.nousResearchApiKey,
 		cloudflareAccountId: config.cloudflareAccountId,
@@ -177,8 +171,6 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		planModeNousResearchModelInfo: convertModelInfoToProtoOpenRouter(config.planModeNousResearchModelInfo),
 		planModeClinePassModelId: config.planModeClinePassModelId,
 		planModeClinePassModelInfo: convertModelInfoToProtoOpenRouter(config.planModeClinePassModelInfo),
-		planModeGalxModelId: config.planModeGalxModelId,
-		planModeGalxModelInfo: convertModelInfoToProtoOpenRouter(config.planModeGalxModelInfo),
 
 		// Act mode configurations
 		actModeApiProvider: config.actModeApiProvider ? convertApiProviderToProto(config.actModeApiProvider) : undefined,
@@ -191,8 +183,6 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		actModeNousResearchModelInfo: convertModelInfoToProtoOpenRouter(config.actModeNousResearchModelInfo),
 		actModeClinePassModelId: config.actModeClinePassModelId,
 		actModeClinePassModelInfo: convertModelInfoToProtoOpenRouter(config.actModeClinePassModelInfo),
-		actModeGalxModelId: config.actModeGalxModelId,
-		actModeGalxModelInfo: convertModelInfoToProtoOpenRouter(config.actModeGalxModelInfo),
 	}
 }
 
@@ -206,8 +196,6 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		openAiHeaders: Object.keys(protoConfig.openAiHeaders || {}).length > 0 ? protoConfig.openAiHeaders : undefined,
 		openRouterApiKey: protoConfig.openRouterApiKey,
 		openRouterProviderSorting: protoConfig.openRouterProviderSorting,
-		galxApiKey: protoConfig.galxApiKey,
-		galxBaseUrl: protoConfig.galxBaseUrl,
 		xaiApiKey: protoConfig.xaiApiKey,
 		nousResearchApiKey: protoConfig.nousResearchApiKey,
 		cloudflareAccountId: protoConfig.cloudflareAccountId,
@@ -237,8 +225,6 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		planModeNousResearchModelInfo: convertProtoToModelInfo(protoConfig.planModeNousResearchModelInfo),
 		planModeClinePassModelId: protoConfig.planModeClinePassModelId,
 		planModeClinePassModelInfo: convertProtoToModelInfo(protoConfig.planModeClinePassModelInfo),
-		planModeGalxModelId: protoConfig.planModeGalxModelId,
-		planModeGalxModelInfo: convertProtoToModelInfo(protoConfig.planModeGalxModelInfo),
 
 		// Act mode configurations
 		actModeApiProvider:
@@ -252,7 +238,5 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		actModeNousResearchModelInfo: convertProtoToModelInfo(protoConfig.actModeNousResearchModelInfo),
 		actModeClinePassModelId: protoConfig.actModeClinePassModelId,
 		actModeClinePassModelInfo: convertProtoToModelInfo(protoConfig.actModeClinePassModelInfo),
-		actModeGalxModelId: protoConfig.actModeGalxModelId,
-		actModeGalxModelInfo: convertProtoToModelInfo(protoConfig.actModeGalxModelInfo),
 	}
 }

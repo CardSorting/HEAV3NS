@@ -3,16 +3,15 @@
  * LUMI-NEW: Cloudflare Edge Worker & Multi-Token Round-Robin Gateway
  *
  * Runs on Cloudflare Anycast Global Edge:
- * 1. Multi-Token Smooth Weighted Round-Robin (SWRR) with Quota Guard for wholesale HTTP/SSE keys.
+ * 1. Multi-Token Smooth Weighted Round-Robin (SWRR) with quota guard for HTTP/SSE keys.
  * 2. Session-sticky routing within a Worker isolate.
  * 3. OpenAI-compatible HTTP/SSE transport projection.
  * 4. Single-Flight Reactive OAuth Refresh & 429 Failover.
  * 5. Dynamic Runtime Ingestion API (/v1/tokens/ingest).
  *
  * ARCHITECTURAL BOUNDARY:
- * Codex WebSockets (wss://chatgpt.com/backend-api/codex/responses) require persistent bidirectional
- * streaming and are governed authoritatively by the Always-On VM Relay (LUMI-NEW/src/relay/relay-server.ts).
- * Serverless V8 isolates in Cloudflare Workers do not handle Codex WebSockets.
+ * Serverless V8 isolates in Cloudflare Workers provide the HTTP/SSE transport used by this gateway.
+ * Persistent bidirectional Codex WebSockets are outside this worker's scope.
  */
 
 import { SmoothWeightedPool, type PooledTokenAccount } from './agents/extensions/credential/smooth-weighted-pool.js';
@@ -292,7 +291,7 @@ export default {
       headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
       headers.set(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization, X-Lumi-Admin-Secret, X-Galx-Session-Id, X-Galx-Shard-Id'
+        'Content-Type, Authorization, X-Lumi-Admin-Secret, X-Session-Id, X-Shard-Id'
       );
       headers.set('Access-Control-Max-Age', '600');
       return new Response(null, {
@@ -367,7 +366,7 @@ export default {
     if (url.pathname === '/v1/debug/probe-ws') {
       return jsonResponse(request, env, {
         error: {
-          message: 'WebSocket probing in Cloudflare Edge Worker has been retired. Use the dedicated VM Relay (LUMI-NEW/src/relay/relay-server.ts) or `npx tsx scripts/manage-shards.ts --test`.',
+          message: 'WebSocket probing is not supported by the Cloudflare Edge Worker. Use the HTTP/SSE gateway endpoint.',
           type: 'unsupported_operation_error'
         }
       }, 410);
@@ -435,12 +434,11 @@ export default {
       }
 
       const sessionId =
-        optionalString(request.headers.get('x-galx-session-id'), MAX_SESSION_ID_LENGTH) ??
         optionalString(request.headers.get('x-session-id'), MAX_SESSION_ID_LENGTH) ??
         optionalString(body.conversation_id, MAX_SESSION_ID_LENGTH) ??
         optionalString(body.session_id, MAX_SESSION_ID_LENGTH);
 
-      const requestedShardId = request.headers.get('x-galx-shard-id') ?? request.headers.get('x-shard-id');
+      const requestedShardId = request.headers.get('x-shard-id');
       const incomingShardId = requestedShardId && /^[A-Za-z0-9._:-]{1,128}$/.test(requestedShardId)
         ? requestedShardId
         : undefined;
@@ -480,7 +478,7 @@ export default {
         if (!account && attempt === 1) {
           if (incomingToken && incomingToken.length > 20 && incomingToken.length <= 32_768) {
             account = {
-              id: `edge_relay_${crypto.randomUUID()}`,
+              id: `edge_gateway_${crypto.randomUUID()}`,
               accessToken: incomingToken,
               accountId: incomingAccountId,
               baseWeight: 1,
@@ -521,9 +519,9 @@ export default {
           logEvent('warn', 'chatgpt_session_incompatible_with_edge_worker', { accountId: account.id });
           return jsonResponse(request, env, {
             error: {
-              message: 'ChatGPT Codex OAuth session tokens require persistent WebSocket connections and must be routed through the Always-On VM Relay (LUMI-NEW/src/relay/relay-server.ts). Cloudflare Edge Workers cannot maintain long-lived Codex WebSockets due to isolate execution limits and Cloudflare WAF restrictions.',
+              message: 'ChatGPT Codex OAuth session tokens require a persistent WebSocket transport that this HTTP worker does not provide.',
               type: 'unsupported_transport_error',
-              code: 'use_vm_relay_required'
+              code: 'use_persistent_transport_required'
             }
           }, 400);
         }
@@ -642,4 +640,3 @@ function wrapResponse(
     headers,
   });
 }
-

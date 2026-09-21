@@ -100,15 +100,15 @@ function validateBudgetPolicy(): void {
 
   // Validate context in ModelCatalog for all Codex GPT models
   const catalog = new ModelCatalog();
-  const galxModels = [
+  const openRouterModels = [
     { name: "gpt-5.6-terra", context: 900_000 },
     { name: "gpt-5.6-luna", context: 900_000 },
     { name: "gpt-5.6-sol", context: 900_000 },
   ];
 
-  for (const item of galxModels) {
+  for (const item of openRouterModels) {
     const info = catalog.getModelInfo(item.name);
-    assert.equal(info.provider, "galx");
+    assert.equal(info.provider, "openrouter");
     assert.equal(info.contextWindowTokens, item.context);
   }
 }
@@ -714,7 +714,7 @@ function validateTimelineTerminalIsExactlyOnce(): void {
     message: "Item complete",
     timestamp: 1,
     sequence: 1,
-    metadata: { source: "galx", scope: "activity" },
+    metadata: { source: "openrouter-api", scope: "activity" },
   });
   assert.equal(timeline.isTerminal(), false);
 
@@ -725,7 +725,7 @@ function validateTimelineTerminalIsExactlyOnce(): void {
     message: "Turn failed",
     timestamp: 2,
     sequence: 2,
-    metadata: { source: "galx", scope: "turn" },
+    metadata: { source: "openrouter-api", scope: "turn" },
   });
   assert.equal(timeline.getTerminalStatus(), "failed");
 
@@ -736,7 +736,7 @@ function validateTimelineTerminalIsExactlyOnce(): void {
     message: "Late completion",
     timestamp: 3,
     sequence: 3,
-    metadata: { source: "galx", scope: "turn" },
+    metadata: { source: "openrouter-api", scope: "turn" },
   });
   assert.equal(timeline.getTerminalStatus(), "failed");
 }

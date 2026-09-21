@@ -10,7 +10,7 @@ import { VStack } from "./v-stack.js"
 type SetupProviderId = ApiKeyProviderId
 
 const PROVIDER_DETAILS: Record<SetupProviderId, { label: string; envVar?: string }> = {
-	galx: { label: "GALX AI Clearinghouse", envVar: "GALX_API_KEY" },
+	openrouter: { label: "OpenRouter", envVar: "OPENROUTER_API_KEY" },
 }
 
 const WIZARD_MARKDOWN_THEME: MarkdownTheme = {
@@ -129,14 +129,14 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			stepMarkdownText =
 				`### Step 2/4: Model Provider Selection & Purpose\n\n` +
 				`Choose a provider below to configure its credentials and make its default model active:\n\n` +
-				`- **GALX AI**: Wholesale sovereign compute clearinghouse (gpt-5.6-sol/terra/luna).\n` +
+				`- **OpenRouter**: OpenAI-compatible model routing for supported frontier and open models.\n` +
 				(this.providerFeedback ? `\n${this.providerFeedback}\n` : "")
 
 			this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME)
 			this.vstack.addChild(this.stepMarkdownComponent)
 
 			const items: SelectItem[] = [
-				{ value: "galx", label: "GALX AI API Key (galx_...)", description: "GALX Wholesale Compute Clearinghouse." },
+				{ value: "openrouter", label: "OpenRouter API Key", description: "OpenRouter model routing." },
 				{
 					value: "next",
 					label: "Proceed to Step 3: Custom Proxy Setup",

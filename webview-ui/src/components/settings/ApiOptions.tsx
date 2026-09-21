@@ -4,8 +4,10 @@ import { Mode } from "@shared/storage/types"
 import { useMemo } from "react"
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { ApiKeyField } from "./common/ApiKeyField"
 import { DROPDOWN_Z_INDEX, DropdownContainer } from "./constants"
-import { GalxProvider } from "./providers/GalxProvider"
+import OpenRouterModelPicker from "./OpenRouterModelPicker"
+import { useApiConfigurationHandlers } from "./utils/useApiConfigurationHandlers"
 
 interface ApiOptionsProps {
 	showModelOptions: boolean
@@ -26,6 +28,7 @@ export type { ApiProvider }
 
 const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, isPopup, currentMode }: ApiOptionsProps) => {
 	const { apiConfiguration } = useExtensionState()
+	const { handleFieldChange } = useApiConfigurationHandlers()
 	const { selectedProvider } = normalizeApiConfiguration(apiConfiguration, currentMode)
 
 	const providerOptions = useMemo(() => {
@@ -33,7 +36,7 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 	}, [])
 
 	const currentProviderLabel = useMemo(() => {
-		return providerOptions.find((option) => option.value === selectedProvider)?.label || "GALX AI"
+		return providerOptions.find((option) => option.value === selectedProvider)?.label || "OpenRouter"
 	}, [providerOptions, selectedProvider])
 
 	return (
@@ -42,12 +45,21 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 				<label className="text-xs font-medium text-foreground">Active AI Provider</label>
 				<div className="px-3 py-2 rounded-lg bg-muted/40 border border-border flex items-center justify-between text-xs text-foreground">
 					<span className="font-semibold text-lumi">{currentProviderLabel}</span>
-					<span className="text-[11px] text-muted-foreground">Managed Clearinghouse</span>
+					<span className="text-[11px] text-muted-foreground">OpenAI-compatible routing</span>
 				</div>
 			</div>
 
 			{apiConfiguration && (
-				<GalxProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
+				<div className="flex flex-col gap-3">
+					<ApiKeyField
+						initialValue={apiConfiguration.openRouterApiKey || ""}
+						onChange={(value) => handleFieldChange("openRouterApiKey", value)}
+						placeholder="Enter API Key..."
+						providerName="OpenRouter"
+						signupUrl="https://openrouter.ai/keys"
+					/>
+					{showModelOptions && <OpenRouterModelPicker currentMode={currentMode} isPopup={isPopup} showProviderRouting={true} />}
+				</div>
 			)}
 
 			{apiErrorMessage && (

@@ -10,7 +10,7 @@
 import type { ToolExecutionRecord } from "../../../core/contracts/tooling.contracts.js";
 import type { ScheduledToolCall } from "../execution/tool-execution-scheduler.js";
 
-export type SupportedModelProvider = "openai" | "openrouter" | "galx" | "anthropic" | "gemini" | "custom";
+export type SupportedModelProvider = "openai" | "openrouter" | "anthropic" | "gemini" | "custom";
 
 export class UniversalToolCallAdapter {
   /**
@@ -64,7 +64,7 @@ export class UniversalToolCallAdapter {
       return calls;
     }
 
-    // OpenAI / OpenRouter / GALX / Custom standard tool call envelope
+    // OpenAI / OpenRouter / Custom standard tool call envelope
     const choice = (rawPayload.choices as Array<Record<string, unknown>>)?.[0];
     const message = choice?.message as Record<string, unknown> | undefined;
     const toolCalls = (message?.tool_calls || rawPayload.tool_calls) as Array<{

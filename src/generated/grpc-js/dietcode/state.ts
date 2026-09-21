@@ -264,7 +264,6 @@ export interface Secrets {
   vertexApiKey?: string | undefined;
   clineApiKey?: string | undefined;
   qwenTokenPlanApiKey?: string | undefined;
-  galxApiKey?: string | undefined;
   openaiCodexOauthCredentials?: string | undefined;
   xaiOauthCredentials?: string | undefined;
 }
@@ -471,11 +470,6 @@ export interface Settings {
   modOutcome?: string | undefined;
   planModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
   actModeNousResearchModelInfo?: OpenRouterModelInfo | undefined;
-  galxBaseUrl?: string | undefined;
-  planModeGalxModelId?: string | undefined;
-  planModeGalxModelInfo?: OpenRouterModelInfo | undefined;
-  actModeGalxModelId?: string | undefined;
-  actModeGalxModelInfo?: OpenRouterModelInfo | undefined;
   openAiHeaders: { [key: string]: string };
   tokenCompressionEnabled?: boolean | undefined;
   joyZoningSteeringEnabled?: boolean | undefined;
@@ -1022,7 +1016,6 @@ function createBaseSecrets(): Secrets {
     vertexApiKey: undefined,
     clineApiKey: undefined,
     qwenTokenPlanApiKey: undefined,
-    galxApiKey: undefined,
     openaiCodexOauthCredentials: undefined,
     xaiOauthCredentials: undefined,
   };
@@ -1176,9 +1169,6 @@ export const Secrets: MessageFns<Secrets> = {
     }
     if (message.qwenTokenPlanApiKey !== undefined) {
       writer.uint32(898).string(message.qwenTokenPlanApiKey);
-    }
-    if (message.galxApiKey !== undefined) {
-      writer.uint32(1018).string(message.galxApiKey);
     }
     if (message.openaiCodexOauthCredentials !== undefined) {
       writer.uint32(1042).string(message.openaiCodexOauthCredentials);
@@ -1594,14 +1584,6 @@ export const Secrets: MessageFns<Secrets> = {
             message.qwenTokenPlanApiKey = reader.string();
             continue;
           }
-          case 127: {
-            if (tag !== 1018) {
-              break;
-            }
-
-            message.galxApiKey = reader.string();
-            continue;
-          }
           case 130: {
             if (tag !== 1042) {
               break;
@@ -1877,11 +1859,6 @@ export const Secrets: MessageFns<Secrets> = {
         : isSet(object.qwen_token_plan_api_key)
         ? globalThis.String(object.qwen_token_plan_api_key)
         : undefined,
-      galxApiKey: isSet(object.galxApiKey)
-        ? globalThis.String(object.galxApiKey)
-        : isSet(object.galx_api_key)
-        ? globalThis.String(object.galx_api_key)
-        : undefined,
       openaiCodexOauthCredentials: isSet(object.openaiCodexOauthCredentials)
         ? globalThis.String(object.openaiCodexOauthCredentials)
         : isSet(object.openai_codex_oauth_credentials)
@@ -2044,9 +2021,6 @@ export const Secrets: MessageFns<Secrets> = {
     if (message.qwenTokenPlanApiKey !== undefined) {
       obj.qwenTokenPlanApiKey = message.qwenTokenPlanApiKey;
     }
-    if (message.galxApiKey !== undefined) {
-      obj.galxApiKey = message.galxApiKey;
-    }
     if (message.openaiCodexOauthCredentials !== undefined) {
       obj.openaiCodexOauthCredentials = message.openaiCodexOauthCredentials;
     }
@@ -2110,7 +2084,6 @@ export const Secrets: MessageFns<Secrets> = {
     message.vertexApiKey = object.vertexApiKey ?? undefined;
     message.clineApiKey = object.clineApiKey ?? undefined;
     message.qwenTokenPlanApiKey = object.qwenTokenPlanApiKey ?? undefined;
-    message.galxApiKey = object.galxApiKey ?? undefined;
     message.openaiCodexOauthCredentials = object.openaiCodexOauthCredentials ?? undefined;
     message.xaiOauthCredentials = object.xaiOauthCredentials ?? undefined;
     return message;
@@ -2315,11 +2288,6 @@ function createBaseSettings(): Settings {
     modOutcome: undefined,
     planModeNousResearchModelInfo: undefined,
     actModeNousResearchModelInfo: undefined,
-    galxBaseUrl: undefined,
-    planModeGalxModelId: undefined,
-    planModeGalxModelInfo: undefined,
-    actModeGalxModelId: undefined,
-    actModeGalxModelInfo: undefined,
     openAiHeaders: {},
     tokenCompressionEnabled: undefined,
     joyZoningSteeringEnabled: undefined,
@@ -2915,21 +2883,6 @@ export const Settings: MessageFns<Settings> = {
     }
     if (message.actModeNousResearchModelInfo !== undefined) {
       OpenRouterModelInfo.encode(message.actModeNousResearchModelInfo, writer.uint32(2778).fork()).join();
-    }
-    if (message.galxBaseUrl !== undefined) {
-      writer.uint32(2794).string(message.galxBaseUrl);
-    }
-    if (message.planModeGalxModelId !== undefined) {
-      writer.uint32(2802).string(message.planModeGalxModelId);
-    }
-    if (message.planModeGalxModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeGalxModelInfo, writer.uint32(2810).fork()).join();
-    }
-    if (message.actModeGalxModelId !== undefined) {
-      writer.uint32(2818).string(message.actModeGalxModelId);
-    }
-    if (message.actModeGalxModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeGalxModelInfo, writer.uint32(2826).fork()).join();
     }
     globalThis.Object.entries(message.openAiHeaders).forEach(([key, value]: [string, string]) => {
       Settings_OpenAiHeadersEntry.encode({ key: key as any, value }, writer.uint32(2834).fork()).join();
@@ -4524,46 +4477,6 @@ export const Settings: MessageFns<Settings> = {
             message.actModeNousResearchModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
-          case 349: {
-            if (tag !== 2794) {
-              break;
-            }
-
-            message.galxBaseUrl = reader.string();
-            continue;
-          }
-          case 350: {
-            if (tag !== 2802) {
-              break;
-            }
-
-            message.planModeGalxModelId = reader.string();
-            continue;
-          }
-          case 351: {
-            if (tag !== 2810) {
-              break;
-            }
-
-            message.planModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
-          case 352: {
-            if (tag !== 2818) {
-              break;
-            }
-
-            message.actModeGalxModelId = reader.string();
-            continue;
-          }
-          case 353: {
-            if (tag !== 2826) {
-              break;
-            }
-
-            message.actModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
           case 354: {
             if (tag !== 2834) {
               break;
@@ -5581,31 +5494,6 @@ export const Settings: MessageFns<Settings> = {
         : isSet(object.act_mode_nous_research_model_info)
         ? OpenRouterModelInfo.fromJSON(object.act_mode_nous_research_model_info)
         : undefined,
-      galxBaseUrl: isSet(object.galxBaseUrl)
-        ? globalThis.String(object.galxBaseUrl)
-        : isSet(object.galx_base_url)
-        ? globalThis.String(object.galx_base_url)
-        : undefined,
-      planModeGalxModelId: isSet(object.planModeGalxModelId)
-        ? globalThis.String(object.planModeGalxModelId)
-        : isSet(object.plan_mode_galx_model_id)
-        ? globalThis.String(object.plan_mode_galx_model_id)
-        : undefined,
-      planModeGalxModelInfo: isSet(object.planModeGalxModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeGalxModelInfo)
-        : isSet(object.plan_mode_galx_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_galx_model_info)
-        : undefined,
-      actModeGalxModelId: isSet(object.actModeGalxModelId)
-        ? globalThis.String(object.actModeGalxModelId)
-        : isSet(object.act_mode_galx_model_id)
-        ? globalThis.String(object.act_mode_galx_model_id)
-        : undefined,
-      actModeGalxModelInfo: isSet(object.actModeGalxModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeGalxModelInfo)
-        : isSet(object.act_mode_galx_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_galx_model_info)
-        : undefined,
       openAiHeaders: isObject(object.openAiHeaders)
         ? (globalThis.Object.entries(object.openAiHeaders) as [string, any][]).reduce(
           (acc: { [key: string]: string }, [key, value]: [string, any]) => {
@@ -6236,21 +6124,6 @@ export const Settings: MessageFns<Settings> = {
     if (message.actModeNousResearchModelInfo !== undefined) {
       obj.actModeNousResearchModelInfo = OpenRouterModelInfo.toJSON(message.actModeNousResearchModelInfo);
     }
-    if (message.galxBaseUrl !== undefined) {
-      obj.galxBaseUrl = message.galxBaseUrl;
-    }
-    if (message.planModeGalxModelId !== undefined) {
-      obj.planModeGalxModelId = message.planModeGalxModelId;
-    }
-    if (message.planModeGalxModelInfo !== undefined) {
-      obj.planModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.planModeGalxModelInfo);
-    }
-    if (message.actModeGalxModelId !== undefined) {
-      obj.actModeGalxModelId = message.actModeGalxModelId;
-    }
-    if (message.actModeGalxModelInfo !== undefined) {
-      obj.actModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.actModeGalxModelInfo);
-    }
     if (message.openAiHeaders) {
       const entries = globalThis.Object.entries(message.openAiHeaders) as [string, string][];
       if (entries.length > 0) {
@@ -6569,16 +6442,6 @@ export const Settings: MessageFns<Settings> = {
       (object.actModeNousResearchModelInfo !== undefined && object.actModeNousResearchModelInfo !== null)
         ? OpenRouterModelInfo.fromPartial(object.actModeNousResearchModelInfo)
         : undefined;
-    message.galxBaseUrl = object.galxBaseUrl ?? undefined;
-    message.planModeGalxModelId = object.planModeGalxModelId ?? undefined;
-    message.planModeGalxModelInfo =
-      (object.planModeGalxModelInfo !== undefined && object.planModeGalxModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeGalxModelInfo)
-        : undefined;
-    message.actModeGalxModelId = object.actModeGalxModelId ?? undefined;
-    message.actModeGalxModelInfo = (object.actModeGalxModelInfo !== undefined && object.actModeGalxModelInfo !== null)
-      ? OpenRouterModelInfo.fromPartial(object.actModeGalxModelInfo)
-      : undefined;
     message.openAiHeaders = (globalThis.Object.entries(object.openAiHeaders ?? {}) as [string, string][]).reduce(
       (acc: { [key: string]: string }, [key, value]: [string, string]) => {
         if (value !== undefined) {

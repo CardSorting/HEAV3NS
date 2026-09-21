@@ -210,11 +210,9 @@ export class InteractiveModeController {
     const headerBg = (text: string) => `\x1b[48;5;234m${text}\x1b[0m`;
     const headerBox = new Box(1, 0, headerBg);
 
-    const isGalx = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
-    const initialAuthTag = isGalx ? " \x1b[32m[GALX AI]\x1b[0m" : "";
     const headerText = new Text(
       `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
-        `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${initialAuthTag}  │  ` +
+        `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
         `\x1b[90mHealth:\x1b[0m \x1b[1;32m[OPERATIONAL]\x1b[0m`,
       0,
       0
@@ -245,11 +243,10 @@ export class InteractiveModeController {
         `*Press \`?\` or type \`/help\` anytime for keyboard shortcuts.*`;
     } else {
       const identityStr = who.authenticated
-        ? `Signed in with **${who.configuredProviders.length}** provider(s) active (${who.configuredProviders.map((p) => p.provider).join(", ") || "GALX AI"})`
+        ? `Signed in with **${who.configuredProviders.length}** provider(s) active (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenRouter"})`
         : "**Unauthenticated** *(Offline)*";
 
-      const isGalxEngine = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
-      const engineNote = isGalxEngine ? " *(GALX AI Active · 900k ctx)*" : "";
+      const engineNote = "";
 
       welcomeText =
         `# ✦ LUMI Agent OS\n\n` +
@@ -547,7 +544,7 @@ export class InteractiveModeController {
             closeFn();
             const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`);
             let diagText = `### Live Provider Diagnostic Audit\n\n`;
-            const providers = ["openai-codex", "galx", "openrouter"];
+            const providers = ["openai-codex", "openrouter"];
             for (const p of providers) {
               const res = await monolith.setupWizard.testProviderConnection(p);
               const icon = res.passed ? "`[PASS]`" : "`[FAIL]`";
@@ -583,11 +580,9 @@ export class InteractiveModeController {
       const turnCount = monolith.sessionContext.turnCount;
       const memCount = monolith.sessionMemoryStore.listMemories().length;
       const memSuffix = memCount > 0 ? `  │  \x1b[90mMem:\x1b[0m \x1b[36m${memCount}\x1b[0m` : "";
-      const isGalx = monolith.config.modelName.includes("gpt-5.6") || monolith.config.modelName.includes("galx");
-      const authTag = isGalx ? " \x1b[32m[GALX AI]\x1b[0m" : "";
       headerText.setText(
         `\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
-          `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m${authTag}  │  ` +
+          `\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
           `\x1b[90mFrame:\x1b[0m \x1b[1;33m#${turnCount}\x1b[0m${memSuffix}  │  ` +
           `\x1b[90mHealth:\x1b[0m \x1b[1;32m[OPERATIONAL]\x1b[0m`
       );
@@ -643,11 +638,11 @@ export class InteractiveModeController {
       if (activeInlineView || isLoadingInlineView) return;
       isLoadingInlineView = true;
       try {
-        const galxModels = await monolith.modelCatalog.fetchGalxModels();
+        const openRouterModels = await monolith.modelCatalog.fetchOpenRouterModels();
         const catalogModels = monolith.modelCatalog.getAllModels();
 
         const combined = [
-          ...galxModels,
+          ...openRouterModels,
           ...catalogModels,
         ];
         const modelMap = new Map<string, ModelSpecs>();
@@ -1148,7 +1143,7 @@ export class InteractiveModeController {
           const lines = [
             "### ✦ LUMI Active Session & Identity",
             who.authenticated
-              ? `- **Auth Status**: \`Authenticated\` (${who.configuredProviders.map((p) => p.provider).join(", ") || "GALX AI"})`
+              ? `- **Auth Status**: \`Authenticated\` (${who.configuredProviders.map((p) => p.provider).join(", ") || "OpenRouter"})`
               : "- **Auth Status**: `Unauthenticated / Offline`",
             `- **Active Model**: \`${who.activeModel}\``,
           ];
@@ -1576,7 +1571,7 @@ export class InteractiveModeController {
 
         if (input === "/providers") {
           console.log("\x1b[1;36mTesting provider connections...\x1b[0m");
-          const providers = ["openai-codex", "galx", "openrouter"];
+          const providers = ["openai-codex", "openrouter"];
           for (const p of providers) {
             const res = await monolith.setupWizard.testProviderConnection(p);
             const icon = res.passed ? "\x1b[32m[PASS]\x1b[0m" : "\x1b[31m[FAIL]\x1b[0m";

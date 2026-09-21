@@ -1,7 +1,7 @@
 import { ApiConfiguration } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { Logger } from "@/shared/services/Logger"
-import { GalxHandler } from "./providers/galx"
+import { OpenRouterHandler } from "./providers/openrouter"
 import { ApiHandler, ApiHandlerModel, ApiProviderInfo, CommonApiHandlerOptions, SingleCompletionHandler } from "./types"
 
 // Re-export the API handler contract for backward compatibility.
@@ -13,12 +13,11 @@ function createHandlerForProvider(
 	options: Omit<ApiConfiguration, "apiProvider">,
 	mode: Mode,
 ): ApiHandler {
-	return new GalxHandler({
+	return new OpenRouterHandler({
 		onRetryAttempt: options.onRetryAttempt,
-		galxApiKey: options.galxApiKey,
-		galxBaseUrl: options.galxBaseUrl,
-		galxModelId: mode === "plan" ? options.planModeGalxModelId : options.actModeGalxModelId,
-		galxModelInfo: mode === "plan" ? options.planModeGalxModelInfo : options.actModeGalxModelInfo,
+		openRouterApiKey: options.openRouterApiKey,
+		openRouterModelId: mode === "plan" ? options.planModeOpenRouterModelId : options.actModeOpenRouterModelId,
+		openRouterModelInfo: mode === "plan" ? options.planModeOpenRouterModelInfo : options.actModeOpenRouterModelInfo,
 		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
 		thinkingBudgetTokens:
 			mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
@@ -58,7 +57,7 @@ export function buildApiHandler(configuration: ApiConfiguration, mode: Mode): Ap
 		return createHandlerForProvider(apiProvider, options, mode)
 	} catch (error) {
 		Logger.error("buildApiHandler: CRITICAL failure in createHandlerForProvider", error)
-		// Fallback to GALX
-		return createHandlerForProvider("galx", options, mode)
+		// Fallback to the supported OpenRouter handler.
+		return createHandlerForProvider("openrouter", options, mode)
 	}
 }

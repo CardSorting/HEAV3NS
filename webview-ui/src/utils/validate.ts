@@ -6,8 +6,8 @@ export function validateApiConfiguration(_currentMode: Mode, apiConfiguration?: 
 		return undefined
 	}
 
-	if (!apiConfiguration.galxApiKey) {
-		return "You must provide a valid GALX AI API key."
+	if (!apiConfiguration.openRouterApiKey) {
+		return "You must provide a valid OpenRouter API key."
 	}
 
 	return undefined

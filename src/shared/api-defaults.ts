@@ -5,11 +5,10 @@ import type { ApiProvider, ModelInfo } from "./api"
  * webview shell does not parse the complete model catalog just to render the
  * composer.
  */
-export const DEFAULT_API_PROVIDER: ApiProvider = "galx"
+export const DEFAULT_API_PROVIDER: ApiProvider = "openrouter"
 
-export const galxDefaultBaseUrl = "https://galx.ai/v1"
-export const galxDefaultModelId = "gpt-5.6-terra"
-export const galxDefaultModelInfo: ModelInfo = {
+export const openRouterDefaultModelId = "gpt-5.6-terra"
+export const openRouterDefaultModelInfo: ModelInfo = {
 	name: "OpenAI Codex GPT-5.6 Terra (Balanced Frontier)",
 	maxTokens: 128_000,
 	contextWindow: 900_000,
@@ -20,11 +19,8 @@ export const galxDefaultModelInfo: ModelInfo = {
 	outputPrice: 9.0,
 	cacheReadsPrice: 0.75,
 	description:
-		"Balanced frontier agentic coding model for large-scale refactoring and daily development with 25% wholesale discount.",
+		"Balanced frontier agentic coding model for large-scale refactoring and daily development through OpenRouter.",
 }
 
-export const openRouterDefaultModelId = "gpt-5.6-terra"
-export const openRouterDefaultModelInfo: ModelInfo = galxDefaultModelInfo
-
 export const requestyDefaultModelId = "gpt-5.6-terra"
-export const requestyDefaultModelInfo: ModelInfo = galxDefaultModelInfo
+export const requestyDefaultModelInfo: ModelInfo = openRouterDefaultModelInfo

@@ -1,6 +1,6 @@
 import { AutoApprovalSettings, DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
 import type { ApiProvider, LiteLLMModelInfo, ModelInfo, OcaModelInfo, OpenAiCompatibleModelInfo } from "@shared/api"
-import { DEFAULT_API_PROVIDER, galxDefaultBaseUrl, galxDefaultModelId, galxDefaultModelInfo } from "@shared/api-defaults"
+import { DEFAULT_API_PROVIDER } from "@shared/api-defaults"
 import { BrowserSettings, DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
 import { DietCodeRulesToggles } from "@shared/dietcode-rules"
 import { DEFAULT_FOCUS_CHAIN_SETTINGS, FocusChainSettings } from "@shared/FocusChainSettings"
@@ -152,7 +152,6 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	aihubmixBaseUrl: { default: undefined as string | undefined },
 	aihubmixAppCode: { default: undefined as string | undefined },
 	cloudflareAccountId: { default: undefined as string | undefined },
-	galxBaseUrl: { default: galxDefaultBaseUrl as string | undefined },
 
 	// Embedding configuration
 	embeddingProvider: { default: DEFAULT_API_PROVIDER as ApiProvider },
@@ -205,8 +204,6 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	planModeNousResearchModelInfo: { default: undefined as ModelInfo | undefined },
 	planModeVercelAiGatewayModelId: { default: undefined as string | undefined },
 	planModeVercelAiGatewayModelInfo: { default: undefined as ModelInfo | undefined },
-	planModeGalxModelId: { default: galxDefaultModelId as string | undefined },
-	planModeGalxModelInfo: { default: galxDefaultModelInfo as ModelInfo | undefined },
 
 	// Act mode configurations
 	actModeApiModelId: { default: undefined as string | undefined },
@@ -254,8 +251,6 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	actModeNousResearchModelInfo: { default: undefined as ModelInfo | undefined },
 	actModeVercelAiGatewayModelId: { default: undefined as string | undefined },
 	actModeVercelAiGatewayModelInfo: { default: undefined as ModelInfo | undefined },
-	actModeGalxModelId: { default: galxDefaultModelId as string | undefined },
-	actModeGalxModelInfo: { default: galxDefaultModelInfo as ModelInfo | undefined },
 
 	// Model-specific settings
 	planModeApiProvider: { default: DEFAULT_API_PROVIDER as ApiProvider },
@@ -291,7 +286,7 @@ const USER_SETTINGS_FIELDS = {
 	modEnabled: { default: false as boolean },
 	modOutcome: { default: "plan-and-implement" as "plan-only" | "plan-and-implement" },
 	useAutoCondense: { default: true as boolean },
-	/** Opt-in GALXAI-derived whitespace prompt compression at the provider boundary. */
+	/** Opt-in whitespace prompt compression at the provider boundary. */
 	tokenCompressionEnabled: { default: false as boolean },
 	subagentsEnabled: { default: true as boolean },
 	/** Keep JoyZoning architecture guidance in prompts. Audits and reports remain available when disabled. */
@@ -356,7 +351,6 @@ const SECRETS_KEYS = [
 	"dietcode:googleAuthInfo",
 	"dietcode:googleOAuthState",
 	"openRouterApiKey",
-	"galxApiKey",
 	"awsAccessKey",
 	"awsSecretKey",
 	"awsSessionToken",

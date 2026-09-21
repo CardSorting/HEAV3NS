@@ -23,8 +23,6 @@ import { AgentLoopHarness } from "../agents/extensions/execution/agent-loop-harn
 import { ProviderAttributionComposer } from "../agents/extensions/resolution/provider-attribution.js";
 import { HttpDispatcherOverlay } from "../agents/extensions/resolution/http-dispatcher.js";
 import { AuthStorageVault } from "../agents/extensions/resolution/auth-storage-vault.js";
-import { GalxProviderEngine } from "../agents/extensions/resolution/galx-provider-engine.js";
-import { GalxTransportClient } from "../integrations/galx/GalxTransportClient.js";
 import { SetupWizard } from "../agents/extensions/setup/setup-wizard.js";
 
 import { SessionContext } from "../sessions/base/session-context.js";
@@ -822,8 +820,6 @@ export class MonolithFactory {
     broccoliOutputBuffer: BroccoliCommandOutputBuffer;
     modelResolver: ModelResolver;
     modelCatalog: ModelCatalog;
-    galxEngine: GalxProviderEngine;
-    galxTransportClient: GalxTransportClient;
     envKeyResolver: EnvironmentKeyResolver;
     imageModelRegistry: ImageModelRegistry;
     proxyGateway: LlmProxyGateway;
@@ -1449,9 +1445,7 @@ export class MonolithFactory {
       config.modelName,
       options.fallbackModels
     );
-    const galxTransport = new GalxTransportClient();
-    const galxEngine = new GalxProviderEngine(undefined, galxTransport);
-    const modelCatalog = new ModelCatalog(undefined, galxEngine);
+    const modelCatalog = new ModelCatalog();
     const envKeyResolver = new EnvironmentKeyResolver();
     const imageModelRegistry = new ImageModelRegistry();
     const proxyGateway = new LlmProxyGateway();
@@ -2476,7 +2470,6 @@ export class MonolithFactory {
       sessionVfs,
       sessionMemoryStore,
       slashRouter,
-      galxEngine,
       proxyGateway,
       undefined,
       { modelCatalog, budgetCalculator, tokenTruncator, completionGate }
@@ -2563,8 +2556,6 @@ export class MonolithFactory {
       broccoliOutputBuffer,
       modelResolver,
       modelCatalog,
-      galxEngine,
-      galxTransportClient: galxTransport,
       envKeyResolver,
       imageModelRegistry,
       proxyGateway,

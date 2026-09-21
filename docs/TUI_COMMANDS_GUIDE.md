@@ -28,8 +28,8 @@ LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-complet
 
 | Slash Command | Parameters | Description |
 |---|---|---|
-| `/setup` | `[provider]` | Launches the interactive setup wizard to configure Codex OAuth, GALX Wholesale Compute, or OpenRouter. |
-| `/providers` | — | Tests latency, authentication headers, and connectivity across all 3 active providers (Codex, GALX, OpenRouter). |
+| `/setup` | `[provider]` | Launches the interactive setup wizard to configure OpenRouter or Codex OAuth. |
+| `/providers` | — | Tests authentication and connectivity across the supported providers. |
 | `/model` | `[model_id]` | Displays active model specs or switches model dynamically without restarting the session. |
 | `/rewind` | `[frames]` | Performs an instant $O(1)$ state rollback to frame $N-k$, restoring conversation, memory, and VFS state. |
 | `/diff` | `[path]` | Synthesizes real-time unified diffs comparing disk files against staged VFS overlays without committing. |
@@ -80,8 +80,8 @@ LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-complet
 2. **Zero Context Pollution**: When a model enters a hallucination loop or flawed refactor, `/rewind 1` rolls back the turn completely, allowing clean prompt re-anchoring.
 
 ### 3.3 Dynamic Multi-Model Hot-Swapping Strategy (`Ctrl+M` / `/model`)
-1. **4 Focused Provider Tabs**: Press `Ctrl+M` to open the modal and navigate between `[1] ALL`, `[2] CODEX OAUTH`, `[3] GALX WHOLESALE`, and `[4] OPENROUTER` using keys `1-4` or `Tab`.
-2. **Wholesale Sub-Cent Switching**: Quickly switch to `galx/gpt-5.6-sol` or `gpt-5.6-luna` for ultra-cost-effective reasoning turns.
+1. **Focused Provider Tabs**: Press `Ctrl+M` to open the modal and navigate between all, OpenRouter, and local/custom models using keys `1-3` or `Tab`.
+2. **Live Model Switching**: Quickly switch among the models available through OpenRouter without restarting the session.
 3. **Prefix Cache Preservation**: LUMI's 5-tier prompt structure (ADR-135) preserves L0–L2 system prompts across model switches.
 
 ---

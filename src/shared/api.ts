@@ -1,34 +1,15 @@
 import { ApiFormat } from "./proto/dietcode/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
-export type ApiProvider = "galx" | "openai-codex" | "openrouter" | (string & {})
+export type ApiProvider = "openai-codex" | "openrouter" | (string & {})
 
 export {
 	DEFAULT_API_PROVIDER,
-	galxDefaultBaseUrl,
-	galxDefaultModelId,
-	galxDefaultModelInfo,
 	openRouterDefaultModelId,
 	openRouterDefaultModelInfo,
 	requestyDefaultModelId,
 	requestyDefaultModelInfo,
 } from "./api-defaults"
-
-export const galxModels: Record<string, ModelInfo> = {
-	"gpt-5.6-terra": {
-		name: "OpenAI Codex GPT-5.6 Terra (Balanced Frontier)",
-		maxTokens: 128_000,
-		contextWindow: 900_000,
-		supportsImages: true,
-		supportsPromptCache: true,
-		supportsReasoning: true,
-		inputPrice: 2.25,
-		outputPrice: 9.0,
-		cacheReadsPrice: 0.75,
-		description:
-			"Balanced frontier agentic coding model for large-scale refactoring and daily development with 25% wholesale discount.",
-	},
-}
 
 export interface ApiHandlerOptions extends Partial<ApiHandlerSettings> {
 	ulid?: string // Used to identify the task in API requests

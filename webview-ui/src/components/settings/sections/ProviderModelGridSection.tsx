@@ -1,15 +1,15 @@
-import { ApiProvider, galxModels, ModelInfo } from "@shared/api"
+import { ModelInfo, openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
 import { Search, Sparkles } from "lucide-react"
 import { useMemo, useState } from "react"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { getModelBadges, isRecentModel, ModelFilterTabs, type ModelFilterType } from "../common/ModelTypeTab"
-import { GalxProvider } from "../providers/GalxProvider"
+import OpenRouterModelPicker from "../OpenRouterModelPicker"
 import Section from "../Section"
 import { normalizeApiConfiguration } from "../utils/providerUtils"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
 
-export type SupportedProviderTabID = "provider-galx"
+export type SupportedProviderTabID = "provider-openrouter"
 
 export interface ProviderMeta {
 	id: SupportedProviderTabID
@@ -22,12 +22,12 @@ export interface ProviderMeta {
 
 export const SUPPORTED_PROVIDERS: ProviderMeta[] = [
 	{
-		id: "provider-galx",
-		apiProviderValue: "galx",
-		name: "GALXAI",
-		label: "GALXAI Wholesale",
-		iconName: "Zap",
-		description: "Wholesale AI Compute Clearinghouse (25%–40% discount, 75% prompt cache pass-through)",
+		id: "provider-openrouter",
+		apiProviderValue: "openrouter",
+		name: "OpenRouter",
+		label: "OpenRouter Models",
+		iconName: "Globe",
+		description: "OpenAI-compatible model routing with live model discovery and provider selection.",
 	},
 ]
 
@@ -39,10 +39,10 @@ interface ProviderModelGridSectionProps {
 }
 
 /**
- * GALXAI Credential Setup & Paginated Ultra-Compressed Model List Section
+ * OpenRouter credential setup and paginated model catalog.
  */
 export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }: ProviderModelGridSectionProps) => {
-	const { apiConfiguration } = useExtensionState()
+	const { apiConfiguration, openRouterModels } = useExtensionState()
 	const { handleModeFieldsChange } = useApiConfigurationHandlers()
 
 	const [activeFilter, setActiveFilter] = useState<ModelFilterType>("all")
@@ -61,7 +61,13 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 	}
 
 	const providerMeta = SUPPORTED_PROVIDERS[0]
-	const providerModelsRecord: Record<string, ModelInfo> = galxModels
+	const providerModelsRecord: Record<string, ModelInfo> = useMemo(
+		() =>
+			Object.keys(openRouterModels).length > 0
+				? openRouterModels
+				: { [openRouterDefaultModelId]: openRouterDefaultModelInfo },
+		[openRouterModels],
+	)
 
 	// Active configuration
 	const currentConfig = useMemo(() => normalizeApiConfiguration(apiConfiguration, "plan"), [apiConfiguration])
@@ -95,19 +101,19 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 		handleModeFieldsChange(
 			{
 				apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
-				galxModelId: { plan: "planModeGalxModelId", act: "actModeGalxModelId" },
-				galxModelInfo: { plan: "planModeGalxModelInfo", act: "actModeGalxModelInfo" },
+				openRouterModelId: { plan: "planModeOpenRouterModelId", act: "actModeOpenRouterModelId" },
+				openRouterModelInfo: { plan: "planModeOpenRouterModelInfo", act: "actModeOpenRouterModelInfo" },
 			},
-			{ apiProvider: "galx", galxModelId: modelId, galxModelInfo: modelInfo },
+			{ apiProvider: "openrouter", openRouterModelId: modelId, openRouterModelInfo: modelInfo },
 			"plan",
 		)
 		handleModeFieldsChange(
 			{
 				apiProvider: { plan: "planModeApiProvider", act: "actModeApiProvider" },
-				galxModelId: { plan: "planModeGalxModelId", act: "actModeGalxModelId" },
-				galxModelInfo: { plan: "planModeGalxModelInfo", act: "actModeGalxModelInfo" },
+				openRouterModelId: { plan: "planModeOpenRouterModelId", act: "actModeOpenRouterModelId" },
+				openRouterModelInfo: { plan: "planModeOpenRouterModelInfo", act: "actModeOpenRouterModelInfo" },
 			},
-			{ apiProvider: "galx", galxModelId: modelId, galxModelInfo: modelInfo },
+			{ apiProvider: "openrouter", openRouterModelId: modelId, openRouterModelInfo: modelInfo },
 			"act",
 		)
 
@@ -131,7 +137,7 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 						{providerMeta.description}
 					</p>
 				</div>
-				<GalxProvider currentMode="plan" isPopup={false} showModelOptions={false} />
+				<OpenRouterModelPicker currentMode="plan" isPopup={false} showProviderRouting={true} />
 			</CredentialsCardWrapper>
 
 			{/* Models Grid & Model Discovery Block */}
@@ -170,11 +176,11 @@ export const ProviderModelGridSection = ({ providerTabId, renderSectionHeader }:
 					<ModelGridContainer>
 						{paginatedGridModels.map(([modelId, modelInfo]) => {
 							const isPlanActive =
-								currentConfig.selectedProvider === "galx" &&
-								(apiConfiguration?.planModeGalxModelId || "gpt-5.6-terra") === modelId
+								currentConfig.selectedProvider === "openrouter" &&
+									(apiConfiguration?.planModeOpenRouterModelId || openRouterDefaultModelId) === modelId
 							const isActActive =
-								currentConfig.selectedProvider === "galx" &&
-								(apiConfiguration?.actModeGalxModelId || "gpt-5.6-terra") === modelId
+								currentConfig.selectedProvider === "openrouter" &&
+									(apiConfiguration?.actModeOpenRouterModelId || openRouterDefaultModelId) === modelId
 							const isSelected = isPlanActive || isActActive
 							const isJustActivated = lastActivatedModelId === modelId
 

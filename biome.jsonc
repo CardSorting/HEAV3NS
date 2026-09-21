@@ -184,7 +184,6 @@
 				"!!src/index.ts",
 				"!!src/agents/extensions/setup/setup-wizard.ts",
 				"!!src/agents/extensions/execution/interactive-mode-controller.ts",
-				"!!src/relay/**"
 			]
 		},
 		{

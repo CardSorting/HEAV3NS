@@ -83,7 +83,7 @@ const featureToggles: FeatureToggle[] = [
 	{
 		id: "token-compression",
 		label: "Compress prompt whitespace",
-		description: "Opt in to GALXAI-derived whitespace compression before prompts are sent. Structured tool and image blocks stay intact.",
+		description: "Opt in to provider-neutral whitespace compression before prompts are sent. Structured tool and image blocks stay intact.",
 		stateKey: "tokenCompressionEnabled",
 		settingKey: "tokenCompressionEnabled",
 	},

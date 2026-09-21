@@ -57,7 +57,6 @@ export enum ApiProvider {
   CLINE_PASS = 43,
   XAI_OAUTH = 44,
   QWEN_TOKEN_PLAN = 45,
-  GALX = 46,
   UNRECOGNIZED = -1,
 }
 
@@ -201,9 +200,6 @@ export function apiProviderFromJSON(object: any): ApiProvider {
     case 45:
     case "QWEN_TOKEN_PLAN":
       return ApiProvider.QWEN_TOKEN_PLAN;
-    case 46:
-    case "GALX":
-      return ApiProvider.GALX;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -305,8 +301,6 @@ export function apiProviderToJSON(object: ApiProvider): string {
       return "XAI_OAUTH";
     case ApiProvider.QWEN_TOKEN_PLAN:
       return "QWEN_TOKEN_PLAN";
-    case ApiProvider.GALX:
-      return "GALX";
     case ApiProvider.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -947,9 +941,7 @@ export interface ModelsApiConfiguration {
   cloudflareAccountId?: string | undefined;
   cloudflareApiToken?: string | undefined;
   clineApiKey?: string | undefined;
-  qwenTokenPlanApiKey?: string | undefined;
-  galxApiKey?: string | undefined;
-  galxBaseUrl?:
+  qwenTokenPlanApiKey?:
     | string
     | undefined;
   /** Plan mode configurations */
@@ -997,9 +989,7 @@ export interface ModelsApiConfiguration {
   planModeDietcodeModelId?: string | undefined;
   planModeDietcodeModelInfo?: OpenRouterModelInfo | undefined;
   planModeClinePassModelId?: string | undefined;
-  planModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
-  planModeGalxModelId?: string | undefined;
-  planModeGalxModelInfo?:
+  planModeClinePassModelInfo?:
     | OpenRouterModelInfo
     | undefined;
   /** Act mode configurations */
@@ -1048,8 +1038,6 @@ export interface ModelsApiConfiguration {
   actModeDietcodeModelInfo?: OpenRouterModelInfo | undefined;
   actModeClinePassModelId?: string | undefined;
   actModeClinePassModelInfo?: OpenRouterModelInfo | undefined;
-  actModeGalxModelId?: string | undefined;
-  actModeGalxModelInfo?: OpenRouterModelInfo | undefined;
 }
 
 export interface ModelsApiConfiguration_OpenAiHeadersEntry {
@@ -8483,8 +8471,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     cloudflareApiToken: undefined,
     clineApiKey: undefined,
     qwenTokenPlanApiKey: undefined,
-    galxApiKey: undefined,
-    galxBaseUrl: undefined,
     planModeApiProvider: undefined,
     planModeApiModelId: undefined,
     planModeThinkingBudgetTokens: undefined,
@@ -8530,8 +8516,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     planModeDietcodeModelInfo: undefined,
     planModeClinePassModelId: undefined,
     planModeClinePassModelInfo: undefined,
-    planModeGalxModelId: undefined,
-    planModeGalxModelInfo: undefined,
     actModeApiProvider: undefined,
     actModeApiModelId: undefined,
     actModeThinkingBudgetTokens: undefined,
@@ -8577,8 +8561,6 @@ function createBaseModelsApiConfiguration(): ModelsApiConfiguration {
     actModeDietcodeModelInfo: undefined,
     actModeClinePassModelId: undefined,
     actModeClinePassModelInfo: undefined,
-    actModeGalxModelId: undefined,
-    actModeGalxModelInfo: undefined,
   };
 }
 
@@ -8866,12 +8848,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.qwenTokenPlanApiKey !== undefined) {
       writer.uint32(754).string(message.qwenTokenPlanApiKey);
     }
-    if (message.galxApiKey !== undefined) {
-      writer.uint32(762).string(message.galxApiKey);
-    }
-    if (message.galxBaseUrl !== undefined) {
-      writer.uint32(770).string(message.galxBaseUrl);
-    }
     if (message.planModeApiProvider !== undefined) {
       writer.uint32(800).int32(message.planModeApiProvider);
     }
@@ -9007,12 +8983,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.planModeClinePassModelInfo !== undefined) {
       OpenRouterModelInfo.encode(message.planModeClinePassModelInfo, writer.uint32(1146).fork()).join();
     }
-    if (message.planModeGalxModelId !== undefined) {
-      writer.uint32(1162).string(message.planModeGalxModelId);
-    }
-    if (message.planModeGalxModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.planModeGalxModelInfo, writer.uint32(1170).fork()).join();
-    }
     if (message.actModeApiProvider !== undefined) {
       writer.uint32(1600).int32(message.actModeApiProvider);
     }
@@ -9147,12 +9117,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     }
     if (message.actModeClinePassModelInfo !== undefined) {
       OpenRouterModelInfo.encode(message.actModeClinePassModelInfo, writer.uint32(1946).fork()).join();
-    }
-    if (message.actModeGalxModelId !== undefined) {
-      writer.uint32(1962).string(message.actModeGalxModelId);
-    }
-    if (message.actModeGalxModelInfo !== undefined) {
-      OpenRouterModelInfo.encode(message.actModeGalxModelInfo, writer.uint32(1970).fork()).join();
     }
     return writer;
   },
@@ -9925,22 +9889,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             message.qwenTokenPlanApiKey = reader.string();
             continue;
           }
-          case 95: {
-            if (tag !== 762) {
-              break;
-            }
-
-            message.galxApiKey = reader.string();
-            continue;
-          }
-          case 96: {
-            if (tag !== 770) {
-              break;
-            }
-
-            message.galxBaseUrl = reader.string();
-            continue;
-          }
           case 100: {
             if (tag !== 800) {
               break;
@@ -10301,22 +10249,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             message.planModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
-          case 145: {
-            if (tag !== 1162) {
-              break;
-            }
-
-            message.planModeGalxModelId = reader.string();
-            continue;
-          }
-          case 146: {
-            if (tag !== 1170) {
-              break;
-            }
-
-            message.planModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
           case 200: {
             if (tag !== 1600) {
               break;
@@ -10675,22 +10607,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
             }
 
             message.actModeClinePassModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
-            continue;
-          }
-          case 245: {
-            if (tag !== 1962) {
-              break;
-            }
-
-            message.actModeGalxModelId = reader.string();
-            continue;
-          }
-          case 246: {
-            if (tag !== 1970) {
-              break;
-            }
-
-            message.actModeGalxModelInfo = OpenRouterModelInfo.decode(reader, reader.uint32());
             continue;
           }
         }
@@ -11195,16 +11111,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         : isSet(object.qwen_token_plan_api_key)
         ? globalThis.String(object.qwen_token_plan_api_key)
         : undefined,
-      galxApiKey: isSet(object.galxApiKey)
-        ? globalThis.String(object.galxApiKey)
-        : isSet(object.galx_api_key)
-        ? globalThis.String(object.galx_api_key)
-        : undefined,
-      galxBaseUrl: isSet(object.galxBaseUrl)
-        ? globalThis.String(object.galxBaseUrl)
-        : isSet(object.galx_base_url)
-        ? globalThis.String(object.galx_base_url)
-        : undefined,
       planModeApiProvider: isSet(object.planModeApiProvider)
         ? apiProviderFromJSON(object.planModeApiProvider)
         : isSet(object.plan_mode_api_provider)
@@ -11430,16 +11336,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         : isSet(object.plan_mode_cline_pass_model_info)
         ? OpenRouterModelInfo.fromJSON(object.plan_mode_cline_pass_model_info)
         : undefined,
-      planModeGalxModelId: isSet(object.planModeGalxModelId)
-        ? globalThis.String(object.planModeGalxModelId)
-        : isSet(object.plan_mode_galx_model_id)
-        ? globalThis.String(object.plan_mode_galx_model_id)
-        : undefined,
-      planModeGalxModelInfo: isSet(object.planModeGalxModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.planModeGalxModelInfo)
-        : isSet(object.plan_mode_galx_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.plan_mode_galx_model_info)
-        : undefined,
       actModeApiProvider: isSet(object.actModeApiProvider)
         ? apiProviderFromJSON(object.actModeApiProvider)
         : isSet(object.act_mode_api_provider)
@@ -11664,16 +11560,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
         ? OpenRouterModelInfo.fromJSON(object.actModeClinePassModelInfo)
         : isSet(object.act_mode_cline_pass_model_info)
         ? OpenRouterModelInfo.fromJSON(object.act_mode_cline_pass_model_info)
-        : undefined,
-      actModeGalxModelId: isSet(object.actModeGalxModelId)
-        ? globalThis.String(object.actModeGalxModelId)
-        : isSet(object.act_mode_galx_model_id)
-        ? globalThis.String(object.act_mode_galx_model_id)
-        : undefined,
-      actModeGalxModelInfo: isSet(object.actModeGalxModelInfo)
-        ? OpenRouterModelInfo.fromJSON(object.actModeGalxModelInfo)
-        : isSet(object.act_mode_galx_model_info)
-        ? OpenRouterModelInfo.fromJSON(object.act_mode_galx_model_info)
         : undefined,
     };
   },
@@ -11968,12 +11854,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.qwenTokenPlanApiKey !== undefined) {
       obj.qwenTokenPlanApiKey = message.qwenTokenPlanApiKey;
     }
-    if (message.galxApiKey !== undefined) {
-      obj.galxApiKey = message.galxApiKey;
-    }
-    if (message.galxBaseUrl !== undefined) {
-      obj.galxBaseUrl = message.galxBaseUrl;
-    }
     if (message.planModeApiProvider !== undefined) {
       obj.planModeApiProvider = apiProviderToJSON(message.planModeApiProvider);
     }
@@ -12108,12 +11988,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     }
     if (message.planModeClinePassModelInfo !== undefined) {
       obj.planModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.planModeClinePassModelInfo);
-    }
-    if (message.planModeGalxModelId !== undefined) {
-      obj.planModeGalxModelId = message.planModeGalxModelId;
-    }
-    if (message.planModeGalxModelInfo !== undefined) {
-      obj.planModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.planModeGalxModelInfo);
     }
     if (message.actModeApiProvider !== undefined) {
       obj.actModeApiProvider = apiProviderToJSON(message.actModeApiProvider);
@@ -12250,12 +12124,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     if (message.actModeClinePassModelInfo !== undefined) {
       obj.actModeClinePassModelInfo = OpenRouterModelInfo.toJSON(message.actModeClinePassModelInfo);
     }
-    if (message.actModeGalxModelId !== undefined) {
-      obj.actModeGalxModelId = message.actModeGalxModelId;
-    }
-    if (message.actModeGalxModelInfo !== undefined) {
-      obj.actModeGalxModelInfo = OpenRouterModelInfo.toJSON(message.actModeGalxModelInfo);
-    }
     return obj;
   },
 
@@ -12366,8 +12234,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
     message.cloudflareApiToken = object.cloudflareApiToken ?? undefined;
     message.clineApiKey = object.clineApiKey ?? undefined;
     message.qwenTokenPlanApiKey = object.qwenTokenPlanApiKey ?? undefined;
-    message.galxApiKey = object.galxApiKey ?? undefined;
-    message.galxBaseUrl = object.galxBaseUrl ?? undefined;
     message.planModeApiProvider = object.planModeApiProvider ?? undefined;
     message.planModeApiModelId = object.planModeApiModelId ?? undefined;
     message.planModeThinkingBudgetTokens = object.planModeThinkingBudgetTokens ?? undefined;
@@ -12460,11 +12326,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       (object.planModeClinePassModelInfo !== undefined && object.planModeClinePassModelInfo !== null)
         ? OpenRouterModelInfo.fromPartial(object.planModeClinePassModelInfo)
         : undefined;
-    message.planModeGalxModelId = object.planModeGalxModelId ?? undefined;
-    message.planModeGalxModelInfo =
-      (object.planModeGalxModelInfo !== undefined && object.planModeGalxModelInfo !== null)
-        ? OpenRouterModelInfo.fromPartial(object.planModeGalxModelInfo)
-        : undefined;
     message.actModeApiProvider = object.actModeApiProvider ?? undefined;
     message.actModeApiModelId = object.actModeApiModelId ?? undefined;
     message.actModeThinkingBudgetTokens = object.actModeThinkingBudgetTokens ?? undefined;
@@ -12556,10 +12417,6 @@ export const ModelsApiConfiguration: MessageFns<ModelsApiConfiguration> = {
       (object.actModeClinePassModelInfo !== undefined && object.actModeClinePassModelInfo !== null)
         ? OpenRouterModelInfo.fromPartial(object.actModeClinePassModelInfo)
         : undefined;
-    message.actModeGalxModelId = object.actModeGalxModelId ?? undefined;
-    message.actModeGalxModelInfo = (object.actModeGalxModelInfo !== undefined && object.actModeGalxModelInfo !== null)
-      ? OpenRouterModelInfo.fromPartial(object.actModeGalxModelInfo)
-      : undefined;
     return message;
   },
 };

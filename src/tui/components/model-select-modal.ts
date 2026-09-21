@@ -32,7 +32,7 @@ const INSPECTOR_MARKDOWN_THEME: MarkdownTheme = {
   underline: (text) => `\x1b[4m${text}\x1b[0m`,
 };
 
-export type CategoryTab = "all" | "galx" | "custom";
+export type CategoryTab = "all" | "openrouter" | "custom";
 
 export class ModelSelectModal implements Component, Focusable {
   focused = false;
@@ -43,7 +43,7 @@ export class ModelSelectModal implements Component, Focusable {
   private readonly modelMap: Map<string, ModelSpecs> = new Map();
   private readonly favoriteModels: Set<string> = new Set([
     "gpt-5.6-terra",
-    "galx/gpt-5.6-terra",
+    "openrouter/gpt-5.6-terra",
   ]);
   private activeCategory: CategoryTab = "all";
   private currentModel: string;
@@ -59,12 +59,12 @@ export class ModelSelectModal implements Component, Focusable {
   ) {
     // Exclusively serve gpt-5.6-terra as the model for selection
     const terraMatches = availableModels.filter(
-      (m) => m.modelName === "gpt-5.6-terra" || m.modelName === "galx/gpt-5.6-terra"
+      (m) => m.modelName === "gpt-5.6-terra" || m.modelName === "openrouter/gpt-5.6-terra"
     );
     this.availableModels = terraMatches.length > 0 ? terraMatches : [
       {
         modelName: "gpt-5.6-terra",
-        provider: "galx",
+        provider: "openrouter",
         contextWindowTokens: 900_000,
         maxOutputTokens: 128_000,
         inputPricePer1M: 2.25,
@@ -121,8 +121,8 @@ export class ModelSelectModal implements Component, Focusable {
 
   private createSelectListForCategory(category: CategoryTab): SelectList {
     let filtered = this.availableModels;
-    if (category === "galx") {
-      filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === "galx" || m.modelName.startsWith("galx/"));
+    if (category === "openrouter") {
+      filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === "openrouter" || m.modelName.startsWith("openrouter/"));
     } else if (category !== "all") {
       filtered = this.availableModels.filter((m) => m.provider.toLowerCase() === category);
     }
@@ -191,10 +191,10 @@ export class ModelSelectModal implements Component, Focusable {
 
     // Render Category Filter Tabs Header Bar
     const tabAll = this.activeCategory === "all" ? "\x1b[1;36m[1: ALL]\x1b[0m" : "\x1b[90m[1: ALL]\x1b[0m";
-    const tabGalx = this.activeCategory === "galx" ? "\x1b[1;36m[2: GALX WHOLESALE]\x1b[0m" : "\x1b[90m[2: GALX WHOLESALE]\x1b[0m";
+    const tabOpenRouter = this.activeCategory === "openrouter" ? "\x1b[1;36m[2: OPENROUTER]\x1b[0m" : "\x1b[90m[2: OPENROUTER]\x1b[0m";
     const tabCustom = this.activeCategory === "custom" ? "\x1b[1;36m[3: LOCAL / CUSTOM]\x1b[0m" : "\x1b[90m[3: LOCAL / CUSTOM]\x1b[0m";
 
-    const tabsHeader = new Text(`${tabAll}  ${tabGalx}  ${tabCustom}`, 0, 0);
+    const tabsHeader = new Text(`${tabAll}  ${tabOpenRouter}  ${tabCustom}`, 0, 0);
     this.vstack.addChild(tabsHeader);
     this.vstack.addChild(this.selectList);
 
@@ -272,7 +272,7 @@ export class ModelSelectModal implements Component, Focusable {
       return;
     }
     if (data === "2") {
-      this.activeCategory = "galx";
+      this.activeCategory = "openrouter";
       this.selectList = this.createSelectListForCategory(this.activeCategory);
       this.renderModal();
       return;
@@ -284,7 +284,7 @@ export class ModelSelectModal implements Component, Focusable {
       return;
     }
     if (data === "\t") {
-      const cats: CategoryTab[] = ["all", "galx", "custom"];
+      const cats: CategoryTab[] = ["all", "openrouter", "custom"];
       const nextIdx = (cats.indexOf(this.activeCategory) + 1) % cats.length;
       const nextCat = cats[nextIdx];
       if (nextCat) {

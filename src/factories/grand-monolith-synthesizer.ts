@@ -373,8 +373,6 @@ export const CURRENT_REQUIRED_COMPONENTS = [
   "fuzzyMatcherSupervisor",
   "fuzzyMatcherToolSuite",
   "fuzzySnapshotManager",
-  "galxEngine",
-  "galxTransportClient",
   "gatewayDeliveryLedger",
   "gatewayDispatcherEngine",
   "gatewayServer",

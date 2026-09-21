@@ -13,23 +13,23 @@ const WelcomeView = memo(() => {
 	const [isSaving, setIsSaving] = useState(false)
 	const { handleModeFieldChange, handleFieldChange } = useApiConfigurationHandlers()
 
-	const [galxKey, setGalxKey] = useState(apiConfiguration?.galxApiKey || "")
+	const [openRouterKey, setOpenRouterKey] = useState(apiConfiguration?.openRouterApiKey || "")
 	const [showKey, setShowKey] = useState(false)
 
-	const handleGalxKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const handleOpenRouterKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const val = event.target.value
-		setGalxKey(val)
-		handleFieldChange("galxApiKey", val)
+		setOpenRouterKey(val)
+		handleFieldChange("openRouterApiKey", val)
 	}
 
 	const handleProceed = async () => {
 		setIsSaving(true)
 		try {
-			if (galxKey.trim()) {
-				await handleFieldChange("galxApiKey", galxKey.trim(), { flushImmediately: true })
+			if (openRouterKey.trim()) {
+				await handleFieldChange("openRouterApiKey", openRouterKey.trim(), { flushImmediately: true })
 				await handleModeFieldChange(
 					{ plan: "planModeApiProvider", act: "actModeApiProvider" },
-					"galx" as ApiProvider,
+					"openrouter" as ApiProvider,
 					mode,
 					{ flushImmediately: true },
 				)
@@ -50,7 +50,7 @@ const WelcomeView = memo(() => {
 		}
 	}
 
-	const isProceedEnabled = galxKey.trim().length > 0
+	const isProceedEnabled = openRouterKey.trim().length > 0
 
 	return (
 		<div className="fixed inset-0 p-0 flex flex-col items-center justify-center bg-background overflow-y-auto">
@@ -68,24 +68,24 @@ const WelcomeView = memo(() => {
 				</div>
 
 				<p className="text-sm leading-relaxed text-center text-foreground m-0">
-					Powered exclusively by GALX AI Wholesale Compute Clearinghouse. Defaulting to <b>GPT-5.6 Terra</b> for balanced frontier agentic coding.
+					Powered by OpenRouter. Defaulting to <b>GPT-5.6 Terra</b> for balanced frontier agentic coding.
 				</p>
 
 				<div className="flex flex-col gap-3 mt-2">
 					<p className="text-xs text-description text-center font-semibold tracking-wider uppercase m-0">
-						Connect GALX AI Clearinghouse
+						Connect OpenRouter
 					</p>
 
-					{/* GALX AI Key Card */}
+					{/* OpenRouter API key card */}
 					<div className="heav3ns-key-card flex flex-col gap-3 p-4">
 						<div className="flex items-center gap-3">
 							<div className="heav3ns-key-icon p-2">
 								<VscIcon className="size-5" name="key" />
 							</div>
 							<div className="flex flex-col">
-								<h3 className="font-semibold text-sm text-foreground m-0">GALX AI API Key</h3>
+								<h3 className="font-semibold text-sm text-foreground m-0">OpenRouter API Key</h3>
 								<p className="text-[11px] text-description m-0 mt-0.5 leading-normal">
-									Wholesale compute with 75% prompt cache pass-through.
+									Access OpenAI-compatible models through a single API.
 								</p>
 							</div>
 						</div>
@@ -94,10 +94,10 @@ const WelcomeView = memo(() => {
 							<div className="flex items-center gap-2 bg-muted/40 border border-border rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-heav3ns focus-within:border-transparent">
 								<input
 									className="bg-transparent border-none text-foreground text-xs w-full focus:outline-none placeholder:text-muted-foreground"
-									onChange={handleGalxKeyChange}
-									placeholder="galx_live_..."
+									onChange={handleOpenRouterKeyChange}
+									placeholder="sk-or-v1-..."
 									type={showKey ? "text" : "password"}
-									value={galxKey}
+									value={openRouterKey}
 								/>
 								<button
 									aria-label={showKey ? "Hide API key" : "Show API key"}
@@ -110,7 +110,7 @@ const WelcomeView = memo(() => {
 							<div className="flex justify-between items-center px-1">
 								<span className="text-[10px] text-description">Stored securely in VS Code SecretStorage</span>
 								<VSCodeLink
-									href="https://galx.ai/keys"
+									href="https://openrouter.ai/keys"
 									style={{ fontSize: "11px", textDecoration: "none", fontWeight: 500 }}>
 									Get Key
 								</VSCodeLink>
