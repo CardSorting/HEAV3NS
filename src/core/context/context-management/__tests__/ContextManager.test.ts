@@ -8,8 +8,10 @@ import { DietCodeMessage } from "@shared/ExtensionMessage"
 import { convertDietCodeStorageToAnthropicMessage, DietCodeStorageMessage } from "@shared/messages/content"
 import { ensureContextIdentifiers, getBlockContextId, getMessageContextId } from "@shared/messages/context-identifiers"
 import { expect } from "chai"
+import { ContextPruner } from "../../ContextPruner"
 import type { ContextCompactionStore } from "../ContextCompactionStore"
 import { ContextManager } from "../ContextManager"
+import { getCompactionTierFromTokens, getTokenSafetyProfile } from "../context-window-utils"
 
 // Minimal mock for ApiHandler — only getModel().info.contextWindow is used by shouldCompactContextWindow
 function createMockApi(contextWindow: number): ApiHandler {
@@ -521,7 +523,6 @@ describe("ContextManager", () => {
 
 	describe("token safety profiles & context pruner", () => {
 		it("calculates token safety profile correctly", () => {
-			const { getTokenSafetyProfile, getCompactionTierFromTokens } = require("../context-window-utils")
 			const api = createMockApi(128_000)
 
 			const profile = getTokenSafetyProfile(api)
@@ -541,7 +542,6 @@ describe("ContextManager", () => {
 		})
 
 		it("generates a recoverable markdown summary and injection-safe inline pointer", () => {
-			const { ContextPruner } = require("../../ContextPruner")
 			const pruner = new ContextPruner()
 
 			const ledger = {
@@ -774,7 +774,6 @@ describe("ContextManager", () => {
 		})
 
 		it("skeletonizes TypeScript and Python code preserving type signatures and exports", () => {
-			const { ContextPruner } = require("../../ContextPruner")
 			const pruner = new ContextPruner({ maxLines: 10 })
 
 			const tsCode =
@@ -789,7 +788,6 @@ describe("ContextManager", () => {
 		})
 
 		it("hyper-compresses command output preserving headers, footers, and error lines", () => {
-			const { ContextPruner } = require("../../ContextPruner")
 			const pruner = new ContextPruner()
 
 			const output = Array.from({ length: 200 }, (_, i) =>

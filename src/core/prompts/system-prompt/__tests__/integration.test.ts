@@ -287,7 +287,7 @@ describe("Prompt System Integration Tests", () => {
 		const featureTests = [
 			{ name: "browser-specific content when browser is enabled", context: { supportsBrowserUse: true }, check: "browser" },
 			{ name: "MCP content when MCP servers are present", context: {}, check: "MCP" },
-			{ name: "TODO content when focus chain is enabled", context: {}, check: "TODO" },
+			{ name: "task progress content when focus chain is enabled", context: {}, check: "task_progress" },
 			{ name: "user instructions when provided", context: {}, check: "USER'S CUSTOM INSTRUCTIONS" },
 		]
 

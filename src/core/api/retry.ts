@@ -14,6 +14,29 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
 	retryAllErrors: false,
 }
 
+function retryDelayFromHint(retryAfter: unknown, maxDelay: number): number | undefined {
+	if (retryAfter === undefined || retryAfter === null) return undefined
+
+	const raw = String(retryAfter).trim()
+	if (!raw) return undefined
+
+	const numericSeconds = Number(raw)
+	if (Number.isFinite(numericSeconds) && numericSeconds >= 0) {
+		const nowMs = Date.now()
+		const delayMs = numericSeconds > nowMs / 1_000 ? numericSeconds * 1_000 - nowMs : numericSeconds * 1_000
+		return Math.min(maxDelay, Math.max(0, Math.floor(delayMs)))
+	}
+
+	const dateMs = Date.parse(raw)
+	if (Number.isFinite(dateMs)) return Math.min(maxDelay, Math.max(0, dateMs - Date.now()))
+	return undefined
+}
+
+function retryDelay(retryAfter: unknown, attempt: number, baseDelay: number, maxDelay: number): number {
+	const hintedDelay = retryDelayFromHint(retryAfter, maxDelay)
+	return hintedDelay ?? Math.min(maxDelay, baseDelay * 2 ** attempt)
+}
+
 export class RetriableError extends Error {
 	status = 429
 	retryAfter?: number
@@ -53,21 +76,7 @@ export function withRetry(options: RetryOptions = {}) {
 						error.headers?.["ratelimit-reset"] ||
 						error.retryAfter
 
-					let delay: number
-					if (retryAfter) {
-						// Handle both delta-seconds and Unix timestamp formats
-						const retryValue = Number.parseInt(retryAfter, 10)
-						if (retryValue > Date.now() / 1000) {
-							// Unix timestamp
-							delay = retryValue * 1000 - Date.now()
-						} else {
-							// Delta seconds
-							delay = retryValue * 1000
-						}
-					} else {
-						// Use exponential backoff if no header
-						delay = Math.min(maxDelay, baseDelay * 2 ** attempt)
-					}
+					const delay = retryDelay(retryAfter, attempt, baseDelay, maxDelay)
 
 					const handlerInstance = this as any
 					if (handlerInstance.options?.onRetryAttempt) {
@@ -111,17 +120,7 @@ export async function asyncRetry<T>(
 				error.headers?.["ratelimit-reset"] ||
 				error.retryAfter
 
-			let delay: number
-			if (retryAfter) {
-				const retryValue = Number.parseInt(retryAfter, 10)
-				if (retryValue > Date.now() / 1000) {
-					delay = retryValue * 1000 - Date.now()
-				} else {
-					delay = retryValue * 1000
-				}
-			} else {
-				delay = Math.min(maxDelay, baseDelay * 2 ** attempt)
-			}
+			const delay = retryDelay(retryAfter, attempt, baseDelay, maxDelay)
 
 			if (onRetry) {
 				await onRetry(attempt + 1, error, delay)

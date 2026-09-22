@@ -1,4 +1,4 @@
-import type { ApiKeyProviderId, SetupWizard } from "../../agents/extensions/setup/setup-wizard.js"
+import type { SetupProviderId, SetupWizard } from "../../agents/extensions/setup/setup-wizard.js"
 import type { Component, Focusable } from "../tui.js"
 import { Box } from "./box.js"
 import { Input } from "./input.js"
@@ -6,11 +6,11 @@ import { Markdown, type MarkdownTheme } from "./markdown.js"
 import { type SelectItem, SelectList, type SelectListTheme } from "./select-list.js"
 import { Text } from "./text.js"
 import { VStack } from "./v-stack.js"
+import { getAgentProviderLabel, isClaudeSubscriptionDirectSdkProvider } from "../../core/providers/provider-ids.js"
 
-type SetupProviderId = ApiKeyProviderId
-
-const PROVIDER_DETAILS: Record<SetupProviderId, { label: string; envVar?: string }> = {
+const PROVIDER_DETAILS: Record<SetupProviderId, { label: string; envVar?: string; external?: boolean }> = {
 	"openai-codex": { label: "OpenAI Codex", envVar: "OPENAI_API_KEY" },
+	"claude-subscription-directsdk-experimental": { label: "Claude Code subscription", external: true },
 }
 
 const WIZARD_MARKDOWN_THEME: MarkdownTheme = {
@@ -95,7 +95,7 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			for (const st of auditStatuses) {
 				const icon = st.configured ? "`[✓ ACTIVE]`" : "`[✗ UNCONFIGURED]`"
 				const src = st.source !== "none" ? `(source: \`${st.source}\`)` : ""
-				stepMarkdownText += `- **${st.provider.toUpperCase()}**: ${icon} ${src} ${st.maskedValue || ""}\n`
+				stepMarkdownText += `- **${getAgentProviderLabel(st.provider)}**: ${icon} ${src} ${st.maskedValue || ""}\n`
 			}
 
 			stepMarkdownText += `\nSelect **Proceed to Step 2** to configure missing credentials or test connections.`
@@ -130,6 +130,7 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 				`### Step 2/4: Model Provider Selection & Purpose\n\n` +
 				`Choose a provider below to configure its credentials and make its default model active:\n\n` +
 				`- **OpenAI Codex**: OpenAI-compatible agentic coding models.\n` +
+				`- **Claude Code subscription**: Uses the official Claude Code CLI session; no API key is copied into LUMI.\n` +
 				(this.providerFeedback ? `\n${this.providerFeedback}\n` : "")
 
 			this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME)
@@ -137,6 +138,11 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 
 			const items: SelectItem[] = [
 				{ value: "openai-codex", label: "OpenAI Codex API Key", description: "OpenAI Codex model access." },
+				{
+					value: "claude-subscription-directsdk-experimental",
+					label: "Claude Code subscription",
+					description: "Use the official Claude Code CLI and its existing subscription login.",
+				},
 				{
 					value: "next",
 					label: "Proceed to Step 3: Custom Proxy Setup",
@@ -230,20 +236,34 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			this.vstack.addChild(selectList)
 		} else if (this.currentStep === 4) {
 			const providerStatuses = this.setupWizard.auditStatus().filter((status) => status.provider !== "custom-llm-proxy")
-			const configuredCount = providerStatuses.filter((status) => status.configured).length
+			const configuredCount = providerStatuses.filter(
+				(status) => status.configured && !isClaudeSubscriptionDirectSdkProvider(status.provider),
+			).length
+			const claudeDetected = providerStatuses.some(
+				(status) => isClaudeSubscriptionDirectSdkProvider(status.provider) && status.configured,
+			)
 			stepMarkdownText =
 				`### Step 4/4: Credential Resolution Audit\n\n` +
 				providerStatuses
 					.map((status) => {
-						const result = status.configured ? "`[READY]`" : "`[NOT CONFIGURED]`"
+						const isClaude = isClaudeSubscriptionDirectSdkProvider(status.provider)
+						const result = isClaude
+							? status.configured
+								? "`[CLI DETECTED · VERIFY LOGIN]`"
+								: "`[CLI NOT FOUND]`"
+							: status.configured
+								? "`[READY]`"
+								: "`[NOT CONFIGURED]`"
 						const source = status.configured ? ` Auth mode: \`${status.source}\`.` : ""
-						return `- **${status.provider.toUpperCase()}**: ${result}${source}`
+						return `- **${getAgentProviderLabel(status.provider)}**: ${result}${source}`
 					})
 					.join("\n") +
 				`\n\n` +
 				(configuredCount > 0
 					? `**[✓] ${configuredCount} provider${configuredCount === 1 ? " is" : "s are"} ready.**\n\nCredentials and the selected model are persisted in \`~/.lumi/config.json\`.`
-					: `**[!] No model provider is configured yet.** Go back to Step 2 to add an API key or connect Codex OAuth.`)
+					: claudeDetected
+						? "**[!] Claude Code was detected but still needs login verification.** Run `claude auth login`, then choose **Verify Claude Code** in Step 2."
+						: "**[!] No model provider is configured yet.** Go back to Step 2 to add an API key or connect Claude Code / Codex.")
 
 			this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME)
 			this.vstack.addChild(this.stepMarkdownComponent)
@@ -274,6 +294,43 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 	private renderProviderConfiguration(providerId: SetupProviderId): void {
 		const provider = PROVIDER_DETAILS[providerId]
 		const status = this.getProviderStatus(providerId)
+		if (provider.external) {
+			const markdown =
+				`### Configure ${provider.label}\n\n` +
+				`This transport never asks for or stores an Anthropic API key. It launches the official Claude Code CLI in an isolated, one-request process and preserves its OAuth/subscription ownership.\n\n` +
+				`1. Run \`claude auth login\` in a terminal.\n` +
+				`2. Keep the extracted plugin available, or set \`LUMI_CLAUDE_SUBSCRIPTION_DIRECTSDK_PLUGIN_DIR\` to its absolute directory.\n` +
+				`3. Verify the CLI and subscription state below.\n\n` +
+				(status?.maskedValue ? `Detected: \`${status.maskedValue}\`\n\n` : "") +
+				(this.oauthStatus ? `${this.oauthStatus}\n\n` : "") +
+				`Press **Esc** to return to the provider list.`
+
+			this.stepMarkdownComponent = new Markdown(markdown, 0, 0, WIZARD_MARKDOWN_THEME)
+			this.vstack.addChild(this.stepMarkdownComponent)
+			const selectList = new SelectList(
+				[
+					{
+						value: "verify",
+						label: "Verify CLI Login & Select Provider",
+						description: "Run Claude Code's local auth status check.",
+					},
+					{ value: "back", label: "Back to Provider List", description: "Return without changing credentials." },
+				],
+				2,
+				WIZARD_SELECT_THEME,
+			)
+			selectList.onSelect = (item) => {
+				if (item.value === "back") {
+					this.cancelProviderConfiguration()
+					return
+				}
+				void this.verifyExternalProvider(providerId)
+			}
+			selectList.onCancel = () => this.cancelProviderConfiguration()
+			this.activeStepComponent = selectList
+			this.vstack.addChild(selectList)
+			return
+		}
 		const statusText = status?.configured
 			? `\`[✓ ACTIVE]\` via \`${status.source}\` ${status.maskedValue ?? ""}`
 			: "`[✗ UNCONFIGURED]`"
@@ -308,6 +365,9 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			}
 
 			try {
+				if (providerId !== "openai-codex") {
+					throw new Error("This provider uses CLI authentication instead of an API key.")
+				}
 				this.setupWizard.configureProviderApiKey(providerId, cleaned)
 				this.finishProviderConfiguration(providerId, `${provider.label} credentials saved.`)
 			} catch (error) {
@@ -320,6 +380,20 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 		input.onEscape = () => this.cancelProviderConfiguration()
 		this.activeStepComponent = input
 		this.vstack.addChild(input)
+	}
+
+	private async verifyExternalProvider(providerId: SetupProviderId): Promise<void> {
+		this.oauthStatus = "Checking the Claude Code CLI..."
+		this.renderCurrentStep()
+		this.requestRender()
+		const result = await this.setupWizard.testProviderConnection(providerId)
+		if (result.passed) {
+			this.finishProviderConfiguration(providerId, result.details)
+		} else {
+			this.oauthStatus = `\`[WARN]\` ${result.details}`
+			this.renderCurrentStep()
+			this.requestRender()
+		}
 	}
 
 	private openProviderConfiguration(providerId: SetupProviderId): void {

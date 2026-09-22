@@ -1,7 +1,6 @@
 import osModule from "node:os"
 import { getShell } from "@utils/shell"
 import osName from "os-name"
-import { getWorkspacePaths } from "@/hosts/vscode/hostbridge/workspace/getWorkspacePaths"
 import { SystemPromptSection } from "../templates/placeholders"
 import { TemplateEngine } from "../templates/TemplateEngine"
 import type { PromptVariant, SystemPromptContext } from "../types"
@@ -21,9 +20,22 @@ function getEffectiveShell(_context: SystemPromptContext): string {
 	return getShell()
 }
 
+/**
+ * Resolve workspace roots from prompt context instead of an editor-host
+ * singleton. The CLI has no editor workspace service, and prompt generation
+ * should remain deterministic for every execution surface.
+ */
+function getWorkspacePaths(context: SystemPromptContext, currentWorkDir: string): string[] {
+	const roots = context.workspaceRoots
+		?.map((root) => root.path.trim())
+		.filter((root): root is string => root.length > 0)
+
+	return roots && roots.length > 0 ? Array.from(new Set(roots)) : [currentWorkDir]
+}
+
 export async function getSystemEnv(context: SystemPromptContext, isTesting = false) {
 	const currentWorkDir = context.cwd || process.cwd()
-	const workspaces = (await getWorkspacePaths({}))?.paths || [currentWorkDir]
+	const workspaces = getWorkspacePaths(context, currentWorkDir)
 	return isTesting
 		? {
 				os: "macOS",

@@ -28,6 +28,11 @@ import { DietCodeDefaultTool } from "@shared/tools"
 
 import { AUTO_GOVERNANCE } from "@/services/roadmap/RoadmapAutoGovernance"
 import { getRoadmapConfig } from "@/services/roadmap/RoadmapConfig"
+import {
+	buildCompletionSnapshot,
+	hasWorkspaceProgress,
+	isDuplicateAttempt,
+} from "./completion/CompletionFunnel"
 
 import { parseFocusChainListCounts, sanitizeChecklistLabel } from "../focus-chain/utils"
 import {
@@ -1153,8 +1158,6 @@ export function validateWorkspaceProgressSinceGateBlock(config: TaskConfig, _cur
 	// Delegate to the central completion funnel — no local workspace progress logic.
 	// The engine uses checkpoint hash comparison (workspace fingerprint),
 	// not result text comparison, so rewording can't bypass this check.
-	const { hasWorkspaceProgress } = require("./completion/CompletionFunnel") as typeof import("./completion/CompletionFunnel")
-	const { buildCompletionSnapshot } = require("./completion/CompletionFunnel") as typeof import("./completion/CompletionFunnel")
 	const snapshot = buildCompletionSnapshot(config)
 
 	// No prior blocks — nothing to check
@@ -1502,8 +1505,6 @@ export function detectDuplicateCompletionSubmission(
 	// Delegate to the central completion funnel — no local duplicate detection logic.
 	// The engine uses both result fingerprint AND workspace checkpoint hash
 	// for idempotency-key style duplicate suppression.
-	const { isDuplicateAttempt } = require("./completion/CompletionFunnel") as typeof import("./completion/CompletionFunnel")
-	const { buildCompletionSnapshot } = require("./completion/CompletionFunnel") as typeof import("./completion/CompletionFunnel")
 	const snapshot = buildCompletionSnapshot(config, { result, checkpointHash: options?.currentCheckpointHash })
 	const isDup = isDuplicateAttempt(snapshot)
 	if (!isDup) {

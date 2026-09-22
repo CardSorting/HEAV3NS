@@ -2,8 +2,7 @@ import { DiagnosticSeverity, FileDiagnostics } from "@shared/proto/index.dietcod
 import { expect } from "chai"
 import { beforeEach, describe, it } from "mocha"
 import * as sinon from "sinon"
-import * as pathUtils from "@/utils/path"
-import { diagnosticsToProblemsString, getNewDiagnostics } from "../"
+import { diagnosticsRuntime, diagnosticsToProblemsString, getNewDiagnostics } from "../"
 
 describe("Diagnostics Tests", () => {
 	describe("getNewDiagnostics", () => {
@@ -190,7 +189,7 @@ describe("Diagnostics Tests", () => {
 		let _getCwdStub: sinon.SinonStub
 
 		beforeEach(() => {
-			_getCwdStub = sinon.stub(pathUtils, "getCwd").resolves("/workspace")
+			_getCwdStub = sinon.stub(diagnosticsRuntime, "getCwd").resolves("/workspace")
 		})
 
 		afterEach(() => {

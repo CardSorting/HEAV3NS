@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
-import * as completionAudit from "@shared/audit/completionAudit"
 import type { TaskAuditMetadata } from "@shared/ExtensionMessage"
 import * as fs from "fs/promises"
 import * as os from "os"
@@ -8,7 +7,7 @@ import * as path from "path"
 import sinon from "sinon"
 import { setRoadmapConfigOverride } from "@/services/roadmap/RoadmapConfig"
 import { TaskState } from "../../TaskState"
-import { evaluateCompletionAuditGate, recordAdvisoryAuditCache } from "../completionGatePipeline"
+import { completionGateRuntime, evaluateCompletionAuditGate, recordAdvisoryAuditCache } from "../completionGatePipeline"
 import type { TaskConfig } from "../types/TaskConfig"
 
 const VALID_RESULT =
@@ -62,7 +61,7 @@ describe("audit invalidation and false-positive prevention", () => {
 		await recordAdvisoryAuditCache(config, VALID_RESULT, "task preview", advisory)
 
 		// Stub to ensure it's NOT called (cache hit)
-		const auditStub = sinon.stub(completionAudit, "runCompletionAudit").rejects(new Error("should not run"))
+		const auditStub = sinon.stub(completionGateRuntime, "runCompletionAudit").rejects(new Error("should not run"))
 
 		const result = await evaluateCompletionAuditGate(config, {
 			result: VALID_RESULT,
@@ -97,7 +96,7 @@ describe("audit invalidation and false-positive prevention", () => {
 		taskState.lastCompletionAuditCachedAt = Date.now()
 
 		// Stub the audit to throw — simulating infra failure
-		const auditStub = sinon.stub(completionAudit, "runCompletionAudit").rejects(new Error("infra down"))
+		const auditStub = sinon.stub(completionGateRuntime, "runCompletionAudit").rejects(new Error("infra down"))
 
 		const result = await evaluateCompletionAuditGate(config, {
 			result: VALID_RESULT,

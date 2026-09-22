@@ -4,6 +4,7 @@ import { Markdown, type MarkdownTheme } from "./markdown.js";
 import { VStack } from "./v-stack.js";
 import { Text } from "./text.js";
 import { matchesKey } from "../keys.js";
+import { isClaudeSubscriptionDirectSdkProvider } from "../../core/providers/provider-ids.js";
 
 const HELP_MARKDOWN_THEME: MarkdownTheme = {
   heading: (text) => `\x1b[1;35m${text}\x1b[0m`,
@@ -27,8 +28,15 @@ export class HelpModal implements Component, Focusable {
   private readonly container: Box;
   private readonly onClose: () => void;
 
-  constructor(onClose: () => void) {
+  constructor(onClose: () => void, activeProvider?: string) {
     this.onClose = onClose;
+
+    const modelGuide = isClaudeSubscriptionDirectSdkProvider(activeProvider)
+      ? `- **[Model]**   \`/model\` or \`Alt+M\` : Choose an actual Claude Code account route\n` +
+        `- **[Model]**   \`/models\` : Review the currently known Claude Code routes\n`
+      : `- **[Model]**   \`/terra\` : Switch to Flagship Reasoning Engine (gpt-5.6-terra · 900k ctx)\n` +
+        `- **[Model]**   \`/luna\` : Switch to High-Velocity Engine (gpt-5.6-luna · 900k ctx)\n` +
+        `- **[Model]**   \`/sol\` : Switch to Balanced Engine (gpt-5.6-sol · 900k ctx)\n`;
 
     const bgFn = (text: string) => `\x1b[48;5;235m${text}\x1b[0m`;
     this.container = new Box(2, 1, bgFn);
@@ -55,9 +63,7 @@ export class HelpModal implements Component, Focusable {
         `- \`Ctrl + D\` : Exit interactive REPL session (EOF)\n` +
         `- \`?\` or \`/help\` : Display this Help & Shortcuts Reference\n\n` +
       `### Slash Commands Reference\n` +
-        `- **[Model]**   \`/terra\` : Switch to Flagship Reasoning Engine (gpt-5.6-terra · 900k ctx)\n` +
-        `- **[Model]**   \`/luna\` : Switch to High-Velocity Engine (gpt-5.6-luna · 900k ctx)\n` +
-        `- **[Model]**   \`/sol\` : Switch to Balanced Engine (gpt-5.6-sol · 900k ctx)\n` +
+        modelGuide +
         `- **[Model]**   \`/model [name]\` : Switch active LLM model or open catalog picker\n` +
         `- **[Session]** \`/snapshot\` : Create immutable state snapshot checkpoint\n` +
         `- **[Session]** \`/snapshots\` : List all snapshot checkpoints in session\n` +

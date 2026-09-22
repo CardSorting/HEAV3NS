@@ -1,9 +1,13 @@
 import {
-	ProviderModelInfo,
 	ModelsApiConfiguration as ProtoApiConfiguration,
 	ApiProvider as ProtoApiProvider,
+	ProviderModelInfo,
 	ThinkingConfig,
 } from "@shared/proto/dietcode/models"
+import {
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+	isClaudeSubscriptionDirectSdkProvider,
+} from "@/core/providers/provider-ids"
 import { ApiConfiguration, ApiProvider, ModelInfo } from "../../api"
 import { DEFAULT_API_PROVIDER } from "../../api-defaults"
 
@@ -85,6 +89,9 @@ function convertProtoToModelInfo(info: ProviderModelInfo | undefined): ModelInfo
 
 // Convert application ApiProvider to proto ApiProvider
 function convertApiProviderToProto(provider: string | undefined): ProtoApiProvider {
+	if (isClaudeSubscriptionDirectSdkProvider(provider)) {
+		return ProtoApiProvider.CLAUDE_CODE
+	}
 	switch (provider) {
 		case "openai":
 			return ProtoApiProvider.OPENAI
@@ -122,6 +129,8 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 			return "nousResearch"
 		case ProtoApiProvider.OPENAI_CODEX:
 			return "openai-codex"
+		case ProtoApiProvider.CLAUDE_CODE:
+			return CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
 		case ProtoApiProvider.CLOUDFLARE:
 			return "cloudflare"
 		case ProtoApiProvider.CEREBRAS:

@@ -1,23 +1,25 @@
-import * as diskModule from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { expect } from "chai"
-import chokidar from "chokidar"
+import chokidar, { type FSWatcher } from "chokidar"
 import { afterEach, beforeEach, describe, it } from "mocha"
-import * as path from "path"
 import * as sinon from "sinon"
-import * as vscode from "vscode"
 import { Controller } from "@/core/controller"
 import { HostProvider } from "@/hosts/host-provider"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
 import type { FileMetadataEntry, TaskMetadata } from "./ContextTrackerTypes"
 import { FileContextTracker } from "./FileContextTracker"
 
+type MockFileSystemWatcher = {
+	close: sinon.SinonStub
+	on: sinon.SinonStub
+}
+
 describe("FileContextTracker", () => {
 	const filePath = "src/test-file.ts"
 	const taskId = "test-task-id"
 
 	let sandbox: sinon.SinonSandbox
-	let _mockWorkspace: sinon.SinonStub
-	let mockFileSystemWatcher: any
+	let mockFileSystemWatcher: MockFileSystemWatcher
 	let chokidarWatchStub: sinon.SinonStub
 	let tracker: FileContextTracker
 	let mockTaskMetadata: TaskMetadata
@@ -26,15 +28,6 @@ describe("FileContextTracker", () => {
 
 	beforeEach(() => {
 		sandbox = sinon.createSandbox()
-
-		// Mock vscode workspace
-		_mockWorkspace = sandbox.stub(vscode.workspace, "workspaceFolders").value([
-			{
-				uri: {
-					fsPath: "/mock/workspace",
-				},
-			} as vscode.WorkspaceFolder,
-		])
 
 		// Mock chokidar file watcher
 		mockFileSystemWatcher = {
@@ -45,12 +38,12 @@ describe("FileContextTracker", () => {
 		mockFileSystemWatcher.on.returns(mockFileSystemWatcher)
 
 		// Stub chokidar.watch to return our mock watcher
-		chokidarWatchStub = sandbox.stub(chokidar, "watch").returns(mockFileSystemWatcher as any)
+		chokidarWatchStub = sandbox.stub(chokidar, "watch").returns(mockFileSystemWatcher as unknown as FSWatcher)
 
 		// Mock disk module functions
 		mockTaskMetadata = { files_in_context: [], model_usage: [], environment_history: [] }
-		getTaskMetadataStub = sandbox.stub(diskModule, "getTaskMetadata").resolves(mockTaskMetadata)
-		saveTaskMetadataStub = sandbox.stub(diskModule, "saveTaskMetadata").resolves()
+		getTaskMetadataStub = sandbox.stub(diskRuntime, "getTaskMetadata").resolves(mockTaskMetadata)
+		saveTaskMetadataStub = sandbox.stub(diskRuntime, "saveTaskMetadata").resolves()
 
 		setVscodeHostProviderMock()
 		sandbox.stub(HostProvider.workspace, "getWorkspacePaths").callsFake(async () => ({
@@ -197,7 +190,7 @@ describe("FileContextTracker", () => {
 		const callback = mockFileSystemWatcher.on.firstCall.args[1]
 
 		// Directly call the callback to simulate a file change event
-		callback(vscode.Uri.file(path.resolve("/mock/workspace", filePath)))
+		callback()
 
 		// Verify trackFileContext was called with the right parameters
 		expect(trackFileContextSpy.calledWith(filePath, "user_edited")).to.be.true
@@ -225,7 +218,7 @@ describe("FileContextTracker", () => {
 		const callback = mockFileSystemWatcher.on.firstCall.args[1]
 
 		// Directly call the callback to simulate a file change event
-		callback(vscode.Uri.file(path.resolve("/mock/workspace", filePath)))
+		callback()
 
 		// Verify trackFileContext was not called with user_edited
 		expect(trackFileContextSpy.calledWith(filePath, "user_edited")).to.be.false

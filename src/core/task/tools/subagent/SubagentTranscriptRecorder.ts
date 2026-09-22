@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
-import { ensureTaskDirectoryExists } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { Logger } from "@shared/services/Logger"
 import { buildTranscriptArtifactPath } from "@shared/subagent/executionEnvelope"
 import {
@@ -50,7 +50,7 @@ export class SubagentTranscriptRecorder {
 	constructor(private readonly context: TranscriptRecorderContext) {}
 
 	async init(): Promise<string> {
-		const taskDir = await ensureTaskDirectoryExists(this.context.taskId)
+		const taskDir = await diskRuntime.ensureTaskDirectoryExists(this.context.taskId)
 		const relativePath = buildTranscriptArtifactPath(this.context.swarmId, this.context.agentId)
 		this.filePath = path.join(taskDir, relativePath)
 		this.contextRecoveryArtifactPath = `${relativePath}.context`
@@ -257,7 +257,7 @@ export async function loadTranscriptEvents(
 	swarmId: string,
 	agentId: string,
 ): Promise<{ events: SubagentTranscriptEvent[]; meta?: SubagentTranscriptMeta; corruption?: string }> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const relativePath = buildTranscriptArtifactPath(swarmId, agentId)
 	const filePath = path.join(taskDir, relativePath)
 

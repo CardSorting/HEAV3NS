@@ -34,6 +34,7 @@ function bareTask(executeToolCaptured: (...args: any[]) => Promise<any>) {
 	task.removeLastPartialMessageIfExistsWithType = async () => undefined
 	task.toolExecutor = {
 		executeToolCaptured,
+		getGuard: () => ({ isCanonicalJoyZoningEnabled: () => false }),
 		captureSyntheticToolResult: async (_block: ToolUse, _sequence: number, _id: string, content: string) => [
 			{ type: "text", text: content },
 		],

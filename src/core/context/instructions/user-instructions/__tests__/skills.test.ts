@@ -4,16 +4,15 @@
  */
 
 import { expect } from "chai"
-import * as fs from "fs"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import * as path from "path"
 import * as sinon from "sinon"
 
-import * as disk from "@/core/storage/disk"
-import * as roadmapSkillInstall from "@/services/roadmap/RoadmapSkillInstall"
+import { diskRuntime } from "@/core/storage/disk"
+import { roadmapSkillRuntime } from "@/services/roadmap/RoadmapSkillInstall"
 import { Logger } from "@/shared/services/Logger"
-import * as fsUtils from "@/utils/fs"
-import { discoverSkills, getAvailableSkills, getSkillContent } from "../skills"
+import { fsRuntime } from "@/utils/fs"
+import { discoverSkills, getAvailableSkills, getSkillContent, skillsRuntime } from "../skills"
 
 describe("Skills Utility Functions", () => {
 	let sandbox: sinon.SinonSandbox
@@ -34,12 +33,12 @@ describe("Skills Utility Functions", () => {
 		sandbox.stub(Logger, "warn")
 
 		// Stub filesystem utilities
-		fileExistsStub = sandbox.stub(fsUtils, "fileExistsAtPath")
-		isDirectoryStub = sandbox.stub(fsUtils, "isDirectory")
-		readdirStub = sandbox.stub(fs.promises, "readdir")
-		statStub = sandbox.stub(fs.promises, "stat")
-		readFileStub = sandbox.stub(fs.promises, "readFile")
-		sandbox.stub(disk, "getSkillsDirectoriesForScan").returns([
+		fileExistsStub = sandbox.stub(fsRuntime, "fileExistsAtPath")
+		isDirectoryStub = sandbox.stub(fsRuntime, "isDirectory")
+		readdirStub = sandbox.stub(skillsRuntime, "readdir")
+		statStub = sandbox.stub(skillsRuntime, "stat")
+		readFileStub = sandbox.stub(skillsRuntime, "readFile")
+		sandbox.stub(diskRuntime, "getSkillsDirectoriesForScan").returns([
 			{ path: path.join(TEST_CWD, ".dietcoderules", "skills"), source: "project" },
 			{ path: path.join(TEST_CWD, ".dietcode", "skills"), source: "project" },
 			{ path: path.join(TEST_CWD, ".claude", "skills"), source: "project" },
@@ -47,7 +46,7 @@ describe("Skills Utility Functions", () => {
 			{ path: GLOBAL_SKILLS_DIR, source: "global" },
 			{ path: path.join("/home", "user", ".agents", "skills"), source: "global" },
 		])
-		sandbox.stub(roadmapSkillInstall, "getBundledRoadmapSkillMetadata").resolves(null)
+		sandbox.stub(roadmapSkillRuntime, "getBundledRoadmapSkillMetadata").resolves(null)
 
 		// Default: no directories exist
 		fileExistsStub.resolves(false)

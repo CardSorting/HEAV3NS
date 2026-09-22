@@ -43,6 +43,12 @@ export function computeMaxInFlightLanes(concurrency = DEFAULT_SUBAGENT_CONCURREN
 	return concurrency + SUBAGENT_IN_FLIGHT_LANE_BUFFER
 }
 
+/** Runtime seam for bounded scheduler policy. Production uses the default;
+ * tests and embedders can replace the policy without mutating ESM exports. */
+export const parentAgentFlowControlRuntime = {
+	computeMaxInFlightLanes,
+}
+
 /** Release governed locks between parent-layer retries so backoff does not hold lane ownership. */
 export function shouldReleaseLaneClaimBetweenAttempts(lockRequired: boolean, willRetry: boolean): boolean {
 	return lockRequired && willRetry

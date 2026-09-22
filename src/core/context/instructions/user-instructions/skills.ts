@@ -1,20 +1,27 @@
-import { getSkillsDirectoriesForScan } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { GOLDEN_CARTRIDGE_SKILL_NAME } from "@shared/golden-cartridge"
 import type { SkillContent, SkillMetadata } from "@shared/skills"
 import { BUNDLED_SKILL_URI_PREFIX } from "@shared/skills"
-import { fileExistsAtPath, isDirectory } from "@utils/fs"
+import { fsRuntime } from "@utils/fs"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { getRoadmapConfig } from "@/services/roadmap/RoadmapConfig"
 import {
 	BUNDLED_SKILL_NAME,
 	bundledSkillPath,
-	getBundledRoadmapSkillMetadata,
 	getBundledSkillMetadata,
+	roadmapSkillRuntime,
 } from "@/services/roadmap/RoadmapSkillInstall"
 import { Logger } from "@/shared/services/Logger"
 import { parseYamlFrontmatter } from "./frontmatter"
 import { ROADMAP_SKILL_EXECUTION_DIGEST } from "./roadmapSkillDigest"
+
+/** Runtime filesystem seam for deterministic CLI tests and alternate hosts. */
+export const skillsRuntime = {
+	readdir: (dirPath: string) => fs.readdir(dirPath),
+	stat: (filePath: string) => fs.stat(filePath),
+	readFile: (filePath: string, encoding: BufferEncoding) => fs.readFile(filePath, encoding),
+}
 
 const GOLDEN_CARTRIDGE_SKILL_DESCRIPTION =
 	"Apply an explicit scarcity budget to development work. Enable this optional preference when you want minimal repository reads, mutations, abstractions, dependencies, delegation, and validation cost."
@@ -88,18 +95,18 @@ async function scanSkillsDirectoryWithDiagnostics(
 	const skills: SkillMetadata[] = []
 	const diagnostics: SkillDiagnostic[] = []
 
-	if (!(await fileExistsAtPath(dirPath)) || !(await isDirectory(dirPath))) {
+	if (!(await fsRuntime.fileExistsAtPath(dirPath)) || !(await fsRuntime.isDirectory(dirPath))) {
 		return { skills, diagnostics }
 	}
 
 	try {
-		const entries = await fs.readdir(dirPath)
+		const entries = await skillsRuntime.readdir(dirPath)
 
 		for (const entryName of entries) {
 			if (!isValidSkillDirName(entryName)) continue
 
 			const entryPath = path.join(dirPath, entryName)
-			const stats = await fs.stat(entryPath).catch(() => null)
+			const stats = await skillsRuntime.stat(entryPath).catch(() => null)
 			if (!stats?.isDirectory()) continue
 
 			const result = await loadSkillMetadataWithDiagnostic(entryPath, source, entryName)
@@ -135,7 +142,7 @@ async function loadSkillMetadataWithDiagnostic(
 	skillName: string,
 ): Promise<{ skill: SkillMetadata | null; diagnostic: SkillDiagnostic | null }> {
 	const skillMdPath = path.join(skillDir, "SKILL.md")
-	if (!(await fileExistsAtPath(skillMdPath))) {
+	if (!(await fsRuntime.fileExistsAtPath(skillMdPath))) {
 		return {
 			skill: null,
 			diagnostic: {
@@ -151,7 +158,7 @@ async function loadSkillMetadataWithDiagnostic(
 	try {
 		let size = 0
 		try {
-			const stats = await fs.stat(skillMdPath)
+			const stats = await skillsRuntime.stat(skillMdPath)
 			size = stats?.size ?? 0
 		} catch {}
 
@@ -169,7 +176,7 @@ async function loadSkillMetadataWithDiagnostic(
 			}
 		}
 
-		const fileContent = await fs.readFile(skillMdPath, "utf-8")
+		const fileContent = await skillsRuntime.readFile(skillMdPath, "utf-8")
 		const parseResult = parseYamlFrontmatter(fileContent)
 
 		if (parseResult.parseError) {
@@ -265,7 +272,7 @@ export async function discoverSkillsWithDiagnostics(cwd: string, includeOptional
 	const skills: SkillMetadata[] = []
 	const diagnostics: SkillDiagnostic[] = []
 
-	const scanDirs = getSkillsDirectoriesForScan(cwd)
+	const scanDirs = diskRuntime.getSkillsDirectoriesForScan(cwd)
 
 	for (const dir of scanDirs) {
 		const result = await scanSkillsDirectoryWithDiagnostics(dir.path, dir.source)
@@ -273,7 +280,7 @@ export async function discoverSkillsWithDiagnostics(cwd: string, includeOptional
 		diagnostics.push(...result.diagnostics)
 	}
 
-	const bundledSkill = await getBundledRoadmapSkillMetadata()
+	const bundledSkill = await roadmapSkillRuntime.getBundledRoadmapSkillMetadata()
 	if (bundledSkill) {
 		skills.push(bundledSkill)
 	} else if (getRoadmapConfig().auto_install_skills) {
@@ -357,7 +364,7 @@ export async function getSkillContent(
 
 	try {
 		const readPath = skill.path.startsWith(BUNDLED_SKILL_URI_PREFIX) ? await bundledSkillPath(skill.name) : skill.path
-		const fileContent = await fs.readFile(readPath, "utf-8")
+		const fileContent = await skillsRuntime.readFile(readPath, "utf-8")
 		if (fileContent.includes("\0")) {
 			Logger.warn(`Corrupt binary content detected when loading skill instructions for ${skill.name}`)
 			return null

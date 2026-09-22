@@ -1,6 +1,4 @@
 import { strict as assert } from "node:assert"
-import * as coreApi from "@core/api"
-import * as skills from "@core/context/instructions/user-instructions/skills"
 import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
 import { afterEach, describe, it } from "mocha"
@@ -10,8 +8,8 @@ import { orchestrator } from "@/infrastructure/ai/Orchestrator"
 import { ApiFormat } from "@/shared/proto/dietcode/models"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
-import { SubagentBuilder } from "../SubagentBuilder"
-import { SubagentRunner } from "../SubagentRunner"
+import { SubagentBuilder, subagentBuilderRuntime } from "../SubagentBuilder"
+import { SubagentRunner, subagentRunnerRuntime } from "../SubagentRunner"
 
 function initializeHostProvider() {
 	HostProvider.reset()
@@ -131,7 +129,7 @@ function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
 }
 
 function stubApiHandler(createMessage: sinon.SinonStub) {
-	sinon.stub(coreApi, "buildApiHandler").returns({
+	sinon.stub(subagentBuilderRuntime, "buildApiHandler").returns({
 		abort: sinon.stub(),
 		getModel: () => ({
 			id: "anthropic/claude-sonnet-4.5",
@@ -145,17 +143,11 @@ function stubApiHandler(createMessage: sinon.SinonStub) {
 	} as never)
 }
 
-describe("Subagent Swarm Inheritance", () => {
+	describe("Subagent Swarm Inheritance", () => {
 	beforeEach(() => {
-		sinon.stub(skills, "getResolvedSkillsForCwd").callsFake(async (cwd) => {
-			return skills.discoverSkills(cwd) as any
-		})
-		sinon.stub(skills, "filterEnabledSkills").callsFake((discovered) => {
-			return skills.getAvailableSkills(discovered)
-		})
-		sinon.stub(skills, "filterSubagentPromptSkills").callsFake((available) => {
-			return available
-		})
+		sinon.stub(subagentRunnerRuntime, "getResolvedSkillsForCwd").resolves([])
+		sinon.stub(subagentRunnerRuntime, "filterEnabledSkills").callsFake((discovered) => discovered)
+		sinon.stub(subagentRunnerRuntime, "filterSubagentPromptSkills").callsFake((available) => available)
 	})
 
 	afterEach(() => {
@@ -183,8 +175,6 @@ describe("Subagent Swarm Inheritance", () => {
 
 		// biome-ignore lint/suspicious/noExplicitAny: Mocking native tools return type for tests
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "attempt_completion" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 

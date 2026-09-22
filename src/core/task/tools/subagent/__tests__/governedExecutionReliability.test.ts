@@ -13,7 +13,7 @@ import {
 } from "@shared/subagent/governedExecution"
 import { afterEach, describe, it } from "mocha"
 import sinon from "sinon"
-import * as broccoliFence from "@/core/governance/BroccoliFencingAdapter"
+import { broccoliFenceRuntime } from "@/core/governance/BroccoliFencingAdapter"
 import { InMemoryLockAuthority } from "@/core/governance/LockAuthority"
 import { swarmEnvelopeToReplayArtifact } from "../executionReplayMappers"
 import {
@@ -83,7 +83,7 @@ describe("governed execution reliability", () => {
 			InMemoryLockAuthority.reset()
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "crash-"))
 			const disk = await import("@core/storage/disk")
-			sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+			sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 			return new GovernedSwarmCoordinator(
 				tempDir,
 				false,
@@ -167,7 +167,7 @@ describe("governed execution reliability", () => {
 		it("retry while prior attempt partially sealed preserves authoritative sealed receipt", async () => {
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "crash-"))
 			const disk = await import("@core/storage/disk")
-			sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+			sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 			const coordinator1 = new GovernedSwarmCoordinator(
 				"/tmp",
@@ -239,7 +239,7 @@ describe("governed execution reliability", () => {
 
 		it("fails closed when broccoli fence unavailable after file lock", async () => {
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fence-fail-"))
-			sinon.stub(broccoliFence, "acquireBroccoliFence").resolves({ ok: false, error: "fence unavailable" })
+			sinon.stub(broccoliFenceRuntime, "acquireBroccoliFence").resolves({ ok: false, error: "fence unavailable" })
 			const { UnifiedLockAuthority } = await import("@/core/governance/LockAuthority")
 			const dbConfig = await import("@/infrastructure/db/Config")
 			const previousDbPath = dbConfig.getDbPath()
@@ -454,7 +454,7 @@ describe("governed execution reliability", () => {
 		async function setupStore() {
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "retry-"))
 			const disk = await import("@core/storage/disk")
-			sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+			sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		}
 
 		it("append-only history links retries with parentAttemptId and retryReason", async () => {

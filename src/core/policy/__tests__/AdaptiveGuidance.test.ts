@@ -16,9 +16,9 @@ describe("FluidPolicyEngine - Adaptive Architectural Guidance", () => {
 		const content = "export class Test {}"
 		const result = await engine.onRead(filePath, content, 0, 0)
 
-		expect(result).to.contain("DOMAIN layer")
-		expect(result).to.contain("[CORE RIGOR]")
-		expect(result).to.contain("scratchpad.md")
+		expect(result).to.contain("WORKSPACE-NATIVE")
+		expect(result).to.contain("ARCHITECTURE-FIT")
+		expect(result).to.contain("Mirror nearby modules")
 	})
 
 	it("should show context saturation when totalReadCount is moderate (e.g., 5)", async () => {
@@ -28,7 +28,7 @@ describe("FluidPolicyEngine - Adaptive Architectural Guidance", () => {
 
 		expect(result).to.contain("[CONTEXT SATURATED]")
 		expect(result).to.contain("plan_mode_respond")
-		expect(result).to.contain("[SOVEREIGN DRAFTING]")
+		expect(result).to.contain("[ARCHITECTURE FIT]")
 	})
 
 	it("should show stalling warning when perFileReadCount is high (e.g., 3)", async () => {

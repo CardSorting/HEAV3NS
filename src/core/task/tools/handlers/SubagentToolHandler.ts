@@ -60,7 +60,6 @@ import {
 	addSubagentRunStats,
 	CoalescingAsyncEmitter,
 	calculateRetryDelayMs,
-	computeMaxInFlightLanes,
 	createGovernedExecutionPathMetrics,
 	createParentAbortWatcher,
 	createSwarmSchedulerWake,
@@ -79,6 +78,7 @@ import {
 	shouldPersistSwarmProgressArtifact,
 	shouldReleaseLaneClaimBetweenAttempts,
 	waitForSettlement,
+	parentAgentFlowControlRuntime,
 } from "../subagent/ParentAgentFlowControl"
 import {
 	computeSwarmArtifactChecksum,
@@ -100,6 +100,11 @@ interface ConfigWithExtensions extends TaskConfig {
 }
 
 const PROMPT_KEYS = ["prompt_1", "prompt_2", "prompt_3", "prompt_4", "prompt_5"] as const
+
+/** Explicit runtime seam for the CLI artifact boundary. */
+export const subagentToolHandlerRuntime = {
+	persistSwarmEnvelope,
+}
 
 function resolveConfiguredSubagentName(toolName: string): string | undefined {
 	return AgentConfigLoader.getInstance().resolveSubagentNameForTool(toolName)
@@ -496,7 +501,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				let artifactPath = draft.artifactPath
 				if (options?.persistArtifact !== false) {
 					try {
-						const persistedPath = await persistSwarmEnvelope(config.taskId, draft)
+						const persistedPath = await subagentToolHandlerRuntime.persistSwarmEnvelope(config.taskId, draft)
 						artifactPath = persistedPath
 					} catch (error) {
 						Logger.warn("[SubagentToolHandler] Failed to persist swarm execution artifact:", error)
@@ -683,7 +688,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				DEFAULT_SUBAGENT_CONCURRENCY,
 				computeFastIoReservedSlots(DEFAULT_SUBAGENT_CONCURRENCY),
 			)
-			const maxInFlightLanes = computeMaxInFlightLanes(DEFAULT_SUBAGENT_CONCURRENCY)
+			const maxInFlightLanes = parentAgentFlowControlRuntime.computeMaxInFlightLanes(DEFAULT_SUBAGENT_CONCURRENCY)
 			const schedulerWake = createSwarmSchedulerWake()
 			let releaseSwarmFinalizationWait: () => void = () => undefined
 			const swarmFinalizationSignal = new Promise<void>((resolve) => {
@@ -1839,7 +1844,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 						violations: [...finalEnvelope.invariants.violations, SWARM_TERMINAL_STAGING_VIOLATION],
 					},
 				}
-				swarmArtifactPath = await persistSwarmEnvelope(config.taskId, stagingEnvelope, {
+				swarmArtifactPath = await subagentToolHandlerRuntime.persistSwarmEnvelope(config.taskId, stagingEnvelope, {
 					validationSnapshot,
 					metrics: executionPathMetrics,
 				})
@@ -1910,7 +1915,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 				finalEnvelope.checksum = computeSwarmArtifactChecksum(finalEnvelope)
 			}
 			try {
-				swarmArtifactPath = await persistSwarmEnvelope(config.taskId, finalEnvelope, {
+				swarmArtifactPath = await subagentToolHandlerRuntime.persistSwarmEnvelope(config.taskId, finalEnvelope, {
 					validationSnapshot,
 					metrics: executionPathMetrics,
 				})

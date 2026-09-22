@@ -172,6 +172,8 @@ describe("CommandExecutor structured evidence", () => {
 	})
 
 	it("rejects known interactive blockers before allocating a terminal", async () => {
+		const previousSanitizerMode = process.env.LUMI_COMMAND_SANITIZER_MODE
+		process.env.LUMI_COMMAND_SANITIZER_MODE = "blocking"
 		let allocatedTerminal = false
 		const manager = {
 			...createTerminalManager(),
@@ -182,14 +184,19 @@ describe("CommandExecutor structured evidence", () => {
 		} as unknown as ITerminalManager
 		const executor = new CommandExecutor(executorConfig(manager), createCallbacks())
 
-		const [rejected, response] = await executor.execute("vim package.json", undefined)
-		const evidence = readCommandExecutionEvidence(response)
+		try {
+			const [rejected, response] = await executor.execute("vim package.json", undefined)
+			const evidence = readCommandExecutionEvidence(response)
 
-		assert.equal(rejected, false)
-		assert.equal(allocatedTerminal, false)
-		assert.equal(evidence?.started, false)
-		assert.equal(evidence?.completed, false)
-		assert.match(String(response), /requires interactive terminal input/)
+			assert.equal(rejected, false)
+			assert.equal(allocatedTerminal, false)
+			assert.equal(evidence?.started, false)
+			assert.equal(evidence?.completed, false)
+			assert.match(String(response), /requires interactive terminal input/)
+		} finally {
+			if (previousSanitizerMode === undefined) delete process.env.LUMI_COMMAND_SANITIZER_MODE
+			else process.env.LUMI_COMMAND_SANITIZER_MODE = previousSanitizerMode
+		}
 	})
 
 	it("preserves signal termination and managed timeout distinctly", async () => {

@@ -226,3 +226,8 @@ export async function verifyBroccoliFence(
 		return { valid: false, reason: "orphaned" }
 	}
 }
+
+/** Runtime seam for authority adapters and deterministic failure-injection tests. */
+export const broccoliFenceRuntime = {
+	acquireBroccoliFence,
+}

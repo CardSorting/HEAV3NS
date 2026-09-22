@@ -1,4 +1,4 @@
-import { getTaskMetadata, saveTaskMetadata } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 
 export class ModelContextTracker {
 	readonly taskId: string
@@ -8,7 +8,7 @@ export class ModelContextTracker {
 	}
 
 	async recordModelUsage(apiProviderId: string, modelId: string, mode: string) {
-		const metadata = await getTaskMetadata(this.taskId)
+		const metadata = await diskRuntime.getTaskMetadata(this.taskId)
 
 		if (!metadata.model_usage) {
 			metadata.model_usage = []
@@ -32,6 +32,6 @@ export class ModelContextTracker {
 			mode: mode,
 		})
 
-		await saveTaskMetadata(this.taskId, metadata)
+		await diskRuntime.saveTaskMetadata(this.taskId, metadata)
 	}
 }

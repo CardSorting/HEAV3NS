@@ -65,6 +65,12 @@ export async function isDirectory(filePath: string): Promise<boolean> {
 	}
 }
 
+/** Runtime filesystem seam for CLI hosts and deterministic unit tests. */
+export const fsRuntime = {
+	fileExistsAtPath,
+	isDirectory,
+}
+
 /**
  * Gets the size of a file in kilobytes
  * @param filePath - Path to the file to check
@@ -123,7 +129,7 @@ export async function writeAtomic(filePath: string, content: string | Uint8Array
 		// Clean up temp file on failure
 		try {
 			await fs.unlink(tempPath)
-		} catch (e) {}
+		} catch {}
 		throw err
 	}
 }

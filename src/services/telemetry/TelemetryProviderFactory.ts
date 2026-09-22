@@ -12,6 +12,14 @@ import { OpenTelemetryTelemetryProvider } from "./providers/opentelemetry/OpenTe
 import { PostHogClientProvider } from "./providers/posthog/PostHogClientProvider"
 import { PostHogTelemetryProvider } from "./providers/posthog/PostHogTelemetryProvider"
 
+/** Runtime configuration seam for CLI hosts and deterministic factory tests. */
+export const telemetryFactoryRuntime = {
+	isSelfHosted: () => DietCodeEndpoint.isSelfHosted(),
+	isPostHogConfigValid,
+	getValidOpenTelemetryConfig,
+	getValidRuntimeOpenTelemetryConfig,
+}
+
 /**
  * Supported telemetry provider types
  */
@@ -107,14 +115,14 @@ export class TelemetryProviderFactory {
 		const configs: TelemetryProviderConfig[] = []
 
 		// Skip PostHog in selfHosted mode - enterprise customers should not send telemetry to PostHog
-		if (!DietCodeEndpoint.isSelfHosted() && isPostHogConfigValid(posthogConfig)) {
+		if (!telemetryFactoryRuntime.isSelfHosted() && telemetryFactoryRuntime.isPostHogConfigValid(posthogConfig)) {
 			configs.push({ type: "posthog", ...posthogConfig })
 		}
 
 		// Skip build-time OTEL in selfHosted mode - enterprise customers should not send telemetry to DietCode's collector
 		// Note: Runtime env OTEL and remote config OTEL are still allowed (user/org explicitly configured them)
-		const otelConfig = getValidOpenTelemetryConfig()
-		if (!DietCodeEndpoint.isSelfHosted() && otelConfig) {
+		const otelConfig = telemetryFactoryRuntime.getValidOpenTelemetryConfig()
+		if (!telemetryFactoryRuntime.isSelfHosted() && otelConfig) {
 			configs.push({
 				type: "opentelemetry",
 				config: otelConfig,
@@ -122,7 +130,7 @@ export class TelemetryProviderFactory {
 			})
 		}
 
-		const runtimeOtelConfig = getValidRuntimeOpenTelemetryConfig()
+		const runtimeOtelConfig = telemetryFactoryRuntime.getValidRuntimeOpenTelemetryConfig()
 		if (runtimeOtelConfig) {
 			configs.push({
 				type: "opentelemetry",

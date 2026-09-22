@@ -1,13 +1,16 @@
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
+import { fileURLToPath } from "node:url"
 import should from "should"
 import sinon from "sinon"
 import { HookOutput } from "../../../shared/proto/dietcode/hooks"
-import * as diskModule from "../../storage/disk"
-import { StateManager } from "../../storage/StateManager"
+import { hookStorageRuntime } from "../../storage/disk"
+import { stateManagerRuntime } from "../../storage/StateManager"
 import { HookDiscoveryCache } from "../HookDiscoveryCache"
 import { Hooks, NamedHookInput } from "../hook-factory"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Define HookName locally since it's not exported from hook-factory
 type HookName = keyof Hooks
@@ -42,7 +45,7 @@ export function hookPath(hooksDir: string, hookName: string, platform: NodeJS.Pl
 }
 
 export function stubHookDirs(sandbox: sinon.SinonSandbox, dirs: string[]): sinon.SinonStub {
-	return sandbox.stub(diskModule, "getAllHooksDirs").resolves(dirs)
+	return sandbox.stub(hookStorageRuntime, "getAllHooksDirs").resolves(dirs)
 }
 
 export async function createHookTestEnv(): Promise<HookTestEnv> {
@@ -50,7 +53,7 @@ export async function createHookTestEnv(): Promise<HookTestEnv> {
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "hook-test-"))
 	const hooksDir = await createHooksDirectory(tempDir)
 
-	sandbox.stub(StateManager, "get").returns({
+	sandbox.stub(stateManagerRuntime, "get").returns({
 		getGlobalStateKey: (key: string) => {
 			if (key === "workspaceRoots") {
 				return [{ path: tempDir }]

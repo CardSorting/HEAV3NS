@@ -1,4 +1,4 @@
-import { getTaskMetadata, readTaskHistoryFromState, saveTaskMetadata } from "@core/storage/disk"
+import { diskRuntime, readTaskHistoryFromState } from "@core/storage/disk"
 import type { DietCodeMessage } from "@shared/ExtensionMessage"
 import chokidar, { FSWatcher } from "chokidar"
 import * as path from "path"
@@ -107,7 +107,7 @@ export class FileContextTracker {
 	 */
 	async addFileToFileContextTracker(taskId: string, filePath: string, source: FileMetadataEntry["record_source"]) {
 		try {
-			const metadata = await getTaskMetadata(taskId)
+			const metadata = await diskRuntime.getTaskMetadata(taskId)
 			const now = Date.now()
 
 			// Mark existing entries for this file as stale
@@ -156,7 +156,7 @@ export class FileContextTracker {
 			}
 
 			metadata.files_in_context.push(newEntry)
-			await saveTaskMetadata(taskId, metadata)
+			await diskRuntime.saveTaskMetadata(taskId, metadata)
 		} catch (error) {
 			Logger.error("Failed to add file to metadata:", error)
 		}
@@ -196,7 +196,7 @@ export class FileContextTracker {
 
 		try {
 			// Check task metadata for files that were edited by DietCode or users after the message timestamp
-			const taskMetadata = await getTaskMetadata(this.taskId)
+			const taskMetadata = await diskRuntime.getTaskMetadata(this.taskId)
 
 			if (taskMetadata?.files_in_context) {
 				for (const fileEntry of taskMetadata.files_in_context) {

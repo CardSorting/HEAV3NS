@@ -1,5 +1,6 @@
 import { Mode } from "@shared/storage/types"
 import { DietCodeDefaultTool } from "@shared/tools"
+import * as ts from "typescript"
 import * as crypto from "crypto"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -21,6 +22,7 @@ import { AxiomVerificationService } from "./AxiomVerificationService"
 import { IntegrityGarbageCollector } from "./IntegrityGarbageCollector"
 import { IntegrityOptimizer } from "./IntegrityOptimizer"
 import { IntegrityProtocol, StabilityDiagnostics } from "./IntegrityProtocol"
+import { PlanModeEnforcer } from "./PlanModeEnforcer"
 import { SemanticAxiomEngine } from "./SemanticAxiomEngine"
 import { SimulationEngine } from "./SimulationEngine"
 import { RefactoringSuggestion, SpiderRefactorer } from "./SpiderRefactorer"
@@ -1347,10 +1349,10 @@ export class FluidPolicyEngine {
 		}
 
 		// Proactive Dependency Detection (AST-based)
-		const sourceFile = require("typescript").createSourceFile(
+		const sourceFile = ts.createSourceFile(
 			absolutePath,
 			content,
-			require("typescript").ScriptTarget.Latest,
+			ts.ScriptTarget.Latest,
 			true,
 		)
 		const crossLayerViolations = this.tspPlugin.findCrossLayerViolations(sourceFile, absolutePath)
@@ -1385,7 +1387,7 @@ export class FluidPolicyEngine {
 
 		// V300: Drift Prophecy in PLAN mode
 		if (this.mode === "plan") {
-			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd, () => this.getArchitectureSteering())
+			const enforcer = new PlanModeEnforcer(this.cwd, () => this.getArchitectureSteering())
 			const status = await enforcer.getStrategicReviewStatus(this.stabilityMonitor)
 			if (status.prophecy) {
 				header += `\n${status.prophecy}\n`
@@ -1441,7 +1443,7 @@ export class FluidPolicyEngine {
 		const isSaturated = totalReadCount >= 5
 
 		if (this.mode === "plan") {
-			const enforcer = new (require("./PlanModeEnforcer").PlanModeEnforcer)(this.cwd, () => this.getArchitectureSteering())
+			const enforcer = new PlanModeEnforcer(this.cwd, () => this.getArchitectureSteering())
 			const status = await enforcer.getStrategicReviewStatus(this.stabilityMonitor)
 			if (status.prophecy) header += `\n${status.prophecy}\n`
 
@@ -1783,7 +1785,6 @@ export class FluidPolicyEngine {
 				}
 
 				// AST-based dependency detection
-				const ts = require("typescript")
 				const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true)
 				const crossViolations = this.tspPlugin.findCrossLayerViolations(sourceFile, filePath)
 				if (crossViolations.length > 0) {
@@ -1916,7 +1917,6 @@ export class FluidPolicyEngine {
 	}
 
 	public getLayerForPath(filePath: string): string {
-		const { getLayer } = require("@/utils/joy-zoning")
 		return getLayer(filePath)
 	}
 

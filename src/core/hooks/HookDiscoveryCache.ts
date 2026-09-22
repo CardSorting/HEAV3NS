@@ -1,6 +1,6 @@
 import { Logger } from "@/shared/services/Logger"
 import { telemetryService } from "../../services/telemetry"
-import { getAllHooksDirs } from "../storage/disk"
+import { hookStorageRuntime } from "../storage/disk"
 import { HookFactory, Hooks } from "./hook-factory"
 
 type HookName = keyof Hooks
@@ -159,7 +159,7 @@ export class HookDiscoveryCache {
 		const scanPromise = (async () => {
 			try {
 				// Get all current hooks directories
-				const hooksDirs = await getAllHooksDirs()
+				const hooksDirs = await hookStorageRuntime.getAllHooksDirs()
 				this.log(`Scanning ${hooksDirs.length} directories for ${hookName}`)
 
 				// Ensure watchers are set up for each directory (lazy initialization)

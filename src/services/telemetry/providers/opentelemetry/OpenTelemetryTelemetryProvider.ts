@@ -5,7 +5,7 @@ import { MeterProvider } from "@opentelemetry/sdk-metrics"
 import { StateManager } from "@/core/storage/StateManager"
 import { HostProvider } from "@/hosts/host-provider"
 import { getErrorLevelFromString } from "@/services/error"
-import { getDistinctId, setDistinctId } from "@/services/logging/distinctId"
+import { distinctIdRuntime } from "@/services/logging/distinctId"
 import { Setting } from "@/shared/proto/index.host"
 import { Logger } from "@/shared/services/Logger"
 import type { DietCodeAccountUserInfo } from "../../../auth/types"
@@ -112,7 +112,7 @@ export class OpenTelemetryTelemetryProvider implements ITelemetryProvider {
 				severityText: "INFO",
 				body: event,
 				attributes: {
-					distinct_id: getDistinctId(),
+					distinct_id: distinctIdRuntime.getDistinctId(),
 					...this.flattenProperties(properties),
 					...this.userAttributes,
 				},
@@ -127,7 +127,7 @@ export class OpenTelemetryTelemetryProvider implements ITelemetryProvider {
 				severityText: "INFO",
 				body: event,
 				attributes: {
-					distinct_id: getDistinctId(),
+					distinct_id: distinctIdRuntime.getDistinctId(),
 					_required: true,
 					...this.flattenProperties(properties),
 					...this.userAttributes,
@@ -146,7 +146,7 @@ export class OpenTelemetryTelemetryProvider implements ITelemetryProvider {
 		// or extension restart with the same user ID).
 		this.userAttributes = this.buildUserAttributes(userInfo, properties)
 
-		const distinctId = getDistinctId()
+		const distinctId = distinctIdRuntime.getDistinctId()
 
 		// Only emit identification event and update distinct ID when the
 		// user ID actually changes (first login or user switch).
@@ -163,7 +163,7 @@ export class OpenTelemetryTelemetryProvider implements ITelemetryProvider {
 			}
 
 			// Ensure distinct ID is updated so that we will not identify the user again
-			setDistinctId(userInfo.id)
+			distinctIdRuntime.setDistinctId(userInfo.id)
 		}
 	}
 

@@ -20,6 +20,7 @@
 | 📋 [What's New](#-whats-new-in-plain-english) | 📖 [Author's Story & Note](PREFACE.md) | ⚡ [Cost-Saving Memory (ADR-135)](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) |
 | 🧪 [78-Test Verification Suite](scripts/validate-qol-enhancements.ts) | 📈 [Live Benchmark Measurements](docs/LIVE_BASELINE.json) | 🏛️ [Architecture Decision Records](docs/adr/README.md) |
 | 🧾 [Claims & Evidence](.wiki/ip/CLAIM-REGISTER.md) | 🛡️ [Security Policy](SECURITY.md) | ⚖️ [Licensing Strategy](docs/LEGAL-STRATEGY.md) |
+| 🤖 [Claude Subscription DirectSDK Provider](docs/CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER.md) | | |
 
 ---
 
@@ -68,6 +69,10 @@ npx tsx src/index.ts --profile coder
 ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+### Verify the CLI path
+
+`npm test` runs the CLI-native Mocha profile in `.mocharc.cli.json`. It keeps host/editor compatibility checks out of the default feedback loop while preserving them as an explicit `npm run test:legacy-host` profile.
+
 ---
 
 ## 🎯 What You Get (Everyday Superpowers)
@@ -80,7 +85,7 @@ npx tsx src/index.ts --profile coder
 | **Typos in function or variable names** | Typo-Friendly Smart Matching | Finds what you're looking for even if you or the AI misspell the name. |
 | **Ghost servers locking a port** | Port Diagnostics | Reports and, where permitted, helps resolve port conflicts; it does not bypass host policy. |
 | **Expensive AI bills on long chats** | Context and Cache Telemetry | Exposes context behavior and cache signals; provider pricing and savings vary. |
-| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch among the supported OpenAI Codex models without losing context. |
+| **Need a smarter model for hard bugs** | Swap AI Models Mid-Chat | Switch among the active provider's supported routes without losing context; Claude account routes are discovered from Claude Code when available. |
 | **Want a custom AI teammate** | Drag & Drop Customization | Drop any notes or script files into a folder to create a personalized AI assistant. |
 
 ---

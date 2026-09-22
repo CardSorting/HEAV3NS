@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert"
+import { parentAgentFlowControlRuntime } from "../../subagent/ParentAgentFlowControl"
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
@@ -18,7 +19,7 @@ import * as subagentExecutionStore from "../../subagent/SubagentExecutionStore"
 import { SubagentRunner } from "../../subagent/SubagentRunner"
 import type { TaskConfig } from "../../types/TaskConfig"
 import { createUIHelpers } from "../../types/UIHelpers"
-import { UseSubagentsToolHandler } from "../SubagentToolHandler"
+import { subagentToolHandlerRuntime, UseSubagentsToolHandler } from "../SubagentToolHandler"
 
 function createConfig(options?: { subagentsEnabled?: boolean }) {
 	const taskState = new TaskState()
@@ -249,7 +250,7 @@ describe("SubagentToolHandler", () => {
 		const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "confidence-probe-handler-"))
 		tempDirs.push(tempDir)
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		const runStub = sinon
 			.stub(SubagentRunner.prototype, "runWithEnvelope")
 			.callsFake(async (prompt, _onProgress, context) => {
@@ -321,7 +322,7 @@ describe("SubagentToolHandler", () => {
 		const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "subagent-handler-"))
 		tempDirs.push(tempDir)
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		let activeRuns = 0
 		let maxActiveRuns = 0
 		const apiHandlers = new Set<unknown>()
@@ -407,12 +408,12 @@ describe("SubagentToolHandler", () => {
 		const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "subagent-promotion-"))
 		tempDirs.push(tempDir)
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		stubCompletedEnvelopeRun()
 
-		const persistOriginal = subagentExecutionStore.persistSwarmEnvelope
+		const persistOriginal = subagentToolHandlerRuntime.persistSwarmEnvelope
 		let persistCalls = 0
-		sinon.stub(subagentExecutionStore, "persistSwarmEnvelope").callsFake(async (...args) => {
+		sinon.stub(subagentToolHandlerRuntime, "persistSwarmEnvelope").callsFake(async (...args) => {
 			persistCalls++
 			if (persistCalls === 2) {
 				throw Object.assign(new Error("transient promotion failure"), { code: "EBUSY" })
@@ -741,8 +742,7 @@ describe("SubagentToolHandler", () => {
 		let activeRuns = 0
 		let maxActiveRuns = 0
 
-		const flowControl = require("../../subagent/ParentAgentFlowControl")
-		sinon.stub(flowControl, "computeMaxInFlightLanes").returns(1)
+		sinon.stub(parentAgentFlowControlRuntime, "computeMaxInFlightLanes").returns(1)
 
 		sinon.stub(GovernedSwarmCoordinator.prototype, "acquireLane").callsFake(async function (
 			this: GovernedSwarmCoordinator,

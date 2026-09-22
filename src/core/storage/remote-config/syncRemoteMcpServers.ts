@@ -1,4 +1,4 @@
-import { getMcpSettingsFilePath } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { RemoteMCPServer } from "@shared/remote-config/schema"
 import * as fs from "fs/promises"
 import type { McpHub } from "@/services/mcp/McpHub"
@@ -28,7 +28,7 @@ export async function syncRemoteMcpServersToSettings(
 ): Promise<void> {
 	try {
 		// Get or create the MCP settings file
-		const settingsPath = await getMcpSettingsFilePath(settingsDirectoryPath)
+		const settingsPath = await diskRuntime.getMcpSettingsFilePath(settingsDirectoryPath)
 
 		// Read current settings
 		const content = await fs.readFile(settingsPath, "utf-8")

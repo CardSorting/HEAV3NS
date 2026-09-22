@@ -5,6 +5,7 @@ import type { IntentClassification, TaskAuditMetadata } from "@shared/audit/type
 import * as path from "path"
 import { v4 as uuidv4 } from "uuid"
 import { Logger } from "@/shared/services/Logger"
+import { getLayer } from "@/utils/joy-zoning"
 import { dbPool } from "../db/BufferedDbPool"
 
 type IntentName = IntentClassification
@@ -1252,7 +1253,6 @@ export class AgentOrchestrator {
 	}
 
 	public getLayerForPath(filePath: string): string {
-		const { getLayer } = require("@/utils/joy-zoning")
 		return getLayer(filePath)
 	}
 

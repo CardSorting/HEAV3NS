@@ -13,6 +13,7 @@ import { StatefulCompactionSynthesizer } from "../../../tooling/extensions/compa
 import type { AdversarialScrutinySupervisor } from "../adversarial/adversarial-scrutiny-supervisor.js";
 import { AdversarialHumanizer } from "../adversarial/adversarial-humanizer.js";
 import type { IBroccoliAcpSubstrate, IAcpPermissionGate } from "../../../core/contracts/acp.contracts.js";
+import { getAgentProviderLabel, isClaudeSubscriptionDirectSdkProvider } from "../../../core/providers/provider-ids.js";
 
 export interface SlashRouteContext {
   sessionContext: SessionContext;
@@ -193,18 +194,23 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
       case "/luna":
       case "/sol": {
         const active = context.modelResolver.switchToTerra();
+        const provider = context.modelResolver.getProvider();
+        const providerLabel = isClaudeSubscriptionDirectSdkProvider(provider) ? "Claude Code route" : `${getAgentProviderLabel(provider)} primary route`;
         return {
           handled: true,
-          output: `✅ **Active Model set to**: \`${active}\` (Flagship Frontier Reasoning Engine · 900k Context · 128k Max Output)`,
+          output: `✅ **Active Model set to**: \`${active}\` (${providerLabel})`,
         };
       }
 
       case "/model": {
         if (args.length === 0 || !args[0]?.trim()) {
           const current = context.modelResolver.getActiveModel();
+          const provider = context.modelResolver.getProvider();
+          const models = context.modelResolver.getCodexModels();
+          const routes = models.map((model) => `• \`${model}\``).join("\n");
           return {
             handled: true,
-            output: `Active Model: \`${current}\`\n\nServed Model for Selection:\n• \`gpt-5.6-terra\` (Flagship Frontier Reasoning · 900k Context)\n\nUsage: \`/model <name>\``,
+            output: `Active Model: \`${current}\`\nProvider: \`${getAgentProviderLabel(provider)}\`\n\nKnown routes:\n${routes}\n\nUsage: \`/model <name>\``,
           };
         }
         const target = args.join(" ").trim();
@@ -218,13 +224,17 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
       case "/models": {
         const current = context.modelResolver.getActiveModel();
         const codexModels = context.modelResolver.getCodexModels();
-        let out = `🤖 **Available Model for Selection**:\n`;
+        const provider = context.modelResolver.getProvider();
+        const isClaude = isClaudeSubscriptionDirectSdkProvider(provider);
+        let out = `🤖 **Available Models for ${getAgentProviderLabel(provider)}**:\n`;
         for (const m of codexModels) {
           const isActive = m === current ? " `[ACTIVE]`" : "";
-          const role = "Flagship Frontier Reasoning (900k ctx · 128k out)";
+          const role = isClaude ? "Claude Code subscription route" : "Codex primary route";
           out += `• **\`${m}\`** — *${role}*${isActive}\n`;
         }
-        out += `\n💡 Exclusively served: \`gpt-5.6-terra\``;
+        out += isClaude
+          ? "\nUse the TUI model selector to refresh the signed-in Claude Code account picker."
+          : "\nUse `/model <name>` to switch the active route.";
         return { handled: true, output: out };
       }
 

@@ -108,7 +108,15 @@ export class TokenIngestionBufferEngine {
 			.replace(/^[ \t]{4,}/gm, "  ")
 
 		// 2. Deep Absolute Path Compaction: Compress long user home/workspace path prefixes
-		compressed = compressed.replace(/(?:\/Users\/[^/]+|\/home\/[^/]+)(\/(?:[^/\n]+\/)+([^/\n]+))/g, "~.../$2")
+		compressed = compressed
+			.replace(/(?:\/Users\/[^/]+|\/home\/[^/]+)(\/(?:[^/\n]+\/)+([^/\n]+))/g, "~.../$2")
+			// CLI diagnostics often report workspace-relative paths instead of absolute
+			// home paths. Compact only a clearly delimited workspace path and retain
+			// the basename so logs remain useful without leaking the workspace name.
+			.replace(
+				/(^|[\s"'(])(?:external source\s+)?workspace\/(?:[^\/\s]+\/)+([^\/\s"'`\)\]}]+)/gm,
+				"$1~.../$2",
+			)
 
 		// 3. Meta-Token Mapping & Run-Length Encoding (RLE) for repetitive character dividers
 		compressed = compressed
@@ -149,9 +157,9 @@ export class TokenIngestionBufferEngine {
 		// 10. Symbolic JSON Key Abbreviation & Line Trailing Whitespace Minification
 		compressed = compressed
 			.replace(/[\t ]+$/gm, "")
-			.replace(/"status":\s*/g, "st:")
-			.replace(/"message":\s*/g, "msg:")
-			.replace(/"error":\s*/g, "err:")
+			.replace(/"status":\s*/g, "st: ")
+			.replace(/"message":\s*/g, "msg: ")
+			.replace(/"error":\s*/g, "err: ")
 
 		return compressed.trim()
 	}

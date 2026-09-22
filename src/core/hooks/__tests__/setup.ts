@@ -2,7 +2,7 @@ import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 import sinon from "sinon"
-import { StateManager } from "../../storage/StateManager"
+import { stateManagerRuntime } from "../../storage/StateManager"
 import { createHooksDirectory } from "./test-utils"
 
 /**
@@ -110,7 +110,7 @@ export function setupHookTests(): {
  * sandbox.restore() // Clean up after tests
  */
 export function mockStateManager(sandbox: sinon.SinonSandbox, workspaceRoots: string[]): void {
-	sandbox.stub(StateManager, "get").returns({
+	sandbox.stub(stateManagerRuntime, "get").returns({
 		getGlobalStateKey: () => workspaceRoots.map((rootPath) => ({ path: rootPath })),
 	} as any)
 }

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
-import * as diskModule from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
@@ -18,7 +18,7 @@ describe("syncRemoteMcpServersToSettings", () => {
 		await fs.mkdir(tempDir, { recursive: true })
 		settingsPath = path.join(tempDir, "dietcode_mcp_settings.json")
 
-		sandbox.stub(diskModule, "getMcpSettingsFilePath").callsFake(async () => {
+		sandbox.stub(diskRuntime, "getMcpSettingsFilePath").callsFake(async () => {
 			try {
 				await fs.access(settingsPath)
 			} catch {

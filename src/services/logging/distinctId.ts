@@ -11,6 +11,13 @@ import { withTimeout } from "@/utils/withTimeout"
 let _distinctId = ""
 const MACHINE_ID_TIMEOUT_MS = 1500
 
+/** Runtime seam keeps machine identity deterministic in CLI tests and alternate hosts. */
+export const distinctIdRuntime = {
+	machineId: () => nodeMachineId.machineId(),
+	getDistinctId: () => getDistinctId(),
+	setDistinctId: (newId: string) => setDistinctId(newId),
+}
+
 /**
  * Some environments don't return a value for the machine ID. For these situations we generated
  * a unique ID and store it locally.
@@ -48,7 +55,7 @@ async function getMachineId(): Promise<string | undefined> {
 	try {
 		// Get the machine ID using node-machine-id package
 		// This provides a deterministic ID across different operating systems
-		const id = await withTimeout(nodeMachineId.machineId(), MACHINE_ID_TIMEOUT_MS, "Machine ID lookup")
+		const id = await withTimeout(distinctIdRuntime.machineId(), MACHINE_ID_TIMEOUT_MS, "Machine ID lookup")
 		return id
 	} catch (error) {
 		Logger.log("[DistinctId] Failed to get machine ID from node-machine-id", error)

@@ -167,6 +167,14 @@ import type {
 } from "./core/contracts/adversarial-scrutiny.contracts.js"
 import type { EngineTickInput, EngineTickResult, IAgentEngine } from "./core/contracts/agent.contracts.js"
 import type { GameStateSnapshot } from "./core/contracts/session.contracts.js"
+import {
+	type AgentProviderId,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+	getAgentProviderLabel,
+	isClaudeSubscriptionDirectSdkProvider,
+	normalizeAgentProvider,
+	OPENAI_CODEX_PROVIDER,
+} from "./core/providers/provider-ids.js"
 import { MonolithFactory, type MonolithFactoryOptions } from "./factories/monolith-factory.js"
 import { SessionContext } from "./sessions/base/session-context.js"
 import { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js"
@@ -2946,6 +2954,17 @@ export type {
 } from "./core/contracts/worktree.contracts.js"
 export { DEFAULT_WORKTREE_CONFIG } from "./core/contracts/worktree.contracts.js"
 export {
+	type AgentProviderId,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_MODELS,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+	getAgentProviderLabel,
+	isClaudeSubscriptionDirectSdkModel,
+	normalizeAgentProvider,
+	normalizeClaudeSubscriptionDirectSdkModel,
+	OPENAI_CODEX_PROVIDER,
+} from "./core/providers/provider-ids.js"
+export {
 	estimateMessagesTokens,
 	estimateMessageTokens,
 	estimateTextTokens,
@@ -2958,6 +2977,17 @@ export {
 	GrandMonolithSynthesizer,
 } from "./factories/grand-monolith-synthesizer.js"
 export { MonolithFactory } from "./factories/monolith-factory.js"
+export {
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PLUGIN_ENV,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PYTHON_ENV,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_TIMEOUT_ENV,
+	ClaudeSubscriptionDirectSdkError,
+	createClaudeSubscriptionDirectSdkCompletion,
+	createClaudeToolNameMapping,
+	discoverClaudeSubscriptionDirectSdkModels,
+	diagnoseClaudeSubscriptionDirectSdk,
+	resolveClaudeSubscriptionDirectSdkPluginDir,
+} from "./integrations/claude-subscription-directsdk/provider.js"
 export { SessionContext } from "./sessions/base/session-context.js"
 export { AcpFineGrainedHunkPatcher } from "./sessions/extensions/acp/acp-fine-grained-hunk-patcher.js"
 export { AcpSnapshotManager } from "./sessions/extensions/acp/acp-snapshot-manager.js"
@@ -4901,22 +4931,40 @@ export class LumiMonolith implements IAgentEngine {
 		return normalized
 	}
 
-	/** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
+	/** Selects the active transport and keeps the model on that provider's catalog. */
+	setProvider(provider: AgentProviderId): AgentProviderId {
+		const normalizedProvider = normalizeAgentProvider(provider)
+		this.modelResolver.setProvider(normalizedProvider)
+		;(this.config as { provider: AgentProviderId }).provider = normalizedProvider
+		this.setModel(this.modelResolver.getActiveModel())
+		const persistableProvider =
+			normalizedProvider === OPENAI_CODEX_PROVIDER
+				? OPENAI_CODEX_PROVIDER
+				: normalizedProvider === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+					? CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+					: undefined
+		if (persistableProvider) {
+			this.setupWizard.setSavedProvider(persistableProvider)
+		}
+		return normalizedProvider
+	}
+
+	/** Switches to the active provider's primary model without crossing provider boundaries. */
 	switchToTerra(): string {
-		return this.setModel("gpt-5.6-terra")
+		return this.setModel(this.modelResolver.switchToTerra())
 	}
 
-	/** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
+	/** Backwards-compatible quick switch; resolves against the active provider. */
 	switchToLuna(): string {
-		return this.setModel("gpt-5.6-terra")
+		return this.setModel(this.modelResolver.switchToLuna())
 	}
 
-	/** Switches active model to Flagship Reasoning Engine (gpt-5.6-terra) */
+	/** Backwards-compatible quick switch; resolves against the active provider. */
 	switchToSol(): string {
-		return this.setModel("gpt-5.6-terra")
+		return this.setModel(this.modelResolver.switchToSol())
 	}
 
-	/** Cycles through models (exclusively gpt-5.6-terra) */
+	/** Cycles through the active provider's known model routes. */
 	cycleModel(): string {
 		const next = this.modelResolver.cycleCodexModel()
 		;(this.config as { modelName: string }).modelName = next
@@ -5008,6 +5056,21 @@ if (cliEntrypoint) {
 if (isDirectCliExecution) {
 	const args = process.argv.slice(2)
 	const primaryCmd = args[0]?.toLowerCase()
+	const providerFlagIndex = args.indexOf("--provider")
+	const providerFlagValue = providerFlagIndex >= 0 ? args[providerFlagIndex + 1] : undefined
+	const modelFlagIndex = args.indexOf("--model")
+	const modelFlagValue = modelFlagIndex >= 0 ? args[modelFlagIndex + 1] : undefined
+	const positionalArgs = args.filter(
+		(_arg, index) =>
+			index !== providerFlagIndex &&
+			index !== providerFlagIndex + 1 &&
+			index !== modelFlagIndex &&
+			index !== modelFlagIndex + 1,
+	)
+	const configuredProviderValue = providerFlagValue || process.env.LUMI_PROVIDER
+	const configuredProvider = normalizeAgentProvider(configuredProviderValue)
+	const configuredModelValue = modelFlagValue || process.env.LUMI_MODEL_ID
+	const supportedCliProviders = new Set<AgentProviderId>([OPENAI_CODEX_PROVIDER, CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER])
 
 	const isSmoke = args.includes("--smoke") || args.includes("-s") || primaryCmd === "smoke"
 	const isSetup = args.includes("--setup") || primaryCmd === "setup"
@@ -5034,19 +5097,25 @@ if (isDirectCliExecution) {
 	const isModelSwitch = primaryCmd === "model" && Boolean(args[1])
 
 	if (isHelp) {
+		const modelExample = isClaudeSubscriptionDirectSdkProvider(configuredProvider) ? "claude-sonnet-5[1m]" : "terra"
+		const modelCommands = isClaudeSubscriptionDirectSdkProvider(configuredProvider)
+			? `  heav3ns models [--refresh]  Resolve the signed-in Claude Code account route catalog
+  heav3ns model <route>       Set an account route (e.g. ${modelExample})`
+			: `  heav3ns terra               Quick-switch default model to Flagship Reasoning Engine (gpt-5.6-terra)
+  heav3ns luna                Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
+  heav3ns sol                 Quick-switch default model to Balanced Engine (gpt-5.6-sol)
+  heav3ns model <name>        Set active model by name or alias (e.g. heav3ns model luna)
+  heav3ns models [--refresh]  Display the curated catalog (and refresh OpenAI Codex models)`
 		console.log(`
 \x1b[1;35m❖ HEAV3NS Agent OS — Command Line Interface\x1b[0m
 
 \x1b[1;34mInteractive Mode:\x1b[0m
   heav3ns                     Start interactive terminal TUI session
-  heav3ns --model <name>      Start interactive session with active model (e.g. luna, terra, sol)
+  heav3ns --provider <id>    Select provider (codex/openai or claude-code)
+  heav3ns --model <name>      Start with an active route (e.g. ${modelExample})
 
 \x1b[1;34mModel Swapping & Catalog:\x1b[0m
-  heav3ns terra               Quick-switch default model to Flagship Reasoning Engine (gpt-5.6-terra)
-  heav3ns luna                Quick-switch default model to High-Velocity Engine (gpt-5.6-luna)
-  heav3ns sol                 Quick-switch default model to Balanced Engine (gpt-5.6-sol)
-  heav3ns model <name>        Set active model by name or alias (e.g. heav3ns model luna)
-  heav3ns models [--refresh]  Fetch live models from OpenAI Codex and display catalog
+${modelCommands}
 \x1b[1;34mAuthentication & Identity:\x1b[0m
   heav3ns login               Sign in with ChatGPT / OpenAI (1-Click browser login)
   heav3ns logout              Sign out and clear local session
@@ -5194,9 +5263,16 @@ if (isDirectCliExecution) {
 	}
 
 	;(async () => {
-		const lumi = new LumiMonolith()
-		if (process.env.LUMI_MODEL_ID) {
-			lumi.setModel(process.env.LUMI_MODEL_ID)
+		if (providerFlagIndex >= 0 && !providerFlagValue) throw new Error("--provider requires a provider ID")
+		if (modelFlagIndex >= 0 && !modelFlagValue) throw new Error("--model requires a model route")
+		if (configuredProviderValue && !supportedCliProviders.has(configuredProvider)) {
+			throw new Error(
+				`Unsupported active provider "${configuredProviderValue}". Supported providers: ${Array.from(supportedCliProviders).join(", ")}`,
+			)
+		}
+		const lumi = new LumiMonolith(configuredProviderValue ? { provider: configuredProvider } : {})
+		if (configuredModelValue) {
+			lumi.setModel(configuredModelValue)
 		}
 
 		if (isLogin) {
@@ -5210,7 +5286,7 @@ if (isDirectCliExecution) {
 		} else if (isWhoAmI) {
 			lumi.setupWizard.displayWhoAmI(lumi.modelResolver.getActiveModel())
 		} else if (isDoctor) {
-			await lumi.setupWizard.displayDoctor()
+			await lumi.setupWizard.displayDoctor(lumi.config.provider)
 		} else if (isPull) {
 			const modelTag = args[1]?.trim() || "qwen2.5-coder:7b"
 			console.log(`\n\x1b[1;36mConnecting to pull ${modelTag} via Ollama...\x1b[0m\n`)
@@ -5309,23 +5385,49 @@ if (isDirectCliExecution) {
 			console.log(`\n\x1b[1;32m[✓] Active LLM Model set to:\x1b[0m \x1b[1;36m${active}\x1b[0m\n`)
 		} else if (isModels) {
 			const force = args.includes("--refresh") || args.includes("-r")
-			if (force) {
-				console.log("\n\x1b[33mFetching latest models dynamically from OpenAI Codex...\x1b[0m")
-				await lumi.modelCatalog.fetchCodexModels(undefined, true)
+			const isClaudeProvider = isClaudeSubscriptionDirectSdkProvider(lumi.config.provider)
+			let models: ReturnType<ModelCatalog["getAllModels"]>
+			if (isClaudeProvider) {
+				console.log("\n\x1b[33mResolving the signed-in Claude Code model picker…\x1b[0m")
+				const catalog = await lumi.modelCatalog.refreshClaudeSubscriptionDirectSdkModels(
+					{
+						pluginDir: lumi.config.claudePluginDir,
+						pythonPath: lumi.config.claudePythonPath,
+						command: lumi.config.claudeCommand,
+						cwd: lumi.sessionContext.cwd,
+					},
+					force,
+				)
+				models = catalog.models
+				console.log(
+					catalog.source === "live"
+						? "\x1b[32m[✓] Live account-scoped Claude routes loaded.\x1b[0m"
+						: "\x1b[33m[!] Live picker unavailable; showing verified upstream fallback routes.\x1b[0m",
+				)
+				if (catalog.source === "pinned" && catalog.detail) {
+					console.log(`\x1b[90m  Diagnostic: ${catalog.detail.slice(0, 240)}\x1b[0m`)
+				}
+			} else {
+				if (force) {
+					console.log("\n\x1b[33mFetching latest models dynamically from OpenAI Codex...\x1b[0m")
+					await lumi.modelCatalog.fetchCodexModels(undefined, true)
+				}
+				models = lumi.modelCatalog.getAllModels()
 			}
 			console.log("\n\x1b[1;35m╭─── HEAV3NS Curated & Dynamic Model Catalog ───────────────────╮\x1b[0m")
-			const models = lumi.modelCatalog.getAllModels()
 			const active = lumi.modelResolver.getActiveModel()
 			for (const m of models) {
 				const isCurrent = m.modelName === active ? " \x1b[32m[ACTIVE]\x1b[0m" : ""
-				const ctxKb = Math.round(m.contextWindowTokens / 1000)
+				const contextLabel = m.contextWindowTokens >= 1_000_000 ? "1M" : `${Math.round(m.contextWindowTokens / 1000)}k`
 				console.log(
-					`│  • \x1b[1;36m${m.modelName.padEnd(24)}\x1b[0m \x1b[90m(${m.provider.padEnd(14)})\x1b[0m \x1b[33m${ctxKb}k ctx\x1b[0m${isCurrent}`,
+					`│  • \x1b[1;36m${m.modelName.padEnd(24)}\x1b[0m \x1b[90m(${getAgentProviderLabel(m.provider).padEnd(14)})\x1b[0m \x1b[33m${contextLabel} ctx\x1b[0m${isCurrent}`,
 				)
 			}
 			console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m")
 			console.log(
-				`\x1b[90mSwitch models instantly with \x1b[36mheav3ns terra\x1b[90m, \x1b[36mheav3ns luna\x1b[90m, \x1b[36mheav3ns sol\x1b[90m, or in TUI with \x1b[36m/model <name>\x1b[90m.\x1b[0m\n`,
+				isClaudeProvider
+					? "\x1b[90mChoose an account route with \x1b[36mheav3ns --provider claude-code --model <route>\x1b[90m or use \x1b[36m/model <route>\x1b[90m.\x1b[0m\n"
+					: "\x1b[90mSwitch models instantly with \x1b[36mheav3ns terra\x1b[90m, \x1b[36mheav3ns luna\x1b[90m, \x1b[36mheav3ns sol\x1b[90m, or in TUI with \x1b[36m/model <name>\x1b[90m.\x1b[0m\n",
 			)
 		} else if (isBaseline) {
 			const passed = await updateLiveBaseline(lumi)
@@ -5336,8 +5438,8 @@ if (isDirectCliExecution) {
 		} else if (isSmoke) {
 			const smoke = await runSmokeTest(lumi)
 			if (!smoke.passed) throw new Error("Runtime smoke suite failed")
-		} else if (args.length > 0 && !args[0].startsWith("-")) {
-			const prompt = args.join(" ")
+		} else if (positionalArgs.length > 0 && !positionalArgs[0].startsWith("-")) {
+			const prompt = positionalArgs.join(" ")
 			const result = await lumi.tick({ prompt })
 			const color =
 				result.outcome === "completed" ? "\x1b[1;32m" : result.outcome === "cancelled" ? "\x1b[1;33m" : "\x1b[1;31m"

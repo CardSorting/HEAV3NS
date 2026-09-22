@@ -74,7 +74,7 @@ describe("GovernedSwarmCoordinator", () => {
 	it("seals governed receipt with broccoli-compatible replay integrity", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "governed-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const coordinator = new GovernedSwarmCoordinator("/tmp", false, 1, undefined, new InMemoryLockAuthority())
 		const agent = buildAgent("agent-a")
@@ -161,7 +161,7 @@ describe("GovernedSwarmCoordinator", () => {
 	it("selects the clean path and reuses immutable validation across crash-safe persistence", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "governed-fast-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		const metrics = createGovernedExecutionPathMetrics()
 		const coordinator = new GovernedSwarmCoordinator(
 			"/tmp",

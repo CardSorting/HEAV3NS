@@ -20,6 +20,7 @@ describe("Storage & Memory Optimizations", () => {
 	})
 
 	afterEach(() => {
+		writeCoalescer.dispose()
 		HostProvider.reset()
 		fs.rmSync(tempDir, { recursive: true, force: true })
 	})

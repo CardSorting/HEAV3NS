@@ -1,0 +1,22 @@
+{
+	"require": [
+		"./src/test/requires.cjs"
+	],
+	"import": [
+		"tsx",
+		"./src/test/register-vscode-mock.mjs"
+	],
+	"extension": [
+		"ts"
+	],
+	"spec": [
+		"src/**/*.test.ts"
+	],
+	"exclude": [
+		"src/test/e2e/**/*.test.ts",
+		"src/test/extension.test.ts",
+		"src/core/api/**/e2e-*.test.ts"
+	],
+	"timeout": 10000,
+	"exit": true
+}

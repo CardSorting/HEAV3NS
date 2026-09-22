@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
-import { ensureTaskDirectoryExists } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { Logger } from "@shared/services/Logger"
 import { SUBAGENT_EXECUTIONS_DIR } from "@shared/subagent/executionEnvelope"
 import type {
@@ -98,7 +98,7 @@ export async function persistGovernedReceipt(
 		metrics?: GovernedExecutionPathMetrics
 	},
 ): Promise<string> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const executionsDir = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR)
 	await fs.mkdir(executionsDir, { recursive: true })
 
@@ -144,7 +144,7 @@ async function appendReceiptHistory(
 	existingHistory?: GovernedRetryHistoryEntry[],
 	metrics?: GovernedExecutionPathMetrics,
 ): Promise<void> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const historyPath = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR, `${receipt.swarmId}.governed.history.jsonl`)
 	const existing = existingHistory ?? (await listGovernedReceiptHistory(taskId, receipt.swarmId))
 	if (!existingHistory && metrics) {
@@ -169,7 +169,7 @@ async function appendReceiptHistory(
 }
 
 export async function listGovernedReceiptHistory(taskId: string, swarmId: string): Promise<GovernedRetryHistoryEntry[]> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const historyPath = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR, `${swarmId}.governed.history.jsonl`)
 
 	try {
@@ -223,7 +223,7 @@ export async function loadSealReceiptContext(taskId: string, swarmId: string): P
 }
 
 export async function loadGovernedReceipt(taskId: string, swarmId: string): Promise<GovernedSwarmReceipt | null> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const filePath = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR, `${swarmId}.governed.json`)
 
 	try {
@@ -248,7 +248,7 @@ export async function loadGovernedReceiptAttempt(
 	swarmId: string,
 	attemptId: string,
 ): Promise<GovernedSwarmReceipt | null> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const filePath = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR, `${swarmId}.governed.${attemptId}.json`)
 
 	try {

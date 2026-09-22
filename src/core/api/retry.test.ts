@@ -88,7 +88,7 @@ describe("Retry Decorator", () => {
 					if (callCount === 1) {
 						const error: any = new Error("Rate limit exceeded")
 						error.status = 429
-						error.headers = { "retry-after": "0.01" } // 10ms delay
+				error.headers = { "retry-after": "0.01" } // 10ms delay
 						throw error
 					}
 					yield "success after retry"
@@ -104,20 +104,22 @@ describe("Retry Decorator", () => {
 			callCount.should.equal(2)
 			setTimeoutSpy.calledOnce.should.be.true
 			const [_, delay] = setTimeoutSpy.getCall(0).args
-			delay?.should.equal(0)
+			delay?.should.equal(10)
 
 			result.should.deepEqual(["success after retry"])
 		})
 
 		it("should respect retry-after header with Unix timestamp", async () => {
+			const fixedDate = new Date("2010-01-01T00:00:00.000Z")
+			const clock = sinon.useFakeTimers({ now: fixedDate.getTime() })
 			const setTimeoutSpy = sinon.spy(global, "setTimeout")
 			let callCount = 0
-			const fixedDate = new Date("2010-01-01T00:00:00.000Z")
-			const retryTimestamp = Math.floor(fixedDate.getTime() / 1000) + 0.01 // 10ms in the future
+			const retryTimestamp = Math.floor(fixedDate.getTime() / 1000) + 1
+			const expectedDelay = retryTimestamp * 1000 - fixedDate.getTime()
 			const baseDelay = 1000
 
 			class TestClass {
-				@withRetry({ maxRetries: 2, baseDelay }) // Use large baseDelay to ensure header takes precedence
+				@withRetry({ maxRetries: 2, baseDelay, maxDelay: 5000 }) // Use a bounded ceiling while honoring the absolute timestamp
 				async *failMethod() {
 					callCount++
 					if (callCount === 1) {
@@ -131,16 +133,20 @@ describe("Retry Decorator", () => {
 			}
 
 			const test = new TestClass()
-			const result = []
-			for await (const value of test.failMethod()) {
-				result.push(value)
-			}
+			const result: string[] = []
+			const pending = (async () => {
+				for await (const value of test.failMethod()) {
+					result.push(value)
+				}
+			})()
+			await clock.tickAsync(expectedDelay)
+			await pending
 
 			callCount.should.equal(2)
 
 			setTimeoutSpy.calledOnce.should.be.true
 			const [_, delay] = setTimeoutSpy.getCall(0).args
-			delay?.should.equal(fixedDate.getTime())
+			delay?.should.equal(expectedDelay)
 
 			result.should.deepEqual(["success after retry"])
 		})

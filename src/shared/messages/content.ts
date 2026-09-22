@@ -23,7 +23,7 @@ interface DietCodeSharedMessageParam {
 	contextId?: string
 }
 
-export const REASONING_DETAILS_PROVIDERS = ["dietcode", "openai-codex"]
+export const REASONING_DETAILS_PROVIDERS = ["dietcode", "openai-codex", "claude-subscription-directsdk-experimental"]
 
 /**
  * An extension of Anthropic.MessageParam that includes DietCode-specific fields: reasoning_details.

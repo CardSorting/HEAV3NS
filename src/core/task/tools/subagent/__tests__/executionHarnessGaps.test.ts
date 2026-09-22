@@ -66,7 +66,7 @@ describe("execution harness gap closure", () => {
 	it("persists transcript through success, failure, and interruption paths", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "transcript-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const recorder = new SubagentTranscriptRecorder({
 			swarmId: "swarm-1",
@@ -90,7 +90,7 @@ describe("execution harness gap closure", () => {
 	it("buffers bursty transcript progress until an explicit durability barrier", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "transcript-buffered-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		const recorder = new SubagentTranscriptRecorder({
 			swarmId: "swarm-buffered",
 			agentId: "agent-buffered",
@@ -120,7 +120,7 @@ describe("execution harness gap closure", () => {
 	it("retries transcript lines after a deferred append failure", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "transcript-retry-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const recorder = new SubagentTranscriptRecorder({
 			swarmId: "swarm-retry",
@@ -182,7 +182,7 @@ describe("execution harness gap closure", () => {
 	it("detects corrupted transcript checksum", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "transcript-corrupt-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const dir = path.join(tempDir, "subagent_executions/swarm-1/agents")
 		await fs.mkdir(dir, { recursive: true })
@@ -208,7 +208,7 @@ describe("execution harness gap closure", () => {
 	it("plans resume with reuse, retry, and restart buckets", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "resume-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const completed = buildAgent({ status: "completed", agentId: "a-done", confidence: "low" })
 		completed.structuredFindings[0].confidence = "low"
@@ -363,7 +363,7 @@ describe("execution harness gap closure", () => {
 	it("rejects corrupted and stale artifacts for resume", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "resume-reject-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const swarm = buildSwarm([buildAgent()], "interrupted")
 		swarm.timestamps.started = Date.now() - 10 * 24 * 60 * 60 * 1000

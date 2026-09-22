@@ -50,7 +50,7 @@ describe("governed execution closure pass", () => {
 	async function setupStore() {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gov-close-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 	}
 
 	describe("orchestration lease", () => {

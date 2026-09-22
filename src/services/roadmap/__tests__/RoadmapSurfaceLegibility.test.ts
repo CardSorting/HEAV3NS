@@ -2,10 +2,12 @@ import * as assert from "assert"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
+import { buildCockpitPayload } from "../RoadmapCockpit"
+import { formatRoadmapSteeringBlock } from "../RoadmapAgentSteering"
 import { DEFAULT_ROADMAP_CONFIG, setRoadmapConfigOverride } from "../RoadmapConfig"
 import { wrapClarityEnvelope } from "../RoadmapOperator"
 import { bootstrapSkeleton } from "../RoadmapSchema"
-import { computeDependencyManifestsHash, RoadmapService, slimEvidence } from "../RoadmapService"
+import { computeDependencyManifestsHash, hydrateRuntimeState, projectRuntimeStateToMarkdown, RoadmapService, slimEvidence } from "../RoadmapService"
 
 describe("RoadmapSurfaceLegibility", () => {
 	let tmpDir = ""
@@ -250,7 +252,6 @@ Decision details
 
 Archive text
 `
-		const { hydrateRuntimeState, projectRuntimeStateToMarkdown } = require("../RoadmapService")
 		const state = hydrateRuntimeState(originalMarkdown)
 
 		assert.strictEqual(state.project_identity.core_purpose, "Test Purpose")
@@ -310,7 +311,6 @@ Archive text
 			body: "Ensure localized boundary update is active",
 		})
 
-		const { projectRuntimeStateToMarkdown } = require("../RoadmapService")
 		const updatedMarkdown = projectRuntimeStateToMarkdown(state)
 		assert.match(updatedMarkdown, /### 1\. Verify Audit Node\s+Ensure localized boundary update is active/)
 	})
@@ -441,24 +441,22 @@ Body
 		await svc.writeState(tmpDir, { runtime_state: mockState })
 
 		// Build cockpit payload with agentId option
-		const { buildCockpitPayload } = require("../RoadmapCockpit")
 		const cockpitPayload = await buildCockpitPayload(svc, tmpDir, { agentId: "agent-ME" })
 
 		// Report should filter out "Task Locked by Other"
-		assert.match(cockpitPayload.report, /Task Locked by Me/)
-		assert.match(cockpitPayload.report, /Unlocked Task/)
-		assert.doesNotMatch(cockpitPayload.report, /Task Locked by Other/)
+		assert.match(String(cockpitPayload.report), /Task Locked by Me/)
+		assert.match(String(cockpitPayload.report), /Unlocked Task/)
+		assert.doesNotMatch(String(cockpitPayload.report), /Task Locked by Other/)
 
 		// If verbose options is passed, it should show all
 		const cockpitPayloadVerbose = await buildCockpitPayload(svc, tmpDir, { agentId: "agent-ME", verbose: true })
-		assert.match(cockpitPayloadVerbose.report, /Task Locked by Other/)
+		assert.match(String(cockpitPayloadVerbose.report), /Task Locked by Other/)
 
 		// Test steering report filtering
-		const { formatRoadmapSteeringBlock } = require("../RoadmapAgentSteering")
 		const steeringBlock = formatRoadmapSteeringBlock(cockpitPayload, { agentId: "agent-ME" })
-		assert.match(steeringBlock, /Task Locked by Me/)
-		assert.match(steeringBlock, /Unlocked Task/)
-		assert.doesNotMatch(steeringBlock, /Task Locked by Other/)
-		assert.match(steeringBlock, new RegExp(`Task ${t2_id} is leased by agent-OTHER`)) // Active Lock Alerts
+		assert.match(String(steeringBlock), /Task Locked by Me/)
+		assert.match(String(steeringBlock), /Unlocked Task/)
+		assert.doesNotMatch(String(steeringBlock), /Task Locked by Other/)
+		assert.match(String(steeringBlock), new RegExp(`Task ${t2_id} is leased by agent-OTHER`)) // Active Lock Alerts
 	})
 })

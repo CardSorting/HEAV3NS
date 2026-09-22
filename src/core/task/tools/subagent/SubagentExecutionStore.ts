@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
-import { ensureTaskDirectoryExists } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { Logger } from "@shared/services/Logger"
 import type { SwarmExecutionEnvelope } from "@shared/subagent/executionEnvelope"
 import { SUBAGENT_EXECUTIONS_DIR, SWARM_ENVELOPE_SCHEMA_VERSION } from "@shared/subagent/executionEnvelope"
@@ -37,7 +37,7 @@ async function persistInOrder(queueKey: string, operation: () => Promise<void>):
 }
 
 async function getExecutionsDir(taskId: string): Promise<string> {
-	const taskDir = await ensureTaskDirectoryExists(taskId)
+	const taskDir = await diskRuntime.ensureTaskDirectoryExists(taskId)
 	const executionsDir = path.join(taskDir, SUBAGENT_EXECUTIONS_DIR)
 	await fs.mkdir(executionsDir, { recursive: true })
 	return executionsDir

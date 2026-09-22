@@ -1521,3 +1521,12 @@ export class StateManager {
 		})
 	}
 }
+
+/**
+ * Mutable runtime seam for host-neutral consumers and tests. Keeping the
+ * seam as an ordinary object avoids attempting to stub ESM namespace/class
+ * exports and makes the dependency explicit at the call site.
+ */
+export const stateManagerRuntime = {
+	get: (): StateManager => StateManager.get(),
+}

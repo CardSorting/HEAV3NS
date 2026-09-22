@@ -51,7 +51,7 @@ describe("governed execution roadmap and audit integration", () => {
 	async function setupStore() {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gov-int-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 	}
 	describe("roadmap linkage parsing", () => {
 		it("parses depends_on and roadmap_item prompt tags", () => {

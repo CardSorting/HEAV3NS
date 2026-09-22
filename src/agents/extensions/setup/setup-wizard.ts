@@ -1,44 +1,68 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
-import * as readline from "node:readline";
-import type { EnvironmentKeyResolver } from "../resolution/environment-key-resolver.js";
-import type { AuthStorageVault } from "../resolution/auth-storage-vault.js";
-import type { LlmProxyGateway, ProxyEndpointConfig } from "../resolution/llm-proxy-gateway.js";
+import * as fs from "node:fs"
+import * as os from "node:os"
+import * as path from "node:path"
+import * as readline from "node:readline"
+import {
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_MODELS,
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+	getAgentProviderLabel,
+	isClaudeSubscriptionDirectSdkProvider,
+	normalizeAgentProvider,
+	OPENAI_CODEX_PROVIDER,
+} from "../../../core/providers/provider-ids.js"
+import {
+	diagnoseClaudeSubscriptionDirectSdk,
+	resolveClaudeSubscriptionDirectSdkPluginDir,
+} from "../../../integrations/claude-subscription-directsdk/provider.js"
+import type { ClaudeSubscriptionDirectSdkOptions } from "../../../integrations/claude-subscription-directsdk/provider.js"
+import type { AuthStorageVault } from "../resolution/auth-storage-vault.js"
+import type { EnvironmentKeyResolver } from "../resolution/environment-key-resolver.js"
+import type { LlmProxyGateway, ProxyEndpointConfig } from "../resolution/llm-proxy-gateway.js"
 
 export interface ProviderAuditStatus {
-  provider: string;
-  configured: boolean;
-  source: "environment" | "vault" | "proxy" | "local" | "none";
-  maskedValue?: string;
+	provider: string
+	configured: boolean
+	source: "environment" | "vault" | "proxy" | "local" | "none"
+	maskedValue?: string
+	authenticated?: boolean
 }
 
 export interface WhoAmIResult {
-  authenticated: boolean;
-  activeModel: string;
-  configuredProviders: Array<{
-    provider: string;
-    source: string;
-    maskedValue?: string;
-  }>;
+	authenticated: boolean
+	activeModel: string
+	configuredProviders: Array<{
+		provider: string
+		source: string
+		maskedValue?: string
+	}>
 }
 
 export interface SetupWizardOptions {
-  envKeyResolver: EnvironmentKeyResolver;
-  authStorageVault: AuthStorageVault;
-  proxyGateway: LlmProxyGateway;
+	envKeyResolver: EnvironmentKeyResolver
+	authStorageVault: AuthStorageVault
+	proxyGateway: LlmProxyGateway
+	claudeSubscriptionDirectSdk?: Pick<ClaudeSubscriptionDirectSdkOptions, "pluginDir" | "pythonPath" | "command" | "cwd">
 }
 
-export type ApiKeyProviderId = "openai-codex";
+export type ApiKeyProviderId = "openai-codex"
+export type SetupProviderId = ApiKeyProviderId | typeof CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+
+function normalizeSetupProvider(provider: string): SetupProviderId | undefined {
+	const normalized = normalizeAgentProvider(provider)
+	if (normalized === OPENAI_CODEX_PROVIDER) return OPENAI_CODEX_PROVIDER
+	if (normalized === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER) return CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+	return undefined
+}
 
 export function writeAtomicJsonFile(filePath: string, data: unknown): void {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  }
-  const tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 8)}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), { mode: 0o600 });
-  fs.renameSync(tempPath, filePath);
+	const dir = path.dirname(filePath)
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
+	}
+	const tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 8)}.tmp`
+	fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), { mode: 0o600 })
+	fs.renameSync(tempPath, filePath)
 }
 
 /**
@@ -46,470 +70,587 @@ export function writeAtomicJsonFile(filePath: string, data: unknown): void {
  * Interactive configuration wizard for OpenAI Codex credentials and Local On-Premises Endpoints.
  */
 export class SetupWizard {
-  private readonly envKeyResolver: EnvironmentKeyResolver;
-  private readonly authStorageVault: AuthStorageVault;
-  private readonly proxyGateway: LlmProxyGateway;
-  private savedModelName?: string;
+	private readonly envKeyResolver: EnvironmentKeyResolver
+	private readonly authStorageVault: AuthStorageVault
+	private readonly proxyGateway: LlmProxyGateway
+	private readonly claudeSubscriptionDirectSdk: Pick<
+		ClaudeSubscriptionDirectSdkOptions,
+		"pluginDir" | "pythonPath" | "command" | "cwd"
+	>
+	private savedModelName?: string
+	private savedProviderName?: SetupProviderId
 
-  constructor(options: SetupWizardOptions) {
-    this.envKeyResolver = options.envKeyResolver;
-    this.authStorageVault = options.authStorageVault;
-    this.proxyGateway = options.proxyGateway;
+	constructor(options: SetupWizardOptions) {
+		this.envKeyResolver = options.envKeyResolver
+		this.authStorageVault = options.authStorageVault
+		this.proxyGateway = options.proxyGateway
+		this.claudeSubscriptionDirectSdk = options.claudeSubscriptionDirectSdk ?? {}
 
-    this.loadSavedConfig();
-  }
+		this.loadSavedConfig()
+	}
 
-  auditStatus(): ProviderAuditStatus[] {
-    const statuses: ProviderAuditStatus[] = [];
+	auditStatus(): ProviderAuditStatus[] {
+		const statuses: ProviderAuditStatus[] = []
 
-    // 1. Env & Vault API Keys
-    const envStatuses = this.envKeyResolver.getProviderStatuses();
-    for (const status of envStatuses) {
-      const vaultToken = this.authStorageVault.getToken(status.provider);
-      let source: ProviderAuditStatus["source"] = "none";
-      let masked: string | undefined;
+		// 1. Env & Vault API Keys
+		const envStatuses = this.envKeyResolver.getProviderStatuses()
+		for (const status of envStatuses) {
+			const vaultToken = this.authStorageVault.getToken(status.provider)
+			let source: ProviderAuditStatus["source"] = "none"
+			let masked: string | undefined
 
-      if (vaultToken) {
-        source = "vault";
-        masked = `${vaultToken.substring(0, 4)}...${vaultToken.slice(-4)}`;
-      } else if (status.hasKey) {
-        source = "environment";
-        masked = status.maskedKey;
-      }
+			if (vaultToken) {
+				source = "vault"
+				masked = `${vaultToken.substring(0, 4)}...${vaultToken.slice(-4)}`
+			} else if (status.hasKey) {
+				source = "environment"
+				masked = status.maskedKey
+			}
 
-      statuses.push({
-        provider: status.provider,
-        configured: source !== "none",
-        source,
-        maskedValue: masked,
-      });
-    }
+			statuses.push({
+				provider: status.provider,
+				configured: source !== "none",
+				source,
+				maskedValue: masked,
+			})
+		}
 
-    return statuses;
-  }
+		// Claude subscription access is intentionally not represented as an API
+		// key.  Surface the local transport without persisting OAuth material; the
+		// asynchronous doctor/test path checks the CLI's own auth state.
+		try {
+			const pluginDir = resolveClaudeSubscriptionDirectSdkPluginDir(this.claudeSubscriptionDirectSdk.pluginDir)
+			statuses.push({
+				provider: CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+				configured: true,
+				authenticated: false,
+				source: "local",
+				maskedValue: `external CLI · ${path.basename(pluginDir)}`,
+			})
+		} catch {
+			// An uninstalled optional provider should not make the default setup
+			// audit noisy or block OpenAI/local flows.
+		}
 
-  getWhoAmI(activeModel = "gpt-5.6-terra"): WhoAmIResult {
-    const statuses = this.auditStatus();
-    const configured = statuses.filter((s) => s.configured);
+		return statuses
+	}
 
-    return {
-      authenticated: configured.length > 0,
-      activeModel,
-      configuredProviders: configured.map((s) => ({
-        provider: s.provider,
-        source: s.source,
-        maskedValue: s.maskedValue,
-      })),
-    };
-  }
+	getWhoAmI(activeModel = this.getSavedModel() ?? "gpt-5.6-terra"): WhoAmIResult {
+		const statuses = this.auditStatus()
+		const configured = statuses.filter((s) => s.configured)
 
-  displayWhoAmI(activeModel = "gpt-5.6-terra"): void {
-    const who = this.getWhoAmI(activeModel);
-    console.log("\n\x1b[1;35m╭─── LUMI Account & Active Session ─────────────────────────────╮\x1b[0m");
+		return {
+			authenticated: configured.some((status) => status.authenticated !== false),
+			activeModel,
+			configuredProviders: configured.map((s) => ({
+				provider: s.provider,
+				source: s.source,
+				maskedValue: s.maskedValue,
+			})),
+		}
+	}
 
-    if (who.authenticated) {
-      console.log(`│  \x1b[1;32m● Connected to OpenAI Codex\x1b[0m`);
-      console.log(`│    \x1b[90mProvider:\x1b[0m   \x1b[32mOpenAI Codex (Active)\x1b[0m`);
-    } else {
-      console.log(`│  \x1b[1;33m○ No active API key\x1b[0m`);
-      console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mExport OPENAI_API_KEY or configure in Settings\x1b[0m`);
-    }
+	displayWhoAmI(activeModel = this.getSavedModel() ?? "gpt-5.6-terra"): void {
+		const who = this.getWhoAmI(activeModel)
+		const hasClaudeTransport = who.configuredProviders.some(
+			(status) => status.provider === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+		)
+		console.log("\n\x1b[1;35m╭─── LUMI Account & Active Session ─────────────────────────────╮\x1b[0m")
 
-    console.log(`│`);
-    console.log(`│  \x1b[90mActive Model:\x1b[0m \x1b[1;36m${who.activeModel}\x1b[0m`);
-    console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m\n");
-  }
+		if (who.authenticated) {
+			console.log(`│  \x1b[1;32m● Connected to OpenAI Codex\x1b[0m`)
+			console.log(`│    \x1b[90mProvider:\x1b[0m   \x1b[32mOpenAI Codex (Active)\x1b[0m`)
+		} else if (hasClaudeTransport) {
+			console.log(`│  \x1b[1;33m○ Claude subscription transport detected\x1b[0m`)
+			console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mRun claude auth login, then /providers\x1b[0m`)
+		} else {
+			console.log(`│  \x1b[1;33m○ No active API key\x1b[0m`)
+			console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mExport OPENAI_API_KEY or configure in Settings\x1b[0m`)
+		}
 
-  clearAllCredentials(): void {
-    for (const provider of this.authStorageVault.listProviders()) {
-      this.authStorageVault.clearToken(provider);
-    }
-    this.proxyGateway.configureProxy(null);
-    for (const p of ["ollama", "lmstudio", "llamacpp", "vllm", "custom"]) {
-      this.proxyGateway.setProviderEndpoint(p, null);
-    }
-    this.saveConfigToDisk();
-  }
+		console.log(`│`)
+		console.log(`│  \x1b[90mActive Model:\x1b[0m \x1b[1;36m${who.activeModel}\x1b[0m`)
+		console.log("\x1b[1;35m╰───────────────────────────────────────────────────────────────╯\x1b[0m\n")
+	}
 
-  /** Signs out and clears all stored credentials. */
-  logout(): boolean {
-    try {
-      this.clearAllCredentials();
-      return true;
-    } catch {
-      return false;
-    }
-  }
+	clearAllCredentials(): void {
+		for (const provider of this.authStorageVault.listProviders()) {
+			this.authStorageVault.clearToken(provider)
+		}
+		this.proxyGateway.configureProxy(null)
+		for (const p of ["ollama", "lmstudio", "llamacpp", "vllm", "custom"]) {
+			this.proxyGateway.setProviderEndpoint(p, null)
+		}
+		this.saveConfigToDisk()
+	}
 
-  /** Interactive login — runs the setup wizard to configure OpenAI Codex credentials. */
-  async loginInteractive(providedReadLine?: readline.Interface): Promise<void> {
-    await this.runInteractiveWizard(providedReadLine);
-  }
+	/** Signs out and clears all stored credentials. */
+	logout(): boolean {
+		try {
+			this.clearAllCredentials()
+			return true
+		} catch {
+			return false
+		}
+	}
 
-  displayAuditTable(): void {
-    console.log("\n\x1b[1;36m--- LUMI Model & Account Status Audit ---\x1b[0m");
-    const statuses = this.auditStatus();
-    for (const status of statuses) {
-      const icon = status.configured ? "\x1b[32m[✓ ACTIVE]\x1b[0m" : "\x1b[31m[✗ UNCONFIGURED]\x1b[0m";
-      const sourceStr = status.source !== "none" ? `(\x1b[33m${status.source}\x1b[0m)` : "";
-      const details = status.maskedValue ? `- ${status.maskedValue}` : "";
-      console.log(`  ${icon} ${status.provider.padEnd(22)} ${sourceStr} ${details}`);
-    }
-    console.log();
-  }
+	/** Interactive login — runs the setup wizard to configure OpenAI Codex credentials. */
+	async loginInteractive(providedReadLine?: readline.Interface): Promise<void> {
+		await this.runInteractiveWizard(providedReadLine)
+	}
 
-  async displayDoctor(): Promise<void> {
-    console.log("\n\x1b[1;36m============================================================\x1b[0m");
-    console.log("\x1b[1;36m   LUMI System Health & Connectivity Doctor                 \x1b[0m");
-    console.log("\x1b[1;36m============================================================\x1b[0m\n");
+	displayAuditTable(): void {
+		console.log("\n\x1b[1;36m--- LUMI Model & Account Status Audit ---\x1b[0m")
+		const statuses = this.auditStatus()
+		for (const status of statuses) {
+			const icon =
+				status.provider === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+					? "\x1b[33m[~ CLI DETECTED]\x1b[0m"
+					: status.configured
+						? "\x1b[32m[✓ ACTIVE]\x1b[0m"
+						: "\x1b[31m[✗ UNCONFIGURED]\x1b[0m"
+			const sourceStr = status.source !== "none" ? `(\x1b[33m${status.source}\x1b[0m)` : ""
+			const details = status.maskedValue ? `- ${status.maskedValue}` : ""
+			console.log(`  ${icon} ${getAgentProviderLabel(status.provider).padEnd(22)} ${sourceStr} ${details}`)
+		}
+		console.log()
+	}
 
-    const statuses = this.auditStatus();
-    const activeProviders = statuses.filter((s) => s.configured);
+	async displayDoctor(activeProvider?: string): Promise<void> {
+		console.log("\n\x1b[1;36m============================================================\x1b[0m")
+		console.log("\x1b[1;36m   LUMI System Health & Connectivity Doctor                 \x1b[0m")
+		console.log("\x1b[1;36m============================================================\x1b[0m\n")
 
-    // Check 1: OpenAI Codex
-    if (activeProviders.length > 0) {
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenAI Codex (${activeProviders.length} credential(s) active)\x1b[0m`);
-      for (const p of activeProviders) {
-        console.log(`         - ${p.provider}: ${p.maskedValue}`);
-      }
-    } else {
-      console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo OPENAI_API_KEY Configured\x1b[0m`);
-      console.log(`         Set OPENAI_API_KEY in your environment or run /setup.`);
-    }
+		const statuses = this.auditStatus()
+		const activeProviders = statuses.filter((s) => s.configured && s.provider !== CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
+		const claudeTransport = statuses.find((s) => s.provider === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
+		const claudeIsActive = isClaudeSubscriptionDirectSdkProvider(activeProvider)
 
-    // Check 2: Host System Hardware & VRAM Capacity
-    try {
-      const hw = this.proxyGateway.getLocalEngine().getHardwareAssessment();
-      console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mHost System Hardware & Engine Headroom\x1b[0m (${hw.totalMemoryGb} GB RAM)`);
-      console.log(`         Platform: ${hw.platform} (${hw.arch}) • Recommended Model: \x1b[36m${hw.recommendedMaxModelParams}\x1b[0m`);
-    } catch {
-      // Ignore hardware probe errors
-    }
+		// Check 1: OpenAI Codex. When Claude Code is selected, a missing OpenAI
+		// key is informational rather than an actionable failure.
+		if (activeProviders.length > 0) {
+			console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mOpenAI Codex (${activeProviders.length} credential(s) active)\x1b[0m`)
+			for (const p of activeProviders) {
+				console.log(`         - ${getAgentProviderLabel(p.provider)}: ${p.maskedValue}`)
+			}
+		} else if (isClaudeSubscriptionDirectSdkProvider(activeProvider)) {
+			console.log(`  \x1b[90m[INFO]\x1b[0m \x1b[1mOpenAI Codex not selected\x1b[0m`)
+			console.log(`         Active provider is ${getAgentProviderLabel(activeProvider)}; no OpenAI key is required.`)
+		} else {
+			console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mNo OPENAI_API_KEY Configured\x1b[0m`)
+			console.log(`         Set OPENAI_API_KEY in your environment or run /setup.`)
+		}
 
-    // Check 3: File Vault Security
-    const configPath = this.getConfigPath();
-    if (fs.existsSync(configPath) && process.platform !== "win32") {
-      const mode = fs.statSync(configPath).mode & 0o777;
-      if (mode === 0o600) {
-        console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (mode 0o600 encrypted)`);
-      } else {
-        console.log(`  \x1b[33m[WARN]\x1b[0m \x1b[1mCredential Vault Permissions\x1b[0m (Current: 0o${mode.toString(8)}, recommended: 0o600)`);
-      }
-    }
+		if (claudeTransport || claudeIsActive) {
+			const result = await this.testProviderConnection(CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
+			const statusBadge = result.passed
+				? "\x1b[32m[PASS]\x1b[0m"
+				: claudeIsActive
+					? "\x1b[33m[WARN]\x1b[0m"
+					: "\x1b[90m[INFO]\x1b[0m"
+			console.log(`  ${statusBadge} \x1b[1mClaude Code provider${claudeIsActive ? "" : " (not selected)"}\x1b[0m`)
+			console.log(`         ${result.details}`)
+		}
 
-    console.log("\n\x1b[32mHealth diagnostic completed successfully.\x1b[0m\n");
-  }
+		// Check 2: Host System Hardware & VRAM Capacity
+		try {
+			const hw = this.proxyGateway.getLocalEngine().getHardwareAssessment()
+			console.log(
+				`  \x1b[32m[PASS]\x1b[0m \x1b[1mHost System Hardware & Engine Headroom\x1b[0m (${hw.totalMemoryGb} GB RAM)`,
+			)
+			console.log(
+				`         Platform: ${hw.platform} (${hw.arch}) • Recommended Model: \x1b[36m${hw.recommendedMaxModelParams}\x1b[0m`,
+			)
+		} catch {
+			// Ignore hardware probe errors
+		}
 
-  async runInteractiveWizard(providedReadLine?: readline.Interface): Promise<void> {
-    const isStandaloneRl = !providedReadLine;
-    const rl = providedReadLine ?? readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
+		// Check 3: File Vault Security
+		const configPath = this.getConfigPath()
+		if (fs.existsSync(configPath) && process.platform !== "win32") {
+			const mode = fs.statSync(configPath).mode & 0o777
+			if (mode === 0o600) {
+				console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (mode 0o600 encrypted)`)
+			} else {
+				console.log(
+					`  \x1b[33m[WARN]\x1b[0m \x1b[1mCredential Vault Permissions\x1b[0m (Current: 0o${mode.toString(8)}, recommended: 0o600)`,
+				)
+			}
+		}
 
-    try {
-      const activeModel = this.getSavedModel() || "gpt-5.6-terra";
+		console.log("\n\x1b[32mHealth diagnostic completed successfully.\x1b[0m\n")
+	}
 
-      console.log("\n\x1b[1;35m============================================================\x1b[0m");
-      console.log("\x1b[1;35m   LUMI Configuration & Account Settings                    \x1b[0m");
-      console.log("\x1b[1;35m============================================================\x1b[0m");
-      console.log(`  \x1b[90mModel:\x1b[0m   \x1b[1;36m${activeModel}\x1b[0m\n`);
+	async runInteractiveWizard(providedReadLine?: readline.Interface): Promise<void> {
+		const isStandaloneRl = !providedReadLine
+		const rl =
+			providedReadLine ??
+			readline.createInterface({
+				input: process.stdin,
+				output: process.stdout,
+			})
 
-      let exitWizard = false;
-      while (!exitWizard) {
-        console.log("\x1b[1;34mOptions:\x1b[0m");
-        console.log("  [1] Configure OpenAI Codex API Key");
-        console.log("  [2] Select Model (gpt-5.6-terra)");
-        console.log("  [3] Run System Health & Diagnostics (Doctor)");
-        console.log("  [4] Display Identity & Session Details");
-        console.log("  [0] Save & Exit\n");
+		try {
+			const activeModel = this.getSavedModel() || "gpt-5.6-terra"
 
-        const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-4): \x1b[0m");
-        switch (choice.trim()) {
-          case "1":
-            await this.configureApiKeys(rl);
-            break;
-          case "2": {
-            console.log("\n\x1b[1;34mModel Selection (OpenAI Codex):\x1b[0m");
-            console.log("  [1] gpt-5.6-terra (Flagship Frontier Reasoning Engine · 900k Context · 128k Output)");
-            this.setSavedModel("gpt-5.6-terra");
-            console.log("\x1b[32m[✓] Active model configured to gpt-5.6-terra\x1b[0m\n");
-            break;
-          }
-          case "3":
-            await this.displayDoctor();
-            break;
-          case "4":
-            this.displayWhoAmI();
-            break;
-          case "0":
-          case "exit":
-          case "quit":
-            exitWizard = true;
-            console.log("\n\x1b[32m[✓] Configuration saved successfully!\x1b[0m\n");
-            break;
-          default:
-            console.log("\x1b[31mInvalid option, please choose 0 - 4.\x1b[0m\n");
-            break;
-        }
-      }
-    } finally {
-      if (isStandaloneRl) {
-        rl.close();
-      }
-    }
-  }
+			console.log("\n\x1b[1;35m============================================================\x1b[0m")
+			console.log("\x1b[1;35m   LUMI Configuration & Account Settings                    \x1b[0m")
+			console.log("\x1b[1;35m============================================================\x1b[0m")
+			console.log(`  \x1b[90mModel:\x1b[0m   \x1b[1;36m${activeModel}\x1b[0m\n`)
 
-  async configureApiKeys(rl: readline.Interface): Promise<void> {
-    console.log("\n\x1b[1;36m--- OpenAI Codex API Key Setup ---\x1b[0m");
-    const existing = this.authStorageVault.getToken("openai-codex") || process.env.OPENAI_API_KEY;
-    const masked = existing ? `${existing.substring(0, 4)}...${existing.slice(-4)}` : "not set";
-    console.log(`\nCurrent OpenAI Codex status: \x1b[33m${masked}\x1b[0m`);
+			let exitWizard = false
+			while (!exitWizard) {
+				console.log("\x1b[1;34mOptions:\x1b[0m")
+				console.log("  [1] Configure OpenAI Codex API Key")
+				console.log(`  [2] Select Model (${activeModel})`)
+				console.log("  [3] Run System Health & Diagnostics (Doctor)")
+				console.log("  [4] Display Identity & Session Details")
+				console.log("  [5] Select & Verify Claude Code subscription")
+				console.log("  [0] Save & Exit\n")
 
-    const keyInput = await this.askQuestion(rl, "Enter OpenAI API Key (Press Enter to keep current): ");
-    const cleaned = keyInput.trim();
+				const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-5): \x1b[0m")
+				switch (choice.trim()) {
+					case "1":
+						await this.configureApiKeys(rl)
+						break
+					case "2": {
+						if (this.getSavedProvider() === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER) {
+							console.log(
+								"\n\x1b[1;34mSupported Claude Code routes (use the TUI picker for live account entitlements):\x1b[0m",
+							)
+							for (const model of CLAUDE_SUBSCRIPTION_DIRECTSDK_MODELS) {
+								console.log(`  • ${model}`)
+							}
+							this.setSavedModel(CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL)
+							console.log(
+								`\x1b[32m[✓] Active model configured to ${CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL}\x1b[0m\n`,
+							)
+						} else {
+							console.log("\n\x1b[1;34mModel Selection (OpenAI Codex):\x1b[0m")
+							console.log("  [1] gpt-5.6-terra (Flagship Frontier Reasoning Engine · 900k Context · 128k Output)")
+							this.setSavedModel("gpt-5.6-terra")
+							console.log("\x1b[32m[✓] Active model configured to gpt-5.6-terra\x1b[0m\n")
+						}
+						break
+					}
+					case "3":
+						await this.displayDoctor(this.getSavedProvider())
+						break
+					case "4":
+						this.displayWhoAmI()
+						break
+					case "5": {
+						this.setSavedProvider(CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
+						this.setSavedModel(CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL)
+						const result = await this.testProviderConnection(CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
+						console.log(
+							result.passed
+								? `\x1b[32m[✓] Claude subscription provider selected and ready: ${result.details}\x1b[0m\n`
+								: `\x1b[33m[!] Claude provider selected, but verification needs attention: ${result.details}\nRun claude auth login and choose this provider again.\x1b[0m\n`,
+						)
+						break
+					}
+					case "0":
+					case "exit":
+					case "quit":
+						exitWizard = true
+						console.log("\n\x1b[32m[✓] Configuration saved successfully!\x1b[0m\n")
+						break
+					default:
+						console.log("\x1b[31mInvalid option, please choose 0 - 5.\x1b[0m\n")
+						break
+				}
+			}
+		} finally {
+			if (isStandaloneRl) {
+				rl.close()
+			}
+		}
+	}
 
-    if (cleaned.length > 0) {
-      this.configureProviderApiKey("openai-codex", cleaned);
-      console.log("\x1b[32m[✓] Updated OpenAI Codex API key in vault!\x1b[0m\n");
-    }
-  }
+	async configureApiKeys(rl: readline.Interface): Promise<void> {
+		console.log("\n\x1b[1;36m--- OpenAI Codex API Key Setup ---\x1b[0m")
+		const existing = this.authStorageVault.getToken("openai-codex") || process.env.OPENAI_API_KEY
+		const masked = existing ? `${existing.substring(0, 4)}...${existing.slice(-4)}` : "not set"
+		console.log(`\nCurrent OpenAI Codex status: \x1b[33m${masked}\x1b[0m`)
 
-  configureProviderApiKey(provider: ApiKeyProviderId, apiKey: string): void {
-    if (provider !== "openai-codex") {
-      throw new Error(`Unsupported API key provider: ${provider}`);
-    }
+		const keyInput = await this.askQuestion(rl, "Enter OpenAI API Key (Press Enter to keep current): ")
+		const cleaned = keyInput.trim()
 
-    const cleaned = apiKey.trim();
-    if (!cleaned) {
-      throw new Error(`API key cannot be empty for ${provider}`);
-    }
+		if (cleaned.length > 0) {
+			this.configureProviderApiKey("openai-codex", cleaned)
+			console.log("\x1b[32m[✓] Updated OpenAI Codex API key in vault!\x1b[0m\n")
+		}
+	}
 
-    this.authStorageVault.setToken(provider, cleaned);
-    this.saveConfigToDisk();
-  }
+	configureProviderApiKey(provider: ApiKeyProviderId, apiKey: string): void {
+		if (provider !== "openai-codex") {
+			throw new Error(`Unsupported API key provider: ${provider}`)
+		}
 
-  configureLocalEndpoint(provider: string, baseUrl: string, apiKey?: string): void {
-    const cleaned = baseUrl.trim();
-    if (!cleaned) {
-      this.proxyGateway.setProviderEndpoint(provider, null);
-    } else {
-      this.proxyGateway.setProviderEndpoint(provider, {
-        baseUrl: cleaned,
-        apiKey: apiKey?.trim() || undefined,
-      });
-    }
-    this.saveConfigToDisk();
-  }
+		const cleaned = apiKey.trim()
+		if (!cleaned) {
+			throw new Error(`API key cannot be empty for ${provider}`)
+		}
 
-  setSavedModel(modelName: string): void {
-    const cleaned = modelName.trim();
-    if (!cleaned) {
-      throw new Error("Model name cannot be empty");
-    }
-    this.savedModelName = cleaned;
-    this.saveConfigToDisk();
-  }
+		this.authStorageVault.setToken(provider, cleaned)
+		this.saveConfigToDisk()
+	}
 
-  getConfigPath(): string {
-    if (process.env.LUMI_CONFIG_PATH) {
-      return process.env.LUMI_CONFIG_PATH;
-    }
-    if (process.env.LUMI_CONFIG_DIR) {
-      return path.join(process.env.LUMI_CONFIG_DIR, "config.json");
-    }
-    return path.join(os.homedir(), ".lumi", "config.json");
-  }
+	configureLocalEndpoint(provider: string, baseUrl: string, apiKey?: string): void {
+		const cleaned = baseUrl.trim()
+		if (!cleaned) {
+			this.proxyGateway.setProviderEndpoint(provider, null)
+		} else {
+			this.proxyGateway.setProviderEndpoint(provider, {
+				baseUrl: cleaned,
+				apiKey: apiKey?.trim() || undefined,
+			})
+		}
+		this.saveConfigToDisk()
+	}
 
-  getSavedModel(): string | undefined {
-    return this.savedModelName || "gpt-5.6-terra";
-  }
+	setSavedModel(modelName: string): void {
+		const cleaned = modelName.trim()
+		if (!cleaned) {
+			throw new Error("Model name cannot be empty")
+		}
+		this.savedModelName = cleaned
+		this.saveConfigToDisk()
+	}
 
-  useDefaultProxyGateway(): void {
-    this.proxyGateway.configureProxy(null);
-    this.saveConfigToDisk();
-  }
+	setSavedProvider(provider: SetupProviderId): void {
+		const normalized = normalizeSetupProvider(provider)
+		if (!normalized) {
+			throw new Error(`Unsupported persisted provider: ${provider}`)
+		}
+		this.savedProviderName = normalized
+		this.saveConfigToDisk()
+	}
 
-  async configureLocalEndpointsInteractive(rl: readline.Interface): Promise<void> {
-    console.log("\n\x1b[1;36m--- Local On-Premises & Custom Proxy Configuration ---\x1b[0m");
-    console.log("  [1] Preset: Ollama Daemon (http://localhost:11434/v1)");
-    console.log("  [2] Preset: LM Studio (http://localhost:1234/v1)");
-    console.log("  [3] Preset: llama.cpp (http://localhost:8080/v1)");
-    console.log("  [4] Preset: vLLM / LocalAI (http://localhost:8000/v1)");
-    console.log("  [5] Custom On-Premise Endpoint / Corporate Gateway");
-    console.log("  [6] Probe & Discover Running Local Models");
-    console.log("  [0] Back to Main Menu\n");
+	getSavedProvider(): SetupProviderId | undefined {
+		return this.savedProviderName
+	}
 
-    const choice = await this.askQuestion(rl, "Select option (0-6): ");
-    switch (choice.trim()) {
-      case "1":
-        this.configureLocalEndpoint("ollama", "http://localhost:11434/v1");
-        console.log("\x1b[32m[✓] Configured Ollama endpoint (http://localhost:11434/v1)\x1b[0m\n");
-        break;
-      case "2":
-        this.configureLocalEndpoint("lmstudio", "http://localhost:1234/v1");
-        console.log("\x1b[32m[✓] Configured LM Studio endpoint (http://localhost:1234/v1)\x1b[0m\n");
-        break;
-      case "3":
-        this.configureLocalEndpoint("llamacpp", "http://localhost:8080/v1");
-        console.log("\x1b[32m[✓] Configured llama.cpp endpoint (http://localhost:8080/v1)\x1b[0m\n");
-        break;
-      case "4":
-        this.configureLocalEndpoint("vllm", "http://localhost:8000/v1");
-        console.log("\x1b[32m[✓] Configured vLLM endpoint (http://localhost:8000/v1)\x1b[0m\n");
-        break;
-      case "5": {
-        const customUrl = await this.askQuestion(rl, "Enter Custom Base URL (e.g. http://localhost:8080/v1): ");
-        const apiKey = await this.askQuestion(rl, "Enter Bearer Token (optional): ");
-        this.configureLocalEndpoint("custom", customUrl.trim(), apiKey.trim() || undefined);
-        console.log("\x1b[32m[✓] Custom endpoint saved!\x1b[0m\n");
-        break;
-      }
-      case "6": {
-        console.log("\x1b[33mProbing local servers on ports 11434, 1234, 8080, 8000...\x1b[0m");
-        const report = await this.proxyGateway.getLocalEngine().probeAllServers();
-        console.log(`\nFound ${report.activeServers} active server(s):`);
-        for (const s of report.serverStatuses) {
-          const statusStr = s.reachable ? `\x1b[32mONLINE\x1b[0m (${s.latencyMs}ms, ${s.activeModelCount} models)` : `\x1b[90mOFFLINE\x1b[0m`;
-          console.log(`  - ${s.displayName.padEnd(22)} ${s.baseUrl.padEnd(24)} -> ${statusStr}`);
-        }
-        console.log();
-        break;
-      }
-    }
-  }
+	getConfigPath(): string {
+		if (process.env.LUMI_CONFIG_PATH) {
+			return process.env.LUMI_CONFIG_PATH
+		}
+		if (process.env.LUMI_CONFIG_DIR) {
+			return path.join(process.env.LUMI_CONFIG_DIR, "config.json")
+		}
+		return path.join(os.homedir(), ".lumi", "config.json")
+	}
 
-  async configureProxyGateway(rl: readline.Interface): Promise<void> {
-    await this.configureLocalEndpointsInteractive(rl);
-  }
+	getSavedModel(): string | undefined {
+		return (
+			this.savedModelName ||
+			(this.savedProviderName === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+				? CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL
+				: "gpt-5.6-terra")
+		)
+	}
 
-  private saveConfigToDisk(): void {
-    try {
-      const configPath = this.getConfigPath();
-      const tokens: Record<string, string> = {};
-      for (const provider of this.authStorageVault.listProviders()) {
-        const t = this.authStorageVault.getToken(provider);
-        if (t) tokens[provider] = t;
-      }
+	useDefaultProxyGateway(): void {
+		this.proxyGateway.configureProxy(null)
+		this.saveConfigToDisk()
+	}
 
-      const proxy = this.proxyGateway.getProxyConfig();
-      const localEndpoints = this.proxyGateway.getAllProviderEndpoints();
+	async configureLocalEndpointsInteractive(rl: readline.Interface): Promise<void> {
+		console.log("\n\x1b[1;36m--- Local On-Premises & Custom Proxy Configuration ---\x1b[0m")
+		console.log("  [1] Preset: Ollama Daemon (http://localhost:11434/v1)")
+		console.log("  [2] Preset: LM Studio (http://localhost:1234/v1)")
+		console.log("  [3] Preset: llama.cpp (http://localhost:8080/v1)")
+		console.log("  [4] Preset: vLLM / LocalAI (http://localhost:8000/v1)")
+		console.log("  [5] Custom On-Premise Endpoint / Corporate Gateway")
+		console.log("  [6] Probe & Discover Running Local Models")
+		console.log("  [0] Back to Main Menu\n")
 
-      const data = {
-        tokens,
-        proxy,
-        localEndpoints,
-        modelName: this.savedModelName,
-        updatedAt: Date.now(),
-      };
+		const choice = await this.askQuestion(rl, "Select option (0-6): ")
+		switch (choice.trim()) {
+			case "1":
+				this.configureLocalEndpoint("ollama", "http://localhost:11434/v1")
+				console.log("\x1b[32m[✓] Configured Ollama endpoint (http://localhost:11434/v1)\x1b[0m\n")
+				break
+			case "2":
+				this.configureLocalEndpoint("lmstudio", "http://localhost:1234/v1")
+				console.log("\x1b[32m[✓] Configured LM Studio endpoint (http://localhost:1234/v1)\x1b[0m\n")
+				break
+			case "3":
+				this.configureLocalEndpoint("llamacpp", "http://localhost:8080/v1")
+				console.log("\x1b[32m[✓] Configured llama.cpp endpoint (http://localhost:8080/v1)\x1b[0m\n")
+				break
+			case "4":
+				this.configureLocalEndpoint("vllm", "http://localhost:8000/v1")
+				console.log("\x1b[32m[✓] Configured vLLM endpoint (http://localhost:8000/v1)\x1b[0m\n")
+				break
+			case "5": {
+				const customUrl = await this.askQuestion(rl, "Enter Custom Base URL (e.g. http://localhost:8080/v1): ")
+				const apiKey = await this.askQuestion(rl, "Enter Bearer Token (optional): ")
+				this.configureLocalEndpoint("custom", customUrl.trim(), apiKey.trim() || undefined)
+				console.log("\x1b[32m[✓] Custom endpoint saved!\x1b[0m\n")
+				break
+			}
+			case "6": {
+				console.log("\x1b[33mProbing local servers on ports 11434, 1234, 8080, 8000...\x1b[0m")
+				const report = await this.proxyGateway.getLocalEngine().probeAllServers()
+				console.log(`\nFound ${report.activeServers} active server(s):`)
+				for (const s of report.serverStatuses) {
+					const statusStr = s.reachable
+						? `\x1b[32mONLINE\x1b[0m (${s.latencyMs}ms, ${s.activeModelCount} models)`
+						: `\x1b[90mOFFLINE\x1b[0m`
+					console.log(`  - ${s.displayName.padEnd(22)} ${s.baseUrl.padEnd(24)} -> ${statusStr}`)
+				}
+				console.log()
+				break
+			}
+		}
+	}
 
-      writeAtomicJsonFile(configPath, data);
-    } catch {
-      // Ignore write errors
-    }
-  }
+	async configureProxyGateway(rl: readline.Interface): Promise<void> {
+		await this.configureLocalEndpointsInteractive(rl)
+	}
 
-  private loadSavedConfig(): void {
-    this.loadDotEnvFile();
-    try {
-      const configPath = this.getConfigPath();
-      if (fs.existsSync(configPath)) {
-        const raw = fs.readFileSync(configPath, "utf-8");
-        const data = JSON.parse(raw) as {
-          tokens?: Record<string, string>;
-          proxy?: { baseUrl?: string; apiKey?: string };
-          localEndpoints?: Record<string, ProxyEndpointConfig>;
-          modelName?: string;
-        };
+	private saveConfigToDisk(): void {
+		try {
+			const configPath = this.getConfigPath()
+			const tokens: Record<string, string> = {}
+			for (const provider of this.authStorageVault.listProviders()) {
+				const t = this.authStorageVault.getToken(provider)
+				if (t) tokens[provider] = t
+			}
 
-        if (data.tokens) {
-          for (const [provider, token] of Object.entries(data.tokens)) {
-            if (token) {
-              this.authStorageVault.setToken(provider, token);
-            }
-          }
-        }
+			const proxy = this.proxyGateway.getProxyConfig()
+			const localEndpoints = this.proxyGateway.getAllProviderEndpoints()
 
-        if (data.proxy?.baseUrl) {
-          this.proxyGateway.configureProxy({
-            baseUrl: data.proxy.baseUrl,
-            apiKey: data.proxy.apiKey,
-          });
-        }
+			const data = {
+				tokens,
+				proxy,
+				localEndpoints,
+				provider: this.savedProviderName,
+				modelName: this.savedModelName,
+				updatedAt: Date.now(),
+			}
 
-        if (data.localEndpoints) {
-          for (const [p, cfg] of Object.entries(data.localEndpoints)) {
-            if (cfg?.baseUrl) {
-              this.proxyGateway.setProviderEndpoint(p, cfg);
-            }
-          }
-        }
+			writeAtomicJsonFile(configPath, data)
+		} catch {
+			// Ignore write errors
+		}
+	}
 
-        if (typeof data.modelName === "string" && data.modelName.trim()) {
-          this.savedModelName = data.modelName.trim();
-        }
-      }
-    } catch {
-      // Ignore load errors
-    }
-  }
+	private loadSavedConfig(): void {
+		this.loadDotEnvFile()
+		try {
+			const configPath = this.getConfigPath()
+			if (fs.existsSync(configPath)) {
+				const raw = fs.readFileSync(configPath, "utf-8")
+				const data = JSON.parse(raw) as {
+					tokens?: Record<string, string>
+					proxy?: { baseUrl?: string; apiKey?: string }
+					localEndpoints?: Record<string, ProxyEndpointConfig>
+					provider?: string
+					modelName?: string
+				}
 
-  private loadDotEnvFile(): void {
-    try {
-      const cwdDotEnv = path.join(process.cwd(), ".env");
-      if (fs.existsSync(cwdDotEnv)) {
-        const content = fs.readFileSync(cwdDotEnv, "utf-8");
-        const lines = content.split(/\r?\n/);
-        const envMap: Record<string, string> = {
-          OPENAI_API_KEY: "openai-codex",
-          OLLAMA_API_KEY: "ollama",
-          LLAMACPP_API_KEY: "llamacpp",
-          LMSTUDIO_API_KEY: "lmstudio",
-        };
+				if (data.tokens) {
+					for (const [provider, token] of Object.entries(data.tokens)) {
+						if (token) {
+							this.authStorageVault.setToken(provider, token)
+						}
+					}
+				}
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith("#")) continue;
-          const eqIdx = trimmed.indexOf("=");
-          if (eqIdx !== -1) {
-            const key = trimmed.slice(0, eqIdx).trim();
-            let val = trimmed.slice(eqIdx + 1).trim();
-            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-              val = val.slice(1, -1);
-            }
-            const targetProvider = envMap[key];
-            if (targetProvider && val) {
-              this.authStorageVault.setToken(targetProvider, val);
-            }
-          }
-        }
-      }
-    } catch {
-      // Ignore load errors
-    }
-  }
+				if (data.proxy?.baseUrl) {
+					this.proxyGateway.configureProxy({
+						baseUrl: data.proxy.baseUrl,
+						apiKey: data.proxy.apiKey,
+					})
+				}
 
-  async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
-    const p = providerName.toLowerCase();
-    const token = this.authStorageVault.getToken(p) || this.envKeyResolver.resolveKey(p);
-    const passed = Boolean(token);
-    return {
-      passed,
-      details: passed
-        ? `Resolved credentials for ${providerName}`
-        : `No API key found for ${providerName}`,
-    };
-  }
+				if (data.localEndpoints) {
+					for (const [p, cfg] of Object.entries(data.localEndpoints)) {
+						if (cfg?.baseUrl) {
+							this.proxyGateway.setProviderEndpoint(p, cfg)
+						}
+					}
+				}
 
-  logoutCodexOAuth(): boolean {
-    return this.logout();
-  }
+				if (typeof data.modelName === "string" && data.modelName.trim()) {
+					this.savedModelName = data.modelName.trim()
+				}
+				if (typeof data.provider === "string") {
+					this.savedProviderName = normalizeSetupProvider(data.provider)
+				}
+			}
+		} catch {
+			// Ignore load errors
+		}
+	}
 
-  private askQuestion(rl: readline.Interface, promptText: string): Promise<string> {
-    return new Promise((resolve) => {
-      rl.question(promptText, (answer) => {
-        resolve(answer);
-      });
-    });
-  }
+	private loadDotEnvFile(): void {
+		try {
+			const cwdDotEnv = path.join(process.cwd(), ".env")
+			if (fs.existsSync(cwdDotEnv)) {
+				const content = fs.readFileSync(cwdDotEnv, "utf-8")
+				const lines = content.split(/\r?\n/)
+				const envMap: Record<string, string> = {
+					OPENAI_API_KEY: "openai-codex",
+					OLLAMA_API_KEY: "ollama",
+					LLAMACPP_API_KEY: "llamacpp",
+					LMSTUDIO_API_KEY: "lmstudio",
+				}
+
+				for (const line of lines) {
+					const trimmed = line.trim()
+					if (!trimmed || trimmed.startsWith("#")) continue
+					const eqIdx = trimmed.indexOf("=")
+					if (eqIdx !== -1) {
+						const key = trimmed.slice(0, eqIdx).trim()
+						let val = trimmed.slice(eqIdx + 1).trim()
+						if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+							val = val.slice(1, -1)
+						}
+						const targetProvider = envMap[key]
+						if (targetProvider && val) {
+							this.authStorageVault.setToken(targetProvider, val)
+						}
+					}
+				}
+			}
+		} catch {
+			// Ignore load errors
+		}
+	}
+
+	async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
+		const p = normalizeAgentProvider(providerName)
+		if (p === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER) {
+			const diagnostic = await diagnoseClaudeSubscriptionDirectSdk(this.claudeSubscriptionDirectSdk)
+			const plan = diagnostic.plan ? ` (${diagnostic.plan})` : ""
+			return {
+				passed: diagnostic.ready,
+				details: diagnostic.ready ? `Claude Code CLI and subscription credentials are ready${plan}` : diagnostic.detail,
+			}
+		}
+		const token = this.authStorageVault.getToken(p) || this.envKeyResolver.resolveKey(p)
+		const passed = Boolean(token)
+		return {
+			passed,
+			details: passed
+				? `Resolved credentials for ${getAgentProviderLabel(providerName)}`
+				: `No API key found for ${getAgentProviderLabel(providerName)}`,
+		}
+	}
+
+	logoutCodexOAuth(): boolean {
+		return this.logout()
+	}
+
+	private askQuestion(rl: readline.Interface, promptText: string): Promise<string> {
+		return new Promise((resolve) => {
+			rl.question(promptText, (answer) => {
+				resolve(answer)
+			})
+		})
+	}
 }

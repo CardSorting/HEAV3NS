@@ -4,6 +4,11 @@ import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/
 import { Logger } from "@/shared/services/Logger"
 import { getCwd } from "@/utils/path"
 
+/** Runtime path-resolution seam for CLI diagnostics and deterministic tests. */
+export const diagnosticsRuntime = {
+	getCwd,
+}
+
 export function getNewDiagnostics(oldDiagnostics: FileDiagnostics[], newDiagnostics: FileDiagnostics[]): FileDiagnostics[] {
 	const oldMap = new Map<string, Diagnostic[]>()
 	for (const diag of oldDiagnostics) {
@@ -45,7 +50,7 @@ export async function singleFileDiagnosticsToProblemsString(filePath: string, di
 	if (!diagnostics.length) {
 		return ""
 	}
-	const cwd = await getCwd()
+	const cwd = await diagnosticsRuntime.getCwd()
 	const relPath = path.relative(cwd, filePath).toPosix()
 	let result = `${relPath}`
 

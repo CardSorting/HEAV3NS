@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import type { DietCodeTool } from "@/shared/tools"
-import { TokenIngestionBufferEngine } from "../token-buffer-engine"
+import { TokenBufferProfiles, TokenIngestionBufferEngine } from "../token-buffer-engine"
 
 describe("TokenIngestionBufferEngine Central Class", () => {
 	const engine = new TokenIngestionBufferEngine()
@@ -92,8 +92,8 @@ Execution Status: Success
 		]
 
 		const tagged = engine.applyEphemeralCacheControl(messages)
-		expect((tagged[0].content as unknown as Array<{ cache_control?: { type?: string } }>)[0].cache_control).to.exist
-		expect(tagged[2].content).to.equal("msg 2")
+		expect(tagged[0].content).to.equal("msg 1")
+		expect((tagged[2].content as unknown as Array<{ cache_control?: { type?: string } }>)[0].cache_control).to.exist
 		expect((tagged[4].content as unknown as Array<{ cache_control?: { type?: string } }>)[0].cache_control).to.exist
 	})
 
@@ -139,10 +139,9 @@ Execution Status: Success
 	})
 
 	it("executes the full optimization pipeline cleanly with preset profiles", () => {
-		const { TokenBufferProfiles } = require("../token-buffer-engine")
 		const profile = TokenBufferProfiles.STRICT_CACHE_STABILITY
 
-		const pipelineInput = {
+		const pipelineInput: Parameters<typeof profile.optimizeMessagesPipeline>[0] = {
 			systemPrompt: " System instruction\r\n ",
 			messages: [
 				{ role: "user", content: "Hello world turn 1" },
@@ -198,14 +197,13 @@ external source workspace/codemarie-new/src/core/api/providers/cerebras.ts
 		})
 
 		it("maintains sub-millisecond throughput under high-frequency pipeline pressure (1,000 runs)", () => {
-			const { TokenBufferProfiles } = require("../token-buffer-engine")
 			const profile = TokenBufferProfiles.STRICT_CACHE_STABILITY
-			const sampleInput = {
+			const sampleInput: Parameters<typeof profile.optimizeMessagesPipeline>[0] = {
 				systemPrompt: "System instruction prompt \r\n",
 				messages: [
 					{ role: "user", content: "Run test suite on external source workspace/codemarie-new/src/index.ts" },
 					{ role: "assistant", content: "Executing test suite" },
-					{ role: "tool", content: '{"status": 200, "message": "Success"} \n' + "=".repeat(100) },
+					{ role: "assistant", content: '{"status": 200, "message": "Success"} \n' + "=".repeat(100) },
 				],
 			}
 

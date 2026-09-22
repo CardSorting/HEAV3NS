@@ -1,0 +1,31 @@
+{
+	"require": [
+		"./src/test/requires.cjs"
+	],
+	"import": [
+		"tsx",
+		"./src/test/register-vscode-mock.mjs"
+	],
+	"extension": [
+		"ts"
+	],
+	"spec": [
+		"src/**/*.test.ts"
+	],
+	"exclude": [
+		"src/hosts/vscode/**/*.test.ts",
+		"src/test/**/*.test.ts",
+		"src/core/api/**/e2e-*.test.ts",
+		"src/core/controller/**/*.test.ts",
+		"src/core/context/instructions/user-instructions/__tests__/RuleContextBuilder.test.ts",
+		"src/core/joyride/**/*.test.ts",
+		"src/core/mentions/**/*.test.ts",
+		"src/core/workspace/__tests__/setup.test.ts",
+		"src/services/search/file-search.test.ts",
+		"src/services/uri/SharedUriHandler.test.ts",
+		"src/test/e2e/**/*.test.ts",
+		"src/test/extension.test.ts"
+	],
+	"timeout": 10000,
+	"exit": true
+}

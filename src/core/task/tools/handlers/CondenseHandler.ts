@@ -1,6 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { ensureTaskDirectoryExists } from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import type { TaskConfig } from "../types/TaskConfig"
 import {
@@ -52,7 +52,7 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 		await config.messageState.saveDietCodeMessagesAndUpdateHistory()
 		await config.services.contextManager.triggerApplyStandardContextTruncationNoticeChange(
 			Date.now(),
-			await ensureTaskDirectoryExists(config.taskId),
+			await diskRuntime.ensureTaskDirectoryExists(config.taskId),
 			apiConversationHistory,
 		)
 

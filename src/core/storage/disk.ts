@@ -245,6 +245,21 @@ export async function ensureTaskDirectoryExists(taskId: string): Promise<string>
 	return getGlobalStorageDir("tasks", taskId)
 }
 
+/**
+ * Runtime filesystem seam for CLI hosts and tests.
+ *
+ * Keeping the boundary as an ordinary object avoids mutating ESM namespace
+ * exports and gives alternate hosts one explicit place to provide task roots.
+ */
+export const diskRuntime = {
+	ensureTaskDirectoryExists,
+	isDirectory,
+	getTaskMetadata,
+	saveTaskMetadata,
+	getSkillsDirectoriesForScan,
+	getMcpSettingsFilePath,
+}
+
 export async function ensureRulesDirectoryExists(): Promise<string> {
 	const userDocumentsPath = await getDocumentsPath()
 	const dietcodeRulesDir = path.join(userDocumentsPath, "DietCode", "Rules")
@@ -697,7 +712,7 @@ export async function deleteRemoteConfigFromCache(organizationId: string): Promi
  */
 export async function getGlobalHooksDir(): Promise<string | undefined> {
 	const globalHooksDir = await ensureHooksDirectoryExists()
-	return (await isDirectory(globalHooksDir)) ? globalHooksDir : undefined
+	return (await diskRuntime.isDirectory(globalHooksDir)) ? globalHooksDir : undefined
 }
 
 /**
@@ -726,15 +741,22 @@ export async function getAllHooksDirs(): Promise<string[]> {
 	return hooksDirs
 }
 
+/** Runtime seam used by hook discovery. Consumers should call this object so
+ * alternate CLI/test storage roots can be supplied without ESM mutation. */
+export const hookStorageRuntime = {
+	getAllHooksDirs,
+}
+
 /**
  * Gets the paths to the workspace's .dietcoderules/hooks directories to search for
  * hooks. A workspace may not use hooks, and the resulting array will be empty. A
  * multi-root workspace may have multiple hooks directories.
  */
 export async function getWorkspaceHooksDirs(): Promise<string[]> {
-	const { StateManager } = await import("./StateManager")
+	const { stateManagerRuntime } = await import("./StateManager")
 	const workspaceRootPaths =
-		StateManager.get()
+		stateManagerRuntime
+			.get()
 			.getGlobalStateKey("workspaceRoots")
 			?.map((root) => root.path) || []
 
@@ -743,7 +765,7 @@ export async function getWorkspaceHooksDirs(): Promise<string[]> {
 			workspaceRootPaths.map(async (workspaceRootPath) => {
 				// Look for a .dietcoderules/hooks folder in this workspace root.
 				const candidate = path.join(workspaceRootPath, GlobalFileNames.hooksDir)
-				return (await isDirectory(candidate)) ? candidate : undefined
+				return (await diskRuntime.isDirectory(candidate)) ? candidate : undefined
 			}),
 		)
 	).filter((path): path is string => Boolean(path))

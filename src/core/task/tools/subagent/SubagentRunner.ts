@@ -61,11 +61,12 @@ import {
 import { executionFunnel, shouldBypassGuardForLaneIoTool, shouldUseIoAuthorityReadFastPath } from "../execution/ExecutionFunnel"
 import { validateSubagentCompletionGates } from "../subagentCompletionGates"
 import { ToolValidator } from "../ToolValidator"
+import { ToolExecutorCoordinator } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import { getTaskArchitectureSteering } from "../utils/ArchitecturePosture"
 import { resolveContinuationFromParentSignals } from "./CoordinatorExecutionAuthority"
 import { shouldEnableParallelToolCallingForLane } from "./LockNecessity"
-import { SubagentBuilder } from "./SubagentBuilder"
+import { SubagentBuilder, subagentBuilderRuntime } from "./SubagentBuilder"
 import { SubagentEnvelopeBuilder } from "./SubagentEnvelopeBuilder"
 import { type SubagentContextRecoveryRecord, SubagentTranscriptRecorder } from "./SubagentTranscriptRecorder"
 import { SwarmConsensusHandler } from "./SwarmConsensusHandler"
@@ -76,6 +77,19 @@ const INITIAL_STREAM_RETRY_BASE_DELAY_MS = 250
 const MAX_TOTAL_TOOL_CALLS = 50
 const MAX_PARALLEL_IO_TOOL_CALLS = 4
 const MAX_TASK_ITERATIONS = 25
+
+/**
+ * Runtime dependency seam for the subagent loop. The production defaults are
+ * the real skill/prompt services; the mutable object gives tests and hosts an
+ * explicit injection point without mutating ESM namespace exports.
+ */
+export const subagentRunnerRuntime = {
+	getResolvedSkillsForCwd,
+	filterEnabledSkills,
+	filterSubagentPromptSkills,
+	getPromptRegistry: () => PromptRegistry.getInstance(),
+	buildApiHandler: subagentBuilderRuntime.buildApiHandler,
+}
 
 function getParentCompletionFailedStage(taskState: TaskState): string | undefined {
 	return taskState.lastCompletionFailedStage
@@ -651,12 +665,12 @@ export class SubagentRunner {
 				!!this.baseConfig.services.stateManager.getGlobalStateKey("nativeToolCallEnabled")
 
 			const host = HostRegistryInfo.get()
-			const discoveredSkills = await getResolvedSkillsForCwd(this.baseConfig.cwd)
+			const discoveredSkills = await subagentRunnerRuntime.getResolvedSkillsForCwd(this.baseConfig.cwd)
 			const globalSkillsToggles = this.baseConfig.services.stateManager.getGlobalSettingsKey("globalSkillsToggles") ?? {}
 			const localSkillsToggles = this.baseConfig.services.stateManager.getWorkspaceStateKey("localSkillsToggles") ?? {}
-			const availableSkills = filterEnabledSkills(discoveredSkills, globalSkillsToggles, localSkillsToggles)
+			const availableSkills = subagentRunnerRuntime.filterEnabledSkills(discoveredSkills, globalSkillsToggles, localSkillsToggles)
 			const configuredSkillNames = this.agent.getConfiguredSkills()
-			const resolvedForPrompt = filterSubagentPromptSkills(availableSkills)
+			const resolvedForPrompt = subagentRunnerRuntime.filterSubagentPromptSkills(availableSkills)
 			const skills =
 				configuredSkillNames !== undefined
 					? configuredSkillNames
@@ -674,7 +688,7 @@ export class SubagentRunner {
 								return skill
 							})
 							.filter((skill): skill is (typeof resolvedForPrompt)[number] => Boolean(skill))
-					: resolvedForPrompt
+					: subagentRunnerRuntime.filterSubagentPromptSkills(availableSkills)
 
 			const context: SystemPromptContext = {
 				providerInfo,
@@ -702,7 +716,7 @@ export class SubagentRunner {
 				modEnabled: this.baseConfig.services.stateManager.getGlobalSettingsKey("modEnabled") ?? false,
 			}
 
-			const promptRegistry = PromptRegistry.getInstance()
+			const promptRegistry = subagentRunnerRuntime.getPromptRegistry()
 			const generatedSystemPrompt = await promptRegistry.get(context)
 
 			// Fluid Orchestration: Inject parent stream context for subagent awareness
@@ -1230,7 +1244,6 @@ export class SubagentRunner {
 
 	private createSubagentTaskConfig(subagentTaskState = new TaskState()): TaskConfig {
 		const baseCallbacks = this.baseConfig.callbacks
-		const { ToolExecutorCoordinator } = require("../ToolExecutorCoordinator")
 		const coordinator = new ToolExecutorCoordinator()
 		const validator = new ToolValidator(
 			this.baseConfig.services.dietcodeIgnoreController,

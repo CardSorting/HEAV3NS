@@ -87,6 +87,10 @@ const copyWasmFiles = {
 			// tree sitter
 			const sourceDir = path.join(__dirname, "node_modules", "web-tree-sitter")
 			const targetDir = path.join(__dirname, destDir)
+			const providerBridgeSource = path.join(__dirname, "src", "integrations", "claude-subscription-directsdk", "bridge.py")
+			const providerBridgeTargetDir = path.join(targetDir, "integrations", "claude-subscription-directsdk")
+			fs.mkdirSync(providerBridgeTargetDir, { recursive: true })
+			fs.copyFileSync(providerBridgeSource, path.join(providerBridgeTargetDir, "bridge.py"))
 
 			// Copy tree-sitter.wasm
 			fs.copyFileSync(path.join(sourceDir, "tree-sitter.wasm"), path.join(targetDir, "tree-sitter.wasm"))
@@ -179,6 +183,9 @@ const baseConfig = {
 	target: "node20",
 	treeShaking: true,
 	define: buildEnvVars,
+	banner: {
+		js: "const _importMetaUrl = import.meta.url;",
+	},
 	tsconfig: path.resolve(__dirname, "tsconfig.json"),
 	plugins: [
 		copyWasmFiles,
@@ -189,6 +196,7 @@ const baseConfig = {
 	format: "esm",
 	sourcesContent: false,
 	platform: "node",
+	external: ["typescript"],
 }
 
 const cliConfig = {

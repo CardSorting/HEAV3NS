@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
 import { HistoryItem } from "@shared/HistoryItem"
-import * as fsUtils from "@utils/fs"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
@@ -13,9 +12,10 @@ import {
 	getTaskHistoryStateFilePath,
 	getWorkspaceHooksDirs,
 	readTaskHistoryFromState,
+	diskRuntime,
 	writeTaskHistoryToState,
 } from "../disk"
-import { StateManager } from "../StateManager"
+import { stateManagerRuntime } from "../StateManager"
 
 describe("disk - hooks functionality", () => {
 	let sandbox: sinon.SinonSandbox
@@ -38,7 +38,7 @@ describe("disk - hooks functionality", () => {
 
 	describe("getWorkspaceHooksDirs", () => {
 		it("should return empty array when no workspace roots exist", async () => {
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => undefined,
 			} as any)
 
@@ -48,7 +48,7 @@ describe("disk - hooks functionality", () => {
 		})
 
 		it("should return empty array when workspace roots is empty array", async () => {
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [],
 			} as any)
 
@@ -62,7 +62,7 @@ describe("disk - hooks functionality", () => {
 			const workspaceRoot = path.join(tempDir, "workspace1")
 			await fs.mkdir(workspaceRoot, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot }],
 			} as any)
 
@@ -77,7 +77,7 @@ describe("disk - hooks functionality", () => {
 			const hooksDir = path.join(workspaceRoot, ".dietcoderules", "hooks")
 			await fs.mkdir(hooksDir, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot }],
 			} as any)
 
@@ -94,7 +94,7 @@ describe("disk - hooks functionality", () => {
 			await fs.mkdir(path.dirname(hooksPath), { recursive: true })
 			await fs.writeFile(hooksPath, "not a directory")
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot }],
 			} as any)
 
@@ -113,7 +113,7 @@ describe("disk - hooks functionality", () => {
 			await fs.mkdir(hooksDir1, { recursive: true })
 			await fs.mkdir(hooksDir2, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot1 }, { path: workspaceRoot2 }],
 			} as any)
 
@@ -136,7 +136,7 @@ describe("disk - hooks functionality", () => {
 			await fs.mkdir(workspaceRoot2, { recursive: true }) // No hooks dir
 			await fs.mkdir(hooksDir3, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot1 }, { path: workspaceRoot2 }, { path: workspaceRoot3 }],
 			} as any)
 
@@ -152,12 +152,12 @@ describe("disk - hooks functionality", () => {
 			const workspaceRoot = path.join(tempDir, "workspace1")
 			await fs.mkdir(workspaceRoot, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot }],
 			} as any)
 
 			// Stub isDirectory to throw an error
-			sandbox.stub(fsUtils, "isDirectory").rejects(new Error("Permission denied"))
+			sandbox.stub(diskRuntime, "isDirectory").rejects(new Error("Permission denied"))
 
 			// Should propagate the error
 			try {
@@ -173,7 +173,7 @@ describe("disk - hooks functionality", () => {
 			const expectedHooksDir = path.join(workspaceRoot, ".dietcoderules", "hooks")
 			await fs.mkdir(expectedHooksDir, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRoot }],
 			} as any)
 
@@ -189,7 +189,7 @@ describe("disk - hooks functionality", () => {
 			const hooksDir = path.join(workspaceRoot, ".dietcoderules", "hooks")
 			await fs.mkdir(hooksDir, { recursive: true })
 
-			sandbox.stub(StateManager, "get").returns({
+			sandbox.stub(stateManagerRuntime, "get").returns({
 				getGlobalStateKey: () => [{ path: workspaceRootWithSlash }],
 			} as any)
 

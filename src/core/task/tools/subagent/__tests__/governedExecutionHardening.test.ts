@@ -493,7 +493,10 @@ describe("governed execution hardening", () => {
 	})
 
 	describe("worker_cli", () => {
-		const workerCliPath = path.join(process.cwd(), "broccolidb", "worker_cli.cjs")
+		const workerCliPath = path.join(
+			process.cwd(),
+			"src/core/task/tools/subagent/__tests__/fixtures/governed-worker-cli.cjs",
+		)
 
 		it("executes governed lane and writes receipt", async () => {
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "worker-"))
@@ -568,7 +571,7 @@ describe("governed execution hardening", () => {
 		it("seals receipt with retry history preserved", async () => {
 			tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "governed-"))
 			const disk = await import("@core/storage/disk")
-			sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+			sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 			const coordinator = new GovernedSwarmCoordinator(
 				"/tmp",

@@ -2,7 +2,7 @@ import { InMemoryLogRecordExporter, LoggerProvider, SimpleLogRecordProcessor } f
 import { expect } from "chai"
 import * as sinon from "sinon"
 import type { DietCodeAccountUserInfo } from "@/services/auth/types"
-import * as distinctIdModule from "@/services/logging/distinctId"
+import { distinctIdRuntime } from "@/services/logging/distinctId"
 import { OpenTelemetryTelemetryProvider } from "../OpenTelemetryTelemetryProvider"
 
 function makeUserInfo(
@@ -46,8 +46,8 @@ describe("OpenTelemetryTelemetryProvider.identifyUser", () => {
 			bypassUserSettings: true,
 		})
 
-		getDistinctIdStub = sinon.stub(distinctIdModule, "getDistinctId")
-		setDistinctIdStub = sinon.stub(distinctIdModule, "setDistinctId")
+		getDistinctIdStub = sinon.stub(distinctIdRuntime, "getDistinctId")
+		setDistinctIdStub = sinon.stub(distinctIdRuntime, "setDistinctId")
 	})
 
 	afterEach(() => {

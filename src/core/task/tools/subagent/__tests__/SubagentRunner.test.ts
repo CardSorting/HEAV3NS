@@ -4,9 +4,6 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { setTimeout as delay } from "node:timers/promises"
-import * as coreApi from "@core/api"
-import * as skillRuntime from "@core/context/instructions/user-instructions/skillRuntime"
-import * as skills from "@core/context/instructions/user-instructions/skills"
 import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
 import type { DietCodeStorageMessage } from "@shared/messages"
@@ -20,8 +17,8 @@ import { Logger } from "@/shared/services/Logger"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
 import { declareApprovalIntent } from "../../types/ToolContracts"
-import { SubagentBuilder } from "../SubagentBuilder"
-import { SubagentRunner } from "../SubagentRunner"
+import { SubagentBuilder, subagentBuilderRuntime } from "../SubagentBuilder"
+import { SubagentRunner, subagentRunnerRuntime } from "../SubagentRunner"
 import { SubagentTranscriptRecorder } from "../SubagentTranscriptRecorder"
 
 const VALID_SUBAGENT_COMPLETION_RESULT =
@@ -193,7 +190,7 @@ function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
 }
 
 function stubApiHandler(createMessage: sinon.SinonStub) {
-	sinon.stub(coreApi, "buildApiHandler").returns({
+	sinon.stub(subagentBuilderRuntime, "buildApiHandler").returns({
 		abort: sinon.stub(),
 		getModel: () => ({
 			id: "anthropic/claude-sonnet-4.5",
@@ -212,9 +209,9 @@ describe("SubagentRunner", () => {
 	beforeEach(() => {
 		mockedSkills = []
 		setRoadmapConfigOverride({ enabled: false })
-		sinon.stub(skillRuntime, "getResolvedSkillsForCwd").callsFake(async () => mockedSkills)
-		sinon.stub(skillRuntime, "filterEnabledSkills").callsFake((discovered) => discovered)
-		sinon.stub(skillRuntime, "filterSubagentPromptSkills").callsFake((available) => available)
+		sinon.stub(subagentRunnerRuntime, "getResolvedSkillsForCwd").callsFake(async () => mockedSkills)
+		sinon.stub(subagentRunnerRuntime, "filterEnabledSkills").callsFake((discovered) => discovered)
+		sinon.stub(subagentRunnerRuntime, "filterSubagentPromptSkills").callsFake((available) => available)
 	})
 
 	afterEach(() => {
@@ -274,8 +271,6 @@ describe("SubagentRunner", () => {
 			return "system prompt"
 		})
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -549,8 +544,6 @@ describe("SubagentRunner", () => {
 			return "system prompt"
 		})
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "attempt_completion" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -607,8 +600,6 @@ describe("SubagentRunner", () => {
 			return "system prompt"
 		})
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -883,8 +874,6 @@ describe("SubagentRunner", () => {
 			promptRegistry.nativeTools = undefined
 			return "system prompt"
 		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -935,8 +924,6 @@ describe("SubagentRunner", () => {
 			promptRegistry.nativeTools = undefined
 			return "system prompt"
 		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -976,8 +963,6 @@ describe("SubagentRunner", () => {
 			promptRegistry.nativeTools = undefined
 			return "system prompt"
 		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -1004,8 +989,6 @@ describe("SubagentRunner", () => {
 			promptRegistry.nativeTools = undefined
 			return "system prompt"
 		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -1084,8 +1067,6 @@ describe("SubagentRunner", () => {
 			return "system prompt"
 		})
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 
@@ -1279,8 +1260,6 @@ describe("SubagentRunner", () => {
 			return "system prompt"
 		})
 		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
 		stubApiHandler(createMessage)
 		initializeHostProvider()
 

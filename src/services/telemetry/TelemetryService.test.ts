@@ -9,12 +9,9 @@
 
 import * as assert from "assert"
 import * as sinon from "sinon"
-import { DietCodeEndpoint } from "@/config"
 import { HostProvider } from "@/hosts/host-provider"
-import * as otelConfigModule from "@/shared/services/config/otel-config"
-import * as posthogConfigModule from "@/shared/services/config/posthog-config"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
-import { NoOpTelemetryProvider, TelemetryProviderFactory } from "./TelemetryProviderFactory"
+import { NoOpTelemetryProvider, telemetryFactoryRuntime, TelemetryProviderFactory } from "./TelemetryProviderFactory"
 import { TelemetryMetadata, TelemetryService } from "./TelemetryService"
 
 describe("Telemetry system is abstracted and can easily switch between providers", () => {
@@ -276,8 +273,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 	describe("Factory Configuration", () => {
 		it("should return default configurations", () => {
 			// Mock PostHog config validation to return true for this test
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(true)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(false)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(true)
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(false)
 
 			const defaultConfigs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -295,9 +292,9 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 		it("should NOT include PostHog config when in selfHosted mode", () => {
 			// Stub DietCodeEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(true)
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(true)
 			// Even if PostHog config is valid, it should be skipped
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(true)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(true)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -312,8 +309,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 		it("should include PostHog config when NOT in selfHosted mode and config is valid", () => {
 			// Stub DietCodeEndpoint.isSelfHosted() to return false (normal mode)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(false)
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(true)
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(false)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(true)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -328,16 +325,16 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 		it("should NOT include build-time OTEL config when in selfHosted mode", () => {
 			// Stub DietCodeEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(true)
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(true)
 			// Even if build-time OTEL config is valid, it should be skipped
-			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
+			const getValidOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
 				metricsExporter: "otlp",
 			})
 			// Disable runtime OTEL to isolate test
-			const getRuntimeOtelConfigStub = sinon.stub(otelConfigModule, "getValidRuntimeOpenTelemetryConfig").returns(null)
+			const getRuntimeOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidRuntimeOpenTelemetryConfig").returns(null)
 			// Disable PostHog to isolate test
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(false)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -354,15 +351,15 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 		it("should include build-time OTEL config when NOT in selfHosted mode", () => {
 			// Stub DietCodeEndpoint.isSelfHosted() to return false (normal mode)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(false)
-			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(false)
+			const getValidOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
 				metricsExporter: "otlp",
 			})
 			// Disable runtime OTEL to isolate test
-			const getRuntimeOtelConfigStub = sinon.stub(otelConfigModule, "getValidRuntimeOpenTelemetryConfig").returns(null)
+			const getRuntimeOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidRuntimeOpenTelemetryConfig").returns(null)
 			// Disable PostHog to isolate test
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(false)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -379,17 +376,17 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 		it("should STILL include runtime env OTEL config even in selfHosted mode", () => {
 			// Stub DietCodeEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DietCodeEndpoint, "isSelfHosted").returns(true)
+			const isSelfHostedStub = sinon.stub(telemetryFactoryRuntime, "isSelfHosted").returns(true)
 			// Disable build-time OTEL
-			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns(null)
+			const getValidOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidOpenTelemetryConfig").returns(null)
 			// Enable runtime OTEL (user explicitly configured it)
-			const getRuntimeOtelConfigStub = sinon.stub(otelConfigModule, "getValidRuntimeOpenTelemetryConfig").returns({
+			const getRuntimeOtelConfigStub = sinon.stub(telemetryFactoryRuntime, "getValidRuntimeOpenTelemetryConfig").returns({
 				enabled: true,
 				metricsExporter: "otlp",
 				otlpEndpoint: "http://user-collector:4317",
 			})
 			// Disable PostHog to isolate test
-			const isPostHogConfigValidStub = sinon.stub(posthogConfigModule, "isPostHogConfigValid").returns(false)
+			const isPostHogConfigValidStub = sinon.stub(telemetryFactoryRuntime, "isPostHogConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 

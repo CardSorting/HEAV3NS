@@ -16,6 +16,20 @@ import { AgentConfigLoader } from "./AgentConfigLoader"
 
 export type AgentConfig = Partial<AgentBaseConfig>
 
+/**
+ * Explicit dependency seam for subagent construction. ESM namespace exports
+ * are immutable by design, so tests and embedders replace these ordinary
+ * object properties instead of mutating imported module bindings.
+ */
+export const subagentBuilderRuntime = {
+	getAgentConfigLoader: (): AgentConfigLoader => AgentConfigLoader.getInstance(),
+	buildApiHandler,
+	getModelFamily: (context: SystemPromptContext) => PromptRegistry.getInstance().getModelFamily(context),
+	getToolsForVariantWithFallback: (family: ReturnType<PromptRegistry["getModelFamily"]>, tools: string[]) =>
+		DietCodeToolSet.getToolsForVariantWithFallback(family, tools),
+	getNativeConverter: (providerId: string, modelId?: string) => DietCodeToolSet.getNativeConverter(providerId, modelId),
+}
+
 export const SUBAGENT_DEFAULT_ALLOWED_TOOLS: DietCodeDefaultTool[] = [
 	DietCodeDefaultTool.FILE_READ,
 	DietCodeDefaultTool.FILE_EDIT,
@@ -81,6 +95,17 @@ const FORENSIC_AXIOMS = `
 10. ZERO HALLUCINATION: Citations must be grounded in actual file reads and tool diagnostics.
 11. ANTI-STALL: Avoid massive git-log reads; use structural tools and focused evidence.
 12. STRUCTURAL SYNC: Verify only the wiki links and indexes touched by the lane.
+`
+
+export const SUBAGENT_EXECUTION_CONTRACT = `
+### WORKER EXECUTION CONTRACT
+Use this short, visible loop for every assignment:
+1. DISCOVER — inspect the smallest relevant set of files, configuration, and existing tests; state the working hypothesis.
+2. PLAN — turn the request into a small ordered checklist and confirm the declared read/write scope.
+3. EXECUTE — make the smallest reversible change within that scope; do not broaden the task silently.
+4. VERIFY — run the narrowest meaningful CLI checks and inspect their result before claiming completion.
+5. HANDOFF — finish with Outcome, Evidence, Verification, Changed files, Assumptions, and Blockers or Next action.
+Prefer repository-native commands and terminal evidence. Do not assume an editor UI or an interactive IDE is available. Keep progress updates short, decision-oriented, and useful to the parent orchestrator.
 `
 
 interface SubagentLaneContext {
@@ -156,7 +181,7 @@ export class SubagentBuilder {
 		private readonly baseConfig: TaskConfig,
 		subagentName?: string,
 	) {
-		const subagentConfig = AgentConfigLoader.getInstance().getCachedConfig(subagentName)
+		const subagentConfig = subagentBuilderRuntime.getAgentConfigLoader().getCachedConfig(subagentName)
 		this.agentConfig = subagentConfig ?? {}
 		this.allowedTools = this.resolveAllowedTools(this.agentConfig.tools)
 
@@ -168,7 +193,7 @@ export class SubagentBuilder {
 		}
 
 		this.applyModelOverride(effectiveApiConfiguration as Record<string, unknown>, mode, this.agentConfig.modelId)
-		this.apiHandler = buildApiHandler(effectiveApiConfiguration as typeof apiConfiguration, mode)
+		this.apiHandler = subagentBuilderRuntime.buildApiHandler(effectiveApiConfiguration as typeof apiConfiguration, mode)
 	}
 
 	setAllowedTools(tools: DietCodeDefaultTool[]): void {
@@ -254,12 +279,12 @@ export class SubagentBuilder {
 				: steeringMode === "blended"
 					? SUBAGENT_BLENDED_SYSTEM_SUFFIX
 					: SUBAGENT_NEUTRAL_SYSTEM_SUFFIX
-		return `${this.buildAgentIdentitySystemPrefix()}${systemPrompt}${depthBlock}${laneBlock}${architectureSignal}${parentContextBlock}${siblingLanesBlock}${blackboardBlock}${suffix}`
+		return `${this.buildAgentIdentitySystemPrefix()}${systemPrompt}${depthBlock}${laneBlock}${architectureSignal}${parentContextBlock}${siblingLanesBlock}${blackboardBlock}${SUBAGENT_EXECUTION_CONTRACT}${suffix}`
 	}
 
 	buildNativeTools(context: SystemPromptContext) {
-		const family = PromptRegistry.getInstance().getModelFamily(context)
-		const toolSets = DietCodeToolSet.getToolsForVariantWithFallback(family, this.allowedTools)
+		const family = subagentBuilderRuntime.getModelFamily(context)
+		const toolSets = subagentBuilderRuntime.getToolsForVariantWithFallback(family, this.allowedTools)
 		const filteredToolSpecs = toolSets
 			.map((toolSet) => toolSet.config)
 			.filter(
@@ -268,7 +293,10 @@ export class SubagentBuilder {
 					(!toolSpec.contextRequirements || toolSpec.contextRequirements(context)),
 			)
 
-		const converter = DietCodeToolSet.getNativeConverter(context.providerInfo.providerId, context.providerInfo.model.id)
+		const converter = subagentBuilderRuntime.getNativeConverter(
+			context.providerInfo.providerId,
+			context.providerInfo.model.id,
+		)
 		return filteredToolSpecs.map((tool) => converter(tool, context))
 	}
 

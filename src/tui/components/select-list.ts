@@ -58,7 +58,11 @@ export class SelectList implements Component {
 	}
 
 	setFilter(filter: string): void {
-		this.filteredItems = this.items.filter((item) => item.value.toLowerCase().startsWith(filter.toLowerCase()));
+		const normalizedFilter = filter.toLowerCase().trim()
+		this.filteredItems = this.items.filter((item) => {
+			if (!normalizedFilter) return true
+			return `${item.label} ${item.value} ${item.description ?? ""}`.toLowerCase().includes(normalizedFilter)
+		});
 		// Reset selection when filter changes
 		this.selectedIndex = 0;
 	}

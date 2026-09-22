@@ -3,7 +3,10 @@ import type { SkillMetadata } from "@shared/skills"
 import { BUNDLED_SKILL_URI_PREFIX } from "@shared/skills"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { fileURLToPath } from "node:url"
 import { getRoadmapConfig } from "./RoadmapConfig"
+
+const moduleDirectory = path.dirname(fileURLToPath(import.meta.url))
 
 export const BUNDLED_SKILL_NAME = "auto-rolling-roadmap"
 export const BUNDLED_SKILL_DESCRIPTION =
@@ -32,11 +35,11 @@ function bundledSkillCandidates(skillName = BUNDLED_SKILL_NAME): string[] {
 	const roots = [
 		process.cwd(),
 		path.resolve(process.cwd(), ".."),
-		path.resolve(__dirname, "."),
-		path.resolve(__dirname, ".."),
-		path.resolve(__dirname, "..", ".."),
-		path.resolve(__dirname, "..", "..", ".."),
-		path.resolve(__dirname, "..", "..", "..", ".."),
+		path.resolve(moduleDirectory, "."),
+		path.resolve(moduleDirectory, ".."),
+		path.resolve(moduleDirectory, "..", ".."),
+		path.resolve(moduleDirectory, "..", "..", ".."),
+		path.resolve(moduleDirectory, "..", "..", "..", ".."),
 	]
 	for (const root of roots) {
 		candidates.push(path.join(root, "optional-skills", "dietcode", skillName, "SKILL.md"))
@@ -114,4 +117,9 @@ export async function getBundledRoadmapSkillMetadata(): Promise<SkillMetadata | 
 
 export async function ensurePrimarySkill(_workspace: string): Promise<{ available: boolean }> {
 	return { available: await isBundledSkillAvailable() }
+}
+
+/** Runtime seam for bundled-skill discovery in CLI tests and alternate hosts. */
+export const roadmapSkillRuntime = {
+	getBundledRoadmapSkillMetadata,
 }

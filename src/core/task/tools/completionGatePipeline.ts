@@ -40,6 +40,11 @@ import {
 import { isNonMutatingMode } from "./subagent/LockNecessity"
 import type { TaskConfig } from "./types/TaskConfig"
 
+/** Runtime seam for CLI audit orchestration and deterministic failure tests. */
+export const completionGateRuntime = {
+	runCompletionAudit,
+}
+
 export type CompletionAuditGateResult =
 	| {
 			status: "advisory_passed"
@@ -299,7 +304,7 @@ async function resolveCompletionAuditMetadata(
 		return advisory
 	}
 
-	let auditMetadata = await runCompletionAudit(
+	let auditMetadata = await completionGateRuntime.runCompletionAudit(
 		config.taskId,
 		params.taskDescription,
 		params.result,
@@ -514,7 +519,7 @@ export async function evaluateSubagentAdvisoryAudit(
 	try {
 		const messages = config.messageState?.getDietCodeMessages?.() ?? []
 		const planBaseline = resolvePlanBaselineMetadata(messages, config.taskState.lastPlanAuditMetadata)
-		let auditMetadata = await runCompletionAudit(
+		let auditMetadata = await completionGateRuntime.runCompletionAudit(
 			config.taskId,
 			params.taskDescription,
 			params.result,

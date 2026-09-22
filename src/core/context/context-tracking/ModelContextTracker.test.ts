@@ -1,4 +1,4 @@
-import * as diskModule from "@core/storage/disk"
+import { diskRuntime } from "@core/storage/disk"
 import { expect } from "chai"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import * as sinon from "sinon"
@@ -18,8 +18,8 @@ describe("ModelContextTracker", () => {
 
 		// Mock disk module functions
 		mockTaskMetadata = { files_in_context: [], model_usage: [], environment_history: [] }
-		getTaskMetadataStub = sandbox.stub(diskModule, "getTaskMetadata").resolves(mockTaskMetadata)
-		saveTaskMetadataStub = sandbox.stub(diskModule, "saveTaskMetadata").resolves()
+		getTaskMetadataStub = sandbox.stub(diskRuntime, "getTaskMetadata").resolves(mockTaskMetadata)
+		saveTaskMetadataStub = sandbox.stub(diskRuntime, "saveTaskMetadata").resolves()
 
 		// Create tracker instance
 		tracker = new ModelContextTracker(taskId)

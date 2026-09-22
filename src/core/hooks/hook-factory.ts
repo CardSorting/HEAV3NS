@@ -16,8 +16,8 @@ import {
 	TaskStartData,
 	UserPromptSubmitData,
 } from "../../shared/proto/dietcode/hooks"
-import { getAllHooksDirs } from "../storage/disk"
-import { StateManager } from "../storage/StateManager"
+import { hookStorageRuntime } from "../storage/disk"
+import { stateManagerRuntime } from "../storage/StateManager"
 import { HookExecutionError } from "./HookError"
 import { HookProcess } from "./HookProcess"
 
@@ -186,7 +186,8 @@ export abstract class HookRunner<Name extends HookName> {
 	 */
 	protected async completeParams(params: NamedHookInput<Name>): Promise<HookInput> {
 		const workspaceRoots =
-			StateManager.get()
+			stateManagerRuntime
+				.get()
 				.getGlobalStateKey("workspaceRoots")
 				?.map((root) => root.path) || []
 		return {
@@ -763,7 +764,7 @@ export class HookFactory {
 		const scripts = await HookDiscoveryCache.getInstance().get(hookName)
 
 		// Fetch hooks dirs once for source determination and telemetry
-		const hooksDirs = await getAllHooksDirs()
+		const hooksDirs = await hookStorageRuntime.getAllHooksDirs()
 
 		// Capture hook discovery telemetry
 		// Categorize scripts by location (global vs workspace)
@@ -776,7 +777,7 @@ export class HookFactory {
 		}
 
 		// Get workspace roots for cwd determination
-		const stateManager = StateManager.get()
+		const stateManager = stateManagerRuntime.get()
 		const workspaceRoots = stateManager.getGlobalStateKey("workspaceRoots")
 		const primaryRootIndex = stateManager.getGlobalStateKey("primaryRootIndex") ?? 0
 		const primaryCwd = workspaceRoots?.[primaryRootIndex]?.path
@@ -893,7 +894,7 @@ export class HookFactory {
 	 */
 	private static async findHookScripts(hookName: HookName): Promise<string[]> {
 		const hookScripts = []
-		for (const hooksDir of await getAllHooksDirs()) {
+		for (const hooksDir of await hookStorageRuntime.getAllHooksDirs()) {
 			hookScripts.push(HookFactory.findHookInHooksDir(hookName, hooksDir))
 		}
 		const isDefined = (scriptPath: string | undefined): scriptPath is string => Boolean(scriptPath)

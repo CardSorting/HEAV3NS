@@ -148,7 +148,7 @@ describe("subagent execution envelope", () => {
 	it("persists and reconstructs replay artifacts", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "subagent-exec-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 
 		const swarm = createSwarmEnvelope([createAgentEnvelope()])
 		const artifactPath = await persistSwarmEnvelope("task-1", swarm)
@@ -169,7 +169,7 @@ describe("subagent execution envelope", () => {
 	it("atomically preserves invocation order and caller-declared terminal violations", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "subagent-exec-order-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		const swarm = createSwarmEnvelope([createAgentEnvelope()])
 
 		await Promise.all(
@@ -195,7 +195,7 @@ describe("subagent execution envelope", () => {
 	it("rejects a staged terminal artifact before its governed receipt is sealed", async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "subagent-exec-staging-"))
 		const disk = await import("@core/storage/disk")
-		sinon.stub(disk, "ensureTaskDirectoryExists").resolves(tempDir)
+		sinon.stub(disk.diskRuntime, "ensureTaskDirectoryExists").resolves(tempDir)
 		const swarm = createSwarmEnvelope([createAgentEnvelope()])
 		swarm.invariants.violations.push(SWARM_TERMINAL_STAGING_VIOLATION)
 		await persistSwarmEnvelope("task-1", swarm)

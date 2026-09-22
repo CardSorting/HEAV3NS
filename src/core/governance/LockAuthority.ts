@@ -11,7 +11,13 @@ import { Logger } from "@shared/services/Logger"
 import { type DurableSwarmLease, SwarmMutexService } from "@/core/swarm/SwarmMutexService"
 import { getCoordinationDb } from "@/infrastructure/db/Config"
 import { RoadmapService } from "@/services/roadmap/RoadmapService"
-import { acquireBroccoliFence, readBroccoliFence, releaseBroccoliFence, verifyBroccoliFence } from "./BroccoliFencingAdapter"
+import {
+	acquireBroccoliFence,
+	broccoliFenceRuntime,
+	readBroccoliFence,
+	releaseBroccoliFence,
+	verifyBroccoliFence,
+} from "./BroccoliFencingAdapter"
 
 export type { CoordinationAuthorityMode, LockBackends, LockClaim } from "@shared/governance/lockTypes"
 
@@ -398,7 +404,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 
 			if (projectionErrors.length === 0) {
 				try {
-					const broccoli = await acquireBroccoliFence(
+					const broccoli = await broccoliFenceRuntime.acquireBroccoliFence(
 						workspace,
 						resourceKey,
 						ownerId,
@@ -942,7 +948,7 @@ export class UnifiedLockAuthority implements LockAuthority {
 						continue
 					}
 				}
-				const written = await acquireBroccoliFence(
+				const written = await broccoliFenceRuntime.acquireBroccoliFence(
 					workspace,
 					resourceKey,
 					authoritative.ownerId,

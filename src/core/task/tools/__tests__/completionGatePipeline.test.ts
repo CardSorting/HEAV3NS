@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
-import * as completionAudit from "@shared/audit/completionAudit"
 import { COMPLETION_RESULT_MAX_LENGTH, MAX_COMPLETION_GATE_BLOCK_COUNT } from "@shared/audit/gatePolicy"
 import type { TaskAuditMetadata } from "@shared/ExtensionMessage"
 import * as fs from "fs/promises"
@@ -16,6 +15,7 @@ import {
 	validateCompletionResultQuality,
 } from "../attemptCompletionUtils"
 import {
+	completionGateRuntime,
 	evaluateCompletionAuditGate,
 	evaluateGatePreflightReadiness,
 	evaluateGatePreflightReadinessAsync,
@@ -160,7 +160,7 @@ describe("completionGatePipeline", () => {
 			blockCount: 0,
 		} as TaskAuditMetadata
 		await recordAdvisoryAuditCache(config, VALID_RESULT, "task preview", advisory)
-		const completionStub = sinon.stub(completionAudit, "runCompletionAudit").rejects(new Error("should not run"))
+		const completionStub = sinon.stub(completionGateRuntime, "runCompletionAudit").rejects(new Error("should not run"))
 
 		const result = await evaluateCompletionAuditGate(config, {
 			result: VALID_RESULT,

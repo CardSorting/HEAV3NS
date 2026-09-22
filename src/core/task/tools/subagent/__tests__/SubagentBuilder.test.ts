@@ -1,17 +1,14 @@
 import { strict as assert } from "node:assert"
-import * as api from "@core/api"
-import { PromptRegistry } from "@core/prompts/system-prompt"
-import { DietCodeToolSet } from "@core/prompts/system-prompt/registry/DietCodeToolSet"
 import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
 import { afterEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { DietCodeDefaultTool } from "@/shared/tools"
-import { AgentConfigLoader } from "../AgentConfigLoader"
 import {
 	constrainSubagentToolsForLane,
 	SUBAGENT_DEFAULT_ALLOWED_TOOLS,
 	SUBAGENT_SYSTEM_SUFFIX,
 	SubagentBuilder,
+	subagentBuilderRuntime,
 } from "../SubagentBuilder"
 
 function createTaskConfig(
@@ -27,11 +24,11 @@ function createTaskConfig(
 		},
 		services: {
 			stateManager: {
-			getGlobalSettingsKey: (key: string) => {
-				if (key === "mode") return mode
-				if (key === "joyZoningSteeringEnabled") return joyZoningSteeringEnabled
-				return undefined
-			},
+				getGlobalSettingsKey: (key: string) => {
+					if (key === "mode") return mode
+					if (key === "joyZoningSteeringEnabled") return joyZoningSteeringEnabled
+					return undefined
+				},
 				getApiConfiguration: () => ({
 					actModeApiProvider: provider,
 					planModeApiProvider: provider,
@@ -67,7 +64,7 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("uses cached config by subagent name and applies act-mode provider model override", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: (subagentName?: string) =>
 				subagentName === "cached-agent"
 					? {
@@ -78,10 +75,10 @@ describe("SubagentBuilder", () => {
 							systemPrompt: "cached system prompt",
 						}
 					: undefined,
-		} as unknown as AgentConfigLoader)
+		} as never)
 
 		const fakeHandler = { getModel: sinon.stub(), createMessage: sinon.stub() }
-		const buildApiHandlerStub = sinon.stub(api, "buildApiHandler").returns(fakeHandler as never)
+		const buildApiHandlerStub = sinon.stub(subagentBuilderRuntime, "buildApiHandler").returns(fakeHandler as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "openai"), "cached-agent")
 
@@ -102,11 +99,13 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("uses defaults when no cached config is provided", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: () => undefined,
-		} as unknown as AgentConfigLoader)
+		} as never)
 
-		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+		sinon
+			.stub(subagentBuilderRuntime, "buildApiHandler")
+			.returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic"))
 
 		assert.deepEqual(builder.getAllowedTools(), SUBAGENT_DEFAULT_ALLOWED_TOOLS)
@@ -114,6 +113,9 @@ describe("SubagentBuilder", () => {
 		assert.match(prompt, /^generated prompt/)
 		assert.match(prompt, /SWARM NESTING CONTEXT/)
 		assert.match(prompt, /SUBSTRATE HEALTH SIGNAL/)
+		assert.match(prompt, /# WORKER EXECUTION CONTRACT/)
+		assert.match(prompt, /DISCOVER .* PLAN .* EXECUTE .* VERIFY .* HANDOFF/s)
+		assert.match(prompt, /Do not assume an editor UI or an interactive IDE is available/)
 		assert.match(prompt, /SIGNAL: REVIEW_REQUESTED/)
 		assert.doesNotMatch(prompt, /Use the 'use_subagents' tool/)
 		assert.match(
@@ -127,10 +129,12 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("keeps subagent guidance workspace-native when JoyZoning steering is off", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: () => undefined,
-		} as unknown as AgentConfigLoader)
-		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+		} as never)
+		sinon
+			.stub(subagentBuilderRuntime, "buildApiHandler")
+			.returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic", false))
 		const prompt = builder.buildSystemPrompt("generated prompt")
@@ -141,10 +145,12 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("blends JoyZoning signals into an established workspace without imposing canonical layers", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: () => undefined,
-		} as unknown as AgentConfigLoader)
-		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+		} as never)
+		sinon
+			.stub(subagentBuilderRuntime, "buildApiHandler")
+			.returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic", true, "workspace-native"))
 		const prompt = builder.buildSystemPrompt("generated prompt")
@@ -156,7 +162,7 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("applies plan-mode model override fields", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: (subagentName?: string) =>
 				subagentName === "codex-agent"
 					? {
@@ -167,9 +173,9 @@ describe("SubagentBuilder", () => {
 							systemPrompt: "plan system",
 						}
 					: undefined,
-		} as unknown as AgentConfigLoader)
+		} as never)
 
-		const buildApiHandlerStub = sinon.stub(api, "buildApiHandler").returns({
+		const buildApiHandlerStub = sinon.stub(subagentBuilderRuntime, "buildApiHandler").returns({
 			getModel: sinon.stub(),
 			createMessage: sinon.stub(),
 		} as never)
@@ -183,7 +189,7 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("builds native tools by filtering allowed ids and context requirements then converting", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: (subagentName?: string) =>
 				subagentName === "tools-agent"
 					? {
@@ -194,11 +200,13 @@ describe("SubagentBuilder", () => {
 							systemPrompt: "tool prompt",
 						}
 					: undefined,
-		} as unknown as AgentConfigLoader)
-		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+		} as never)
+		sinon
+			.stub(subagentBuilderRuntime, "buildApiHandler")
+			.returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 
-		const getModelFamilyStub = sinon.stub(PromptRegistry.getInstance(), "getModelFamily").returns("test-family" as never)
-		const getToolsStub = sinon.stub(DietCodeToolSet, "getToolsForVariantWithFallback").returns([
+		const getModelFamilyStub = sinon.stub(subagentBuilderRuntime, "getModelFamily").returns("test-family" as never)
+		const getToolsStub = sinon.stub(subagentBuilderRuntime, "getToolsForVariantWithFallback").returns([
 			{
 				config: {
 					id: DietCodeDefaultTool.LIST_FILES,
@@ -219,7 +227,7 @@ describe("SubagentBuilder", () => {
 			},
 		] as never)
 		const converter = sinon.stub().callsFake((tool: { id: string }) => ({ converted: tool.id }))
-		const getConverterStub = sinon.stub(DietCodeToolSet, "getNativeConverter").returns(converter as never)
+		const getConverterStub = sinon.stub(subagentBuilderRuntime, "getNativeConverter").returns(converter as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic"), "tools-agent")
 
@@ -238,10 +246,12 @@ describe("SubagentBuilder", () => {
 	})
 
 	it("injects sibling lanes context into system prompt when set", () => {
-		sinon.stub(AgentConfigLoader, "getInstance").returns({
+		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
 			getCachedConfig: () => undefined,
-		} as unknown as AgentConfigLoader)
-		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
+		} as never)
+		sinon
+			.stub(subagentBuilderRuntime, "buildApiHandler")
+			.returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic"))
 		builder.setSiblingLanesContext("lane 1 finished writing tests")
