@@ -2,7 +2,7 @@
 import { realpathSync } from "node:fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { StateManager } from "./core/storage/StateManager.js"
-import { createStorageContext } from "./shared/storage/storage-context.js"
+import { createStorageContext, getStorageDataDirectory } from "./shared/storage/storage-context.js"
 import { AgentConfig } from "./agents/base/agent-config.js"
 import { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js"
 import { AcpSupervisor } from "./agents/extensions/acp/acp-supervisor.js"
@@ -5026,7 +5026,8 @@ export class LumiMonolith implements IAgentEngine {
 		if (snapshot.stagedFiles) {
 			this.sessionVfs.clear()
 			for (const file of snapshot.stagedFiles) {
-				this.sessionVfs.stageWrite(file.path, file.stagedContent)
+				if (file.isDeleted) this.sessionVfs.stageDelete(file.path, file.diskBaseline)
+				else this.sessionVfs.stageWrite(file.path, file.stagedContent, file.diskBaseline)
 			}
 		}
 	}
@@ -5278,7 +5279,9 @@ ${modelCommands}
 			stateManagerInitialized = true
 		} catch (error) {
 			const detail = error instanceof Error ? error.message : String(error)
-			throw new Error(`Could not open HEAV3NS local credential storage. ${detail}`)
+			throw new Error(
+				`Could not initialize HEAV3NS CLI storage at "${getStorageDataDirectory()}". Check that the directory is writable or set DIETCODE_DIR to a writable location. ${detail}`,
+			)
 		}
 		const lumi = new LumiMonolith(configuredProviderValue ? { provider: configuredProvider } : {})
 		if (configuredModelValue) {

@@ -1,107 +1,69 @@
-# ⌨️ Interactive TUI Keybindings, Modals & Slash Commands
+# HEAV3NS CLI: Interactive TUI Guide
 
-Comprehensive reference for keyboard navigation, specialized terminal UI modals, and slash commands in **LUMI-JOY**.
+This guide describes the interactive CLI in `src/agents/extensions/execution/interactive-mode-controller.ts` and its keyboard-first task and skill views.
 
----
+## Everyday controls
 
-## 1. 🎮 Universal Keyboard Shortcuts
+| Key | Action |
+|---|---|
+| `Enter` | Submit a prompt or run a slash command |
+| `Shift+Enter` / `Alt+Enter` | Insert a new line |
+| `↑` / `↓` | Browse prompt history or autocomplete options |
+| `Tab` | Complete a slash command or workspace path |
+| `?` or `/help` | Open the shortcut and command guide |
+| `Ctrl+S` or `/settings` | Open settings |
+| `Alt+M` or `/model` | Open the model picker |
+| `PageUp` / `PageDown` | Scroll conversation history |
+| `Home` / `End` | Jump to the start or end of history |
+| `Ctrl+L` or `/clear` | Clear displayed history |
+| `Esc` | Close the open view or cancel the active turn |
+| `Ctrl+C` | Clear a non-empty input, or quit when input is empty |
+| `Ctrl+D` | Exit the interactive session |
 
-The fullscreen differential terminal interface maintains synchronized `\x1b[?2026h` flicker-free updates and responsive navigation shortcuts:
+Type `/` to see command completions. Press `Esc` to dismiss the completion menu.
 
-| Keybinding | Action & Context | Operational Behavior |
-|---|---|---|
-| `Ctrl+C` / `Esc` | **Abort Current Turn** | Immediately cancels in-flight LLM requests, rolls back uncommitted VFS diffs, and restores loop phase to `idle`. |
-| `Ctrl+L` | **Repaint Canvas** | Flushes terminal buffer, queries terminal size via ANSI sequence, and redraws differential frame. |
-| `Ctrl+M` | **Model Selector Modal** | Opens the interactive model switcher modal to select and hot-swap between supported LLM providers and models. |
-| `Ctrl+P` | **Provider Setup Wizard** | Launches the guided provider credential setup walkthrough. |
-| `Ctrl+D` / `Tab` | **Toggle View / Autocomplete** | In input mode: auto-completes slash commands and file paths. In view mode: cycles between metrics and timeline. |
-| `PageUp` / `PageDown` | **Scroll Conversation Timeline** | Scrolls through the active conversation projection and tool execution activity history. |
-| `Up` / `Down` | **Input History Navigation** | Cycles through previous prompt history entries stored in the session ring buffer. |
-| `Home` / `End` | **Timeline Boundary Jumps** | Jumps directly to the start (top) or newest turn (bottom) of the conversation timeline. |
-| `?` | **Help & Shortcut Palette** | Displays the interactive help overlay modal with keybindings and command reference. |
+## Agent tasks
 
----
+Use `/agents` to open the task dashboard. `/subagents` and `/swarm` are aliases. In the non-TTY fallback, the same commands print task status and any recorded blocker.
 
-## 2. 🧭 Essential Slash Commands Reference
+| Key | Action |
+|---|---|
+| `1`–`6` | Switch between Tasks, DAG, Results, Worktrees, Health, and Metrics; navigation groups them as Tasks, Flow, Results, and Insights |
+| `/` | Search task IDs, goals, context, status, parent IDs, tags, results, and blockers; press `Enter` to apply or `Esc` to cancel |
+| `f` | Cycle the status filter |
+| `0` | Clear both search and the status filter |
+| `j` / `k` or arrows | Move through tasks; scroll the other views |
+| `PageUp` / `PageDown` | Scroll a page in DAG, Results, Worktrees, Health, or Metrics |
+| `Enter` | Inspect the selected task and result |
+| `a` | Mark a running task aborted; confirm with `y` or cancel with `n` / `Esc` |
+| `?` | Show dashboard key help |
+| `q` / `Esc` | Close the dashboard |
 
-LUMI-JOY features a built-in slash router (`AgentSlashRouter`) with auto-completion and instant sub-millisecond command execution:
+The CLI runs delegated work in isolated provider, session, and file-overlay contexts with a four-child concurrency limit. Children can inspect files and stage requested edits; successful changes become an uncommitted parent diff for review with `/diff [file]` and application with `/commit [file]`. Paths can be relative to the workspace; omit the path to review or apply all staged files. Child edits retain a disk baseline, so `/commit` blocks and preserves a stale edit if another process changed that file during review. Cancelling the parent turn also cancels its active child and discards that child’s branch. Children cannot run shell commands or delegate more work. Parallel edits to a file changed by another lane are rejected as conflicts. `/agents` shows status, results, modified files, and blockers. Git-worktree delegation is rejected clearly because this runtime does not provision worktrees.
 
-| Slash Command | Parameters | Description |
-|---|---|---|
-| `/setup` | `[provider]` | Launches the interactive setup wizard to configure Codex OAuth or a custom endpoint. |
-| `/providers` | — | Tests authentication and connectivity across the supported providers. |
-| `/model` | `[model_id]` | Displays active model specs or switches model dynamically without restarting the session. |
-| `/rewind` | `[frames]` | Performs an instant $O(1)$ state rollback to frame $N-k$, restoring conversation, memory, and VFS state. |
-| `/diff` | `[path]` | Synthesizes real-time unified diffs comparing disk files against staged VFS overlays without committing. |
-| `/commit` | `[path]` | Atomically commits staged VFS file mutations directly to physical disk storage. |
-| `/discard` | `[path]` | Discards staged VFS file modifications and restores working disk state. |
-| `/tools` | `[query]` | Lists all registered native developer tools, parameter schemas, and normalized aliases. |
-| `/compact` | `[--force]` | Manually triggers semantic trajectory compaction and AST `LUMI-CONTEXT/1` envelope serialization. |
-| `/db` | `[status\|query\|wal\|rollback]` | Opens BroccoliDB inspection dashboard, executes SQL-like AST queries, or rolls back table branches. |
-| `/profile` | `[list\|use\|init\|fav\|diff\|starters\|revisions\|rollback]` | Manages isolated multi-agent personas, blueprints, few-shot exemplars, resilient fallback ladders, and revision time-travel. |
-| `/swarm` | `[status\|tasks\|consensus]` | Inspects multi-agent swarm status, active DAG task dependencies, and Byzantine consensus voting logs. |
-| `/doctor` | `[--full]` | Runs the environment stability doctor, checks network, disk permissions, and audits orphaned turn state. |
-| `/benchmark` | `[--live]` | Runs the real-time deterministic benchmark harness and measures local frame latency and throughput. |
-| `/help` | `[topic]` | Displays comprehensive usage instructions, documentation links, and active configuration parameters. |
-| `/exit` | — | Gracefully persists session snapshot to disk and terminates the agent process. |
+## Skills
 
----
+Use `/skills` to browse skill names, descriptions, and sources. Run `/skills <term>` to search names and descriptions, or `/skills refresh [term]` to rescan and optionally search in one step. Discovery checks project folders `.dietcoderules/skills`, `.dietcode/skills`, `.claude/skills`, and `.agents/skills`, plus `skills/` under the configured DietCode home (default `~/.dietcode`) and `~/.agents/skills`.
 
-## 3. 🛡️ Interactive Operational Strategies & Flow Topology
+The model receives a compact metadata catalog and loads a matching skill's instructions on demand through `use_skill`. You can describe the task normally or name a skill explicitly; unrelated skills are not loaded. Skill instructions guide the task while system and user instructions retain priority.
 
-```
-┌───────────────────────────────────────────────────────────────────────────────────┐
-│                    INTERACTIVE TUI STRATEGY & MUTATION WORKFLOW                   │
-├───────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│  [ Developer Prompt ] ──► [ Model Generates Edits ] ──► [ Staged in SessionVFS ]  │
-│                                                                  │                │
-│                                      ┌───────────────────────────┴─────────────┐  │
-│                                      ▼                                         ▼  │
-│                           [ /diff Inspect Changes ]               [ /discard Revert ]
-│                                      │                                            │
-│                                      ▼                                            │
-│                           [ /commit Apply to Disk ]                               │
-│                                      │                                            │
-│                                      ▼                                            │
-│                           [ /rewind 1 Emergency Rollback (<0.05ms) ]               │
-│                                                                                   │
-└───────────────────────────────────────────────────────────────────────────────────┘
-```
+## Common commands
 
-### 3.1 Non-Destructive VFS Staging Strategy
-1. **Zero Unintended Disk Mutations**: When an agent edits files, mutations are held in `SessionVFS` memory buffers rather than immediately touching physical disk storage.
-2. **Instant Unified Diffs (`/diff [path]`)**: Developers can inspect changes line-by-line using git-compatible unified diff syntax directly in the TUI terminal.
-3. **Selective Commit Authority (`/commit [path]`)**: Commit all files (`/commit`) or selectively commit individual files (`/commit src/auth.ts`).
-4. **Instant Reversion (`/discard [path]`)**: Discard unwanted mutations instantly without dirtying git working trees.
+| Command | Action |
+|---|---|
+| `/agents` | Inspect delegated task status, results, and blockers |
+| `/skills` | Browse skills currently available to the agent |
+| `/skills refresh` | Refresh skill discovery |
+| `/login` / `/logout` / `/whoami` | Manage and inspect authentication |
+| `/model [name]` / `/models` | View or switch the active model |
+| `/providers` / `/setup` | Configure or diagnose providers |
+| `/local` | Open local model controls |
+| `/doctor` / `/health` / `/status` | Inspect subsystem diagnostics |
+| `/snapshot` / `/snapshots` / `/rewind [id]` | Manage session snapshots |
+| `/memory` | View active session memory |
+| `/help` | Open the in-app help guide |
+| `/exit` / `/quit` | Exit the REPL |
 
-### 3.2 Time-Travel Rewind & State Rollback Strategy (`/rewind`)
-1. **Full-Envelope Restoration**: Rewinds transcript messages, frame counters, virtual file overlays, and in-memory BroccoliDB tables in **$0.022\text{ ms p95}$**.
-2. **Zero Context Pollution**: When a model enters a hallucination loop or flawed refactor, `/rewind 1` rolls back the turn completely, allowing clean prompt re-anchoring.
+## Parallel tool execution
 
-### 3.3 Dynamic Multi-Model Hot-Swapping Strategy (`Ctrl+M` / `/model`)
-1. **Focused Provider Tabs**: Press `Ctrl+M` to open the modal and navigate between Codex and local/custom models using keys `1-3` or `Tab`.
-2. **Live Model Switching**: Quickly switch among the available Codex models without restarting the session.
-3. **Prefix Cache Preservation**: LUMI's 5-tier prompt structure (ADR-135) preserves L0–L2 system prompts across model switches.
-
----
-
-## 4. 🖥️ 30+ Interactive Dashboard Modals
-
-LUMI-JOY includes 30+ specialized terminal modal dashboards (`src/tui/components/`), accessible via slash commands or direct hotkeys:
-- **`ProfileDashboardModal`**: 6-view orchestrator studio for browsing active agent personas, built-in blueprints, immutable revisions, few-shot exemplars, SLA health metrics, and raw JSON snapshots.
-- **`ToolExecutionGuardDashboardModal`**: Real-time batch parallelism timelines and anti-loop firewall violations.
-- **`PromptCacheDashboardModal`**: Prefix prompt cache byte layout inspection and hit rate analytics.
-- **`VerificationEvidenceDashboardModal`**: Turn-by-turn verification evidence ledgers and stop-gate evaluation.
-- **`DiagnosticDoctorDashboardModal`**: Subsystem health diagnostics and self-healing telemetry.
-- **`SessionArchiveDashboardModal`**: Multi-format session export, HTML archiving, and encrypted backups.
-- **`SwarmDashboardModal`**: Multi-agent task DAG scheduling and priority lattice consensus.
-
----
-
-## 5. Related Documentation
-
-- [Runtime Architecture Guide](RUNTIME_ARCHITECTURE_GUIDE.md)
-- [Architecture Decision Records: ADR-136](adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md)
-- [Architecture Diagrams](ARCHITECTURE_DIAGRAMS.md)
-- [FAQ Guide](FAQ.md)
+Independent tool calls may run concurrently, with a per-turn limit of eight. Calls that mutate the same resource are serialized, and unscoped shell commands run alone. A failed call is reported alongside the results of its siblings so one failure does not hide completed work or leave the parent turn waiting on abandoned I/O.

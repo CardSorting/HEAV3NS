@@ -35,6 +35,7 @@ import { DaemonSupervisor } from "../agents/extensions/daemon/daemon-supervisor.
 import { DeadlineSupervisor } from "../agents/extensions/deadline/deadline-supervisor.js"
 import { DeterministicDeadlineEngine } from "../agents/extensions/deadline/deterministic-deadline-engine.js"
 import { MonolithSwarmDelegator } from "../agents/extensions/delegation/monolith-swarm-delegator.js"
+import { CLI_SUBAGENT_TOOLS, CliSubagentRunner } from "../agents/extensions/delegation/cli-subagent-runner.js"
 import { SubagentLifecycleGuard } from "../agents/extensions/delegation/subagent-lifecycle-guard.js"
 import { ToolDisclosureSupervisor } from "../agents/extensions/disclosure/tool-disclosure-supervisor.js"
 import { DeterministicDocExtractor } from "../agents/extensions/doc_extractor/deterministic-doc-extractor.js"
@@ -2253,6 +2254,20 @@ export class MonolithFactory {
 		)
 
 		const promptComposer = new PromptComposer()
+		const cliSubagentRunner = new CliSubagentRunner({
+			config,
+			workspaceRoot: cwd,
+			toolRegistry,
+			modelCatalog,
+			proxyGateway,
+			budgetCalculator,
+			tokenTruncator,
+			getOpenAiApiKey: () => authStorageVault.getToken("openai-codex"),
+			getOpenAiAuthMethod: () => setupWizard.getOpenAiAuthMethod(),
+			parentSessionId: sessionId,
+			vfsBrancher: subagentVfsBrancher,
+		})
+		monolithSwarmDelegator.setChildRunner((manifest, signal) => cliSubagentRunner.run(manifest, signal), CLI_SUBAGENT_TOOLS)
 
 		const agentEngine = new AgentEngine(
 			config,

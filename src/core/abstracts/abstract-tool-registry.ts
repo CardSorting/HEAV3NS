@@ -1,4 +1,4 @@
-import type { IToolRegistry, ToolDefinition } from "../contracts/tooling.contracts.js";
+import type { IToolRegistry, ToolDefinition, ToolExecutionOptions } from "../contracts/tooling.contracts.js";
 import type { Eyes } from "../../tooling/base/eyes.js";
 import type { AbstractHands } from "./abstract-hands.js";
 import type { AbstractEars } from "./abstract-ears.js";
@@ -212,7 +212,8 @@ export abstract class AbstractToolRegistry implements IToolRegistry {
   async executeTool(
     name: string,
     args: Record<string, unknown>,
-    cwd: string
+    cwd: string,
+    options?: ToolExecutionOptions,
   ): Promise<unknown> {
     const canonicalName = TOOL_NAME_ALIASES[name] ?? name;
     const tool = this.tools.get(canonicalName);
@@ -222,7 +223,7 @@ export abstract class AbstractToolRegistry implements IToolRegistry {
     const normalizedArgs = this.normalizeToolArgs(args);
     this.ears.emit("tool_start", "AbstractToolRegistry", { name: canonicalName, args: normalizedArgs });
     try {
-      const result = await tool.execute(normalizedArgs, cwd);
+      const result = await tool.execute(normalizedArgs, cwd, options);
       this.ears.emit("tool_success", "AbstractToolRegistry", { name: canonicalName, result });
       return result;
     } catch (err: unknown) {

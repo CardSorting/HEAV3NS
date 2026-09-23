@@ -707,7 +707,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
 
       const fastStart = Date.now();
       try {
-        const fastResult = await super.executeTool(canonicalName, preparedArgs, cwd);
+        const fastResult = await super.executeTool(canonicalName, preparedArgs, cwd, options);
         const fastElapsed = Date.now() - fastStart;
         this.cache.set(canonicalName, preparedArgs, cwd, fastResult);
         this.telemetryLedger.recordSample(
@@ -776,7 +776,7 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
 
     const startTime = Date.now();
     try {
-      const result = await super.executeTool(canonicalName, preparedArgs, cwd);
+      const result = await super.executeTool(canonicalName, preparedArgs, cwd, options);
       const elapsed = Date.now() - startTime;
       this.circuitBreaker.recordSuccess(canonicalName);
       this.telemetryLedger.recordSample(
@@ -3971,9 +3971,31 @@ export class ValidatingToolRegistry extends AbstractToolRegistry {
 
     this.registerTool({
       name: "list_skills",
-      description: "Discover available workspace skill manifests (SkillsIngestor)",
-      execute: async (_args, cwd) => {
-        return this.skillsIngestor.discoverSkills(cwd);
+      description: "Search available project, user, and bundled skills by name or description. Returns metadata only; use use_skill to load instructions.",
+      parameters: {
+        query: { type: "string", description: "Optional search terms matched against skill names and descriptions." },
+        refresh: { type: "boolean", description: "Refresh skill discovery instead of using the short-lived cache." },
+      },
+      execute: async (args, cwd) => {
+        const skills = await this.skillsIngestor.discoverSkills(cwd || process.cwd(), args.refresh === true);
+        const query = String(args.query ?? "").trim().toLocaleLowerCase();
+        if (!query) return skills;
+        const terms = query.split(/\s+/).filter(Boolean);
+        return skills.filter((skill) => {
+          const searchable = `${skill.name} ${skill.description}`.toLocaleLowerCase();
+          return terms.every((term) => searchable.includes(term));
+        });
+      },
+    });
+
+    this.registerTool({
+      name: "use_skill",
+      description: "Load the full instructions for one relevant skill by exact name. Call once when the task clearly matches its description.",
+      parameters: {
+        skill_name: { type: "string", required: true, description: "Exact name shown in the available skills catalog." },
+      },
+      execute: async (args, cwd) => {
+        return this.skillsIngestor.activateSkill(String(args.skill_name ?? ""), cwd || process.cwd());
       },
     });
 

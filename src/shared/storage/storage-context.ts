@@ -63,6 +63,12 @@ export interface StorageContextOptions {
 
 const SETTINGS_SUBFOLDER = "data"
 
+/** Resolve the shared file-backed storage directory without creating it. */
+export function getStorageDataDirectory(dietcodeDir?: string): string {
+	const rootDir = dietcodeDir || process.env.DIETCODE_DIR || process.env.CLINE_DIR || path.join(os.homedir(), ".dietcode")
+	return path.join(rootDir, SETTINGS_SUBFOLDER)
+}
+
 /**
  * Create a short deterministic hash of a string for use in directory names.
  * Produces an up-to-8-character hex string.
@@ -92,9 +98,7 @@ function hashString(str: string): string {
  * @returns A StorageContext ready for use by StateManager
  */
 export function createStorageContext(opts: StorageContextOptions = {}): StorageContext {
-	const dietcodeDir =
-		opts.dietcodeDir || process.env.DIETCODE_DIR || process.env.CLINE_DIR || path.join(os.homedir(), ".dietcode")
-	const dataDir = path.join(dietcodeDir, SETTINGS_SUBFOLDER)
+	const dataDir = getStorageDataDirectory(opts.dietcodeDir)
 
 	// Resolve workspace storage directory
 	let workspaceDir: string

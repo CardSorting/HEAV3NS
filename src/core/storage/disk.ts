@@ -11,6 +11,7 @@ import fs from "fs/promises"
 import os from "os"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
+import { getStorageDataDirectory } from "@/shared/storage/storage-context"
 import { ExtensionRegistryInfo } from "@/registry"
 import { telemetryService } from "@/services/telemetry"
 import { McpMarketplaceCatalog } from "@/shared/mcp"
@@ -555,7 +556,14 @@ export async function writeMcpMarketplaceCatalogToCache(catalog: McpMarketplaceC
 }
 
 async function getGlobalStorageDir(...subdirs: string[]) {
-	const fullPath = path.resolve(HostProvider.get().globalStorageFsPath, ...subdirs)
+	// The editor host provides its own legacy storage root. Headless hosts such as
+	// the CLI use the shared file-backed storage directory instead; it must match
+	// createStorageContext() so task history and credentials stay under the same
+	// configurable DietCode home.
+	const globalStoragePath = HostProvider.isInitialized()
+		? HostProvider.get().globalStorageFsPath
+		: getStorageDataDirectory()
+	const fullPath = path.resolve(globalStoragePath, ...subdirs)
 	await fs.mkdir(fullPath, { recursive: true })
 	return fullPath
 }

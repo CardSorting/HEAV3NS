@@ -18,6 +18,7 @@ import { ScrollView } from "../../../tui/components/scroll-view.js"
 import type { SelectListTheme } from "../../../tui/components/select-list.js"
 import type { SettingItem } from "../../../tui/components/settings-list.js"
 import { SettingsModal } from "../../../tui/components/settings-modal.js"
+import { SwarmDashboardModal } from "../../../tui/components/swarm-dashboard-modal.js"
 import { Text } from "../../../tui/components/text.js"
 import { VStack } from "../../../tui/components/v-stack.js"
 import { matchesKey } from "../../../tui/keys.js"
@@ -25,6 +26,7 @@ import { highlightTerminalCode } from "../../../tui/syntax-highlighter.js"
 import { ProcessTerminal } from "../../../tui/terminal.js"
 import type { Component } from "../../../tui/tui.js"
 import { TuiAltScreen } from "../../../tui/tui-alt-screen.js"
+import type { SkillManifest } from "../../../tooling/extensions/registry/skills-ingestor.js"
 import {
 	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
 	getAgentProviderLabel,
@@ -63,6 +65,35 @@ const DEFAULT_SELECT_LIST_THEME: SelectListTheme = {
 	description: (text) => `\x1b[90m${text}\x1b[0m`,
 	scrollInfo: (text) => `\x1b[90m${text}\x1b[0m`,
 	noMatch: (text) => `\x1b[31m${text}\x1b[0m`,
+}
+
+function formatSkillCatalog(skills: readonly SkillManifest[], query = ""): string {
+	const normalizedQuery = query.trim().toLocaleLowerCase()
+	const terms = normalizedQuery.split(/\s+/).filter(Boolean)
+	const matches =
+		terms.length === 0
+			? [...skills]
+			: skills.filter((skill) => {
+					const searchable = `${skill.name} ${skill.description}`.toLocaleLowerCase()
+					return terms.every((term) => searchable.includes(term))
+				})
+	if (matches.length === 0) {
+		return terms.length > 0
+			? "No skills match those terms. Try different terms or run /skills refresh after adding a skill."
+			: "No valid skills found in the project or user skill folders. Add a SKILL.md under .agents/skills/<name>/, then run /skills refresh."
+	}
+
+	const visibleSkills = matches.slice(0, 80)
+	const rows = visibleSkills.map((skill) => {
+		const description = skill.description.replace(/\s+/g, " ").trim().slice(0, 220)
+		const source = skill.source === "project" ? "project" : skill.source === "global" ? "user" : "built-in"
+		return `- **${skill.name}** · ${source} — ${description}`
+	})
+	const omitted = matches.length - visibleSkills.length
+	if (omitted > 0) rows.push(`- …and ${omitted} more. Search with \`/skills <term>\` to narrow the list.`)
+	const title =
+		terms.length > 0 ? `### Skills matching your search (${matches.length})` : `### Available skills (${matches.length})`
+	return `${title}\n\n${rows.join("\n")}\n\nSkills load on demand when a task matches. Use \`/skills <term>\` to search, or \`/skills refresh\` after adding or changing a SKILL.md.`
 }
 
 function formatUniversalToolSection(
@@ -214,7 +245,7 @@ export class InteractiveModeController {
 		const headerBox = new Box(1, 0, headerBg)
 
 		const headerText = new Text(
-			`\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
+			`\x1b[1;35m❖ HEAV3NS v0.1.0\x1b[0m  │  ` +
 				`\x1b[90mProvider:\x1b[0m \x1b[1;35m${getAgentProviderLabel(monolith.config.provider)}\x1b[0m  │  ` +
 				`\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
 				`\x1b[90mHealth:\x1b[0m \x1b[1;32m[OPERATIONAL]\x1b[0m`,
@@ -239,7 +270,7 @@ export class InteractiveModeController {
 		let welcomeText = ""
 		if (!who.authenticated) {
 			welcomeText =
-				`# ✦ Welcome to LUMI Agent OS!\n\n` +
+				`# ✦ Welcome to HEAV3NS!\n\n` +
 				`To start chatting and executing agent workflows, connect an AI model:\n\n` +
 				`- **[1] Sign in with ChatGPT / OpenAI:** Type \`/login\` for instant browser OAuth.\n` +
 				`- **[2] Configure providers:** Type \`/setup\` for Claude Code login, OpenAI keys, or other routes.\n` +
@@ -253,7 +284,7 @@ export class InteractiveModeController {
 			const engineNote = ""
 
 			welcomeText =
-				`# ✦ LUMI Agent OS\n\n` +
+				`# ✦ HEAV3NS\n\n` +
 				`● ${identityStr}  │  Active Engine: \`${monolith.config.modelName}\`${engineNote}\n\n` +
 				`**Quick Model Switch:**\n` +
 				(isClaudeSubscriptionDirectSdkProvider(monolith.config.provider)
@@ -267,6 +298,8 @@ export class InteractiveModeController {
 				`- Press \`Ctrl+S\` or type \`/settings\` : Configure models, reasoning effort & policies\n` +
 				`- Type \`/providers\` or \`/setup\` : Provider keys, Claude subscription login & setup\n` +
 				`- Type \`/doctor\` or \`/health\` : Run subsystem health diagnostics\n` +
+				`- Type \`/agents\` : Inspect delegated task status, results, and blockers\n` +
+				`- Type \`/skills [term]\` : Search project, user, and built-in skill workflows\n` +
 				`- Press \`?\` or type \`/help\` : Display keyboard guide & slash commands\n`
 		}
 
@@ -277,6 +310,10 @@ export class InteractiveModeController {
 		// 3. Categorized Slash Commands (Mirroring familiar CLI/TUI standards)
 		const slashCommands: SlashCommand[] = [
 			{ name: "help", description: "[Help] Display interactive keyboard shortcuts & usage guide" },
+			{ name: "agents", description: "[Agents] Inspect delegated tasks, outcomes, and blockers" },
+			{ name: "subagents", description: "[Agents] Alias for /agents" },
+			{ name: "swarm", description: "[Agents] Alias for /agents" },
+			{ name: "skills", description: "[Skills] Search available workflows; /skills refresh rescans SKILL.md files" },
 			...(isClaudeSubscriptionDirectSdkProvider(monolith.config.provider)
 				? []
 				: [
@@ -410,6 +447,42 @@ export class InteractiveModeController {
 			activeInlineView = helpModal
 			historyContainer.addChild(helpModal)
 			tui.setFocus(helpModal)
+			tui.requestRender()
+		}
+
+		const openSwarmDashboardModal = () => {
+			if (activeInlineView || isLoadingInlineView) return
+			let modal: SwarmDashboardModal
+			const closeFn = () => closeInlineView(modal)
+			modal = new SwarmDashboardModal(monolith.monolithSwarmDelegator, closeFn)
+			activeInlineView = modal
+			historyContainer.addChild(modal)
+			tui.setFocus(modal)
+			tui.requestRender()
+		}
+
+		const showSkillCatalog = async (refresh: boolean, query = "") => {
+			const cardBox = new Box(1, 0, (str: string) => `\x1b[48;5;236m${str}\x1b[0m`)
+			cardBox.addChild(
+				new Markdown(query ? "Searching available skills…" : "Loading available skills…", 0, 0, DEFAULT_MARKDOWN_THEME),
+			)
+			historyContainer.addChild(cardBox)
+			tui.requestRender()
+			try {
+				const skills = await monolith.skillsIngestor.discoverSkills(monolith.sessionContext.cwd, refresh)
+				cardBox.clear()
+				cardBox.addChild(new Markdown(formatSkillCatalog(skills, query), 0, 0, DEFAULT_MARKDOWN_THEME))
+			} catch (error) {
+				cardBox.clear()
+				cardBox.addChild(
+					new Markdown(
+						`Unable to discover skills: ${error instanceof Error ? error.message : String(error)}\n\nRun \`/skills refresh\` after fixing the skill folder permissions or SKILL.md frontmatter.`,
+						0,
+						0,
+						DEFAULT_MARKDOWN_THEME,
+					),
+				)
+			}
 			tui.requestRender()
 		}
 
@@ -642,7 +715,7 @@ export class InteractiveModeController {
 			const memCount = monolith.sessionMemoryStore.listMemories().length
 			const memSuffix = memCount > 0 ? `  │  \x1b[90mMem:\x1b[0m \x1b[36m${memCount}\x1b[0m` : ""
 			headerText.setText(
-				`\x1b[1;35m❖ LUMI AGENT OS v0.1.0\x1b[0m  │  ` +
+				`\x1b[1;35m❖ HEAV3NS v0.1.0\x1b[0m  │  ` +
 					`\x1b[90mProvider:\x1b[0m \x1b[1;35m${getAgentProviderLabel(monolith.config.provider)}\x1b[0m  │  ` +
 					`\x1b[90mModel:\x1b[0m \x1b[1;36m${monolith.config.modelName}\x1b[0m  │  ` +
 					`\x1b[90mFrame:\x1b[0m \x1b[1;33m#${turnCount}\x1b[0m${memSuffix}  │  ` +
@@ -980,6 +1053,19 @@ export class InteractiveModeController {
 
 				if (input === "/help" || input === "?") {
 					openHelpModal()
+					return
+				}
+
+				if (input === "/agents" || input === "/subagents" || input === "/swarm") {
+					openSwarmDashboardModal()
+					return
+				}
+
+				if (input === "/skills" || input.startsWith("/skills ")) {
+					const argument = input.slice("/skills".length).trim()
+					const refresh = argument === "refresh" || argument.startsWith("refresh ")
+					const query = refresh ? argument.slice("refresh".length).trim() : argument
+					void showSkillCatalog(refresh, query)
 					return
 				}
 
@@ -1674,14 +1760,14 @@ export class InteractiveModeController {
 
 	private async startFallbackReadlineSession(monolith: LumiMonolith): Promise<void> {
 		console.log("\x1b[1;36m========================================================\x1b[0m")
-		console.log("\x1b[1;36m   LUMI Agent CLI - Interactive REPL (Fallback Mode)    \x1b[0m")
-		console.log("\x1b[90m   Commands: /login, /whoami, /model, /setup, /doctor, /help, /exit\x1b[0m")
+		console.log("\x1b[1;36m   HEAV3NS Agent CLI - Interactive REPL                 \x1b[0m")
+		console.log("\x1b[90m   Commands: /agents, /skills, /login, /model, /doctor, /help, /exit\x1b[0m")
 		console.log("\x1b[1;36m========================================================\x1b[0m\n")
 
 		const rl = readline.createInterface({
 			input: process.stdin,
 			output: process.stdout,
-			prompt: "\x1b[1;35mlumi > \x1b[0m",
+			prompt: "\x1b[1;35mheav3ns > \x1b[0m",
 		})
 
 		rl.prompt()
@@ -1732,12 +1818,45 @@ export class InteractiveModeController {
 					return
 				}
 
+				if (input === "/agents" || input === "/subagents" || input === "/swarm") {
+					const tasks = monolith.monolithSwarmDelegator.listTasks()
+					console.log(`\nHEAV3NS agent tasks (${tasks.length})`)
+					if (tasks.length === 0) {
+						console.log("No delegated tasks are recorded in this session.")
+						console.log("Delegate a task to start an isolated child agent with reviewable staged edits.")
+					}
+					for (const task of tasks) {
+						console.log(`- [${task.status}] ${task.id} · ${task.goal}`)
+						const outcome = monolith.monolithSwarmDelegator.getTaskOutcome(task.id)
+						if (outcome?.error) console.log(`  Blocker: ${outcome.error}`)
+						else if (outcome?.summary) console.log(`  Result: ${outcome.summary}`)
+					}
+					rl.prompt()
+					return
+				}
+
+				if (input === "/skills" || input.startsWith("/skills ")) {
+					const argument = input.slice("/skills".length).trim()
+					const refresh = argument === "refresh" || argument.startsWith("refresh ")
+					const query = refresh ? argument.slice("refresh".length).trim() : argument
+					try {
+						const skills = await monolith.skillsIngestor.discoverSkills(monolith.sessionContext.cwd, refresh)
+						console.log(`\n${formatSkillCatalog(skills, query).replace(/\*\*/g, "").replace(/`/g, "")}`)
+					} catch (error) {
+						console.log(`Unable to discover skills: ${error instanceof Error ? error.message : String(error)}`)
+					}
+					rl.prompt()
+					return
+				}
+
 				if (input === "/help" || input === "?") {
-					console.log("\x1b[1;36m--- LUMI REPL Commands Reference ---\x1b[0m")
+					console.log("\x1b[1;36m--- HEAV3NS REPL Commands ---\x1b[0m")
 					console.log("  \x1b[35m/login\x1b[0m        : Connect OpenAI Codex OAuth or configure API keys")
 					console.log("  \x1b[35m/logout\x1b[0m       : Sign out and clear cached credentials")
 					console.log("  \x1b[35m/whoami\x1b[0m       : Display current identity & token status")
 					console.log("  \x1b[35m/model [name]\x1b[0m : Switch active LLM model")
+					console.log("  \x1b[35m/agents\x1b[0m       : Inspect delegated tasks, outcomes, and blockers")
+					console.log("  \x1b[35m/skills [term]\x1b[0m: Search skills (/skills refresh to rescan)")
 					console.log("  \x1b[35m/doctor\x1b[0m       : Run connectivity & health diagnostics")
 					console.log("  \x1b[35m/settings\x1b[0m     : View active engine configuration")
 					console.log("  \x1b[35m/providers\x1b[0m    : Run provider connectivity test")

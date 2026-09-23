@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import type { SessionContext } from "../../../sessions/base/session-context.js";
 import type { PersistentSessionStore } from "../../../sessions/extensions/persistence/session-store.js";
 import type { SessionCompactor } from "../../../sessions/extensions/compaction/session-compactor.js";
@@ -260,9 +261,10 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
         if (staged.length === 0) {
           return { handled: true, output: "No staged file modifications in VFS overlay." };
         }
-        const targetFile = args[0]?.trim();
+        const targetFile = args.join(" ").trim();
         if (targetFile) {
-          const diff = await context.sessionVfs.generateDiff(targetFile);
+          const stagedPath = this.resolveStagedPath(targetFile, context);
+          const diff = await context.sessionVfs.generateDiff(stagedPath);
           if (!diff) {
             return { handled: true, output: `File '${targetFile}' is not staged in VFS overlay.` };
           }
@@ -281,27 +283,35 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
       }
 
       case "/commit": {
-        const targetFile = args[0]?.trim();
-        if (targetFile) {
-          const ok = await context.sessionVfs.commitFile(targetFile);
+        const targetFile = args.join(" ").trim();
+        try {
+          if (targetFile) {
+            const ok = await context.sessionVfs.commitFile(this.resolveStagedPath(targetFile, context));
+            return {
+              handled: true,
+              output: ok
+                ? `✅ Committed staged file \`${targetFile}\` to disk.`
+                : `❌ File \`${targetFile}\` is not staged in VFS.`,
+            };
+          }
+          const committed = await context.sessionVfs.commitAll();
           return {
             handled: true,
-            output: ok
-              ? `✅ Committed staged file \`${targetFile}\` to disk.`
-              : `❌ File \`${targetFile}\` is not staged in VFS.`,
+            output: `✅ Committed ${committed.length} staged file(s) to disk:\n` + committed.map((p) => `• \`${p}\``).join("\n"),
+          };
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          return {
+            handled: true,
+            output: `❌ Could not commit staged changes. ${detail}\nReview with /diff, then edit, discard, or retry the affected files.`,
           };
         }
-        const committed = await context.sessionVfs.commitAll();
-        return {
-          handled: true,
-          output: `✅ Committed ${committed.length} staged file(s) to disk:\n` + committed.map((p) => `• \`${p}\``).join("\n"),
-        };
       }
 
       case "/discard": {
-        const targetFile = args[0]?.trim();
+        const targetFile = args.join(" ").trim();
         if (targetFile) {
-          const ok = context.sessionVfs.discardFile(targetFile);
+          const ok = context.sessionVfs.discardFile(this.resolveStagedPath(targetFile, context));
           return {
             handled: true,
             output: ok
@@ -419,7 +429,9 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
 • \`/stats\` — Inspect telemetry, token estimates, and slab metrics
 • \`/memory\` — List long-term facts & Knowledge Items
 • \`/vfs\` — Inspect staged virtual filesystem mutations
-• \`/diff\` — View line diff of staged file edits
+• \`/diff [file]\` — Review staged edits; file paths can be relative to the workspace
+• \`/commit [file]\` — Apply reviewed edits (stale child edits are preserved and rejected)
+• \`/discard [file]\` — Discard staged edits
 • \`/tools\` — List registered model and developer tools
 • \`/compact\` — Force progressive context window compaction
 • \`/clear\` — Reset active session state and turn counter
@@ -443,5 +455,12 @@ Slab Allocated Bytes: ${slab.allocatedBytes} / ${slab.capacityBytes}`;
       default:
         return { handled: false };
     }
+  }
+
+  private resolveStagedPath(target: string, context: SlashRouteContext): string {
+    const normalized = path.normalize(target);
+    if (context.sessionVfs.hasStaged(normalized)) return normalized;
+    const workspacePath = path.resolve(context.sessionContext.cwd, normalized);
+    return context.sessionVfs.hasStaged(workspacePath) ? workspacePath : normalized;
   }
 }

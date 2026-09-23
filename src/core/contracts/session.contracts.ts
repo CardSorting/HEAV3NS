@@ -13,6 +13,12 @@ export interface SlabBufferSnapshot {
   resetCount: number;
 }
 
+/** Disk state required to reject stale staged writes at commit time. */
+export interface VfsDiskBaseline {
+  signature: string | null;
+  contentHash?: string;
+}
+
 export interface GameStateSnapshot {
   snapshotId: string;
   frameIndex: number;
@@ -20,7 +26,14 @@ export interface GameStateSnapshot {
   messages: SessionMessage[];
   /** Durable, uncompacted conversation log. Optional for snapshot compatibility. */
   transcript?: SessionMessage[];
-  stagedFiles: Array<{ path: string; originalContent: string; stagedContent: string; isNew: boolean }>;
+  stagedFiles: Array<{
+    path: string;
+    originalContent: string;
+    stagedContent: string;
+    isNew: boolean;
+    isDeleted?: boolean;
+    diskBaseline?: VfsDiskBaseline;
+  }>;
   memories: Array<{ key: string; value: string; category: string; timestamp: number }>;
   modelMetrics: { totalTurns: number; totalTokensEstimated: number; fallbackTriggeredCount: number };
   slabSnapshot?: SlabBufferSnapshot;

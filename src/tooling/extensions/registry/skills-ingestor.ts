@@ -1,77 +1,102 @@
-import * as path from "node:path";
-import type { Eyes } from "../../base/eyes.js";
+import {
+	getResolvedSkillsForCwd,
+	getSkillContent,
+} from "../../../core/context/instructions/user-instructions/skills.js"
+import type { SkillContent, SkillMetadata } from "../../../shared/skills.js"
+import type { Eyes } from "../../base/eyes.js"
+
 
 export interface SkillManifest {
-  name: string;
-  description: string;
-  location: string;
-  body: string;
+	name: string
+	description: string
+	location: string
+	body?: string
+	path?: string
+	source?: SkillMetadata["source"]
+	defaultEnabled?: boolean
 }
 
+const MAX_PROMPT_SKILLS = 80
+const MAX_PROMPT_DESCRIPTION_LENGTH = 320
+
+/**
+ * Skill discovery and progressive loading for the active CLI runtime.
+ * The catalog contains metadata only; full instructions are loaded on demand.
+ */
 export class SkillsIngestor {
-  private readonly eyes: Eyes;
+	constructor(_eyes?: Eyes) {
+		// Kept optional for source compatibility with existing tool registry setup.
+	}
 
-  constructor(eyes: Eyes) {
-    this.eyes = eyes;
-  }
+	async discoverSkills(workspaceRoot: string, forceRefresh = false): Promise<SkillManifest[]> {
+		const skills = await getResolvedSkillsForCwd(workspaceRoot, forceRefresh)
+		return skills.map((skill) => this.toManifest(skill))
+	}
 
-  async discoverSkills(workspaceRoot: string): Promise<SkillManifest[]> {
-    const skillsDir = path.join(workspaceRoot, ".agents", "skills");
-    const manifests: SkillManifest[] = [];
+	async activateSkill(
+		skillName: string,
+		workspaceRoot: string,
+	): Promise<
+		| { success: true; name: string; source: SkillMetadata["source"]; location: string; instructions: string }
+		| { success: false; error: string; availableSkills: string[] }
+	> {
+		const requestedName = skillName.trim()
+		const skills = await getResolvedSkillsForCwd(workspaceRoot)
+		if (!requestedName) {
+			return { success: false, error: "Provide the exact name of a skill to load.", availableSkills: skills.map((skill) => skill.name) }
+		}
 
-    const exists = await this.eyes.exists(skillsDir);
-    if (!exists) {
-      return manifests;
-    }
+		const content: SkillContent | null = await getSkillContent(requestedName, skills, { mode: "full" })
+		if (!content) {
+			return {
+				success: false,
+				error: `Skill \"${requestedName}\" was not found. Run /skills to see available skills.`,
+				availableSkills: skills.map((skill) => skill.name),
+			}
+		}
 
-    const skillFolders = await this.eyes.listDirectory(skillsDir);
-    for (const folder of skillFolders) {
-      const skillPath = path.join(skillsDir, folder.replace(/\/$/, ""), "SKILL.md");
-      const fileExists = await this.eyes.exists(skillPath);
-      if (fileExists) {
-        try {
-          const viewResult = await this.eyes.readFile(skillPath);
-          const manifest = this.parseSkillMarkdown(folder.replace(/\/$/, ""), skillPath, viewResult.content);
-          manifests.push(manifest);
-        } catch {
-          // ignore unreadable skills
-        }
-      }
-    }
+		return {
+			success: true,
+			name: content.name,
+			source: content.source,
+			location: content.path,
+			instructions: content.instructions,
+		}
+	}
 
-    return manifests;
-  }
+	parseSkillMarkdown(folderName: string, filePath: string, rawContent: string): SkillManifest {
+		let name = folderName
+		let description = "Workspace Skill"
+		let body = rawContent
+		const frontmatterMatch = rawContent.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+		if (frontmatterMatch) {
+			const frontmatter = frontmatterMatch[1]!
+			body = frontmatterMatch[2]!.trim()
+			name = frontmatter.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? name
+			description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? description
+		}
+		return { name, description, location: filePath, path: filePath, body, source: "project" }
+	}
 
-  parseSkillMarkdown(folderName: string, filePath: string, rawContent: string): SkillManifest {
-    let name = folderName;
-    let description = "Workspace Skill";
-    let body = rawContent;
+	formatSkillsContext(manifests: readonly SkillManifest[]): string {
+		if (manifests.length === 0) return ""
 
-    const frontmatterMatch = rawContent.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-    if (frontmatterMatch) {
-      const yamlStr = frontmatterMatch[1];
-      body = frontmatterMatch[2].trim();
+		const skills = manifests.slice(0, MAX_PROMPT_SKILLS).map(({ name, description, source }) => ({
+			name: name.slice(0, 120),
+			description: description.replace(/\s+/g, " ").trim().slice(0, MAX_PROMPT_DESCRIPTION_LENGTH),
+			source: source ?? "project",
+		}))
+		return JSON.stringify({ skills, omitted: Math.max(0, manifests.length - skills.length) })
+	}
 
-      const nameMatch = yamlStr.match(/^name:\s*(.+)$/m);
-      if (nameMatch) name = nameMatch[1].trim();
-
-      const descMatch = yamlStr.match(/^description:\s*(.+)$/m);
-      if (descMatch) description = descMatch[1].trim();
-    }
-
-    return {
-      name,
-      description,
-      location: filePath,
-      body,
-    };
-  }
-
-  formatSkillsContext(manifests: SkillManifest[]): string {
-    if (manifests.length === 0) return "";
-    const formatted = manifests
-      .map((m) => `### Skill: ${m.name}\n**Description**: ${m.description}\n**Path**: ${m.location}`)
-      .join("\n\n");
-    return formatted;
-  }
+	private toManifest(skill: SkillMetadata): SkillManifest {
+		return {
+			name: skill.name,
+			description: skill.description,
+			path: skill.path,
+			location: skill.path,
+			source: skill.source,
+			...(skill.defaultEnabled === undefined ? {} : { defaultEnabled: skill.defaultEnabled }),
+		}
+	}
 }

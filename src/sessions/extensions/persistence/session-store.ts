@@ -172,6 +172,8 @@ export class PersistentSessionStore extends AbstractSessionStore {
           originalContent: "",
           stagedContent: f.content,
           isNew: !f.isDeleted,
+          isDeleted: f.isDeleted,
+          ...(f.diskBaseline ? { diskBaseline: { ...f.diskBaseline } } : {}),
         }))
       : [];
 

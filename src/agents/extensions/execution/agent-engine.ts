@@ -32,6 +32,7 @@ import { DynamicToolRouter } from "../../../tooling/extensions/registry/dynamic-
 import { ToolCallArgParser } from "../../../tooling/extensions/registry/tool-call-arg-parser.js"
 import { ToolChoicePolicyOrchestrator } from "../../../tooling/extensions/registry/tool-choice-policy-orchestrator.js"
 import type { ValidatingToolRegistry } from "../../../tooling/extensions/registry/tool-registry.js"
+import type { SkillManifest } from "../../../tooling/extensions/registry/skills-ingestor.js"
 import { ToolSchemaCompressor } from "../../../tooling/extensions/registry/tool-schema-compressor.js"
 import { ToolSchemaSerializer } from "../../../tooling/extensions/registry/tool-schema-serializer.js"
 import { UniversalToolCallAdapter } from "../../../tooling/extensions/registry/universal-tool-call-adapter.js"
@@ -52,6 +53,8 @@ interface PreparedProviderContext {
 	messages: SessionMessage[]
 	currentPrompt: string
 	budget: ContextBudgetInfo
+	hasAvailableSkills: boolean
+	skillDiscoveryFailed: boolean
 }
 
 type ProviderCompletionResponse = ClaudeSubscriptionDirectSdkCompletionResponse & {
@@ -144,6 +147,7 @@ export interface AgentContextServices {
 	budgetCalculator?: ContextBudgetCalculator
 	tokenTruncator?: TokenTruncator
 	completionGate?: RoadmapCompletionGate
+	maxOutputTokens?: number
 	openAiApiKey?: string
 	getOpenAiApiKey?: () => string | undefined
 	getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
@@ -169,6 +173,7 @@ export class AgentEngine extends AbstractAgentEngine {
 	private readonly runtimeModelCatalog: ModelCatalog
 	private readonly runtimeBudgetCalculator: ContextBudgetCalculator
 	private readonly runtimeTokenTruncator: TokenTruncator
+	private readonly runtimeMaxOutputTokens?: number
 	private readonly openAiApiKey?: string
 	private readonly getOpenAiApiKey?: () => string | undefined
 	private readonly getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
@@ -202,7 +207,8 @@ export class AgentEngine extends AbstractAgentEngine {
 		this.dynamicToolRouter = new DynamicToolRouter()
 		this.argParser = new ToolCallArgParser()
 		this.schemaSerializer = new ToolSchemaSerializer()
-		this.scheduler = new ToolExecutionScheduler({ parser: this.argParser })
+		// Bound one model turn's parallel I/O fan-out while preserving disjoint-call concurrency.
+		this.scheduler = new ToolExecutionScheduler({ parser: this.argParser, maxConcurrency: 8 })
 		this.universalAdapter = new UniversalToolCallAdapter()
 		this.schemaCompressor = new ToolSchemaCompressor()
 		this.dagPlanner = new ToolDependencyGraphPlanner()
@@ -210,6 +216,7 @@ export class AgentEngine extends AbstractAgentEngine {
 		this.runtimeModelCatalog = contextServices.modelCatalog ?? new ModelCatalog()
 		this.runtimeBudgetCalculator = contextServices.budgetCalculator ?? new ContextBudgetCalculator()
 		this.runtimeTokenTruncator = contextServices.tokenTruncator ?? new TokenTruncator()
+		this.runtimeMaxOutputTokens = contextServices.maxOutputTokens
 		this.openAiApiKey = contextServices.openAiApiKey
 		this.getOpenAiApiKey = contextServices.getOpenAiApiKey
 		this.getOpenAiAuthMethod = contextServices.getOpenAiAuthMethod
@@ -370,7 +377,7 @@ export class AgentEngine extends AbstractAgentEngine {
 				const maxAttempts = usesClaudeSubscriptionDirectSdk ? 1 : 2
 				for (let attempt = 0; attempt < maxAttempts; attempt++) {
 					try {
-						const preparedContext = this.prepareProviderContext(activeModel, promptText)
+						const preparedContext = await this.prepareProviderContext(activeModel, promptText)
 						const defaultUrl = "https://api.openai.com/v1/chat/completions"
 						const requestStartedAt = Date.now()
 						const endpoint = this.proxyGateway?.getEffectiveEndpoint("openai-codex", defaultUrl) ?? {
@@ -399,7 +406,18 @@ export class AgentEngine extends AbstractAgentEngine {
 						})
 
 						const allRegisteredTools = this.toolRegistry ? this.toolRegistry.listTools() : []
-						const relevantTools = this.dynamicToolRouter.selectRelevantTools(allRegisteredTools, promptText)
+						const routedTools = this.dynamicToolRouter.selectRelevantTools(allRegisteredTools, promptText)
+						const relevantTools =
+							preparedContext.hasAvailableSkills || preparedContext.skillDiscoveryFailed
+								? [
+										...routedTools,
+										...allRegisteredTools.filter(
+											(tool) =>
+												(tool.name === "use_skill" || tool.name === "list_skills") &&
+												!routedTools.some((routed) => routed.name === tool.name),
+										),
+									]
+								: routedTools
 						const toolNameMapping = usesClaudeSubscriptionDirectSdk
 							? createClaudeToolNameMapping(relevantTools.map((tool) => tool.name))
 							: undefined
@@ -641,6 +659,7 @@ export class AgentEngine extends AbstractAgentEngine {
 										executionAuthority: "autonomous",
 										bypassConfirmation: true,
 										bypassThreatDetection: true,
+										signal: input.signal,
 										onToolStart: (call: ScheduledToolCall) => {
 											this.reportProgress(input.onProgress, {
 												activityId: liveProgressActivityId,
@@ -808,20 +827,43 @@ export class AgentEngine extends AbstractAgentEngine {
 		}
 	}
 
-	private prepareProviderContext(activeModel: string, requestedPrompt = ""): PreparedProviderContext {
+	private async prepareProviderContext(activeModel: string, requestedPrompt = ""): Promise<PreparedProviderContext> {
 		const sessionStore = this.sessionStore as PersistentSessionStore
 		const model = this.runtimeModelCatalog.getModelInfo(activeModel, this.config.provider ?? "openai-codex")
-		const requestedOutputTokens = Math.min(8_192, model.maxOutputTokens)
+		const requestedOutputTokens = Math.max(
+			256,
+			Math.min(8_192, model.maxOutputTokens, this.runtimeMaxOutputTokens ?? Number.POSITIVE_INFINITY),
+		)
 		const budget = this.runtimeBudgetCalculator.calculateBudget(activeModel, requestedOutputTokens, {
 			contextWindowTokens: model.contextWindowTokens,
 		})
 		const memoryContext = this.sessionMemoryStore.formatMemoryContext()
+		let skillManifests: SkillManifest[] = []
+		let skillDiscoveryFailed = false
+		const skillsIngestor = (this.toolRegistry as ValidatingToolRegistry | undefined)?.skillsIngestor
+		if (skillsIngestor) {
+			try {
+				skillManifests = await skillsIngestor.discoverSkills(this.sessionContext.cwd)
+			} catch {
+				// Preserve the task flow and expose a targeted retry instead of hiding the failure.
+				skillDiscoveryFailed = true
+			}
+		}
+		const skillsContext = [
+			skillsIngestor?.formatSkillsContext(skillManifests) ?? "",
+			skillDiscoveryFailed
+				? "Skill discovery failed for this turn. Retry with list_skills and refresh=true before deciding no relevant skill exists. Continue without a skill if the retry also fails."
+				: "",
+		]
+			.filter(Boolean)
+			.join("\n\n")
 		const promptConfig = activeModel === this.config.modelName ? this.config : { ...this.config, modelName: activeModel }
 		const pinnedMessages = this.promptComposer.compileTurnMessages({
 			config: promptConfig,
 			sessionContext: this.sessionContext,
 			messages: [],
 			memoryContext,
+			skillsContext,
 		})
 		const reservedTokens = this.runtimeTokenTruncator.estimateMessages(pinnedMessages)
 
@@ -838,6 +880,7 @@ export class AgentEngine extends AbstractAgentEngine {
 			sessionContext: this.sessionContext,
 			messages: [...sessionStore.getMessages()],
 			memoryContext,
+			skillsContext,
 		})
 		const guarded = this.runtimeTokenTruncator.truncateToTokenBudget(compiled, budget.availableInputTokens, {
 			preserveRecentTurns: 1,
@@ -850,6 +893,8 @@ export class AgentEngine extends AbstractAgentEngine {
 			messages: guarded,
 			currentPrompt,
 			budget,
+			hasAvailableSkills: skillManifests.length > 0,
+			skillDiscoveryFailed,
 		}
 	}
 

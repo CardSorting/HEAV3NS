@@ -1,11 +1,14 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { createHash } from "node:crypto";
+import type { VfsDiskBaseline } from "../../../core/contracts/session.contracts.js";
 
 export interface VfsFileOverlay {
   path: string;
   content: string;
   isDeleted: boolean;
   timestamp: number;
+  diskBaseline?: VfsDiskBaseline;
 }
 
 export class SessionVfs {
@@ -15,23 +18,25 @@ export class SessionVfs {
     this.stagedFiles = new Map();
   }
 
-  stageWrite(filePath: string, content: string): void {
+  stageWrite(filePath: string, content: string, diskBaseline?: VfsDiskBaseline): void {
     const normalized = path.normalize(filePath);
     this.stagedFiles.set(normalized, {
       path: normalized,
       content,
       isDeleted: false,
       timestamp: Date.now(),
+      ...(diskBaseline ? { diskBaseline: { ...diskBaseline } } : {}),
     });
   }
 
-  stageDelete(filePath: string): void {
+  stageDelete(filePath: string, diskBaseline?: VfsDiskBaseline): void {
     const normalized = path.normalize(filePath);
     this.stagedFiles.set(normalized, {
       path: normalized,
       content: "",
       isDeleted: true,
       timestamp: Date.now(),
+      ...(diskBaseline ? { diskBaseline: { ...diskBaseline } } : {}),
     });
   }
 
@@ -59,6 +64,8 @@ export class SessionVfs {
     const normalized = path.normalize(filePath);
     const overlay = this.stagedFiles.get(normalized);
     if (!overlay) return false;
+
+    await this.assertDiskBaseline(overlay);
 
     if (overlay.isDeleted) {
       try {
@@ -98,7 +105,11 @@ export class SessionVfs {
 
   async commitAll(): Promise<string[]> {
     const committedPaths: string[] = [];
-    for (const overlay of this.stagedFiles.values()) {
+    const overlays = Array.from(this.stagedFiles.values());
+    // Validate delegated edits together before writing, so a stale child result
+    // cannot leave a partially committed batch behind.
+    await Promise.all(overlays.map((overlay) => this.assertDiskBaseline(overlay)));
+    for (const overlay of overlays) {
       if (overlay.isDeleted) {
         try {
           await fs.unlink(overlay.path);
@@ -115,5 +126,26 @@ export class SessionVfs {
     }
     this.stagedFiles.clear();
     return committedPaths;
+  }
+
+  private async assertDiskBaseline(overlay: VfsFileOverlay): Promise<void> {
+    const baseline = overlay.diskBaseline;
+    if (!baseline) return;
+
+    try {
+      const contents = await fs.readFile(overlay.path);
+      const stat = await fs.stat(overlay.path, { bigint: true });
+      const signature = [stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs, stat.mode].map(String).join(":");
+      const contentHash = createHash("sha256").update(contents).digest("hex");
+      if (baseline.signature === null || baseline.signature !== signature || baseline.contentHash !== contentHash) {
+        throw new Error(`Staged file changed on disk since review: ${overlay.path}. The staged change was preserved.`);
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT" && baseline.signature === null) return;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new Error(`Staged file changed on disk since review: ${overlay.path}. The staged change was preserved.`);
+      }
+      throw error;
+    }
   }
 }

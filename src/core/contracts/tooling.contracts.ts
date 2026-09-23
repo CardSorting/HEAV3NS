@@ -98,7 +98,7 @@ export interface ToolDefinition {
   requiresConfirmation?: boolean;
   timeoutMs?: number;
   examples?: readonly ToolExample[];
-  execute: (args: Record<string, unknown>, cwd: string) => Promise<unknown>;
+  execute: (args: Record<string, unknown>, cwd: string, options?: ToolExecutionOptions) => Promise<unknown>;
 }
 
 export interface ToolExecutionRecord {
@@ -166,6 +166,7 @@ export interface ToolExecutionOptions {
   readonly nonBlockingAudit?: boolean;
   readonly timeoutMs?: number;
   readonly autoHeal?: boolean;
+  readonly signal?: AbortSignal;
 }
 
 export interface PipelinedStreamChunk {
@@ -184,4 +185,3 @@ export interface IToolRegistry {
   listTools(): readonly ToolDefinition[];
   executeTool(name: string, args: Record<string, unknown>, cwd: string, options?: ToolExecutionOptions): Promise<unknown>;
 }
-
