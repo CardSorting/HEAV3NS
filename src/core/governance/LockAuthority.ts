@@ -11,13 +11,7 @@ import { Logger } from "@shared/services/Logger"
 import { type DurableSwarmLease, SwarmMutexService } from "@/core/swarm/SwarmMutexService"
 import { getCoordinationDb } from "@/infrastructure/db/Config"
 import { RoadmapService } from "@/services/roadmap/RoadmapService"
-import {
-	acquireBroccoliFence,
-	broccoliFenceRuntime,
-	readBroccoliFence,
-	releaseBroccoliFence,
-	verifyBroccoliFence,
-} from "./BroccoliFencingAdapter"
+import { broccoliFenceRuntime, readBroccoliFence, releaseBroccoliFence, verifyBroccoliFence } from "./BroccoliFencingAdapter"
 
 export type { CoordinationAuthorityMode, LockBackends, LockClaim } from "@shared/governance/lockTypes"
 

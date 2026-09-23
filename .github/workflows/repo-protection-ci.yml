@@ -10,6 +10,50 @@ permissions:
   contents: read
 
 jobs:
+  agent-flight-test:
+    name: Agent Flight Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.x, 24.x]
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run Agent Flight Test
+        timeout-minutes: 2
+        run: npm run benchmark:flight -- --output agent-flight-test-report.json
+
+      - name: Upload machine-readable report
+        if: ${{ always() && hashFiles('agent-flight-test-report.json') != '' }}
+        id: upload-report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: agent-flight-test-report-node-${{ matrix.node }}-${{ github.sha }}
+          path: agent-flight-test-report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Add result to workflow summary
+        if: ${{ always() && hashFiles('agent-flight-test-report.json') != '' }}
+        env:
+          FLIGHT_REPORT_ARTIFACT_URL: ${{ steps.upload-report.outputs.artifact-url }}
+        run: node scripts/write-agent-flight-summary.mjs agent-flight-test-report.json
+
   guardrail-protection-audit:
     runs-on: ubuntu-latest
 

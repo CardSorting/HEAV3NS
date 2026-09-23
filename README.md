@@ -1,10 +1,10 @@
 <div align="center">
 
-# ⚡ HEAV3NS-JOY
+# ⚡ HEAV3NS
 
-### **A calm, local-first AI coding companion**
+### **Your cockpit for the tight coding loop**
 
-*Explicit review, reversible workspace operations, provider choice, and long-session focus for developers.*
+*A local-first CLI coding agent for focused, reviewable work.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.12%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
@@ -14,11 +14,12 @@
 
 | **Quick Links** | **Guides & Manuals** | **Deep Dives & Architecture** |
 |---|---|---|
-| 🚀 [Quick Start](#-quick-start-in-60-seconds) | 🔮 [Custom Assistants (SOULs & Skills)](SOUL_AND_SKILLS_GUIDE.md) | 📐 [Visual Architecture Maps](docs/ARCHITECTURE_DIAGRAMS.md) |
+| 🚀 [Quick Start](#-quick-start) | 🔮 [Custom Assistants (SOULs & Skills)](SOUL_AND_SKILLS_GUIDE.md) | 📐 [Visual Architecture Maps](docs/ARCHITECTURE_DIAGRAMS.md) |
 | 🎯 [Everyday Benefits](#-what-you-get-everyday-superpowers) | ❓ [Frequently Asked Questions](docs/FAQ.md) | 🏗️ [Runtime Architecture Guide](docs/RUNTIME_ARCHITECTURE_GUIDE.md) |
 | 👤 [Pick an AI Specialist](#-pick-an-ai-specialist) | ⌨️ [Terminal & Commands Guide](docs/TUI_COMMANDS_GUIDE.md) | 🔍 [Smart Search Engine (ADR-136)](docs/adr/ADR-136-high-velocity-pattern-search-and-zen-io-execution-authority.md) |
 | 📋 [What's New](#-whats-new-in-plain-english) | 📖 [Author's Story & Note](PREFACE.md) | ⚡ [Cost-Saving Memory (ADR-135)](docs/adr/ADR-135-zenith-tier-prompt-caching-telemetry-and-auto-tuning-substrate.md) |
 | 🧪 [78-Test Verification Suite](scripts/validate-qol-enhancements.ts) | 📈 [Live Benchmark Measurements](docs/LIVE_BASELINE.json) | 🏛️ [Architecture Decision Records](docs/adr/README.md) |
+| 🛩️ [Agent Flight Test](agent-flight-test/README.md) | 📊 [Benchmark Methodology](agent-flight-test/METHODOLOGY.md) | 🚀 [Launch & Trust Strategy](agent-flight-test/LAUNCH-STRATEGY.md) |
 | 🧾 [Claims & Evidence](.wiki/ip/CLAIM-REGISTER.md) | 🛡️ [Security Policy](SECURITY.md) | ⚖️ [Licensing Strategy](docs/LEGAL-STRATEGY.md) |
 | 🤖 [Claude Subscription DirectSDK Provider](docs/CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER.md) | | |
 
@@ -30,6 +31,20 @@
 > — **William Andrew Cruz** (`bozoegg` / `CardSorting`) · [Read Author's Note](PREFACE.md)
 
 ---
+
+## Precision at speed. Pilot in command.
+
+Every agent has a flight profile. Cargo planes carry the operation; fighter jets are built for tight turns. HEAV3NS takes the fighter-jet mission: one focused coding task close to the code—inspect context, make a scoped change, verify it, then hand control back to the developer. The metaphor describes our intended use, not a ranking of other agents.
+
+“Break the sound barrier” is our north star for a shorter path from intent to evidence. It is not a measured speed claim. The [Agent Flight Test](agent-flight-test/README.md) checks selected harness behavior with a deterministic local provider; it does not measure live-model coding ability.
+
+Start with the no-key harness check:
+
+```sh
+npm run benchmark:flight
+```
+
+Read the [test protocol](agent-flight-test/METHODOLOGY.md) or the [adoption and trust plan](agent-flight-test/LAUNCH-STRATEGY.md).
 
 ## 🌟 Why Developers Love It
 
@@ -44,7 +59,7 @@
 
 ---
 
-## 🚀 Quick Start in 60 Seconds
+## 🚀 Quick Start
 
 ```bash
 # 1. Download & Build
@@ -60,7 +75,7 @@ npx tsx src/index.ts --profile coder
 
 ```text
 ╔══════════════════════════════════════════════════════════════════════════════════════════╗
-║ ⚡ HEAV3NS-JOY │ 👤 [💻 Coder] │ 🧠 [configured model] │ ⏱️ local measurement │ 💰 provider usage ║
+║ ⚡ HEAV3NS │ 👤 [💻 Coder] │ 🧠 [configured model] │ ⏱️ local measurement │ 💰 provider usage ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════╣
 ║  👤 You: Refactor auth.ts to add expiration checks                                        ║
 ║  ⚡ HEAV3NS (Coder): Checked auth.ts and applied reviewable edits with unit tests         ║
@@ -71,7 +86,7 @@ npx tsx src/index.ts --profile coder
 
 ### Verify the CLI path
 
-`npm test` runs the CLI-native Mocha profile in `.mocharc.cli.json`. It keeps host/editor compatibility checks out of the default feedback loop while preserving them as an explicit `npm run test:legacy-host` profile.
+`npm test` runs the CLI-native Mocha unit profile in `.mocharc.cli.json`, then the no-key Agent Flight Test. It keeps host/editor compatibility checks out of the default feedback loop while preserving them as an explicit `npm run test:legacy-host` profile.
 
 ---
 

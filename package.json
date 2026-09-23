@@ -1,6 +1,6 @@
 {
   "name": "heav3ns",
-  "description": "HEAV3NS is a calm, local-first CLI coding agent with explicit review and provider choice.",
+  "description": "HEAV3NS is a focused, local-first CLI coding agent for reviewable developer workflows.",
   "version": "13.0.1",
   "engines": {
     "node": ">=22.12.0"
@@ -47,9 +47,10 @@
     "license:check": "node scripts/check-licensing.mjs",
     "dco:check": "node scripts/check-dco.mjs",
     "build": "npm run protos && node esbuild.mjs --production",
-    "test": "npm run test:unit",
+    "test": "npm run test:unit && npm run benchmark:flight",
     "smoke": "node --import tsx src/index.ts --smoke",
     "benchmark": "node --import tsx src/index.ts --benchmark",
+    "benchmark:flight": "node --import tsx scripts/benchmark-agent-flight.ts",
     "baseline:update": "node --import tsx src/index.ts --baseline",
     "guardrail": "node --import tsx scripts/validate-repo.ts",
     "validate:adr": "node --import tsx scripts/validate-adr-workspace.ts",
