@@ -2267,7 +2267,15 @@ export class MonolithFactory {
 			slashRouter,
 			proxyGateway,
 			undefined,
-			{ modelCatalog, budgetCalculator, tokenTruncator, completionGate },
+			{
+				modelCatalog,
+				budgetCalculator,
+				tokenTruncator,
+				completionGate,
+				openAiApiKey: authStorageVault.getToken("openai-codex"),
+				getOpenAiApiKey: () => authStorageVault.getToken("openai-codex"),
+				getOpenAiAuthMethod: () => setupWizard.getOpenAiAuthMethod(),
+			},
 		)
 
 		return {

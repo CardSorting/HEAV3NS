@@ -9,6 +9,7 @@ import type {
 } from "../../../core/contracts/agent.contracts.js"
 import type { SessionMessage } from "../../../core/contracts/session.contracts.js"
 import type { ToolExecutionRecord } from "../../../core/contracts/tooling.contracts.js"
+import { OpenAiCodexHandler } from "../../../core/api/providers/openai-codex.js"
 import {
 	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
 	isClaudeSubscriptionDirectSdkProvider,
@@ -42,6 +43,9 @@ import type { AgentSlashRouter } from "../resolution/agent-slash-router.js"
 import type { LlmProxyGateway } from "../resolution/llm-proxy-gateway.js"
 import { ModelCatalog } from "../resolution/model-catalog.js"
 import type { ModelResolver } from "../resolution/model-resolver.js"
+import { hasOpenAiCodexOAuthCredentials } from "../../../services/auth/OpenAiCodexOAuthService.js"
+import type { DietCodeStorageMessage } from "../../../shared/messages/content.js"
+import type { DietCodeTool } from "../../../shared/tools.js"
 import { FlappyBirdProjectSynthesizer } from "./flappy-bird-project-synthesizer.js"
 
 interface PreparedProviderContext {
@@ -56,11 +60,83 @@ type ProviderCompletionResponse = ClaudeSubscriptionDirectSdkCompletionResponse 
 			content?: string | null
 			tool_calls?: Array<{
 				id: string
+				item_id?: string
 				type: "function"
 				function: { name: string; arguments: string }
 			}>
+			codex_reasoning?: Array<{ id: string; text: string; summary?: unknown[]; redacted_data?: string }>
 		}
 	}>
+}
+
+function toCodexOAuthTranscript(
+	messages: Array<{
+		role: string
+		content: string | null
+		tool_call_id?: string
+		tool_calls?: Array<{ id: string; item_id?: string; function: { name: string; arguments: string } }>
+		codex_reasoning?: Array<{ id: string; text: string; summary?: unknown[]; redacted_data?: string }>
+	}>,
+): { instructions: string; transcript: DietCodeStorageMessage[] } {
+	const instructions = messages
+		.filter((message) => message.role === "system")
+		.map((message) => message.content ?? "")
+		.join("\n\n")
+	const transcript: DietCodeStorageMessage[] = []
+	for (const message of messages) {
+		if (message.role === "system") continue
+		if (message.role === "tool") {
+			transcript.push({
+				role: "user",
+				content: [
+					{
+						type: "tool_result",
+						tool_use_id: message.tool_call_id ?? "",
+						call_id: message.tool_call_id,
+						content: message.content ?? "",
+					},
+				],
+			})
+			continue
+		}
+		if (message.role === "assistant" && message.tool_calls?.length) {
+			const content: Array<Record<string, unknown>> = []
+			for (const reasoning of message.codex_reasoning ?? []) {
+				if (reasoning.redacted_data) {
+					content.push({ type: "redacted_thinking", call_id: reasoning.id, data: reasoning.redacted_data })
+				} else if (reasoning.text || reasoning.summary?.length) {
+					content.push({
+						type: "thinking",
+						call_id: reasoning.id,
+						thinking: reasoning.text,
+						summary: reasoning.summary,
+					})
+				}
+			}
+			if (message.content) content.push({ type: "text", text: message.content })
+			for (const toolCall of message.tool_calls) {
+				let input: unknown = {}
+				try {
+					input = JSON.parse(toolCall.function.arguments)
+				} catch {
+					input = {}
+				}
+				content.push({
+					type: "tool_use",
+					id: toolCall.item_id ?? toolCall.id,
+					call_id: toolCall.id,
+					name: toolCall.function.name,
+					input,
+				})
+			}
+			transcript.push({ role: "assistant", content } as unknown as DietCodeStorageMessage)
+			continue
+		}
+		if (message.role === "user" || message.role === "assistant") {
+			transcript.push({ role: message.role, content: message.content ?? "" })
+		}
+	}
+	return { instructions, transcript }
 }
 
 export interface AgentContextServices {
@@ -68,6 +144,9 @@ export interface AgentContextServices {
 	budgetCalculator?: ContextBudgetCalculator
 	tokenTruncator?: TokenTruncator
 	completionGate?: RoadmapCompletionGate
+	openAiApiKey?: string
+	getOpenAiApiKey?: () => string | undefined
+	getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
 }
 
 export class AgentEngine extends AbstractAgentEngine {
@@ -90,6 +169,9 @@ export class AgentEngine extends AbstractAgentEngine {
 	private readonly runtimeModelCatalog: ModelCatalog
 	private readonly runtimeBudgetCalculator: ContextBudgetCalculator
 	private readonly runtimeTokenTruncator: TokenTruncator
+	private readonly openAiApiKey?: string
+	private readonly getOpenAiApiKey?: () => string | undefined
+	private readonly getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
 	private readonly flappyBirdProjectSynthesizer = new FlappyBirdProjectSynthesizer()
 	private turnQueue: Promise<void> = Promise.resolve()
 
@@ -128,6 +210,9 @@ export class AgentEngine extends AbstractAgentEngine {
 		this.runtimeModelCatalog = contextServices.modelCatalog ?? new ModelCatalog()
 		this.runtimeBudgetCalculator = contextServices.budgetCalculator ?? new ContextBudgetCalculator()
 		this.runtimeTokenTruncator = contextServices.tokenTruncator ?? new TokenTruncator()
+		this.openAiApiKey = contextServices.openAiApiKey
+		this.getOpenAiApiKey = contextServices.getOpenAiApiKey
+		this.getOpenAiAuthMethod = contextServices.getOpenAiAuthMethod
 	}
 
 	/** Serialize mutations and stateful provider calls for deterministic turn order. */
@@ -264,14 +349,24 @@ export class AgentEngine extends AbstractAgentEngine {
 			const nextProgressSequence = (): number => ++liveProgressSequence
 			const liveStartedAt = Date.now()
 
-			const openAiApiKey = process.env.OPENAI_API_KEY
+			const authMethod = this.getOpenAiAuthMethod?.()
+			const openAiApiKey =
+				authMethod === "oauth" ? undefined : this.getOpenAiApiKey?.() || this.openAiApiKey || process.env.OPENAI_API_KEY
 			const activeModel = this.modelResolver.getActiveModel()
 			const activeProvider = this.config.provider ?? "openai-codex"
 			const usesClaudeSubscriptionDirectSdk = isClaudeSubscriptionDirectSdkProvider(activeProvider)
+			const hasConfiguredOpenAiProxy = Boolean(
+				this.proxyGateway?.getProxyConfig() || this.proxyGateway?.getProviderEndpoint("openai-codex"),
+			)
+			const usesCodexOAuth =
+				!usesClaudeSubscriptionDirectSdk &&
+				!hasConfiguredOpenAiProxy &&
+				authMethod !== "api-key" &&
+				hasOpenAiCodexOAuthCredentials(undefined)
 			const providerLabel = usesClaudeSubscriptionDirectSdk ? "Claude Code subscription" : "OpenAI Codex"
 			const progressSource = usesClaudeSubscriptionDirectSdk ? CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER : "openai-codex-api"
 
-			if (usesClaudeSubscriptionDirectSdk || openAiApiKey || this.proxyGateway) {
+			if (usesClaudeSubscriptionDirectSdk || openAiApiKey || usesCodexOAuth || hasConfiguredOpenAiProxy) {
 				const maxAttempts = usesClaudeSubscriptionDirectSdk ? 1 : 2
 				for (let attempt = 0; attempt < maxAttempts; attempt++) {
 					try {
@@ -283,9 +378,10 @@ export class AgentEngine extends AbstractAgentEngine {
 							headers: {},
 							timeoutMs: 30000,
 						}
-						const providerTimeoutMs = usesClaudeSubscriptionDirectSdk
-							? (this.config.providerTimeoutMs ?? 180_000)
-							: endpoint.timeoutMs
+						const providerTimeoutMs =
+							usesClaudeSubscriptionDirectSdk || usesCodexOAuth
+								? (this.config.providerTimeoutMs ?? 180_000)
+								: endpoint.timeoutMs
 						const timeoutSignal = AbortSignal.timeout(providerTimeoutMs)
 						const requestSignal = input.signal ? AbortSignal.any([input.signal, timeoutSignal]) : timeoutSignal
 
@@ -318,7 +414,13 @@ export class AgentEngine extends AbstractAgentEngine {
 							content: string | null
 							name?: string
 							tool_call_id?: string
-							tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }>
+							tool_calls?: Array<{
+								id: string
+								item_id?: string
+								type: "function"
+								function: { name: string; arguments: string }
+							}>
+							codex_reasoning?: Array<{ id: string; text: string; summary?: unknown[]; redacted_data?: string }>
 						}> = preparedContext.messages.map((message) => ({
 							role: message.role,
 							content: message.content,
@@ -396,6 +498,81 @@ export class AgentEngine extends AbstractAgentEngine {
 											signal: requestSignal,
 										},
 									)
+								} else if (usesCodexOAuth) {
+									const codexOAuthHandler = new OpenAiCodexHandler({
+										openAiCodexModelId: activeModel,
+										abortSignal: requestSignal,
+									})
+									const { instructions, transcript } = toCodexOAuthTranscript(apiMessages)
+									const toolCalls = new Map<
+										string,
+										{
+											itemId: string
+											callId: string
+											name: string
+											finalArguments: string
+											argumentDeltas: string
+										}
+									>()
+									const reasoningItems = new Map<
+										string,
+										{ id: string; text: string; summary?: unknown[]; redacted_data?: string }
+									>()
+									let content = ""
+									for await (const chunk of codexOAuthHandler.createMessage(
+										instructions,
+										transcript,
+										availableTools as DietCodeTool[],
+									)) {
+										if (chunk.type === "text") content += chunk.text
+										if (chunk.type === "reasoning" && chunk.id) {
+											const item = reasoningItems.get(chunk.id) ?? { id: chunk.id, text: "" }
+											item.text += chunk.reasoning
+											if (chunk.redacted_data) item.redacted_data = chunk.redacted_data
+											if (Array.isArray(chunk.details)) item.summary = chunk.details
+											else if (chunk.details) item.summary = [...(item.summary ?? []), chunk.details]
+											reasoningItems.set(chunk.id, item)
+										}
+										if (chunk.type !== "tool_calls") continue
+										const fn = chunk.tool_call.function
+										const itemId = fn.id ?? chunk.id ?? `fc_${toolCalls.size}`
+										const entry = toolCalls.get(itemId) ?? {
+											itemId,
+											callId: chunk.tool_call.call_id ?? itemId,
+											name: "",
+											finalArguments: "",
+											argumentDeltas: "",
+										}
+										entry.callId = chunk.tool_call.call_id ?? entry.callId
+										const name = typeof fn.name === "string" ? fn.name : ""
+										if (name && name !== itemId) entry.name = name
+										const args =
+											typeof fn.arguments === "string" ? fn.arguments : JSON.stringify(fn.arguments ?? {})
+										if (args) {
+											if (name === itemId) entry.argumentDeltas += args
+											else entry.finalArguments = args
+										}
+										toolCalls.set(itemId, entry)
+									}
+									data = {
+										choices: [
+											{
+												message: {
+													content: content || null,
+													codex_reasoning: [...reasoningItems.values()],
+													tool_calls: [...toolCalls.values()].map((call) => ({
+														id: call.callId,
+														item_id: call.itemId,
+														type: "function" as const,
+														function: {
+															name: call.name,
+															arguments: call.finalArguments || call.argumentDeltas || "{}",
+														},
+													})),
+												},
+											},
+										],
+									}
 								} else {
 									const authHeaders: Record<string, string> = {}
 									if (openAiApiKey) {
@@ -446,6 +623,7 @@ export class AgentEngine extends AbstractAgentEngine {
 									role: "assistant",
 									content: choiceMessage?.content ?? null,
 									tool_calls: providerToolCalls,
+									codex_reasoning: choiceMessage?.codex_reasoning,
 								})
 
 								const scheduledCalls = toolCalls.map((tc) => ({
@@ -525,6 +703,17 @@ export class AgentEngine extends AbstractAgentEngine {
 						liveError = this.formatLiveDispatchError(error)
 						if (input.signal?.aborted) {
 							liveFailureKind = "cancelled"
+							this.reportProgress(input.onProgress, {
+								activityId: liveProgressActivityId,
+								phase: "cancelled",
+								status: "cancelled",
+								message: "Agent turn cancelled",
+								detail: "Turn cancelled by user",
+								timestamp: Date.now(),
+								elapsedMs: Date.now() - liveStartedAt,
+								sequence: nextProgressSequence(),
+								metadata: { source: progressSource, scope: "turn", attempt: attempt + 1 },
+							})
 							break
 						}
 						const err = error as { name?: string; message?: string } | undefined
@@ -578,14 +767,20 @@ export class AgentEngine extends AbstractAgentEngine {
 				turnOutcome = "failed"
 				const actionHint = usesClaudeSubscriptionDirectSdk
 					? `[Check Claude Code: run \`claude auth login\`, verify the official CLI is compatible with your Node runtime, and set ${"LUMI_CLAUDE_SUBSCRIPTION_DIRECTSDK_PLUGIN_DIR"} if the plugin path is not auto-discovered.]`
-					: "[Check OpenAI credentials: Set OPENAI_API_KEY in the environment or run /setup.]"
+					: usesCodexOAuth
+						? "[Check your ChatGPT sign-in with `heav3ns whoami`; reconnect with `heav3ns login` if needed.]"
+						: authMethod === "api-key"
+							? "[The selected API key is missing. Configure OPENAI_API_KEY with `heav3ns setup`, or switch to ChatGPT sign-in in Settings.]"
+							: "[Connect your ChatGPT account with `heav3ns login`, or configure an OPENAI_API_KEY with `heav3ns setup`.]"
 				responseText = `Live model request failed for ${activeModel}: ${liveError}\n${actionHint}`
 			} else {
 				turnOutcome = "failed"
 				responseText = usesClaudeSubscriptionDirectSdk
 					? `Processed turn prompt: "${promptText}".\n[Note: Select a valid Claude subscription provider plugin and authenticate with \x1b[33mclaude auth login\x1b[0m.]`
-					: `Processed turn prompt: "${promptText}".\n` +
-						`[Note: Configure \x1b[33mOPENAI_API_KEY\x1b[0m or run \x1b[33m/setup\x1b[0m for live OpenAI Codex responses.]`
+					: authMethod === "api-key"
+						? `Processed turn prompt: "${promptText}".\n[Note: The selected API-key method has no key configured. Add OPENAI_API_KEY with \x1b[33mheav3ns setup\x1b[0m, or switch to ChatGPT sign-in in Settings.]`
+						: `Processed turn prompt: "${promptText}".\n` +
+							`[Note: Run \x1b[33mheav3ns login\x1b[0m to connect ChatGPT, or configure an \x1b[33mOPENAI_API_KEY\x1b[0m with \x1b[33mheav3ns setup\x1b[0m.]`
 			}
 		}
 

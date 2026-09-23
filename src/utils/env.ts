@@ -40,22 +40,29 @@ export async function readTextFromClipboard(): Promise<string> {
  * @param url The URL to open
  * @returns Promise that resolves when the operation is complete
  */
-export async function openExternal(url: string): Promise<void> {
-	Logger.log("Opening browser:", url)
+export async function openExternal(url: string): Promise<boolean> {
+	Logger.log("Opening external URL")
 	try {
 		await HostProvider.env.openExternal(StringRequest.create({ value: url }))
+		return true
 	} catch (error) {
 		// Fallback for hosts that don't implement openExternal (e.g., JetBrains plugin)
 		Logger.warn(`Host openExternal RPC failed, falling back to 'open' package: ${error}`)
 		try {
 			const open = (await import("open")).default
 			await open(url)
+			return true
 		} catch (fallbackError) {
-			Logger.error(`Fallback 'open' also failed: ${fallbackError}`)
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: `Failed to open URL: ${url}`,
-			})
+			Logger.error(`Could not open external URL: ${fallbackError}`)
+			try {
+				HostProvider.window.showMessage({
+					type: ShowMessageType.ERROR,
+					message: "Could not open the link in a browser. Copy the link from the terminal and open it manually.",
+				})
+			} catch {
+				// Terminal-only hosts have no native message surface.
+			}
+			return false
 		}
 	}
 }

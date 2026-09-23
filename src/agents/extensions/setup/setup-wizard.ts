@@ -19,11 +19,12 @@ import type { ClaudeSubscriptionDirectSdkOptions } from "../../../integrations/c
 import type { AuthStorageVault } from "../resolution/auth-storage-vault.js"
 import type { EnvironmentKeyResolver } from "../resolution/environment-key-resolver.js"
 import type { LlmProxyGateway, ProxyEndpointConfig } from "../resolution/llm-proxy-gateway.js"
+import { hasOpenAiCodexOAuthCredentials, OpenAiCodexOAuthService } from "../../../services/auth/OpenAiCodexOAuthService.js"
 
 export interface ProviderAuditStatus {
 	provider: string
 	configured: boolean
-	source: "environment" | "vault" | "proxy" | "local" | "none"
+	source: "environment" | "vault" | "proxy" | "local" | "oauth" | "none"
 	maskedValue?: string
 	authenticated?: boolean
 }
@@ -47,6 +48,7 @@ export interface SetupWizardOptions {
 
 export type ApiKeyProviderId = "openai-codex"
 export type SetupProviderId = ApiKeyProviderId | typeof CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER
+export type OpenAiAuthMethod = "oauth" | "api-key"
 
 function normalizeSetupProvider(provider: string): SetupProviderId | undefined {
 	const normalized = normalizeAgentProvider(provider)
@@ -79,6 +81,7 @@ export class SetupWizard {
 	>
 	private savedModelName?: string
 	private savedProviderName?: SetupProviderId
+	private savedOpenAiAuthMethod?: OpenAiAuthMethod
 
 	constructor(options: SetupWizardOptions) {
 		this.envKeyResolver = options.envKeyResolver
@@ -99,7 +102,12 @@ export class SetupWizard {
 			let source: ProviderAuditStatus["source"] = "none"
 			let masked: string | undefined
 
-			if (vaultToken) {
+			if (status.provider === OPENAI_CODEX_PROVIDER && this.getOpenAiAuthMethod() === "oauth") {
+				if (hasOpenAiCodexOAuthCredentials(undefined)) {
+					source = "oauth"
+					masked = "ChatGPT account session"
+				}
+			} else if (vaultToken) {
 				source = "vault"
 				masked = `${vaultToken.substring(0, 4)}...${vaultToken.slice(-4)}`
 			} else if (status.hasKey) {
@@ -152,14 +160,26 @@ export class SetupWizard {
 
 	displayWhoAmI(activeModel = this.getSavedModel() ?? "gpt-5.6-terra"): void {
 		const who = this.getWhoAmI(activeModel)
+		const activeProvider =
+			who.configuredProviders.find((status) => status.provider === this.getSavedProvider()) ?? who.configuredProviders[0]
 		const hasClaudeTransport = who.configuredProviders.some(
 			(status) => status.provider === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
 		)
 		console.log("\n\x1b[1;35m╭─── LUMI Account & Active Session ─────────────────────────────╮\x1b[0m")
 
 		if (who.authenticated) {
-			console.log(`│  \x1b[1;32m● Connected to OpenAI Codex\x1b[0m`)
-			console.log(`│    \x1b[90mProvider:\x1b[0m   \x1b[32mOpenAI Codex (Active)\x1b[0m`)
+			const codexSession = who.configuredProviders.some(
+				(status) => status.provider === OPENAI_CODEX_PROVIDER && status.source === "oauth",
+			)
+			console.log(
+				codexSession
+					? `│  \x1b[1;32m● ChatGPT session saved\x1b[0m`
+					: `│  \x1b[1;32m● Provider credentials configured\x1b[0m`,
+			)
+			console.log(
+				`│    \x1b[90mProvider:\x1b[0m   \x1b[32m${activeProvider ? getAgentProviderLabel(activeProvider.provider) : "Configured"}\x1b[0m`,
+			)
+			console.log(`│    \x1b[90mCheck access:\x1b[0m \x1b[36mRun heav3ns doctor\x1b[0m`)
 		} else if (hasClaudeTransport) {
 			console.log(`│  \x1b[1;33m○ Claude subscription transport detected\x1b[0m`)
 			console.log(`│    \x1b[90mConnect:\x1b[0m    \x1b[36mRun claude auth login, then /providers\x1b[0m`)
@@ -187,6 +207,8 @@ export class SetupWizard {
 	/** Signs out and clears all stored credentials. */
 	logout(): boolean {
 		try {
+			OpenAiCodexOAuthService.signOut()
+			this.savedOpenAiAuthMethod = undefined
 			this.clearAllCredentials()
 			return true
 		} catch {
@@ -194,9 +216,42 @@ export class SetupWizard {
 		}
 	}
 
-	/** Interactive login — runs the setup wizard to configure OpenAI Codex credentials. */
+	/** Interactive login — authenticate to OpenAI Codex with the ChatGPT browser OAuth flow. */
 	async loginInteractive(providedReadLine?: readline.Interface): Promise<void> {
-		await this.runInteractiveWizard(providedReadLine)
+		console.log("\nOpenAI Codex sign-in")
+		console.log(
+			"A browser window will open. Sign in to ChatGPT, then return here. The link expires in 5 minutes; press Ctrl+C to cancel.\n",
+		)
+		const abortController = new AbortController()
+		const onInterrupt = () => abortController.abort()
+		process.once("SIGINT", onInterrupt)
+		try {
+			await this.signInCodexOAuth(
+				(link) => console.log(`Browser did not open. Open this sign-in link manually:\n\n${link}\n`),
+				abortController.signal,
+			)
+			this.setOpenAiAuthMethod("oauth")
+			this.setSavedProvider(OPENAI_CODEX_PROVIDER)
+			const savedModel = this.getSavedModel()
+			if (!savedModel || savedModel.toLowerCase().startsWith("claude-")) {
+				this.setSavedModel("gpt-5.6-terra")
+			}
+			console.log("\x1b[32m[✓] OpenAI Codex connected with your ChatGPT account.\x1b[0m\n")
+		} catch (error) {
+			if (abortController.signal.aborted) {
+				console.log("\nOpenAI Codex sign-in cancelled. Your current connection was left unchanged.\n")
+				return
+			}
+			const detail = error instanceof Error ? error.message : String(error)
+			console.error(`\x1b[31m[!] OpenAI Codex sign-in failed: ${detail}\x1b[0m\n`)
+			throw error
+		} finally {
+			process.off("SIGINT", onInterrupt)
+		}
+	}
+
+	async signInCodexOAuth(onManualBrowserOpen?: (authorizationLink: string) => void, signal?: AbortSignal): Promise<void> {
+		await OpenAiCodexOAuthService.signIn(onManualBrowserOpen, signal)
 	}
 
 	displayAuditTable(): void {
@@ -270,7 +325,7 @@ export class SetupWizard {
 		if (fs.existsSync(configPath) && process.platform !== "win32") {
 			const mode = fs.statSync(configPath).mode & 0o777
 			if (mode === 0o600) {
-				console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential Vault Security\x1b[0m (mode 0o600 encrypted)`)
+				console.log(`  \x1b[32m[PASS]\x1b[0m \x1b[1mCredential File Permissions\x1b[0m (owner-only, mode 0o600)`)
 			} else {
 				console.log(
 					`  \x1b[33m[WARN]\x1b[0m \x1b[1mCredential Vault Permissions\x1b[0m (Current: 0o${mode.toString(8)}, recommended: 0o600)`,
@@ -301,19 +356,28 @@ export class SetupWizard {
 			let exitWizard = false
 			while (!exitWizard) {
 				console.log("\x1b[1;34mOptions:\x1b[0m")
-				console.log("  [1] Configure OpenAI Codex API Key")
-				console.log(`  [2] Select Model (${activeModel})`)
-				console.log("  [3] Run System Health & Diagnostics (Doctor)")
-				console.log("  [4] Display Identity & Session Details")
-				console.log("  [5] Select & Verify Claude Code subscription")
+				console.log("  [1] Connect OpenAI Codex with ChatGPT (browser sign-in)")
+				console.log("  [2] Configure an OpenAI API Key instead")
+				console.log(`  [3] Select Model (${activeModel})`)
+				console.log("  [4] Run System Health & Diagnostics (Doctor)")
+				console.log("  [5] Display Identity & Session Details")
+				console.log("  [6] Select & Verify Claude Code subscription")
 				console.log("  [0] Save & Exit\n")
 
-				const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-5): \x1b[0m")
+				const choice = await this.askQuestion(rl, "\x1b[1;33mSelect option (0-6): \x1b[0m")
 				switch (choice.trim()) {
 					case "1":
-						await this.configureApiKeys(rl)
+						try {
+							await this.loginInteractive()
+						} catch {
+							// Keep the setup menu available so the user can retry or choose another sign-in method.
+						}
 						break
 					case "2": {
+						await this.configureApiKeys(rl)
+						break
+					}
+					case "3": {
 						if (this.getSavedProvider() === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER) {
 							console.log(
 								"\n\x1b[1;34mSupported Claude Code routes (use the TUI picker for live account entitlements):\x1b[0m",
@@ -333,13 +397,13 @@ export class SetupWizard {
 						}
 						break
 					}
-					case "3":
+					case "4":
 						await this.displayDoctor(this.getSavedProvider())
 						break
-					case "4":
+					case "5":
 						this.displayWhoAmI()
 						break
-					case "5": {
+					case "6": {
 						this.setSavedProvider(CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
 						this.setSavedModel(CLAUDE_SUBSCRIPTION_DIRECTSDK_DEFAULT_MODEL)
 						const result = await this.testProviderConnection(CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER)
@@ -357,7 +421,7 @@ export class SetupWizard {
 						console.log("\n\x1b[32m[✓] Configuration saved successfully!\x1b[0m\n")
 						break
 					default:
-						console.log("\x1b[31mInvalid option, please choose 0 - 5.\x1b[0m\n")
+						console.log("\x1b[31mInvalid option, please choose 0 - 6.\x1b[0m\n")
 						break
 				}
 			}
@@ -394,7 +458,28 @@ export class SetupWizard {
 		}
 
 		this.authStorageVault.setToken(provider, cleaned)
+		this.setOpenAiAuthMethod("api-key")
 		this.saveConfigToDisk()
+	}
+
+	setOpenAiAuthMethod(method: OpenAiAuthMethod | undefined): void {
+		this.savedOpenAiAuthMethod = method
+		this.saveConfigToDisk()
+	}
+
+	getOpenAiAuthMethod(): OpenAiAuthMethod | undefined {
+		if (this.savedOpenAiAuthMethod) return this.savedOpenAiAuthMethod
+		if (hasOpenAiCodexOAuthCredentials(undefined)) return "oauth"
+		if (this.authStorageVault.hasToken(OPENAI_CODEX_PROVIDER) || this.envKeyResolver.resolveKey(OPENAI_CODEX_PROVIDER)) {
+			return "api-key"
+		}
+		return undefined
+	}
+
+	hasOpenAiApiKey(): boolean {
+		return Boolean(
+			this.authStorageVault.getToken(OPENAI_CODEX_PROVIDER) || this.envKeyResolver.resolveKey(OPENAI_CODEX_PROVIDER),
+		)
 	}
 
 	configureLocalEndpoint(provider: string, baseUrl: string, apiKey?: string): void {
@@ -528,6 +613,7 @@ export class SetupWizard {
 				proxy,
 				localEndpoints,
 				provider: this.savedProviderName,
+				openAiAuthMethod: this.savedOpenAiAuthMethod,
 				modelName: this.savedModelName,
 				updatedAt: Date.now(),
 			}
@@ -549,6 +635,7 @@ export class SetupWizard {
 					proxy?: { baseUrl?: string; apiKey?: string }
 					localEndpoints?: Record<string, ProxyEndpointConfig>
 					provider?: string
+					openAiAuthMethod?: OpenAiAuthMethod
 					modelName?: string
 				}
 
@@ -580,6 +667,9 @@ export class SetupWizard {
 				}
 				if (typeof data.provider === "string") {
 					this.savedProviderName = normalizeSetupProvider(data.provider)
+				}
+				if (data.openAiAuthMethod === "oauth" || data.openAiAuthMethod === "api-key") {
+					this.savedOpenAiAuthMethod = data.openAiAuthMethod
 				}
 			}
 		} catch {
@@ -624,6 +714,30 @@ export class SetupWizard {
 
 	async testProviderConnection(providerName: string): Promise<{ passed: boolean; details: string }> {
 		const p = normalizeAgentProvider(providerName)
+		if (p === OPENAI_CODEX_PROVIDER && this.getOpenAiAuthMethod() === "oauth") {
+			if (!hasOpenAiCodexOAuthCredentials(undefined)) {
+				return {
+					passed: false,
+					details: "ChatGPT sign-in is selected, but no session is saved. Sign in again or switch to API-key sign-in.",
+				}
+			}
+			try {
+				const models = await OpenAiCodexOAuthService.listModels()
+				const modelCount = Object.keys(models).length
+				return {
+					passed: modelCount > 0,
+					details:
+						modelCount > 0
+							? `ChatGPT session verified · ${modelCount} Codex models available`
+							: "ChatGPT session responded, but no Codex models are available to this account",
+				}
+			} catch (error) {
+				return {
+					passed: false,
+					details: error instanceof Error ? error.message : String(error),
+				}
+			}
+		}
 		if (p === CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER) {
 			const diagnostic = await diagnoseClaudeSubscriptionDirectSdk(this.claudeSubscriptionDirectSdk)
 			const plan = diagnostic.plan ? ` (${diagnostic.plan})` : ""

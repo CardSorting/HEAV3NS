@@ -18,6 +18,7 @@ export interface OpenAiCodexHandlerOptions extends CommonApiHandlerOptions {
 	openAiCodexModelId?: string
 	reasoningEffort?: string
 	thinkingBudgetTokens?: number
+	abortSignal?: AbortSignal
 }
 
 function isOpenAiTool(tool: DietCodeTool): tool is OpenAITool {
@@ -40,6 +41,10 @@ function modelInfoFor(modelId: string): ModelInfo {
 			description: "Model metadata will be populated from the authenticated OpenAI Codex provider.",
 		}
 	)
+}
+
+function isUnauthorized(error: unknown): boolean {
+	return typeof error === "object" && error !== null && "status" in error && (error as { status?: unknown }).status === 401
 }
 
 /** OpenAI Responses API handler authenticated with the ChatGPT Codex OAuth session. */
@@ -83,7 +88,6 @@ export class OpenAiCodexHandler implements ApiHandler {
 		tools?: DietCodeTool[],
 		_useResponseApi?: boolean,
 	): ApiStream {
-		const client = await this.ensureClient()
 		let model = this.getModel()
 		if (!model.id) {
 			throw new Error("No OpenAI Codex model is selected. Sign in and refresh the available models.")
@@ -127,8 +131,25 @@ export class OpenAiCodexHandler implements ApiHandler {
 			}
 		}
 
-		const stream = await client.responses.create(requestParams)
-		yield* handleResponsesApiStreamResponse(stream, model.info, async () => 0)
+		let unauthorizedRetry = false
+		while (true) {
+			let yieldedChunk = false
+			try {
+				const stream = await (await this.ensureClient()).responses.create(requestParams, { signal: this.options.abortSignal })
+				for await (const chunk of handleResponsesApiStreamResponse(stream, model.info, async () => 0)) {
+					yieldedChunk = true
+					yield chunk
+				}
+				return
+			} catch (error) {
+				if (unauthorizedRetry || yieldedChunk || !isUnauthorized(error) || this.options.abortSignal?.aborted) {
+					throw error
+				}
+				unauthorizedRetry = true
+				await OpenAiCodexOAuthService.refreshAfterUnauthorized(this.options.openAiCodexOauthCredentials)
+				this.client = undefined
+			}
+		}
 	}
 
 	getModel(): { id: string; info: ModelInfo } {

@@ -184,7 +184,7 @@ const baseConfig = {
 	treeShaking: true,
 	define: buildEnvVars,
 	banner: {
-		js: "const _importMetaUrl = import.meta.url;",
+		js: 'import { createRequire as _createRequire } from "node:module"; const require = _createRequire(import.meta.url); const _importMetaUrl = import.meta.url;',
 	},
 	tsconfig: path.resolve(__dirname, "tsconfig.json"),
 	plugins: [

@@ -1168,6 +1168,16 @@ export class StateManager {
 		}
 	}
 
+	/** Flush and release file watchers/timers when a standalone CLI process exits. */
+	public async shutdown(): Promise<void> {
+		if (!this.isInitialized) return
+		await this.flushPendingState()
+		this.dispose()
+		if (StateManager.instance === this) {
+			StateManager.instance = null
+		}
+	}
+
 	/**
 	 * Cancel the current debounce generation and timeout.
 	 */

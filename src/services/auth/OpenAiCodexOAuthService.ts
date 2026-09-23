@@ -6,10 +6,7 @@ import { StateManager } from "@core/storage/StateManager"
 import { ExtensionRegistryInfo } from "@/registry"
 import { fetch as configuredFetch } from "@/shared/net"
 import { openExternal } from "@/utils/env"
-import {
-	writeOpenAiCodexOAuthCallbackResponse,
-	type OpenAiCodexOAuthCallbackPageState,
-} from "./openAiCodexOAuthCallbackPage"
+import { writeOpenAiCodexOAuthCallbackResponse, type OpenAiCodexOAuthCallbackPageState } from "./openAiCodexOAuthCallbackPage"
 
 export const OPENAI_CODEX_OAUTH_CREDENTIALS_KEY = "openaiCodexOauthCredentials" as const
 
@@ -283,6 +280,7 @@ async function exchangeAuthorizationCode(
 	code: string,
 	redirectUri: string,
 	verifier: string,
+	signal?: AbortSignal,
 ): Promise<OpenAiCodexOAuthCredentials> {
 	const body = new URLSearchParams({
 		grant_type: "authorization_code",
@@ -292,8 +290,11 @@ async function exchangeAuthorizationCode(
 		code_verifier: verifier,
 	})
 
+	if (signal?.aborted) throw new Error("OpenAI Codex sign-in was cancelled.")
 	const controller = new AbortController()
 	const timeout = setTimeout(() => controller.abort(), OPENAI_CODEX_TOKEN_TIMEOUT_MS)
+	const abortFromCaller = () => controller.abort()
+	signal?.addEventListener("abort", abortFromCaller, { once: true })
 	try {
 		const response = await configuredFetch(OPENAI_CODEX_TOKEN_ENDPOINT, {
 			method: "POST",
@@ -304,12 +305,16 @@ async function exchangeAuthorizationCode(
 
 		return await readTokenResponse(response)
 	} catch (error) {
+		if (signal?.aborted) {
+			throw new Error("OpenAI Codex sign-in was cancelled.")
+		}
 		if (controller.signal.aborted) {
 			throw new Error("ChatGPT sign-in timed out before HEAV3NS could finish connecting.")
 		}
 		throw error
 	} finally {
 		clearTimeout(timeout)
+		signal?.removeEventListener("abort", abortFromCaller)
 	}
 }
 
@@ -335,7 +340,7 @@ export async function refreshOpenAiCodexOAuthCredentials(
 	return readTokenResponse(response, credentials)
 }
 
-async function bindCallbackServer(expectedState: string): Promise<CallbackServerHandle> {
+async function bindCallbackServer(expectedState: string, signal?: AbortSignal): Promise<CallbackServerHandle> {
 	for (const port of OPENAI_CODEX_CALLBACK_PORTS) {
 		try {
 			return await new Promise<CallbackServerHandle>((resolve, reject) => {
@@ -346,6 +351,7 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 				let awaitingCompletionPage = false
 				let finalPageState: OpenAiCodexOAuthCallbackPageState | undefined
 				let pendingResponse: http.ServerResponse | undefined
+				let abortListener: (() => void) | undefined
 				let resolveCallback!: (code: string) => void
 				let rejectCallback!: (error: Error) => void
 				let server: Server
@@ -355,6 +361,7 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 					serverClosed = true
 					if (timer) clearTimeout(timer)
 					if (finishTimer) clearTimeout(finishTimer)
+					if (abortListener) signal?.removeEventListener("abort", abortListener)
 					server.close()
 				}
 
@@ -367,14 +374,14 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 					pendingResponse = undefined
 
 					if (!callbackResponse || callbackResponse.destroyed || callbackResponse.writableEnded) {
-					closeServer()
-					return
+						closeServer()
+						return
 					}
 
 					awaitingCompletionPage = true
 					callbackResponse.writeHead(303, {
 						"Cache-Control": "no-store, max-age=0",
-						"Location": `${OPENAI_CODEX_CALLBACK_PATH}/complete`,
+						Location: `${OPENAI_CODEX_CALLBACK_PATH}/complete`,
 						"Referrer-Policy": "no-referrer",
 					})
 					callbackResponse.end()
@@ -435,7 +442,11 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 						settled = true
 						if (timer) clearTimeout(timer)
 						rejectCallback(
-							new Error(oauthError === "access_denied" ? "OpenAI Codex sign-in was cancelled" : "OpenAI Codex could not complete sign-in"),
+							new Error(
+								oauthError === "access_denied"
+									? "OpenAI Codex sign-in was cancelled"
+									: "OpenAI Codex could not complete sign-in",
+							),
 						)
 						redirectToCompletion(response, oauthError === "access_denied" ? "cancelled" : "failed")
 						return
@@ -467,6 +478,17 @@ async function bindCallbackServer(expectedState: string): Promise<CallbackServer
 						rejectCallback(new Error("Timed out waiting for OpenAI Codex sign-in."))
 					}, OPENAI_CODEX_CALLBACK_TIMEOUT_MS)
 					timer.unref?.()
+					if (signal) {
+						abortListener = () => {
+							if (settled) return
+							settled = true
+							if (timer) clearTimeout(timer)
+							closeServer()
+							rejectCallback(new Error("OpenAI Codex sign-in was cancelled."))
+						}
+						signal.addEventListener("abort", abortListener, { once: true })
+						if (signal.aborted) abortListener()
+					}
 
 					resolve({
 						port,
@@ -508,9 +530,7 @@ function getStoredCredentials(rawFallback?: string): OpenAiCodexOAuthCredentials
 	}
 }
 
-async function refreshAndPersistCredentials(
-	credentials: OpenAiCodexOAuthCredentials,
-): Promise<OpenAiCodexOAuthCredentials> {
+async function refreshAndPersistCredentials(credentials: OpenAiCodexOAuthCredentials): Promise<OpenAiCodexOAuthCredentials> {
 	if (!credentials.refreshToken) {
 		throw new Error("OpenAI Codex session expired. Sign out and sign in again.")
 	}
@@ -576,10 +596,10 @@ export function hasOpenAiCodexOAuthCredentials(raw: string | undefined): boolean
 }
 
 export class OpenAiCodexOAuthService {
-	static async signIn(): Promise<void> {
+	static async signIn(onManualBrowserOpen?: (authorizationLink: string) => void, signal?: AbortSignal): Promise<void> {
 		const { verifier, challenge } = createOpenAiCodexPkcePair()
 		const state = randomBytes(32).toString("base64url")
-		const callbackServer = await bindCallbackServer(state)
+		const callbackServer = await bindCallbackServer(state, signal)
 		// Ensure a callback rejection caused by an early browser/openExternal
 		// failure is observed even though the callback is only awaited on success.
 		void callbackServer.callback.catch(() => undefined)
@@ -600,13 +620,30 @@ export class OpenAiCodexOAuthService {
 		}).toString()
 
 		try {
-			await openExternal(authorizationUrl.toString())
+			if (signal?.aborted) throw new Error("OpenAI Codex sign-in was cancelled.")
+			const authorizationLink = authorizationUrl.toString()
+			if (!(await openExternal(authorizationLink))) {
+				if (!onManualBrowserOpen) {
+					throw new Error("Could not open a browser automatically. Try signing in again from a local terminal session.")
+				}
+				onManualBrowserOpen(authorizationLink)
+			}
 			const code = await callbackServer.callback
-			const credentials = await exchangeAuthorizationCode(code, redirectUri, verifier)
+			if (signal?.aborted) throw new Error("OpenAI Codex sign-in was cancelled.")
+			const credentials = await exchangeAuthorizationCode(code, redirectUri, verifier, signal)
+			if (signal?.aborted) throw new Error("OpenAI Codex sign-in was cancelled.")
 			credentialGeneration += 1
 			credentialRefreshInFlight = undefined
-			StateManager.get().setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(credentials))
-			await StateManager.get().flushPendingState()
+			const stateManager = StateManager.get()
+			const previousCredentials = stateManager.getSecretKey(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY)
+			stateManager.setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, serializeOpenAiCodexOAuthCredentials(credentials))
+			try {
+				await stateManager.flushPendingState()
+			} catch (error) {
+				// Keep a failed disk write from silently replacing the current session in memory.
+				stateManager.setSecret(OPENAI_CODEX_OAUTH_CREDENTIALS_KEY, previousCredentials)
+				throw error
+			}
 			callbackServer.complete()
 		} catch (error) {
 			callbackServer.cancel(error instanceof Error ? error : new Error(String(error)))
@@ -632,6 +669,15 @@ export class OpenAiCodexOAuthService {
 			return credentials
 		}
 
+		return refreshAndPersistCredentials(credentials)
+	}
+
+	/** Refresh a session rejected by the provider even when its expiry claim is still in the future. */
+	static async refreshAfterUnauthorized(rawFallback?: string): Promise<OpenAiCodexOAuthCredentials> {
+		const credentials = getStoredCredentials(rawFallback)
+		if (!credentials) {
+			throw new Error("OpenAI Codex OAuth is not configured. Sign in with OpenAI Codex in Settings.")
+		}
 		return refreshAndPersistCredentials(credentials)
 	}
 

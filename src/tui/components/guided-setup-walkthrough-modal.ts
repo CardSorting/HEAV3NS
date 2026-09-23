@@ -53,6 +53,9 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 	private selectedProvider: SetupProviderId | null = null
 	private providerFeedback = ""
 	private oauthStatus = ""
+	private oauthInProgress = false
+	private oauthAbortController: AbortController | null = null
+	private isClosed = false
 
 	constructor(
 		setupWizard: SetupWizard,
@@ -129,15 +132,27 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			stepMarkdownText =
 				`### Step 2/4: Model Provider Selection & Purpose\n\n` +
 				`Choose a provider below to configure its credentials and make its default model active:\n\n` +
+				`For OpenAI Codex, choose which sign-in method to use. Switching methods keeps the other saved credential available.\n\n` +
 				`- **OpenAI Codex**: OpenAI-compatible agentic coding models.\n` +
 				`- **Claude Code subscription**: Uses the official Claude Code CLI session; no API key is copied into LUMI.\n` +
-				(this.providerFeedback ? `\n${this.providerFeedback}\n` : "")
+				(this.providerFeedback ? `\n${this.providerFeedback}\n` : "") +
+				(this.oauthStatus ? `\n${this.oauthStatus}\n` : "")
 
 			this.stepMarkdownComponent = new Markdown(stepMarkdownText, 0, 0, WIZARD_MARKDOWN_THEME)
 			this.vstack.addChild(this.stepMarkdownComponent)
 
+			const activeOpenAiAuthMethod = this.setupWizard.getOpenAiAuthMethod()
 			const items: SelectItem[] = [
-				{ value: "openai-codex", label: "OpenAI Codex API Key", description: "OpenAI Codex model access." },
+				{
+					value: "openai-codex-oauth",
+					label: `ChatGPT sign-in${activeOpenAiAuthMethod === "oauth" ? " (current)" : ""}`,
+					description: "Use your ChatGPT session. No API key required.",
+				},
+				{
+					value: "openai-codex",
+					label: `OpenAI API key${activeOpenAiAuthMethod === "api-key" ? " (current)" : ""}`,
+					description: "Use a platform API key instead of your ChatGPT session.",
+				},
 				{
 					value: "claude-subscription-directsdk-experimental",
 					label: "Claude Code subscription",
@@ -159,6 +174,8 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 				} else if (item.value === "back") {
 					this.currentStep = 1
 					this.renderCurrentStep()
+				} else if (item.value === "openai-codex-oauth") {
+					void this.signInOpenAiCodex()
 				} else if (this.isProviderId(item.value)) {
 					this.openProviderConfiguration(item.value)
 				}
@@ -331,18 +348,18 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 			this.vstack.addChild(selectList)
 			return
 		}
-		const statusText = status?.configured
-			? `\`[✓ ACTIVE]\` via \`${status.source}\` ${status.maskedValue ?? ""}`
-			: "`[✗ UNCONFIGURED]`"
+		const hasApiKey = this.setupWizard.hasOpenAiApiKey()
+		const isApiKeyActive = this.setupWizard.getOpenAiAuthMethod() === "api-key"
+		const statusText = hasApiKey
+			? `\`[✓ ${isApiKeyActive ? "ACTIVE" : "SAVED"}]\` API key configured`
+			: "`[✗ NOT CONFIGURED]` No OpenAI API key found"
 
 		const markdown =
 			`### Configure ${provider.label}\n\n` +
 			`Current status: ${statusText}\n\n` +
 			`Paste the API key below. It will be saved to the local LUMI credential vault. ` +
 			`You can also provide it through \`${provider.envVar}\`.\n\n` +
-			(status?.configured
-				? `Press **Enter** with an empty field to keep the existing key and select this provider.\n\n`
-				: "") +
+			(hasApiKey ? `Press **Enter** with an empty field to keep the saved key and switch to API-key sign-in.\n\n` : "") +
 			(this.oauthStatus ? `${this.oauthStatus}\n\n` : "") +
 			`Press **Esc** to return to the provider list.`
 
@@ -353,7 +370,9 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 		input.focused = true
 		input.onSubmit = (value) => {
 			const cleaned = value.trim()
-			if (!cleaned && status?.configured) {
+			if (!cleaned && hasApiKey) {
+				this.setupWizard.setOpenAiAuthMethod("api-key")
+				this.setupWizard.setSavedProvider("openai-codex")
 				this.finishProviderConfiguration(providerId, `Existing ${provider.label} credentials selected.`)
 				return
 			}
@@ -396,6 +415,35 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 		}
 	}
 
+	private async signInOpenAiCodex(): Promise<void> {
+		if (this.oauthInProgress) return
+		this.oauthInProgress = true
+		this.oauthAbortController = new AbortController()
+		this.oauthStatus = "Opening OpenAI sign-in. Complete the steps in your browser, then return here."
+		this.renderCurrentStep()
+		this.requestRender()
+		try {
+			await this.setupWizard.signInCodexOAuth((link) => {
+				this.oauthStatus = `Your browser did not open. Open this sign-in link manually, finish sign-in, then return here:\n\n${link}`
+				this.renderCurrentStep()
+				this.requestRender()
+			}, this.oauthAbortController.signal)
+			this.setupWizard.setOpenAiAuthMethod("oauth")
+			this.setupWizard.setSavedProvider("openai-codex")
+			this.setupWizard.setSavedModel("gpt-5.6-terra")
+			this.finishProviderConfiguration("openai-codex", "OpenAI Codex connected with your ChatGPT account.")
+		} catch (error) {
+			if (this.isClosed) return
+			const message = error instanceof Error ? error.message : String(error)
+			this.oauthStatus = `\`[ERROR]\` ${message}\nRetry the browser sign-in, or choose OpenAI API Key to use an API key instead.`
+			this.renderCurrentStep()
+			this.requestRender()
+		} finally {
+			this.oauthInProgress = false
+			this.oauthAbortController = null
+		}
+	}
+
 	private openProviderConfiguration(providerId: SetupProviderId): void {
 		this.selectedProvider = providerId
 		this.providerFeedback = ""
@@ -429,6 +477,8 @@ export class GuidedSetupWalkthroughModal implements Component, Focusable {
 	}
 
 	private close(completed: boolean): void {
+		this.isClosed = true
+		this.oauthAbortController?.abort()
 		this.onClose(completed)
 	}
 

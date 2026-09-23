@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
+import { StateManager } from "./core/storage/StateManager.js"
+import { createStorageContext } from "./shared/storage/storage-context.js"
 import { AgentConfig } from "./agents/base/agent-config.js"
 import { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js"
 import { AcpSupervisor } from "./agents/extensions/acp/acp-supervisor.js"
@@ -5262,6 +5264,7 @@ ${modelCommands}
 		await lumi.interactiveController.startInteractiveSession(lumi)
 	}
 
+	let stateManagerInitialized = false
 	;(async () => {
 		if (providerFlagIndex >= 0 && !providerFlagValue) throw new Error("--provider requires a provider ID")
 		if (modelFlagIndex >= 0 && !modelFlagValue) throw new Error("--model requires a model route")
@@ -5269,6 +5272,13 @@ ${modelCommands}
 			throw new Error(
 				`Unsupported active provider "${configuredProviderValue}". Supported providers: ${Array.from(supportedCliProviders).join(", ")}`,
 			)
+		}
+		try {
+			await StateManager.initialize(createStorageContext({ workspacePath: process.cwd() }))
+			stateManagerInitialized = true
+		} catch (error) {
+			const detail = error instanceof Error ? error.message : String(error)
+			throw new Error(`Could not open HEAV3NS local credential storage. ${detail}`)
 		}
 		const lumi = new LumiMonolith(configuredProviderValue ? { provider: configuredProvider } : {})
 		if (configuredModelValue) {
@@ -5450,8 +5460,19 @@ ${modelCommands}
 		} else {
 			await startRepl(lumi)
 		}
-	})().catch((err) => {
-		console.error("HEAV3NS CLI execution failed:", err)
-		process.exitCode = 1
-	})
+	})()
+		.catch((err) => {
+			console.error("HEAV3NS CLI execution failed:", err)
+			process.exitCode = 1
+		})
+		.finally(async () => {
+			if (stateManagerInitialized) {
+				try {
+					await StateManager.get().shutdown()
+				} catch (error) {
+					console.error("Could not flush HEAV3NS local state during shutdown:", error)
+					process.exitCode = 1
+				}
+			}
+		})
 }
