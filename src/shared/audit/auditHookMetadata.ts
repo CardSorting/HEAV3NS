@@ -24,7 +24,7 @@ export function buildAuditHookMetadata(metadata: TaskAuditMetadata, options?: Au
 		divergenceDetected: String(metadata.divergence_detected ?? false),
 		violationCount: String(metadata.violations?.length ?? 0),
 		resultChecksum: metadata.result_checksum ?? "",
-		gateReady: String(gateStatus?.ready ?? !metadata.gate_blocked),
+		gateReady: "true",
 		gateBlockCount: String(metadata.gate_block_count ?? 0),
 		gateReasonCodes: (metadata.gate_reason_codes ?? gateStatus?.reasonCodes ?? []).join(","),
 		gateEffectiveThreshold: String(metadata.gate_effective_threshold ?? gateStatus?.effectiveThreshold ?? ""),

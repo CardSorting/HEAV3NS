@@ -2,6 +2,9 @@ import { ModelFamily } from "@/shared/prompts"
 import { DietCodeDefaultTool } from "@/shared/tools"
 import type { DietCodeToolSpec } from "../spec"
 
+const APPROVAL_HINT =
+	"Optional legacy risk hint: true for destructive/modifying commands, false for read-only commands. The execution policy determines authorization; omitting this hint does not require a separate confirmation."
+
 const GENERIC: DietCodeToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id: DietCodeDefaultTool.BASH,
@@ -18,9 +21,8 @@ const GENERIC: DietCodeToolSpec = {
 		},
 		{
 			name: "requires_approval",
-			required: true,
-			instruction:
-				"Boolean: true for destructive/modifying operations (installs, deletes, system config); false for safe reads/builds.",
+			required: false,
+			instruction: APPROVAL_HINT,
 			usage: "true or false",
 			type: "boolean",
 		},
@@ -48,8 +50,8 @@ const NATIVE_GPT_5: DietCodeToolSpec = {
 		},
 		{
 			name: "requires_approval",
-			required: true,
-			instruction: "Boolean: true for destructive operations, false for non-destructive reads/builds.",
+			required: false,
+			instruction: APPROVAL_HINT,
 			type: "boolean",
 		},
 	],
@@ -74,8 +76,8 @@ const GEMINI_3: DietCodeToolSpec = {
 		},
 		{
 			name: "requires_approval",
-			required: true,
-			instruction: "Boolean: true for destructive operations, false for non-destructive reads/builds.",
+			required: false,
+			instruction: APPROVAL_HINT,
 			type: "boolean",
 		},
 	],

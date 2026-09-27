@@ -12,13 +12,16 @@ describe("auditJunitExport", () => {
 		expect(xml).to.contain("hardening_gate")
 	})
 
-	it("includes violation and gate failures", () => {
+	it("exports quality findings as advisory cases without failing CI", () => {
 		const metadata = enrichAuditMetadata({
 			violations: ["missing_validation_evidence"],
 		})
 		const decision = evaluateAuditGate(metadata, { gateEnabled: true, scoreThreshold: 95 })
 		const xml = buildAuditJunitXml(metadata, { taskId: "task-2", gateDecision: decision })
-		expect(xml).to.contain('failures="2"')
+		expect(xml).to.contain('failures="0"')
+		expect(xml).to.contain('skipped="2"')
+		expect(xml).not.to.contain("<failure")
+		expect(xml).to.contain("Advisory:")
 		expect(xml).to.contain("missing_validation_evidence")
 		expect(xml).to.contain("audit.gate")
 	})

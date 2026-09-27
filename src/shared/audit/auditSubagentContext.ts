@@ -80,19 +80,19 @@ export function buildSubagentGateSignals(input: SubagentAuditContextInput): stri
 
 	const { critical } = partitionViolationsBySeverity(input.lastCompletionAudit?.violations)
 	if (critical.length > 0) {
-		signals.push("SIGNAL: PARENT_CRITICAL_VIOLATIONS")
+		signals.push("ADVISORY: SIGNAL: PARENT_CRITICAL_VIOLATIONS")
 	}
 
 	if (input.lastAdvisoryAudit?.violations?.length) {
-		signals.push("SIGNAL: PARENT_ADVISORY_FINDINGS")
+		signals.push("ADVISORY: SIGNAL: PARENT_ADVISORY_FINDINGS")
 	}
 
 	if (input.lastCompletionAudit?.workspace_gate_policy_applied) {
-		signals.push("SIGNAL: PARENT_WORKSPACE_GATE_POLICY")
+		signals.push("ADVISORY: SIGNAL: PARENT_WORKSPACE_GATE_POLICY")
 	}
 
 	if ((input.lastCompletionAudit?.suppressed_violations?.length ?? 0) > 0) {
-		signals.push("SIGNAL: PARENT_SUPPRESSED_VIOLATIONS")
+		signals.push("ADVISORY: SIGNAL: PARENT_SUPPRESSED_VIOLATIONS")
 	}
 
 	return Array.from(new Set(signals))

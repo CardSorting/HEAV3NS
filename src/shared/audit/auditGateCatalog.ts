@@ -1,4 +1,4 @@
-import type { AuditGateDecision, CompletionGateReason } from "./auditGateReport"
+import { type AuditGateDecision, type CompletionGateReason, hasAuditGateFindings } from "./auditGateReport"
 import type { CompletionGateReasonCode, TaskAuditMetadata } from "./types"
 
 /** Human-readable gate reason labels — mirrors SARIF rule short descriptions. */
@@ -56,7 +56,7 @@ export function enrichAuditMetadataWithGateDecision(
 ): TaskAuditMetadata {
 	return {
 		...metadata,
-		gate_blocked: decision.blocked,
+		gate_blocked: false,
 		gate_block_count: blockCount,
 		gate_reason_codes: decision.reasons.map((r) => r.code),
 		gate_effective_threshold: decision.effectiveThreshold,
@@ -65,7 +65,7 @@ export function enrichAuditMetadataWithGateDecision(
 
 export function buildGateBlockEventSummary(decision: AuditGateDecision, blockCount?: number): string {
 	const attempt = blockCount && blockCount > 0 ? ` (historical attempt ${blockCount})` : ""
-	const status = decision.blocked ? "findings present" : "quality passed"
+	const status = hasAuditGateFindings(decision) ? "findings present" : "quality passed"
 	const reasonLines = formatGateReasonsForDisplay(decision.reasons)
 	return [
 		`Advisory completion diagnostics — ${status}${attempt}: Grade ${decision.grade ?? "?"} (${decision.score}/100, threshold ${decision.effectiveThreshold}).`,

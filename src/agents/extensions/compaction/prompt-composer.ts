@@ -1,6 +1,7 @@
 import type { AgentConfig } from "../../base/agent-config.js";
 import type { SessionContext } from "../../../sessions/base/session-context.js";
 import type { SessionMessage } from "../../../core/contracts/session.contracts.js";
+import { getHeav3nsMandate } from "../../../core/prompts/system-prompt/components/heav3ns_mandate.js";
 import { BroccoliCognitiveSuggestionEngine } from "../intelligence/broccolidb-cognitive-suggestion.js";
 import { ContextDslEngine } from "./context-dsl-engine.js";
 import { PromptTemplateEngine } from "./prompt-template-engine.js";
@@ -62,6 +63,8 @@ export class PromptComposer {
     const platform = process.platform;
     const workspaceSummary = this.getWorkspaceSummary(cwd);
     const basePrompt = `${config.systemPrompt.trim() || "You are LUMI, an intelligent AI pair programmer."}
+
+${getHeav3nsMandate("act", "return the verified result")}
 
 ## Runtime Context
 - Active model: {{modelName}}

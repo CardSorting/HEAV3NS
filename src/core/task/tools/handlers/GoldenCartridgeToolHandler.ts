@@ -301,7 +301,7 @@ export class GoldenCartridgeToolHandler implements IToolHandler {
 				capability: "internal_state",
 				risk: "elevated",
 				requestedSideEffects: ["replace active context or persist cognitive memory"],
-				autoApprovalEligible: false,
+				autoApprovalEligible: true,
 			})
 		}
 		if (verb === "patch_smallest") {

@@ -19,6 +19,7 @@ import { SubagentVfsBrancher } from "../../../sessions/extensions/delegation/sub
 import { AnchoredWorktreeManager } from "../../../tooling/extensions/delegation/anchored-worktree-manager.js"
 import { BroccoliSwarmSubstrate } from "../../../sessions/extensions/delegation/broccoli-swarm-substrate.js"
 import type { SwarmDesktopNotificationDispatcher } from "../../../tooling/extensions/delegation/swarm-notification-dispatcher.js"
+import { awaitChildOperation } from "./await-child-operation.js"
 
 export interface SwarmChildRunResult {
 	readonly result: string
@@ -124,9 +125,9 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 			}
 		}
 
-		const maxIterations = this.clampBudget(manifestInput.budget.maxIterations, 10, 1, 50)
-		const maxTokens = this.clampBudget(manifestInput.budget.maxTokens, 10_000, 1_000, 50_000)
-		const maxWallClockMs = this.clampBudget(manifestInput.budget.maxWallClockMs, 60_000, 1_000, 120_000)
+		const maxIterations = this.clampBudget(manifestInput.budget.maxIterations, 10, 0)
+		const maxTokens = this.clampBudget(manifestInput.budget.maxTokens, 10_000, 0)
+		const maxWallClockMs = this.clampBudget(manifestInput.budget.maxWallClockMs, 60_000, 0)
 		const manifest: SwarmTaskManifest = {
 			...manifestInput,
 			id: taskId,
@@ -137,6 +138,10 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 						return Object.freeze(
 							candidates
 								.filter((tool) => this.childAllowedTools.includes("*") || this.childAllowedTools.includes(tool))
+								.filter(
+									(tool) =>
+										!manifestInput.blockedTools.includes("*") && !manifestInput.blockedTools.includes(tool),
+								)
 								.filter((tool, index, tools) => tools.indexOf(tool) === index),
 						)
 					})()
@@ -187,8 +192,15 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 			controller.signal.throwIfAborted()
 
 			const allocatedBudget = this.budgetGovernor.allocateBudget(manifest)
-			if (allocatedBudget.remainingIterations <= 0 || allocatedBudget.remainingTokens <= 0) {
+			if (
+				allocatedBudget.remainingIterations <= 0 ||
+				allocatedBudget.remainingTokens <= 0 ||
+				allocatedBudget.maxWallClockMs <= 0
+			) {
 				throw new Error("Delegated task budget is empty before execution.")
+			}
+			if (allocatedBudget.maxWallClockMs > 2_147_483_647) {
+				throw new Error("The runtime timer supports a wall-clock budget up to 2147483647ms; choose a supported budget.")
 			}
 
 			const runningManifest: SwarmTaskManifest = {
@@ -201,7 +213,8 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 
 			const timeoutSignal = AbortSignal.timeout(runningManifest.budget.maxWallClockMs)
 			const runSignal = AbortSignal.any([controller.signal, timeoutSignal])
-			const result = await this.childRunner(runningManifest, runSignal)
+			const result = await awaitChildOperation(() => this.childRunner!(runningManifest, runSignal), runSignal)
+			runSignal.throwIfAborted()
 
 			if (controller.signal.aborted || this.substrate.getTask(manifest.id)?.status === "aborted") {
 				return this.getTaskOutcome(manifest.id) ?? this.makeAbortedOutcome(manifest.id, "Task aborted.", startTime)
@@ -219,7 +232,7 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 				budget: budgetCheck.remainingBudget,
 				updatedAtMs: completedAt,
 			}
-			const sanitizedResult = this.lifecycleGuard.sanitizeSubagentOutput(result.result).slice(0, 20_000)
+			const sanitizedResult = this.lifecycleGuard.sanitizeSubagentOutput(result.result)
 			const outcome: DelegationOutcome = {
 				taskId: manifest.id,
 				success: true,
@@ -249,7 +262,7 @@ export class MonolithSwarmDelegator implements ISwarmDelegator {
 		}
 	}
 
-	private clampBudget(value: number | undefined, fallback: number, min: number, max: number): number {
+	private clampBudget(value: number | undefined, fallback: number, min: number, max = Number.MAX_SAFE_INTEGER): number {
 		return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.floor(value!))) : fallback
 	}
 

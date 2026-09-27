@@ -44,12 +44,11 @@
           },
           "requires_approval": {
             "type": "boolean",
-            "description": "Boolean: true for destructive operations, false for non-destructive reads/builds."
+            "description": "Optional legacy risk hint: true for destructive/modifying commands, false for read-only commands. The execution policy determines authorization; omitting this hint does not require a separate confirmation."
           }
         },
         "required": [
-          "command",
-          "requires_approval"
+          "command"
         ],
         "additionalProperties": false
       }

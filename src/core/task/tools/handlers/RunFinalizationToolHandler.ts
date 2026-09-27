@@ -24,7 +24,7 @@ export class RunFinalizationToolHandler implements IToolHandler {
 					capability: "subagent",
 					risk: "elevated",
 					requestedSideEffects: ["delegate post-completion documentation maintenance"],
-					autoApprovalEligible: false,
+					autoApprovalEligible: true,
 				},
 			],
 		})

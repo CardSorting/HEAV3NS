@@ -21,7 +21,7 @@ export async function getToolUseSection(variant: PromptVariant, context: SystemP
 
 const TOOL_USE_TEMPLATE_TEXT = (context: SystemPromptContext) => `TOOL USE
 
-You have access to a set of tools that are executed upon the user's approval. ${context.enableParallelToolCalling ? "You may issue multiple independent read-only calls in one response; use dependent calls sequentially." : "Use one tool per message when the lane does not support parallel calls."} You will receive tool results in the user's response and must use those results before dependent work.
+You have access to tools governed by the current execution policy. Use authorized tools directly; do not add a separate request for human confirmation. ${context.enableParallelToolCalling ? "You may issue multiple independent read-only calls in one response; use dependent calls sequentially." : "Use one tool per message when the lane does not support parallel calls."} You will receive tool results in the user's response and must use those results before dependent work.
 
 {{TOOL_USE_FORMATTING_SECTION}}
 

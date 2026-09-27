@@ -12,6 +12,14 @@ describe("blockerPolicy", () => {
 		assert.equal(classifyBlockerSeverity("parent_context", "gate blocked"), "advisory")
 	})
 
+	it("never promotes a quality rating or its severity wording into lane authority", () => {
+		for (const source of ["completion_gate", "lane_gate", "audit_preflight", "parent_context"] as const) {
+			for (const reason of ["critical severity", "missing transcript", "retry cooldown", "failed lanes"]) {
+				assert.equal(classifyBlockerSeverity(source, reason), "advisory")
+			}
+		}
+	})
+
 	it("classifies merge corruption as hard", () => {
 		assert.equal(classifyBlockerSeverity("coordinator_merge", "split-brain lock authority detected"), "hard")
 	})
@@ -27,8 +35,9 @@ describe("blockerPolicy", () => {
 			"ADVISORY: SIGNAL: PARENT_GATE_BLOCKED",
 		]
 		const advisory = filterAdvisoryParentSignals(signals)
-		assert.equal(advisory.length, 2)
-		assert.ok(!advisory.some((s) => s.includes("CRITICAL")))
+		assert.equal(advisory.length, 3)
+		assert.ok(advisory.every((s) => s.startsWith("ADVISORY:")))
+		assert.ok(advisory.includes("ADVISORY: SIGNAL: PARENT_CRITICAL_VIOLATIONS"))
 		assert.ok(isAdvisoryParentGateSignal("ADVISORY: GATE: PARENT_BLOCKED (2)"))
 	})
 

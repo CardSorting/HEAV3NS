@@ -38,7 +38,7 @@ export class SwarmToolSuite {
 			{
 				name: "delegate_task",
 				description:
-					"Run a bounded child agent to inspect the workspace and stage requested file edits. Changes return to the parent as an uncommitted diff; children cannot run commands.",
+					"Delegate inspection and implementation to a child agent. File changes reconcile into the parent agent's uncommitted diff; the parent owns applying changes and running command verification without an extra human-approval round.",
 				isMutating: true,
 				parameters: {
 					id: { type: "string", required: true, description: "Unique subagent task identifier." },
@@ -47,6 +47,7 @@ export class SwarmToolSuite {
 					parentTaskId: { type: "string", description: "Optional parent task ID for DAG hierarchy." },
 					maxIterations: { type: "number", description: "Max iterations (default 10)." },
 					maxTokens: { type: "number", description: "Max tokens (default 10000)." },
+					maxWallClockMs: { type: "number", description: "Execution time budget in milliseconds (default 60000)." },
 				},
 				execute: async (args: Record<string, unknown>, cwd?: string, options?: ToolExecutionOptions) => {
 					return this.executeTool("delegate_task", args, cwd, options?.signal)
@@ -55,10 +56,15 @@ export class SwarmToolSuite {
 			{
 				name: "delegate_batch",
 				description:
-					"Run several bounded child agents in parallel (up to four at once). Children can stage file edits for parent review, but cannot run commands.",
+					"Run child inspection and implementation tasks in parallel (up to four at once). Children stage file edits; the parent agent reconciles, applies, and runs command verification.",
 				isMutating: true,
 				parameters: {
-					tasks: { type: "string", required: true, description: "JSON-encoded array of subagent task objects." },
+					tasks: {
+						type: "string",
+						required: true,
+						description:
+							"JSON-encoded task objects with id, goal, optional context, maxIterations, maxTokens, and maxWallClockMs.",
+					},
 				},
 				execute: async (args: Record<string, unknown>, cwd?: string, options?: ToolExecutionOptions) => {
 					return this.executeTool("delegate_batch", args, cwd, options?.signal)
@@ -368,8 +374,9 @@ export class SwarmToolSuite {
 					const goal = String(args.goal ?? "")
 					const context = String(args.context ?? "")
 					const parentTaskId = typeof args.parentTaskId === "string" ? args.parentTaskId : undefined
-					const maxIterations = Number(args.maxIterations) || 10
-					const maxTokens = Number(args.maxTokens) || 10000
+					const maxIterations = Number(args.maxIterations ?? 10)
+					const maxTokens = Number(args.maxTokens ?? 10000)
+					const maxWallClockMs = Number(args.maxWallClockMs ?? 60000)
 
 					const outcome = await this.delegator.delegateTask(
 						{
@@ -383,7 +390,7 @@ export class SwarmToolSuite {
 							budget: {
 								maxIterations,
 								maxTokens,
-								maxWallClockMs: 60000,
+								maxWallClockMs,
 								remainingIterations: maxIterations,
 								remainingTokens: maxTokens,
 							},
@@ -394,7 +401,14 @@ export class SwarmToolSuite {
 				}
 
 				case "delegate_batch": {
-					let tasks: Array<{ id: string; goal: string; context?: string }> = []
+					let tasks: Array<{
+						id: string
+						goal: string
+						context?: string
+						maxIterations?: number
+						maxTokens?: number
+						maxWallClockMs?: number
+					}> = []
 					if (typeof args.tasks === "string") {
 						try {
 							tasks = JSON.parse(args.tasks)
@@ -413,11 +427,11 @@ export class SwarmToolSuite {
 						allowedTools: ["*"],
 						blockedTools: [],
 						budget: {
-							maxIterations: 10,
-							maxTokens: 10000,
-							maxWallClockMs: 60000,
-							remainingIterations: 10,
-							remainingTokens: 10000,
+							maxIterations: Number(t.maxIterations ?? 10),
+							maxTokens: Number(t.maxTokens ?? 10000),
+							maxWallClockMs: Number(t.maxWallClockMs ?? 60000),
+							remainingIterations: Number(t.maxIterations ?? 10),
+							remainingTokens: Number(t.maxTokens ?? 10000),
 						},
 					}))
 

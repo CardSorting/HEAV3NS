@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import type { ToolUse } from "@core/assistant-message"
 import { DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
+import { attachCommandExecutionEvidence, readCommandExecutionEvidence } from "@shared/command-execution-evidence"
 import type { ApprovalIntent } from "@shared/execution/executionFunnelEvent"
 import { DietCodeDefaultTool } from "@shared/tools"
 import { afterEach, describe, it } from "mocha"
@@ -12,12 +13,19 @@ import {
 	getTaskLifecycleAuthority,
 } from "../../../lifecycle/TaskLifecycleFunnel"
 import { TaskState } from "../../../TaskState"
+import { DietcodeKernelToolHandler } from "../../handlers/DietcodeKernelToolHandler"
+import { ExecuteCommandToolHandler } from "../../handlers/ExecuteCommandToolHandler"
+import { GoldenCartridgeToolHandler } from "../../handlers/GoldenCartridgeToolHandler"
+import { RunFinalizationToolHandler } from "../../handlers/RunFinalizationToolHandler"
+import { UseSubagentsToolHandler } from "../../handlers/SubagentToolHandler"
 import type { TaskConfig } from "../../types/TaskConfig"
+import type { ToolValidator } from "../../ToolValidator"
 import { declareApprovalIntent, type IToolHandler, type ToolResponse } from "../../types/ToolContracts"
 import {
 	appendSessionStabilityContext,
 	computeFastIoReservedSlots,
 	ExecutionFunnel,
+	executionFunnel,
 	isIoAuthorityTool,
 	isLocalMutationTool,
 	resolveSessionSpiderEngine,
@@ -143,6 +151,90 @@ async function run(
 }
 
 describe("ExecutionFunnel approval authority", () => {
+	it("executes authorized commands without a legacy approval flag or an extra prompt", async () => {
+		for (const requiresApproval of [undefined, "true"]) {
+			const taskConfig = config()
+			const ask = sinon.stub().rejects(new Error("Unexpected approval prompt"))
+			const executeCommand = sinon.stub().callsFake(async (command: string) => [
+				false,
+				attachCommandExecutionEvidence("v26.8.1", {
+					command,
+					approvalStatus: "unknown",
+					started: true,
+					completed: true,
+					exitCode: 0,
+					timedOut: false,
+					stdoutAvailable: true,
+					stderrAvailable: true,
+				}),
+			])
+			taskConfig.api = { getModel: () => ({ id: "test-model" }) } as TaskConfig["api"]
+			taskConfig.callbacks.ask = ask
+			taskConfig.callbacks.executeCommandTool = executeCommand
+			taskConfig.callbacks.sayAndCreateMissingParamError = async (_tool, param) => `Missing parameter: ${param}`
+			const validator = { validateCommand: () => ({ ok: true }) } as unknown as ToolValidator
+			const outcome = await run(
+				executionFunnel,
+				taskConfig,
+				block(DietCodeDefaultTool.BASH, `command-${requiresApproval ?? "omitted"}`, {
+					command: "node --version",
+					...(requiresApproval ? { requires_approval: requiresApproval } : {}),
+				}),
+				new ExecuteCommandToolHandler(validator),
+			)
+			assert.equal(outcome.event.phase, "succeeded", outcome.event.reason)
+			assert.equal(executeCommand.callCount, 1)
+			assert.equal(ask.callCount, 0)
+			assert.equal(readCommandExecutionEvidence(outcome.result)?.approvalStatus, "approved")
+			assert.equal(readCommandExecutionEvidence(outcome.result)?.exitCode, 0)
+		}
+	})
+
+	it("lets corrected work execute after twenty unrelated operation failures", async () => {
+		const funnel = new ExecutionFunnel()
+		const taskConfig = config()
+		let dispatches = 0
+		const operation = handler(DietCodeDefaultTool.ATTEMPT, async () => {
+			dispatches++
+			if (dispatches <= 20) throw new Error(`Observed failure ${dispatches}`)
+			return "corrected operation completed"
+		})
+		for (let index = 0; index < 20; index++) {
+			const failed = await run(funnel, taskConfig, block(DietCodeDefaultTool.ATTEMPT, `failed-${index}`), operation)
+			assert.equal(failed.event.phase, "failed")
+			assert.match(failed.event.reason, /Observed failure/)
+		}
+		const recovered = await run(funnel, taskConfig, block(DietCodeDefaultTool.ATTEMPT, "corrected"), operation)
+		assert.equal(recovered.event.phase, "succeeded", recovered.event.reason)
+		assert.equal(dispatches, 21)
+	})
+
+	it("runs delegation and task-maintenance helpers without redundant approval prompts", async () => {
+		const cases = [
+			{ operation: new UseSubagentsToolHandler(), params: { prompt_1: "[execution_mode:mutation] Fix the assigned bug" } },
+			{ operation: new RunFinalizationToolHandler(), params: {} },
+			{ operation: new DietcodeKernelToolHandler(), params: { action: "refresh" } },
+			{ operation: new GoldenCartridgeToolHandler({} as never), params: { verb: "compress" } },
+		]
+		for (const { operation, params } of cases) {
+			const taskConfig = config()
+			const ask = sinon.stub().rejects(new Error("Unexpected approval prompt"))
+			taskConfig.callbacks.ask = ask
+			const outcome = await run(
+				new ExecutionFunnel(),
+				taskConfig,
+				block(operation.name, `automatic-${operation.name}`, params),
+				handler(
+					operation.name,
+					async () => "completed",
+					(toolBlock) => operation.getApprovalIntent(toolBlock),
+				),
+			)
+			assert.equal(outcome.event.phase, "succeeded", `${operation.name}: ${outcome.event.reason}`)
+			assert.equal(outcome.event.approvalDecision?.mechanism, "automatic")
+			assert.equal(ask.callCount, 0)
+		}
+	})
 	afterEach(() => sinon.restore())
 
 	it("never exposes a permit before one immutable approval decision", async () => {
@@ -634,7 +726,7 @@ describe("ExecutionFunnel approval authority", () => {
 		assert.equal(dispatches, 1)
 	})
 
-	it("keeps retries inside the original decision and permit", async () => {
+	it("returns observed failure to the agent without a hidden replay or another approval", async () => {
 		const funnel = new ExecutionFunnel()
 		const taskConfig = config()
 		taskConfig.autoApprovalSettings.actions.readFiles = false
@@ -647,16 +739,11 @@ describe("ExecutionFunnel approval authority", () => {
 		const toolHandler = handler(
 			DietCodeDefaultTool.FILE_READ,
 			async () =>
-				funnel.executeReliableAction(
-					taskConfig.taskId,
-					taskConfig.taskState.executionGeneration,
-					async () => {
-						attempts++
-						if (attempts === 1) throw new Error("UNAVAILABLE")
-						return "done"
-					},
-					{ maxRetries: 2, backoffMs: 0 },
-				),
+				funnel.executeReliableAction(taskConfig.taskId, taskConfig.taskState.executionGeneration, async () => {
+					attempts++
+					if (attempts === 1) throw new Error("UNAVAILABLE")
+					return "done"
+				}),
 			readIntent,
 		)
 		const outcome = await run(
@@ -665,27 +752,24 @@ describe("ExecutionFunnel approval authority", () => {
 			block(DietCodeDefaultTool.FILE_READ, "retry", { path: "a.ts" }),
 			toolHandler,
 		)
-		assert.equal(attempts, 2)
+		assert.equal(attempts, 1)
 		assert.equal(prompts, 1)
+		assert.equal(outcome.event.phase, "failed")
+		assert.match(outcome.event.reason, /UNAVAILABLE/)
 		assert.equal(outcome.event.stages.filter((stage) => stage.stage === "approval.decision").length, 1)
 	})
 
-	it("does not replay an at-most-once operation after a retryable failure", async () => {
+	it("does not replay an operation after a failure that may follow a remote side effect", async () => {
 		const funnel = new ExecutionFunnel()
 		const taskConfig = config()
 		let attempts = 0
 		const toolHandler = handler(
 			DietCodeDefaultTool.FILE_READ,
 			async () =>
-				funnel.executeReliableAction(
-					taskConfig.taskId,
-					taskConfig.taskState.executionGeneration,
-					async () => {
-						attempts++
-						throw new Error("UNAVAILABLE after remote side effect")
-					},
-					{ maxRetries: 3, backoffMs: 0, retryPolicy: "at_most_once" },
-				),
+				funnel.executeReliableAction(taskConfig.taskId, taskConfig.taskState.executionGeneration, async () => {
+					attempts++
+					throw new Error("UNAVAILABLE after remote side effect")
+				}),
 			readIntent,
 		)
 
@@ -871,7 +955,7 @@ describe("ExecutionFunnel approval authority", () => {
 		assert.equal(outcome.event.phase, "succeeded")
 	})
 
-	it("aborts retry loop and backoff immediately upon cancellation", async () => {
+	it("forwards cancellation immediately to an active operation without replaying it", async () => {
 		const state = new TaskState()
 		const funnel = new ExecutionFunnel()
 		const parentConfig = config(state)
@@ -886,15 +970,14 @@ describe("ExecutionFunnel approval authority", () => {
 
 		const parentHandler = handler(DietCodeDefaultTool.BASH, async () => {
 			try {
-				return await funnel.executeReliableAction(
-					"task-1",
-					state.executionGeneration,
-					async () => {
-						attempts++
-						throw new Error("TIMEOUT")
-					},
-					{ maxRetries: 3, backoffMs: 10000 },
-				)
+				return await funnel.executeReliableAction("task-1", state.executionGeneration, async (signal) => {
+					attempts++
+					return new Promise<string>((_resolve, reject) => {
+						signal.addEventListener("abort", () => reject(new Error("Observed operation cancellation")), {
+							once: true,
+						})
+					})
+				})
 			} catch (e) {
 				reliableActionError = e
 				throw e
@@ -919,7 +1002,7 @@ describe("ExecutionFunnel approval authority", () => {
 		const duration = Date.now() - startTime
 		assert.ok(duration < 1000, `Expected quick cancellation, took ${duration}ms`)
 		assert.equal(attempts, 1)
-		assert.match(reliableActionError?.message, /Reliability execution aborted during retry backoff/)
+		assert.match(reliableActionError?.message, /Observed operation cancellation/)
 	})
 
 	it("aborts queued concurrency immediately upon cancellation", async () => {

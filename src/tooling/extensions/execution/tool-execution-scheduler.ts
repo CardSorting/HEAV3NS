@@ -59,7 +59,8 @@ export class ToolExecutionScheduler {
 		this.governor = options.governor ?? new ToolOutputGovernor()
 		this.healer = options.healer ?? new ToolErrorAutoHealer()
 		this.parser = options.parser ?? new ToolCallArgParser()
-		this.defaultMaxConcurrency = options.maxConcurrency ?? 16
+		const requestedConcurrency = options.maxConcurrency ?? 16
+		this.defaultMaxConcurrency = Number.isFinite(requestedConcurrency) ? Math.max(1, Math.floor(requestedConcurrency)) : 16
 	}
 
 	/**
@@ -99,6 +100,9 @@ export class ToolExecutionScheduler {
 				? path.normalize(rawArgs.target)
 				: path.normalize(path.join(cwd, rawArgs.target))
 			resources.push(resolvedTarget)
+		}
+		for (const value of [rawArgs.directory, rawArgs.dir, ...(Array.isArray(rawArgs.paths) ? rawArgs.paths : [])]) {
+			if (typeof value === "string") resources.push(path.resolve(cwd, value))
 		}
 
 		if (Array.isArray(rawArgs.files)) {
@@ -232,7 +236,8 @@ export class ToolExecutionScheduler {
 	}
 
 	/**
-	 * Executes a batch of tool calls with parallel concurrency for disjoint waves.
+	 * Executes dependency-ready calls as capacity becomes available. Planned waves
+	 * remain useful progress labels, but are not runtime barriers.
 	 */
 	public async executeBatch(
 		calls: readonly ScheduledToolCall[],
@@ -241,9 +246,7 @@ export class ToolExecutionScheduler {
 		options: SchedulerOptions = {},
 	): Promise<{ results: ToolExecutionRecord[]; metrics: SchedulerMetrics }> {
 		const startedAt = Date.now()
-		const enableCache = options.enableCache ?? true
-		const enableGov = options.enableOutputGovernance ?? true
-		const resultsMap = new Map<string, ToolExecutionRecord>()
+		const orderedResults: ToolExecutionRecord[] = new Array(calls.length)
 		let cacheHits = 0
 
 		const waves = this.partitionWaves(calls, registry, {
@@ -252,38 +255,12 @@ export class ToolExecutionScheduler {
 			maxConcurrency: options.maxConcurrency,
 		})
 
-		let disjointParallelWaves = 0
-
-		for (let waveIndex = 0; waveIndex < waves.length; waveIndex++) {
-			const wave = waves[waveIndex]
-
-			if (wave.length === 1) {
-				// Single call execution
-				const call = wave[0]
-				this.notifyToolStart(options, call, waveIndex + 1)
-				const record = await this.executeSafely(call, registry, cwd, enableCache, enableGov, options)
-				if (record.isCached) cacheHits++
-				resultsMap.set(call.id, record)
-				this.notifyToolComplete(options, record)
-			} else {
-				// Parallel batch execution (multiple concurrent reads or disjoint mutations)
-				disjointParallelWaves++
-				const executions = wave.map(async (call) => {
-					this.notifyToolStart(options, call, waveIndex + 1)
-					const record = await this.executeSafely(call, registry, cwd, enableCache, enableGov, options)
-					if (record.isCached) cacheHits++
-					resultsMap.set(call.id, record)
-					this.notifyToolComplete(options, record)
-				})
-
-				await Promise.all(executions)
-			}
+		for await (const { index, record } of this.executeReadyCalls(calls, registry, cwd, options, waves)) {
+			orderedResults[index] = record
+			if (record.isCached) cacheHits++
 		}
 
 		const totalElapsed = Date.now() - startedAt
-
-		// Maintain original call order
-		const orderedResults = calls.map((call) => resultsMap.get(call.id)!)
 
 		// Estimate theoretical serial execution duration
 		const serialDuration = orderedResults.reduce((acc, r) => acc + (r.durationMs ?? 0), 0)
@@ -297,13 +274,13 @@ export class ToolExecutionScheduler {
 				cacheHits,
 				executionTimeMs: totalElapsed,
 				concurrencySpeedup: Math.max(1.0, speedup),
-				disjointParallelWaves,
+				disjointParallelWaves: waves.filter((wave) => wave.length > 1).length,
 			},
 		}
 	}
 
 	/**
-	 * Streams tool execution records wave by wave as an async generator for real-time responsiveness.
+	 * Streams records in original call order while independent I/O keeps running.
 	 */
 	public async *executePipelinedStream(
 		calls: readonly ScheduledToolCall[],
@@ -311,43 +288,117 @@ export class ToolExecutionScheduler {
 		cwd: string,
 		options: SchedulerOptions = {},
 	): AsyncGenerator<PipelinedStreamChunk, void, unknown> {
-		const enableCache = options.enableCache ?? true
-		const enableGov = options.enableOutputGovernance ?? true
 		const waves = this.partitionWaves(calls, registry, {
 			allowParallelDisjointMutations: options.allowParallelDisjointMutations ?? true,
 			cwd,
 			maxConcurrency: options.maxConcurrency,
 		})
 
-		let totalYielded = 0
-
-		for (let waveIndex = 0; waveIndex < waves.length; waveIndex++) {
-			const wave = waves[waveIndex]
-			const wavePromises = wave.map(async (call) => {
-				this.notifyToolStart(options, call, waveIndex + 1)
-				const record = await this.executeSafely(call, registry, cwd, enableCache, enableGov, options)
-				this.notifyToolComplete(options, record)
-				return { call, record }
-			})
-
-			const waveResults = await Promise.all(wavePromises)
-
-			for (let i = 0; i < waveResults.length; i++) {
-				totalYielded++
-				const { call, record } = waveResults[i]
-				const isLastInWave = i === waveResults.length - 1
-				const isFinal = totalYielded === calls.length
-
+		const positions = waves.flatMap((wave, waveIndex) =>
+			wave.map((_, index) => ({ waveIndex, isLastInWave: index === wave.length - 1 })),
+		)
+		const ready = new Map<number, ToolExecutionRecord>()
+		let nextIndex = 0
+		for await (const { index, record } of this.executeReadyCalls(calls, registry, cwd, options, waves)) {
+			ready.set(index, record)
+			while (ready.has(nextIndex)) {
+				const call = calls[nextIndex]
+				const position = positions[nextIndex]
+				const nextRecord = ready.get(nextIndex)!
+				ready.delete(nextIndex++)
 				yield {
-					waveIndex: waveIndex + 1,
+					waveIndex: position.waveIndex + 1,
 					totalWaves: waves.length,
 					callId: call.id,
 					toolName: call.name,
-					record,
-					isLastInWave,
-					isFinal,
+					record: nextRecord,
+					isLastInWave: position.isLastInWave,
+					isFinal: nextIndex === calls.length,
 				}
 			}
+		}
+	}
+
+	private async *executeReadyCalls(
+		calls: readonly ScheduledToolCall[],
+		registry: IToolRegistry,
+		cwd: string,
+		options: SchedulerOptions,
+		waves: ScheduledToolCall[][],
+	): AsyncGenerator<{ index: number; record: ToolExecutionRecord & { isCached?: boolean } }> {
+		const requestedConcurrency = options.maxConcurrency ?? this.defaultMaxConcurrency
+		const maxConcurrency = Number.isFinite(requestedConcurrency)
+			? Math.max(1, Math.floor(requestedConcurrency))
+			: this.defaultMaxConcurrency
+		const targets = calls.map((call) => ({
+			mutating: registry.getTool(call.name)?.isMutating === true || this.isKnownMutatingTool(call.name),
+			global: ["run_command", "terminal", "bash", "delegate_task", "delegate_batch", "delegate_abort"].includes(call.name),
+			resources: this.extractTargetResources(call, cwd),
+		}))
+		const overlaps = (left: string, right: string): boolean => {
+			const relative = path.relative(left, right)
+			return relative === "" || (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`))
+		}
+		const dependencies = targets.map((target, index) => {
+			const previous: number[] = []
+			for (let before = 0; before < index; before++) {
+				const prior = targets[before]
+				if (!target.mutating && !prior.mutating && !target.global && !prior.global) continue
+				if (
+					target.global ||
+					prior.global ||
+					options.allowParallelDisjointMutations === false ||
+					target.resources.length === 0 ||
+					prior.resources.length === 0 ||
+					target.resources.some((resource) =>
+						prior.resources.some((other) => overlaps(resource, other) || overlaps(other, resource)),
+					)
+				)
+					previous.push(before)
+			}
+			return previous
+		})
+		const waveLabels = waves.flatMap((wave, index) => wave.map(() => index + 1))
+		const pending = new Set(calls.map((_, index) => index))
+		const completed = new Set<number>()
+		const active = new Map<number, Promise<{ index: number; record: ToolExecutionRecord & { isCached?: boolean } }>>()
+		const streamController = new AbortController()
+		const executionOptions = {
+			...options,
+			signal: options.signal ? AbortSignal.any([options.signal, streamController.signal]) : streamController.signal,
+		}
+		try {
+			while (pending.size > 0 || active.size > 0) {
+				for (const index of pending) {
+					if (active.size >= maxConcurrency) break
+					if (dependencies[index].some((dependency) => !completed.has(dependency))) continue
+					pending.delete(index)
+					const call = calls[index]
+					if (!executionOptions.signal.aborted) this.notifyToolStart(options, call, waveLabels[index])
+					active.set(
+						index,
+						this.executeSafely(
+							call,
+							registry,
+							cwd,
+							options.enableCache ?? true,
+							options.enableOutputGovernance ?? true,
+							executionOptions,
+						).then((record) => {
+							this.notifyToolComplete(options, record)
+							return { index, record }
+						}),
+					)
+				}
+				const settled = await Promise.race(active.values())
+				active.delete(settled.index)
+				completed.add(settled.index)
+				yield settled
+			}
+		} finally {
+			// Closing a stream must not launch queued work or leave active mutations unobserved.
+			streamController.abort()
+			await Promise.all(active.values())
 		}
 	}
 
@@ -363,6 +414,7 @@ export class ToolExecutionScheduler {
 		schedulerOptions: SchedulerOptions = {},
 	): Promise<ToolExecutionRecord & { isCached?: boolean }> {
 		const callStart = Date.now()
+		schedulerOptions.signal?.throwIfAborted()
 		const toolDef = registry.getTool(call.name)
 
 		// 1. Parse & Repair Arguments

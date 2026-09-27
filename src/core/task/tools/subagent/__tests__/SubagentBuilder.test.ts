@@ -16,6 +16,7 @@ function createTaskConfig(
 	provider: string,
 	joyZoningSteeringEnabled?: boolean,
 	architecture: "canonical" | "workspace-native" = "canonical",
+	thinkingBudgetTokens?: number,
 ): TaskConfig {
 	return {
 		ulid: "ulid-123",
@@ -30,6 +31,7 @@ function createTaskConfig(
 					return undefined
 				},
 				getApiConfiguration: () => ({
+					thinkingBudgetTokens,
 					actModeApiProvider: provider,
 					planModeApiProvider: provider,
 					actModeApiModelId: "act-default",
@@ -114,7 +116,12 @@ describe("SubagentBuilder", () => {
 		assert.match(prompt, /SWARM NESTING CONTEXT/)
 		assert.match(prompt, /SUBSTRATE HEALTH SIGNAL/)
 		assert.match(prompt, /# WORKER EXECUTION CONTRACT/)
-		assert.match(prompt, /DISCOVER .* PLAN .* EXECUTE .* VERIFY .* HANDOFF/s)
+		assert.match(prompt, /HEAV3NS MANDATE/)
+		assert.match(prompt, /INSPECT → REASON → ACT → OBSERVE → ADAPT → VERIFY/)
+		assert.match(prompt, /NO BLIND RETRIES/)
+		assert.match(prompt, /workers are compute, not an approval committee/)
+		assert.match(prompt, /hand off and stop/)
+		assert.doesNotMatch(prompt, /MUST provide a "JoyZoning Alignment"|Grounded Specification Refresh/)
 		assert.match(prompt, /Do not assume an editor UI or an interactive IDE is available/)
 		assert.match(prompt, /SIGNAL: REVIEW_REQUESTED/)
 		assert.doesNotMatch(prompt, /Use the 'use_subagents' tool/)
@@ -127,6 +134,22 @@ describe("SubagentBuilder", () => {
 			),
 		)
 	})
+
+	for (const budget of [undefined, 0, 2048, 32768]) {
+		it(`inherits the explicit parent thinking budget (${budget ?? "unset"}) without an artificial worker cap`, () => {
+			sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({
+				getCachedConfig: () => undefined,
+			} as never)
+			const buildApiHandlerStub = sinon.stub(subagentBuilderRuntime, "buildApiHandler").returns({
+				getModel: sinon.stub(),
+				createMessage: sinon.stub(),
+			} as never)
+
+			new SubagentBuilder(createTaskConfig("act", "anthropic", false, "workspace-native", budget))
+
+			assert.equal((buildApiHandlerStub.firstCall.args[0] as Record<string, unknown>).thinkingBudgetTokens, budget ?? 8192)
+		})
+	}
 
 	it("keeps subagent guidance workspace-native when JoyZoning steering is off", () => {
 		sinon.stub(subagentBuilderRuntime, "getAgentConfigLoader").returns({

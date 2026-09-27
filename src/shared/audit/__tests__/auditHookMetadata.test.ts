@@ -12,7 +12,7 @@ describe("auditHookMetadata", () => {
 			gate_reason_codes: ["score_below_threshold"],
 		})
 		const hookMeta = buildAuditHookMetadata(metadata, { gateOptions: { scoreThreshold: 95 } })
-		expect(hookMeta.gateReady).to.equal("false")
+		expect(hookMeta.gateReady).to.equal("true")
 		expect(hookMeta.gateBlockCount).to.equal("1")
 		expect(hookMeta.gateReasonCodes).to.contain("score_below_threshold")
 		expect(hookMeta.qualityGatePassed).to.equal("false")

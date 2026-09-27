@@ -21,7 +21,7 @@ describe("auditPostTool", () => {
 		expect(detectVerificationOutputFailures("npm ERR! Test failed")).to.not.be.empty
 	})
 
-	it("blocks completion on advisory escalation even when score passes threshold", () => {
+	it("keeps escalated quality findings advisory", () => {
 		const advisory = enrichAuditMetadata({
 			violations: ["missing_validation_evidence"],
 		})
@@ -35,6 +35,6 @@ describe("auditPostTool", () => {
 				advisoryEscalationEnabled: true,
 				scoreThreshold: 50,
 			}),
-		).to.equal(true)
+		).to.equal(false)
 	})
 })

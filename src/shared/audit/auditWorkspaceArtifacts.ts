@@ -6,7 +6,7 @@ import type { AuditGateSettingsSource } from "./auditGateOptions"
 import type { GatePolicyProvenance } from "./auditGatePolicyLoader"
 import { serializeWorkspaceGatePolicy, WORKSPACE_GATE_POLICY_FILE, WORKSPACE_SUPPRESSIONS_FILE } from "./auditGatePolicyLoader"
 import type { CompletionGateOptions } from "./auditGateReport"
-import { evaluateAuditGate } from "./auditGateReport"
+import { evaluateAuditGate, hasAuditGateFindings } from "./auditGateReport"
 import { buildQualityGateStatus } from "./auditGateStatus"
 import { buildGitHubCheckRunJson } from "./auditGitHubCheck"
 import { buildAuditJunitXml } from "./auditJunitExport"
@@ -266,6 +266,7 @@ export async function persistAuditWorkspaceArtifacts(
 	await ensureWorkspaceSuppressionsTemplate(rootDir)
 
 	const gateDecision = gateOptions ? evaluateAuditGate(metadata, gateOptions) : undefined
+	const advisoryFailed = (gateDecision ? hasAuditGateFindings(gateDecision) : false) || metadata.gate_blocked === true
 
 	const baseName = buildArtifactBaseName(taskId, event, metadata.audited_at ?? Date.now())
 	const taskUri = `task://${taskId}/${event}`
@@ -303,7 +304,7 @@ export async function persistAuditWorkspaceArtifacts(
 		auditedAt: metadata.audited_at ?? Date.now(),
 		hardeningGrade: metadata.hardening_grade,
 		hardeningScore: metadata.hardening_score,
-		advisoryFailed: metadata.gate_blocked ?? false,
+		advisoryFailed,
 		gateBlocked: false,
 		gateReasonCodes: metadata.gate_reason_codes ?? [],
 		violationCount: metadata.violations?.length ?? 0,
@@ -326,7 +327,7 @@ export async function persistAuditWorkspaceArtifacts(
 		auditedAt: metadata.audited_at ?? Date.now(),
 		hardeningGrade: metadata.hardening_grade,
 		hardeningScore: metadata.hardening_score,
-		advisoryFailed: metadata.gate_blocked ?? false,
+		advisoryFailed,
 		gateBlocked: false,
 		suppressedViolationCount: metadata.suppressed_violations?.length ?? 0,
 		workspaceGatePolicyApplied: metadata.workspace_gate_policy_applied ?? false,
@@ -338,7 +339,7 @@ export async function persistAuditWorkspaceArtifacts(
 	await updateAuditArtifactIndex(rootDir, indexEntry, cwd)
 	await writeCiArtifacts(rootDir, metadata, indexEntry, gateOptions, gatePolicySettings, policyProvenance)
 
-	if (event === "completion" && !metadata.gate_blocked && !(gateDecision?.blocked ?? false)) {
+	if (event === "completion" && !advisoryFailed) {
 		await persistWorkspaceAuditBaseline(cwd, metadata, taskId)
 	}
 

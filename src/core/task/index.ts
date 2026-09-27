@@ -3397,27 +3397,11 @@ export class Task {
 			this.taskState.consecutiveMistakeCount >= this.stateManager.getGlobalSettingsKey("maxConsecutiveMistakes") &&
 			!isReady
 		) {
-			// Trigger the mistake limit approval gate so the user can intervene and help the agent
-			try {
-				const askResult = await this.ask(
-					"mistake_limit_reached",
-					`I have made ${this.taskState.consecutiveMistakeCount} consecutive mistakes (e.g. repeated errors or no tools used). Please help guide my next steps.`,
-				)
-
-				if (askResult.response === "messageResponse" && askResult.text) {
-					// Append user's typed feedback to the message log so the LLM receives it in the next request
-					await this.say("user_feedback", askResult.text, askResult.images, askResult.files)
-					await this.checkpointManager?.saveCheckpoint()
-
-					// Push it into the active userMessageContent so the task runner submits it in the next turn
-					this.taskState.userMessageContent.push({
-						type: "text",
-						text: askResult.text,
-					})
-				}
-			} catch (err) {
-				Logger.error(`[Task] Mistake limit ask failed: ${err}`)
-			}
+			// Repeated mistakes call for a change of approach, not a user approval stop.
+			userContent.push({
+				type: "text",
+				text: `[Recovery advisory] ${this.taskState.consecutiveMistakeCount} consecutive attempts did not make progress. Inspect the latest errors, choose a different approach, and continue the assigned work using the available tools. Ask for input only if an essential fact cannot be obtained from the workspace or tools.`,
+			})
 
 			this.taskState.consecutiveMistakeCount = 0
 			this.taskState.autoRetryAttempts = 0

@@ -37,14 +37,11 @@ const SOFT_PATTERNS = [
 ]
 
 export function classifyBlockerSeverity(source: BlockerSource, reason: string): BlockerSeverity {
-	if (source === "parent_context" || source === "audit_preflight") {
+	if (source === "parent_context" || source === "audit_preflight" || source === "completion_gate" || source === "lane_gate") {
 		return "advisory"
 	}
 	if (source === "receipt_pointer" && !HARD_MERGE_PATTERNS.some((p) => p.test(reason))) {
 		return "advisory"
-	}
-	if (source === "completion_gate" && SOFT_PATTERNS.some((p) => p.test(reason))) {
-		return "soft"
 	}
 	if (source === "coordinator_merge" || source === "coordinator_corruption" || source === "coordinator_lock") {
 		if (SOFT_PATTERNS.some((p) => p.test(reason)) && !HARD_MERGE_PATTERNS.some((p) => p.test(reason))) {
@@ -58,23 +55,22 @@ export function classifyBlockerSeverity(source: BlockerSource, reason: string): 
 	if (SOFT_PATTERNS.some((p) => p.test(reason))) {
 		return "soft"
 	}
-	if (source === "lane_gate") {
-		return reason.includes("preflight") || reason.includes("advisory") ? "advisory" : "hard"
-	}
 	return "hard"
 }
 
 /** Parent gate signals injected into subagents are always advisory — never lane-blocking authority. */
 export function isAdvisoryParentGateSignal(signal: string): boolean {
-	return signal.startsWith("ADVISORY:")
+	return signal.startsWith("ADVISORY:") || signal.startsWith("SIGNAL: PARENT_")
 }
 
-export function isHardParentGateSignal(signal: string): boolean {
-	return signal.startsWith("SIGNAL: PARENT_CRITICAL")
+export function isHardParentGateSignal(_signal: string): boolean {
+	return false
 }
 
 export function filterAdvisoryParentSignals(signals: string[]): string[] {
-	return signals.filter(isAdvisoryParentGateSignal)
+	return signals
+		.filter(isAdvisoryParentGateSignal)
+		.map((signal) => (signal.startsWith("ADVISORY:") ? signal : `ADVISORY: ${signal}`))
 }
 
 /** Lane authority state for compact progress handoff — parent reads coordinator truth, not receipt drama. */

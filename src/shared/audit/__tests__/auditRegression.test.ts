@@ -12,7 +12,7 @@ describe("auditRegression", () => {
 		expect(hasAuditScoreRegression(baseline, enrichAuditMetadata({ violations: [] }))).to.equal(false)
 	})
 
-	it("blocks completion when plan regression gate is enabled", () => {
+	it("reports plan regression without blocking completion", () => {
 		const baseline = enrichAuditMetadata({ violations: [] })
 		const completion = enrichAuditMetadata({ violations: ["result_empty", "missing_validation_evidence"] })
 		expect(
@@ -20,7 +20,7 @@ describe("auditRegression", () => {
 				planBaselineMetadata: baseline,
 				planRegressionGateEnabled: true,
 			}),
-		).to.equal(true)
+		).to.equal(false)
 		expect(buildRegressionGateSection(baseline, completion)).to.contain("Plan Regression Gate")
 	})
 })

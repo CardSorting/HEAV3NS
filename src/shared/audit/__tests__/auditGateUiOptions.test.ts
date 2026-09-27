@@ -38,7 +38,7 @@ describe("auditGateUiOptions", () => {
 		expect(options.baselineMetadata?.violations).to.deep.equal(["result_empty"])
 	})
 
-	it("blocks only new violations in UI preview when new-code gate is active", () => {
+	it("reports new findings as advisory in UI preview when new-code diagnostics are active", () => {
 		const baseline = enrichAuditMetadata({ violations: ["result_empty"] })
 		const current = enrichAuditMetadata({
 			violations: ["result_empty", "missing_validation_evidence"],
@@ -51,7 +51,8 @@ describe("auditGateUiOptions", () => {
 
 		const options = buildUIGateEvaluationOptions(settings, messages, current)
 		const decision = evaluateAuditGate(current, options)
-		expect(decision.blocked).to.equal(true)
+		expect(decision.blocked).to.equal(false)
+		expect(decision.advisoryFailed).to.equal(true)
 		expect(decision.reasons.some((reason) => reason.code === "policy_violations")).to.equal(true)
 	})
 

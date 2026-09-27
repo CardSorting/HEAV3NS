@@ -148,6 +148,8 @@ export interface AgentContextServices {
 	tokenTruncator?: TokenTruncator
 	completionGate?: RoadmapCompletionGate
 	maxOutputTokens?: number
+	/** Explicit per-turn provider-round budget. Omitted means no arbitrary round limit. */
+	maxToolRounds?: number
 	openAiApiKey?: string
 	getOpenAiApiKey?: () => string | undefined
 	getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
@@ -174,6 +176,7 @@ export class AgentEngine extends AbstractAgentEngine {
 	private readonly runtimeBudgetCalculator: ContextBudgetCalculator
 	private readonly runtimeTokenTruncator: TokenTruncator
 	private readonly runtimeMaxOutputTokens?: number
+	private readonly runtimeMaxToolRounds?: number
 	private readonly openAiApiKey?: string
 	private readonly getOpenAiApiKey?: () => string | undefined
 	private readonly getOpenAiAuthMethod?: () => "oauth" | "api-key" | undefined
@@ -217,6 +220,7 @@ export class AgentEngine extends AbstractAgentEngine {
 		this.runtimeBudgetCalculator = contextServices.budgetCalculator ?? new ContextBudgetCalculator()
 		this.runtimeTokenTruncator = contextServices.tokenTruncator ?? new TokenTruncator()
 		this.runtimeMaxOutputTokens = contextServices.maxOutputTokens
+		this.runtimeMaxToolRounds = contextServices.maxToolRounds
 		this.openAiApiKey = contextServices.openAiApiKey
 		this.getOpenAiApiKey = contextServices.getOpenAiApiKey
 		this.getOpenAiAuthMethod = contextServices.getOpenAiAuthMethod
@@ -350,7 +354,8 @@ export class AgentEngine extends AbstractAgentEngine {
 			// Attempt live LLM dispatch through the configured provider.
 			let liveResponse: string | null = null
 			let liveError: string | null = null
-			let liveFailureKind: "cancelled" | "timeout" | "provider" | null = null
+			let liveFailureKind: "cancelled" | "timeout" | "provider" | "budget" | null = null
+			let totalProviderRounds = 0
 			const liveProgressActivityId = "lumi:turn"
 			let liveProgressSequence = 0
 			const nextProgressSequence = (): number => ++liveProgressSequence
@@ -389,9 +394,6 @@ export class AgentEngine extends AbstractAgentEngine {
 							usesClaudeSubscriptionDirectSdk || usesCodexOAuth
 								? (this.config.providerTimeoutMs ?? 180_000)
 								: endpoint.timeoutMs
-						const timeoutSignal = AbortSignal.timeout(providerTimeoutMs)
-						const requestSignal = input.signal ? AbortSignal.any([input.signal, timeoutSignal]) : timeoutSignal
-
 						this.reportProgress(input.onProgress, {
 							activityId: liveProgressActivityId,
 							phase: "connecting",
@@ -446,11 +448,20 @@ export class AgentEngine extends AbstractAgentEngine {
 							...(message.toolCallId ? { tool_call_id: message.toolCallId } : {}),
 						}))
 
-						const maxToolSteps = 10
 						let stepCount = 0
 						let accumulatedResponse = ""
 
-						while (stepCount < maxToolSteps) {
+						// Tool rounds are progress, not a completion deadline. Continue until the
+						// provider finishes, the user cancels, or an actual request fails.
+						while (true) {
+							input.signal?.throwIfAborted()
+							if (this.runtimeMaxToolRounds !== undefined && totalProviderRounds >= this.runtimeMaxToolRounds) {
+								liveFailureKind = "budget"
+								throw new Error(
+									`Explicit provider-round budget exhausted after ${totalProviderRounds} rounds before completion.`,
+								)
+							}
+							totalProviderRounds++
 							stepCount++
 							const payload: {
 								model: string
@@ -471,13 +482,16 @@ export class AgentEngine extends AbstractAgentEngine {
 								activityId: liveProgressActivityId,
 								phase: "thinking",
 								status: "in_progress",
-								message: `[${activeModel}] Deliberating action (step ${stepCount}/${maxToolSteps})`,
+								message: `[${activeModel}] Deliberating action (step ${stepCount})`,
 								detail: `Sending request to ${providerLabel}...`,
 								timestamp: Date.now(),
 								sequence: nextProgressSequence(),
 								metadata: { source: progressSource, scope: "turn", attempt: attempt + 1 },
 							})
 
+							// A provider timeout bounds one request, not all subsequent tool work.
+							const timeoutSignal = AbortSignal.timeout(providerTimeoutMs)
+							const requestSignal = input.signal ? AbortSignal.any([input.signal, timeoutSignal]) : timeoutSignal
 							const stepStartedAt = Date.now()
 							const stepHeartbeat = setInterval(() => {
 								const idle = Date.now() - stepStartedAt
@@ -615,6 +629,7 @@ export class AgentEngine extends AbstractAgentEngine {
 							} finally {
 								clearInterval(stepHeartbeat)
 							}
+							requestSignal.throwIfAborted()
 
 							const choiceMessage = data.choices?.[0]?.message
 							const content = choiceMessage?.content?.trim() ?? ""
@@ -649,6 +664,11 @@ export class AgentEngine extends AbstractAgentEngine {
 									name: tc.function.name,
 									args: tc.function.arguments,
 								}))
+								// Provider call IDs can recur in later rounds or turns. Keep each
+								// invocation separate from its siblings and the parent turn row.
+								const toolActivityPrefix = `lumi:${encodeURIComponent(this.sessionContext.sessionId)}:turn:${this.sessionContext.turnCount}:round:${totalProviderRounds}:tool:`
+								const toolActivityId = (callId: string | undefined): string =>
+									`${toolActivityPrefix}${encodeURIComponent(callId ?? "unknown")}`
 
 								const { results: batchResults } = await this.scheduler.executeBatch(
 									scheduledCalls,
@@ -662,7 +682,7 @@ export class AgentEngine extends AbstractAgentEngine {
 										signal: input.signal,
 										onToolStart: (call: ScheduledToolCall) => {
 											this.reportProgress(input.onProgress, {
-												activityId: liveProgressActivityId,
+												activityId: toolActivityId(call.id),
 												phase: "tool",
 												status: "in_progress",
 												message: `Executing ${call.name}`,
@@ -671,21 +691,34 @@ export class AgentEngine extends AbstractAgentEngine {
 														? call.args.slice(0, 100)
 														: JSON.stringify(call.args).slice(0, 100),
 												timestamp: Date.now(),
+												elapsedMs: 0,
 												sequence: nextProgressSequence(),
-												metadata: { itemType: call.name, scope: "activity", attempt: attempt + 1 },
+												metadata: {
+													source: progressSource,
+													itemType: call.name,
+													scope: "activity",
+													attempt: attempt + 1,
+												},
 											})
 										},
 										onToolComplete: (record: ToolExecutionRecord) => {
 											accumulatedToolResults.push(record)
 											this.reportProgress(input.onProgress, {
-												activityId: liveProgressActivityId,
+												activityId: toolActivityId(record.callId),
 												phase: "tool",
 												status: record.success ? "completed" : "failed",
-												message: `Completed ${record.name}`,
+												message: `${record.success ? "Completed" : "Failed"} ${record.name}`,
 												detail: record.success ? "Success" : `Failed: ${record.error}`,
 												timestamp: Date.now(),
+												elapsedMs: record.durationMs,
 												sequence: nextProgressSequence(),
-												metadata: { itemType: record.name, scope: "activity", attempt: attempt + 1 },
+												metadata: {
+													source: progressSource,
+													itemType: record.name,
+													scope: "activity",
+													attempt: attempt + 1,
+													exitCode: record.exitCode,
+												},
 											})
 										},
 									},
@@ -699,6 +732,9 @@ export class AgentEngine extends AbstractAgentEngine {
 									})
 								}
 							} else {
+								if (!content) {
+									throw new Error("Model response ended without assistant completion content.")
+								}
 								break
 							}
 						}
@@ -736,13 +772,18 @@ export class AgentEngine extends AbstractAgentEngine {
 							break
 						}
 						const err = error as { name?: string; message?: string } | undefined
-						if (err?.name === "TimeoutError" || err?.message?.includes("timed out")) {
+						if (liveFailureKind === "budget") {
+							// A caller-supplied budget cannot be renewed by retrying the turn.
+						} else if (err?.name === "TimeoutError" || err?.message?.includes("timed out")) {
 							liveFailureKind = "timeout"
 						} else {
 							liveFailureKind = "provider"
 						}
 
-						const isLastAttempt = attempt >= maxAttempts - 1
+						// The next attempt rebuilds the transcript. Never replay completed tool
+						// work from the initial prompt after a later provider failure.
+						const isLastAttempt =
+							liveFailureKind === "budget" || accumulatedToolResults.length > 0 || attempt >= maxAttempts - 1
 						if (!isLastAttempt) {
 							this.reportProgress(input.onProgress, {
 								activityId: liveProgressActivityId,
@@ -762,7 +803,12 @@ export class AgentEngine extends AbstractAgentEngine {
 							activityId: liveProgressActivityId,
 							phase: terminalStatus,
 							status: terminalStatus,
-							message: liveFailureKind === "timeout" ? "Model request timed out" : "Model request failed",
+							message:
+								liveFailureKind === "budget"
+									? "Explicit execution budget exhausted"
+									: liveFailureKind === "timeout"
+										? "Model request timed out"
+										: "Model request failed",
 							detail: liveError,
 							timestamp: Date.now(),
 							elapsedMs: Date.now() - liveStartedAt,
@@ -779,6 +825,9 @@ export class AgentEngine extends AbstractAgentEngine {
 			} else if (liveFailureKind === "cancelled") {
 				turnOutcome = "cancelled"
 				responseText = "[Cancelled] Agent turn cancelled by user."
+			} else if (liveFailureKind === "budget") {
+				turnOutcome = "failed"
+				responseText = `[Budget exhausted] ${liveError}`
 			} else if (liveFailureKind === "timeout") {
 				turnOutcome = "failed"
 				responseText = `[Timed out] ${liveError}. You can retry with a narrower request.`

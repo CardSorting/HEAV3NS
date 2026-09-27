@@ -30,7 +30,7 @@ describe("auditGateCatalog", () => {
 		const metadata = enrichAuditMetadata({ violations: ["result_empty"] })
 		const decision = evaluateAuditGate(metadata, { scoreThreshold: 95 })
 		const enriched = enrichAuditMetadataWithGateDecision(metadata, decision, 2)
-		expect(enriched.gate_blocked).to.equal(true)
+		expect(enriched.gate_blocked).to.equal(false)
 		expect(enriched.gate_block_count).to.equal(2)
 		expect(enriched.gate_reason_codes?.length).to.be.greaterThan(0)
 	})

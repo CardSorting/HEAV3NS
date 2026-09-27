@@ -14,7 +14,7 @@ describe("auditOrchestratorDigest", () => {
 		expect(status?.score).to.be.a("number")
 	})
 
-	it("builds blocked gate status with reason labels", () => {
+	it("keeps the orchestrator ready while reporting quality findings", () => {
 		const metadata = enrichAuditMetadata({
 			violations: ["missing_validation_evidence"],
 			intent_coverage: 0.1,
@@ -22,7 +22,7 @@ describe("auditOrchestratorDigest", () => {
 			gate_block_count: 2,
 		})
 		const status = buildOrchestratorGateStatus(metadata, { scoreThreshold: 95 })
-		expect(status?.ready).to.equal(false)
+		expect(status?.ready).to.equal(true)
 		expect(status?.reasonLabels.length).to.be.greaterThan(0)
 		expect(status?.gateBlockCount).to.equal(2)
 	})

@@ -2,6 +2,7 @@ import {
 	buildGateDecisionSummary,
 	buildPreCompletionChecklist,
 	evaluateAuditGate,
+	hasAuditGateFindings,
 	isCompletionBlockedByDecision,
 } from "@shared/audit/auditGateReport"
 import { isCompletionBlockedByAudit } from "@shared/audit/completionAudit"
@@ -16,10 +17,12 @@ describe("auditGateReport", () => {
 			entropy_score: 0.9,
 		})
 		const decision = evaluateAuditGate(metadata)
-		expect(decision.blocked).to.equal(true)
+		expect(decision.blocked).to.equal(false)
+		expect(hasAuditGateFindings(decision)).to.equal(true)
 		expect(decision.reasons.some((r) => r.code === "score_below_threshold")).to.equal(true)
-		expect(isCompletionBlockedByDecision(decision)).to.equal(true)
-		expect(isCompletionBlockedByAudit(metadata)).to.equal(true)
+		expect(isCompletionBlockedByDecision(decision)).to.equal(false)
+		expect(isCompletionBlockedByAudit(metadata)).to.equal(false)
+		expect(isCompletionBlockedByDecision({ ...decision, blocked: true })).to.equal(false)
 	})
 
 	it("returns gate_disabled reason when gate is off", () => {
@@ -29,7 +32,7 @@ describe("auditGateReport", () => {
 		expect(decision.reasons[0]?.code).to.equal("gate_disabled")
 	})
 
-	it("blocks on advisory escalation with explicit reason", () => {
+	it("retains escalation findings without promoting them to blockers", () => {
 		const advisory = enrichAuditMetadata({ violations: ["missing_validation_evidence"] })
 		const completion = enrichAuditMetadata({
 			violations: ["missing_validation_evidence", "result_empty"],
@@ -39,7 +42,8 @@ describe("auditGateReport", () => {
 			advisoryMetadata: advisory,
 			advisoryEscalationEnabled: true,
 		})
-		expect(decision.blocked).to.equal(true)
+		expect(decision.blocked).to.equal(false)
+		expect(decision.advisoryFailed).to.equal(true)
 		expect(decision.reasons.some((r) => r.code === "advisory_escalation")).to.equal(true)
 	})
 
@@ -69,7 +73,7 @@ describe("auditGateReport", () => {
 		expect(buildGateDecisionSummary(decision)).to.contain("Gate ready")
 	})
 
-	it("blocks only on new violations when newViolationsOnly is enabled", () => {
+	it("reports only new findings when newViolationsOnly is enabled", () => {
 		const baseline = enrichAuditMetadata({ violations: ["result_empty"] })
 		const metadata = enrichAuditMetadata({ violations: ["result_empty"] })
 		const passing = evaluateAuditGate(metadata, { newViolationsOnly: true, baselineMetadata: baseline })
@@ -77,7 +81,8 @@ describe("auditGateReport", () => {
 
 		const withNew = enrichAuditMetadata({ violations: ["result_empty", "missing_validation_evidence"] })
 		const blocked = evaluateAuditGate(withNew, { newViolationsOnly: true, baselineMetadata: baseline })
-		expect(blocked.blocked).to.equal(true)
+		expect(blocked.blocked).to.equal(false)
+		expect(blocked.advisoryFailed).to.equal(true)
 		expect(blocked.reasons.some((r) => r.code === "policy_violations")).to.equal(true)
 	})
 })

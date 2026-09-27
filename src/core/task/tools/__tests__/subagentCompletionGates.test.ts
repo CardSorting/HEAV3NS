@@ -88,4 +88,21 @@ describe("subagentCompletionGates", () => {
 		const diagnostics = runSubagentCompletionLanePreflight(config, { result: VALID_RESULT })
 		assert.equal(diagnostics.length, 0)
 	})
+
+	it("returns a ready parent handoff despite old gate history and a concise result", async () => {
+		const config = {
+			...configWithState(taskState),
+			focusChainSettings: { enabled: true },
+		} as TaskConfig
+		taskState.completionGateBlockCount = 100
+		taskState.currentFocusChainChecklist = "- [ ] parent bookkeeping"
+		const result = await validateSubagentCompletionGates(config, "Done", undefined, undefined, {
+			laneExecutionMode: "mutation",
+		})
+		assert.equal(result.error, null)
+		assert.equal(result.completionFunnelEvent.phase, "ready")
+		assert.equal(result.completionFunnelEvent.nextAllowedAction, "attempt_completion")
+		assert.ok(result.diagnostics.length > 0)
+		assert.equal(taskState.completionGateBlockCount, 100)
+	})
 })

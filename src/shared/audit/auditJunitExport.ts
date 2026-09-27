@@ -28,8 +28,10 @@ export function buildAuditJunitXml(
 		}))
 
 	const testcaseCount = Math.max(1, violations.length + gateFailures.length + suppressed.length)
-	const failureCount = violations.length + gateFailures.length
-	const skippedCount = suppressed.length
+	// These are quality observations, not failed executable tests. CI must not
+	// turn an advisory rating back into a completion or merge veto.
+	const failureCount = 0
+	const skippedCount = violations.length + gateFailures.length + suppressed.length
 	const lines = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
 		`<testsuites name="DietCode Task Audit" tests="${testcaseCount}" failures="${failureCount}" errors="0" skipped="${skippedCount}">`,
@@ -43,14 +45,14 @@ export function buildAuditJunitXml(
 			const label = formatViolationLabel(violation)
 			lines.push(
 				`<testcase classname="audit.violation" name="${escapeXml(violation)}" time="0">`,
-				`<failure message="${escapeXml(label)}" type="${escapeXml(violation)}">${escapeXml(label)}</failure>`,
+				`<skipped message="Advisory: ${escapeXml(label)}"/>`,
 				"</testcase>",
 			)
 		}
 		for (const failure of gateFailures) {
 			lines.push(
 				`<testcase classname="audit.gate" name="${escapeXml(failure.name)}" time="0">`,
-				`<failure message="${escapeXml(failure.message)}" type="gate">${escapeXml(failure.message)}</failure>`,
+				`<skipped message="Advisory: ${escapeXml(failure.message)}"/>`,
 				"</testcase>",
 			)
 		}

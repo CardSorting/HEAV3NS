@@ -71,7 +71,7 @@ describe("CompletionFunnel monolith", () => {
 		expect(decision.stages.some((stage) => stage.stage === "core_policy")).to.equal(true)
 	})
 
-	it("blocks a duplicate result on an unchanged checkpoint", () => {
+	it("allows reconciliation after a duplicate result on an unchanged checkpoint", () => {
 		const decision = CompletionFunnelEvaluator.evaluate(
 			snapshot({
 				blockCount: 1,
@@ -79,19 +79,20 @@ describe("CompletionFunnel monolith", () => {
 				lastBlockedResultFingerprint: "result-1",
 			}),
 		)
-		expect(decision.kind).to.equal("soft_block")
-		expect(decision.nextAllowedAction).to.equal("modify_workspace")
+		expect(decision.kind).to.equal("allow_attempt")
+		expect(decision.nextAllowedAction).to.equal("attempt_completion")
 	})
 
-	it("allows exactly one half-open probe after workspace progress", () => {
+	it("keeps completion available regardless of historical retry or probe counts", () => {
 		const probe = snapshot({
 			blockCount: MAX_COMPLETION_GATE_BLOCK_COUNT,
 			checkpointHash: "checkpoint-2",
 			lastGateBlockCheckpointHash: "checkpoint-1",
 		})
-		expect(evaluateCircuitBreaker(probe).state).to.equal("half_open")
-		expect(CompletionFunnelEvaluator.evaluate(probe).kind).to.equal("allow_probe")
-		expect(evaluateCircuitBreaker({ ...probe, lastProbeCheckpointHash: "checkpoint-2" }).state).to.equal("tripped")
+		expect(evaluateCircuitBreaker(probe).state).to.equal("closed")
+		expect(CompletionFunnelEvaluator.evaluate(probe).kind).to.equal("allow_attempt")
+		expect(evaluateCircuitBreaker({ ...probe, lastProbeCheckpointHash: "checkpoint-2" }).state).to.equal("closed")
+		expect(CompletionFunnelEvaluator.evaluate({ ...probe, checkpointHash: "checkpoint-1" }).kind).to.equal("allow_attempt")
 	})
 
 	it("represents terminal success as completed with no second action", () => {
@@ -194,31 +195,47 @@ describe("CompletionFunnel monolith", () => {
 			expect(qualityStage?.result).to.equal("not_applicable")
 		})
 
-		it("fails quality check if result summary is empty or ends with a question", () => {
+		it("records an advisory for quality check if result summary is empty or ends with a question", () => {
 			const emptyDecision = CompletionFunnelEvaluator.evaluate(snapshot({ result: "" }))
-			expect(emptyDecision.kind).to.equal("soft_block")
-			expect(emptyDecision.reason).to.contain("empty")
+			expect(emptyDecision.kind).to.equal("allow_attempt")
+			expect(
+				emptyDecision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("empty"),
+				),
+			).to.equal(true)
 
 			const questionDecision = CompletionFunnelEvaluator.evaluate(snapshot({ result: "Done. Is there anything else?" }))
-			expect(questionDecision.kind).to.equal("soft_block")
-			expect(questionDecision.reason).to.contain("question")
+			expect(questionDecision.kind).to.equal("allow_attempt")
+			expect(
+				questionDecision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("question"),
+				),
+			).to.equal(true)
 		})
 
-		it("fails min_length if result summary is too brief", () => {
+		it("records an advisory for min_length if result summary is too brief", () => {
 			const briefDecision = CompletionFunnelEvaluator.evaluate(snapshot({ result: "Done" }))
-			expect(briefDecision.kind).to.equal("soft_block")
-			expect(briefDecision.reason).to.contain("too brief")
+			expect(briefDecision.kind).to.equal("allow_attempt")
+			expect(
+				briefDecision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("too brief"),
+				),
+			).to.equal(true)
 		})
 
-		it("fails checklist_in_result if checklist formatting is in the result summary", () => {
+		it("records an advisory for checklist_in_result if checklist formatting is in the result summary", () => {
 			const checklistDecision = CompletionFunnelEvaluator.evaluate(
 				snapshot({ result: "Here is what I did:\n- [x] Subtask 1\n- [x] Subtask 2" }),
 			)
-			expect(checklistDecision.kind).to.equal("soft_block")
-			expect(checklistDecision.reason).to.contain("checklist")
+			expect(checklistDecision.kind).to.equal("allow_attempt")
+			expect(
+				checklistDecision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("checklist"),
+				),
+			).to.equal(true)
 		})
 
-		it("fails task_progress_required when focus chain is enabled but progress is missing", () => {
+		it("records an advisory for task_progress_required when focus chain is enabled but progress is missing", () => {
 			const decision = CompletionFunnelEvaluator.evaluate(
 				snapshot({
 					focusChainEnabled: true,
@@ -226,11 +243,13 @@ describe("CompletionFunnel monolith", () => {
 					taskProgress: undefined,
 				}),
 			)
-			expect(decision.kind).to.equal("soft_block")
-			expect(decision.reason).to.contain("missing")
+			expect(decision.kind).to.equal("allow_attempt")
+			expect(
+				decision.stages.some((stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("missing")),
+			).to.equal(true)
 		})
 
-		it("fails task_progress_complete when progress checklist has incomplete items", () => {
+		it("records an advisory for task_progress_complete when progress checklist has incomplete items", () => {
 			const decision = CompletionFunnelEvaluator.evaluate(
 				snapshot({
 					focusChainEnabled: true,
@@ -238,11 +257,15 @@ describe("CompletionFunnel monolith", () => {
 					taskProgress: "- [ ] Subtask 1",
 				}),
 			)
-			expect(decision.kind).to.equal("soft_block")
-			expect(decision.reason).to.contain("incomplete")
+			expect(decision.kind).to.equal("allow_attempt")
+			expect(
+				decision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("incomplete"),
+				),
+			).to.equal(true)
 		})
 
-		it("fails task_progress_align when progress checklist labels are misaligned with focus chain", () => {
+		it("records an advisory for task_progress_align when progress checklist labels are misaligned with focus chain", () => {
 			const decision = CompletionFunnelEvaluator.evaluate(
 				snapshot({
 					focusChainEnabled: true,
@@ -250,11 +273,15 @@ describe("CompletionFunnel monolith", () => {
 					taskProgress: "- [x] Subtask 1",
 				}),
 			)
-			expect(decision.kind).to.equal("soft_block")
-			expect(decision.reason).to.contain("task_progress has")
+			expect(decision.kind).to.equal("allow_attempt")
+			expect(
+				decision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("task_progress has"),
+				),
+			).to.equal(true)
 		})
 
-		it("fails focus_chain when active focus chain has incomplete items", () => {
+		it("records an advisory for focus_chain when active focus chain has incomplete items", () => {
 			const decision = CompletionFunnelEvaluator.evaluate(
 				snapshot({
 					focusChainEnabled: true,
@@ -262,19 +289,23 @@ describe("CompletionFunnel monolith", () => {
 					taskProgress: "- [x] Subtask 1",
 				}),
 			)
-			expect(decision.kind).to.equal("soft_block")
+			expect(decision.kind).to.equal("allow_attempt")
 			expect(focusChainStageFailed(decision)).to.equal(true)
 		})
 
-		it("fails demo_command if a blocked demo command is provided", () => {
+		it("records an advisory for demo_command if a blocked demo command is provided", () => {
 			const decision = CompletionFunnelEvaluator.evaluate(
 				snapshot({
 					result: "This is a long enough and detailed summary of the task and what was done to resolve it. We successfully verified all gates and everything is complete.",
 					command: "echo hello",
 				}),
 			)
-			expect(decision.kind).to.equal("soft_block")
-			expect(decision.reason).to.contain("showcase live output")
+			expect(decision.kind).to.equal("allow_attempt")
+			expect(
+				decision.stages.some(
+					(stage) => stage.result === "failed" && !stage.decisive && stage.reason.includes("showcase live output"),
+				),
+			).to.equal(true)
 		})
 	})
 })

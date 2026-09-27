@@ -1,6 +1,6 @@
 import { describeGateReadiness, type GateReadinessLevel } from "./auditGateReadiness"
 import type { CompletionGateOptions } from "./auditGateReport"
-import { evaluateAuditGate } from "./auditGateReport"
+import { evaluateAuditGate, hasAuditGateFindings } from "./auditGateReport"
 import { partitionViolationsBySeverity } from "./auditSeverity"
 import type { CompletionGateReasonCode, TaskAuditMetadata } from "./types"
 
@@ -41,8 +41,8 @@ export function buildQualityGateStatus(
 
 	return {
 		status: readiness.level,
-		passed: !decision.blocked,
-		advisoryFailed: decision.blocked || metadata.gate_blocked === true,
+		passed: !hasAuditGateFindings(decision),
+		advisoryFailed: hasAuditGateFindings(decision) || metadata.gate_blocked === true,
 		blocked: false,
 		score: decision.score,
 		effectiveThreshold: decision.effectiveThreshold,

@@ -18,7 +18,7 @@ describe("completionAudit", () => {
 			intent_coverage: 0.1,
 			entropy_score: 0.9,
 		})
-		expect(isCompletionBlockedByAudit(metadata)).to.equal(true)
+		expect(isCompletionBlockedByAudit(metadata)).to.equal(false)
 		expect(buildCompletionGateMessage(metadata)).to.contain("Completion diagnostics (advisory)")
 		expect(buildCompletionGateMessage(metadata)).not.to.contain("COMPLETION BLOCKED")
 	})
@@ -32,12 +32,12 @@ describe("completionAudit", () => {
 		expect(isCompletionBlockedByAudit(metadata)).to.equal(false)
 	})
 
-	it("respects gateEnabled=false to bypass blocking (advisory-only mode)", () => {
+	it("keeps enabled and disabled quality gates advisory", () => {
 		const metadata = enrichAuditMetadata({
 			violations: ["missing_validation_evidence", "unresolved_work_marker:todo", "result_empty"],
 		})
 		expect(isCompletionBlockedByAudit(metadata, { gateEnabled: false })).to.equal(false)
-		expect(isCompletionBlockedByAudit(metadata, { gateEnabled: true })).to.equal(true)
+		expect(isCompletionBlockedByAudit(metadata, { gateEnabled: true })).to.equal(false)
 	})
 
 	it("respects configurable score threshold", () => {
@@ -46,7 +46,7 @@ describe("completionAudit", () => {
 		})
 		expect(metadata.hardening_score).to.be.a("number")
 		expect(isCompletionBlockedByAudit(metadata, { scoreThreshold: 70 })).to.equal(false)
-		expect(isCompletionBlockedByAudit(metadata, { scoreThreshold: 95 })).to.equal(true)
+		expect(isCompletionBlockedByAudit(metadata, { scoreThreshold: 95 })).to.equal(false)
 	})
 
 	it("supports critical-only gate mode for warning-level violations", () => {

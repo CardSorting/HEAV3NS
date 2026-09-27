@@ -1,6 +1,6 @@
 import { filterNewViolationsSinceBaseline } from "./auditBaselineUtils"
 import { formatGateReasonLabel } from "./auditGateCatalog"
-import { type CompletionGateOptions, evaluateAuditGate } from "./auditGateReport"
+import { type CompletionGateOptions, evaluateAuditGate, hasAuditGateFindings } from "./auditGateReport"
 import { partitionViolationsBySeverity } from "./auditSeverity"
 import { formatViolationLabel } from "./taskAuditUtils"
 import type { TaskAuditMetadata } from "./types"
@@ -45,7 +45,7 @@ export function buildPreCompletionChecklistSummary(
 	items.push({
 		key: "hardening_score",
 		label: `Hardening score ${decision.score}/${decision.effectiveThreshold}`,
-		status: scorePassed ? "pass" : decision.blocked ? "fail" : "warn",
+		status: scorePassed ? "pass" : "warn",
 		detail: decision.grade ? `Grade ${decision.grade}` : undefined,
 	})
 
@@ -54,7 +54,7 @@ export function buildPreCompletionChecklistSummary(
 		items.push({
 			key: "new_code_gate",
 			label: `New-code diagnostics (${gateViolations.length} finding(s) since baseline)`,
-			status: gateViolations.length === 0 ? "pass" : "fail",
+			status: gateViolations.length === 0 ? "pass" : "warn",
 			detail: grandfathered > 0 ? `${grandfathered} grandfathered violation(s) excluded` : undefined,
 		})
 	}
@@ -63,14 +63,14 @@ export function buildPreCompletionChecklistSummary(
 		items.push({
 			key: "critical_violations",
 			label: `${critical.length} critical violation(s)`,
-			status: "fail",
+			status: "warn",
 			detail: critical.slice(0, 3).map(formatViolationLabel).join(", "),
 		})
 	} else if (warning.length > 0) {
 		items.push({
 			key: "warning_violations",
 			label: `${warning.length} warning violation(s)`,
-			status: decision.blocked ? "fail" : "warn",
+			status: "warn",
 			detail: warning.slice(0, 3).map(formatViolationLabel).join(", "),
 		})
 	} else if ((metadata.violations?.length ?? 0) === 0) {
@@ -88,7 +88,7 @@ export function buildPreCompletionChecklistSummary(
 		items.push({
 			key: reason.code,
 			label: formatGateReasonLabel(reason.code),
-			status: "fail",
+			status: "warn",
 			detail: reason.message,
 		})
 	}
@@ -104,7 +104,7 @@ export function buildPreCompletionChecklistSummary(
 	}
 
 	return {
-		advisoryFailed: decision.blocked,
+		advisoryFailed: hasAuditGateFindings(decision),
 		blocked: false,
 		score: decision.score,
 		effectiveThreshold: decision.effectiveThreshold,

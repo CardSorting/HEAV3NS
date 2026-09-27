@@ -3,7 +3,7 @@
  *
  * Registration, task/lane admission, plan-mode enforcement, mutation fencing,
  * roadmap protection, policy enforcement, PreToolUse hooks, cancellation,
- * dispatch, retries/timeouts/concurrency, result classification, post-policy
+ * dispatch, timeouts/concurrency, result classification, post-policy
  * observation, and publication of one terminal outcome live here.
  *
  * Handlers are operation adapters. They may validate operation-specific input
@@ -189,15 +189,7 @@ export function appendSessionStabilityContext(config: TaskConfig, relPath: strin
 export interface ExecuteOptions {
 	/** Set to zero when the backend owns timeout/cancellation. */
 	timeoutMs?: number
-	maxRetries?: number
-	backoffMs?: number
 	concurrencyGroup?: string
-	/**
-	 * Controls whether a failed operation may be replayed. Mutations without an
-	 * end-to-end idempotency key should use at_most_once so a timeout cannot
-	 * duplicate a side effect that may already have reached its target.
-	 */
-	retryPolicy?: "idempotent" | "at_most_once"
 }
 
 type ReliableOperation<T> = (signal: AbortSignal) => Promise<T>
@@ -217,19 +209,11 @@ interface ReliabilityContext {
 	signal?: AbortSignal
 }
 
-interface CircuitState {
-	failures: number
-	lastFailureTime: number
-}
-
 class ExecutionReliability {
 	private readonly activeOperations = new Map<string, number>()
 	private readonly queues = new Map<string, Array<() => void>>()
-	private readonly circuits = new Map<string, CircuitState>()
 	private readonly storage = new AsyncLocalStorage<ReliabilityContext>()
 	private readonly maxConcurrency = 5
-	private readonly circuitOpenThreshold = 20
-	private readonly circuitResetMs = 30_000
 	private readonly defaultTimeoutMs = 60_000
 
 	runWithPermit<T>(context: ReliabilityContext, operation: () => Promise<T>): Promise<T> {
@@ -283,74 +267,33 @@ class ExecutionReliability {
 			}
 		}
 		const timeoutMs = options.timeoutMs ?? this.defaultTimeoutMs
-		const maxRetries = options.maxRetries ?? 3
-		const backoffMs = options.backoffMs ?? 500
 		const concurrencyGroup = options.concurrencyGroup ?? "default"
-		const retryPolicy = options.retryPolicy ?? "idempotent"
-		const circuitKey = `${taskId}:${concurrencyGroup}`
-		let attempts = 0
-
-		while (attempts < maxRetries) {
-			if (context?.signal?.aborted) {
-				throw new Error("Reliability execution aborted: task cancellation active.")
-			}
-			if (this.isCircuitOpen(circuitKey)) {
-				context?.stages.push(fail("reliability.circuit", `Task-scoped ${concurrencyGroup} circuit is open`, true))
-				throw new Error(`[ExecutionFunnel] Circuit is OPEN for task ${taskId} (${concurrencyGroup}).`)
-			}
-			const attemptSignal = this.createAttemptSignal(context.signal)
-			try {
-				const result = await this.withConcurrency(
-					concurrencyGroup,
-					() => {
-						const running = operation(attemptSignal.controller.signal)
-						return timeoutMs > 0 ? this.withTimeout(taskId, running, timeoutMs, attemptSignal.controller) : running
-					},
-					context?.signal,
-				)
-				this.onSuccess(circuitKey)
-				context?.stages.push(pass("reliability", `Operation completed after ${attempts + 1} attempt(s)`))
-				return result
-			} catch (error) {
-				attempts++
-				const retryable = retryPolicy === "idempotent" && this.isRetryableError(error)
-				if (attempts >= maxRetries || !retryable) {
-					this.onFailure(circuitKey)
-					Logger.error(`[ExecutionFunnel] Task ${taskId} failed permanently after ${attempts} attempts:`, error)
-					throw error
-				}
-				if (context?.signal?.aborted) {
-					throw new Error("Reliability execution aborted: task cancellation active.")
-				}
-				const delay = backoffMs * 2 ** (attempts - 1)
-				context?.stages.push(pass("reliability.retry", `Retry ${attempts}/${maxRetries} after ${delay}ms`))
-				await new Promise<void>((resolve, reject) => {
-					let timeoutId: ReturnType<typeof setTimeout> | undefined
-					const cleanup = () => {
-						if (timeoutId) clearTimeout(timeoutId)
-						context?.signal?.removeEventListener("abort", onAbort)
-					}
-					const onAbort = () => {
-						cleanup()
-						reject(new Error("Reliability execution aborted during retry backoff: task cancellation active."))
-					}
-					if (context?.signal) {
-						context.signal.addEventListener("abort", onAbort, { once: true })
-					}
-					if (context?.signal?.aborted) {
-						onAbort()
-						return
-					}
-					timeoutId = setTimeout(() => {
-						cleanup()
-						resolve()
-					}, delay)
-				})
-			} finally {
-				attemptSignal.dispose()
-			}
+		if (context.signal?.aborted) {
+			throw new Error("Reliability execution aborted: task cancellation active.")
 		}
-		throw new Error(`[ExecutionFunnel] Task ${taskId} failed after max retries`)
+		const attemptSignal = this.createAttemptSignal(context.signal)
+		try {
+			const result = await this.withConcurrency(
+				concurrencyGroup,
+				() => {
+					if (attemptSignal.controller.signal.aborted) {
+						throw new Error("Reliability execution aborted: task cancellation active.")
+					}
+					const running = operation(attemptSignal.controller.signal)
+					return timeoutMs > 0 ? this.withTimeout(taskId, running, timeoutMs, attemptSignal.controller) : running
+				},
+				context.signal,
+			)
+			context.stages.push(pass("reliability", "Operation completed without an implicit replay"))
+			return result
+		} catch (error) {
+			// Return the actual failure for observation and adaptation. A generic
+			// error label cannot prove replay safety or justify blocking later work.
+			context.stages.push(fail("reliability", error instanceof Error ? error.message : String(error), false))
+			throw error
+		} finally {
+			attemptSignal.dispose()
+		}
 	}
 
 	private async withConcurrency<T>(group: string, operation: () => Promise<T>, signal?: AbortSignal): Promise<T> {
@@ -426,42 +369,6 @@ class ExecutionReliability {
 		} finally {
 			if (timeoutId) clearTimeout(timeoutId)
 		}
-	}
-
-	private isRetryableError(error: unknown): boolean {
-		const message = (error instanceof Error ? error.message : String(error)).toUpperCase()
-		return [
-			"ABORTED",
-			"CONTENTION",
-			"DEADLINE EXCEEDED",
-			"SQLITE_BUSY",
-			"SQLITE_LOCKED",
-			"TIMEOUT",
-			"RATE_LIMIT",
-			"UNAVAILABLE",
-		].some((token) => message.includes(token))
-	}
-
-	private isCircuitOpen(key: string): boolean {
-		const state = this.circuits.get(key)
-		if (!state || state.failures < this.circuitOpenThreshold) return false
-		if (Date.now() - state.lastFailureTime < this.circuitResetMs) return true
-		this.circuits.delete(key)
-		return false
-	}
-
-	private onSuccess(key: string): void {
-		const state = this.circuits.get(key)
-		if (!state) return
-		state.failures = Math.max(0, state.failures - 1)
-		if (state.failures === 0) this.circuits.delete(key)
-	}
-
-	private onFailure(key: string): void {
-		const state = this.circuits.get(key) ?? { failures: 0, lastFailureTime: 0 }
-		state.failures++
-		state.lastFailureTime = Date.now()
-		this.circuits.set(key, state)
 	}
 }
 
@@ -1054,7 +961,7 @@ export class ExecutionFunnel {
 								}
 								return this.dispatchAuthorizedOperation(config, block, handler)
 							},
-							{ timeoutMs: 0, maxRetries: 1, concurrencyGroup: "dispatch" },
+							{ timeoutMs: 0, concurrencyGroup: "dispatch" },
 						),
 				)
 				let rawResult: ToolResponse
@@ -1485,9 +1392,12 @@ export class ExecutionFunnel {
 					case "mcp":
 						return actions.useMcp || mcpToolSettingMatched
 					case "internal_state":
-						return false
+						// Bookkeeping and context maintenance are part of executing the task.
+						return true
 					case "subagent":
-						return false
+						// Delegation inherits the parent's policy. Each child operation is
+						// evaluated again against these same capabilities when dispatched.
+						return true
 					default:
 						return false
 				}
@@ -1874,12 +1784,12 @@ export class ExecutionFunnel {
 	): Promise<string | undefined> {
 		if (!declaredMutation) return undefined
 		try {
-			const { preflightRoadmapWrite, targetsRoadmapFile } = require("@/services/roadmap/RoadmapNativeBridge")
+			const { preflightRoadmapWrite, targetsRoadmapFile } = await import("@/services/roadmap/RoadmapNativeBridge")
 			if (!targetsRoadmapFile(block.name, block.params)) return undefined
 			const preflight = await preflightRoadmapWrite(block.name, block.params, config.cwd)
 			return preflight.block ? preflight.message || "Roadmap write blocked." : undefined
 		} catch {
-			const { getRoadmapConfig } = require("@/services/roadmap/RoadmapConfig")
+			const { getRoadmapConfig } = await import("@/services/roadmap/RoadmapConfig")
 			const roadmapConfig = getRoadmapConfig()
 			return roadmapConfig.enabled && roadmapConfig.fail_closed_completion_gates
 				? "ROADMAP write guard failed — the target could not be verified safely."

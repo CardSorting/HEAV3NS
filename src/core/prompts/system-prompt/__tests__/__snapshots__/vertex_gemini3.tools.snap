@@ -13,8 +13,7 @@
         }
       },
       "required": [
-        "command",
-        "requires_approval"
+        "command"
       ]
     }
   },

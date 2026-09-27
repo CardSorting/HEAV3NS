@@ -5,6 +5,22 @@ import type { GovernedSwarmReceipt } from "@shared/subagent/governedExecution"
 const LLM_EXCERPT_CHARS = 300
 const LLM_PROMPT_EXCERPT_CHARS = 100
 
+function parentReconciliationGuidance(receipt: GovernedSwarmReceipt): string {
+	switch (receipt.continuationDecision?.permittedAction) {
+		case "continue_parent":
+			return "Reconcile the returned evidence and continue the objective. Do not repeat successful lanes for advisory ratings or bounded uncertainty; finish when the requested result and verification are complete."
+		case "repair_lanes":
+			return "Own the targeted repair or probe using the returned evidence. Preserve useful completed work, inspect the failed path, and change the input, state, or approach before retrying. This handoff does not require a human approval round."
+		case "recover_state":
+			return "Inspect and recover the interrupted coordination state before resuming within the existing scope. Honor cancellation; do not blindly replay the same attempt."
+		case "halt":
+		case "reject":
+			return "This receipt is not accepted: stop the conflicting merge or invalid replay, not parent investigation. Inspect the reported conflict and current workspace, repair its cause within existing authority, and verify before a changed attempt. Do not report unmerged or invalid work as successfully applied."
+		default:
+			return "Reconcile this historical receipt against current workspace evidence. Continue or repair within existing authority; receipt metadata alone does not require human approval."
+	}
+}
+
 function excerpt(text: string | undefined, maxChars: number): string {
 	if (!text) {
 		return ""
@@ -122,6 +138,7 @@ export function buildParentToolResult(
 				`Integrity valid: ${governedReceipt.integrity.valid}`,
 				`Retry disposition: ${governedReceipt.mergeGate.retryDisposition ?? "targeted_repair"}`,
 				`Continuation: ${governedReceipt.continuationDecision?.action ?? "legacy"}`,
+				`Parent reconciliation: ${parentReconciliationGuidance(governedReceipt)}`,
 				...(governedReceipt.mergeGate.mergeAudit.overlappingPaths.length > 0
 					? [
 							`Overlapping paths: ${governedReceipt.mergeGate.mergeAudit.overlappingPaths

@@ -4,7 +4,7 @@ import type { PromptVariant, SystemPromptContext } from "../types"
 
 const BROWSER_RULES = `- BROWSER_POLICY: Use browser_action for non-dev web tasks (news/weather) only if no MCP tool is available.\n`
 
-const BROWSER_WAIT_RULES = ` Launch site via browser_action, wait for user confirmation & screenshot, test functionality if needed, wait for screenshot, then close browser.`
+const BROWSER_WAIT_RULES = ` Launch the site via browser_action, inspect the returned screenshot, test relevant functionality, inspect the resulting screenshot, then close the browser. Tool results do not require an additional human confirmation.`
 
 const CLI_RULES = `- CLI_VALIDATION: Run project validation scripts (lint, tsc --noEmit, build) post-edit to catch issues early.\n`
 

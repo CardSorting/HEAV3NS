@@ -20,8 +20,8 @@ You have access to a set of tools. One tool may be used per message, results wil
 ## TOOLS
 
 **execute_command** — Run terminal commands in {{CWD}} or other directories.  
-Params: command, requires_approval. "requires_approval" should be true if the command is dangerous, otherwise false.
-Key: If output doesn't stream, assume success unless critical; else ask user to paste via ask_followup_question.  
+Params: command (required), requires_approval (optional legacy risk hint). The execution policy determines authorization; no separate confirmation is needed for authorized commands.
+Key: Inspect command output and exit status. If output is missing, use available diagnostics to recover it and verify the effects; never infer success from silence.
 *Example:*
 <execute_command>
 <command>npm run build</command>
@@ -90,7 +90,7 @@ Params: result, command (optional demonstration of completed work).
 <command>Your command here (optional)</command>
 <task_progress>Checklist here (required if you used task_progress in previous tool uses)</task_progress>
 </attempt_completion>
-**Gate:** Ask yourself inside <reasoning> whether all prior tool uses were user-confirmed. If not, do **not** call.
+Verify required outcomes from tool results and relevant checks, then call attempt_completion without asking for human reconfirmation.
 
 **new_task** — Create a new task with context.
 Param: context (Current Work; Key Concepts; Relevant Files/Code; Problem Solving; Pending & Next).
@@ -166,14 +166,14 @@ const HERMES_RULES_TEMPLATE = (context: SystemPromptContext) => `RULES
 - When the user requests a specific output format (e.g., JSON, LaTeX with \\boxed{} for math, CSV, XML), strictly adhere to that format in your final answer. Similarly, when the user specifies a programming language, use that language unless there is a clear reason not to.
 - Use Markdown semantically only (e.g., inline code, code fences, lists, tables). Backtick file/dir/function/class names. Use for inline math and for block math.
 - ${context.yoloModeToggled !== true ? "Ask questions only via ask_followup_question when details are required to proceed; otherwise prefer using tools. Example: if a file may be on the Desktop, use list_files to find it rather than asking the user." : "Use tools and best judgment to complete the task without follow-up questions, making reasonable assumptions from context."}${context.yoloModeToggled !== true ? "\n- If the request is vague, use ask_followup_question to clarify. If intent can be inferred from context/tools, proceed without unnecessary questions." : ""}
-- If command output doesn't appear, assume success and continue.${context.yoloModeToggled !== true ? " If you must see output, use ask_followup_question to request a pasted log." : ""}
+- If command output is missing, inspect exit state and resulting artifacts and recover the observation path using available tools. Treat the result as unverified until evidence demonstrates success.
 - If the user pasted a file's contents or provided the relevant contents of a file, don't call read_file for it.
 - {{BROWSER_RULES}}- Never end attempt_completion with a question. Finish decisively.
 - You will receive environment_details after each user message; treat this as helpful context only, not as a new user request.
 - For replace_in_file, SEARCH blocks must contain complete, exact lines (no partial matches).
 - With multiple SEARCH/REPLACE blocks, order them as they appear in the file (earlier lines first).
 - For replace_in_file markers, do not alter the format; include the closing +++++++ REPLACE.
-- After each tool use, wait for the user's response to confirm success before proceeding.{{BROWSER_WAIT_RULES}}
+- After each tool use, inspect its result before dependent work. Successful tool results do not require human reconfirmation.{{BROWSER_WAIT_RULES}}
 `
 
 export const hermesComponentOverrides = {

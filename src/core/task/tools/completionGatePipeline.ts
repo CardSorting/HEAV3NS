@@ -4,7 +4,7 @@ import {
 	type GatePolicyProvenance,
 	resolveCompletionGateContext,
 } from "@shared/audit/auditGatePolicyLoader"
-import { type AuditGateDecision, evaluateAuditGate } from "@shared/audit/auditGateReport"
+import { type AuditGateDecision, evaluateAuditGate, hasAuditGateFindings } from "@shared/audit/auditGateReport"
 import { resolvePlanBaselineMetadata } from "@shared/audit/auditMessages"
 import { buildPreCompletionChecklistBlock, buildPreCompletionChecklistSummary } from "@shared/audit/auditPreCompletionChecklist"
 import { buildCompletionGateMessage, runCompletionAudit } from "@shared/audit/completionAudit"
@@ -378,7 +378,7 @@ export async function evaluateCompletionAuditGate(
 			})
 			const gateOptions = gateContext.options
 			const gateDecision = evaluateAuditGate(cachedAudit, gateOptions)
-			if (!gateDecision.blocked) {
+			if (!hasAuditGateFindings(gateDecision)) {
 				config.taskState.lastCompletionAuditCheckpointHash = checkpointHash
 				return {
 					status: "advisory_passed",
@@ -406,7 +406,7 @@ export async function evaluateCompletionAuditGate(
 		const gateOptions = gateContext.options
 		const gateDecision = evaluateAuditGate(auditMetadata, gateOptions)
 
-		if (gateDecision.blocked) {
+		if (hasAuditGateFindings(gateDecision)) {
 			const auditHumanMessage = buildCompletionGateMessage(auditMetadata, {
 				scoreThreshold: config.auditCompletionGateThreshold,
 				criticalOnly: gateOptions.criticalOnly ?? config.auditCompletionGateCriticalOnly,
@@ -533,9 +533,9 @@ export async function evaluateSubagentAdvisoryAudit(
 			lastAdvisoryAudit: config.taskState.lastAdvisoryAudit,
 		})
 		const gateDecision = evaluateAuditGate(auditMetadata, gateContext.options)
-		if (gateDecision.blocked) {
+		if (hasAuditGateFindings(gateDecision)) {
 			config.taskState.lastAdvisoryAudit = auditMetadata
-			return { metadata: auditMetadata, wouldBlock: true }
+			return { metadata: auditMetadata, wouldBlock: false }
 		}
 
 		return { metadata: auditMetadata, wouldBlock: false }

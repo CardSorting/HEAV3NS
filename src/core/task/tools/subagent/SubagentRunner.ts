@@ -74,9 +74,7 @@ import { SwarmConsensusHandler } from "./SwarmConsensusHandler"
 const MAX_EMPTY_ASSISTANT_RETRIES = 3
 const MAX_INITIAL_STREAM_ATTEMPTS = 3
 const INITIAL_STREAM_RETRY_BASE_DELAY_MS = 250
-const MAX_TOTAL_TOOL_CALLS = 50
 const MAX_PARALLEL_IO_TOOL_CALLS = 4
-const MAX_TASK_ITERATIONS = 25
 
 /**
  * Runtime dependency seam for the subagent loop. The production defaults are
@@ -633,13 +631,12 @@ export class SubagentRunner {
 			completionGateOperationalState: parentGateOperationalState,
 			gateOptions,
 		})
-		const hardSignals = parentGateSignals.filter((s) => s.startsWith("SIGNAL: PARENT_CRITICAL"))
 		const { advisorySignals } = resolveContinuationFromParentSignals(parentGateSignals)
-		if (advisorySignals.length > 0 || hardSignals.length > 0) {
-			this.activeSignals = [...advisorySignals, ...hardSignals]
+		if (advisorySignals.length > 0) {
+			this.activeSignals = advisorySignals
 			onProgress({
 				advisorySignals,
-				hardSignals,
+				hardSignals: [],
 				authorityState: "executing",
 			})
 		}
@@ -668,7 +665,11 @@ export class SubagentRunner {
 			const discoveredSkills = await subagentRunnerRuntime.getResolvedSkillsForCwd(this.baseConfig.cwd)
 			const globalSkillsToggles = this.baseConfig.services.stateManager.getGlobalSettingsKey("globalSkillsToggles") ?? {}
 			const localSkillsToggles = this.baseConfig.services.stateManager.getWorkspaceStateKey("localSkillsToggles") ?? {}
-			const availableSkills = subagentRunnerRuntime.filterEnabledSkills(discoveredSkills, globalSkillsToggles, localSkillsToggles)
+			const availableSkills = subagentRunnerRuntime.filterEnabledSkills(
+				discoveredSkills,
+				globalSkillsToggles,
+				localSkillsToggles,
+			)
 			const configuredSkillNames = this.agent.getConfiguredSkills()
 			const resolvedForPrompt = subagentRunnerRuntime.filterSubagentPromptSkills(availableSkills)
 			const skills =
@@ -828,7 +829,7 @@ export class SubagentRunner {
 			]
 
 			let iterationCount = 0
-			while (iterationCount < MAX_TASK_ITERATIONS) {
+			while (!this.shouldAbort()) {
 				iterationCount++
 				const systemPrompt = this.agent.buildSystemPrompt(generatedSystemPrompt)
 				if (usageState.lastRequest) {
@@ -918,15 +919,6 @@ export class SubagentRunner {
 								return this.finalizeAndPublish({ status: "failed", error, stats })
 							}
 
-							if (stats.toolCalls >= MAX_TOTAL_TOOL_CALLS) {
-								const error = `Swarm Tool Call Limit Exceeded (${MAX_TOTAL_TOOL_CALLS}). Terminating subagent to prevent infinite tool loops.`
-								Logger.warn(`[SubagentRunner] ${error}`)
-								this.envelopeBuilder?.fail(error)
-								this.envelopeBuilder?.recordRetryHint(
-									"Simplify the objective or decompose into smaller subtasks.",
-								)
-								return this.finalizeAndPublish({ status: "failed", error, stats })
-							}
 							break
 						case "text":
 							requestId = requestId ?? chunk.id
@@ -1222,10 +1214,8 @@ export class SubagentRunner {
 				await delay(0)
 			}
 
-			const loopError = `Swarm Iteration Limit Exceeded (${MAX_TASK_ITERATIONS}). Subagent failed to complete the task within allowed turns.`
-			this.envelopeBuilder?.fail(loopError)
-			this.envelopeBuilder?.recordRetryHint("Decompose the task or increase iteration budget.")
-			return this.finalizeAndPublish({ status: "failed", error: loopError, stats })
+			this.envelopeBuilder?.abort()
+			return this.finalizeAndPublish({ status: "failed", error: "Subagent run cancelled.", stats })
 		} catch (error) {
 			if (this.shouldAbort()) {
 				const cancelledError = "Subagent run cancelled."
@@ -1385,41 +1375,9 @@ export class SubagentRunner {
 				executionFunnelEvent: execution.event,
 			}
 		}
-		const executableCount = Math.min(calls.length, Math.max(0, MAX_TOTAL_TOOL_CALLS - this.stats.toolCalls))
 		const outcomes: Awaited<ReturnType<typeof executeCall>>[] = []
-		for (let offset = 0; offset < executableCount; offset += MAX_PARALLEL_IO_TOOL_CALLS) {
+		for (let offset = 0; offset < calls.length; offset += MAX_PARALLEL_IO_TOOL_CALLS) {
 			outcomes.push(...(await Promise.all(calls.slice(offset, offset + MAX_PARALLEL_IO_TOOL_CALLS).map(executeCall))))
-		}
-		for (const call of calls.slice(executableCount)) {
-			const toolName = call.name as DietCodeDefaultTool
-			const toolCallParams = toToolUseParams(call.input)
-			const toolCallBlock: ToolUse = {
-				type: "tool_use",
-				name: toolName,
-				params: toolCallParams,
-				partial: false,
-				call_id: call.call_id || call.toolUseId,
-			}
-			const denied = await executionFunnel.execute({
-				config: subagentConfig,
-				block: toolCallBlock,
-				registered: !!this.baseConfig.coordinator.getHandler(toolName),
-				handler: this.baseConfig.coordinator.getHandler(toolName),
-				lane: "subagent",
-				laneMode: this.laneExecutionMode,
-				allowedInLane: false,
-				laneDenialReason: `Swarm Tool Call Limit Exceeded (${MAX_TOTAL_TOOL_CALLS}). Tool was not executed.`,
-				signal: this.runnerAbortController.signal,
-			})
-			outcomes.push({
-				call,
-				handler: this.baseConfig.coordinator.getHandler(toolName),
-				latestToolCall: formatToolCallPreview(toolName, toolCallParams),
-				toolCallParams,
-				toolResult: formatResponse.toolError(denied.event.reason),
-				executed: false,
-				executionFunnelEvent: denied.event,
-			})
 		}
 
 		const toolResultBlocks: DietCodeUserContent[] = []
@@ -1520,7 +1478,7 @@ export class SubagentRunner {
 
 		toolResultBlocks.push({
 			type: "text",
-			text: `[SELF-CORRECTION NUDGE] You have called the same tool with the same parameters ${this.MAX_CONSECUTIVE_IDENTICAL_CALLS + 1} times in a row. This suggests you are stuck. Please RE-EVALUATE your approach, inspect a different boundary or evidence source, or use 'ask_followup_question' to clarify the objective with the parent.`,
+			text: `[SELF-CORRECTION NUDGE] You have called the same tool with the same parameters ${this.MAX_CONSECUTIVE_IDENTICAL_CALLS + 1} times in a row. This suggests you are stuck. Please RE-EVALUATE your approach, inspect a different boundary or evidence source, make a reasonable scoped assumption, and continue. Return useful findings to the parent when the assignment is complete.`,
 		})
 		Logger.warn(`[SubagentRunner] Repetition detected for tool ${toolName}; injected nudge.`)
 		void this.signalCriticalFindingsToSwarm(

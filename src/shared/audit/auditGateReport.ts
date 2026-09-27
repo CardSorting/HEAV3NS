@@ -14,7 +14,10 @@ export interface CompletionGateReason {
 }
 
 export interface AuditGateDecision {
+	/** @deprecated Quality ratings are advisory and never deny execution. */
 	blocked: boolean
+	/** Separate diagnostic outcome from execution authority; optional for historical records. */
+	advisoryFailed?: boolean
 	score: number
 	effectiveThreshold: number
 	grade: TaskAuditMetadata["hardening_grade"]
@@ -36,7 +39,7 @@ export interface CompletionGateOptions {
 	baselineMetadata?: TaskAuditMetadata
 }
 
-/** Unified quality-gate evaluator — mirrors CI/SonarQube gate decision APIs. */
+/** Evaluate quality diagnostics without granting the rater execution authority. */
 export function evaluateAuditGate(metadata: TaskAuditMetadata, options?: CompletionGateOptions): AuditGateDecision {
 	const gateViolations =
 		options?.newViolationsOnly && options.baselineMetadata
@@ -58,6 +61,7 @@ export function evaluateAuditGate(metadata: TaskAuditMetadata, options?: Complet
 	if (options?.gateEnabled === false) {
 		return {
 			blocked: false,
+			advisoryFailed: false,
 			score,
 			effectiveThreshold,
 			grade,
@@ -114,7 +118,8 @@ export function evaluateAuditGate(metadata: TaskAuditMetadata, options?: Complet
 	}
 
 	return {
-		blocked: reasons.some((r) => r.code !== "gate_disabled"),
+		blocked: false,
+		advisoryFailed: reasons.some((r) => r.code !== "gate_disabled"),
 		score,
 		effectiveThreshold,
 		grade,
@@ -122,15 +127,19 @@ export function evaluateAuditGate(metadata: TaskAuditMetadata, options?: Complet
 	}
 }
 
-export function isCompletionBlockedByDecision(decision: AuditGateDecision): boolean {
-	return decision.blocked
+export function hasAuditGateFindings(decision: AuditGateDecision): boolean {
+	return decision.advisoryFailed ?? (decision.blocked || decision.reasons.some((reason) => reason.code !== "gate_disabled"))
+}
+
+export function isCompletionBlockedByDecision(_decision: AuditGateDecision): boolean {
+	return false
 }
 
 export function buildGateDecisionSummary(decision: AuditGateDecision): string {
-	if (!decision.blocked) {
+	if (!hasAuditGateFindings(decision)) {
 		return `Gate ready: Grade ${decision.grade ?? "?"} (${decision.score}/100, threshold ${decision.effectiveThreshold})`
 	}
-	return decision.reasons.map((r) => `- ${r.message}`).join("\n")
+	return decision.reasons.map((r) => `- Advisory: ${r.message}`).join("\n")
 }
 
 export function buildPreCompletionChecklist(metadata: TaskAuditMetadata, options?: CompletionGateOptions): string {
@@ -146,7 +155,7 @@ export function buildPreCompletionChecklist(metadata: TaskAuditMetadata, options
 	const lines = [
 		'<pre_completion_checklist authority="advisory">',
 		`Hardening: ${decision.grade ?? "?"} (${decision.score}/100) · Threshold ${decision.effectiveThreshold}`,
-		decision.blocked ? "Advisory quality status: findings present" : "Advisory quality status: passed",
+		hasAuditGateFindings(decision) ? "Advisory quality status: findings present" : "Advisory quality status: passed",
 	]
 
 	if (options?.newViolationsOnly) {

@@ -89,7 +89,7 @@ export class UseMcpToolHandler implements IToolHandler, IPartialBlockHandler {
 				config.taskId,
 				config.taskState.executionGeneration,
 				(signal) => config.services.mcpHub.callTool(server_name, tool_name, parsedArguments, config.ulid, signal),
-				{ concurrencyGroup: "mcp", retryPolicy: "at_most_once" },
+				{ concurrencyGroup: "mcp" },
 			)
 
 			// Check for any pending notifications after the tool call

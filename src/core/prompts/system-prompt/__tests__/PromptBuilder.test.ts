@@ -70,6 +70,49 @@ describe("PromptBuilder", () => {
 	}
 
 	describe("build", () => {
+		it("includes one shared mandate even when a variant omits objective and rules components", async () => {
+			const variant = { ...baseVariant, baseTemplate: "Custom agent role", componentOrder: [] }
+			const result = await new PromptBuilder(variant, { ...mockContext, mode: "act" }, {}).build()
+
+			expect(result.match(/\[HEAV3NS MANDATE\]/g)).to.have.length(1)
+			expect(result).to.include("INSPECT → REASON → ACT → OBSERVE → ADAPT → VERIFY")
+			expect(result).to.include("NO BLIND RETRIES")
+			expect(result).to.include("reconcile conflicts as the parent")
+			expect(result).to.include("call attempt_completion and STOP")
+			expect(result).to.include("configured permissions")
+			expect(result).to.include("Custom agent role")
+		})
+
+		it("keeps explicit Plan Mode read-only under the mandate", async () => {
+			const result = await new PromptBuilder(baseVariant, { ...mockContext, mode: "plan" }, mockComponents).build()
+
+			expect(result).to.include("PLAN MODE: Own discovery and planning within the current read-only tool policy")
+			expect(result).to.include(
+				"Do not perform implementation or mutate the workspace until the runtime enters ACT/AUTO mode",
+			)
+			expect(result).not.to.include("ACT/AUTO MODE: Own the authorized objective")
+		})
+
+		it("uses the provider's Plan Mode when no top-level mode is supplied", async () => {
+			const result = await new PromptBuilder(
+				baseVariant,
+				{ ...mockContext, providerInfo: { ...mockProviderInfo, mode: "plan" } },
+				mockComponents,
+			).build()
+
+			expect(result).to.include("PLAN MODE: Own discovery and planning within the current read-only tool policy")
+		})
+
+		it("executes AUTO mode without mandatory user decision waypoints", async () => {
+			const result = await new PromptBuilder(baseVariant, { ...mockContext, mode: "auto" }, mockComponents).build()
+
+			expect(result).to.include("Mode: AUTO (AUTONOMOUS EXECUTION)")
+			expect(result).to.include("expose uncertainty honestly")
+			expect(result).not.to.include("Proceed with Defaults")
+			expect(result).not.to.include("DECISION WAYPOINT")
+			expect(result).not.to.include("ZERO UNCERTAINTY LANGUAGE")
+		})
+
 		it("should build a complete prompt", async () => {
 			const builder = new PromptBuilder(baseVariant, mockContext, mockComponents)
 			const result = await builder.build()

@@ -15,6 +15,8 @@ describe("auditSarifExport", () => {
 		expect(sarif.runs[0].results.length).to.be.greaterThan(0)
 		expect(sarif.runs[0].tool.driver.rules.some((r) => r.id === "missing_validation_evidence")).to.equal(true)
 		expect(sarif.runs[0].tool.driver.rules.some((r) => r.id === "gate:score_below_threshold")).to.equal(true)
+		expect(sarif.runs[0].results.every((result) => result.level !== "error")).to.equal(true)
+		expect(sarif.runs[0].tool.driver.rules.every((rule) => rule.defaultConfiguration.level !== "error")).to.equal(true)
 	})
 
 	it("serializes SARIF JSON for CI upload", () => {

@@ -105,7 +105,6 @@ export class ExecuteCommandToolHandler implements IToolHandler, IPartialBlockHan
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		let command: string | undefined = block.params.command
-		const requiresApprovalRaw: string | undefined = block.params.requires_approval
 		const timeoutParam: string | undefined = block.params.timeout
 		let timeoutSeconds: number | undefined
 		const evidenceResponse = (content: ToolResponse, overrides: Partial<CommandExecutionEvidence> = {}): ToolResponse =>
@@ -124,11 +123,6 @@ export class ExecuteCommandToolHandler implements IToolHandler, IPartialBlockHan
 		if (!command) {
 			config.taskState.consecutiveMistakeCount++
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "command")
-		}
-
-		if (!requiresApprovalRaw) {
-			config.taskState.consecutiveMistakeCount++
-			return await config.callbacks.sayAndCreateMissingParamError(this.name, "requires_approval")
 		}
 
 		config.taskState.consecutiveMistakeCount = 0
@@ -235,14 +229,13 @@ export class ExecuteCommandToolHandler implements IToolHandler, IPartialBlockHan
 					// CommandExecutor owns process timeout and cancellation. A second
 					// Promise.race here could retry while the original shell was alive.
 					timeoutMs: 0,
-					maxRetries: 1,
 				},
 			)
 		} catch (error) {
 			if (!commandStarted) config.latencyTracker?.recordIoClassCancelled(ioClass)
 			return evidenceResponse(formatResponse.toolError(`Command execution failed: ${String(error)}`), {
 				approvalStatus: "unknown",
-				started: true,
+				started: commandStarted,
 				executionError: error instanceof Error ? error.message : String(error),
 				durationMs: Date.now() - startedAt,
 			})

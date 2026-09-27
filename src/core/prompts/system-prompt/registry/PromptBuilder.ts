@@ -1,6 +1,7 @@
 import { getTaskLifecycleAuthority } from "@/core/task/lifecycle/TaskLifecycleFunnel"
 import { Logger } from "@/shared/services/Logger"
 import type { DietCodeDefaultTool } from "@/shared/tools"
+import { getHeav3nsMandate } from "../components/heav3ns_mandate"
 import { DietCodeToolSet } from "../registry/DietCodeToolSet"
 import { type DietCodeToolSpec, resolveInstruction } from "../spec"
 import { STANDARD_PLACEHOLDERS, SystemPromptSection } from "../templates/placeholders"
@@ -40,45 +41,11 @@ export class PromptBuilder {
 			executionStateHeader = [
 				"# EXECUTION STATE",
 				"",
-				"Mode: AUTO (GUIDED SPEC MODE)",
+				"Mode: AUTO (AUTONOMOUS EXECUTION)",
 				`Workspace: ${workspaceRoots}`,
 				`Task: ${this.context.taskId || "unknown"}`,
 				"",
-				"# SYSTEM OVERRIDE: LUMI GUIDED SPEC MODE",
-				"",
-				"## 1. DIRECTIVE",
-				"You are operating in GUIDED SPEC MODE. Your user is a non-technical stakeholder who evaluates software based on visual outcomes, not code architecture. You must shield them from technical complexity, code syntax, and open-ended prompting.",
-				"",
-				"## 2. STRICT OPERATIONAL INVARIANTS",
-				"- ABSOLUTE CODE BAN: Never output code blocks (```jsx, ```py, etc.), file trees, command-line syntax, or git operations.",
-				'- ZERO UNCERTAINTY LANGUAGE: Banned words: "maybe", "possibly", "I think", "confidence score", "should we consider". State every choice authoritatively.',
-				'- NO OPEN-ENDED PROMPTS: Never end a turn with "What do you think?" or "How would you like to handle X?". Always provide 2 structured choices.',
-				'- DEFAULT CHOICE RULE: Always designate Option A as the recommended default so the user can click "Proceed with Defaults" to continue without typing.',
-				"",
-				"## 3. RESPONSE STRUCTURE (STRICT 4-BLOCK LAYOUT)",
-				"",
-				"Every turn MUST be formatted into these exact four visual blocks:",
-				"",
-				"### BLOCK 1: BREADBOARD SPEC (Visual Map)",
-				"Translate the intent into a plain-English surface map:",
-				"- 📍 SCREEN / PLACE: [Name of the screen]",
-				"- 🔘 WHAT YOU CAN DO (AFFORDANCES): [List of actions/buttons]",
-				"- ⚡ WHAT HAPPENS (WIRING): [What occurs when interacted with]",
-				"",
-				"### BLOCK 2: MILESTONE STEPPER",
-				"Render progress timeline explicitly:",
-				"[DONE] Milestone 1: Core Surface & Layout",
-				"[IN PROGRESS] Milestone 2: Interactive Controls & Triggers",
-				"[PENDING] Milestone 3: Polish & Edge Case Armor",
-				"",
-				"### BLOCK 3: DECISION WAYPOINT (Max 2 Choices)",
-				"Present business-logic trade-offs as clear binary choices:",
-				"- Option A (Recommended Default): [Statement of default choice + rationale]",
-				"- Option B (Alternative): [Statement of alternative choice + trade-off]",
-				"",
-				"### BLOCK 4: EXECUTION ACTION",
-				"Provide clear call-to-action (e.g., \"Click 'Proceed with Defaults' below or select an option\").",
-				"",
+				"Execute the user's objective with evidence-backed defaults. Explain progress and outcomes in plain language, expose uncertainty honestly, and continue without routine decision waypoints or a 'proceed' confirmation.",
 				"",
 			].join("\n")
 		} else if (this.context.mode === "act") {
@@ -128,7 +95,8 @@ export class PromptBuilder {
 			].join("\n")
 		}
 
-		return this.postProcess(executionStateHeader + prompt)
+		const mandate = getHeav3nsMandate(this.context.mode ?? this.context.providerInfo?.mode ?? "act")
+		return this.postProcess(`${executionStateHeader}${mandate}\n\n${prompt}`)
 	}
 
 	private async buildComponents(): Promise<Record<string, string>> {

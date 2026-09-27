@@ -206,7 +206,7 @@ describe("confidence-aware convergence", () => {
 		)
 	})
 
-	it("launches one targeted probe for a critical mutation assumption and blocks only if no safe action remains", () => {
+	it("returns mutation uncertainty to the parent after a targeted probe instead of inventing a hard failure", () => {
 		const critical = agent(
 			"mutation",
 			0,
@@ -231,11 +231,9 @@ describe("confidence-aware convergence", () => {
 			laneReceipts: [mutationLane],
 			probeHistory: [probeHistory(first.tentativeFindings[0].id)],
 		})
-		assert.equal(exhausted.decision, "block_hard_failure")
-		assert.equal(
-			exhausted.gateDecision.kind === "block_hard_failure" ? exhausted.gateDecision.reason : "",
-			"unsafe_under_all_interpretations",
-		)
+		assert.equal(exhausted.decision, "converge_with_uncertainty")
+		assert.equal(exhausted.diagnostics.trueHardBlocks, 0)
+		assert.ok(exhausted.tentativeFindings.length > 0)
 
 		const reversible = evaluateConfidenceAwareConvergence({
 			agents: [critical],

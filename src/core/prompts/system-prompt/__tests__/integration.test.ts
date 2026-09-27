@@ -273,6 +273,12 @@ describe("Prompt System Integration Tests", () => {
 
 							expect(systemPrompt).to.be.a("string").with.length.greaterThan(100)
 							expect(systemPrompt).to.not.include("{{TOOL_USE_SECTION}}")
+							expect(systemPrompt.match(/\[HEAV3NS MANDATE\]/g)).to.have.length(1)
+							expect(systemPrompt).to.include("NO BLIND RETRIES")
+							expect(systemPrompt).to.include("reconcile conflicts as the parent")
+							expect(systemPrompt).not.to.include("user-confirmed")
+							expect(systemPrompt).not.to.include("wait for user confirmation")
+							expect(systemPrompt).not.to.include("assume success and continue")
 
 							const snapshotName = `${providerId}_${modelId.replace(/[^a-zA-Z0-9]/g, "_")}-${contextName}.snap`
 							await assertSnapshot(snapshotName, systemPrompt)

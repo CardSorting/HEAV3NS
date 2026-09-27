@@ -6,6 +6,11 @@ import type { CompletionFunnelEvent } from "@shared/completion/completionFunnelE
 import { EXECUTION_FUNNEL_SCHEMA_VERSION, type ExecutionFunnelEvent } from "@shared/execution/executionFunnelEvent"
 import type { SubagentExecutionEnvelope, SwarmExecutionEnvelope } from "@shared/subagent/executionEnvelope"
 import { createContinuityMarker } from "@shared/subagent/executionEnvelope"
+import {
+	GOVERNED_RECEIPT_SCHEMA_VERSION,
+	type GovernedContinuationDecision,
+	type GovernedSwarmReceipt,
+} from "@shared/subagent/governedExecution"
 import { afterEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { assertSwarmEnvelopeOrThrow, validateSwarmEnvelope } from "../executionValidation"
@@ -78,6 +83,45 @@ function createSwarmEnvelope(agents: SubagentExecutionEnvelope[]): SwarmExecutio
 	}
 }
 
+function createGovernedReceipt(decision: GovernedContinuationDecision): GovernedSwarmReceipt {
+	const accepted = decision.permittedAction === "continue_parent"
+	return {
+		schemaVersion: GOVERNED_RECEIPT_SCHEMA_VERSION,
+		swarmId: "swarm-1",
+		executionId: "swarm-exec-1",
+		taskId: "task-1",
+		attemptId: "attempt-1",
+		admission: { admitted: true, backoffMs: 0 },
+		laneReceipts: [],
+		laneDag: [],
+		claimHistory: [],
+		mergeGate: {
+			passed: accepted,
+			violations: accepted ? [] : [decision.reasonCode],
+			sealedSupersessionBlocked: false,
+			failedLaneCount: accepted ? 0 : 1,
+			mergeAudit: {
+				safe: accepted,
+				violations: [],
+				overlappingPaths: [],
+				missingEvidence: [],
+				placeholderWarnings: [],
+			},
+			replayIntegrity: { valid: true, violations: [], checksum: "abc" },
+			staleLeaseCount: 0,
+			orphanedClaimCount: 0,
+			splitBrainDetected: false,
+			retryDisposition: decision.retryDisposition,
+		},
+		replayArtifactPath: "subagent_executions/swarm-1.json",
+		governedArtifactPath: "subagent_executions/swarm-1.governed.attempt-1.json",
+		sealedAt: Date.now(),
+		sealed: accepted,
+		integrity: { valid: true, violations: [], checksum: "abc" },
+		continuationDecision: decision,
+	}
+}
+
 describe("subagent execution envelope", () => {
 	let tempDir: string
 
@@ -119,6 +163,59 @@ describe("subagent execution envelope", () => {
 		assert.ok(verbatimOutput.length > 300)
 		assert.ok(!overlay.includes(verbatimOutput))
 		assert.equal(agent.evidenceRefs.length > 0, true)
+	})
+
+	it("hands accepted advisories back to the parent without another review loop", () => {
+		const receipt = createGovernedReceipt({
+			action: "accept_with_advisories",
+			retryDisposition: "not_needed",
+			reasonCode: "sealed_with_bounded_uncertainty",
+			cleanPath: true,
+			permittedAction: "continue_parent",
+		})
+		receipt.mergeGate.advisoryWarnings = ["low confidence in optional finding"]
+		const result = buildParentToolResult(createSwarmEnvelope([createAgentEnvelope()]), "summary", receipt)
+
+		assert.match(result, /Merge gate passed: true/)
+		assert.match(result, /low confidence in optional finding/)
+		assert.match(result, /Do not repeat successful lanes for advisory ratings or bounded uncertainty/)
+		assert.match(result, /finish when the requested result and verification are complete/)
+	})
+
+	it("gives the parent authority to repair a localized failed handoff without blind retries", () => {
+		const receipt = createGovernedReceipt({
+			action: "targeted_repair",
+			retryDisposition: "targeted_repair",
+			reasonCode: "localized_repair_required",
+			cleanPath: false,
+			permittedAction: "repair_lanes",
+		})
+		const result = buildParentToolResult(createSwarmEnvelope([createAgentEnvelope()]), "summary", receipt)
+
+		assert.match(result, /Own the targeted repair or probe/)
+		assert.match(result, /change the input, state, or approach before retrying/)
+		assert.match(result, /does not require a human approval round/)
+		assert.match(result, /Merge gate passed: false/)
+	})
+
+	it("keeps conflict rejection local to unsafe integration while the parent investigates and repairs", () => {
+		const receipt = createGovernedReceipt({
+			action: "halt_for_conflict",
+			retryDisposition: "do_not_retry",
+			reasonCode: "hard_conflict",
+			cleanPath: false,
+			permittedAction: "halt",
+		})
+		receipt.mergeGate.mergeAudit.overlappingPaths = [{ path: "src/auth.ts", agents: ["agent-1", "agent-2"] }]
+		const result = buildParentToolResult(createSwarmEnvelope([createAgentEnvelope()]), "summary", receipt)
+
+		assert.match(result, /Merge gate passed: false/)
+		assert.match(result, /Sealed: false/)
+		assert.match(result, /Continuation: halt_for_conflict/)
+		assert.match(result, /Overlapping paths: src\/auth.ts \(agent-1, agent-2\)/)
+		assert.match(result, /stop the conflicting merge or invalid replay, not parent investigation/)
+		assert.match(result, /Do not report unmerged or invalid work as successfully applied/)
+		assert.equal(receipt.continuationDecision?.permittedAction, "halt")
 	})
 
 	it("rejects malformed completed swarm reports without verbatim output", () => {

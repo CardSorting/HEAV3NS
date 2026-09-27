@@ -24,7 +24,7 @@ import { VStack } from "../../../tui/components/v-stack.js"
 import { matchesKey } from "../../../tui/keys.js"
 import { highlightTerminalCode } from "../../../tui/syntax-highlighter.js"
 import { ProcessTerminal } from "../../../tui/terminal.js"
-import type { Component } from "../../../tui/tui.js"
+import type { Component, OverlayHandle } from "../../../tui/tui.js"
 import { TuiAltScreen } from "../../../tui/tui-alt-screen.js"
 import type { SkillManifest } from "../../../tooling/extensions/registry/skills-ingestor.js"
 import {
@@ -403,6 +403,7 @@ export class InteractiveModeController {
 		tui.setFocus(editor)
 
 		let activeInlineView: Component | null = null
+		let taskMonitorOverlay: OverlayHandle | undefined
 		let isLoadingInlineView = false
 		let activeTurnAbortController: AbortController | null = null
 		let activeTurnStartedAt = 0
@@ -418,14 +419,20 @@ export class InteractiveModeController {
 		const renderTurnProgress = () => {
 			if (!activeTurnAbortController) return
 			const elapsed = formatElapsed(Date.now() - activeTurnStartedAt)
+			const cancelKey = activeInlineView instanceof SwarmDashboardModal ? "Ctrl+C" : "Esc/Ctrl+C"
 			footerText.setText(
 				`\x1b[33m[Working ${elapsed}]\x1b[0m \x1b[90m${activeTurnProgress}\x1b[0m   ` +
-					`\x1b[1;31m[Esc/Ctrl+C]\x1b[0m \x1b[90mCancel\x1b[0m`,
+					`\x1b[1;36m[/agents]\x1b[0m \x1b[90mMonitor\x1b[0m   ` +
+					`\x1b[1;31m[${cancelKey}]\x1b[0m \x1b[90mStop turn\x1b[0m`,
 			)
 			tui.requestRender()
 		}
 
 		const closeInlineView = (component?: Component) => {
+			if ((component ?? activeInlineView) instanceof SwarmDashboardModal) {
+				taskMonitorOverlay?.hide()
+				taskMonitorOverlay = undefined
+			}
 			if (component) {
 				historyContainer.removeChild(component)
 				if (activeInlineView === component) {
@@ -436,6 +443,7 @@ export class InteractiveModeController {
 				activeInlineView = null
 			}
 			tui.setFocus(editor)
+			if (activeTurnAbortController) renderTurnProgress()
 			tui.requestRender()
 		}
 
@@ -454,10 +462,11 @@ export class InteractiveModeController {
 			if (activeInlineView || isLoadingInlineView) return
 			let modal: SwarmDashboardModal
 			const closeFn = () => closeInlineView(modal)
-			modal = new SwarmDashboardModal(monolith.monolithSwarmDelegator, closeFn)
+			modal = new SwarmDashboardModal(monolith.monolithSwarmDelegator, closeFn, () => terminal.rows)
 			activeInlineView = modal
-			historyContainer.addChild(modal)
-			tui.setFocus(modal)
+			// Keep the monitor visible as the transcript grows, using the TUI's
+			// existing overlay focus/resize handling instead of an offscreen card.
+			taskMonitorOverlay = tui.showOverlay(modal, { width: "100%", maxHeight: "100%" })
 			tui.requestRender()
 		}
 
@@ -910,6 +919,10 @@ export class InteractiveModeController {
 
 		// Global Key Listener for shortcuts & navigation beyond the fold
 		tui.addInputListener((data: string) => {
+			// Esc belongs to the monitor's current search/detail/list state. Only
+			// Ctrl+C stops the parent while the monitor has keyboard focus.
+			if (activeInlineView instanceof SwarmDashboardModal && !matchesKey(data, "ctrl+c")) return undefined
+
 			if (activeTurnAbortController && (matchesKey(data, "escape") || matchesKey(data, "ctrl+c"))) {
 				if (!activeTurnAbortController.signal.aborted) {
 					activeTurnProgress = "Cancelling agent turn"
@@ -921,7 +934,10 @@ export class InteractiveModeController {
 
 			// Inline views own their keyboard input.
 			if (activeInlineView) {
-				if (matchesKey(data, "escape")) {
+				if (
+					matchesKey(data, "escape") ||
+					(activeInlineView instanceof SwarmDashboardModal && matchesKey(data, "ctrl+c"))
+				) {
 					closeInlineView(activeInlineView)
 					return { consume: true }
 				}
@@ -1040,8 +1056,17 @@ export class InteractiveModeController {
 			editor.onSubmit = async (text: string) => {
 				const input = text.trim()
 
+				// Monitoring is read-only navigation and must remain available while
+				// the parent owns the execution turn.
+				if (input === "/agents" || input === "/subagents" || input === "/swarm") {
+					editor.setText("")
+					editor.addToHistory(input)
+					openSwarmDashboardModal()
+					return
+				}
+
 				if (activeTurnAbortController) {
-					activeTurnProgress = "A turn is already running; press Esc to cancel it"
+					activeTurnProgress = "Turn running; /agents to inspect workers, Esc to stop"
 					renderTurnProgress()
 					return
 				}
@@ -1053,11 +1078,6 @@ export class InteractiveModeController {
 
 				if (input === "/help" || input === "?") {
 					openHelpModal()
-					return
-				}
-
-				if (input === "/agents" || input === "/subagents" || input === "/swarm") {
-					openSwarmDashboardModal()
 					return
 				}
 

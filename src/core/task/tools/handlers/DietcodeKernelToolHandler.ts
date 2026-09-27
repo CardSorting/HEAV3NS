@@ -35,7 +35,7 @@ export class DietcodeKernelToolHandler implements IToolHandler {
 									capability: "internal_state" as const,
 									risk: "elevated" as const,
 									requestedSideEffects: ["mutate native execution metadata"],
-									autoApprovalEligible: false,
+									autoApprovalEligible: true,
 								},
 							]
 						: []

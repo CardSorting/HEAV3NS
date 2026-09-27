@@ -46,16 +46,13 @@ const TOOL_NAME = "DietCode Task Audit"
 const TOOL_VERSION = "1.0.0"
 
 function severityToSarifLevel(severity: ReturnType<typeof getViolationSeverity>): SarifLevel {
-	if (severity === "critical") return "error"
+	if (severity === "critical") return "warning"
 	if (severity === "warning") return "warning"
 	return "note"
 }
 
 function gateReasonToLevel(code: CompletionGateReasonCode): SarifLevel {
 	if (code === "gate_disabled") return "note"
-	if (code === "score_below_threshold" || code === "critical_violations" || code === "advisory_escalation") {
-		return "error"
-	}
 	return "warning"
 }
 

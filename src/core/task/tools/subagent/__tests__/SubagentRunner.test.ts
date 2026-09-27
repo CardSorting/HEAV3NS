@@ -220,6 +220,55 @@ describe("SubagentRunner", () => {
 		setRoadmapConfigOverride(null)
 	})
 
+	it("finishes useful work beyond the former 25-turn and 50-tool-call cutoffs", async () => {
+		let turn = 0
+		const createMessage = sinon.stub().callsFake(async function* () {
+			turn++
+			if (turn <= 26) {
+				for (let call = 0; call < 2; call++) {
+					yield {
+						type: "tool_calls",
+						tool_call: {
+							function: {
+								id: `read-${turn}-${call}`,
+								name: DietCodeDefaultTool.LIST_FILES,
+								arguments: JSON.stringify({ path: `scope-${turn}-${call}` }),
+							},
+						},
+					}
+				}
+			} else {
+				yield {
+					type: "tool_calls",
+					tool_call: {
+						function: {
+							id: "complete-long-task",
+							name: DietCodeDefaultTool.ATTEMPT,
+							arguments: JSON.stringify({ result: "Done" }),
+						},
+					},
+				}
+			}
+			yield { type: "usage", inputTokens: 1, outputTokens: 1 }
+		})
+		const promptRegistry = PromptRegistry.getInstance()
+		sinon.stub(promptRegistry, "get").callsFake(async () => {
+			promptRegistry.nativeTools = [{ name: "list_files" } as any]
+			return "system prompt"
+		})
+		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
+		stubApiHandler(createMessage)
+		initializeHostProvider()
+		const config = createTaskConfig(true)
+		const runner = new SubagentRunner(config, new SubagentBuilder(config, "subagent"))
+		const result = await runner.run("Inspect each scope and report the outcome", () => {})
+		assert.equal(result.status, "completed", result.error)
+		assert.equal(result.result, "Done")
+		assert.equal(createMessage.callCount, 27)
+		assert.ok(result.stats.toolCalls >= 52)
+		assert.equal((config.callbacks.ask as sinon.SinonStub).callCount, 0)
+	})
+
 	it("emits native tool_use blocks with matching tool_result tool_use_id across turns", async function () {
 		this.timeout(10_000)
 		const createMessage = sinon.stub()

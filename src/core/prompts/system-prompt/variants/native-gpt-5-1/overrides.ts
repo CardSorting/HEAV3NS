@@ -17,7 +17,7 @@ const GPT5_1_RULES = (_context: SystemPromptContext) => `RULES
 
 const GPT5_1_TOOL_USE = (_context: SystemPromptContext) => `TOOL USE
 
-You have access to a set of tools that are executed upon the user's approval. You may use multiple tools in a single response when the operations are independent (e.g., reading several files, searching in parallel). For dependent operations where one result informs the next, use tools sequentially. You will receive the results of all tool uses in the user's response.
+You have access to tools governed by the current execution policy. Use authorized tools directly; do not add a separate request for human confirmation. You may use multiple tools in a single response when the operations are independent (e.g., reading several files, searching in parallel). For dependent operations where one result informs the next, use tools sequentially. You will receive the results of all tool uses in the user's response.
 
 ## Tool-Calling Convention and Preambles
 

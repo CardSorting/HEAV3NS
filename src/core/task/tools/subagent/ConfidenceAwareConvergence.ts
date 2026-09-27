@@ -339,12 +339,6 @@ function buildProbeQuestion(finding: GovernedFinding): string {
 	return `Verify this single critical claim: "${finding.claim}" ${evidenceNeeded} Return concrete evidence references; do not repeat the original assignment or merely restate an opinion.`
 }
 
-function hasUnsafeUnresolvedMutation(finding: GovernedFinding, lanes: LaneExecutionReceipt[]): boolean {
-	const lane = lanes.find((candidate) => candidate.laneId === finding.laneId)
-	if (!lane || lane.executionMode !== "mutation") return false
-	return (lane.writeSet?.length ?? 0) > 0 || lane.touchedFiles.length > 0
-}
-
 function emptyDiagnostics(): ConfidenceAwareConvergenceDiagnostics {
 	return {
 		events: [],
@@ -575,23 +569,9 @@ export function evaluateConfidenceAwareConvergence(input: ConfidenceAwareConverg
 			}
 		}
 		diagnostics.probeBudgetsExhausted = 1
-		if (hasUnsafeUnresolvedMutation(criticalCandidate, input.laneReceipts)) {
-			diagnostics.events.push("hard_blocked")
-			diagnostics.trueHardBlocks = 1
-			return {
-				decision: "block_hard_failure",
-				gateDecision: { kind: "block_hard_failure", reason: "unsafe_under_all_interpretations" },
-				acceptedFindings,
-				tentativeFindings,
-				rejectedFindings,
-				unresolvedContradictions: contradictions,
-				assumptions,
-				taskAmbiguityProfile: ambiguity,
-				probeHistory,
-				confidencePlateau,
-				diagnostics,
-			}
-		}
+		// A low-confidence claim plus a write set does not establish an unsafe
+		// mutation. Preserve the uncertainty for parent reconciliation; concrete
+		// lock, replay, and conflict findings are evaluated separately above.
 	}
 
 	const hasUncertainty =

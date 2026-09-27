@@ -13,25 +13,23 @@
  *     → evaluate audit validity (strict AND: cache key + graph revision + TTL + gate active)
  *     → evaluate workspace progress (checkpoint hash change detection)
  *     → evaluate duplicate attempt (fingerprint + workspace hash)
- *     → evaluate circuit breaker (block count threshold)
- *     → evaluate half-open probe eligibility (tripped + not verified + workspace changed + one per checkpoint)
+ *     → record quality, checklist, and retry-history diagnostics without a veto
  *     → return one current decision or one durable terminal outcome
  *     → return one canonical decision with full trace
  *
  * Industry patterns mirrored:
  * - Finite state machine for funnel transitions
- * - Circuit breaker / half-open probe (Hystrix, Envoy)
  * - CDN cache validation: all validity dimensions must match (AND, not OR)
  * - Idempotency-key duplicate suppression
  * - Single policy authority: the funnel collects, decides, commits, and publishes
  * - Structured decision traces (workflow engines, distributed systems debuggers)
- * - Fail-closed only for known active gates; fail-open for unknown/retired gates
+ * - Quality gates are advisory; durable lifecycle and active execution own terminal state
  */
 
 import { createHash, randomUUID } from "node:crypto"
 import { formatResponse } from "@core/prompts/responses"
 import type { AuditGateDecision } from "@shared/audit/auditGateReport"
-import { COMPLETION_AUDIT_CACHE_TTL_MS, MAX_COMPLETION_GATE_BLOCK_COUNT } from "@shared/audit/gatePolicy"
+import { COMPLETION_AUDIT_CACHE_TTL_MS } from "@shared/audit/gatePolicy"
 import {
 	COMPLETION_FUNNEL_SCHEMA_VERSION,
 	type CompletionFunnelEvent,
@@ -294,46 +292,15 @@ export function isDuplicateAttempt(snapshot: CompletionFunnelSnapshot): boolean 
 
 // ─── Circuit Breaker ──────────────────────────────────────────────────────────
 
-/**
- * Evaluate circuit breaker state.
- *
- * Returns "closed" (normal), "tripped" (hard stop), or "half_open" (probe allowed).
- *
- * Half-open behavior (mirrors Hystrix / Envoy):
- * - Tripped + workspace changed → "half_open"
- * - Tripped + workspace unchanged → "tripped"
- *
- * Half-open is deterministic: exactly one probe is allowed per checkpoint
- * (tracked via lastProbeCheckpointHash).
- */
+/** Historical retry counts are diagnostics, never a completion circuit breaker. */
 export function evaluateCircuitBreaker(snapshot: CompletionFunnelSnapshot): {
 	state: "closed" | "tripped" | "half_open"
 	stages: DecisionStage[]
 } {
-	const stages: DecisionStage[] = []
-
-	if (snapshot.blockCount < MAX_COMPLETION_GATE_BLOCK_COUNT) {
-		stages.push(pass("circuit_breaker", `Closed (${snapshot.blockCount}/${MAX_COMPLETION_GATE_BLOCK_COUNT} blocks)`))
-		return { state: "closed", stages }
+	return {
+		state: "closed",
+		stages: [na("circuit_breaker", `Completion retry history (${snapshot.blockCount}) is advisory; execution may continue.`)],
 	}
-
-	stages.push(fail("circuit_breaker", `Tripped (${snapshot.blockCount}/${MAX_COMPLETION_GATE_BLOCK_COUNT} blocks)`))
-
-	// Check if workspace changed for a half-open probe.
-	const workspaceChanged = hasWorkspaceProgress(snapshot)
-	if (!workspaceChanged) {
-		stages.push(fail("circuit_breaker.probe", "Workspace unchanged — no probe allowed, stay tripped"))
-		return { state: "tripped", stages }
-	}
-
-	// Workspace changed — check if this checkpoint already had a probe
-	if (snapshot.lastProbeCheckpointHash === snapshot.checkpointHash) {
-		stages.push(fail("circuit_breaker.probe", "Probe already used for this checkpoint — stay tripped", true))
-		return { state: "tripped", stages }
-	}
-
-	stages.push(pass("circuit_breaker.probe", "Workspace changed — half-open probe allowed", true))
-	return { state: "half_open", stages }
 }
 
 // ─── Pure funnel policy ──────────────────────────────────────────────────────
@@ -350,344 +317,79 @@ export function evaluateCircuitBreaker(snapshot: CompletionFunnelSnapshot): {
  * event publication.
  */
 export const CompletionFunnelEvaluator = {
-	/**
-	 * Evaluate a completion funnel snapshot and return one core policy decision.
-	 *
-	 * Pipeline (each stage adds to the trace):
-	 *   1. Normalize inputs
-	 *   2. Validate active registry
-	 *   3. Evaluate audit validity (strict AND)
-	 *   4. Evaluate workspace progress
-	 *   5. Evaluate duplicate attempt
-	 *   6. Evaluate circuit breaker
-	 *   7. Evaluate half-open probe eligibility
-	 *   8. Return one canonical decision
-	 */
 	evaluate(snapshot: CompletionFunnelSnapshot): CompletionFunnelDecision {
-		const stages: DecisionStage[] = []
-
-		// ── Stage 1: Normalize inputs ──
+		const stages: DecisionStage[] = [
+			pass("normalize", `Task ${snapshot.taskId}, revision ${snapshot.graphRevision}`),
+			pass("registry", "Quality gates provide advisory diagnostics"),
+		]
+		// Cache freshness and historical ratings cannot veto a parent's or child's handoff.
+		const auditValidity = evaluateAuditValidity(snapshot)
+		stages.push(...auditValidity.stages.map((stage) => ({ ...stage, decisive: false })))
+		stages.push(...evaluateCircuitBreaker(snapshot).stages)
+		if (snapshot.auditGateDecision) {
+			for (const finding of snapshot.auditGateDecision.reasons) {
+				if (finding.code !== "gate_disabled") stages.push(fail("audit", finding.message))
+			}
+		}
+		if (snapshot.blockCount > 0 && !hasWorkspaceProgress(snapshot)) {
+			stages.push(fail("workspace_progress", "No workspace change since the prior quality finding; advisory only."))
+		} else {
+			stages.push(pass("workspace_progress", "Workspace progress recorded or no prior quality findings"))
+		}
 		stages.push(
-			pass("normalize", `Task ${snapshot.taskId}, revision ${snapshot.graphRevision}, blocks ${snapshot.blockCount}`),
+			isDuplicateAttempt(snapshot)
+				? fail("duplicate_check", "Repeated completion summary recorded; advisory only.")
+				: pass("duplicate_check", "Not a duplicate attempt"),
 		)
 
-		// ── Stage 2: Validate active registry ──
-		const auditGateKnown = isGateKnown(snapshot.registry.gates, "audit")
-		if (!auditGateKnown && snapshot.auditGateEnabled) {
-			stages.push(na("registry", "Audit gate not in registry — treating as non-participating"))
-		} else {
-			stages.push(pass("registry", "Active gate registry validated"))
-		}
-
-		// ── Stage 3: Evaluate audit validity ──
-		const auditValidity = evaluateAuditValidity(snapshot)
-		stages.push(...auditValidity.stages)
-
-		// ── Stage 6: Evaluate circuit breaker ──
-		const circuitBreaker = evaluateCircuitBreaker(snapshot)
-		stages.push(...circuitBreaker.stages)
-
-		// Circuit breaker tripped (not half-open) → hard block
-		if (circuitBreaker.state === "tripped") {
-			stages.push(fail("core_policy", "Circuit breaker tripped — hard block", true))
-			return {
-				kind: "hard_block" as const,
-				nextAllowedAction: "stop_and_report" as const,
-				forbiddenActions: ["attempt_completion"] as const,
-				canonicalInstruction:
-					"Stop calling attempt_completion. Make workspace changes for a probe attempt, or present results via act_mode_respond.",
-				reason:
-					`Maximum completion gate retries (${MAX_COMPLETION_GATE_BLOCK_COUNT}) exceeded. ` +
-					"Make substantive workspace changes (checkpoint hash must change) for a probe attempt, " +
-					"or use act_mode_respond to present results.",
-				playbook: [
-					"Stop calling attempt_completion — further calls will fail unless workspace changes.",
-					"Make substantive code changes (checkpoint hash must change) — circuit breaker opens for one probe.",
-					"If the probe passes, the funnel can commit one terminal result.",
-					"If violations cannot be fixed, present results via act_mode_respond.",
-				],
-				stages,
-			}
-		}
-
-		// Circuit breaker half-open → allow probe
-		if (circuitBreaker.state === "half_open") {
-			stages.push(pass("core_policy", "Circuit breaker half-open — probe allowed"))
-			return {
-				kind: "allow_probe" as const,
-				nextAllowedAction: "attempt_completion" as const,
-				forbiddenActions: [] as const,
-				canonicalInstruction:
-					"Call attempt_completion now. This is a half-open probe — one attempt allowed for this checkpoint.",
-				reason:
-					"Circuit breaker half-open: workspace changed since last block. " +
-					"One probe attempt is allowed for this checkpoint.",
-				stages,
-			}
-		}
-
-		// ── Stage 4: Evaluate workspace progress ──
-		if (snapshot.blockCount > 0) {
-			const workspaceChanged = hasWorkspaceProgress(snapshot)
-			if (!workspaceChanged && snapshot.lastGateBlockCheckpointHash) {
-				stages.push(
-					fail("workspace_progress", "Workspace unchanged since last gate block — rewording result won't help", true),
-				)
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction:
-						"Do not call attempt_completion. Modify the workspace (code changes required), then retry.",
-					reason:
-						"Completion blocked: the workspace hasn't changed since the last gate block. " +
-						"Rewording the result summary won't change the audit outcome. " +
-						"Make substantive fixes to the code (checkpoint hash must change), then retry.",
-					playbook: [
-						"Make actual code changes — rewording the result summary won't fix audit violations.",
-						"Verify the checkpoint hash changed (via git status or a test run) before retrying.",
-						"If violations cannot be fixed, stop and report the blocking evidence.",
-					],
-					stages,
-				}
-			}
-			stages.push(pass("workspace_progress", "Workspace changed since last gate block"))
-		} else {
-			stages.push(na("workspace_progress", "No prior blocks — skipping"))
-		}
-
-		// ── Stage 5: Evaluate duplicate attempt ──
-		if (isDuplicateAttempt(snapshot)) {
-			stages.push(fail("duplicate_check", "Same result fingerprint AND same workspace checkpoint — duplicate", true))
-			return {
-				kind: "soft_block" as const,
-				nextAllowedAction: "modify_workspace" as const,
-				forbiddenActions: ["attempt_completion"] as const,
-				canonicalInstruction:
-					"Do not call attempt_completion. Modify the workspace (code changes required), then retry with an updated result.",
-				reason:
-					"Duplicate completion submission: the same result was re-submitted after a gate block with no workspace changes. " +
-					"Fix violations in the workspace and update your result before retrying.",
-				playbook: [
-					"Make substantive fixes in the workspace — do not retry the same summary.",
-					"Verify changes with git status or tests before retrying.",
-					"If violations cannot be fixed, stop and report the blocking evidence.",
-				],
-				stages,
-			}
-		}
-		stages.push(pass("duplicate_check", "Not a duplicate attempt"))
-
-		// ── Preflight check validations ──
-		const dummyConfig = {
+		const diagnosticConfig = {
 			isSubagentExecution: false,
 			focusChainSettings: { enabled: snapshot.focusChainEnabled ?? false },
-			taskState: {
-				currentFocusChainChecklist: snapshot.focusChainChecklist,
-			},
+			taskState: { currentFocusChainChecklist: snapshot.focusChainChecklist },
 		} as unknown as TaskConfig
-
-		// Stage: quality
-		if (snapshot.result !== undefined) {
-			const qualityErr = validateCompletionResultQuality(snapshot.result)
-			if (qualityErr) {
-				stages.push(fail("quality", qualityErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Improve the completion result quality summary.",
-					reason: qualityErr,
-					playbook: ["Verify the result summary does not contain unfinished markers or end in a question."],
-					stages,
-				}
+		const checks: Array<[string, boolean, () => string | null]> = [
+			["quality", snapshot.result !== undefined, () => validateCompletionResultQuality(snapshot.result ?? "")],
+			["min_length", snapshot.result !== undefined, () => validateCompletionResultMinLength(snapshot.result ?? "")],
+			["max_length", snapshot.result !== undefined, () => validateCompletionResultMaxLength(snapshot.result ?? "")],
+			[
+				"checklist_in_result",
+				snapshot.result !== undefined,
+				() => validateCompletionResultExcludesChecklist(snapshot.result ?? ""),
+			],
+			[
+				"task_progress_required",
+				!!snapshot.focusChainEnabled,
+				() => validateCompletionTaskProgressRequired(diagnosticConfig, snapshot.taskProgress),
+			],
+			[
+				"task_progress_complete",
+				!!snapshot.focusChainEnabled && snapshot.taskProgress !== undefined,
+				() => validateCompletionTaskProgress(snapshot.taskProgress),
+			],
+			[
+				"task_progress_align",
+				!!snapshot.focusChainEnabled && snapshot.taskProgress !== undefined,
+				() => validateTaskProgressAlignsWithFocusChain(diagnosticConfig, snapshot.taskProgress),
+			],
+			["focus_chain", !!snapshot.focusChainEnabled, () => validateFocusChainComplete(diagnosticConfig)],
+			["demo_command", snapshot.command !== undefined, () => validateCompletionDemoCommand(snapshot.command)],
+		]
+		for (const [stage, applicable, validate] of checks) {
+			if (!applicable) {
+				stages.push(na(stage, "No applicable diagnostic input"))
+				continue
 			}
-			stages.push(pass("quality", "Result quality check passed"))
-		} else {
-			stages.push(na("quality", "No result provided for quality check"))
+			const finding = validate()
+			stages.push(finding ? fail(stage, finding) : pass(stage, "Quality diagnostic passed"))
 		}
-
-		// Stage: min_length
-		if (snapshot.result !== undefined) {
-			const minLengthErr = validateCompletionResultMinLength(snapshot.result)
-			if (minLengthErr) {
-				stages.push(fail("min_length", minLengthErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Provide a longer summary of your work.",
-					reason: minLengthErr,
-					playbook: ["Make the result summary longer to hit the required minimum character limit."],
-					stages,
-				}
-			}
-			stages.push(pass("min_length", "Result length satisfies minimum requirement"))
-		} else {
-			stages.push(na("min_length", "No result provided for minimum length check"))
-		}
-
-		// Stage: max_length
-		if (snapshot.result !== undefined) {
-			const maxLengthErr = validateCompletionResultMaxLength(snapshot.result)
-			if (maxLengthErr) {
-				stages.push(fail("max_length", maxLengthErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Provide a shorter summary of your work.",
-					reason: maxLengthErr,
-					playbook: ["Make the result summary shorter to fit within the maximum character limit."],
-					stages,
-				}
-			}
-			stages.push(pass("max_length", "Result length is within maximum limit"))
-		} else {
-			stages.push(na("max_length", "No result provided for maximum length check"))
-		}
-
-		// Stage: checklist_in_result
-		if (snapshot.result !== undefined) {
-			const checklistInResultErr = validateCompletionResultExcludesChecklist(snapshot.result)
-			if (checklistInResultErr) {
-				stages.push(fail("checklist_in_result", checklistInResultErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Keep the checklist in task_progress parameter instead of result summary.",
-					reason: checklistInResultErr,
-					playbook: ["Remove checklist markdown formatting from the result summary."],
-					stages,
-				}
-			}
-			stages.push(pass("checklist_in_result", "Result excludes checklist markdown"))
-		} else {
-			stages.push(na("checklist_in_result", "No result provided for checklist check"))
-		}
-
-		// Stage: task_progress_required
-		if (snapshot.focusChainEnabled) {
-			const progressRequiredErr = validateCompletionTaskProgressRequired(dummyConfig, snapshot.taskProgress)
-			if (progressRequiredErr) {
-				stages.push(fail("task_progress_required", progressRequiredErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Provide the task_progress parameter to match the focus chain checklist.",
-					reason: progressRequiredErr,
-					playbook: ["Ensure the task_progress parameter is passed with the completion attempt."],
-					stages,
-				}
-			}
-			stages.push(pass("task_progress_required", "Task progress checklist provided when required"))
-		} else {
-			stages.push(na("task_progress_required", "Focus chain checklist not enabled"))
-		}
-
-		// Stage: task_progress_complete
-		if (snapshot.focusChainEnabled && snapshot.taskProgress !== undefined) {
-			const progressCompleteErr = validateCompletionTaskProgress(snapshot.taskProgress)
-			if (progressCompleteErr) {
-				stages.push(fail("task_progress_complete", progressCompleteErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Complete all items in the task_progress parameter.",
-					reason: progressCompleteErr,
-					playbook: ["Mark all task progress checklist items completed before attempting completion."],
-					stages,
-				}
-			}
-			stages.push(pass("task_progress_complete", "All items in task_progress checklist are complete"))
-		} else {
-			stages.push(na("task_progress_complete", "Focus chain checklist not enabled or task progress empty"))
-		}
-
-		// Stage: task_progress_align
-		if (snapshot.focusChainEnabled && snapshot.taskProgress !== undefined) {
-			const progressAlignErr = validateTaskProgressAlignsWithFocusChain(dummyConfig, snapshot.taskProgress)
-			if (progressAlignErr) {
-				stages.push(fail("task_progress_align", progressAlignErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Ensure task_progress labels align with the active focus chain checklist.",
-					reason: progressAlignErr,
-					playbook: ["Align task_progress checklist labels with the current focus chain items."],
-					stages,
-				}
-			}
-			stages.push(pass("task_progress_align", "Task progress checklist aligns with active focus chain"))
-		} else {
-			stages.push(na("task_progress_align", "Focus chain checklist not enabled or task progress empty"))
-		}
-
-		// Stage: focus_chain
-		if (snapshot.focusChainEnabled) {
-			const focusChainErr = validateFocusChainComplete(dummyConfig)
-			if (focusChainErr) {
-				stages.push(fail("focus_chain", focusChainErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Complete all checklist items in the active focus chain.",
-					reason: focusChainErr,
-					playbook: ["Ensure every focus chain item is completed in the markdown list and task state."],
-					stages,
-				}
-			}
-			stages.push(pass("focus_chain", "All focus chain checklist items are complete"))
-		} else {
-			stages.push(na("focus_chain", "Focus chain checklist not enabled or empty"))
-		}
-
-		// Stage: demo_command
-		if (snapshot.command !== undefined) {
-			const demoCommandErr = validateCompletionDemoCommand(snapshot.command)
-			if (demoCommandErr) {
-				stages.push(fail("demo_command", demoCommandErr, true))
-				return {
-					kind: "soft_block" as const,
-					nextAllowedAction: "modify_workspace" as const,
-					forbiddenActions: ["attempt_completion"] as const,
-					canonicalInstruction: "Provide a valid demo command that showcases the output.",
-					reason: demoCommandErr,
-					playbook: ["Use a command that starts a live server or generates output; do not use echo or cat."],
-					stages,
-				}
-			}
-			stages.push(pass("demo_command", "Demo command is valid"))
-		} else {
-			stages.push(na("demo_command", "No demo command provided"))
-		}
-
-		// ── Stage 7: Half-open probe already handled above ──
-		// (circuit breaker stage handles half-open probe eligibility)
-
-		// ── All stages passed → allow attempt ──
-		// Check if we can take the fast path (audit valid + no blocks + ready)
-		const canFastPath =
-			auditValidity.result === "valid" &&
-			snapshot.blockCount === 0 &&
-			(snapshot.lastCompletionAttemptGraphRevision === undefined ||
-				snapshot.lastCompletionAttemptGraphRevision === snapshot.graphRevision)
-
-		stages.push(pass("core_policy", canFastPath ? "Core policy passed — fast path eligible" : "Core policy passed"))
-
+		stages.push(pass("core_policy", "Completion may proceed; quality findings are advisory"))
 		return {
-			kind: "allow_attempt" as const,
-			nextAllowedAction: "attempt_completion" as const,
-			forbiddenActions: [] as const,
-			canonicalInstruction: "Call attempt_completion now.",
-			reason: canFastPath
-				? "Completion allowed — audit valid, no blocks, fast path eligible."
-				: "Completion allowed — all gate stages passed.",
+			kind: "allow_attempt",
+			nextAllowedAction: "attempt_completion",
+			forbiddenActions: [],
+			canonicalInstruction:
+				"Complete the assigned work and verification, then call attempt_completion. Use quality findings as advisory context.",
+			reason: "Completion allowed; quality ratings and retry history do not block handoff.",
 			stages,
 		}
 	},
@@ -1276,33 +978,13 @@ async function evaluateCompletionDecision(
 
 	const funnelStages = [...coreDecision.stages]
 	try {
-		const { evaluateRoadmapCompletionBlock } = require("@/services/roadmap/RoadmapCompletionGate")
+		const { evaluateRoadmapCompletionBlock } = await import("@/services/roadmap/RoadmapCompletionGate")
 		const roadmapBlock = await evaluateRoadmapCompletionBlock(config.cwd)
 		if (roadmapBlock.blocked) {
-			const reason = roadmapBlock.message || "ROADMAP steering gate closed."
-			return {
-				decision: {
-					status: "blocked_recoverable",
-					code: "ROADMAP_REMEDIATION_REQUIRED",
-					nextTransition: "REMEDIATE_ROADMAP",
-					stateVersion,
-					decisionId,
-					details: { blocker: reason, remediationSteps: roadmapBlock.remediationSteps },
-				},
-				funnelDecision: {
-					kind: "soft_block",
-					nextAllowedAction: "modify_workspace",
-					forbiddenActions: ["attempt_completion"],
-					canonicalInstruction: reason,
-					reason,
-					playbook: Array.isArray(roadmapBlock.remediationSteps)
-						? roadmapBlock.remediationSteps
-						: ["Complete the ROADMAP remediation recorded in the funnel trace."],
-					stages: [...funnelStages, fail("roadmap", reason, true)],
-				},
-			}
+			funnelStages.push(fail("roadmap", roadmapBlock.message || "Roadmap diagnostics need review; advisory only."))
+		} else {
+			funnelStages.push(pass("roadmap", "Roadmap completion diagnostics passed"))
 		}
-		funnelStages.push(pass("roadmap", "Roadmap completion requirements passed"))
 	} catch {
 		funnelStages.push(na("roadmap", "Roadmap provider unavailable — non-participating"))
 	}

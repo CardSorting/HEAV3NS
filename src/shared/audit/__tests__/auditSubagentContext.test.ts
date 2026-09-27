@@ -114,8 +114,8 @@ describe("auditSubagentContext", () => {
 			lastCompletionAudit,
 			gateOptions: { gateEnabled: true, scoreThreshold: 50 },
 		})
-		expect(signals).to.include("SIGNAL: PARENT_WORKSPACE_GATE_POLICY")
-		expect(signals).to.include("SIGNAL: PARENT_SUPPRESSED_VIOLATIONS")
+		expect(signals).to.include("ADVISORY: SIGNAL: PARENT_WORKSPACE_GATE_POLICY")
+		expect(signals).to.include("ADVISORY: SIGNAL: PARENT_SUPPRESSED_VIOLATIONS")
 		const context = buildSubagentAuditContext({ lastCompletionAudit })
 		expect(context).to.contain("Workspace gate policy")
 		expect(context).to.contain("Suppressed violations")

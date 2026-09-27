@@ -3,34 +3,33 @@ import { MonolithSwarmDelegator } from "../../agents/extensions/delegation/monol
 import { BroccoliViewRenderer } from "../../sessions/extensions/substrate/broccolidb-view-renderer.js"
 import type { Component } from "../tui.js"
 import { matchesKey } from "../keys.js"
-import { sliceByColumn, visibleWidth } from "../utils.js"
+import { sliceByColumn, stripTerminalSequences, visibleWidth, wrapTextWithAnsi } from "../utils.js"
+import { Input } from "./input.js"
 
 export type SwarmDashboardViewMode = "tasks" | "dag" | "outcomes" | "worktrees" | "health" | "metrics"
 
 const VIEW_MODES: Array<{ mode: SwarmDashboardViewMode; label: string }> = [
 	{ mode: "tasks", label: "Tasks" },
-	{ mode: "dag", label: "DAG" },
+	{ mode: "dag", label: "Flow" },
 	{ mode: "outcomes", label: "Results" },
 	{ mode: "worktrees", label: "Worktrees" },
 	{ mode: "health", label: "Health" },
 	{ mode: "metrics", label: "Metrics" },
 ]
 
-const VIEW_GROUPS: Array<{ label: string; modes: readonly SwarmDashboardViewMode[] }> = [
-	{ label: "Tasks", modes: ["tasks"] },
-	{ label: "Flow", modes: ["dag", "worktrees"] },
-	{ label: "Results", modes: ["outcomes"] },
-	{ label: "Insights", modes: ["health", "metrics"] },
-]
-
 const STATUS_FILTERS: Array<{ label: string; status?: SwarmTaskStatus }> = [
 	{ label: "All" },
 	{ label: "Running", status: "running" },
-	{ label: "Pending", status: "pending" },
+	{ label: "Queued", status: "pending" },
 	{ label: "Completed", status: "completed" },
 	{ label: "Failed", status: "failed" },
-	{ label: "Aborted", status: "aborted" },
+	{ label: "Cancelled", status: "aborted" },
 ]
+
+/** Task text is data, never terminal instructions. Preserve newlines for evidence. */
+function safeTaskText(value: string): string {
+	return stripTerminalSequences(value.replace(/\r\n?/g, "\n")).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, "")
+}
 
 /** Keyboard-first task monitor for the current swarm session. */
 export class SwarmDashboardModal implements Component {
@@ -39,6 +38,10 @@ export class SwarmDashboardModal implements Component {
 	private readonly delegator: MonolithSwarmDelegator
 	private readonly onClose: () => void
 	private selectedIndex = 0
+	private selectedTaskId?: string
+	private renderedWidth = 80
+	private summaryRows = 2
+	private navigationRows = 2
 	private filterIndex = 0
 	private viewMode: SwarmDashboardViewMode = "tasks"
 	private viewScrollOffset = 0
@@ -48,24 +51,41 @@ export class SwarmDashboardModal implements Component {
 	private showHelp = false
 	private statusMessage = ""
 	private searchQuery = ""
-	private searchBuffer = ""
+	private readonly searchInput = new Input()
 	private searchPreviousQuery = ""
 	private searchActive = false
 
-	constructor(delegator: MonolithSwarmDelegator, onClose: () => void) {
+	constructor(
+		delegator: MonolithSwarmDelegator,
+		onClose: () => void,
+		private readonly viewportRows: () => number = () => process.stdout.rows ?? 24,
+	) {
 		this.delegator = delegator
 		this.onClose = onClose
+		this.searchInput.onSubmit = (value) => {
+			this.searchQuery = safeTaskText(value).trim()
+			this.searchActive = false
+			this.resetSelection()
+			this.statusMessage = this.searchQuery ? "Search applied." : "Search cleared."
+		}
+		this.searchInput.onEscape = () => {
+			this.searchQuery = this.searchPreviousQuery
+			this.searchActive = false
+			this.resetSelection()
+			this.statusMessage = "Search cancelled."
+		}
 	}
 
 	invalidate(): void {}
 
 	render(maxWidth: number): string[] {
 		const width = Math.max(1, Math.floor(maxWidth))
+		this.renderedWidth = width
 		if (width < 8) return [sliceByColumn("HEAV3NS agents", 0, width)]
 
 		const border = "─".repeat(Math.max(0, width - 2))
 		const tasks = this.getFilteredTasks()
-		this.selectedIndex = Math.max(0, Math.min(this.selectedIndex, tasks.length - 1))
+		this.syncSelection(tasks)
 		const metrics = this.delegator.getSwarmMetrics()
 		const lines = [`┌${border}┐`]
 
@@ -117,7 +137,7 @@ export class SwarmDashboardModal implements Component {
 				const taskId = this.abortConfirmationTaskId
 				this.abortConfirmationTaskId = undefined
 				const aborted = this.delegator.abortTask(taskId, "Aborted from /agents")
-				this.statusMessage = aborted ? `Marked ${taskId} aborted.` : `Could not abort ${taskId}; its state changed.`
+				this.statusMessage = aborted ? `Stopped ${taskId}.` : `Could not stop ${taskId}; its state changed.`
 			} else if (key === "n" || key === "N" || matchesKey(key, "escape")) {
 				this.abortConfirmationTaskId = undefined
 				this.statusMessage = "Stop cancelled."
@@ -126,50 +146,64 @@ export class SwarmDashboardModal implements Component {
 		}
 
 		if (this.detailTaskId) {
+			const pageSize = Math.max(1, this.getVisibleRows(this.renderedWidth) - 1)
 			if (matchesKey(key, "escape") || matchesKey(key, "backspace")) {
 				this.detailTaskId = undefined
 				this.detailScrollOffset = 0
 				this.statusMessage = ""
-			} else if (key === "j" || matchesKey(key, "down") || matchesKey(key, "pageDown")) {
+			} else if (key === "a") {
+				this.requestStop(this.delegator.getTask(this.detailTaskId))
+			} else if (matchesKey(key, "end") || key === "G") {
+				this.detailScrollOffset = Number.MAX_SAFE_INTEGER
+			} else if (matchesKey(key, "home") || key === "g") {
+				this.detailScrollOffset = 0
+			} else if (matchesKey(key, "pageDown")) {
+				this.detailScrollOffset += pageSize
+			} else if (matchesKey(key, "pageUp")) {
+				this.detailScrollOffset = Math.max(0, this.detailScrollOffset - pageSize)
+			} else if (key === "j" || matchesKey(key, "down")) {
 				this.detailScrollOffset++
-			} else if (key === "k" || matchesKey(key, "up") || matchesKey(key, "pageUp")) {
+			} else if (key === "k" || matchesKey(key, "up")) {
 				this.detailScrollOffset = Math.max(0, this.detailScrollOffset - 1)
 			}
 			return
 		}
 
 		if (this.searchActive) {
-			if (matchesKey(key, "escape")) {
-				this.searchQuery = this.searchPreviousQuery
-				this.searchBuffer = this.searchQuery
-				this.searchActive = false
-				this.selectedIndex = 0
-				this.statusMessage = "Search cancelled."
-				return
-			}
-			if (matchesKey(key, "return")) {
-				this.searchQuery = this.searchBuffer.trim()
-				this.searchActive = false
-				this.selectedIndex = 0
-				this.statusMessage = this.searchQuery ? "Search applied." : "Search cleared."
-				return
-			}
-			if (matchesKey(key, "backspace")) {
-				this.searchBuffer = this.searchBuffer.slice(0, -1)
-				this.searchQuery = this.searchBuffer.trim()
-				this.selectedIndex = 0
-				return
-			}
-			if (key.length === 1 && key >= " ") {
-				this.searchBuffer += key
-				this.searchQuery = this.searchBuffer.trim()
-				this.selectedIndex = 0
+			this.searchInput.handleInput(key)
+			const safeValue = safeTaskText(this.searchInput.getValue()).replace(/\n/g, " ")
+			if (safeValue !== this.searchInput.getValue()) this.searchInput.setValue(safeValue)
+			if (this.searchActive) {
+				this.searchQuery = safeValue.trim()
+				this.resetSelection()
 			}
 			return
 		}
 
 		const tasks = this.getFilteredTasks()
-		this.selectedIndex = Math.max(0, Math.min(this.selectedIndex, tasks.length - 1))
+		this.syncSelection(tasks)
+
+		if (matchesKey(key, "tab") || matchesKey(key, "shift+tab")) {
+			const index = VIEW_MODES.findIndex(({ mode }) => mode === this.viewMode)
+			const direction = matchesKey(key, "shift+tab") ? -1 : 1
+			this.viewMode = VIEW_MODES[(index + direction + VIEW_MODES.length) % VIEW_MODES.length]!.mode
+			this.viewScrollOffset = 0
+			this.statusMessage = ""
+			return
+		}
+		if (matchesKey(key, "home") || matchesKey(key, "end") || key === "g" || key === "G") {
+			const atEnd = matchesKey(key, "end") || key === "G"
+			if (this.viewMode === "tasks") this.selectTask(tasks, atEnd ? tasks.length - 1 : 0)
+			else this.viewScrollOffset = atEnd ? Number.MAX_SAFE_INTEGER : 0
+			return
+		}
+		if (matchesKey(key, "pageDown") || matchesKey(key, "pageUp")) {
+			const direction = matchesKey(key, "pageDown") ? 1 : -1
+			const delta = direction * Math.max(1, this.getVisibleRows(this.renderedWidth) - 3)
+			if (this.viewMode === "tasks") this.selectTask(tasks, this.selectedIndex + delta)
+			else this.viewScrollOffset = Math.max(0, this.viewScrollOffset + delta)
+			return
+		}
 
 		if (/^[1-6]$/.test(key)) {
 			this.viewMode = VIEW_MODES[Number(key) - 1]!.mode
@@ -180,7 +214,7 @@ export class SwarmDashboardModal implements Component {
 
 		if (key === "j" || matchesKey(key, "down")) {
 			if (this.viewMode === "tasks") {
-				if (tasks.length > 0 && this.selectedIndex < tasks.length - 1) this.selectedIndex++
+				this.selectTask(tasks, this.selectedIndex + 1)
 			} else {
 				this.viewScrollOffset++
 			}
@@ -188,21 +222,10 @@ export class SwarmDashboardModal implements Component {
 		}
 		if (key === "k" || matchesKey(key, "up")) {
 			if (this.viewMode === "tasks") {
-				if (this.selectedIndex > 0) this.selectedIndex--
+				this.selectTask(tasks, this.selectedIndex - 1)
 			} else {
 				this.viewScrollOffset = Math.max(0, this.viewScrollOffset - 1)
 			}
-			return
-		}
-		if (this.viewMode !== "tasks" && matchesKey(key, "pageDown")) {
-			this.viewScrollOffset += Math.max(1, this.getVisibleRows(process.stdout.columns ?? 80) - 4)
-			return
-		}
-		if (this.viewMode !== "tasks" && matchesKey(key, "pageUp")) {
-			this.viewScrollOffset = Math.max(
-				0,
-				this.viewScrollOffset - Math.max(1, this.getVisibleRows(process.stdout.columns ?? 80) - 4),
-			)
 			return
 		}
 		if (matchesKey(key, "return")) {
@@ -223,24 +246,24 @@ export class SwarmDashboardModal implements Component {
 			case "/":
 				this.viewMode = "tasks"
 				this.searchPreviousQuery = this.searchQuery
-				this.searchBuffer = ""
+				this.searchInput.setValue("")
 				this.searchQuery = ""
 				this.searchActive = true
-				this.selectedIndex = 0
+				this.resetSelection()
 				this.viewScrollOffset = 0
 				this.statusMessage = ""
 				break
 			case "f":
 				this.filterIndex = (this.filterIndex + 1) % STATUS_FILTERS.length
-				this.selectedIndex = 0
+				this.resetSelection()
 				this.viewScrollOffset = 0
 				this.statusMessage = ""
 				break
 			case "0":
 				this.filterIndex = 0
 				this.searchQuery = ""
-				this.searchBuffer = ""
-				this.selectedIndex = 0
+				this.searchInput.setValue("")
+				this.resetSelection()
 				this.viewScrollOffset = 0
 				this.statusMessage = "Filter cleared."
 				break
@@ -252,14 +275,7 @@ export class SwarmDashboardModal implements Component {
 			}
 			case "a": {
 				const selected = this.viewMode === "tasks" ? tasks[this.selectedIndex] : undefined
-				if (!selected) {
-					this.statusMessage = "Select a task in Tasks before aborting it."
-				} else if (selected.status !== "running") {
-					this.statusMessage = `Only running tasks can be marked aborted (${selected.status}).`
-				} else {
-					this.abortConfirmationTaskId = selected.id
-					this.statusMessage = ""
-				}
+				this.requestStop(selected)
 				break
 			}
 			case "?":
@@ -271,6 +287,31 @@ export class SwarmDashboardModal implements Component {
 			default:
 				if (matchesKey(key, "escape")) this.onClose()
 				break
+		}
+	}
+
+	private resetSelection(): void {
+		this.selectedIndex = 0
+		this.selectedTaskId = undefined
+	}
+
+	private selectTask(tasks: readonly SwarmTaskManifest[], index: number): void {
+		this.selectedIndex = Math.max(0, Math.min(index, tasks.length - 1))
+		this.selectedTaskId = tasks[this.selectedIndex]?.id
+	}
+
+	private syncSelection(tasks: readonly SwarmTaskManifest[]): void {
+		const index = this.selectedTaskId ? tasks.findIndex((task) => task.id === this.selectedTaskId) : -1
+		this.selectTask(tasks, index >= 0 ? index : this.selectedIndex)
+	}
+
+	private requestStop(task: SwarmTaskManifest | undefined): void {
+		if (!task) this.statusMessage = "Select a task in Tasks before stopping it."
+		else if (task.status !== "running" && task.status !== "pending") {
+			this.statusMessage = `Task already ${this.statusLabel(task.status).toLowerCase()}; no work to stop.`
+		} else {
+			this.abortConfirmationTaskId = task.id
+			this.statusMessage = ""
 		}
 	}
 
@@ -303,7 +344,7 @@ export class SwarmDashboardModal implements Component {
 			const branch = task.worktree ? ` · ${task.worktree.branchName}` : ""
 			lines.push(
 				this.formatLine(
-					`${marker} ${icon} ${task.status.padEnd(9)} ${task.id.slice(0, 12)} · D${task.depth} · ${task.goal}${branch}`,
+					`${marker} ${icon} ${this.statusLabel(task.status).padEnd(9)} ${task.goal} · ${task.id}${branch}`,
 					width,
 				),
 			)
@@ -327,14 +368,29 @@ export class SwarmDashboardModal implements Component {
 		const outcome = this.delegator.getTaskOutcome(task.id)
 		const content = [
 			`Task: ${task.id}`,
-			`Status: ${task.status} · Depth: ${task.depth}${task.parentTaskId ? ` · Parent: ${task.parentTaskId}` : ""}`,
+			`Status: ${this.statusLabel(task.status)}${task.parentTaskId ? ` · Parent: ${task.parentTaskId}` : ""}`,
 			`Created: ${this.formatTimestamp(task.createdAtMs)}`,
-			"",
-			"Goal:",
-			...this.wrapText(task.goal, Math.max(1, width - 6)).map((line) => `  ${line}`),
 		]
-		if (task.context)
-			content.push("", "Context:", ...this.wrapText(task.context, Math.max(1, width - 6)).map((line) => `  ${line}`))
+		if (outcome) {
+			content.push("", `Result: ${outcome.summary}`)
+			if (outcome.error) content.push(`Failure: ${outcome.error}`)
+			if (outcome.filesModified.length > 0) {
+				content.push(
+					`Staged files: ${outcome.filesModified.join(", ")}`,
+					"Handoff: parent applies the diff and verifies it.",
+				)
+			}
+			const fullResult =
+				outcome.output && typeof outcome.output === "object" ? (outcome.output as { result?: unknown }).result : undefined
+			if (typeof fullResult === "string" && fullResult !== outcome.summary) {
+				content.push("", "Full result:", ...this.wrapText(fullResult, Math.max(1, width - 6)))
+			}
+			content.push(
+				`Usage: ${outcome.toolCallsCount} tool calls · ${outcome.tokenUsage} tokens · ${outcome.durationMs.toFixed(0)} ms`,
+			)
+		}
+		content.push("", "Goal:", task.goal)
+		if (task.context) content.push("", "Context:", task.context)
 		content.push(
 			"",
 			`Budget: ${task.budget.remainingIterations}/${task.budget.maxIterations} iterations · ${task.budget.remainingTokens}/${task.budget.maxTokens} tokens`,
@@ -342,24 +398,11 @@ export class SwarmDashboardModal implements Component {
 			`Blocked tools: ${task.blockedTools.join(", ") || "none"}`,
 		)
 		if (task.worktree) content.push(`Worktree: ${task.worktree.branchName} · ${task.worktree.worktreePath}`)
-		if (outcome) {
-			content.push("", `Result: ${outcome.summary}`)
-			const fullResult =
-				outcome.output && typeof outcome.output === "object" ? (outcome.output as { result?: unknown }).result : undefined
-			if (typeof fullResult === "string" && fullResult !== outcome.summary) {
-				content.push("", "Full result:", ...this.wrapText(fullResult, Math.max(1, width - 6)))
-			}
-			if (outcome.error) content.push(`Blocker: ${outcome.error}`)
-			if (outcome.filesModified.length > 0) content.push(`Staged files: ${outcome.filesModified.join(", ")}`)
-			content.push(
-				`Usage: ${outcome.toolCallsCount} tool calls · ${outcome.tokenUsage} tokens · ${outcome.durationMs.toFixed(0)} ms`,
-			)
-		}
 
 		const wrapped = content.flatMap((line) =>
 			this.wrapText(line, Math.max(1, width - 6)).map((wrappedLine) => this.formatLine(` ${wrappedLine}`, width)),
 		)
-		const maxRows = this.getVisibleRows(width)
+		const maxRows = Math.max(1, this.getVisibleRows(width) - 1)
 		this.detailScrollOffset = Math.min(this.detailScrollOffset, Math.max(0, wrapped.length - maxRows))
 		for (const line of wrapped.slice(this.detailScrollOffset, this.detailScrollOffset + maxRows)) lines.push(line)
 		if (this.detailScrollOffset > 0 || this.detailScrollOffset + maxRows < wrapped.length) {
@@ -375,19 +418,24 @@ export class SwarmDashboardModal implements Component {
 	private renderAbortConfirmation(lines: string[], tasks: readonly SwarmTaskManifest[], width: number): void {
 		const task = this.delegator.getTask(this.abortConfirmationTaskId!)
 		const goal = task?.goal ?? tasks.find(({ id }) => id === this.abortConfirmationTaskId)?.goal ?? ""
-		lines.push(this.formatLine(` Mark running task ${this.abortConfirmationTaskId} as aborted?`, width))
+		lines.push(
+			this.formatLine(
+				` Stop ${task?.status === "pending" ? "queued" : "running"} task ${this.abortConfirmationTaskId}?`,
+				width,
+			),
+		)
 		if (goal) lines.push(this.formatLine(` ${goal}`, width))
-		lines.push(this.formatLine(" Its isolated staged changes will be discarded.", width))
+		lines.push(this.formatLine(" Its isolated child changes will be discarded; parent edits remain.", width))
 	}
 
 	private renderDag(lines: string[], tasks: readonly SwarmTaskManifest[], width: number): void {
 		const dagLines =
 			tasks.length === 0 ? [" No task hierarchy to show yet."] : BroccoliViewRenderer.renderSwarmDagGraph(tasks).split("\n")
-		this.renderPagedLines(lines, dagLines, width)
+		this.renderPagedLines(lines, dagLines, width, false)
 	}
 
 	private renderOutcomes(lines: string[], width: number): void {
-		const outcomes = this.delegator.getSubstrate().getOutcomes(undefined, 100)
+		const outcomes = this.delegator.getSubstrate().getOutcomes(undefined, Number.POSITIVE_INFINITY)
 		if (outcomes.length === 0) {
 			this.renderPagedLines(lines, [" No recorded task results yet."], width)
 			return
@@ -396,7 +444,7 @@ export class SwarmDashboardModal implements Component {
 			const icon = outcome.success ? "✓" : "✗"
 			return [
 				` ${icon} ${outcome.taskId} · ${outcome.summary} · ${outcome.durationMs.toFixed(0)} ms · ${outcome.tokenUsage} tokens`,
-				...(outcome.error ? [`   Blocker: ${outcome.error}`] : []),
+				...(outcome.error ? [`   Failure: ${outcome.error}`] : []),
 			]
 		})
 		this.renderPagedLines(lines, content, width)
@@ -440,7 +488,8 @@ export class SwarmDashboardModal implements Component {
 		)
 	}
 
-	private renderPagedLines(lines: string[], content: readonly string[], width: number): void {
+	private renderPagedLines(lines: string[], content: readonly string[], width: number, wrap = true): void {
+		if (wrap) content = content.flatMap((line) => this.wrapText(line, Math.max(1, width - 4)))
 		const maxContentRows = Math.max(1, this.getVisibleRows(width) - 3)
 		const start = Math.min(this.viewScrollOffset, Math.max(0, content.length - maxContentRows))
 		const end = Math.min(content.length, start + maxContentRows)
@@ -455,63 +504,48 @@ export class SwarmDashboardModal implements Component {
 	}
 
 	private renderKpis(lines: string[], metrics: SwarmMetricsReport, width: number): void {
-		if (width >= 112) {
-			lines.push(
-				this.formatLine(
-					` ${metrics.totalTasks} tasks · ${metrics.activeTasks} active · ${metrics.overallSuccessRatePercent}% success · ${metrics.totalTokensUsed} tokens · ${metrics.activeWorktreesCount} worktrees`,
-					width,
-				),
-			)
-			return
-		}
-		lines.push(
-			this.formatLine(
-				` ${metrics.totalTasks} tasks · ${metrics.activeTasks} active · ${metrics.overallSuccessRatePercent}% success`,
-				width,
-			),
+		const queued = this.delegator.listTasks("pending").length
+		const rows = this.wrapItems(
+			[
+				`${metrics.activeTasks - queued} running`,
+				`${queued} queued`,
+				`${metrics.completedTasks} done`,
+				`${metrics.failedTasks} failed`,
+			],
+			width - 4,
+			" · ",
 		)
-		lines.push(this.formatLine(` ${metrics.totalTokensUsed} tokens · ${metrics.activeWorktreesCount} worktrees`, width))
+		this.summaryRows = rows.length
+		for (const row of rows) lines.push(this.formatLine(` ${row}`, width))
 	}
 
 	private renderViewNavigation(lines: string[], width: number): void {
-		if (width >= 112) {
-			const groups = VIEW_GROUPS.map(({ label, modes }) => {
-				const entries = modes.map((mode) => {
-					const index = VIEW_MODES.findIndex((entry) => entry.mode === mode)
-					const entry = `${index + 1} ${VIEW_MODES[index]!.label}`
-					return mode === this.viewMode ? `[${entry}]` : entry
-				})
-				return `${label} ${entries.join(" / ")}`
-			})
-			lines.push(this.formatLine(` ${groups.join("  ·  ")}`, width))
-			return
-		}
-
-		const currentIndex = VIEW_MODES.findIndex(({ mode }) => mode === this.viewMode)
-		const currentGroupIndex = VIEW_GROUPS.findIndex(({ modes }) => modes.includes(this.viewMode))
-		lines.push(
-			this.formatLine(
-				` Group ${currentGroupIndex + 1}/4 ${VIEW_GROUPS[currentGroupIndex]!.label} · ${VIEW_MODES[currentIndex]!.label}`,
-				width,
-			),
-		)
-		lines.push(this.formatLine(" 1 Tasks · Flow: 2 DAG / 4 Trees", width))
-		lines.push(this.formatLine(" 3 Results · Insights: 5 Health / 6 Metrics", width))
+		const tabs = VIEW_MODES.map(({ mode, label }, index) => {
+			const entry = `${index + 1} ${label}`
+			return mode === this.viewMode ? `[${entry}]` : entry
+		})
+		const rows = this.wrapItems(tabs, width - 4, "  ")
+		this.navigationRows = rows.length
+		for (const row of rows) lines.push(this.formatLine(` ${row}`, width))
 	}
 
 	private renderSearchStatus(lines: string[], tasks: readonly SwarmTaskManifest[], width: number): void {
-		const query = this.searchActive ? this.searchBuffer : this.searchQuery
-		const searchLabel = query
-			? `Search ${this.searchActive ? ">" : ""}${query}`
-			: "Search: ID, goal, context, result, or status"
-		lines.push(this.formatLine(` ${searchLabel} · ${tasks.length} match${tasks.length === 1 ? "" : "es"}`, width))
+		const label = this.searchActive ? "Search tasks" : `Search: ${this.searchQuery}`
+		lines.push(this.formatLine(` ${label} · ${tasks.length} match${tasks.length === 1 ? "" : "es"}`, width))
+		if (this.searchActive) {
+			this.searchInput.focused = this.focused
+			const [input] = this.searchInput.render(Math.max(1, width - 4))
+			lines.push(this.formatLine(` ${input}`, width, true))
+		}
 	}
 
 	private getFilteredTasks(): readonly SwarmTaskManifest[] {
 		const filter = STATUS_FILTERS[this.filterIndex]!
 		const terms = this.searchQuery.toLocaleLowerCase().split(/\s+/).filter(Boolean)
 		const outcomesByTaskId = new Map<string, { summary: string; error?: string }>()
-		for (const outcome of this.delegator.getSubstrate().getOutcomes(undefined, 500)) {
+		for (const outcome of terms.length
+			? this.delegator.getSubstrate().getOutcomes(undefined, Number.POSITIVE_INFINITY)
+			: []) {
 			if (!outcomesByTaskId.has(outcome.taskId)) {
 				outcomesByTaskId.set(outcome.taskId, { summary: outcome.summary, error: outcome.error })
 			}
@@ -543,60 +577,64 @@ export class SwarmDashboardModal implements Component {
 	}
 
 	private getVisibleRows(width: number): number {
-		const metricsRows = width >= 112 ? 1 : 2
-		const navigationRows = width >= 112 ? 1 : 3
-		const searchRows = this.searchActive || this.searchQuery ? 1 : 0
+		const searchRows = this.searchActive ? 2 : this.searchQuery ? 1 : 0
 		const footerRows = this.getFooter(width).length
-		const chromeRows = 9 + metricsRows + navigationRows + searchRows + footerRows
-		return Math.max(1, (process.stdout.rows ?? 24) - chromeRows)
+		const chromeRows = 7 + this.summaryRows + this.navigationRows + searchRows + footerRows + (this.statusMessage ? 1 : 0)
+		return Math.max(1, this.viewportRows() - chromeRows)
 	}
 
 	private getFooter(width: number): string[] {
 		const isTasksView = this.viewMode === "tasks"
-		const movementHint = isTasksView ? "[j/k] Move" : "[j/k] Scroll"
-		const pageHint = isTasksView ? "" : " · [PgUp/Dn] Page"
-		const taskActionHint = isTasksView ? " · [Enter] Inspect · [a] Abort" : ""
+		const movementHint = isTasksView ? "[↑↓] Move" : "[↑↓] Scroll"
 		if (this.abortConfirmationTaskId) {
-			return [width < 40 ? " [y] Abort · [n/Esc] Cancel" : " [y/Enter] Abort · [n/Esc] Cancel"]
+			return [width < 40 ? " [y] Stop · [n/Esc] Back" : " [y/Enter] Stop · [n/Esc] Back"]
 		}
 		if (this.detailTaskId) {
-			return [width < 48 ? " [j/k] Scroll · [Esc] Back" : " [j/k] Scroll · [Esc/Backspace] Back"]
+			return this.footerLines(["[↑↓] Scroll · [PgUp/Dn] Page", "[Home/End] Jump · [a] Stop · [Esc] Back"], width)
 		}
 		if (this.searchActive) {
-			return [" Type to search · [Enter] Apply · [Esc] Cancel"]
-		}
-		if (width < 48) {
-			return [
-				" [1–6] Views · [/] Search",
-				" [f] Filter · [0] Clear",
-				` ${movementHint}`,
-				isTasksView ? " [Enter] Inspect · [a] Abort" : " [PageUp/Dn] Page",
-				this.showHelp ? " [?] Hide help · [q/Esc] Close" : " [?] Help · [q/Esc] Close",
-			]
-		}
-		if (width < 72) {
-			return [
-				" [1–6] Views · [/] Search · [f] Filter · [0] Clear",
-				isTasksView ? " [j/k] Move · [Enter] Inspect · [a] Abort" : " [j/k] Scroll · [PgUp/Dn] Page",
-				this.showHelp ? " [?] Hide help · [q/Esc] Close" : " [?] Help · [q/Esc] Close",
-			]
-		}
-		if (width < 120) {
-			return [
-				` [1–6] Views · [/] Search · [f] Filter: ${STATUS_FILTERS[this.filterIndex]!.label} · [0] Clear`,
-				this.showHelp
-					? ` ${movementHint}${pageHint}${taskActionHint} · [?] Hide help · [q] Close`
-					: ` ${movementHint}${pageHint}${taskActionHint} · [?] Help · [q] Close`,
-			]
+			return this.footerLines(["[Enter] Apply · [Esc] Cancel"], width)
 		}
 		if (this.showHelp) {
-			return [
-				` [1–6] Views · [/] Search · [f] Cycle filter · [0] Clear · ${movementHint}${pageHint}${taskActionHint} · [?] Hide help · [q] Close`,
-			]
+			return this.footerLines(
+				[
+					"[Tab/Shift+Tab] Views · [1–6] Jump to view",
+					"[↑↓/j/k] Move · [PgUp/Dn] Page · [Home/End/g/G] First/last",
+					"[/] Search · [f] Status filter · [0] Clear filters",
+					"[Enter] Inspect · [a] Stop queued/running task",
+					"[?] Hide keys · [q/Esc] Close",
+				],
+				width,
+			)
 		}
-		return [
-			` [1–6] Views · [/] Search · [f] Filter: ${STATUS_FILTERS[this.filterIndex]!.label} · [0] Clear · ${movementHint}${pageHint}${taskActionHint} · [?] Help · [q] Close`,
-		]
+		return this.footerLines(
+			width < 48
+				? [`${movementHint} · [Enter] Open`, "[Tab] Views · [/] Find", "[a] Stop · [f] Filter", "[?] Keys · [Esc] Close"]
+				: [
+						`[Tab] Views · [/] Search · [f] Filter · [0] Clear`,
+						`${movementHint}${isTasksView ? " · [Enter] Inspect · [a] Stop" : " · [PgUp/Dn] Page"} · [?] Keys · [Esc] Close`,
+					],
+			width,
+		)
+	}
+
+	private footerLines(content: readonly string[], width: number): string[] {
+		return content.flatMap((line) => this.wrapItems(line.split(" · "), width - 4, " · ").map((row) => ` ${row}`))
+	}
+
+	/** Keep each count/label, tab, and keyboard shortcut together when space allows. */
+	private wrapItems(items: readonly string[], width: number, separator: string): string[] {
+		const rows: string[] = []
+		let row = ""
+		for (const item of items) {
+			const next = row ? `${row}${separator}${item}` : item
+			if (row && visibleWidth(next) > width) {
+				rows.push(...this.wrapText(row, width))
+				row = item
+			} else row = next
+		}
+		if (row) rows.push(...this.wrapText(row, width))
+		return rows
 	}
 
 	private statusIcon(status: SwarmTaskStatus): string {
@@ -614,31 +652,24 @@ export class SwarmDashboardModal implements Component {
 		}
 	}
 
+	private statusLabel(status: SwarmTaskStatus): string {
+		return status === "pending" ? "Queued" : status === "aborted" ? "Cancelled" : status[0]!.toUpperCase() + status.slice(1)
+	}
+
 	private formatTimestamp(timestamp?: number): string {
 		if (!timestamp) return "unknown"
 		return new Date(timestamp).toLocaleString()
 	}
 
 	private wrapText(value: string, width: number): string[] {
-		if (!value) return [""]
-		const lines: string[] = []
-		let line = ""
-		for (const word of value.split(/\s+/)) {
-			const candidate = line ? `${line} ${word}` : word
-			if (visibleWidth(candidate) <= width) {
-				line = candidate
-				continue
-			}
-			if (line) lines.push(line)
-			line = visibleWidth(word) > width ? sliceByColumn(word, 0, width) : word
-		}
-		if (line) lines.push(line)
-		return lines
+		return wrapTextWithAnsi(safeTaskText(value), Math.max(1, width))
 	}
 
-	private formatLine(content: string, width: number): string {
+	private formatLine(content: string, width: number, trustedInput = false): string {
+		if (!trustedInput) content = safeTaskText(content).replace(/\s/g, " ")
 		const contentWidth = Math.max(0, width - 2)
-		const clipped = visibleWidth(content) > contentWidth ? sliceByColumn(content, 0, contentWidth) : content
+		const clipped =
+			visibleWidth(content) > contentWidth ? `${sliceByColumn(content, 0, Math.max(0, contentWidth - 1))}…` : content
 		const padding = Math.max(0, contentWidth - visibleWidth(clipped))
 		return `│${clipped}${" ".repeat(padding)}│`
 	}

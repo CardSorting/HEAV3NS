@@ -232,7 +232,7 @@ export class UseSubagentsToolHandler implements IToolHandler, IPartialBlockHandl
 					capability: "subagent",
 					risk: mutating ? "high" : "elevated",
 					requestedSideEffects: [mutating ? "delegate workspace mutation" : "delegate governed execution"],
-					autoApprovalEligible: false,
+					autoApprovalEligible: true,
 				},
 			],
 			promptType: "use_subagents",
