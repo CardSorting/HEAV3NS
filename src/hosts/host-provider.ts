@@ -2,6 +2,7 @@ import { WebviewProvider } from "@/core/webview"
 import { CommentReviewController } from "@/integrations/editor/CommentReviewController"
 import { DiffViewProvider } from "@/integrations/editor/DiffViewProvider"
 import { ITerminalManager } from "@/integrations/terminal/types"
+import { getStorageDataDirectory } from "@/shared/storage/storage-context"
 import { HostBridgeClientProvider } from "./host-provider-types"
 /**
  * Singleton class that manages host-specific providers for dependency injection.
@@ -18,6 +19,7 @@ import { HostBridgeClientProvider } from "./host-provider-types"
  */
 export class HostProvider {
 	private static instance: HostProvider | null = null
+	private static isHeadlessFallback = false
 
 	createWebviewProvider: WebviewProviderCreator
 	createDiffViewProvider: DiffViewProviderCreator
@@ -70,6 +72,74 @@ export class HostProvider {
 		this.globalStorageFsPath = globalStorageFsPath
 	}
 
+	/**
+	 * Initializes or returns a headless HostProvider fallback for CLI and standalone environments.
+	 * This ensures that CLI executions, background workers, scripts, and tests never crash
+	 * with "HostProvider not setup" when accessing host bridge services or paths.
+	 */
+	public static initializeHeadless(): HostProvider {
+		if (HostProvider.instance && !HostProvider.isHeadlessFallback) {
+			return HostProvider.instance
+		}
+		const noopAsync = async () => ({}) as Record<string, never>
+		const headlessBridge: HostBridgeClientProvider = {
+			workspaceClient: {
+				getWorkspacePaths: async () => ({ paths: [process.cwd()] }),
+				getDiagnostics: async () => ({ fileDiagnostics: [] }),
+				saveOpenDocumentIfDirty: noopAsync,
+				openProblemsPanel: noopAsync,
+				openInFileExplorerPanel: noopAsync,
+				openTerminalPanel: noopAsync,
+				openDietCodeSidebarPanel: noopAsync,
+				openFolder: noopAsync,
+			} as unknown as HostBridgeClientProvider["workspaceClient"],
+			envClient: {
+				getHostVersion: async () => ({
+					platform: process.platform,
+					version: "13.0.1",
+					dietcodeType: "cli",
+					dietcodeVersion: "13.0.1",
+				}),
+				getTelemetrySettings: async () => ({ isEnabled: 1 }),
+				getIdeRedirectUri: async () => ({ value: "http://localhost" }),
+				clipboardWriteText: noopAsync,
+				clipboardReadText: async () => ({ value: "" }),
+				openExternal: noopAsync,
+				debugLog: noopAsync,
+				subscribeToTelemetrySettings: () => () => {},
+			} as unknown as HostBridgeClientProvider["envClient"],
+			windowClient: {
+				showMessage: noopAsync,
+				getOpenTabs: async () => ({ paths: [] as string[] }),
+				getVisibleTabs: async () => ({ paths: [] as string[] }),
+				getActiveEditor: async () => ({ filePath: "" }),
+				showOpenDialogue: noopAsync,
+				openFile: noopAsync,
+				showTextDocument: noopAsync,
+				openSettings: noopAsync,
+				showInputBox: noopAsync,
+			} as unknown as HostBridgeClientProvider["windowClient"],
+			diffClient: {
+				openMultiFileDiff: noopAsync,
+			} as unknown as HostBridgeClientProvider["diffClient"],
+		}
+
+		HostProvider.instance = new HostProvider(
+			(() => null) as unknown as WebviewProviderCreator,
+			(() => null) as unknown as DiffViewProviderCreator,
+			(() => null) as unknown as CommentReviewControllerCreator,
+			(() => null) as unknown as TerminalManagerCreator,
+			headlessBridge,
+			() => {},
+			async () => "http://localhost",
+			async () => "",
+			process.cwd(),
+			getStorageDataDirectory(),
+		)
+		HostProvider.isHeadlessFallback = true
+		return HostProvider.instance
+	}
+
 	public static initialize(
 		webviewProviderCreator: WebviewProviderCreator,
 		diffViewProviderCreator: DiffViewProviderCreator,
@@ -82,9 +152,10 @@ export class HostProvider {
 		extensionFsPath: string,
 		globalStorageFsPath: string,
 	): HostProvider {
-		if (HostProvider.instance) {
+		if (HostProvider.instance && !HostProvider.isHeadlessFallback) {
 			throw new Error("Host provider has already been initialized.")
 		}
+		HostProvider.isHeadlessFallback = false
 		HostProvider.instance = new HostProvider(
 			webviewProviderCreator,
 			diffViewProviderCreator,
@@ -105,7 +176,7 @@ export class HostProvider {
 	 */
 	public static get(): HostProvider {
 		if (!HostProvider.instance) {
-			throw new Error("HostProvider not setup. Call HostProvider.initialize() first.")
+			return HostProvider.initializeHeadless()
 		}
 		return HostProvider.instance
 	}
@@ -120,6 +191,7 @@ export class HostProvider {
 	 */
 	public static reset(): void {
 		HostProvider.instance = null
+		HostProvider.isHeadlessFallback = false
 	}
 
 	public static get workspace() {

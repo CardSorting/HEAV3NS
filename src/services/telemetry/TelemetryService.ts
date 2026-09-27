@@ -332,7 +332,12 @@ export class TelemetryService {
 
 	public static async create(): Promise<TelemetryService> {
 		const providers = await TelemetryProviderFactory.createProviders()
-		const hostVersion = await HostProvider.env.getHostVersion({})
+		let hostVersion: { platform?: string; version?: string; dietcodeType?: string } = {}
+		try {
+			hostVersion = await HostProvider.env.getHostVersion({})
+		} catch (error) {
+			Logger.warn("[TelemetryService] Host metadata lookup failed, using fallback:", error)
+		}
 		const metadata: TelemetryMetadata = {
 			extension_version: extensionVersion,
 			platform: hostVersion.platform || "unknown",

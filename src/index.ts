@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { StateManager } from "./core/storage/StateManager.js"
 import { createStorageContext, getStorageDataDirectory } from "./shared/storage/storage-context.js"
+import { HostProvider } from "./hosts/host-provider.js"
 import { AgentConfig } from "./agents/base/agent-config.js"
 import { AcpBridgeServer } from "./agents/extensions/acp/acp-bridge-server.js"
 import { AcpSupervisor } from "./agents/extensions/acp/acp-supervisor.js"
@@ -5273,6 +5274,9 @@ ${modelCommands}
 			throw new Error(
 				`Unsupported active provider "${configuredProviderValue}". Supported providers: ${Array.from(supportedCliProviders).join(", ")}`,
 			)
+		}
+		if (!HostProvider.isInitialized()) {
+			HostProvider.initializeHeadless()
 		}
 		try {
 			await StateManager.initialize(createStorageContext({ workspacePath: process.cwd() }))
