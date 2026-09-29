@@ -177,6 +177,9 @@ Desktop.ini
 tmp/
 temp/
 scratch/
+# Local roadmap observations and coordination leases are runtime state.
+.dietcode/roadmap-state.json
+.broccolidb/governed/locks/
 *.tmp
 *.bak
 *.orig

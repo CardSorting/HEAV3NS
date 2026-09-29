@@ -2,6 +2,7 @@ import * as assert from "assert"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
+import sinon from "sinon"
 import {
 	evaluateRoadmapCompletionBlock,
 	failClosedCompletionMessage,
@@ -21,6 +22,7 @@ describe("RoadmapCompletionGate", () => {
 	})
 
 	afterEach(async () => {
+		sinon.restore()
 		setRoadmapConfigOverride(null)
 		if (tmpDir) await fs.rm(tmpDir, { recursive: true, force: true })
 	})
@@ -101,6 +103,37 @@ describe("RoadmapCompletionGate", () => {
 		assert.strictEqual(block.blocked, true)
 		assert.match(block.message || "", /ROADMAP\.md/)
 		assert.doesNotMatch(block.message || "", /roadmap\(action=/)
+		const state = await RoadmapService.getInstance().readState(tmpDir)
+		assert.strictEqual(state.validation_pending, true)
+		assert.strictEqual(state.schema_valid, null)
+		assert.strictEqual(await fs.readFile(path.join(tmpDir, "ROADMAP.md"), "utf8"), "# Test\n")
+		assert.strictEqual((await evaluateRoadmapCompletionBlock(tmpDir)).blocked, true)
+	})
+
+	it("does not reuse a cached validation after mutation with identical bytes", async () => {
+		const svc = RoadmapService.getInstance()
+		const roadmapPath = path.join(tmpDir, "ROADMAP.md")
+		await fs.writeFile(roadmapPath, bootstrapSkeleton({ project_hint: "Cache recovery" }))
+		await svc.validateRoadmap(tmpDir)
+		await svc.recordFileMutation(tmpDir, "write_to_file", roadmapPath)
+		await svc.validateRoadmap(tmpDir)
+		assert.strictEqual((await svc.readState(tmpDir)).validation_pending, false)
+	})
+
+	it("revalidates when restored state requires validation despite unchanged bytes", async () => {
+		const svc = RoadmapService.getInstance()
+		await fs.writeFile(path.join(tmpDir, "ROADMAP.md"), bootstrapSkeleton({ project_hint: "Restored state" }))
+		await svc.validateRoadmap(tmpDir)
+		await fs.writeFile(svc.getStatePath(tmpDir), JSON.stringify({ validation_pending: true, schema_valid: null }))
+		await svc.validateRoadmap(tmpDir)
+		assert.strictEqual((await svc.readState(tmpDir)).validation_pending, false)
+	})
+
+	it("requires an explicit completion decision from operational status", async () => {
+		sinon.stub(RoadmapService.getInstance(), "getOperationalStatus").resolves({ schema_valid: true })
+		const block = await evaluateRoadmapCompletionBlock(tmpDir, { dryRun: true })
+		assert.strictEqual(block.blocked, true)
+		assert.strictEqual(block.message, failClosedCompletionMessage())
 	})
 
 	it("requireFreshCheckpointBeforeComplete returns diagnostic message without tool commands", async () => {

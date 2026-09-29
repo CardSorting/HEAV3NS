@@ -16,6 +16,16 @@ import {
 } from "../RoadmapAutoGovernance"
 
 describe("RoadmapAutoGovernance", () => {
+	it("does not soften known schema failures when only mechanical gates are reported", () => {
+		assert.strictEqual(
+			isAutoClearableGovernanceOnly({
+				kanbanCompleteAllowed: false,
+				schemaValid: false,
+				blockingGates: [{ id: "bootstrap_complete" }, { id: "validation_current" }],
+			}),
+			false,
+		)
+	})
 	it("formatRemediationNote returns empty for no steps", () => {
 		assert.strictEqual(formatRemediationNote([]), "")
 	})

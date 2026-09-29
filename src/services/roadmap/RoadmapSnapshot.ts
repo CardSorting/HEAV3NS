@@ -14,6 +14,7 @@ export interface WorkspaceSnapshot {
 	validation: RoadmapValidation | null
 	gateState: Record<string, unknown>
 	cachedAt: number
+	runtimeState?: unknown
 }
 
 const snapshotCache = new Map<string, WorkspaceSnapshot>()
@@ -45,11 +46,18 @@ export function getSnapshotFromCache(key: string): WorkspaceSnapshot | undefined
 		snapshotCache.delete(key)
 		return undefined
 	}
-	return entry
+	return structuredClone(entry)
 }
 
 export function setSnapshotCache(key: string, snapshot: WorkspaceSnapshot): void {
-	snapshotCache.set(key, snapshot)
+	// Each workspace/tier keeps only its current revision; stale keys must not
+	// accumulate as documents and persisted state advance.
+	const prefix = `${path.resolve(snapshot.workspace)}::${snapshot.tier}::`
+	for (const existing of snapshotCache.keys()) {
+		if (existing.startsWith(prefix)) snapshotCache.delete(existing)
+	}
+	snapshotCache.set(key, structuredClone(snapshot))
+	while (snapshotCache.size > 128) snapshotCache.delete(snapshotCache.keys().next().value!)
 }
 
 export function invalidateSnapshotCache(workspace?: string): void {

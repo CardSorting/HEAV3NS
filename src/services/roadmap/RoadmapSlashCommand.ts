@@ -14,7 +14,7 @@ import { RoadmapService } from "./RoadmapService"
 export const ROADMAP_SLASH_HELP = `/roadmap — auto-rolling roadmap checkpoint console
 
 Subcommands:
-  cockpit                One-screen operator summary (health, schema, code soup, next action)
+  cockpit [--verbose]    Status and next action; --verbose shows the full history and diagnostics
   doctor                 Install skill + production health checks
   status                 Parse ROADMAP.md health and schema completeness
   evidence               Gather read-only project signals for a checkpoint pass
@@ -95,7 +95,7 @@ export async function executeRoadmapSlashCommand(rawArgs: string, workspace?: st
 	try {
 		switch (sub) {
 			case "cockpit": {
-				const payload = await service.buildCockpit(ws)
+				const payload = await service.buildCockpit(ws, { verbose: argv.includes("--verbose") })
 				return payloadReport(payload) || formatCockpitReport(payload)
 			}
 			case "doctor": {

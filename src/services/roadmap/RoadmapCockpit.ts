@@ -1,13 +1,111 @@
+import { stripVTControlCharacters } from "node:util"
 import * as path from "path"
-import { AUTO_GOVERNANCE, formatKanbanGateStatusLine } from "./RoadmapAutoGovernance"
+import { truncateToWidth, wrapTextWithAnsi } from "../../tui/utils"
+import {
+	AUTO_GOVERNANCE,
+	formatKanbanGateStatusLine,
+	gateEditInstruction,
+	isAutoClearableGovernanceOnly,
+} from "./RoadmapAutoGovernance"
 import { getRoadmapConfig } from "./RoadmapConfig"
-import { formatExplainGateReport, gateExplainParamsFromStatus, recommendNextAction, wrapClarityEnvelope } from "./RoadmapOperator"
+import {
+	formatExplainGateReport,
+	gateExplainParamsFromStatus,
+	recommendNextAction,
+	roadmapToolCommandToSlash,
+	wrapClarityEnvelope,
+} from "./RoadmapOperator"
 import { readCurrentProgress, readLastError } from "./RoadmapProgress"
 import type { RoadmapService } from "./RoadmapService"
 import { BUNDLED_SKILL_REL } from "./RoadmapSkillInstall"
 
-export function formatCockpitReport(payload: Record<string, unknown>, options?: { agentId?: string; verbose?: boolean }): string {
-	const verbose = options?.verbose || process.argv.includes("--verbose")
+export interface RoadmapCockpitOptions {
+	agentId?: string
+	verbose?: boolean
+	width?: number
+}
+
+function record(value: unknown): Record<string, any> {
+	return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, any>) : {}
+}
+
+function cleanText(value: unknown): string {
+	return stripVTControlCharacters(String(value ?? "")).replace(/\p{Cc}/gu, " ")
+}
+
+function compactCockpit(payload: Record<string, unknown>, options?: RoadmapCockpitOptions): string {
+	const width = Number.isFinite(options?.width) ? Math.max(20, Math.floor(options!.width!)) : process.stdout.columns || 80
+	const gate = record(payload.roadmap_gate)
+	const blocking = Array.isArray(gate.blocking_gates) ? gate.blocking_gates.map(record) : []
+	const allowed =
+		payload.kanban_complete_allowed === false || gate.kanban_complete_allowed === false
+			? false
+			: (payload.kanban_complete_allowed ?? gate.kanban_complete_allowed)
+	const automatic = isAutoClearableGovernanceOnly({
+		kanbanCompleteAllowed: allowed,
+		validationPending: !!payload.validation_pending,
+		schemaValid: payload.schema_valid as boolean | null | undefined,
+		blockingGates: blocking,
+	})
+	const needsRepair = payload.schema_valid === false || (allowed === false && !automatic)
+	let status = "Roadmap readiness is unknown"
+	let next = "/roadmap explain-gate"
+	if (payload.roadmap_exists === false) {
+		status = "No roadmap yet"
+		next = "/roadmap checkpoint"
+	} else if (needsRepair) {
+		status = "Roadmap needs attention"
+		next = blocking.length
+			? gateEditInstruction(blocking[0].id, blocking[0].fix)
+			: "Repair ROADMAP.md; use /roadmap explain-gate for details."
+	} else if (automatic || payload.validation_pending) {
+		status = "Roadmap checks pending"
+		next = "Continue the task. Roadmap checks run automatically at completion."
+	} else if (allowed === true) {
+		status = "Roadmap checks passed"
+		const recommended = record(payload.recommended_next_action).command || payload.agent_next_call
+		next = recommended
+			? String(recommended).includes("roadmap(action=")
+				? roadmapToolCommandToSlash(String(recommended))
+				: String(recommended)
+			: "Continue the task."
+	}
+	const lines = [
+		"Roadmap cockpit",
+		`Status: ${status}`,
+		`Next: ${cleanText(next)}`,
+		"",
+		`Project: ${truncateToWidth(cleanText(payload.project_identity_line || payload.steering_brief || "Current workspace"), width - 9)}`,
+		`Checkpoint: ${cleanText(payload.recent_checkpoint_date || "Not recorded")}`,
+	]
+	if (needsRepair && blocking[0]?.why) lines.push(`Reason: ${cleanText(blocking[0].why)}`)
+	const runtime = record(payload.runtime_state || record(payload.workspace_state).runtime_state)
+	const items = record(record(runtime.tasks).now).items
+	const all = Array.isArray(items) ? items.map(record) : []
+	const locks = record(runtime.locks)
+	const visible = all.filter((item) => {
+		const lock = record(locks[item.id])
+		return (
+			!options?.agentId ||
+			!lock.owner_agent ||
+			lock.owner_agent === options.agentId ||
+			Date.parse(lock.expires_at) <= Date.now()
+		)
+	})
+	lines.push("", "Current work:")
+	for (const item of visible.slice(0, 3))
+		lines.push(`  - ${truncateToWidth(cleanText(item.title || item.id || "Untitled task"), width - 4)}`)
+	if (!visible.length)
+		lines.push(all.length ? "  Work is assigned to other agents." : "  No active items. Review Next in ROADMAP.md.")
+	if (all.length > Math.min(visible.length, 3))
+		lines.push(`  ${all.length - Math.min(visible.length, 3)} more items in details.`)
+	lines.push("", "Details: /roadmap cockpit --verbose", "Checks: /roadmap explain-gate")
+	return lines.flatMap((line) => wrapTextWithAnsi(line, width)).join("\n")
+}
+
+export function formatCockpitReport(payload: Record<string, unknown>, options?: RoadmapCockpitOptions): string {
+	const verbose = options?.verbose ?? process.argv.includes("--verbose")
+	if (!verbose) return compactCockpit(payload, options)
 	const agentId = options?.agentId
 
 	const lines = [
@@ -97,7 +195,8 @@ export function formatCockpitReport(payload: Record<string, unknown>, options?: 
 		}
 	}
 
-	let lineage = (payload.workspace_state as Record<string, unknown> | undefined)?.lineage as Array<any> | undefined
+	const rawLineage = (payload.workspace_state as Record<string, unknown> | undefined)?.lineage
+	let lineage = Array.isArray(rawLineage) ? rawLineage.map(record) : []
 	if (lineage && lineage.length > 0) {
 		if (agentId && !verbose) {
 			lineage = lineage.filter((entry: any) => !entry.agent_id || entry.agent_id === agentId)
@@ -105,7 +204,7 @@ export function formatCockpitReport(payload: Record<string, unknown>, options?: 
 		if (lineage.length > 0) {
 			lines.push("", "Steering Lineage Ledger:")
 			for (const entry of lineage.slice().reverse()) {
-				const time = entry.timestamp.slice(11, 19)
+				const time = typeof entry.timestamp === "string" ? entry.timestamp.slice(11, 19) : "Unknown time"
 				const tool = entry.tool ? ` [${entry.tool}]` : ""
 				const action = entry.action || "mutate"
 				const hashStr = entry.hash ? ` (hash: ${entry.hash})` : ""
@@ -126,7 +225,7 @@ export function formatCockpitReport(payload: Record<string, unknown>, options?: 
 export async function buildCockpitPayload(
 	roadmapService: RoadmapService,
 	workspace: string,
-	options?: { agentId?: string; verbose?: boolean },
+	options?: RoadmapCockpitOptions,
 ): Promise<Record<string, unknown>> {
 	const cfg = getRoadmapConfig()
 	const status = await roadmapService.getOperationalStatus(workspace, "", "standard")

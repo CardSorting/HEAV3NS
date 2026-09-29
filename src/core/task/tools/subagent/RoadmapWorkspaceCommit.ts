@@ -3,6 +3,7 @@ import type { RoadmapCompletionUpdatePolicy } from "@shared/subagent/governedExe
 import type { RoadmapPatchReconciliation, RoadmapWorkspaceCommitResult } from "@shared/subagent/roadmapProjection"
 import type { LockAuthority } from "@/core/governance/LockAuthority"
 import { releaseGovernedLock } from "@/core/governance/LockAuthority"
+import { withRoadmapMutation } from "@/services/roadmap/RoadmapPersistence"
 import { RoadmapService } from "@/services/roadmap/RoadmapService"
 import { buildRoadmapWorkspaceKey } from "./RoadmapMutation"
 
@@ -99,94 +100,96 @@ export async function commitWorkspaceRoadmapPatches(options: {
 	claim = acquireResult.claim
 
 	try {
-		const runtimeState = await RoadmapService.getInstance().getOrHydrateRuntimeState(options.workspace)
-		const appliedPatchIds: string[] = []
+		return await withRoadmapMutation(options.workspace, async () => {
+			const runtimeState = await RoadmapService.getInstance().getOrHydrateRuntimeState(options.workspace)
+			const appliedPatchIds: string[] = []
 
-		for (const patch of actionable) {
-			appliedPatchIds.push(patch.patchId)
-			switch (patch.type) {
-				case "mark_complete": {
-					const lists = [runtimeState.tasks.now, runtimeState.tasks.next, runtimeState.tasks.later]
-					for (const list of lists) {
-						const idx = list.items.findIndex((item) => item.id === patch.itemId)
-						if (idx >= 0) {
-							list.items.splice(idx, 1)
+			for (const patch of actionable) {
+				appliedPatchIds.push(patch.patchId)
+				switch (patch.type) {
+					case "mark_complete": {
+						const lists = [runtimeState.tasks.now, runtimeState.tasks.next, runtimeState.tasks.later]
+						for (const list of lists) {
+							const idx = list.items.findIndex((item) => item.id === patch.itemId)
+							if (idx >= 0) {
+								list.items.splice(idx, 1)
+							}
 						}
+						break
 					}
-					break
-				}
-				case "reopen_item": {
-					const exists = [
-						...runtimeState.tasks.now.items,
-						...runtimeState.tasks.next.items,
-						...runtimeState.tasks.later.items,
-					].some((item) => item.id === patch.itemId)
-					if (!exists) {
-						runtimeState.tasks.next.items.push({
-							id: patch.itemId,
-							title: String(patch.payload?.title ?? patch.itemId),
-							body: String(patch.rationale ?? ""),
-						})
-					}
-					break
-				}
-				case "move_lane": {
-					const targetLane = String(patch.payload?.targetLane ?? "next")
-					const lists = {
-						now: runtimeState.tasks.now,
-						next: runtimeState.tasks.next,
-						later: runtimeState.tasks.later,
-					}
-					let moved: (typeof runtimeState.tasks.now.items)[0] | undefined
-					for (const list of Object.values(lists)) {
-						const idx = list.items.findIndex((item) => item.id === patch.itemId)
-						if (idx >= 0) {
-							moved = list.items.splice(idx, 1)[0]
-							break
+					case "reopen_item": {
+						const exists = [
+							...runtimeState.tasks.now.items,
+							...runtimeState.tasks.next.items,
+							...runtimeState.tasks.later.items,
+						].some((item) => item.id === patch.itemId)
+						if (!exists) {
+							runtimeState.tasks.next.items.push({
+								id: patch.itemId,
+								title: String(patch.payload?.title ?? patch.itemId),
+								body: String(patch.rationale ?? ""),
+							})
 						}
+						break
 					}
-					if (moved && targetLane in lists) {
-						lists[targetLane as keyof typeof lists].items.push(moved)
+					case "move_lane": {
+						const targetLane = String(patch.payload?.targetLane ?? "next")
+						const lists = {
+							now: runtimeState.tasks.now,
+							next: runtimeState.tasks.next,
+							later: runtimeState.tasks.later,
+						}
+						let moved: (typeof runtimeState.tasks.now.items)[0] | undefined
+						for (const list of Object.values(lists)) {
+							const idx = list.items.findIndex((item) => item.id === patch.itemId)
+							if (idx >= 0) {
+								moved = list.items.splice(idx, 1)[0]
+								break
+							}
+						}
+						if (moved && targetLane in lists) {
+							lists[targetLane as keyof typeof lists].items.push(moved)
+						}
+						break
 					}
-					break
+					case "add_blocked_reason":
+						runtimeState.decision_log =
+							`${runtimeState.decision_log}\n[blocked:${patch.itemId}] ${patch.payload?.detail ?? patch.rationale ?? ""}`.trim()
+						break
+					case "attach_evidence":
+						if (!runtimeState.memory) {
+							runtimeState.memory = { continuation_anchors: {} }
+						}
+						runtimeState.memory.continuation_anchors[`evidence:${patch.itemId}`] = String(
+							patch.evidencePointer ?? patch.payload?.detail ?? patch.patchId,
+						)
+						break
+					case "update_dependency":
+					case "update_ownership":
+					case "suggest_follow_up":
+						runtimeState.decision_log =
+							`${runtimeState.decision_log}\n[${patch.type}:${patch.itemId}] ${patch.rationale ?? patch.payload?.detail ?? ""}`.trim()
+						break
+					default:
+						break
 				}
-				case "add_blocked_reason":
-					runtimeState.decision_log =
-						`${runtimeState.decision_log}\n[blocked:${patch.itemId}] ${patch.payload?.detail ?? patch.rationale ?? ""}`.trim()
-					break
-				case "attach_evidence":
-					if (!runtimeState.memory) {
-						runtimeState.memory = { continuation_anchors: {} }
-					}
-					runtimeState.memory.continuation_anchors[`evidence:${patch.itemId}`] = String(
-						patch.evidencePointer ?? patch.payload?.detail ?? patch.patchId,
-					)
-					break
-				case "update_dependency":
-				case "update_ownership":
-				case "suggest_follow_up":
-					runtimeState.decision_log =
-						`${runtimeState.decision_log}\n[${patch.type}:${patch.itemId}] ${patch.rationale ?? patch.payload?.detail ?? ""}`.trim()
-					break
-				default:
-					break
 			}
-		}
 
-		runtimeState.version = (runtimeState.version ?? 0) + 1
-		if (!runtimeState.version_vectors) {
-			runtimeState.version_vectors = {}
-		}
-		runtimeState.version_vectors.workspace = (runtimeState.version_vectors.workspace ?? 0) + 1
+			runtimeState.version = (runtimeState.version ?? 0) + 1
+			if (!runtimeState.version_vectors) {
+				runtimeState.version_vectors = {}
+			}
+			runtimeState.version_vectors.workspace = (runtimeState.version_vectors.workspace ?? 0) + 1
 
-		await RoadmapService.getInstance().writeState(options.workspace, { runtime_state: runtimeState })
+			await RoadmapService.getInstance().writeState(options.workspace, { runtime_state: runtimeState })
 
-		return {
-			committed: true,
-			commitStatus: "committed",
-			workspaceLockAcquired: true,
-			appliedPatchIds,
-		}
+			return {
+				committed: true,
+				commitStatus: "committed",
+				workspaceLockAcquired: true,
+				appliedPatchIds,
+			}
+		})
 	} catch (error) {
 		return {
 			committed: false,

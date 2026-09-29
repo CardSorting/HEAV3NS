@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+import { fileURLToPath } from "node:url"
 /**
  * Production audit for roadmap checkpoint — wiring, workspace boundaries, and ergonomics.
  * Port of dietcode-plugin/scripts/roadmap_audit.py
@@ -34,7 +35,7 @@ import { executeRoadmapSlashCommand } from "../src/services/roadmap/RoadmapSlash
 import { buildSteeringContext } from "../src/services/roadmap/RoadmapSteeringContext"
 import { DietCodeDefaultTool } from "../src/shared/tools"
 
-const ROOT = path.resolve(__dirname, "..")
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 const REQUIRED_FILES = [
 	"src/services/roadmap/RoadmapConfig.ts",
@@ -43,6 +44,7 @@ const REQUIRED_FILES = [
 	"src/services/roadmap/RoadmapOperator.ts",
 	"src/services/roadmap/RoadmapSnapshot.ts",
 	"src/services/roadmap/RoadmapService.ts",
+	"src/services/roadmap/RoadmapPersistence.ts",
 	"src/services/roadmap/RoadmapProgress.ts",
 	"src/services/roadmap/RoadmapErrors.ts",
 	"src/services/roadmap/RoadmapDoctor.ts",

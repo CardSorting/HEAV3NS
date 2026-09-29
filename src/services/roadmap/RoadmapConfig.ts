@@ -9,6 +9,7 @@ export interface RoadmapConfig {
 	stale_checkpoint_days: number
 	git_timeout_seconds: number
 	evidence_cache_ttl_seconds: number
+	/** @deprecated Retained for config compatibility; session briefs use the input-aware evidence cache. */
 	session_brief_cache_ttl_seconds: number
 	block_kanban_on_invalid_schema: boolean
 	block_kanban_on_validation_pending: boolean

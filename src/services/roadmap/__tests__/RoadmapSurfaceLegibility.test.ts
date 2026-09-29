@@ -2,12 +2,18 @@ import * as assert from "assert"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
-import { buildCockpitPayload } from "../RoadmapCockpit"
 import { formatRoadmapSteeringBlock } from "../RoadmapAgentSteering"
+import { buildCockpitPayload } from "../RoadmapCockpit"
 import { DEFAULT_ROADMAP_CONFIG, setRoadmapConfigOverride } from "../RoadmapConfig"
 import { wrapClarityEnvelope } from "../RoadmapOperator"
 import { bootstrapSkeleton } from "../RoadmapSchema"
-import { computeDependencyManifestsHash, hydrateRuntimeState, projectRuntimeStateToMarkdown, RoadmapService, slimEvidence } from "../RoadmapService"
+import {
+	computeDependencyManifestsHash,
+	hydrateRuntimeState,
+	projectRuntimeStateToMarkdown,
+	RoadmapService,
+	slimEvidence,
+} from "../RoadmapService"
 
 describe("RoadmapSurfaceLegibility", () => {
 	let tmpDir = ""
@@ -165,7 +171,7 @@ Archive section content
 		assert.strictEqual(payload.continuation_semantics.intent_class, "CONTINUE_NORMAL")
 	})
 
-	it("performs transaction rollback on failed remediation and logs a failed transaction receipt", async () => {
+	it("rejects invalid staged remediation without changing the document and records the failure", async () => {
 		const svc = RoadmapService.getInstance()
 		const { remediateRoadmapGatesInternally } = await import("../RoadmapCompletionGate")
 
@@ -186,9 +192,9 @@ Archive section content
 		assert.strictEqual(text, initialText)
 
 		const state = await svc.readState(tmpDir)
-		const rollbackReceipt = state.lineage.find((l: any) => l.action === "remediation_rollback")
+		const rollbackReceipt = state.lineage.find((l: any) => l.action === "remediation_rejected")
 		assert.ok(rollbackReceipt)
-		assert.match(rollbackReceipt.diff_summary, /Remediation rolled back/i)
+		assert.match(rollbackReceipt.diff_summary, /without restoring stale backups/i)
 		assert.ok(rollbackReceipt.causality_token)
 	})
 

@@ -5,7 +5,7 @@ import * as path from "path"
 import { AUTO_GOVERNANCE, isAutoClearableGovernanceOnly, midTaskAgentNextCall } from "./RoadmapAutoGovernance"
 import { invalidateRoadmapWorkspaceCache } from "./RoadmapCache"
 import { isDigestContext, slimCheckpointPayload } from "./RoadmapCheckpointDigest"
-import { buildCockpitPayload } from "./RoadmapCockpit"
+import { buildCockpitPayload, type RoadmapCockpitOptions } from "./RoadmapCockpit"
 import { getRoadmapConfig, type RoadmapConfig } from "./RoadmapConfig"
 import { runDoctorChecks } from "./RoadmapDoctor"
 import { formatExplainStaleReport } from "./RoadmapFreshness"
@@ -18,6 +18,7 @@ import {
 	wrapClarityEnvelope as operatorWrapClarityEnvelope,
 	recommendNextAction,
 } from "./RoadmapOperator"
+import { readOptionalRoadmapFile, withRoadmapMutation, writeRoadmapFileChecked } from "./RoadmapPersistence"
 import { clearLastError, formatWatchReport, readCurrentProgress, readLastError, recordLastError } from "./RoadmapProgress"
 import {
 	bootstrapSkeleton,
@@ -27,6 +28,7 @@ import {
 	REQUIRED_SECTIONS,
 	RoadmapValidation,
 	SOUP_RISK_LEVELS,
+	stampRecentCheckpointDate,
 	validateRoadmapContent,
 } from "./RoadmapSchema"
 import { BUNDLED_SKILL_REL } from "./RoadmapSkillInstall"
@@ -39,17 +41,7 @@ interface HeavyScanResult {
 	testFileCount: number
 }
 
-const SKIP_DIRS = new Set([
-	".git",
-	"node_modules",
-	"dist",
-	"build",
-	".venv",
-	"venv",
-	"__pycache__",
-	"kernel/build",
-	".cursor",
-])
+const SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", ".venv", "venv", "__pycache__", "kernel/build", ".cursor"])
 
 const SOURCE_SUFFIXES = new Set([".py", ".ts", ".js", ".mm", ".cpp", ".go", ".rs"])
 const TODO_SUFFIXES = new Set([".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".md", ".yaml", ".yml"])
@@ -284,26 +276,10 @@ export function projectRuntimeStateToMarkdown(state: RoadmapRuntimeState): strin
 	return md
 }
 
-async function writeRoadmapAtomically(workspace: string, content: string): Promise<void> {
+async function writeRoadmapAtomically(workspace: string, content: string, expected: string | null): Promise<void> {
 	const roadmapPath = path.join(workspace, "ROADMAP.md")
-	const tempPath = path.join(workspace, "ROADMAP.md.tmp")
-	await fs.mkdir(path.dirname(tempPath), { recursive: true })
-	await fs.writeFile(tempPath, content, "utf8")
-	try {
-		const verifiedContent = await fs.readFile(tempPath, "utf8")
-		if (!verifiedContent || verifiedContent.trim().length === 0) {
-			throw new Error("Written content is empty")
-		}
-		if (verifiedContent.length < 10) {
-			throw new Error("Written content too short to be a valid ROADMAP.md")
-		}
-	} catch (err) {
-		try {
-			await fs.unlink(tempPath)
-		} catch {}
-		throw new Error(`Roadmap atomic write verification failed: ${err instanceof Error ? err.message : String(err)}`)
-	}
-	await fs.rename(tempPath, roadmapPath)
+	if (content.trim().length < 10) throw new Error("Roadmap content is empty or too short")
+	await writeRoadmapFileChecked(roadmapPath, content, expected)
 }
 
 export async function computeDependencyManifestsHash(workspace: string): Promise<string> {
@@ -1675,7 +1651,10 @@ function parseRoadmapText(content: string, pathStr: string): any {
 
 export class RoadmapService {
 	private static instance: RoadmapService | null = null
-	private lastValidationResult: Record<string, { timestamp: number; hash: string; result: any }> = {}
+	private readonly lastValidationResult = new Map<
+		string,
+		{ timestamp: number; hash: string; policy: string; dependencies: string; result: any }
+	>()
 
 	public static getInstance(): RoadmapService {
 		if (!RoadmapService.instance) {
@@ -1700,8 +1679,8 @@ export class RoadmapService {
 		return runDoctorChecks(this, workspace)
 	}
 
-	public async buildCockpit(workspace: string): Promise<Record<string, unknown>> {
-		return buildCockpitPayload(this, workspace)
+	public async buildCockpit(workspace: string, options?: RoadmapCockpitOptions): Promise<Record<string, unknown>> {
+		return buildCockpitPayload(this, workspace, options)
 	}
 
 	public async getProgressSnapshot(workspace: string, context = ""): Promise<Record<string, unknown>> {
@@ -1842,6 +1821,10 @@ export class RoadmapService {
 	}
 
 	public async autoBootstrapIfNeeded(workspace: string): Promise<Record<string, unknown> | null> {
+		return withRoadmapMutation(workspace, () => this.autoBootstrapIfNeededLocked(workspace))
+	}
+
+	private async autoBootstrapIfNeededLocked(workspace: string): Promise<Record<string, unknown> | null> {
 		const cfg = getRoadmapConfig()
 		if (!cfg.enabled || !cfg.auto_bootstrap) {
 			return null
@@ -1860,7 +1843,7 @@ export class RoadmapService {
 
 		const evidence = await this.gatherEvidence(workspace, null, "full")
 		const skeleton = bootstrapSkeletonFromEvidenceAutofilled(evidence)
-		await writeRoadmapAtomically(workspace, skeleton)
+		await writeRoadmapAtomically(workspace, skeleton, null)
 		await this.recordFileMutation(workspace, "roadmap", "ROADMAP.md")
 
 		let result: Record<string, unknown> = {
@@ -1892,10 +1875,18 @@ export class RoadmapService {
 	}
 
 	public async recordMutationLineage(workspace: string, entry: any): Promise<void> {
+		return withRoadmapMutation(workspace, () => this.recordMutationLineageLocked(workspace, entry))
+	}
+
+	private async recordMutationLineageLocked(workspace: string, entry: any): Promise<void> {
 		await recordMutationLineage(workspace, entry)
 	}
 
 	public async getOrHydrateRuntimeState(workspace: string, text?: string): Promise<RoadmapRuntimeState> {
+		return withRoadmapMutation(workspace, () => this.getOrHydrateRuntimeStateLocked(workspace, text))
+	}
+
+	private async getOrHydrateRuntimeStateLocked(workspace: string, text?: string): Promise<RoadmapRuntimeState> {
 		const state = await this.readState(workspace)
 		const roadmapPath = path.join(workspace, "ROADMAP.md")
 
@@ -1929,6 +1920,10 @@ export class RoadmapService {
 	}
 
 	public async recordContinuationAnchor(workspace: string, key: string, value: string): Promise<void> {
+		return withRoadmapMutation(workspace, () => this.recordContinuationAnchorLocked(workspace, key, value))
+	}
+
+	private async recordContinuationAnchorLocked(workspace: string, key: string, value: string): Promise<void> {
 		const runtimeState = await this.getOrHydrateRuntimeState(workspace)
 
 		if (!runtimeState.memory) {
@@ -1957,6 +1952,17 @@ export class RoadmapService {
 	}
 
 	public async acquireOrchestrationLease(
+		workspace: string,
+		agentId: string,
+		taskId: string,
+		durationSeconds = 300,
+	): Promise<{ success: boolean; expires_at?: string }> {
+		return withRoadmapMutation(workspace, () =>
+			this.acquireOrchestrationLeaseLocked(workspace, agentId, taskId, durationSeconds),
+		)
+	}
+
+	private async acquireOrchestrationLeaseLocked(
 		workspace: string,
 		agentId: string,
 		taskId: string,
@@ -1998,6 +2004,10 @@ export class RoadmapService {
 	}
 
 	public async releaseOrchestrationLease(workspace: string, agentId: string, taskId: string): Promise<void> {
+		return withRoadmapMutation(workspace, () => this.releaseOrchestrationLeaseLocked(workspace, agentId, taskId))
+	}
+
+	private async releaseOrchestrationLeaseLocked(workspace: string, agentId: string, taskId: string): Promise<void> {
 		const runtimeState = await this.getOrHydrateRuntimeState(workspace)
 		if (!runtimeState.locks || !runtimeState.locks[taskId]) {
 			return
@@ -2030,6 +2040,14 @@ export class RoadmapService {
 	}
 
 	public async scheduleAdmission(
+		workspace: string,
+		agentId: string,
+		operation: string,
+	): Promise<{ admitted: boolean; backoff_ms: number; pressure_score?: number }> {
+		return withRoadmapMutation(workspace, () => this.scheduleAdmissionLocked(workspace, agentId, operation))
+	}
+
+	private async scheduleAdmissionLocked(
 		workspace: string,
 		agentId: string,
 		operation: string,
@@ -2105,47 +2123,53 @@ export class RoadmapService {
 
 	public async readState(workspace: string): Promise<any> {
 		const stateFile = this.getStatePath(workspace)
-		if (!(await fileExists(stateFile))) {
-			return {}
+		const content = await readOptionalRoadmapFile(stateFile)
+		if (content === null) return {}
+		return this.parsePersistedState(content)
+	}
+
+	private parsePersistedState(content: string): Record<string, any> {
+		const state = JSON.parse(content)
+		if (!state || typeof state !== "object" || Array.isArray(state)) {
+			throw new Error("Roadmap state must be a JSON object; preserve the file and repair it before retrying.")
 		}
-		try {
-			const content = await fs.readFile(stateFile, "utf8")
-			return JSON.parse(content) || {}
-		} catch {
-			return {}
-		}
+		return state
 	}
 
 	public async writeState(workspace: string, patch: any): Promise<any> {
+		return withRoadmapMutation(workspace, () => this.writeStateLocked(workspace, patch))
+	}
+
+	private async writeStateLocked(workspace: string, patch: any): Promise<any> {
+		this.lastValidationResult.delete(workspace)
 		const stateFile = this.getStatePath(workspace)
-		const tempStateFile = `${stateFile}.tmp`
-		const current = await this.readState(workspace)
+		const original = await readOptionalRoadmapFile(stateFile)
+		const current = original === null ? {} : this.parsePersistedState(original)
 		const merged = {
 			...current,
 			...patch,
 			updated_at: new Date().toISOString(),
 		}
 		try {
-			await fs.mkdir(path.dirname(stateFile), { recursive: true })
-			await fs.writeFile(tempStateFile, JSON.stringify(merged, null, 2), "utf8")
-			await fs.rename(tempStateFile, stateFile)
+			await writeRoadmapFileChecked(stateFile, JSON.stringify(merged, null, 2), original)
 		} catch (error) {
-			try {
-				await fs.unlink(tempStateFile)
-			} catch {}
 			await recordLastError({
 				string_code: "roadmap_state_write_failed",
 				message: error instanceof Error ? error.message : String(error),
 				retry_command: "roadmap(action='guide')",
 				safe_to_retry: true,
-			})
-			return { ...merged, _write_failed: true }
+			}).catch(() => undefined)
+			throw error
 		}
 		invalidateRoadmapWorkspaceCache(workspace)
 		return merged
 	}
 
 	public async recordFileMutation(workspace: string, tool: string, filePath: string): Promise<any> {
+		return withRoadmapMutation(workspace, () => this.recordFileMutationLocked(workspace, tool, filePath))
+	}
+
+	private async recordFileMutationLocked(workspace: string, tool: string, filePath: string): Promise<any> {
 		invalidateRoadmapWorkspaceCache(workspace)
 		const res = await this.writeState(workspace, {
 			validation_pending: true,
@@ -2161,6 +2185,28 @@ export class RoadmapService {
 	}
 
 	public async recordValidation(
+		workspace: string,
+		valid: boolean,
+		health_status: string | null,
+		recent_checkpoint_date: string | null,
+		phase: string,
+		issue_count: number,
+		bootstrap_placeholder_count: number,
+	): Promise<any> {
+		return withRoadmapMutation(workspace, () =>
+			this.recordValidationLocked(
+				workspace,
+				valid,
+				health_status,
+				recent_checkpoint_date,
+				phase,
+				issue_count,
+				bootstrap_placeholder_count,
+			),
+		)
+	}
+
+	private async recordValidationLocked(
 		workspace: string,
 		valid: boolean,
 		health_status: string | null,
@@ -2509,6 +2555,10 @@ export class RoadmapService {
 	}
 
 	public async writeBootstrapAutofill(workspace: string, dryRun: boolean): Promise<any> {
+		return withRoadmapMutation(workspace, () => this.writeBootstrapAutofillLocked(workspace, dryRun))
+	}
+
+	private async writeBootstrapAutofillLocked(workspace: string, dryRun: boolean): Promise<any> {
 		const roadmapPath = path.join(workspace, "ROADMAP.md")
 		if (!(await fileExists(roadmapPath))) {
 			return {
@@ -2541,16 +2591,7 @@ export class RoadmapService {
 			return result
 		}
 
-		await writeRoadmapAtomically(workspace, draft.preview_text)
-
-		const newRuntimeState = hydrateRuntimeState(draft.preview_text)
-		const newHash = crypto.createHash("sha256").update(draft.preview_text).digest("hex").slice(0, 16)
-		await this.writeState(workspace, {
-			runtime_state: newRuntimeState,
-			roadmap_md_hash: newHash,
-		})
-
-		await this.recordFileMutation(workspace, "roadmap", "ROADMAP.md")
+		await this.commitRoadmapText(workspace, draft.preview_text, text)
 
 		result.written = true
 		result.applied_count = draft.applied_count
@@ -2559,6 +2600,7 @@ export class RoadmapService {
 	}
 
 	// Cached workspace context for gate/evidence operations
+
 	private async resolveWorkspaceContext(
 		workspace: string,
 		tier: EvidenceTier = "standard",
@@ -2573,7 +2615,7 @@ export class RoadmapService {
 		gateState: any
 		state: any
 	}> {
-		const { key, roadmapPath } = await buildSnapshotKey(workspace, tier)
+		const { key: documentKey, roadmapPath } = await buildSnapshotKey(workspace, tier)
 		let state = await this.readState(workspace)
 
 		if (state.validation_pending && roadmapText === undefined && options?.validatePendingOnRead) {
@@ -2581,6 +2623,24 @@ export class RoadmapService {
 			state = await this.readState(workspace)
 		}
 
+		let text = roadmapText
+		if (text === undefined) {
+			text = (await fileExists(roadmapPath)) ? await readText(roadmapPath, 500000) : ""
+		} else if (text === null) {
+			text = ""
+		}
+
+		// Content identity also covers same-mtime edits and explicit draft text.
+		// Persisted state can change in another process without invalidating this
+		// process's cache. Policy and manifests also affect readiness independently.
+		const contextHash = crypto
+			.createHash("sha256")
+			.update(text)
+			.update(JSON.stringify(state))
+			.update(JSON.stringify(getRoadmapConfig()))
+			.update(await computeDependencyManifestsHash(workspace))
+			.digest("hex")
+		const key = `${documentKey}::${contextHash}`
 		const cached = getSnapshotFromCache(key)
 		if (cached) {
 			return {
@@ -2590,15 +2650,8 @@ export class RoadmapService {
 				evidence: cached.evidence,
 				validation: cached.validation as RoadmapValidation,
 				gateState: cached.gateState,
-				state,
+				state: { ...state, runtime_state: cached.runtimeState ?? state.runtime_state },
 			}
-		}
-
-		let text = roadmapText
-		if (text === undefined) {
-			text = (await fileExists(roadmapPath)) ? await readText(roadmapPath, 500000) : ""
-		} else if (text === null) {
-			text = ""
 		}
 
 		if (text) {
@@ -2612,10 +2665,7 @@ export class RoadmapService {
 					if (state.runtime_state.scheduler_state) runtimeState.scheduler_state = state.runtime_state.scheduler_state
 					if (state.runtime_state.version_vectors) runtimeState.version_vectors = state.runtime_state.version_vectors
 				}
-				state = await this.writeState(workspace, {
-					runtime_state: runtimeState,
-					roadmap_md_hash: currentHash,
-				})
+				state = { ...state, runtime_state: runtimeState, roadmap_md_hash: currentHash }
 			}
 		}
 
@@ -2632,6 +2682,7 @@ export class RoadmapService {
 			validation,
 			gateState,
 			cachedAt: Date.now(),
+			runtimeState: state.runtime_state,
 		})
 
 		return { workspace, text, roadmapPath, evidence, validation, gateState, state }
@@ -2886,56 +2937,26 @@ export class RoadmapService {
 		return payload
 	}
 
-	/**
-	 * Mechanical checkpoint date repair — stamps **Date:** in section 11 when missing or unparsable.
-	 * Used by completion-gate auto-remediation only; does not rewrite checkpoint narrative.
-	 */
 	public async touchRecentCheckpointDate(workspace: string): Promise<{ written: boolean; reason?: string }> {
+		return withRoadmapMutation(workspace, () => this.touchRecentCheckpointDateLocked(workspace))
+	}
+
+	private async touchRecentCheckpointDateLocked(workspace: string): Promise<{ written: boolean; reason?: string }> {
 		const roadmapPath = path.join(workspace, "ROADMAP.md")
-		if (!(await fileExists(roadmapPath))) {
-			return { written: false, reason: "missing_file" }
-		}
-
-		const runtimeState = await this.getOrHydrateRuntimeState(workspace)
-
+		const original = await readOptionalRoadmapFile(roadmapPath)
+		if (original === null) return { written: false, reason: "missing_file" }
 		const today = new Date().toISOString().slice(0, 10)
-		const current = runtimeState.checkpoint.date.trim()
-		if (/^\d{4}-\d{2}-\d{2}$/.test(current) && current === today) {
-			return { written: false, reason: "date_already_valid" }
-		}
-
-		runtimeState.checkpoint.date = today
-
-		const secBody = runtimeState.checkpoint.raw_body
-		const dateLineMatch = /\*\*Date:\*\*\s*(\S*)/i.exec(secBody)
-		let updatedBody = secBody
-		if (dateLineMatch) {
-			updatedBody = secBody.replace(/(\*\*Date:\*\*\s*)(\S*)/i, `$1${today}`)
-		} else {
-			const firstLineEnd = secBody.indexOf("\n")
-			if (firstLineEnd !== -1) {
-				updatedBody = `${secBody.slice(0, firstLineEnd + 1)}**Date:** ${today}\n${secBody.slice(firstLineEnd + 1)}`
-			} else {
-				updatedBody = `${secBody}\n**Date:** ${today}\n`
-			}
-		}
-		runtimeState.checkpoint.raw_body = updatedBody
-
-		const newText = projectRuntimeStateToMarkdown(runtimeState)
-		await writeRoadmapAtomically(workspace, newText)
-
-		const newHash = crypto.createHash("sha256").update(newText).digest("hex").slice(0, 16)
-		await this.writeState(workspace, {
-			runtime_state: runtimeState,
-			roadmap_md_hash: newHash,
-		})
-
-		await this.recordFileMutation(workspace, "roadmap_auto_touch", roadmapPath)
-		invalidateRoadmapWorkspaceCache(workspace)
+		const newText = stampRecentCheckpointDate(original, today)
+		if (newText === original) return { written: false, reason: "date_already_valid" }
+		await this.commitRoadmapText(workspace, newText, original)
 		return { written: true }
 	}
 
 	public async validateRoadmap(workspace: string): Promise<any> {
+		return withRoadmapMutation(workspace, () => this.validateRoadmapLocked(workspace))
+	}
+
+	private async validateRoadmapLocked(workspace: string): Promise<any> {
 		const roadmapPath = path.join(workspace, "ROADMAP.md")
 		let text = ""
 		if (await fileExists(roadmapPath)) {
@@ -2944,22 +2965,31 @@ export class RoadmapService {
 
 		const currentHash = crypto.createHash("sha256").update(text).digest("hex").slice(0, 16)
 		const nowTime = Date.now()
-		const cached = this.lastValidationResult[workspace]
-		if (cached && nowTime - cached.timestamp < 5000 && cached.hash === currentHash) {
-			return cached.result
+		const policy = JSON.stringify(getRoadmapConfig())
+		const dependencies = await computeDependencyManifestsHash(workspace)
+		const cached = this.lastValidationResult.get(workspace)
+		if (
+			cached &&
+			nowTime - cached.timestamp < 5000 &&
+			cached.hash === currentHash &&
+			cached.policy === policy &&
+			cached.dependencies === dependencies
+		) {
+			// A restored or externally updated state can require validation even
+			// when the document bytes match a recent result.
+			const state = await this.readState(workspace)
+			if (state.validation_pending === false && state.schema_valid === cached.result.validation.valid) {
+				return structuredClone(cached.result)
+			}
 		}
 
 		const cfg = getRoadmapConfig()
 		if (cfg.auto_bootstrap_fill && text) {
 			const placeholders = findBootstrapPlaceholders(text)
 			if (placeholders.length > 0) {
-				try {
-					const filled = await this.writeBootstrapAutofill(workspace, false)
-					if (filled && filled.written && filled.applied_count > 0) {
-						text = await fs.readFile(roadmapPath, "utf8")
-					}
-				} catch (_err) {
-					// non-fatal
+				const filled = await this.writeBootstrapAutofill(workspace, false)
+				if (filled && filled.written && filled.applied_count > 0) {
+					text = await fs.readFile(roadmapPath, "utf8")
 				}
 			}
 		}
@@ -2990,6 +3020,9 @@ export class RoadmapService {
 			phase = bootstrap_complete ? "checkpoint" : "bootstrap_fill"
 		}
 
+		if (((await readOptionalRoadmapFile(roadmapPath)) ?? "") !== text) {
+			throw new Error("Roadmap changed during validation; reload before retrying.")
+		}
 		await this.recordValidation(
 			workspace,
 			validation.valid,
@@ -3065,10 +3098,16 @@ export class RoadmapService {
 		}
 
 		const wrappedPayload = this.wrapClarityEnvelope(payload)
-		this.lastValidationResult[workspace] = {
+		this.lastValidationResult.delete(workspace)
+		this.lastValidationResult.set(workspace, {
 			timestamp: nowTime,
-			hash: currentHash,
-			result: wrappedPayload,
+			hash: crypto.createHash("sha256").update(text).digest("hex").slice(0, 16),
+			policy,
+			dependencies,
+			result: structuredClone(wrappedPayload),
+		})
+		while (this.lastValidationResult.size > 128) {
+			this.lastValidationResult.delete(this.lastValidationResult.keys().next().value!)
 		}
 		return wrappedPayload
 	}
@@ -3141,6 +3180,18 @@ export class RoadmapService {
 		payload.steering_brief = (evidence.project_fingerprint || {}).steering_brief
 		payload.project_archetype = (evidence.project_fingerprint || {}).project_archetype
 		return this.wrapClarityEnvelope(payload)
+	}
+
+	public async commitRoadmapText(workspace: string, content: string, expected: string | null): Promise<void> {
+		return withRoadmapMutation(workspace, () => this.commitRoadmapTextLocked(workspace, content, expected))
+	}
+
+	private async commitRoadmapTextLocked(workspace: string, content: string, expected: string | null): Promise<void> {
+		// Persist pending first: interruption after publishing bytes must never retain a passing gate.
+		await this.writeState(workspace, { validation_pending: true, schema_valid: null })
+		await writeRoadmapAtomically(workspace, content, expected)
+		await this.getOrHydrateRuntimeState(workspace, content)
+		await this.recordFileMutation(workspace, "roadmap", "ROADMAP.md")
 	}
 }
 

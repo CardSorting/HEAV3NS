@@ -4,24 +4,11 @@ import { governanceFieldsFromStatus } from "./RoadmapAutoGovernance"
 import { getRoadmapConfig } from "./RoadmapConfig"
 import { RoadmapService } from "./RoadmapService"
 import { BUNDLED_SKILL_REL } from "./RoadmapSkillInstall"
+import { invalidateSnapshotCache } from "./RoadmapSnapshot"
 
-interface BriefCacheEntry {
-	brief: Record<string, unknown>
-	cachedAt: number
-}
-
-const briefCache = new Map<string, BriefCacheEntry>()
-
-function cacheKey(workspace: string): string {
-	return path.resolve(workspace)
-}
-
+/** Compatibility entry point; the service owns the only evidence cache. */
 export function invalidateSessionBriefCache(workspace?: string): void {
-	if (!workspace) {
-		briefCache.clear()
-		return
-	}
-	briefCache.delete(cacheKey(workspace))
+	invalidateSnapshotCache(workspace)
 }
 
 export async function sessionBrief(workspace: string, forceRefresh = false): Promise<Record<string, unknown> | null> {
@@ -30,13 +17,7 @@ export async function sessionBrief(workspace: string, forceRefresh = false): Pro
 		return null
 	}
 
-	const key = cacheKey(workspace)
-	if (!forceRefresh) {
-		const cached = briefCache.get(key)
-		if (cached && Date.now() - cached.cachedAt < cfg.session_brief_cache_ttl_seconds * 1000) {
-			return { ...cached.brief }
-		}
-	}
+	if (forceRefresh) invalidateSnapshotCache(workspace)
 
 	try {
 		const status = await RoadmapService.getInstance().getOperationalStatus(workspace, "", "light")
@@ -89,8 +70,8 @@ export async function sessionBrief(workspace: string, forceRefresh = false): Pro
 			orchestration_pressure_score: status.orchestration_pressure_score,
 		}
 
-		briefCache.set(key, { brief, cachedAt: Date.now() })
-		return { ...brief }
+		// Do not let callers mutate nested state retained by service snapshots.
+		return structuredClone(brief)
 	} catch (error) {
 		return {
 			enabled: cfg.enabled,

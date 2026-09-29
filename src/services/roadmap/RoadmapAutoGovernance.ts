@@ -135,14 +135,15 @@ export function isAutoClearableGovernanceOnly(params: {
 	blockingGates?: Array<{ id?: string }>
 }): boolean {
 	if (params.kanbanCompleteAllowed !== false) return false
+	if (params.schemaValid === false) return false
 	const blocking = params.blockingGates || []
 	const autoClearable = new Set(["validation_current", "bootstrap_complete"])
 	if (params.validationPending && blocking.length === 0) {
-		return params.schemaValid !== false
+		return true
 	}
 	if (blocking.length === 0) return false
 	if (params.validationPending && blocking.every((g) => g.id === "validation_current")) {
-		return params.schemaValid !== false
+		return true
 	}
 	if (blocking.every((g) => g.id && autoClearable.has(g.id))) {
 		return blocking.length <= 2

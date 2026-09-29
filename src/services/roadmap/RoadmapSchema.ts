@@ -111,6 +111,22 @@ export function getSectionBody(content: string, sectionTitle: string): string {
 	return content.slice(start, end)
 }
 
+/** Repair only section 11; preserve every unrelated byte and task identifier. */
+export function stampRecentCheckpointDate(content: string, date: string): string {
+	const header = /^##\s+11\. Recent Checkpoint\s*$/m.exec(content)
+	if (!header) return content
+	const start = header.index + header[0].length
+	const rest = content.slice(start)
+	const next = /\r?\n##\s+/.exec(rest)
+	const end = next ? start + next.index : content.length
+	const body = content.slice(start, end)
+	const newline = content.includes("\r\n") ? "\r\n" : "\n"
+	const updated = /\*\*Date:\*\*/.test(body)
+		? body.replace(/(\*\*Date:\*\*[^\S\r\n]*)[^\r\n]*/, `$1${date}`)
+		: `${newline}**Date:** ${date}${newline}${body}`
+	return content.slice(0, start) + updated + content.slice(end)
+}
+
 function countSubsections(sectionBody: string): number {
 	const matches = sectionBody.match(/^###\s+\d+\.\s+/gm)
 	return matches ? matches.length : 0
