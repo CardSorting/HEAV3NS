@@ -4,6 +4,9 @@ import type { DietCodeToolSpec } from "../spec"
 
 const id = DietCodeDefaultTool.ATTEMPT
 
+const completionWalkthroughInstruction =
+	"Lead with the outcome, then give a concise walkthrough: what changed, where to inspect or use it, and the checks actually run with their results. Include remaining limitations when relevant. Use a short ordered walkthrough for multi-step behavior changes; keep simple results brief. Never invent verification evidence or mark blocked work complete."
+
 const generic: DietCodeToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id,
@@ -16,7 +19,7 @@ const generic: DietCodeToolSpec = {
 		{
 			name: "result",
 			required: true,
-			instruction: "Clear, specific description of task results.",
+			instruction: completionWalkthroughInstruction,
 			usage: "Your final result description here",
 		},
 		{
@@ -48,7 +51,7 @@ const GPT_5: DietCodeToolSpec = {
 		{
 			name: "result",
 			required: true,
-			instruction: "Clear, specific description of task results.",
+			instruction: completionWalkthroughInstruction,
 			usage: "Your final result description here",
 		},
 		{
@@ -78,7 +81,7 @@ const NATIVE_NEXT_GEN: DietCodeToolSpec = {
 		{
 			name: "result",
 			required: true,
-			instruction: "Clear, concise 1-2 paragraph summary of the final result.",
+			instruction: completionWalkthroughInstruction,
 		},
 		{
 			name: "command",

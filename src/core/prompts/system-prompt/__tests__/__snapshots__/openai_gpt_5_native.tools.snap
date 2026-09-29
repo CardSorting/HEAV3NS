@@ -266,7 +266,7 @@
         "properties": {
           "result": {
             "type": "string",
-            "description": "Clear, concise 1-2 paragraph summary of the final result."
+            "description": "Lead with the outcome, then give a concise walkthrough: what changed, where to inspect or use it, and the checks actually run with their results. Include remaining limitations when relevant. Use a short ordered walkthrough for multi-step behavior changes; keep simple results brief. Never invent verification evidence or mark blocked work complete."
           },
           "command": {
             "type": "string",

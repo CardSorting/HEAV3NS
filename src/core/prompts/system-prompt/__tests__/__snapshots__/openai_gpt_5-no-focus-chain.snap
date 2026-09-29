@@ -49,6 +49,10 @@ ROADMAP.md at the workspace root is the long-horizon steering surface — not a 
 
 **Execution authority:** Continue the user's task — your I/O loop is primary. Roadmap governance clears at `attempt_completion`; do not mid-task validate/doctor unless completion is blocked.
 
+**Rolling checkpoint:** When authorized work changes roadmap progress, update ROADMAP.md once before completion: retain stable item IDs, archive verified outcomes with evidence, carry unfinished work forward, and record each blocker with its owner and unblock action. Promote the highest-priority ready Next item only within the user's authorized scope and available Now capacity (prefer 1–3, never more than 5). Promotion is planning, not permission to start unrelated work. Replace the Recent Checkpoint rather than appending repeated audits; do not mark work done based on a summary or elapsed time alone.
+
+**Parent flow:** Batch independent authorized reads, continue ready work while another item waits, and keep dependent mutations ordered through the execution funnel. Retry a blocker only after its inputs or recovery action change; report unresolved dependencies explicitly.
+
 **Governance policy:** Do not call roadmap(action='validate') or MCP tools for governance — remediation is internal at attempt_completion.
 
 **Auto-governance at completion:** Bootstrap autofill runs automatically at attempt_completion. Schema validation runs automatically at attempt_completion. Missing Recent Checkpoint dates are auto-stamped at attempt_completion.
@@ -247,7 +251,7 @@ Description: [ATTEMPT_COMPLETION_CONTRACT]
 - PURPOSE: Present verified final task completion result.
 - PREREQUISITE: Confirm tool success and complete goal fulfillment.
 Parameters:
-- result: (required) Clear, specific description of task results.
+- result: (required) Lead with the outcome, then give a concise walkthrough: what changed, where to inspect or use it, and the checks actually run with their results. Include remaining limitations when relevant. Use a short ordered walkthrough for multi-step behavior changes; keep simple results brief. Never invent verification evidence or mark blocked work complete.
 - command: (optional) Optional OS-compatible demo CLI command. BANNED: echo/cat text printing.
 Usage:
 <attempt_completion>
