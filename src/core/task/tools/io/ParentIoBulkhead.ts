@@ -3,6 +3,9 @@ import { DietCodeDefaultTool } from "@shared/tools"
 /** Global extension-host guardrail for parent I/O. Per-class caps prevent expensive work from occupying every slot. */
 export const PARENT_IO_BULKHEAD_CAPACITY = 4
 
+/** Eligible requests may be overtaken this many times before FIFO takes precedence. */
+export const PARENT_IO_MAX_PRIORITY_BYPASSES = 8
+
 export const PARENT_IO_WORK_CLASSES = ["metadata", "small-read", "search", "traversal"] as const
 export type ParentIoWorkClass = (typeof PARENT_IO_WORK_CLASSES)[number]
 
@@ -57,6 +60,7 @@ type Release = () => void
 
 type ParentIoWaiter = {
 	priority: number
+	bypasses: number
 	sequence: number
 	isFastIo: boolean
 	workClass: ParentIoWorkClass
@@ -104,10 +108,11 @@ export class ParentIoBudgetPool {
 	private readonly waiters: ParentIoWaiter[] = []
 	private readonly classStats = emptyStats()
 	private sequence = 0
+	private readonly classCapacities: Readonly<Record<ParentIoWorkClass, number>>
 
 	constructor(
 		private readonly capacity = PARENT_IO_BULKHEAD_CAPACITY,
-		private readonly classCapacities: Readonly<Record<ParentIoWorkClass, number>> = PARENT_IO_CLASS_CAPACITIES,
+		classCapacities: Readonly<Record<ParentIoWorkClass, number>> = PARENT_IO_CLASS_CAPACITIES,
 	) {
 		if (!Number.isInteger(capacity) || capacity < 1) {
 			throw new Error(`Parent I/O capacity must be a positive integer (received ${capacity}).`)
@@ -121,6 +126,7 @@ export class ParentIoBudgetPool {
 			}
 			this.classStats[workClass].capacity = classCapacity
 		}
+		this.classCapacities = Object.freeze({ ...classCapacities })
 	}
 
 	/** Compatible with AuthorityAwareExecutionPool.acquire(priority, isFastIo). */
@@ -128,10 +134,14 @@ export class ParentIoBudgetPool {
 		const workClass = options.workClass ?? "small-read"
 		const signal = options.signal
 		if (signal?.aborted) return Promise.reject(acquisitionAbortError(signal))
+		if (!PARENT_IO_WORK_CLASSES.includes(workClass) || !Number.isFinite(priority)) {
+			return Promise.reject(new Error("Parent I/O requires a known work class and finite priority."))
+		}
 
 		return new Promise<Release>((resolve, reject) => {
 			const waiter: ParentIoWaiter = {
 				priority,
+				bypasses: 0,
 				sequence: this.sequence++,
 				isFastIo,
 				workClass,
@@ -181,9 +191,16 @@ export class ParentIoBudgetPool {
 
 	private findBestEligibleWaiterIndex(): number {
 		let bestIndex = -1
+		let oldestOvertakenIndex = -1
 		for (let index = 0; index < this.waiters.length; index++) {
 			const waiter = this.waiters[index]
 			if (!this.canDispatch(waiter)) continue
+			if (
+				waiter.bypasses >= PARENT_IO_MAX_PRIORITY_BYPASSES &&
+				(oldestOvertakenIndex === -1 || waiter.sequence < this.waiters[oldestOvertakenIndex].sequence)
+			) {
+				oldestOvertakenIndex = index
+			}
 			if (bestIndex === -1) {
 				bestIndex = index
 				continue
@@ -193,7 +210,7 @@ export class ParentIoBudgetPool {
 				bestIndex = index
 			}
 		}
-		return bestIndex
+		return oldestOvertakenIndex === -1 ? bestIndex : oldestOvertakenIndex
 	}
 
 	private dispatchWhileCapacity(): void {
@@ -201,6 +218,9 @@ export class ParentIoBudgetPool {
 			const bestIndex = this.findBestEligibleWaiterIndex()
 			if (bestIndex === -1) return
 			const [waiter] = this.waiters.splice(bestIndex, 1)
+			for (const pending of this.waiters) {
+				if (this.canDispatch(pending)) pending.bypasses++
+			}
 			this.removeAbortListener(waiter)
 			const stats = this.classStats[waiter.workClass]
 			stats.pending = Math.max(0, stats.pending - 1)

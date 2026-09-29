@@ -12,6 +12,7 @@ import {
 import {
 	acquireParentIoSlot,
 	classifyParentIoWorkClass,
+	PARENT_IO_MAX_PRIORITY_BYPASSES,
 	ParentIoBudgetPool,
 	resetParentIoBulkheadForTests,
 } from "../ParentIoBulkhead"
@@ -159,6 +160,55 @@ describe("IoRequestCoalescer", () => {
 })
 
 describe("ParentIoBulkhead", () => {
+	it("isolates validated capacities from caller mutation", async () => {
+		const caps = { metadata: 4, "small-read": 4, search: 1, traversal: 2 }
+		const pool = new ParentIoBudgetPool(4, caps)
+		caps.search = 4
+		const first = await pool.acquire(0, true, { workClass: "search" })
+		const next = pool.acquire(0, true, { workClass: "search" })
+		assert.equal(pool.getPendingCount(), 1)
+		assert.equal(pool.getStats().byClass.search.capacity, 1)
+		first()
+		;(await next)()
+		assert.equal(pool.getStats().byClass.search.maxActive, 1)
+	})
+
+	it("rejects malformed requests without poisoning the queue", async () => {
+		const pool = new ParentIoBudgetPool()
+		await assert.rejects(pool.acquire(0, true, { workClass: "invalid" as "search" }), /known work class/)
+		await assert.rejects(pool.acquire(Number.NaN), /finite priority/)
+		await assert.rejects(pool.acquire(Number.POSITIVE_INFINITY), /finite priority/)
+		assert.equal(pool.getPendingCount(), 0)
+		const release = await pool.acquire()
+		release()
+		assert.equal(pool.getActiveCount(), 0)
+	})
+	it("bounds priority overtaking while preserving priority for short bursts", async () => {
+		const pool = new ParentIoBudgetPool(1, { metadata: 1, "small-read": 1, search: 1, traversal: 1 })
+		let release = await pool.acquire()
+		let olderStarted = false
+		const older = pool.acquire(0).then((slot) => {
+			olderStarted = true
+			return slot
+		})
+		for (let i = 0; i < PARENT_IO_MAX_PRIORITY_BYPASSES; i++) {
+			const urgent = pool.acquire(2)
+			release()
+			release = await urgent
+			assert.equal(olderStarted, false)
+		}
+		const nextUrgent = pool.acquire(2)
+		release()
+		const releaseOlder = await older
+		assert.equal(pool.getActiveCount(), 1)
+		assert.equal(pool.getPendingCount(), 1)
+		releaseOlder()
+		releaseOlder() // A repeated release must not over-admit the urgent request.
+		const releaseUrgent = await nextUrgent
+		releaseUrgent()
+		assert.equal(pool.getActiveCount(), 0)
+		assert.equal(pool.getPendingCount(), 0)
+	})
 	it("classifies expensive tools into centrally bounded work classes", () => {
 		assert.equal(classifyParentIoWorkClass(DietCodeDefaultTool.FILE_READ), "small-read")
 		assert.equal(classifyParentIoWorkClass(DietCodeDefaultTool.SEARCH), "search")
