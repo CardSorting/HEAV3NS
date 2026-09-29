@@ -2,6 +2,8 @@
 
 This directory contains the authoritative current-worktree runtime evidence.
 
+For upcoming QoL work, see the [rolling roadmap](../ROADMAP.md) and its [audit and review walkthrough](QOL_ROLLING_AUDIT.md).
+
 Read [`CLAIM-SCOPE.md`](CLAIM-SCOPE.md) before treating any report, ADR,
 whitepaper, or field note as a current performance claim, rights statement, or
 authorship record.

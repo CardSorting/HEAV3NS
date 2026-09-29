@@ -21,7 +21,7 @@
 | 🧪 [78-Test Verification Suite](scripts/validate-qol-enhancements.ts) | 📈 [Live Benchmark Measurements](docs/LIVE_BASELINE.json) | 🏛️ [Architecture Decision Records](docs/adr/README.md) |
 | 🛩️ [Agent Flight Test](agent-flight-test/README.md) | 📊 [Benchmark Methodology](agent-flight-test/METHODOLOGY.md) | 🚀 [Launch & Trust Strategy](agent-flight-test/LAUNCH-STRATEGY.md) |
 | 🧾 [Claims & Evidence](.wiki/ip/CLAIM-REGISTER.md) | 🛡️ [Security Policy](SECURITY.md) | ⚖️ [Licensing Strategy](docs/LEGAL-STRATEGY.md) |
-| 🤖 [Claude Subscription DirectSDK Provider](docs/CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER.md) | | |
+| 🤖 [Claude Subscription DirectSDK Provider](docs/CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER.md) | [Rolling QoL Roadmap](ROADMAP.md) | [QoL Audit & Walkthrough](docs/QOL_ROLLING_AUDIT.md) |
 
 ---
 
