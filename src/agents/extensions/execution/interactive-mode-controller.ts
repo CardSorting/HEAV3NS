@@ -1,8 +1,15 @@
 import * as readline from "node:readline"
 import type { EngineProgressEvent } from "../../../core/contracts/agent.contracts.js"
 import type { GameStateSnapshot } from "../../../core/contracts/session.contracts.js"
+import {
+	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
+	getAgentProviderLabel,
+	isClaudeSubscriptionDirectSdkProvider,
+	OPENAI_CODEX_PROVIDER,
+} from "../../../core/providers/provider-ids.js"
 import { sanitizeProgressText } from "../../../core/utilities/progress-sanitizer.js"
 import type { LumiMonolith } from "../../../index.js"
+import type { SkillManifest } from "../../../tooling/extensions/registry/skills-ingestor.js"
 import { CombinedAutocompleteProvider, type SlashCommand } from "../../../tui/autocomplete.js"
 import { AgentActivityTimeline } from "../../../tui/components/agent-activity-timeline.js"
 import { Box } from "../../../tui/components/box.js"
@@ -26,13 +33,6 @@ import { highlightTerminalCode } from "../../../tui/syntax-highlighter.js"
 import { ProcessTerminal } from "../../../tui/terminal.js"
 import type { Component, OverlayHandle } from "../../../tui/tui.js"
 import { TuiAltScreen } from "../../../tui/tui-alt-screen.js"
-import type { SkillManifest } from "../../../tooling/extensions/registry/skills-ingestor.js"
-import {
-	CLAUDE_SUBSCRIPTION_DIRECTSDK_PROVIDER,
-	getAgentProviderLabel,
-	isClaudeSubscriptionDirectSdkProvider,
-	OPENAI_CODEX_PROVIDER,
-} from "../../../core/providers/provider-ids.js"
 import type { ModelSpecs } from "../resolution/model-catalog.js"
 import type { ReasoningEffortLevel } from "../resolution/reasoning-effort-controller.js"
 
@@ -1673,6 +1673,7 @@ export class InteractiveModeController {
 				)
 				historyContainer.addChild(userBox)
 
+				autocompleteProvider.setDynamicSuggestions([])
 				const turnAbortController = new AbortController()
 				activeTurnAbortController = turnAbortController
 				activeTurnStartedAt = Date.now()
@@ -1702,12 +1703,7 @@ export class InteractiveModeController {
 						},
 					})
 					activityTimeline.settleIfNeeded(tickResult.outcome, tickResult.response, Date.now() - activeTurnStartedAt)
-					if (tickResult.outcome === "completed") {
-						const followUps = activityTimeline.getFollowUpSuggestions()
-						if (followUps.length > 0) {
-							autocompleteProvider.setDynamicSuggestions(followUps)
-						}
-					}
+					autocompleteProvider.setDynamicSuggestions(activityTimeline.getFollowUpSuggestions())
 					const toolSection = formatUniversalToolSection(tickResult.toolResults ?? [])
 
 					const responseBox = new Box(1, 0, (str: string) => `\x1b[48;5;237m${str}\x1b[0m`)
@@ -1727,6 +1723,7 @@ export class InteractiveModeController {
 					const errorMsg = err instanceof Error ? err.message : String(err)
 					const safeErrorMsg = sanitizeProgressText(errorMsg, 700) || "Unknown engine error"
 					activityTimeline.failIfNeeded(safeErrorMsg, Date.now() - activeTurnStartedAt)
+					autocompleteProvider.setDynamicSuggestions(activityTimeline.getFollowUpSuggestions())
 
 					const isAuthError =
 						safeErrorMsg.includes("401") ||
