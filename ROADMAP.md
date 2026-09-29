@@ -59,8 +59,10 @@ Familiar references guide behavior: [Linear cycles](https://linear.app/docs/use-
 
 **Success Signal:** At 80- and 120-column widths, each state shows a plain-language label and actionable recovery without truncating the primary action; keyboard-only navigation reaches its details.
 
-**Gravity Impact:** Strengthens  
-**Centralization Effect:** Centralizes  
+**Gravity Impact:** Strengthens
+
+**Centralization Effect:** Centralizes
+
 **Entropy Risk:** Low
 
 **Risk / Mitigation:** A wording-only change can conceal unresolved state disagreement; derive labels from lifecycle authority and test transitions.
@@ -77,8 +79,10 @@ Familiar references guide behavior: [Linear cycles](https://linear.app/docs/use-
 
 **Success Signal:** Affected gates rerun, unaffected evidence remains reusable, and callers cannot mutate retained evidence.
 
-**Gravity Impact:** Strengthens  
-**Centralization Effect:** Centralizes  
+**Gravity Impact:** Strengthens
+
+**Centralization Effect:** Centralizes
+
 **Entropy Risk:** Medium
 
 **Risk / Mitigation:** Removing duplicate caches adds freshness-check I/O; use the existing service cache and measure end-to-end tasks before tuning.
@@ -95,9 +99,12 @@ Familiar references guide behavior: [Linear cycles](https://linear.app/docs/use-
 
 **First Validation Step:** Exercise a one-file fix, multi-step feature, partial failure, and no-code answer; verify that each final view links to available evidence and never fabricates a check. Keep simple answers short.
 
-**Confidence:** High  
-**Gravity Impact:** Strengthens  
-**Centralization Effect:** Centralizes  
+**Confidence:** High
+
+**Gravity Impact:** Strengthens
+
+**Centralization Effect:** Centralizes
+
 **Entropy Risk:** Low
 
 ## 6. Later
@@ -112,8 +119,10 @@ Familiar references guide behavior: [Linear cycles](https://linear.app/docs/use-
 
 **Promotion Trigger:** QOL-04 and QOL-08 pass interruption/restart scenarios with no lost or falsely completed work.
 
-**Gravity Impact:** Strengthens  
-**Centralization Effect:** Centralizes  
+**Gravity Impact:** Strengthens
+
+**Centralization Effect:** Centralizes
+
 **Entropy Risk:** Medium
 
 ## 7. Discovery
@@ -213,7 +222,8 @@ Keep service mutations and coordinator commits inside the existing governed pers
 
 ### QOL-01 — Honest roadmap completion and retry recovery
 
-**Archived Date:** 2026-09-29  
+**Archived Date:** 2026-09-29
+
 **Reason:** Rollback preserves pending/unknown validation; missing gate decisions block completion; state changes invalidate cached validation; known schema failures remain blocking in previews. Roadmap regression suite passes.
 
 **Evidence:** `src/services/roadmap/__tests__/RoadmapCompletionGate.test.ts`, `RoadmapAutoGovernance.test.ts`; see the [audit and verification record](docs/QOL_ROLLING_AUDIT.md).
@@ -222,7 +232,8 @@ Keep service mutations and coordinator commits inside the existing governed pers
 
 ### QOL-02 — Bounded priority overtaking for parent I/O
 
-**Archived Date:** 2026-09-29  
+**Archived Date:** 2026-09-29
+
 **Reason:** After eight eligible bypasses, oldest eligible work takes precedence over priority boosts. Global/per-class caps and queued cancellation are preserved.
 
 **Evidence:** `src/core/task/tools/io/__tests__/parentIoThroughput.test.ts` covers priority bursts, eventual admission, repeated release, caps, and cancellation. No wall-clock speedup is claimed.
@@ -231,7 +242,8 @@ Keep service mutations and coordinator commits inside the existing governed pers
 
 ### QOL-03 — Shared completion walkthrough and rolling guidance
 
-**Archived Date:** 2026-09-29  
+**Archived Date:** 2026-09-29
+
 **Reason:** Completion tool variants share outcome/review/check/limitation guidance; roadmap steering now gives a bounded session-driven rollover procedure. Terminal rendering and model-adherence evaluation remain QOL-07.
 
 **Evidence:** `src/core/prompts/system-prompt/tools/attempt_completion.ts` and `components/roadmap_steering.ts`.
@@ -240,7 +252,8 @@ Keep service mutations and coordinator commits inside the existing governed pers
 
 ### QOL-04 — Cooperating-writer persistence and non-destructive recovery
 
-**Archived Date:** 2026-09-29  
+**Archived Date:** 2026-09-29
+
 **Reason:** RoadmapService and coordinator commits serialize read/modify/write work using the existing governed file-lock backend. Unique synced staging files replace shared temporary paths. Changed document bases reject publication, corrupt state is preserved, failed writes throw, and invalid remediation drafts never replace the document. No stale backup is restored.
 
 **Evidence:** `RoadmapPersistence.test.ts` exercises 24 concurrent patches, 12 continuation updates, a contested lease, separate-process updates, external edits, persistence failures, and snapshot freshness. Existing coordinator projection tests pass.
@@ -249,7 +262,8 @@ Keep service mutations and coordinator commits inside the existing governed pers
 
 ### QOL-06 — Reproducible mixed parent-I/O baseline
 
-**Archived Date:** 2026-09-29  
+**Archived Date:** 2026-09-29
+
 **Reason:** A production-pool harness runs one warmup and five measured bursts of 192 requests across four classes, reports queue/service p50/p95 and backend call counts, asserts caps and drained queues, then cancels 32 queued requests and verifies recovery. No capacity tuning was justified or performed, so no before/after speedup is claimed.
 
 **Evidence:** [Raw baseline](docs/PARENT_IO_BASELINE.json) and [methodology/results](docs/QOL_ROLLING_AUDIT.md). Peak active count 4; 528 filesystem calls per measured burst; all queued cancellations rejected with no stranded slots.
